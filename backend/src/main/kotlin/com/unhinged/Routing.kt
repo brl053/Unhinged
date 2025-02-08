@@ -24,10 +24,11 @@ fun Application.configureRouting() {
             call.respondText("Hello World!")
         }
         post("/chat") {
+            // TODO: Prompt is actually JSON. We need to improve FE/BE connection. Good for PoC.
             val prompt = call.receiveText()
             println("Received prompt: $prompt")
-            val response = LlmService.queryLlm(prompt)
-            call.respondText(response.response)
+            val response = LlmService.queryLlmStream(prompt)
+            call.respondText(response)
         }
     }
 }

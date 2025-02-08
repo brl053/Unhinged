@@ -2,6 +2,9 @@
 FROM gradle:8-jdk17 AS build
 WORKDIR /app
 
+# Install dependencies (curl is for testing from inside container to others)
+RUN apt update && apt install -y curl
+
 # Copy Gradle wrapper and build configuration first (improves caching)
 COPY gradlew gradlew
 COPY gradlew.bat gradlew.bat

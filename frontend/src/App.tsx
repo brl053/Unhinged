@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSendMessage } from './queries/api';
 
 const App: React.FC = () => {
-  console.log("I am ALIVE")
   const [message, setMessage] = useState<string>('');
   
   // Destructuring the result of the mutation hook with proper types
@@ -18,6 +17,11 @@ const App: React.FC = () => {
   const handleSendMessage = () => {
     mutate(message);
   };
+
+  console.log('isLoading', isLoading);
+  console.log('isError', isError);
+  console.log('data', data);
+  console.log('error', error);
 
   return (
     <div>
@@ -43,7 +47,7 @@ const App: React.FC = () => {
       {data && (
         <div>
           <h3>Response:</h3>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
+          <pre>{data}</pre>
         </div>
       )}
     </div>

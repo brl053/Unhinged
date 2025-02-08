@@ -26,6 +26,8 @@ services:
   llm:
     build: ./llm
     container_name: ollama-service
+    volumes:
+      - llm-models:/models  # Mount the volume to persist the model
     ports:
       - "11434:11434"
 
@@ -42,4 +44,5 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
 volumes:
+  llm-models:  # Declare the volume to store the model data
   postgres-data:

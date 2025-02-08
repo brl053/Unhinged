@@ -8,7 +8,7 @@ interface ResponseData {
 }
 
 export const useSendMessage = () => {
-  return useMutation<ResponseData, Error, string>({
+  return useMutation<string, Error, string>({
     mutationFn: async (message: string) => {
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
@@ -22,7 +22,8 @@ export const useSendMessage = () => {
         throw new Error("Failed to send message");
       }
 
-      return response.json(); // This will return ResponseData
+      console.log('response', response);
+      return await response.text(); // This will return ResponseData
     }
   });
 };
