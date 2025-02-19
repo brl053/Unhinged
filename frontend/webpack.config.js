@@ -1,6 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
 
 module.exports = (env, argv) => {
   const isDevelopment = argv.mode === 'development';
@@ -25,7 +27,18 @@ module.exports = (env, argv) => {
         {
           test: /\.css$/,
           use: ['style-loader', 'css-loader']
-        }
+        },
+        {
+          test: /\.(png|jpg|jpeg|gif|svg)$/,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {
+                name: 'assets/[name].[hash].[ext]',
+              },
+            },
+          ],
+        },
       ]
     },
     plugins: [
@@ -33,7 +46,12 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: 'public/index.html',
         filename: 'index.html'
-      })
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: 'lib/assets', to: 'assets' } // Copy assets from lib/assets to dist/assets
+        ],
+      }),
     ],
     devServer: isDevelopment
       ? {

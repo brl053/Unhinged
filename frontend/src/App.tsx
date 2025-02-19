@@ -1,56 +1,30 @@
-import React, { useState } from 'react';
-import { useSendMessage } from './queries/api';
+import React from 'react';
+import { createGlobalStyle, ThemeProvider } from 'styled-components';
+import { basicTheme } from './design_system/theme';
+import { RouterProvider } from 'react-router-dom';
+import { RouterProviderProps } from 'react-router';
 
-const App: React.FC = () => {
-  const [message, setMessage] = useState<string>('');
-  
-  // Destructuring the result of the mutation hook with proper types
-    // @ts-ignore
-  const { mutate, isLoading, isError, data, error } = useSendMessage();
+export interface IAppRoutersProps {
+  router: RouterProviderProps['router']
+}
 
-  // Handler for input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
-  };
+// TODO: Make this a better pattern one day!
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin: 0;
+    padding: 0;
+    /* font-family: 'Roboto', sans-serif; */
+  }
+`;
 
-  // Handler for sending the message
-  const handleSendMessage = () => {
-    mutate(message);
-  };
+const App: React.FC<IAppRoutersProps> = ({router}) => {
 
-  console.log('isLoading', isLoading);
-  console.log('isError', isError);
-  console.log('data', data);
-  console.log('error', error);
 
   return (
-    <div>
-      <h1>🚀 React + TypeScript + Webpack</h1>
-      <p>Hello, world!</p>
-
-      <div>
-        <input
-          type="text"
-          value={message}
-          onChange={handleInputChange}
-          placeholder="Enter your message"
-        />
-        <button onClick={handleSendMessage} disabled={isLoading}>
-          {isLoading ? 'Sending...' : 'Send Message'}
-        </button>
-      </div>
-
-      {/* Handle errors */}
-      {isError && <p style={{ color: 'red' }}>Error: {error instanceof Error ? error.message : 'Unknown error'}</p>}
-
-      {/* Display response if available */}
-      {data && (
-        <div>
-          <h3>Response:</h3>
-          <pre>{data}</pre>
-        </div>
-      )}
-    </div>
+    <ThemeProvider theme={basicTheme}>
+      <GlobalStyle /> 
+      <RouterProvider router={router}/>
+    </ThemeProvider>
   );
 };
 
