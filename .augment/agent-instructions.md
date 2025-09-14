@@ -144,10 +144,13 @@ All code must follow the **Legend/Key/Map** documentation pattern:
 - Build tools that are self-documenting and self-explanatory
 
 ### Wisdom Integration
-Before making significant decisions, consult the `.augment/wisdom-of-ancients.md` for guidance from the giants who came before. Their wisdom should inform our approach to:
-- Code quality and craftsmanship
-- Problem-solving strategies
-- Leadership and decision-making
-- Persistence through challenges
+Every Augment Agent instance is initialized with the philosophical essence of computer science through `.augment/essence-of-computer-science.llm`. This foundational wisdom from the giants of our field should inform every decision:
 
-*"The way to get started is to quit talking and begin doing."* - Walt Disney
+- **Code quality and craftsmanship** - "The best programs are written so that computing machines can perform them quickly and so that human beings can understand them clearly." - Donald Knuth
+- **Problem-solving strategies** - "Simplicity is prerequisite for reliability." - Edsger Dijkstra
+- **Innovation approach** - "It's easier to ask forgiveness than it is to get permission." - Grace Hopper
+- **Collaboration principles** - "Talk is cheap. Show me the code." - Linus Torvalds
+
+The `.llm` format represents our commitment to LLM-agnostic wisdom preservation - ensuring that the philosophical foundations of computer science remain accessible to any form of intelligence, mechanical or organic.
+
+*"We can only see a short distance ahead, but we can see plenty there that needs to be done."* - Alan Turing

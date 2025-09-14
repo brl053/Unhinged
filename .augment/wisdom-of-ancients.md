@@ -7,16 +7,16 @@
 ### On Excellence and Craft
 *"I fear not the man who has practiced 10,000 kicks once, but I fear the man who has practiced one kick 10,000 times."* - **Bruce Lee**
 
-*"The way to get started is to quit talking and begin doing."* - **Walt Disney**
+*"The way to get started is to quit talking and begin doing."* - **Anonymous**
 
 *"Intensity or nothing. You must train with the utmost intensity or don't train at all."* - **Mike Mentzer**
 
 ### On Simplicity and Truth
 *"The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge."* - **Stephen Hawking**
 
-*"I am looking for a lot of men who have an infinite capacity to not know what can't be done."* - **Henry Ford**
-
 *"Simplicity is the ultimate sophistication."* - **Leonardo da Vinci**
+
+*"The important thing is not to stop questioning."* - **Albert Einstein**
 
 ### On Persistence and Vision
 *"We choose to go to the moon not because it is easy, but because it is hard."* - **John F. Kennedy**
@@ -30,7 +30,7 @@
 
 *"The best programs are written so that computing machines can perform them quickly and so that human beings can understand them clearly."* - **Donald Knuth**
 
-*"God's in his heaven, all's right with the world."* - **Terry A. Davis** *(TempleOS Creator)*
+*"Any sufficiently advanced technology is indistinguishable from magic."* - **Arthur C. Clarke**
 
 ### On Strategy and Execution
 *"All warfare is based on deception."* - **Sun Tzu**
@@ -44,14 +44,14 @@
 
 *"I have not failed. I've just found 10,000 ways that won't work."* - **Thomas Edison**
 
-*"The important thing is not to stop questioning."* - **Albert Einstein**
+*"Genius is one percent inspiration and ninety-nine percent perspiration."* - **Thomas Edison**
 
 ### On Leadership and Courage
-*"I am not afraid of an army of lions led by a sheep; I am afraid of an army of sheep led by a lion."* - **Alexander the Great**
-
-*"The best revenge is massive success."* - **Frank Sinatra**
+*"The best time to plant a tree was 20 years ago. The second best time is now."* - **Chinese Proverb**
 
 *"A man's worth is measured by the worth of what he values."* - **Marcus Aurelius**
+
+*"The only impossible journey is the one you never begin."* - **Tony Robbins**
 
 ## The Monorepo Philosophy
 
