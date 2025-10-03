@@ -57,7 +57,17 @@ module.exports = (env, argv) => {
       ? {
           static: './dist',
           port: 3000,
-          hot: true
+          host: '0.0.0.0', // Allow external connections (for Docker)
+          hot: true,
+          liveReload: true,
+          watchFiles: ['src/**/*', 'lib/**/*'], // Watch for changes
+          historyApiFallback: true, // Support React Router
+          client: {
+            overlay: {
+              errors: true,
+              warnings: false,
+            },
+          },
         }
       : undefined,
     mode: isDevelopment ? 'development' : 'production',

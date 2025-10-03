@@ -6,19 +6,48 @@ import styled from "styled-components";
 import { InlineChildren } from "../../../lib/components/InlineChildren/InlineChildren";
 import React from "react";
 import { InlineChildrenAlignment, InlineChildrenJustification } from "../../../lib/components/InlineChildren/types";
+import { VoiceInput } from "../../../lib/components/VoiceInput/VoiceInput";
+import { VoiceInputVariant, VoiceInputSize } from "../../../lib/components/VoiceInput/types";
+import { TranscriptionResult, VoiceInputErrorDetails } from "../../utils/audio/types";
 
 export const Chatroom: React.FC = () => {
     const [userInput, setUserInput] = useState<string | undefined>();
     const [messageHistroy, setMessageHistory] = useState<ChatMessage[]>([]);
     const { mutate, isPending, isError, data, error } = useSendMessage();
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setUserInput(e.target.value);
     };
+
     const handleSendMessage = () => {
       if (!userInput) return;
       const newMessage = { type: ChatMessageType.Sent, message: userInput };
       setMessageHistory([...messageHistroy, newMessage])
       mutate(userInput);
+      setUserInput(''); // Clear input after sending
+    };
+
+    /**
+     * Handles voice transcription completion
+     * Automatically sends the transcribed text as a message
+     */
+    const handleVoiceTranscription = (result: TranscriptionResult) => {
+      const transcribedText = result.text.trim();
+      if (transcribedText) {
+        const newMessage = { type: ChatMessageType.Sent, message: transcribedText };
+        setMessageHistory([...messageHistroy, newMessage]);
+        mutate(transcribedText);
+      }
+    };
+
+    /**
+     * Handles voice input errors
+     * Shows error feedback to the user
+     */
+    const handleVoiceError = (error: VoiceInputErrorDetails) => {
+      console.error('Voice input error:', error);
+      // TODO: Add toast notification or error display
+      // For now, just log the error
     };
 
     React.useEffect(() => {
@@ -38,16 +67,31 @@ export const Chatroom: React.FC = () => {
             </ChatMessagesContainer>
             <ChatInputContainer>
               <InlineChildren>
-            <TerminalInput
-              type="text"
-              value={userInput}
-              onChange={handleInputChange}
-              placeholder="Enter your message"
-            />
-            <button onClick={handleSendMessage} disabled={isPending}>
-              {isPending ? 'Sending...' : 'Send Message'}
-            </button>
-            </InlineChildren>
+                <TerminalInput
+                  type="text"
+                  value={userInput || ''}
+                  onChange={handleInputChange}
+                  placeholder="Enter your message or use voice input"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !isPending) {
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <VoiceInput
+                  onTranscription={handleVoiceTranscription}
+                  onError={handleVoiceError}
+                  variant={VoiceInputVariant.PRIMARY}
+                  size={VoiceInputSize.MEDIUM}
+                  showAudioLevel={true}
+                  showDuration={true}
+                  disabled={isPending}
+                  placeholder="Click to record"
+                />
+                <button onClick={handleSendMessage} disabled={isPending || !userInput}>
+                  {isPending ? 'Sending...' : 'Send Message'}
+                </button>
+              </InlineChildren>
             </ChatInputContainer>
 
           {isError && <p style={{ color: 'red' }}>Error: {error instanceof Error ? error.message : 'Unknown error'}</p>}

@@ -2,6 +2,9 @@ export enum IconType {
     DemonEmoji = 'demon_emoji',
     ChatBubbleFill = 'chat_bubble_fill',
     ChatBubbleLine = 'chat_bubble_line',
+    Microphone = 'microphone',
+    MicrophoneOff = 'microphone_off',
+    Stop = 'stop',
 }
 
 export enum IconSize {

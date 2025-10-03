@@ -1,0 +1,25 @@
+# Development Dockerfile for Frontend
+# Provides hot reloading and development tools
+
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies first (for better caching)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy source code (will be overridden by volume mount in dev)
+COPY . .
+
+# Expose webpack dev server port
+EXPOSE 3000
+
+# Set environment variables for development
+ENV NODE_ENV=development
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+# Start webpack dev server with hot reloading
+CMD ["npm", "run", "dev"]
