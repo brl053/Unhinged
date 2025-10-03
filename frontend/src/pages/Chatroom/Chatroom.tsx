@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useSendMessage } from "../../queries/api";
+import { useState, useRef } from "react";
+import { useSendMessage, useSynthesizeAudio } from "../../queries/api";
 import { Layout } from "../../../lib/components/Layout/Layout";
 import { ChatContainer, ChatInputContainer, ChatMessagesContainer, LoadingDots, TerminalInput } from "./styles";
 import styled from "styled-components";
@@ -9,11 +9,18 @@ import { InlineChildrenAlignment, InlineChildrenJustification } from "../../../l
 import { VoiceInput } from "../../../lib/components/VoiceInput/VoiceInput";
 import { VoiceInputVariant, VoiceInputSize } from "../../../lib/components/VoiceInput/types";
 import { TranscriptionResult, VoiceInputErrorDetails } from "../../utils/audio/types";
+import { playAudioBlob, stopAudio } from "../../utils/audio/audioUtils";
+import { DEFAULT_TTS_CONFIG } from "../../utils/audio/constants";
 
 export const Chatroom: React.FC = () => {
     const [userInput, setUserInput] = useState<string | undefined>();
     const [messageHistroy, setMessageHistory] = useState<ChatMessage[]>([]);
+    const [ttsEnabled, setTtsEnabled] = useState<boolean>(DEFAULT_TTS_CONFIG.autoPlay);
+    const [isPlayingTts, setIsPlayingTts] = useState<boolean>(false);
+    const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
     const { mutate, isPending, isError, data, error } = useSendMessage();
+    const synthesizeMutation = useSynthesizeAudio();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setUserInput(e.target.value);
@@ -50,11 +57,70 @@ export const Chatroom: React.FC = () => {
       // For now, just log the error
     };
 
+    /**
+     * Synthesizes and plays text as speech
+     */
+    const handleTextToSpeech = async (text: string) => {
+      if (!ttsEnabled || !text.trim()) return;
+
+      try {
+        setIsPlayingTts(true);
+
+        // Stop any currently playing audio
+        if (currentAudioRef.current) {
+          stopAudio(currentAudioRef.current);
+        }
+
+        const result = await synthesizeMutation.mutateAsync({
+          text: text.trim(),
+          language: DEFAULT_TTS_CONFIG.language,
+        });
+
+        const audio = await playAudioBlob(
+          result.audioBlob,
+          () => {
+            setIsPlayingTts(false);
+            currentAudioRef.current = null;
+          },
+          (error) => {
+            console.error('TTS playback error:', error);
+            setIsPlayingTts(false);
+            currentAudioRef.current = null;
+          }
+        );
+
+        currentAudioRef.current = audio;
+
+      } catch (error) {
+        console.error('TTS synthesis error:', error);
+        setIsPlayingTts(false);
+      }
+    };
+
+    /**
+     * Toggles TTS functionality on/off
+     */
+    const handleTtsToggle = () => {
+      setTtsEnabled(!ttsEnabled);
+
+      // Stop any currently playing audio when disabling TTS
+      if (!ttsEnabled && currentAudioRef.current) {
+        stopAudio(currentAudioRef.current);
+        setIsPlayingTts(false);
+        currentAudioRef.current = null;
+      }
+    };
+
     React.useEffect(() => {
       if (!data) return;
       const newMessage = { type: ChatMessageType.Received, message: data };
-      setMessageHistory([...messageHistroy, newMessage])
-    }, [data])
+      setMessageHistory([...messageHistroy, newMessage]);
+
+      // Auto-play TTS for AI responses if enabled
+      if (ttsEnabled) {
+        handleTextToSpeech(data);
+      }
+    }, [data, ttsEnabled])
 
     console.log(messageHistroy)
 
@@ -88,6 +154,14 @@ export const Chatroom: React.FC = () => {
                   disabled={isPending}
                   placeholder="Click to record"
                 />
+                <TtsToggleButton
+                  onClick={handleTtsToggle}
+                  enabled={ttsEnabled}
+                  isPlaying={isPlayingTts}
+                  disabled={isPending}
+                >
+                  {isPlayingTts ? '🔊' : ttsEnabled ? '🔊' : '🔇'}
+                </TtsToggleButton>
                 <button onClick={handleSendMessage} disabled={isPending || !userInput}>
                   {isPending ? 'Sending...' : 'Send Message'}
                 </button>
@@ -132,3 +206,44 @@ const ChatBubble: React.FC<ChatMessage> = ({ type, message }) => {
     </InlineChildren>
   );
 }
+
+interface TtsToggleButtonProps {
+  enabled: boolean;
+  isPlaying: boolean;
+  disabled?: boolean;
+}
+
+export const TtsToggleButton = styled.button<TtsToggleButtonProps>`
+  background: ${({ enabled, theme }) => enabled ? theme.color.background.primary : theme.color.background.secondary};
+  color: ${({ theme }) => theme.color.text.primary};
+  border: 2px solid ${({ enabled, theme }) => enabled ? '#4CAF50' : theme.color.border.primary};
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 18px;
+  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease;
+  min-width: 50px;
+
+  &:hover:not(:disabled) {
+    background: ${({ enabled, theme }) => enabled ? '#45a049' : theme.color.background.primary};
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  ${({ isPlaying }) => isPlaying && `
+    animation: pulse 1s infinite;
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+  `}
+`;
