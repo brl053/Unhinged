@@ -66,8 +66,12 @@ export const RECORDING_TIMINGS = {
 export const VOICE_API_ENDPOINTS = {
   /** Whisper transcription endpoint */
   TRANSCRIBE: '/transcribe',
+  /** Text-to-Speech synthesis endpoint */
+  SYNTHESIZE: '/synthesize',
   /** Health check endpoint */
   HEALTH: '/health',
+  /** Service info endpoint */
+  INFO: '/info',
 } as const;
 
 /**
@@ -79,6 +83,20 @@ export const ERROR_MESSAGES = {
   DEVICE_NOT_FOUND: 'No microphone found. Please check your audio devices and try again.',
   RECORDING_FAILED: 'Recording failed. Please try again.',
   TRANSCRIPTION_FAILED: 'Could not transcribe audio. Please try speaking more clearly.',
+  SYNTHESIS_FAILED: 'Could not generate speech. Please try again.',
+  PLAYBACK_FAILED: 'Could not play audio. Please check your audio settings.',
   NETWORK_ERROR: 'Network error. Please check your connection and try again.',
-  BROWSER_NOT_SUPPORTED: 'Your browser does not support audio recording. Please use a modern browser.',
+  BROWSER_NOT_SUPPORTED: 'Your browser does not support this audio feature. Please use a modern browser.',
+} as const;
+
+/**
+ * Default TTS configuration
+ */
+export const DEFAULT_TTS_CONFIG = {
+  /** Default language for speech synthesis */
+  language: 'en',
+  /** Auto-play synthesized responses */
+  autoPlay: false,
+  /** Volume level (0-1) */
+  volume: 0.8,
 } as const;

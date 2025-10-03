@@ -79,6 +79,30 @@ export interface TranscriptionResult {
 }
 
 /**
+ * Text-to-Speech synthesis request
+ */
+export interface SynthesisRequest {
+  /** Text to convert to speech */
+  text: string;
+  /** Language code for synthesis (e.g., 'en', 'es') */
+  language?: string;
+}
+
+/**
+ * Text-to-Speech synthesis result
+ */
+export interface SynthesisResult {
+  /** Audio blob containing the synthesized speech */
+  audioBlob: Blob;
+  /** Duration of the audio in milliseconds */
+  duration?: number;
+  /** Language used for synthesis */
+  language: string;
+  /** Original text that was synthesized */
+  text: string;
+}
+
+/**
  * Error types that can occur during voice input
  */
 export enum VoiceInputError {
@@ -90,6 +114,10 @@ export enum VoiceInputError {
   RECORDING_FAILED = 'recording_failed',
   /** Transcription API error */
   TRANSCRIPTION_FAILED = 'transcription_failed',
+  /** Text-to-Speech synthesis error */
+  SYNTHESIS_FAILED = 'synthesis_failed',
+  /** Audio playback error */
+  PLAYBACK_FAILED = 'playback_failed',
   /** Network error */
   NETWORK_ERROR = 'network_error',
   /** Browser not supported */

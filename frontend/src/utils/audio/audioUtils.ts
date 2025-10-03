@@ -168,3 +168,100 @@ export const validateAudioFile = (file: File): boolean => {
   
   return true;
 };
+
+/**
+ * Checks if the browser supports audio playback
+ * @returns true if Audio API is available
+ */
+export const isAudioPlaybackSupported = (): boolean => {
+  return !!(
+    typeof window !== 'undefined' &&
+    window.Audio &&
+    typeof window.Audio === 'function'
+  );
+};
+
+/**
+ * Plays an audio blob with error handling
+ * @param audioBlob - The audio blob to play
+ * @param onEnded - Optional callback when audio finishes playing
+ * @param onError - Optional callback when audio playback fails
+ * @returns Promise that resolves when audio starts playing
+ */
+export const playAudioBlob = async (
+  audioBlob: Blob,
+  onEnded?: () => void,
+  onError?: (error: VoiceInputErrorDetails) => void
+): Promise<HTMLAudioElement> => {
+  try {
+    if (!isAudioPlaybackSupported()) {
+      throw createVoiceInputError(
+        VoiceInputError.BROWSER_NOT_SUPPORTED,
+        'Browser does not support audio playback'
+      );
+    }
+
+    // Create audio URL from blob
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+
+    // Set up event listeners
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl); // Clean up memory
+      onEnded?.();
+    };
+
+    audio.onerror = () => {
+      URL.revokeObjectURL(audioUrl); // Clean up memory
+      const errorDetails = createVoiceInputError(
+        VoiceInputError.PLAYBACK_FAILED,
+        'Failed to play audio'
+      );
+      onError?.(errorDetails);
+    };
+
+    // Start playback
+    await audio.play();
+
+    return audio;
+
+  } catch (error) {
+    if (error instanceof Error) {
+      // Handle specific audio errors
+      if (error.name === 'NotAllowedError') {
+        throw createVoiceInputError(
+          VoiceInputError.PLAYBACK_FAILED,
+          'Audio playback blocked by browser. Please allow audio autoplay.'
+        );
+      }
+      if (error.name === 'NotSupportedError') {
+        throw createVoiceInputError(
+          VoiceInputError.PLAYBACK_FAILED,
+          'Audio format not supported by browser'
+        );
+      }
+    }
+
+    throw createVoiceInputError(
+      VoiceInputError.PLAYBACK_FAILED,
+      error instanceof Error ? error.message : 'Failed to play audio'
+    );
+  }
+};
+
+/**
+ * Stops and cleans up an audio element
+ * @param audio - The audio element to stop
+ */
+export const stopAudio = (audio: HTMLAudioElement): void => {
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+    // Clean up the object URL if it exists
+    if (audio.src && audio.src.startsWith('blob:')) {
+      URL.revokeObjectURL(audio.src);
+    }
+  } catch (error) {
+    console.warn('Failed to stop audio:', error);
+  }
+};
