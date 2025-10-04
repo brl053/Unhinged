@@ -1,0 +1,123 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="3.7172840000000003">
+<testsuite name="e2e/sidebar-navigation-diagnostic.spec.ts" timestamp="2025-10-04T22:37:34.047Z" hostname="chromium" tests="2" failures="0" skipped="0" time="5.234" errors="0">
+<testcase name="Sidebar Navigation Diagnostics › diagnose sidebar navigation issues with comprehensive error capture" classname="e2e/sidebar-navigation-diagnostic.spec.ts" time="1.834">
+<system-out>
+<![CDATA[🔍 Starting comprehensive sidebar navigation diagnostic...
+📋 Step 1: Validating React application health...
+✅ React application is healthy
+📋 Step 2: Validating sidebar rendering and interactivity...
+✅ SIDEBAR_VALIDATION: Found 2 interactive navigation items
+✅ Sidebar is rendered and interactive
+📋 Step 3: Testing navigation click functionality...
+📋 Step 4: Capturing comprehensive application state...
+📋 Step 5: Generating diagnostic report...
+🎯 COMPREHENSIVE DIAGNOSTIC REPORT
+=====================================
+{
+  "summary": {
+    "navigationWorking": false,
+    "reactHealthy": true,
+    "errorsDetected": 0,
+    "overallHealth": 0.4265
+  },
+  "navigationResult": {
+    "success": false,
+    "initialUrl": "http://localhost:3000/",
+    "finalUrl": "http://localhost:3000/",
+    "navigationTime": 1019,
+    "errors": {
+      "errors": [],
+      "warnings": [],
+      "networkFailures": [],
+      "uncaughtExceptions": []
+    },
+    "recommendations": [
+      "Check navigation click handlers and routing logic"
+    ],
+    "applicationState": null
+  },
+  "applicationState": {
+    "navigation": {
+      "url": "http://localhost:3000/",
+      "pathname": "/",
+      "search": "",
+      "hash": ""
+    },
+    "react": {
+      "devToolsAvailable": false,
+      "mounted": true,
+      "errorBoundariesActive": 0
+    },
+    "dom": {
+      "title": "🎤 WEBPACK DEV SERVER RUNNING - TTS/STT READY! 🔊",
+      "bodyClasses": [],
+      "visibleElements": 32,
+      "interactiveElements": 5,
+      "textContentLength": 115
+    },
+    "errors": {
+      "consoleErrors": [],
+      "networkErrors": [],
+      "reactErrors": 0,
+      "loadingElements": 0
+    },
+    "performance": {
+      "navigationStart": 1759617454397,
+      "domContentLoaded": 1759617454412,
+      "loadComplete": 1759617454562
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "devicePixelRatio": 1
+    },
+    "storage": {
+      "localStorage": {},
+      "sessionStorage": {}
+    },
+    "confidence": {
+      "fullyRendered": 0.4265,
+      "errorState": 0,
+      "loadingState": 0,
+      "blankPage": 0.1,
+      "navigationWorking": 0.3,
+      "reactHealthy": 0.9
+    }
+  },
+  "errors": {
+    "errors": [],
+    "warnings": [
+      "[CONSOLE WARNING] styled-components: it looks like an unknown prop \"variant\" is being sent through to the DOM, which will likely trigger a React console error. If you would like automatic filtering of unknown props, you can opt-into that behavior via `<StyleSheetManager shouldForwardProp={...}>` (connect an API like `@emotion/is-prop-valid`) or consider using transient props (`$` prefix for automatic filtering.)"
+    ],
+    "networkFailures": [],
+    "uncaughtExceptions": []
+  },
+  "recommendations": [
+    "Navigation clicks are not working - check click event handlers"
+  ],
+  "timestamp": "2025-10-04T22:37:36.121Z"
+}
+💡 ACTIONABLE RECOMMENDATIONS:
+1. Navigation clicks are not working - check click event handlers
+]]>
+</system-out>
+<system-err>
+<![CDATA[ACCESSIBILITY_WARNING: Navigation item 0 lacks aria-label or role attribute. Consider adding for screen reader support.
+ACCESSIBILITY_WARNING: Navigation item 1 lacks aria-label or role attribute. Consider adding for screen reader support.
+]]>
+</system-err>
+</testcase>
+<testcase name="Sidebar Navigation Diagnostics › test individual navigation items for click responsiveness" classname="e2e/sidebar-navigation-diagnostic.spec.ts" time="3.4">
+<system-out>
+<![CDATA[🔍 Testing individual navigation items...
+📊 Found 2 navigation items to test
+🧪 Testing navigation item: "Chat" (route: /)
+⚠️  Navigation attempted but URL unchanged: http://localhost:3000/ (1016ms)
+💡 RECOMMENDATION: Check click handler attachment and navigation logic
+🧪 Testing navigation item: "Components" (route: /showcase)
+✅ Navigation successful: http://localhost:3000/ → http://localhost:3000/showcase (1013ms)
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

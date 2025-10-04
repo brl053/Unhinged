@@ -1,7 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Layout } from '../../../lib/components/Layout/Layout';
+
 import { TextEditor } from '../../../lib/components/TextEditor';
 import { EditorInstance, EditorLanguage, EditorTheme, EditorSize } from '../../../lib/components/TextEditor/types';
+import { ImageUpload } from '../../../lib/components/ImageUpload';
+import { ImageUploadEvent, VisionAnalysisEvent, UploadSize, VisionProvider, AnalysisType } from '../../../lib/components/ImageUpload/types';
+import { ScreenshotCapture } from '../../../lib/components/ScreenshotCapture';
+import { CaptureTarget } from '../../../lib/components/ScreenshotCapture/ScreenshotCapture';
 import {
   ShowcaseContainer,
   ShowcaseSection,
@@ -91,6 +95,14 @@ demo().catch(console.error);`);
 
   // Editor ref
   const editorRef = useRef<EditorInstance>(null);
+
+  // Image upload state
+  const [uploadSize, setUploadSize] = useState<UploadSize>('medium');
+  const [visionProvider, setVisionProvider] = useState<VisionProvider>('openai-gpt4o');
+  const [analysisTypes, setAnalysisTypes] = useState<AnalysisType[]>(['screenshot', 'general-description']);
+  const [enableVisionAnalysis, setEnableVisionAnalysis] = useState(true);
+  const [uploadedImages, setUploadedImages] = useState<any[]>([]);
+  const [analysisResults, setAnalysisResults] = useState<any[]>([]);
 
   // Sample code for different languages
   const sampleCode: Record<EditorLanguage, string> = {
@@ -865,8 +877,26 @@ export default UserForm;`
     // Here you would typically save to a file or send to an API
   };
 
+  // Handle image upload events
+  const handleImageUpload = (event: ImageUploadEvent) => {
+    console.log('Image uploaded:', event.image);
+    setUploadedImages(prev => [...prev, event.image]);
+  };
+
+  const handleVisionAnalysis = (event: VisionAnalysisEvent) => {
+    console.log('Vision analysis completed:', event.result);
+    setAnalysisResults(prev => [...prev, event.result]);
+  };
+
+  const handleAnalysisTypeToggle = (type: AnalysisType) => {
+    setAnalysisTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
   return (
-    <Layout title="Component Showcase">
       <ShowcaseContainer>
         <SectionTitle>🎨 Unhinged Platform Component Showcase</SectionTitle>
         <SectionDescription>
@@ -997,6 +1027,136 @@ export default UserForm;`
         </ShowcaseSection>
 
         <ShowcaseSection>
+          <h2>Image Upload Component</h2>
+          <p>
+            A comprehensive drag-and-drop image upload component with vision processing integration.
+            Supports multiple image formats, file validation, upload progress tracking, and automatic
+            vision analysis using various AI providers.
+          </p>
+
+          <ControlsContainer>
+            <ControlGroup>
+              <ControlLabel>Upload Size:</ControlLabel>
+              <Select
+                value={uploadSize}
+                onChange={(e) => setUploadSize(e.target.value as UploadSize)}
+              >
+                <option value="small">Small (300x200)</option>
+                <option value="medium">Medium (500x300)</option>
+                <option value="large">Large (700x400)</option>
+                <option value="full">Full Width</option>
+              </Select>
+            </ControlGroup>
+
+            <ControlGroup>
+              <ControlLabel>Vision Provider:</ControlLabel>
+              <Select
+                value={visionProvider}
+                onChange={(e) => setVisionProvider(e.target.value as VisionProvider)}
+              >
+                <option value="openai-gpt4o">OpenAI GPT-4o Vision</option>
+                <option value="claude-vision">Claude Vision</option>
+                <option value="google-vision">Google Cloud Vision</option>
+                <option value="azure-vision">Azure Computer Vision</option>
+                <option value="local-model">Local Model (Future)</option>
+              </Select>
+            </ControlGroup>
+
+            <ControlGroup>
+              <FeatureToggle>
+                <input
+                  type="checkbox"
+                  id="enableVision"
+                  checked={enableVisionAnalysis}
+                  onChange={(e) => setEnableVisionAnalysis(e.target.checked)}
+                />
+                <FeatureLabel htmlFor="enableVision">Enable Vision Analysis</FeatureLabel>
+              </FeatureToggle>
+            </ControlGroup>
+          </ControlsContainer>
+
+          <h3>Analysis Types</h3>
+          <ControlsContainer>
+            {(['screenshot', 'ui-analysis', 'code-analysis', 'text-extraction', 'general-description', 'accessibility-audit'] as AnalysisType[]).map((type) => (
+              <ControlGroup key={type}>
+                <FeatureToggle>
+                  <input
+                    type="checkbox"
+                    id={type}
+                    checked={analysisTypes.includes(type)}
+                    onChange={() => handleAnalysisTypeToggle(type)}
+                  />
+                  <FeatureLabel htmlFor={type}>
+                    {type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </FeatureLabel>
+                </FeatureToggle>
+              </ControlGroup>
+            ))}
+          </ControlsContainer>
+
+          <EditorContainer>
+            <ImageUpload
+              size={uploadSize}
+              enableVisionAnalysis={enableVisionAnalysis}
+              visionProvider={visionProvider}
+              analysisTypes={analysisTypes}
+              onUpload={handleImageUpload}
+              onAnalysis={handleVisionAnalysis}
+              maxFiles={5}
+              maxFileSize={10 * 1024 * 1024} // 10MB
+              placeholder="Drop screenshots, UI mockups, or code images here for AI analysis"
+              testId="showcase-image-upload"
+            />
+          </EditorContainer>
+
+          {uploadedImages.length > 0 && (
+            <>
+              <h3>Uploaded Images ({uploadedImages.length})</h3>
+              <CodeOutput>
+                <pre>{JSON.stringify(uploadedImages.map(img => ({
+                  id: img.id,
+                  name: img.name,
+                  size: img.size,
+                  dimensions: img.dimensions,
+                  uploadedAt: img.uploadedAt
+                })), null, 2)}</pre>
+              </CodeOutput>
+            </>
+          )}
+
+          {analysisResults.length > 0 && (
+            <>
+              <h3>Vision Analysis Results ({analysisResults.length})</h3>
+              <CodeOutput>
+                <pre>{JSON.stringify(analysisResults, null, 2)}</pre>
+              </CodeOutput>
+            </>
+          )}
+        </ShowcaseSection>
+
+        <ShowcaseSection>
+          <h2>Screenshot Capture & Vision Analysis</h2>
+          <p>
+            Integrated screenshot capture with automatic vision processing. Capture your desktop,
+            browser windows, or web pages and analyze them using AI vision models for UI analysis,
+            code extraction, accessibility audits, and more.
+          </p>
+
+          <ScreenshotCapture
+            onScreenshotCaptured={(screenshot) => {
+              console.log('Screenshot captured:', screenshot);
+              setUploadedImages(prev => [...prev, screenshot]);
+            }}
+            onVisionAnalysis={handleVisionAnalysis}
+            enableAutoAnalysis={enableVisionAnalysis}
+            defaultTarget="localhost"
+            defaultUrl="http://localhost:3000/showcase"
+            defaultPort={3000}
+            showPreview={true}
+          />
+        </ShowcaseSection>
+
+        <ShowcaseSection>
           <h2>Integration Examples</h2>
           <p>
             The TextEditor component is designed to integrate seamlessly with the Unhinged Platform.
@@ -1022,7 +1182,7 @@ function MyCodeEditor() {
 }`}</pre>
           </CodeOutput>
 
-          <h3>Advanced Configuration</h3>
+          <h3>Advanced TextEditor Configuration</h3>
           <CodeOutput>
             <pre>{`<TextEditor
   value={code}
@@ -1046,8 +1206,179 @@ function MyCodeEditor() {
   placeholder="Enter your code here..."
 />`}</pre>
           </CodeOutput>
+
+          <h3>Basic ImageUpload Usage</h3>
+          <CodeOutput>
+            <pre>{`import { ImageUpload } from '@/lib/components/ImageUpload';
+
+function MyImageUploader() {
+  const handleImageUpload = (event) => {
+    console.log('Uploaded:', event.image);
+  };
+
+  const handleVisionAnalysis = (event) => {
+    console.log('Analysis:', event.result);
+  };
+
+  return (
+    <ImageUpload
+      onUpload={handleImageUpload}
+      onAnalysis={handleVisionAnalysis}
+      enableVisionAnalysis={true}
+      visionProvider="openai-gpt4o"
+      analysisTypes={['screenshot', 'ui-analysis']}
+      maxFiles={5}
+      maxFileSize={10 * 1024 * 1024} // 10MB
+    />
+  );
+}`}</pre>
+          </CodeOutput>
+
+          <h3>Advanced ImageUpload with Custom Hook</h3>
+          <CodeOutput>
+            <pre>{`import { ImageUpload, useImageUpload } from '@/lib/components/ImageUpload';
+
+function AdvancedImageUploader() {
+  const {
+    uploadedImages,
+    uploadProgress,
+    analysisResults,
+    uploadImages,
+    removeImage,
+    clearAll,
+    isUploading,
+    isAnalyzing
+  } = useImageUpload({
+    maxFiles: 10,
+    enableVisionAnalysis: true,
+    visionProvider: 'claude-vision',
+    analysisTypes: ['screenshot', 'code-analysis', 'accessibility-audit'],
+    enableCaching: true
+  });
+
+  return (
+    <div>
+      <ImageUpload
+        size="large"
+        enableVisionAnalysis={true}
+        visionProvider="claude-vision"
+        onUpload={(event) => console.log('Upload:', event)}
+        onAnalysis={(event) => console.log('Analysis:', event)}
+        placeholder="Drop screenshots for AI-powered analysis"
+      />
+
+      <div>
+        <p>Status: {uploadProgress.status}</p>
+        <p>Images: {uploadedImages.length}</p>
+        <p>Analyses: {analysisResults.size}</p>
+
+        <button onClick={clearAll} disabled={isUploading}>
+          Clear All
+        </button>
+      </div>
+    </div>
+  );
+}`}</pre>
+          </CodeOutput>
+
+          <h3>Screenshot Capture Integration</h3>
+          <CodeOutput>
+            <pre>{`import { ScreenshotCapture } from '@/lib/components/ScreenshotCapture';
+
+function ScreenshotAnalyzer() {
+  const handleScreenshotCaptured = (screenshot) => {
+    console.log('Screenshot captured:', screenshot);
+    // Automatically processed by ImageUpload component
+  };
+
+  const handleVisionAnalysis = (event) => {
+    console.log('AI Analysis Result:', event.result);
+    // Process analysis results
+    const { description, extractedText, uiElements } = event.result.results;
+  };
+
+  return (
+    <ScreenshotCapture
+      onScreenshotCaptured={handleScreenshotCaptured}
+      onVisionAnalysis={handleVisionAnalysis}
+      enableAutoAnalysis={true}
+      defaultTarget="localhost"
+      defaultUrl="http://localhost:3000"
+      showPreview={true}
+    />
+  );
+}`}</pre>
+          </CodeOutput>
+
+          <h3>Complete Vision Processing Pipeline</h3>
+          <CodeOutput>
+            <pre>{`import { ScreenshotCapture } from '@/lib/components/ScreenshotCapture';
+import { ImageUpload } from '@/lib/components/ImageUpload';
+
+function VisionProcessingPipeline() {
+  const [screenshots, setScreenshots] = useState([]);
+  const [analysisResults, setAnalysisResults] = useState([]);
+
+  const handleScreenshotCaptured = (screenshot) => {
+    setScreenshots(prev => [...prev, screenshot]);
+  };
+
+  const handleVisionAnalysis = (event) => {
+    setAnalysisResults(prev => [...prev, event.result]);
+
+    // Process different analysis types
+    const { analysisType, results } = event.result;
+
+    switch (analysisType) {
+      case 'ui-analysis':
+        console.log('UI Elements:', results.uiElements);
+        break;
+      case 'code-analysis':
+        console.log('Code Snippets:', results.codeSnippets);
+        break;
+      case 'accessibility-audit':
+        console.log('A11y Issues:', results.accessibilityIssues);
+        break;
+      case 'text-extraction':
+        console.log('Extracted Text:', results.extractedText);
+        break;
+    }
+  };
+
+  return (
+    <div>
+      {/* Screenshot Capture */}
+      <ScreenshotCapture
+        onScreenshotCaptured={handleScreenshotCaptured}
+        onVisionAnalysis={handleVisionAnalysis}
+        enableAutoAnalysis={true}
+        defaultTarget="desktop"
+      />
+
+      {/* Manual Image Upload */}
+      <ImageUpload
+        onUpload={(event) => console.log('Manual upload:', event)}
+        onAnalysis={handleVisionAnalysis}
+        enableVisionAnalysis={true}
+        visionProvider="openai-gpt4o"
+        analysisTypes={[
+          'screenshot',
+          'ui-analysis',
+          'code-analysis',
+          'accessibility-audit'
+        ]}
+      />
+
+      {/* Results Display */}
+      <div>
+        <h3>Screenshots: {screenshots.length}</h3>
+        <h3>Analyses: {analysisResults.length}</h3>
+      </div>
+    </div>
+  );
+}`}</pre>
+          </CodeOutput>
         </ShowcaseSection>
       </ShowcaseContainer>
-    </Layout>
   );
 };

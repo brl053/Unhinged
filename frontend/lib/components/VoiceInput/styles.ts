@@ -199,7 +199,7 @@ export const AudioLevelRipple = styled.div<{
 export const RecordingDuration = styled.span<{
   variant: VoiceInputVariant;
 }>`
-  font-family: ${({ theme }) => theme.fonts.main};
+  font-family: ${({ theme }) => theme.typography.fontFamily.main};
   font-size: 14px;
   color: ${({ theme }) => theme.color.text.primary};
   font-weight: 500;
@@ -219,7 +219,7 @@ export const StatusText = styled.span<{
   variant: VoiceInputVariant;
   $isError: boolean;
 }>`
-  font-family: ${({ theme }) => theme.fonts.main};
+  font-family: ${({ theme }) => theme.typography.fontFamily.main};
   font-size: 12px;
   color: ${({ theme, $isError }) =>
     $isError ? '#ff6b6b' : theme.color.text.primary};

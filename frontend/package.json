@@ -7,7 +7,12 @@
     "start": "webpack serve --open",
     "build": "webpack --mode production",
     "build:staging": "webpack --mode production --env staging",
-    "analyze": "webpack --mode production --env analyze"
+    "analyze": "webpack --mode production --env analyze",
+    "test": "playwright test",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:diagnostic": "playwright test sidebar-navigation-diagnostic --headed"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +35,7 @@
   },
   "devDependencies": {
     "@microsoft/tsdoc": "^0.15.1",
+    "@playwright/test": "^1.55.1",
     "@types/node": "^24.6.2",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useSendMessage, useSynthesizeAudio } from "../../queries/api";
-import { Layout } from "../../../lib/components/Layout/Layout";
+
 import { ChatContainer, ChatInputContainer, ChatMessagesContainer, LoadingDots, TerminalInput } from "./styles";
 import styled from "styled-components";
 import { InlineChildren } from "../../../lib/components/InlineChildren/InlineChildren";
@@ -125,7 +125,6 @@ export const Chatroom: React.FC = () => {
     console.log(messageHistroy)
 
     return (
-        <Layout title="Ero-Ero Chatroom ~.~">
           <ChatContainer>
             <ChatMessagesContainer>
               <div style={{color: 'red', fontSize: '24px', fontWeight: 'bold', textAlign: 'center', padding: '20px'}}>
@@ -173,7 +172,6 @@ export const Chatroom: React.FC = () => {
 
           {isError && <p style={{ color: 'red' }}>Error: {error instanceof Error ? error.message : 'Unknown error'}</p>}
           </ChatContainer>
-      </Layout>
     );
 }
 

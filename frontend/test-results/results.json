@@ -1,0 +1,288 @@
+{
+  "config": {
+    "configFile": "/home/e-bliss-station-1/projects/Unhinged/frontend/playwright.config.ts",
+    "rootDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.1",
+    "workers": 16,
+    "webServer": {
+      "command": "npm run dev",
+      "port": 3000,
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "e2e/sidebar-navigation-diagnostic.spec.ts",
+      "file": "e2e/sidebar-navigation-diagnostic.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sidebar Navigation Diagnostics",
+          "file": "e2e/sidebar-navigation-diagnostic.spec.ts",
+          "line": 78,
+          "column": 6,
+          "specs": [
+            {
+              "title": "diagnose sidebar navigation issues with comprehensive error capture",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1834,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "🔍 Starting comprehensive sidebar navigation diagnostic...\n"
+                        },
+                        {
+                          "text": "📋 Step 1: Validating React application health...\n"
+                        },
+                        {
+                          "text": "✅ React application is healthy\n"
+                        },
+                        {
+                          "text": "📋 Step 2: Validating sidebar rendering and interactivity...\n"
+                        },
+                        {
+                          "text": "✅ SIDEBAR_VALIDATION: Found 2 interactive navigation items\n"
+                        },
+                        {
+                          "text": "✅ Sidebar is rendered and interactive\n"
+                        },
+                        {
+                          "text": "📋 Step 3: Testing navigation click functionality...\n"
+                        },
+                        {
+                          "text": "📋 Step 4: Capturing comprehensive application state...\n"
+                        },
+                        {
+                          "text": "📋 Step 5: Generating diagnostic report...\n"
+                        },
+                        {
+                          "text": "🎯 COMPREHENSIVE DIAGNOSTIC REPORT\n"
+                        },
+                        {
+                          "text": "=====================================\n"
+                        },
+                        {
+                          "text": "{\n  \"summary\": {\n    \"navigationWorking\": false,\n    \"reactHealthy\": true,\n    \"errorsDetected\": 0,\n    \"overallHealth\": 0.4265\n  },\n  \"navigationResult\": {\n    \"success\": false,\n    \"initialUrl\": \"http://localhost:3000/\",\n    \"finalUrl\": \"http://localhost:3000/\",\n    \"navigationTime\": 1019,\n    \"errors\": {\n      \"errors\": [],\n      \"warnings\": [],\n      \"networkFailures\": [],\n      \"uncaughtExceptions\": []\n    },\n    \"recommendations\": [\n      \"Check navigation click handlers and routing logic\"\n    ],\n    \"applicationState\": null\n  },\n  \"applicationState\": {\n    \"navigation\": {\n      \"url\": \"http://localhost:3000/\",\n      \"pathname\": \"/\",\n      \"search\": \"\",\n      \"hash\": \"\"\n    },\n    \"react\": {\n      \"devToolsAvailable\": false,\n      \"mounted\": true,\n      \"errorBoundariesActive\": 0\n    },\n    \"dom\": {\n      \"title\": \"🎤 WEBPACK DEV SERVER RUNNING - TTS/STT READY! 🔊\",\n      \"bodyClasses\": [],\n      \"visibleElements\": 32,\n      \"interactiveElements\": 5,\n      \"textContentLength\": 115\n    },\n    \"errors\": {\n      \"consoleErrors\": [],\n      \"networkErrors\": [],\n      \"reactErrors\": 0,\n      \"loadingElements\": 0\n    },\n    \"performance\": {\n      \"navigationStart\": 1759617454397,\n      \"domContentLoaded\": 1759617454412,\n      \"loadComplete\": 1759617454562\n    },\n    \"viewport\": {\n      \"width\": 1280,\n      \"height\": 720,\n      \"devicePixelRatio\": 1\n    },\n    \"storage\": {\n      \"localStorage\": {},\n      \"sessionStorage\": {}\n    },\n    \"confidence\": {\n      \"fullyRendered\": 0.4265,\n      \"errorState\": 0,\n      \"loadingState\": 0,\n      \"blankPage\": 0.1,\n      \"navigationWorking\": 0.3,\n      \"reactHealthy\": 0.9\n    }\n  },\n  \"errors\": {\n    \"errors\": [],\n    \"warnings\": [\n      \"[CONSOLE WARNING] styled-components: it looks like an unknown prop \\\"variant\\\" is being sent through to the DOM, which will likely trigger a React console error. If you would like automatic filtering of unknown props, you can opt-into that behavior via `<StyleSheetManager shouldForwardProp={...}>` (connect an API like `@emotion/is-prop-valid`) or consider using transient props (`$` prefix for automatic filtering.)\"\n    ],\n    \"networkFailures\": [],\n    \"uncaughtExceptions\": []\n  },\n  \"recommendations\": [\n    \"Navigation clicks are not working - check click event handlers\"\n  ],\n  \"timestamp\": \"2025-10-04T22:37:36.121Z\"\n}\n"
+                        },
+                        {
+                          "text": "💡 ACTIONABLE RECOMMENDATIONS:\n"
+                        },
+                        {
+                          "text": "1. Navigation clicks are not working - check click event handlers\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "ACCESSIBILITY_WARNING: Navigation item 0 lacks aria-label or role attribute. Consider adding for screen reader support.\n"
+                        },
+                        {
+                          "text": "ACCESSIBILITY_WARNING: Navigation item 1 lacks aria-label or role attribute. Consider adding for screen reader support.\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2025-10-04T22:37:34.292Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4bf76a0efa053ca192cf-693528cc1433513cac5c",
+              "file": "e2e/sidebar-navigation-diagnostic.spec.ts",
+              "line": 139,
+              "column": 7
+            },
+            {
+              "title": "test individual navigation items for click responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3400,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "🔍 Testing individual navigation items...\n"
+                        },
+                        {
+                          "text": "📊 Found 2 navigation items to test\n"
+                        },
+                        {
+                          "text": "🧪 Testing navigation item: \"Chat\" (route: /)\n"
+                        },
+                        {
+                          "text": "⚠️  Navigation attempted but URL unchanged: http://localhost:3000/ (1016ms)\n"
+                        },
+                        {
+                          "text": "💡 RECOMMENDATION: Check click handler attachment and navigation logic\n"
+                        },
+                        {
+                          "text": "🧪 Testing navigation item: \"Components\" (route: /showcase)\n"
+                        },
+                        {
+                          "text": "✅ Navigation successful: http://localhost:3000/ → http://localhost:3000/showcase (1013ms)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-04T22:37:34.293Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4bf76a0efa053ca192cf-827c8eed66c5d61f5a7e",
+              "file": "e2e/sidebar-navigation-diagnostic.spec.ts",
+              "line": 215,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-04T22:37:34.035Z",
+    "duration": 3717.284,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
