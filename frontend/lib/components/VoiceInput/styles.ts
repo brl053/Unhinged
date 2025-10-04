@@ -122,8 +122,8 @@ const colorVariants = {
 export const VoiceInputButton = styled.button<{
   variant: VoiceInputVariant;
   size: VoiceInputSize;
-  isRecording: boolean;
-  hasError: boolean;
+  $isRecording: boolean;
+  $hasError: boolean;
 }>`
   ${({ size }) => sizeVariants[size]}
   ${({ variant }) => colorVariants[variant]}
@@ -146,13 +146,13 @@ export const VoiceInputButton = styled.button<{
     cursor: not-allowed;
   }
   
-  ${({ isRecording }) => isRecording && css`
+  ${({ $isRecording }) => $isRecording && css`
     animation: ${pulseAnimation} 1.5s ease-in-out infinite;
     background: #ff4444 !important;
     color: white;
   `}
-  
-  ${({ hasError }) => hasError && css`
+
+  ${({ $hasError }) => $hasError && css`
     background: #ff6b6b !important;
     color: white;
   `}
@@ -175,8 +175,8 @@ export const AudioLevelContainer = styled.div<{
  * Audio level ripple effect
  */
 export const AudioLevelRipple = styled.div<{
-  level: number;
-  isActive: boolean;
+  $level: number;
+  $isActive: boolean;
 }>`
   position: absolute;
   top: 0;
@@ -187,9 +187,9 @@ export const AudioLevelRipple = styled.div<{
   border: 2px solid ${({ theme }) => theme.color.border.secondary};
   opacity: 0;
   
-  ${({ isActive, level }) => isActive && css`
+  ${({ $isActive, $level }) => $isActive && css`
     animation: ${rippleAnimation} 1s ease-out infinite;
-    border-color: ${level > 70 ? '#ff4444' : level > 40 ? '#ffaa00' : '#44ff44'};
+    border-color: ${$level > 70 ? '#ff4444' : $level > 40 ? '#ffaa00' : '#44ff44'};
   `}
 `;
 
@@ -217,12 +217,12 @@ export const RecordingDuration = styled.span<{
  */
 export const StatusText = styled.span<{
   variant: VoiceInputVariant;
-  isError: boolean;
+  $isError: boolean;
 }>`
   font-family: ${({ theme }) => theme.fonts.main};
   font-size: 12px;
-  color: ${({ theme, isError }) => 
-    isError ? '#ff6b6b' : theme.color.text.primary};
+  color: ${({ theme, $isError }) =>
+    $isError ? '#ff6b6b' : theme.color.text.primary};
   opacity: 0.8;
   
   ${({ variant }) => variant === VoiceInputVariant.COMPACT && css`

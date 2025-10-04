@@ -190,11 +190,14 @@ export const useAudioRecorder = (
    */
   const startRecording = useCallback(async () => {
     try {
+      console.log('🎙️ useAudioRecorder: Starting recording...');
       setError(null);
       setRecordingState(RecordingState.RECORDING);
 
       // Request microphone access
+      console.log('🎤 Requesting microphone access...');
       const stream = await requestMicrophoneAccess();
+      console.log('✅ Microphone access granted!', stream);
       streamRef.current = stream;
 
       // Setup audio analysis for level monitoring
@@ -263,6 +266,7 @@ export const useAudioRecorder = (
       }, audioConfig.maxDuration);
 
     } catch (err) {
+      console.error('❌ Recording failed:', err);
       const errorDetails = err as VoiceInputErrorDetails;
       setError(errorDetails);
       setRecordingState(RecordingState.ERROR);

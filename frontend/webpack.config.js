@@ -1,21 +1,29 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 
 module.exports = (env, argv) => {
   const isDevelopment = argv.mode === 'development';
+  const isAnalyze = env && env.analyze;
 
   return {
     entry: './src/index.tsx',
     output: {
-      path: path.resolve(__dirname, 'dist'),  // Ensure this matches Docker COPY path
-      filename: 'bundle.js',
-      publicPath: '/' // Prevents issues with React routes in production
+      path: path.resolve(__dirname, 'dist'),
+      filename: isDevelopment ? 'bundle.js' : '[name].[contenthash].js',
+      chunkFilename: isDevelopment ? '[name].chunk.js' : '[name].[contenthash].chunk.js',
+      publicPath: '/',
+      clean: true
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js']
+      extensions: ['.tsx', '.ts', '.js'],
+      alias: {
+        '@': path.resolve(__dirname, 'src')
+      }
     },
     module: {
       rules: [
@@ -30,14 +38,10 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.(png|jpg|jpeg|gif|svg)$/,
-          use: [
-            {
-              loader: 'file-loader',
-              options: {
-                name: 'assets/[name].[hash].[ext]',
-              },
-            },
-          ],
+          type: 'asset/resource',
+          generator: {
+            filename: 'assets/[name].[hash][ext]'
+          }
         },
       ]
     },
@@ -49,10 +53,38 @@ module.exports = (env, argv) => {
       }),
       new CopyWebpackPlugin({
         patterns: [
-          { from: 'lib/assets', to: 'assets' } // Copy assets from lib/assets to dist/assets
+          { from: 'lib/assets', to: 'assets', noErrorOnMissing: true }
         ],
       }),
+      new webpack.DefinePlugin({
+        'process.env.REACT_APP_API_URL': JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:8080'),
+        'process.env.REACT_APP_WHISPER_URL': JSON.stringify(process.env.REACT_APP_WHISPER_URL || 'http://localhost:8000'),
+        'process.env.NODE_ENV': JSON.stringify(isDevelopment ? 'development' : 'production')
+      }),
+      ...(isAnalyze ? [new BundleAnalyzerPlugin()] : [])
     ],
+    optimization: isDevelopment ? {} : {
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: 10
+          },
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'react',
+            priority: 20
+          },
+          query: {
+            test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
+            name: 'query',
+            priority: 15
+          }
+        }
+      }
+    },
     devServer: isDevelopment
       ? {
           static: './dist',
@@ -71,8 +103,11 @@ module.exports = (env, argv) => {
         }
       : undefined,
     mode: isDevelopment ? 'development' : 'production',
+    devtool: isDevelopment ? 'eval-source-map' : 'source-map',
     performance: {
-      hints: false, // Disable performance hints; enable later after PoC done.
+      hints: isDevelopment ? false : 'warning',
+      maxEntrypointSize: 512000,
+      maxAssetSize: 512000
     },
   };
 };

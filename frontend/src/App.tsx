@@ -1,6 +1,6 @@
 import React from 'react';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
-import { basicTheme } from './design_system/theme';
+import { defaultTheme } from './design_system/theme';
 import { RouterProvider } from 'react-router-dom';
 import { RouterProviderProps } from 'react-router';
 
@@ -21,7 +21,7 @@ const App: React.FC<IAppRoutersProps> = ({router}) => {
 
 
   return (
-    <ThemeProvider theme={basicTheme}>
+    <ThemeProvider theme={defaultTheme}>
       <GlobalStyle /> 
       <RouterProvider router={router}/>
     </ThemeProvider>

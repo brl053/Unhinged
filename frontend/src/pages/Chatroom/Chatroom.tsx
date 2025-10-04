@@ -128,6 +128,9 @@ export const Chatroom: React.FC = () => {
         <Layout title="Ero-Ero Chatroom ~.~">
           <ChatContainer>
             <ChatMessagesContainer>
+              <div style={{color: 'red', fontSize: '24px', fontWeight: 'bold', textAlign: 'center', padding: '20px'}}>
+                🎤 WEBPACK DEV SERVER IS RUNNING - TTS/STT READY FOR TESTING! 🔊
+              </div>
               {messageHistroy.map((message, index) => <ChatBubble key={index} {...message} />)}
               {isPending &&  <LoadingDots><div></div><div></div><div></div></LoadingDots>}
             </ChatMessagesContainer>
@@ -156,8 +159,8 @@ export const Chatroom: React.FC = () => {
                 />
                 <TtsToggleButton
                   onClick={handleTtsToggle}
-                  enabled={ttsEnabled}
-                  isPlaying={isPlayingTts}
+                  $enabled={ttsEnabled}
+                  $isPlaying={isPlayingTts}
                   disabled={isPending}
                 >
                   {isPlayingTts ? '🔊' : ttsEnabled ? '🔊' : '🔇'}
@@ -208,15 +211,15 @@ const ChatBubble: React.FC<ChatMessage> = ({ type, message }) => {
 }
 
 interface TtsToggleButtonProps {
-  enabled: boolean;
-  isPlaying: boolean;
+  $enabled: boolean;
+  $isPlaying: boolean;
   disabled?: boolean;
 }
 
 export const TtsToggleButton = styled.button<TtsToggleButtonProps>`
-  background: ${({ enabled, theme }) => enabled ? theme.color.background.primary : theme.color.background.secondary};
+  background: ${({ $enabled, theme }) => $enabled ? theme.color.background.primary : theme.color.background.secondary};
   color: ${({ theme }) => theme.color.text.primary};
-  border: 2px solid ${({ enabled, theme }) => enabled ? '#4CAF50' : theme.color.border.primary};
+  border: 2px solid ${({ $enabled, theme }) => $enabled ? '#4CAF50' : theme.color.border.primary};
   border-radius: 8px;
   padding: 10px 15px;
   font-size: 18px;
@@ -225,7 +228,7 @@ export const TtsToggleButton = styled.button<TtsToggleButtonProps>`
   min-width: 50px;
 
   &:hover:not(:disabled) {
-    background: ${({ enabled, theme }) => enabled ? '#45a049' : theme.color.background.primary};
+    background: ${({ $enabled, theme }) => $enabled ? '#45a049' : theme.color.background.primary};
     transform: translateY(-1px);
   }
 
@@ -237,7 +240,7 @@ export const TtsToggleButton = styled.button<TtsToggleButtonProps>`
     opacity: 0.6;
   }
 
-  ${({ isPlaying }) => isPlaying && `
+  ${({ $isPlaying }) => $isPlaying && `
     animation: pulse 1s infinite;
 
     @keyframes pulse {

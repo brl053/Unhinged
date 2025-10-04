@@ -24,7 +24,7 @@ export const SideNav: React.FC<SideNavProps> = ({
             <SideNavHeaderContainer>
             </SideNavHeaderContainer>
             <SideNavBodyContainer>
-                {routes.map((route) => <Icon size={IconSize.Medium} type={route.icon} />)}
+                {routes.map((route) => <Icon key={route.path} size={IconSize.Medium} type={route.icon} />)}
             </SideNavBodyContainer>
             <SideNavFooterContainer>
                 

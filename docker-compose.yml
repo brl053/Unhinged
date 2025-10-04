@@ -17,6 +17,9 @@ services:
       - llm
       - whisper-tts
 
+  # NOTE: Frontend is NOT run via Docker for development
+  # Use: cd frontend && npm run dev
+  # This container is only for production deployment
   frontend:
     build: ./frontend
     container_name: frontend-service
@@ -24,6 +27,8 @@ services:
       - "3000:80"
     depends_on:
       - backend
+    profiles:
+      - production  # Only start with --profile production
 
   llm:
     build: ./llm

@@ -18,14 +18,12 @@
  * ```
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React from 'react';
 import { Icon } from '../Icon/Icon';
 import { IconType, IconSize } from '../Icon/types';
-import { useAudioRecorder } from '../../../src/hooks/useAudioRecorder';
-import { useTranscribeAudio } from '../../../src/queries/api';
-import { RecordingState, TranscriptionResult, VoiceInputErrorDetails } from '../../../src/utils/audio/types';
-import { formatDuration, blobToFile, validateAudioFile } from '../../../src/utils/audio/audioUtils';
-import { ERROR_MESSAGES } from '../../../src/utils/audio/constants';
+import { useVoiceRecorder, useVoiceRecorderStatus } from '../../../src/hooks/useVoiceRecorder';
+import { TranscriptionResult, VoiceInputErrorDetails } from '../../../src/utils/audio/types';
+import { formatDuration } from '../../../src/utils/audio/audioUtils';
 import {
   VoiceInputProps,
   VoiceInputVariant,
@@ -78,145 +76,70 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   className,
   maxDuration,
 }) => {
-  // Component state
-  const [state, setState] = useState<VoiceInputState>({
-    isTranscribing: false,
-    lastTranscription: null,
-    hasError: false,
+  // Voice recorder hook
+  const recorder = useVoiceRecorder({
+    maxDuration,
+    autoTranscribe: true,
+    cacheAudio: true
   });
 
-  // Audio recording hook
-  const {
-    recordingState,
-    recording,
-    audioLevel,
-    duration,
-    error: recordingError,
-    startRecording,
-    stopRecording,
-    clearRecording,
-    isRecording,
-  } = useAudioRecorder({ maxDuration });
+  // Voice recorder status helper
+  const status = useVoiceRecorderStatus(recorder);
 
-  // Transcription API hook
-  const transcriptionMutation = useTranscribeAudio();
-
-  /**
-   * Handles transcription completion
-   */
-  const handleTranscriptionSuccess = useCallback((result: TranscriptionResult) => {
-    setState(prev => ({
-      ...prev,
-      isTranscribing: false,
-      lastTranscription: result,
-      hasError: false,
-    }));
-    onTranscription(result);
-    clearRecording();
-  }, [onTranscription, clearRecording]);
-
-  /**
-   * Handles transcription errors
-   */
-  const handleTranscriptionError = useCallback((error: VoiceInputErrorDetails) => {
-    setState(prev => ({
-      ...prev,
-      isTranscribing: false,
-      hasError: true,
-    }));
-    onError?.(error);
-  }, [onError]);
-
-  /**
-   * Starts transcription process
-   */
-  const startTranscription = useCallback(async (audioFile: File) => {
-    try {
-      setState(prev => ({ ...prev, isTranscribing: true, hasError: false }));
-      
-      const result = await transcriptionMutation.mutateAsync(audioFile);
-      handleTranscriptionSuccess(result);
-    } catch (error) {
-      const errorDetails: VoiceInputErrorDetails = {
-        type: 'transcription_failed' as any,
-        message: ERROR_MESSAGES.TRANSCRIPTION_FAILED,
-        originalError: error as Error,
+  // Handle transcription completion
+  React.useEffect(() => {
+    if (recorder.transcript) {
+      const result: TranscriptionResult = {
+        text: recorder.transcript,
+        language: 'en', // TODO: Get from transcription response
+        confidence: 1.0 // TODO: Get from transcription response
       };
-      handleTranscriptionError(errorDetails);
+      onTranscription(result);
     }
-  }, [transcriptionMutation, handleTranscriptionSuccess, handleTranscriptionError]);
+  }, [recorder.transcript, onTranscription]);
+
+  // Handle errors
+  React.useEffect(() => {
+    if (recorder.error) {
+      const errorDetails: VoiceInputErrorDetails = {
+        type: 'recording_failed' as any,
+        message: recorder.error.message,
+        originalError: recorder.error
+      };
+      onError?.(errorDetails);
+    }
+  }, [recorder.error, onError]);
+
+  // Handle recording start/stop callbacks
+  React.useEffect(() => {
+    if (recorder.status === 'recording') {
+      onRecordingStart?.();
+    } else if (recorder.status === 'stopped') {
+      onRecordingStop?.();
+    }
+  }, [recorder.status, onRecordingStart, onRecordingStop]);
 
   /**
    * Handles recording button click
    */
-  const handleButtonClick = useCallback(async () => {
-    if (disabled) return;
+  const handleButtonClick = () => {
+    if (disabled || status.isProcessing) return;
 
-    if (isRecording) {
-      stopRecording();
-      onRecordingStop?.();
+    if (status.isRecording) {
+      recorder.stopRecording();
     } else {
-      try {
-        await startRecording();
-        onRecordingStart?.();
-      } catch (error) {
-        const errorDetails = error as VoiceInputErrorDetails;
-        setState(prev => ({ ...prev, hasError: true }));
-        onError?.(errorDetails);
-      }
+      recorder.startRecording();
     }
-  }, [disabled, isRecording, startRecording, stopRecording, onRecordingStart, onRecordingStop, onError]);
-
-  /**
-   * Effect to handle recording completion
-   */
-  useEffect(() => {
-    if (recordingState === RecordingState.COMPLETED && recording) {
-      try {
-        validateAudioFile(blobToFile(recording.blob));
-        const audioFile = blobToFile(recording.blob);
-        startTranscription(audioFile);
-      } catch (error) {
-        const errorDetails = error as VoiceInputErrorDetails;
-        handleTranscriptionError(errorDetails);
-      }
-    }
-  }, [recordingState, recording, startTranscription, handleTranscriptionError]);
-
-  /**
-   * Effect to handle recording errors
-   */
-  useEffect(() => {
-    if (recordingError) {
-      setState(prev => ({ ...prev, hasError: true }));
-      onError?.(recordingError);
-    }
-  }, [recordingError, onError]);
+  };
 
   /**
    * Gets the appropriate icon based on current state
    */
   const getIcon = (): IconType => {
-    if (state.hasError) return IconType.MicrophoneOff;
-    if (isRecording) return IconType.Stop;
+    if (status.hasError) return IconType.MicrophoneOff;
+    if (status.isRecording) return IconType.Stop;
     return IconType.Microphone;
   };
-
-  /**
-   * Gets status text based on current state
-   */
-  const getStatusText = (): string => {
-    if (state.hasError) return 'Error occurred';
-    if (state.isTranscribing) return 'Transcribing...';
-    if (recordingState === RecordingState.PROCESSING) return 'Processing...';
-    if (isRecording) return 'Recording...';
-    return placeholder;
-  };
-
-  /**
-   * Determines if component should show error state
-   */
-  const hasError = state.hasError || recordingState === RecordingState.ERROR;
 
   return (
     <VoiceInputContainer
@@ -228,40 +151,40 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       <VoiceInputButton
         variant={variant}
         size={size}
-        isRecording={isRecording}
-        hasError={hasError}
+        $isRecording={status.isRecording}
+        $hasError={status.hasError}
         onClick={handleButtonClick}
-        disabled={disabled || state.isTranscribing}
-        title={getStatusText()}
+        disabled={disabled || status.isProcessing}
+        title={status.statusText}
       >
-        {state.isTranscribing ? (
+        {status.isProcessing ? (
           <LoadingSpinner />
         ) : (
           <Icon type={getIcon()} size={getIconSize(size)} />
         )}
 
         {/* Audio level visualization */}
-        {showAudioLevel && isRecording && (
+        {showAudioLevel && status.isRecording && (
           <AudioLevelContainer size={size}>
             <AudioLevelRipple
-              level={audioLevel.level}
-              isActive={audioLevel.isActive}
+              $level={50}
+              $isActive={true}
             />
           </AudioLevelContainer>
         )}
       </VoiceInputButton>
 
       {/* Recording duration */}
-      {showDuration && isRecording && (
+      {showDuration && status.isRecording && (
         <RecordingDuration variant={variant}>
-          {formatDuration(duration)}
+          {formatDuration(recorder.duration)}
         </RecordingDuration>
       )}
 
       {/* Status text */}
       {variant !== VoiceInputVariant.COMPACT && (
-        <StatusText variant={variant} isError={hasError}>
-          {getStatusText()}
+        <StatusText variant={variant} $isError={status.hasError}>
+          {status.statusText}
         </StatusText>
       )}
     </VoiceInputContainer>
