@@ -135,6 +135,42 @@ We have successfully completed a **world-class, production-ready audio processin
 - **Accessibility**: Full ARIA support and keyboard navigation
 - **Responsive Design**: Works on desktop and mobile devices
 
+## 🗺️ **DAG ROADMAP - React SPA Integration**
+
+### 🎯 **NEXT PHASE: React SPA Voice Integration**
+
+**Status**: Ready to Execute
+**Foundation**: ✅ HTML Voice Test Working + ✅ React Architecture Solid
+
+#### **Phase 4A: React SPA Health Check** 🔧
+- [ ] Verify React build compilation (no TypeScript errors)
+- [ ] Ensure all dependencies properly installed
+- [ ] Validate webpack dev server stability
+- [ ] Test existing chat functionality
+- [ ] Confirm service connectivity (backend + Whisper)
+
+#### **Phase 4B: Port HTML Magic to React** 🎤
+- [ ] Create VoiceRecorder component (port HTML functionality exactly)
+- [ ] Extend ChatService for audio endpoints
+- [ ] Add React Query hooks for audio operations
+- [ ] Maintain excellent UX (status indicators, error handling)
+- [ ] Integrate with existing Chatroom component
+
+#### **Phase 4C: Enhanced Chat Experience** 💬
+- [ ] Voice message bubbles in chat history
+- [ ] Audio playback controls for voice messages
+- [ ] Voice-to-text display in chat
+- [ ] Seamless text/voice mode switching
+- [ ] Real-time transcription feedback
+
+#### **Phase 4D: Advanced Audio Features** 🎭
+- [ ] Voice selection and management UI
+- [ ] Real-time audio visualization (waveforms)
+- [ ] TTS for AI responses (speak back to user)
+- [ ] Voice commands and advanced interactions
+
+**Integration Strategy**: Keep the proven HTML approach, port to React components, integrate with existing chat patterns
+
 ## 🚀 **DEPLOYMENT READY**
 
 ### ✅ **What's Ready for Production**
