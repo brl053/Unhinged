@@ -64,6 +64,9 @@ message UniversalEvent {
     SessionEvent session_event = 23;
     SystemEvent system_event = 24;
     WorkflowEvent workflow_event = 25;
+    ChatEvent chat_event = 26;         // Chat and conversation events
+    AudioEvent audio_event = 27;       // Audio processing events
+    UserEvent user_event = 28;         // User management events
   }
   
   // Metadata and tags
@@ -435,4 +438,132 @@ message WorkflowFailed {
   string failure_step_id = 1;
   string failure_reason = 2;
   string error_message = 3;
+}
+
+// ============================================================================
+// Chat Events - New Event Types for Chat Service Integration
+// ============================================================================
+
+message ChatEvent {
+  string conversation_id = 1;
+  string message_id = 2;
+  ChatEventType event_type = 3;
+
+  oneof event_data {
+    ConversationCreated conversation_created = 10;
+    MessageSent message_sent = 11;
+    MessageUpdated message_updated = 12;
+    TypingStarted typing_started = 13;
+    ParticipantJoined participant_joined = 14;
+  }
+}
+
+enum ChatEventType {
+  CHAT_EVENT_TYPE_UNSPECIFIED = 0;
+  CHAT_EVENT_TYPE_CONVERSATION_CREATED = 1;
+  CHAT_EVENT_TYPE_MESSAGE_SENT = 2;
+  CHAT_EVENT_TYPE_MESSAGE_UPDATED = 3;
+  CHAT_EVENT_TYPE_TYPING_STARTED = 4;
+  CHAT_EVENT_TYPE_PARTICIPANT_JOINED = 5;
+}
+
+message ConversationCreated {
+  string title = 1;
+  string created_by = 2;
+  repeated string participant_ids = 3;
+}
+
+message MessageSent {
+  string content = 1;
+  string role = 2;
+  string sent_by = 3;
+}
+
+message MessageUpdated {
+  string content = 1;
+  string updated_by = 2;
+}
+
+message TypingStarted {
+  string user_id = 1;
+}
+
+message ParticipantJoined {
+  string user_id = 1;
+  string invited_by = 2;
+}
+
+// ============================================================================
+// Audio Events - New Event Types for Audio Service Integration
+// ============================================================================
+
+message AudioEvent {
+  string audio_id = 1;
+  AudioEventType event_type = 2;
+
+  oneof event_data {
+    TTSStarted tts_started = 10;
+    TTSCompleted tts_completed = 11;
+    STTCompleted stt_completed = 12;
+  }
+}
+
+enum AudioEventType {
+  AUDIO_EVENT_TYPE_UNSPECIFIED = 0;
+  AUDIO_EVENT_TYPE_TTS_STARTED = 1;
+  AUDIO_EVENT_TYPE_TTS_COMPLETED = 2;
+  AUDIO_EVENT_TYPE_STT_COMPLETED = 3;
+}
+
+message TTSStarted {
+  string text = 1;
+  string voice_id = 2;
+}
+
+message TTSCompleted {
+  string audio_url = 1;
+  float duration_seconds = 2;
+}
+
+message STTCompleted {
+  string transcript = 1;
+  float confidence = 2;
+}
+
+// ============================================================================
+// User Events - New Event Types for User Management
+// ============================================================================
+
+message UserEvent {
+  string user_id = 1;
+  UserEventType event_type = 2;
+
+  oneof event_data {
+    UserCreated user_created = 10;
+    UserLoggedIn user_logged_in = 11;
+    TeamMemberAdded team_member_added = 12;
+  }
+}
+
+enum UserEventType {
+  USER_EVENT_TYPE_UNSPECIFIED = 0;
+  USER_EVENT_TYPE_CREATED = 1;
+  USER_EVENT_TYPE_LOGGED_IN = 2;
+  USER_EVENT_TYPE_TEAM_MEMBER_ADDED = 3;
+}
+
+message UserCreated {
+  string email = 1;
+  string name = 2;
+}
+
+message UserLoggedIn {
+  string ip_address = 1;
+  string user_agent = 2;
+}
+
+message TeamMemberAdded {
+  string team_id = 1;
+  string role = 2;
+  string added_by = 3;
 }
