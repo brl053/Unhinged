@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unhinged - Clean Architecture Chat</title>
+    <style>
+        /* gRPC Tool Styling with Localhost Discovery */
+        :root {
+            --primary-bg: #1a1a1a;
+            --secondary-bg: #2d2d2d;
+            --accent-bg: #3d3d3d;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #555555;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --discovery-color: #6f42c1;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Enhanced gRPC Tool Layout */
+        .grpc-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .grpc-sidebar {
+            width: 350px;
+            background: var(--secondary-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .grpc-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .grpc-header {
+            height: 50px;
+            background: var(--accent-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            -webkit-app-region: drag;
+        }
+
+        .grpc-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Connection Panel */
+        .connection-panel {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .connection-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            align-items: end;
+        }
+
+        /* Form Controls */
+        input, select, button, textarea {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--info-color);
+        }
+
+        button {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--border-color);
+        }
+
+        button.primary {
+            background: var(--info-color);
+            border-color: var(--info-color);
+        }
+
+        button.success {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        button.danger {
+            background: var(--error-color);
+            border-color: var(--error-color);
+        }
+
+        button.discovery {
+            background: var(--discovery-color);
+            border-color: var(--discovery-color);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Localhost Discovery Panel */
+        .discovery-panel {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--discovery-color)20, var(--secondary-bg));
+        }
+
+        .discovery-results {
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .discovered-service {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .discovered-service:hover {
+            background: var(--border-color);
+        }
+
+        .discovered-service.healthy {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .discovered-service.unhealthy {
+            border-left: 4px solid var(--error-color);
+        }
+
+        /* Services Panel */
+        .services-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .service-item {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .service-header {
+            padding: 12px 16px;
+            background: var(--secondary-bg);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-methods {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .service-methods.expanded {
+            max-height: 500px;
+        }
+
+        .method-item {
+            padding: 8px 16px;
+            border-top: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .method-item:hover {
+            background: var(--secondary-bg);
+        }
+
+        /* Request/Response Panel */
+        .request-response-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .panel-tabs {
+            display: flex;
+            background: var(--secondary-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-right: 1px solid var(--border-color);
+            transition: background 0.2s ease;
+        }
+
+        .tab:hover, .tab.active {
+            background: var(--accent-bg);
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .json-editor {
+            width: 100%;
+            height: 200px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .status-connected {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-disconnected {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--error-color);
+        }
+
+        .status-scanning {
+            background: rgba(111, 66, 193, 0.2);
+            color: var(--discovery-color);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .scanning .status-dot {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="grpc-container">
+        <!-- Enhanced Sidebar with Localhost Discovery -->
+        <div class="grpc-sidebar">
+            <!-- Localhost Discovery Panel -->
+            <div class="discovery-panel">
+                <h3 style="margin: 0 0 16px 0; color: var(--text-primary);">🏠 Localhost Discovery</h3>
+
+                <div class="connection-form">
+                    <div class="form-row">
+                        <button id="scan-localhost-btn" class="discovery">🔍 Scan Localhost</button>
+                        <button id="refresh-services-btn" class="success">🔄 Refresh</button>
+                    </div>
+
+                    <div id="scan-status" class="status-indicator status-disconnected">
+                        <div class="status-dot"></div>
+                        <span>Ready to scan</span>
+                    </div>
+
+                    <div id="discovery-results" class="discovery-results" style="display: none;">
+                        <h4 style="margin: 12px 0 8px 0; color: var(--text-secondary); font-size: 12px;">DISCOVERED SERVICES</h4>
+                        <div id="discovered-services-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Connection Panel -->
+            <div class="connection-panel">
+                <h3 style="margin: 0 0 16px 0; color: var(--text-primary);">🔗 Manual Connection</h3>
+
+                <div class="connection-form">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Host</label>
+                            <input type="text" id="grpc-host" value="localhost" placeholder="localhost">
+                        </div>
+                        <div class="form-group" style="width: 80px;">
+                            <label>Port</label>
+                            <input type="number" id="grpc-port" value="9090" placeholder="9090">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="grpc-tls"> Use TLS
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <button id="connect-btn" class="primary">Connect</button>
+                        <button id="disconnect-btn" class="danger" disabled>Disconnect</button>
+                    </div>
+
+                    <div class="form-row" style="margin-top: 8px;">
+                        <button id="discover-btn" class="success" disabled>Discover Services</button>
+                        <button id="health-check-btn" class="info" disabled>Health Check</button>
+                    </div>
+
+                    <div id="connection-status" class="status-indicator status-disconnected">
+                        <div class="status-dot"></div>
+                        <span>Disconnected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Panel -->
+            <div class="services-panel">
+                <h3 style="margin: 0 0 16px 0; color: var(--text-primary);">📋 Services</h3>
+                <div id="services-list">
+                    <div style="color: var(--text-secondary); text-align: center; padding: 40px 20px;">
+                        Scan localhost or connect to discover services
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="grpc-main">
+            <!-- Header -->
+            <div class="grpc-header">
+                <div style="-webkit-app-region: no-drag;">
+                    <h2 style="margin: 0; color: var(--text-primary);">🔧 gRPC Tool - Localhost Discovery</h2>
+                </div>
+
+                <div style="-webkit-app-region: no-drag; display: flex; gap: 8px;">
+                    <button onclick="minimizeWindow()" style="width: 24px; height: 24px; padding: 0;">−</button>
+                    <button onclick="maximizeWindow()" style="width: 24px; height: 24px; padding: 0;">□</button>
+                    <button onclick="closeWindow()" style="width: 24px; height: 24px; padding: 0;">×</button>
+                </div>
+            </div>
+
+            <!-- Request/Response Panel -->
+            <div class="grpc-content">
+                <div class="panel-tabs">
+                    <div class="tab active" onclick="switchTab('request')">Request</div>
+                    <div class="tab" onclick="switchTab('response')">Response</div>
+                    <div class="tab" onclick="switchTab('discovery')">Discovery Log</div>
+                    <div class="tab" onclick="switchTab('health')">Health Monitor</div>
+                </div>
+
+                <div class="panel-content">
+                    <!-- Request Tab -->
+                    <div id="request-panel" class="tab-content">
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0;">Selected Method</h4>
+                            <div id="selected-method" style="color: var(--text-secondary); font-style: italic;">
+                                No method selected
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0;">Request JSON</h4>
+                            <textarea id="request-json" class="json-editor" placeholder='{\n  "example": "value"\n}'></textarea>
+                        </div>
+
+                        <div>
+                            <button id="send-request-btn" class="primary" disabled>Send Request</button>
+                            <button onclick="formatJson('request-json')">Format JSON</button>
+                            <button onclick="clearJson('request-json')">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Response Tab -->
+                    <div id="response-panel" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0;">Response</h4>
+                            <textarea id="response-json" class="json-editor" readonly placeholder="Response will appear here..."></textarea>
+                        </div>
+
+                        <div>
+                            <button onclick="copyToClipboard('response-json')">Copy Response</button>
+                            <button onclick="clearJson('response-json')">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Discovery Log Tab -->
+                    <div id="discovery-panel" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0;">🔍 Discovery Log</h4>
+                            <div id="discovery-log" style="background: var(--accent-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                <div style="color: var(--text-secondary);">Discovery logs will appear here...</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button onclick="clearDiscoveryLog()">Clear Log</button>
+                            <button onclick="exportDiscoveryLog()">Export Log</button>
+                        </div>
+                    </div>
+
+                    <!-- Health Monitor Tab -->
+                    <div id="health-panel" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0;">💓 Health Monitor</h4>
+                            <div id="health-monitor" style="background: var(--accent-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; height: 300px; overflow-y: auto;">
+                                <div style="color: var(--text-secondary); text-align: center; padding: 40px 20px;">
+                                    Health monitoring data will appear here
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button onclick="refreshHealthStatus()">Refresh Health</button>
+                            <button onclick="clearHealthLog()">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced gRPC Tool with Localhost Discovery
+        const isTauri = window.__TAURI__ !== undefined;
+        let currentServices = [];
+        let localhostServices = [];
+        let selectedMethod = null;
+        let discoveryLogEntries = [];
+
+        // Window controls
+        async function minimizeWindow() {
+            if (isTauri) {
+                try {
+                    await window.__TAURI__.core.invoke('minimize_window');
+                } catch (error) {
+                    console.error('❌ Failed to minimize:', error);
+                }
+            }
+        }
+
+        async function maximizeWindow() {
+            if (isTauri) {
+                try {
+                    await window.__TAURI__.core.invoke('maximize_window');
+                } catch (error) {
+                    console.error('❌ Failed to maximize:', error);
+                }
+            }
+        }
+
+        async function closeWindow() {
+            if (isTauri) {
+                try {
+                    await window.__TAURI__.core.invoke('close_window');
+                } catch (error) {
+                    console.error('❌ Failed to close:', error);
+                }
+            }
+        }
+
+        // Localhost Discovery Functions
+        async function scanLocalhost() {
+            if (!isTauri) {
+                alert('Localhost scanning only available in desktop app');
+                return;
+            }
+
+            updateScanStatus(true, 'Scanning localhost for gRPC services...');
+            logDiscovery('🔍 Starting localhost scan...');
+
+            try {
+                const result = await window.__TAURI__.core.invoke('scan_localhost_services');
+
+                if (result.success) {
+                    updateScanStatus(false, `Found ${Object.keys(result.data.services).length} services`);
+                    localhostServices = result.data.services;
+                    updateDiscoveredServicesList();
+                    logDiscovery(`✅ Scan complete: ${Object.keys(result.data.services).length} gRPC services found`);
+
+                    // Show discovery results
+                    document.getElementById('discovery-results').style.display = 'block';
+                } else {
+                    updateScanStatus(false, result.message);
+                    logDiscovery(`❌ Scan failed: ${result.message}`);
+                }
+            } catch (error) {
+                updateScanStatus(false, `Scan error: ${error}`);
+                logDiscovery(`❌ Scan error: ${error}`);
+            }
+        }
+
+        async function refreshServices() {
+            if (!isTauri) return;
+
+            try {
+                const services = await window.__TAURI__.core.invoke('get_localhost_services');
+                localhostServices = services;
+                updateDiscoveredServicesList();
+                logDiscovery('🔄 Services refreshed');
+            } catch (error) {
+                logDiscovery(`❌ Refresh error: ${error}`);
+            }
+        }
+
+        function updateScanStatus(scanning, message) {
+            const statusEl = document.getElementById('scan-status');
+            if (scanning) {
+                statusEl.className = 'status-indicator status-scanning scanning';
+                statusEl.innerHTML = `<div class="status-dot"></div><span>${message}</span>`;
+            } else {
+                statusEl.className = 'status-indicator status-connected';
+                statusEl.innerHTML = `<div class="status-dot"></div><span>${message}</span>`;
+            }
+        }
+
+        function updateDiscoveredServicesList() {
+            const listEl = document.getElementById('discovered-services-list');
+
+            if (Object.keys(localhostServices).length === 0) {
+                listEl.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">No services discovered</div>';
+                return;
+            }
+
+            listEl.innerHTML = Object.entries(localhostServices).map(([endpoint, service]) => `
+                <div class="discovered-service ${service.metadata.health_status === 'Healthy' ? 'healthy' : 'unhealthy'}"
+                     onclick="connectToDiscoveredService('${service.host}', ${service.port})">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${endpoint}</strong>
+                            <div style="font-size: 11px; color: var(--text-secondary);">
+                                ${service.is_grpc ? '✅ gRPC' : '❌ Not gRPC'} •
+                                ${service.metadata.health_status} •
+                                ${service.metadata.response_time_ms ? service.metadata.response_time_ms + 'ms' : 'N/A'}
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            Click to connect
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function connectToDiscoveredService(host, port) {
+            document.getElementById('grpc-host').value = host;
+            document.getElementById('grpc-port').value = port;
+            await connectGrpc();
+        }
+
+        // gRPC Connection Management
+        async function connectGrpc() {
+            if (!isTauri) {
+                alert('gRPC functionality only available in desktop app');
+                return;
+            }
+
+            const host = document.getElementById('grpc-host').value;
+            const port = parseInt(document.getElementById('grpc-port').value);
+            const useTls = document.getElementById('grpc-tls').checked;
+
+            try {
+                const result = await window.__TAURI__.core.invoke('connect_grpc', {
+                    host: host,
+                    port: port,
+                    use_tls: useTls
+                });
+
+                if (result.success) {
+                    updateConnectionStatus(true, result.message);
+                    document.getElementById('connect-btn').disabled = true;
+                    document.getElementById('disconnect-btn').disabled = false;
+                    document.getElementById('discover-btn').disabled = false;
+                    document.getElementById('health-check-btn').disabled = false;
+                    logDiscovery(`✅ Connected: ${result.message}`);
+                } else {
+                    updateConnectionStatus(false, result.message);
+                    logDiscovery(`❌ Connection failed: ${result.message}`);
+                }
+            } catch (error) {
+                updateConnectionStatus(false, `Error: ${error}`);
+                logDiscovery(`❌ Connection error: ${error}`);
+            }
+        }
+
+        async function disconnectGrpc() {
+            if (!isTauri) return;
+
+            try {
+                const result = await window.__TAURI__.core.invoke('disconnect_grpc');
+                updateConnectionStatus(false, result.message);
+                document.getElementById('connect-btn').disabled = false;
+                document.getElementById('disconnect-btn').disabled = true;
+                document.getElementById('discover-btn').disabled = true;
+                document.getElementById('health-check-btn').disabled = true;
+                document.getElementById('send-request-btn').disabled = true;
+
+                // Clear services
+                currentServices = [];
+                updateServicesList();
+                logDiscovery(`✅ Disconnected: ${result.message}`);
+            } catch (error) {
+                logDiscovery(`❌ Disconnect error: ${error}`);
+            }
+        }
+
+        async function discoverServices() {
+            if (!isTauri) return;
+
+            try {
+                const result = await window.__TAURI__.core.invoke('discover_services');
+
+                if (result.success && result.data) {
+                    currentServices = result.data;
+                    updateServicesList();
+                    logDiscovery(`✅ Discovered ${currentServices.length} services`);
+                } else {
+                    logDiscovery(`❌ Service discovery failed: ${result.message}`);
+                }
+            } catch (error) {
+                logDiscovery(`❌ Discovery error: ${error}`);
+            }
+        }
+
+        async function healthCheckService() {
+            if (!isTauri) return;
+
+            const host = document.getElementById('grpc-host').value;
+            const port = parseInt(document.getElementById('grpc-port').value);
+
+            try {
+                const result = await window.__TAURI__.core.invoke('health_check_service', {
+                    host: host,
+                    port: port
+                });
+
+                const healthEl = document.getElementById('health-monitor');
+                const timestamp = new Date().toLocaleTimeString();
+                const statusIcon = result.success ? '✅' : '❌';
+                const responseTime = result.data?.response_time_ms || 'N/A';
+
+                healthEl.innerHTML += `
+                    <div style="margin-bottom: 8px; padding: 8px; background: var(--secondary-bg); border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>${statusIcon} ${host}:${port}</span>
+                            <span style="color: var(--text-secondary);">${timestamp}</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            ${result.message} ${responseTime !== 'N/A' ? `(${responseTime}ms)` : ''}
+                        </div>
+                    </div>
+                `;
+                healthEl.scrollTop = healthEl.scrollHeight;
+
+                logDiscovery(`💓 Health check: ${result.message}`);
+            } catch (error) {
+                logDiscovery(`❌ Health check error: ${error}`);
+            }
+        }
+
+        // UI Helper Functions
+        function updateConnectionStatus(connected, message) {
+            const statusEl = document.getElementById('connection-status');
+            statusEl.className = `status-indicator ${connected ? 'status-connected' : 'status-disconnected'}`;
+            statusEl.innerHTML = `<div class="status-dot"></div><span>${connected ? 'Connected' : 'Disconnected'}</span>`;
+        }
+
+        function updateServicesList() {
+            const listEl = document.getElementById('services-list');
+
+            if (currentServices.length === 0) {
+                listEl.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 40px 20px;">No services discovered</div>';
+                return;
+            }
+
+            listEl.innerHTML = currentServices.map(service => `
+                <div class="service-item">
+                    <div class="service-header" onclick="toggleService('${service.name}')">
+                        <span>${service.name}</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="service-methods" id="methods-${service.name.replace(/\./g, '-')}">
+                        ${service.methods.map(method => `
+                            <div class="method-item" onclick="selectMethod('${service.name}', '${method.name}', '${method.input_type}', '${method.output_type}')">
+                                <strong>${method.name}</strong><br>
+                                <small style="color: var(--text-secondary);">
+                                    ${method.input_type} → ${method.output_type}
+                                    ${method.client_streaming ? ' (client streaming)' : ''}
+                                    ${method.server_streaming ? ' (server streaming)' : ''}
+                                </small>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleService(serviceName) {
+            const methodsEl = document.getElementById(`methods-${serviceName.replace(/\./g, '-')}`);
+            methodsEl.classList.toggle('expanded');
+        }
+
+        function selectMethod(serviceName, methodName, inputType, outputType) {
+            selectedMethod = { serviceName, methodName, inputType, outputType };
+            document.getElementById('selected-method').innerHTML = `
+                <strong>${serviceName}.${methodName}</strong><br>
+                <small style="color: var(--text-secondary);">${inputType} → ${outputType}</small>
+            `;
+            document.getElementById('send-request-btn').disabled = false;
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show/hide panels
+            document.querySelectorAll('.tab-content').forEach(panel => panel.style.display = 'none');
+            document.getElementById(`${tabName}-panel`).style.display = 'block';
+        }
+
+        function formatJson(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            try {
+                const parsed = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(parsed, null, 2);
+            } catch (e) {
+                alert('Invalid JSON format');
+            }
+        }
+
+        function clearJson(textareaId) {
+            document.getElementById(textareaId).value = '';
+        }
+
+        function copyToClipboard(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            textarea.select();
+            document.execCommand('copy');
+        }
+
+        function logDiscovery(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            discoveryLogEntries.push(entry);
+
+            const logEl = document.getElementById('discovery-log');
+            logEl.innerHTML += `<div>${entry}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function clearDiscoveryLog() {
+            discoveryLogEntries = [];
+            document.getElementById('discovery-log').innerHTML = '<div style="color: var(--text-secondary);">Discovery logs cleared...</div>';
+        }
+
+        function exportDiscoveryLog() {
+            const logs = discoveryLogEntries.join('\n');
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'grpc-discovery-logs.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function refreshHealthStatus() {
+            healthCheckService();
+        }
+
+        function clearHealthLog() {
+            document.getElementById('health-monitor').innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 40px 20px;">Health monitoring cleared</div>';
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 gRPC Tool with Localhost Discovery initialized');
+            console.log('📱 Environment:', isTauri ? 'Tauri Desktop App' : 'Web Browser');
+
+            // Bind event listeners
+            document.getElementById('scan-localhost-btn').onclick = scanLocalhost;
+            document.getElementById('refresh-services-btn').onclick = refreshServices;
+            document.getElementById('connect-btn').onclick = connectGrpc;
+            document.getElementById('disconnect-btn').onclick = disconnectGrpc;
+            document.getElementById('discover-btn').onclick = discoverServices;
+            document.getElementById('health-check-btn').onclick = healthCheckService;
+
+            // Initialize UI state
+            updateConnectionStatus(false, 'Not connected');
+            updateScanStatus(false, 'Ready to scan');
+            logDiscovery('🔧 gRPC Tool with Localhost Discovery ready');
+            logDiscovery('🏠 Click "Scan Localhost" to discover gRPC services');
+        });
+    </script>
+</body>
+</html>

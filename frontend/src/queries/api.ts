@@ -1,29 +1,56 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { chatService, ChatRequest, ChatResponse, ChatSession, ConversationResponse } from '../services/ChatService';
 
-const API_BASE_URL = "http://localhost:8080";
+/**
+ * React Query hooks for chat functionality - Clean Architecture
+ */
 
-// Define response type for clarity
-interface ResponseData {
-  response: string;
-}
-
+// Legacy hook for backward compatibility
 export const useSendMessage = () => {
   return useMutation<string, Error, string>({
     mutationFn: async (message: string) => {
-      const response = await fetch(`${API_BASE_URL}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: message }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      console.log('response', response);
-      return await response.text(); // This will return ResponseData
+      return await chatService.sendMessageLegacy(message);
     }
+  });
+};
+
+// Modern chat hooks
+export const useChatMutation = () => {
+  return useMutation({
+    mutationFn: async (request: ChatRequest): Promise<ChatResponse> => {
+      return await chatService.sendMessage(request);
+    },
+  });
+};
+
+export const useCreateSessionMutation = () => {
+  return useMutation({
+    mutationFn: async ({ userId, title }: { userId: string; title?: string }): Promise<ChatSession> => {
+      return await chatService.createSession(userId, title);
+    },
+  });
+};
+
+export const useUserSessions = (userId: string) => {
+  return useQuery({
+    queryKey: ['sessions', userId],
+    queryFn: () => chatService.getUserSessions(userId),
+    enabled: !!userId,
+  });
+};
+
+export const useConversation = (sessionId: string, limit?: number) => {
+  return useQuery({
+    queryKey: ['conversation', sessionId, limit],
+    queryFn: () => chatService.getConversation(sessionId, limit),
+    enabled: !!sessionId,
+  });
+};
+
+export const useHealthCheck = () => {
+  return useQuery({
+    queryKey: ['health'],
+    queryFn: () => chatService.healthCheck(),
+    refetchInterval: 30000, // Check every 30 seconds
   });
 };

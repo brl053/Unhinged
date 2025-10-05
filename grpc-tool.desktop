@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=gRPC Tool
+Comment=Professional gRPC client with server reflection support
+Exec=/home/e-bliss-station-1/projects/Unhinged/src-tauri/target/debug/bundle/appimage/gRPC Tool_0.1.0_amd64.AppImage
+Icon=network-server
+Terminal=false
+Categories=Development;Network;
+Keywords=grpc;api;client;reflection;development;
+StartupNotify=true
+StartupWMClass=gRPC Tool
