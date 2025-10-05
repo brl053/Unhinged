@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { createBrowserRouter } from "react-router-dom";
-import { routes } from "./routing/routes";
+import { createAppRouter } from "./routing/routes";
+import { initializeDatabase } from "./services/db";
 
 interface IMountArgs {
     mountPoint: HTMLElement
@@ -10,11 +10,13 @@ interface IMountArgs {
 }
 
 const mount = ({ mountPoint, mountOptions }: IMountArgs): (() => void) => {
-    const basename = mountOptions?.basename as string
-    const router = basename === undefined
-            ? createBrowserRouter(Object.values(routes))
-            : createBrowserRouter(Object.values(routes), { basename });
+    const router = createAppRouter();
     const queryClient = new QueryClient();
+
+    // Initialize IndexedDB
+    initializeDatabase().catch(error => {
+        console.error('Failed to initialize database:', error);
+    });
 
     const root = ReactDOM.createRoot(mountPoint);
     root.render(

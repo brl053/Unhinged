@@ -6,6 +6,16 @@
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "sourceMap": true
-  }
+    "sourceMap": true,
+    "lib": ["ES6", "DOM", "DOM.Iterable"],
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

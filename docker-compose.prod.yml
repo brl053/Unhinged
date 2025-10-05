@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: backend-service
+    environment:
+      - DB_HOST=database
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - OLLAMA_HOST=http://llm:11434
+      - WHISPER_TTS_HOST=http://whisper-tts:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+      - llm
+      - whisper-tts
+
+  frontend:
+    build: ./frontend
+    container_name: frontend-service
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  llm:
+    build: ./llm
+    container_name: ollama-service
+    volumes:
+      - llm-models:/models  # Mount the volume to persist the model
+    ports:
+      - "11434:11434"
+
+  whisper-tts:
+    build: ./whisper-tts
+    container_name: whisper-tts-service
+    volumes:
+      - whisper-models:/app/models  # Persist Whisper models
+      - whisper-uploads:/app/uploads  # Temporary uploads
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  database:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: unhinged_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  llm-models:  # Declare the volume to store the model data
+  postgres-data:
+  whisper-models:  # Persist Whisper models
+  whisper-uploads:  # Temporary uploads storage

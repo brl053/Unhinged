@@ -1,0 +1,90 @@
+# Development Docker Compose
+# Provides hot reloading and development tools
+# Usage: docker compose -f docker-compose.dev.yml up
+
+services:
+  # Development Frontend with Hot Reloading
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend-dev-service
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reloading
+      - ./frontend/src:/app/src
+      - ./frontend/lib:/app/lib
+      - ./frontend/public:/app/public
+      - ./frontend/webpack.config.js:/app/webpack.config.js
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      # Exclude node_modules to avoid conflicts
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - backend
+      - whisper-tts
+
+  # Backend (same as production)
+  backend:
+    build: ./backend
+    container_name: backend-dev-service
+    environment:
+      - DB_HOST=database
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - OLLAMA_HOST=http://llm:11434
+      - WHISPER_TTS_HOST=http://whisper-tts:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+      - llm
+      - whisper-tts
+
+  # LLM Service (same as production)
+  llm:
+    build: ./llm
+    container_name: ollama-dev-service
+    volumes:
+      - llm-models-dev:/models
+    ports:
+      - "11434:11434"
+
+  # Whisper TTS Service (same as production)
+  whisper-tts:
+    build: ./whisper-tts
+    container_name: whisper-tts-dev-service
+    volumes:
+      - whisper-models-dev:/app/models
+      - whisper-uploads-dev:/app/uploads
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Database (same as production)
+  database:
+    image: postgres:15
+    container_name: postgres-dev-db
+    environment:
+      POSTGRES_DB: unhinged
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  llm-models-dev:
+  postgres-data-dev:
+  whisper-models-dev:
+  whisper-uploads-dev:

@@ -1,0 +1,441 @@
+# Universal System DSL Schema v1.0
+# LLM-Native UI Component Definition Language
+# Optimized for programmatic interpretation and generation
+
+version: "1.0"
+description: "Universal System DSL for LLM-native interface generation"
+created: "2025-01-04"
+author: "Unhinged Universal System"
+
+# Core Design Principles
+principles:
+  explicit_over_implicit: "Every behavior is clearly stated"
+  flat_structure: "Minimal nesting for LLM parsing"
+  consistent_naming: "Predictable patterns across components"
+  self_documenting: "Schema includes interpretation hints"
+  llm_optimized: "Designed for AI understanding and generation"
+
+# Component Primitive Types
+primitives:
+  layout:
+    description: "Structural components that organize other components"
+    types:
+      - name: "Container"
+        purpose: "Root wrapper with padding and constraints"
+        props: ["padding", "maxWidth", "background"]
+      
+      - name: "Stack"
+        purpose: "Vertical arrangement of components"
+        props: ["spacing", "alignment", "direction"]
+      
+      - name: "Inline"
+        purpose: "Horizontal arrangement of components"
+        props: ["spacing", "justification", "wrap"]
+      
+      - name: "Grid"
+        purpose: "Two-dimensional layout system"
+        props: ["columns", "rows", "gap", "template"]
+      
+      - name: "Flex"
+        purpose: "Flexible box layout with grow/shrink"
+        props: ["direction", "justify", "align", "wrap"]
+
+  input:
+    description: "Interactive components that accept user input"
+    types:
+      - name: "VoiceInput"
+        purpose: "Voice recording and transcription interface"
+        props: ["placeholder", "variant", "size", "autoStart"]
+        state: ["isRecording", "transcription", "audioLevel", "error"]
+        actions: ["onRecordStart", "onRecordStop", "onTranscribe", "onSubmit", "onError"]
+      
+      - name: "TextInput"
+        purpose: "Traditional text input field"
+        props: ["placeholder", "type", "variant", "disabled"]
+        state: ["value", "focused", "error"]
+        actions: ["onChange", "onFocus", "onBlur", "onSubmit"]
+      
+      - name: "Button"
+        purpose: "Clickable action trigger"
+        props: ["label", "variant", "size", "disabled", "loading"]
+        state: ["pressed", "loading"]
+        actions: ["onClick", "onPress", "onRelease"]
+      
+      - name: "Toggle"
+        purpose: "Boolean state switcher"
+        props: ["label", "variant", "disabled"]
+        state: ["checked", "disabled"]
+        actions: ["onChange", "onToggle"]
+
+  display:
+    description: "Components that present information to users"
+    types:
+      - name: "Text"
+        purpose: "Textual content display"
+        props: ["content", "variant", "size", "color", "weight"]
+        state: ["truncated", "expanded"]
+        actions: ["onExpand", "onCollapse"]
+      
+      - name: "Icon"
+        purpose: "Visual symbol representation"
+        props: ["name", "size", "color", "variant"]
+        state: ["loaded", "error"]
+        actions: ["onLoad", "onError"]
+      
+      - name: "Image"
+        purpose: "Visual media display"
+        props: ["src", "alt", "size", "fit", "loading"]
+        state: ["loaded", "loading", "error"]
+        actions: ["onLoad", "onError"]
+      
+      - name: "Progress"
+        purpose: "Task completion indicator"
+        props: ["value", "max", "variant", "label"]
+        state: ["progress", "complete"]
+        actions: ["onComplete", "onUpdate"]
+
+  action:
+    description: "Components that trigger system behaviors"
+    types:
+      - name: "Command"
+        purpose: "Execute system or shell commands"
+        props: ["command", "args", "timeout", "silent"]
+        state: ["executing", "result", "error"]
+        actions: ["onExecute", "onComplete", "onError"]
+      
+      - name: "Navigation"
+        purpose: "Route or context switching"
+        props: ["target", "params", "replace", "external"]
+        state: ["navigating", "current"]
+        actions: ["onNavigate", "onComplete"]
+      
+      - name: "StateChange"
+        purpose: "Modify component or global state"
+        props: ["target", "key", "value", "merge"]
+        state: ["updating", "complete"]
+        actions: ["onChange", "onComplete"]
+      
+      - name: "Event"
+        purpose: "Emit custom events to parent components"
+        props: ["name", "data", "bubbles", "cancelable"]
+        state: ["emitted", "handled"]
+        actions: ["onEmit", "onHandle"]
+
+# Data Binding System
+binding:
+  description: "How data flows through the component tree"
+  
+  state_flow:
+    type: "unidirectional"
+    description: "Data flows down, events flow up"
+    pattern: "parent_state -> child_props -> child_actions -> parent_handlers"
+  
+  context_scope:
+    type: "component_tree"
+    description: "State can be local, parent, or global context"
+    levels:
+      - "local": "Component-specific state"
+      - "parent": "Inherited from parent component"
+      - "global": "Application-wide context"
+  
+  update_strategy:
+    type: "reactive"
+    description: "Components re-render when dependencies change"
+    triggers: ["state_change", "prop_change", "context_change"]
+
+# Event System Architecture
+events:
+  description: "How components communicate and trigger behaviors"
+  
+  syntax:
+    format: "action_type:parameters"
+    description: "Colon-separated action type and parameters"
+    examples:
+      - "setState:key=value"
+      - "setState:isRecording=true"
+      - "emit:messageSubmit"
+      - "emit:navigationRequest=route=/dashboard"
+      - "navigate:route=/settings"
+      - "command:execute=npm run dev"
+      - "command:execute=docker ps"
+  
+  action_types:
+    setState:
+      description: "Modify component state"
+      syntax: "setState:key=value"
+      examples: ["setState:isRecording=true", "setState:value=hello world"]
+    
+    emit:
+      description: "Send event to parent component"
+      syntax: "emit:eventName=data"
+      examples: ["emit:messageSubmit", "emit:userAction=click"]
+    
+    navigate:
+      description: "Change application route or context"
+      syntax: "navigate:route=path"
+      examples: ["navigate:route=/dashboard", "navigate:route=/settings"]
+    
+    command:
+      description: "Execute system command"
+      syntax: "command:execute=shell_command"
+      examples: ["command:execute=npm run dev", "command:execute=git status"]
+
+# Renderer-Specific Interpretation Hints
+renderers:
+  description: "How different renderers interpret the same DSL"
+  
+  electron:
+    target: "react_components"
+    description: "Renders as React components in Electron app"
+    styling: "styled_components"
+    features:
+      - "hot_module_replacement"
+      - "dev_tools_integration"
+      - "native_system_access"
+    
+    component_mapping:
+      VoiceInput: "lib/components/VoiceInput/VoiceInput.tsx"
+      TextInput: "styled.input"
+      Button: "styled.button"
+      Container: "styled.div"
+  
+  llm:
+    target: "natural_language"
+    description: "Interprets as conversational interface"
+    context: "voice_first"
+    features:
+      - "intent_recognition"
+      - "context_awareness"
+      - "natural_language_generation"
+    
+    interpretation_hints:
+      VoiceInput: "Voice recording interface - user can speak commands"
+      TextInput: "Text input field - user can type messages"
+      Button: "Clickable button - user can activate with voice or click"
+      Container: "Layout wrapper - organizes other components"
+
+# State Management Patterns
+state_management:
+  description: "Patterns for managing component and application state"
+  
+  local_state:
+    description: "Component-specific state"
+    pattern: "state: { key: value }"
+    example:
+      state:
+        isRecording: false
+        transcription: ""
+        audioLevel: 0
+  
+  context_state:
+    description: "Shared state across component tree"
+    pattern: "context: { scope: global, key: value }"
+    example:
+      context:
+        scope: "navigation"
+        currentRoute: "/dashboard"
+        sidebarCollapsed: false
+  
+  derived_state:
+    description: "State computed from other state values"
+    pattern: "computed: { key: expression }"
+    example:
+      computed:
+        canSubmit: "transcription.length > 0 && !isRecording"
+        recordingStatus: "isRecording ? 'Recording...' : 'Ready'"
+
+# Real Component Examples from Unhinged Platform
+examples:
+  description: "Actual component definitions used in Unhinged platform"
+
+  voice_input_component:
+    description: "Voice recording interface for chat input"
+    component: VoiceInput
+    props:
+      placeholder: "Speak or type your message..."
+      variant: "primary"
+      size: "large"
+      autoStart: false
+    state:
+      isRecording: false
+      transcription: ""
+      audioLevel: 0
+      error: null
+    actions:
+      onRecordStart: "setState:isRecording=true"
+      onRecordStop: "setState:isRecording=false"
+      onTranscribe: "setState:transcription=$result"
+      onSubmit: "emit:messageSubmit=transcription"
+      onError: "setState:error=$message"
+    context:
+      scope: "chat"
+      ttsEnabled: true
+      voiceModel: "whisper-base"
+
+  chat_message_component:
+    description: "Individual chat message display"
+    component: Container
+    props:
+      padding: "medium"
+      background: "message_bubble"
+    children:
+      - component: Text
+        props:
+          content: "$message.text"
+          variant: "body"
+          color: "$message.type === 'sent' ? 'primary' : 'secondary'"
+        state:
+          expanded: false
+        actions:
+          onExpand: "setState:expanded=true"
+
+      - component: Text
+        props:
+          content: "$message.timestamp"
+          variant: "caption"
+          color: "muted"
+    state:
+      selected: false
+      contextMenuOpen: false
+    actions:
+      onSelect: "setState:selected=!selected"
+      onContextMenu: "setState:contextMenuOpen=true"
+
+  sidebar_navigation:
+    description: "Main application sidebar with navigation items"
+    component: Container
+    props:
+      padding: "none"
+      background: "sidebar"
+      maxWidth: "$collapsed ? '60px' : '240px'"
+    children:
+      - component: Stack
+        props:
+          spacing: "small"
+          alignment: "stretch"
+        children:
+          - component: Button
+            props:
+              label: "Chat"
+              variant: "ghost"
+              size: "medium"
+            state:
+              active: "$currentRoute === '/'"
+            actions:
+              onClick: "navigate:route=/"
+
+          - component: Button
+            props:
+              label: "Components"
+              variant: "ghost"
+              size: "medium"
+            state:
+              active: "$currentRoute === '/showcase'"
+            actions:
+              onClick: "navigate:route=/showcase"
+    state:
+      collapsed: false
+      mobileOpen: false
+    actions:
+      onToggleCollapse: "setState:collapsed=!collapsed"
+      onMobileToggle: "setState:mobileOpen=!mobileOpen"
+    context:
+      scope: "navigation"
+      currentRoute: "/"
+      sidebarCollapsed: false
+
+# LLM Interpretation Guidelines
+llm_guidelines:
+  description: "How LLMs should interpret and generate DSL components"
+
+  understanding_patterns:
+    - "component: Identifies the UI element type"
+    - "props: Static configuration that doesn't change"
+    - "state: Dynamic data that can change over time"
+    - "actions: Behaviors triggered by user interaction"
+    - "context: Shared data from parent or global scope"
+
+  generation_principles:
+    - "Start with user intent: 'I want to...' -> component selection"
+    - "Use explicit prop names: 'placeholder' not 'hint'"
+    - "Prefer simple state: boolean/string over complex objects"
+    - "Chain actions logically: record -> transcribe -> submit"
+    - "Include error handling: onError actions for failure cases"
+
+  voice_command_mapping:
+    "create a voice input": "component: VoiceInput with recording capabilities"
+    "add a text field": "component: TextInput with appropriate props"
+    "make a button": "component: Button with onClick action"
+    "show some text": "component: Text with content prop"
+    "create a sidebar": "component: Container with navigation children"
+
+  context_awareness:
+    - "Chat context: Include voice/audio related components"
+    - "Navigation context: Include routing and state management"
+    - "Development context: Include debugging and monitoring tools"
+    - "Settings context: Include toggles and configuration options"
+
+# Validation Rules
+validation:
+  description: "Rules for validating DSL component definitions"
+
+  required_fields:
+    - "component: Must be a valid primitive type"
+    - "props: Must be object with valid prop names for component type"
+
+  optional_fields:
+    - "state: Object with key-value pairs"
+    - "actions: Object with event handlers"
+    - "context: Object with scope and shared data"
+    - "children: Array of child component definitions"
+
+  naming_conventions:
+    props: "camelCase (placeholder, maxWidth, autoStart)"
+    state: "camelCase (isRecording, audioLevel, currentRoute)"
+    actions: "onEventName (onClick, onSubmit, onRecordStart)"
+    context: "camelCase with scope (scope: 'navigation')"
+
+  data_types:
+    string: "Text content, identifiers, CSS values"
+    boolean: "Toggle states, flags, conditions"
+    number: "Counts, measurements, indices"
+    object: "Complex data structures, configurations"
+    array: "Lists, collections, child components"
+
+  action_syntax_validation:
+    setState: "Must follow 'setState:key=value' pattern"
+    emit: "Must follow 'emit:eventName=data' pattern"
+    navigate: "Must follow 'navigate:route=path' pattern"
+    command: "Must follow 'command:execute=shell_command' pattern"
+
+# Extension Points
+extensions:
+  description: "How to extend the DSL with custom components and behaviors"
+
+  custom_components:
+    process: "Add to primitives section with full specification"
+    requirements: ["name", "purpose", "props", "state", "actions"]
+    example:
+      - name: "CustomWidget"
+        purpose: "Domain-specific functionality"
+        props: ["config", "data", "variant"]
+        state: ["loaded", "error"]
+        actions: ["onLoad", "onError", "onUpdate"]
+
+  custom_actions:
+    process: "Add to events.action_types with syntax specification"
+    requirements: ["description", "syntax", "examples"]
+    example:
+      customAction:
+        description: "Perform custom system operation"
+        syntax: "customAction:operation=parameters"
+        examples: ["customAction:backup=database", "customAction:sync=remote"]
+
+  renderer_extensions:
+    process: "Add new renderer to renderers section"
+    requirements: ["target", "description", "features", "component_mapping"]
+    example:
+      mobile:
+        target: "react_native"
+        description: "Mobile app renderer"
+        features: ["touch_gestures", "native_apis"]

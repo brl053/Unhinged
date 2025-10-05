@@ -1,0 +1,90 @@
+# Staging Docker Compose
+# Pseudo-production environment for testing
+# Usage: docker compose -f docker-compose.staging.yml up
+
+services:
+  # Production-like Frontend (but with source maps for debugging)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-staging-service
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # Backend with staging configuration
+  backend:
+    build: ./backend
+    container_name: backend-staging-service
+    environment:
+      - DB_HOST=database
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - OLLAMA_HOST=http://llm:11434
+      - WHISPER_TTS_HOST=http://whisper-tts:8000
+      - NODE_ENV=staging
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+      - llm
+      - whisper-tts
+
+  # LLM Service
+  llm:
+    build: ./llm
+    container_name: ollama-staging-service
+    volumes:
+      - llm-models-staging:/models
+    ports:
+      - "11434:11434"
+
+  # Whisper TTS Service
+  whisper-tts:
+    build: ./whisper-tts
+    container_name: whisper-tts-staging-service
+    volumes:
+      - whisper-models-staging:/app/models
+      - whisper-uploads-staging:/app/uploads
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Database
+  database:
+    image: postgres:15
+    container_name: postgres-staging-db
+    environment:
+      POSTGRES_DB: unhinged_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data-staging:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Optional: Monitoring and logging for staging
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: nginx-staging
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/staging.conf:/etc/nginx/nginx.conf
+  #   depends_on:
+  #     - frontend
+  #     - backend
+
+volumes:
+  llm-models-staging:
+  postgres-data-staging:
+  whisper-models-staging:
+  whisper-uploads-staging:
