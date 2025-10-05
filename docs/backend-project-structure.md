@@ -2,11 +2,11 @@
 
 ## 🏗️ **Architecture Overview**
 
-The Unhinged backend is a **LLM-native microservices platform** built with Kotlin, featuring:
-- **Dual Protocol Support**: HTTP/REST (Ktor) + gRPC for high-performance inter-service communication
-- **Event-Driven Architecture**: CDC (Change Data Capture) with Kafka for real-time workflow orchestration
-- **LLM-Optimized Components**: Session context management, semantic analysis, and intelligent document ranking
-- **Production-Ready Infrastructure**: Dependency injection, health monitoring, and comprehensive observability
+LLM-native microservices platform with:
+- **Dual Protocol**: HTTP/REST (Ktor) + gRPC
+- **Event-Driven**: CDC with Kafka for real-time workflows
+- **LLM-Optimized**: Session context, semantic analysis, document ranking
+- **Production-Ready**: Koin DI, health monitoring, PostgreSQL with JSONB
 
 ## 📁 **Project Structure**
 
@@ -71,36 +71,21 @@ com/unhinged/
 
 ## 🤖 **Generated Protobuf Code**
 
-### **`src/main/kotlin/unhinged/`** - Generated gRPC Services
+### **`src/main/kotlin/unhinged/`** - Generated from Proto Schemas
 
 ```
 unhinged/
-├── 📄 document_store/                # DocumentStore gRPC generated code (30+ files)
-│   ├── DocumentKt.kt                 # Document message types
-│   ├── DocumentStoreKt.kt            # Service interfaces
-│   ├── PutDocumentRequestKt.kt       # Request/response types
-│   ├── GetSessionContextRequestKt.kt # LLM-specific context queries
-│   └── [28+ more generated files]    # Complete gRPC API surface
+├── 📄 document_store/                # Generated from document_store.proto
+│   └── [Kotlin gRPC stubs and message types for DocumentStore service]
 │
-├── 📡 cdc/                           # CDC Event System (70+ files)
-│   ├── UniversalEventKt.kt           # Universal event envelope
-│   ├── DocumentEventKt.kt            # Document lifecycle events
-│   ├── LLMEventKt.kt                 # LLM interaction events
-│   ├── AgentEventKt.kt               # Agent workflow events
-│   ├── SessionEventKt.kt             # Session management events
-│   ├── SystemEventKt.kt              # System monitoring events
-│   ├── PublishEventRequestKt.kt      # Event publishing API
-│   └── [65+ more generated files]    # Complete CDC event system
+├── 📡 cdc/                           # Generated from cdc_events.proto + cdc_service.proto
+│   └── [Kotlin types for universal events and CDC service]
 │
-└── 💬 messaging/                     # Inter-Service Messaging (50+ files)
-    ├── MessageKt.kt                  # Core message types
-    ├── LLMMessageKt.kt               # LLM service communication
-    ├── AgentMessageKt.kt             # Agent coordination messages
-    ├── ToolMessageKt.kt              # Tool invocation and results
-    ├── WorkflowMessageKt.kt          # Workflow orchestration
-    ├── UIMessageKt.kt                # Real-time UI updates
-    └── [45+ more generated files]    # Complete messaging system
+└── 💬 messaging/                     # Generated from messaging.proto
+    └── [Kotlin types for inter-service messaging]
 ```
+
+**Note**: All files in `unhinged/` are auto-generated from protobuf schemas. Don't edit these directly - modify the `.proto` files instead.
 
 ## 🗄️ **Resources & Configuration**
 
@@ -230,30 +215,17 @@ CMD ["java", "-jar", "app.jar"]
 - ✅ **Container Ready**: Docker multi-stage builds
 - ✅ **Testing Suite**: Unit, integration, and end-to-end tests
 
-## 📊 **Component Statistics**
+## 📊 **What Actually Matters - Hand-Written Code**
 
-### **Generated Code (Auto-generated from Protobuf)**
-- **DocumentStore**: 30 Kotlin files (11 gRPC endpoints)
-- **CDC Events**: 70 Kotlin files (5 event categories, universal envelope)
-- **Messaging**: 50 Kotlin files (inter-service communication)
-- **Total Generated**: **150+ files** from 4 protobuf schemas
+### **Core Business Logic** (the stuff you actually work on)
+- **Application Core**: ~15 Kotlin files (DI, services, repositories)
+- **Database Migrations**: SQL files with LLM-optimized schemas
+- **Configuration**: HOCON file with environment-specific settings
+- **Legacy Ktor Components**: HTTP/WebSocket support (to be refactored)
 
-### **Hand-Written Code (Core Business Logic)**
-- **Application Core**: 15 Kotlin files (DI, services, repositories)
-- **Database Layer**: 2 SQL migration files with LLM-optimized schemas
-- **Configuration**: 1 HOCON file with 200+ settings
-- **Legacy Components**: 10 Kotlin files (to be refactored)
-- **Total Hand-Written**: **28 files** with comprehensive documentation
-
-### **File Organization**
-```
-📁 Total Files: 180+
-├── 🤖 Generated (150+): Type-safe gRPC services and message types
-├── 🧠 Core Logic (15): LLM-native business logic and DI
-├── 🗄️ Database (2): PostgreSQL schemas with performance optimization
-├── ⚙️ Config (1): Comprehensive HOCON configuration
-└── 🔧 Legacy (10): Ktor components for HTTP/WebSocket support
-```
+### **Generated Code** (don't touch these)
+- **`unhinged/`**: Auto-generated from 4 protobuf schemas
+- **Protobuf generates**: gRPC service stubs, message types, serialization code
 
 ## 🔄 **Service Communication Flow**
 
