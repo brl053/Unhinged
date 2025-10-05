@@ -11,16 +11,18 @@ import { VoiceInputVariant, VoiceInputSize } from "../../../lib/components/Voice
 import { TranscriptionResult, VoiceInputErrorDetails } from "../../utils/audio/types";
 import { playAudioBlob, stopAudio } from "../../utils/audio/audioUtils";
 import { DEFAULT_TTS_CONFIG } from "../../utils/audio/constants";
+import { useLogger, LogLevel } from "../../hooks/useLogger";
 
 export const Chatroom: React.FC = () => {
     const [userInput, setUserInput] = useState<string | undefined>();
-    const [messageHistroy, setMessageHistory] = useState<ChatMessage[]>([]);
+    const [messageHistory, setMessageHistory] = useState<ChatMessage[]>([]);
     const [ttsEnabled, setTtsEnabled] = useState<boolean>(DEFAULT_TTS_CONFIG.autoPlay);
     const [isPlayingTts, setIsPlayingTts] = useState<boolean>(false);
     const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
     const { mutate, isPending, isError, data, error } = useSendMessage();
     const synthesizeMutation = useSynthesizeAudio();
+    const logger = useLogger(LogLevel.DEBUG, 'Chatroom');
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setUserInput(e.target.value);
@@ -29,7 +31,7 @@ export const Chatroom: React.FC = () => {
     const handleSendMessage = () => {
       if (!userInput) return;
       const newMessage = { type: ChatMessageType.Sent, message: userInput };
-      setMessageHistory([...messageHistroy, newMessage])
+      setMessageHistory(prev => [...prev, newMessage])
       mutate(userInput);
       setUserInput(''); // Clear input after sending
     };
@@ -42,7 +44,7 @@ export const Chatroom: React.FC = () => {
       const transcribedText = result.text.trim();
       if (transcribedText) {
         const newMessage = { type: ChatMessageType.Sent, message: transcribedText };
-        setMessageHistory([...messageHistroy, newMessage]);
+        setMessageHistory(prev => [...prev, newMessage]);
         mutate(transcribedText);
       }
     };
@@ -114,7 +116,7 @@ export const Chatroom: React.FC = () => {
     React.useEffect(() => {
       if (!data) return;
       const newMessage = { type: ChatMessageType.Received, message: data };
-      setMessageHistory([...messageHistroy, newMessage]);
+      setMessageHistory(prev => [...prev, newMessage]);
 
       // Auto-play TTS for AI responses if enabled
       if (ttsEnabled) {
@@ -122,7 +124,7 @@ export const Chatroom: React.FC = () => {
       }
     }, [data, ttsEnabled])
 
-    console.log(messageHistroy)
+    logger('Message history updated', { count: messageHistory.length });
 
     return (
           <ChatContainer>
@@ -130,7 +132,7 @@ export const Chatroom: React.FC = () => {
               <div style={{color: 'red', fontSize: '24px', fontWeight: 'bold', textAlign: 'center', padding: '20px'}}>
                 🎤 WEBPACK DEV SERVER IS RUNNING - TTS/STT READY FOR TESTING! 🔊
               </div>
-              {messageHistroy.map((message, index) => <ChatBubble key={index} {...message} />)}
+              {messageHistory.map((message: ChatMessage, index: number) => <ChatBubble key={index} {...message} />)}
               {isPending &&  <LoadingDots><div></div><div></div><div></div></LoadingDots>}
             </ChatMessagesContainer>
             <ChatInputContainer>

@@ -47,16 +47,16 @@ const rippleAnimation = keyframes`
  * Main container for the voice input component
  */
 export const VoiceInputContainer = styled.div<{
-  variant: VoiceInputVariant;
-  size: VoiceInputSize;
-  disabled: boolean;
+  $variant: VoiceInputVariant;
+  $size: VoiceInputSize;
+  $disabled: boolean;
 }>`
   display: inline-flex;
   align-items: center;
   gap: 8px;
   position: relative;
-  
-  ${({ disabled }) => disabled && css`
+
+  ${({ $disabled }) => $disabled && css`
     opacity: 0.5;
     pointer-events: none;
   `}
@@ -120,13 +120,13 @@ const colorVariants = {
  * Main voice input button
  */
 export const VoiceInputButton = styled.button<{
-  variant: VoiceInputVariant;
-  size: VoiceInputSize;
+  $variant: VoiceInputVariant;
+  $size: VoiceInputSize;
   $isRecording: boolean;
   $hasError: boolean;
 }>`
-  ${({ size }) => sizeVariants[size]}
-  ${({ variant }) => colorVariants[variant]}
+  ${({ $size }) => sizeVariants[$size]}
+  ${({ $variant }) => colorVariants[$variant]}
   
   border-radius: 50%;
   cursor: pointer;

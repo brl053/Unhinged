@@ -1,0 +1,76 @@
+{
+  "name": "@unhinged/monorepo",
+  "version": "1.0.0",
+  "description": "Universal System - Voice-driven UI generation with LLM intelligence",
+  "private": true,
+  "workspaces": [
+    "services/frontend",
+    "services/backend",
+    "applications/electron",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "./scripts/dev.sh",
+    "build": "npm run build --workspaces",
+    "test": "./scripts/test.sh",
+    "test:unit": "npm run test:unit --workspaces",
+    "test:integration": "npm run test:integration --workspaces",
+    "test:e2e": "npm run test:e2e --workspaces",
+    "lint": "npm run lint --workspaces",
+    "format": "npm run format --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "migrate": "./scripts/migrate.sh",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
+    "docker:staging": "docker-compose -f docker-compose.staging.yml up",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up",
+    "system:test": "./test-full-system.sh",
+    "system:live": "node test-live-system.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.0.0",
+    "concurrently": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/unhinged.git"
+  },
+  "keywords": [
+    "voice-ui",
+    "llm",
+    "universal-system",
+    "cdc",
+    "event-driven",
+    "microservices",
+    "kafka",
+    "react",
+    "typescript",
+    "kotlin",
+    "python"
+  ],
+  "author": "Unhinged Team",
+  "license": "MIT",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test:unit"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

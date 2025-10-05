@@ -1,0 +1,221 @@
+{
+  "type": "record",
+  "name": "UniversalEvent",
+  "namespace": "com.unhinged.cdc",
+  "doc": "Universal Event Schema for CDC - The lifeblood of our event-driven architecture",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Unique identifier for this event (UUID v4)"
+    },
+    {
+      "name": "event_type",
+      "type": {
+        "type": "enum",
+        "name": "EventType",
+        "symbols": [
+          "LLM_INFERENCE",
+          "TOOL_USAGE", 
+          "VOICE_TRANSCRIPTION",
+          "TTS_SYNTHESIS",
+          "UI_GENERATION",
+          "USER_INTERACTION",
+          "SYSTEM_STATE_CHANGE",
+          "DATA_MUTATION",
+          "WORKFLOW_EXECUTION",
+          "ERROR_EVENT",
+          "AUDIT_EVENT",
+          "PERFORMANCE_METRIC"
+        ]
+      },
+      "doc": "Type of event for routing and processing"
+    },
+    {
+      "name": "event_version",
+      "type": "string",
+      "default": "1.0.0",
+      "doc": "Schema version for backward compatibility"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Event occurrence timestamp in milliseconds since epoch"
+    },
+    {
+      "name": "correlation_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Links related events across the system (e.g., request trace)"
+    },
+    {
+      "name": "causation_id", 
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ID of the event that caused this event (event sourcing)"
+    },
+    {
+      "name": "session_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "User session identifier for grouping related activities"
+    },
+    {
+      "name": "user_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "User who triggered this event (if applicable)"
+    },
+    {
+      "name": "source_service",
+      "type": "string",
+      "doc": "Service that generated this event (backend, frontend, llm-service, etc.)"
+    },
+    {
+      "name": "source_component",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Specific component within the service (VoiceInput, ChatRoom, etc.)"
+    },
+    {
+      "name": "aggregate_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Domain aggregate this event belongs to (DDD pattern)"
+    },
+    {
+      "name": "aggregate_type",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Type of domain aggregate (User, Conversation, Workflow, etc.)"
+    },
+    {
+      "name": "event_data",
+      "type": {
+        "type": "record",
+        "name": "EventData",
+        "fields": [
+          {
+            "name": "payload",
+            "type": "string",
+            "doc": "JSON-encoded event-specific data"
+          },
+          {
+            "name": "metadata",
+            "type": {
+              "type": "map",
+              "values": "string"
+            },
+            "default": {},
+            "doc": "Additional metadata as key-value pairs"
+          }
+        ]
+      },
+      "doc": "Event-specific data and metadata"
+    },
+    {
+      "name": "context",
+      "type": {
+        "type": "record", 
+        "name": "EventContext",
+        "fields": [
+          {
+            "name": "environment",
+            "type": {
+              "type": "enum",
+              "name": "Environment",
+              "symbols": ["DEVELOPMENT", "STAGING", "PRODUCTION"]
+            },
+            "default": "DEVELOPMENT"
+          },
+          {
+            "name": "region",
+            "type": "string",
+            "default": "us-east-1"
+          },
+          {
+            "name": "instance_id",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Container/instance identifier"
+          },
+          {
+            "name": "request_id",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "HTTP request ID if applicable"
+          }
+        ]
+      },
+      "doc": "Execution context information"
+    },
+    {
+      "name": "performance",
+      "type": {
+        "type": "record",
+        "name": "PerformanceMetrics",
+        "fields": [
+          {
+            "name": "duration_ms",
+            "type": ["null", "long"],
+            "default": null,
+            "doc": "Event processing duration in milliseconds"
+          },
+          {
+            "name": "memory_usage_mb",
+            "type": ["null", "double"],
+            "default": null,
+            "doc": "Memory usage in megabytes"
+          },
+          {
+            "name": "cpu_usage_percent",
+            "type": ["null", "double"],
+            "default": null,
+            "doc": "CPU usage percentage"
+          }
+        ]
+      },
+      "default": {"duration_ms": null, "memory_usage_mb": null, "cpu_usage_percent": null},
+      "doc": "Performance metrics for this event"
+    },
+    {
+      "name": "tags",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "Searchable tags for categorization and filtering"
+    },
+    {
+      "name": "error_info",
+      "type": ["null", {
+        "type": "record",
+        "name": "ErrorInfo",
+        "fields": [
+          {
+            "name": "error_code",
+            "type": "string"
+          },
+          {
+            "name": "error_message",
+            "type": "string"
+          },
+          {
+            "name": "stack_trace",
+            "type": ["null", "string"],
+            "default": null
+          },
+          {
+            "name": "recovery_action",
+            "type": ["null", "string"],
+            "default": null
+          }
+        ]
+      }],
+      "default": null,
+      "doc": "Error information if this is an error event"
+    }
+  ]
+}

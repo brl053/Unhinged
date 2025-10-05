@@ -596,3 +596,576 @@ export class UnhingedBackendClient extends EventEmitter {
 
     return response;
   }
+
+  /**
+   * Execute tool through backend tool registry
+   *
+   * @param request - Tool execution request
+   * @returns Promise resolving to tool execution result
+   */
+  async executeTool(request: ToolExecutionRequest): Promise<BackendServiceResponse<any>> {
+    console.log(`🛠️ Executing tool: ${request.toolName}`);
+
+    const apiRequest: ContextAwareAPIRequest = {
+      endpoint: '/tools/execute',
+      method: 'POST',
+      data: {
+        toolName: request.toolName,
+        toolVersion: request.toolVersion,
+        parameters: request.parameters,
+        options: request.options,
+        context: request.context,
+      },
+      context: request.context,
+      optimization: {
+        priority: request.options.priority,
+        cacheable: false,
+        realTime: !request.options.async,
+        compress: true,
+      },
+    };
+
+    const response = await this.makeAPIRequest(apiRequest);
+
+    // If tool execution has a callback, update the component
+    if (request.callback && response.data && !response.error) {
+      this.handleToolCallback(request.callback, response.data);
+    }
+
+    return response;
+  }
+
+  /**
+   * Convert text to speech with context optimization
+   *
+   * @param text - Text to convert
+   * @param context - User context
+   * @returns Promise resolving to audio data
+   */
+  async textToSpeech(text: string, context: UserContext): Promise<BackendServiceResponse<ArrayBuffer>> {
+    console.log(`🔊 Converting text to speech: "${text.substring(0, 50)}..."`);
+
+    const apiRequest: ContextAwareAPIRequest = {
+      endpoint: '/tts/synthesize',
+      method: 'POST',
+      data: {
+        text,
+        voice: this.selectOptimalVoice(context),
+        speed: context.accessibility.cognitiveSupport ? 0.8 : 1.0,
+        pitch: 1.0,
+        format: 'wav',
+      },
+      context,
+      optimization: {
+        priority: 'high',
+        cacheable: true,
+        realTime: true,
+        compress: false, // Audio data shouldn't be compressed
+      },
+    };
+
+    return this.makeAPIRequest(apiRequest);
+  }
+
+  /**
+   * Convert speech to text with context optimization
+   *
+   * @param audioData - Audio data to transcribe
+   * @param context - User context
+   * @returns Promise resolving to transcription
+   */
+  async speechToText(audioData: ArrayBuffer, context: UserContext): Promise<BackendServiceResponse<string>> {
+    console.log(`🎤 Converting speech to text (${audioData.byteLength} bytes)`);
+
+    const apiRequest: ContextAwareAPIRequest = {
+      endpoint: '/stt/transcribe',
+      method: 'POST',
+      data: {
+        audio: Array.from(new Uint8Array(audioData)),
+        format: 'wav',
+        language: context.user.language,
+        enhanceForNoise: context.environment.noise === 'noisy',
+        model: context.environment.noise === 'noisy' ? 'whisper-large' : 'whisper-base',
+      },
+      context,
+      optimization: {
+        priority: 'high',
+        cacheable: false,
+        realTime: true,
+        compress: true,
+      },
+    };
+
+    return this.makeAPIRequest(apiRequest);
+  }
+
+  /**
+   * Generate UI from voice command (complete pipeline)
+   *
+   * @param voiceCommand - Voice command text
+   * @param context - User context
+   * @returns Promise resolving to generated UI components
+   */
+  async generateUIFromVoice(voiceCommand: string, context: UserContext): Promise<{
+    components: ComponentInstance[];
+    confidence: number;
+    processingTime: number;
+  }> {
+    const startTime = Date.now();
+    console.log(`🎤→🎨 Generating UI from voice: "${voiceCommand}"`);
+
+    try {
+      // Step 1: Generate UI schema using LLM
+      const schemaResult = await this.uiGenerator.generateFromPrompt(voiceCommand, {
+        existingComponents: [],
+        userPreferences: {
+          preferredVariants: {},
+          commonProps: {},
+          stylePreferences: {},
+        },
+        applicationContext: {
+          currentRoute: '/',
+          activeFeatures: [],
+          userRole: 'user',
+        },
+        usagePatterns: {
+          frequentCombinations: [],
+          successfulGenerations: [],
+          userFeedback: [],
+        },
+      });
+
+      // Step 2: Create components in interpreter
+      const components: ComponentInstance[] = [];
+      for (const componentDef of schemaResult.components) {
+        const component = this.interpreter.createComponent(
+          componentDef.component,
+          componentDef.props || {},
+          componentDef.state || {}
+        );
+        components.push(component);
+      }
+
+      // Step 3: Apply context-aware adaptations
+      const adaptedComponents: ComponentInstance[] = [];
+      for (const component of components) {
+        const adaptedComponent = await this.contextAdapter.adaptComponent(component);
+        adaptedComponents.push(adaptedComponent);
+      }
+
+      const processingTime = Date.now() - startTime;
+
+      console.log(`✅ UI generated from voice in ${processingTime}ms (${adaptedComponents.length} components)`);
+
+      return {
+        components: adaptedComponents,
+        confidence: schemaResult.confidence,
+        processingTime,
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to generate UI from voice:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle real-time events from backend
+   *
+   * @param event - Real-time event
+   */
+  private handleRealtimeEvent(event: BackendRealtimeEvent): void {
+    console.log(`📡 Received real-time event: ${event.type}`);
+
+    switch (event.type) {
+      case 'ui_update':
+        this.handleUIUpdateEvent(event);
+        break;
+
+      case 'context_change':
+        this.handleContextChangeEvent(event);
+        break;
+
+      case 'tool_result':
+        this.handleToolResultEvent(event);
+        break;
+
+      case 'llm_response':
+        this.handleLLMResponseEvent(event);
+        break;
+
+      case 'system_notification':
+        this.handleSystemNotificationEvent(event);
+        break;
+
+      default:
+        console.warn(`❓ Unknown real-time event type: ${event.type}`);
+    }
+
+    // Emit event for external listeners
+    this.emit('realtimeEvent', event);
+  }
+
+  /**
+   * Handle UI update events
+   *
+   * @param event - UI update event
+   */
+  private handleUIUpdateEvent(event: BackendRealtimeEvent): void {
+    if (event.target?.componentId) {
+      const component = this.interpreter.getComponent(event.target.componentId);
+      if (component && event.data.props) {
+        this.interpreter.updateComponentProps(event.target.componentId, event.data.props);
+        console.log(`🔄 Updated component ${event.target.componentId} from real-time event`);
+      }
+    }
+  }
+
+  /**
+   * Handle context change events
+   *
+   * @param event - Context change event
+   */
+  private handleContextChangeEvent(event: BackendRealtimeEvent): void {
+    if (event.data.context) {
+      this.contextAdapter.updateContext(event.data.context);
+      console.log('🔄 Updated context from real-time event');
+    }
+  }
+
+  /**
+   * Handle tool result events
+   *
+   * @param event - Tool result event
+   */
+  private handleToolResultEvent(event: BackendRealtimeEvent): void {
+    if (event.target?.componentId && event.data.callback) {
+      this.handleToolCallback(event.data.callback, event.data.result);
+    }
+  }
+
+  /**
+   * Handle LLM response events
+   *
+   * @param event - LLM response event
+   */
+  private handleLLMResponseEvent(event: BackendRealtimeEvent): void {
+    console.log('🤖 Received LLM response via real-time event');
+    this.emit('llmResponse', event.data);
+  }
+
+  /**
+   * Handle system notification events
+   *
+   * @param event - System notification event
+   */
+  private handleSystemNotificationEvent(event: BackendRealtimeEvent): void {
+    console.log(`📢 System notification: ${event.data.message}`);
+    this.emit('systemNotification', event.data);
+  }
+
+  /**
+   * Handle tool callback execution
+   *
+   * @param callback - Callback information
+   * @param result - Tool execution result
+   */
+  private handleToolCallback(callback: { componentId: string; action: string }, result: any): void {
+    const component = this.interpreter.getComponent(callback.componentId);
+    if (!component) {
+      console.warn(`⚠️ Tool callback for unknown component: ${callback.componentId}`);
+      return;
+    }
+
+    // Execute the callback action with the result
+    const action = this.interpreter.parseAction(`${callback.action}=${JSON.stringify(result)}`);
+    this.interpreter.executeAction(callback.componentId, action).catch(error => {
+      console.error('❌ Failed to execute tool callback:', error);
+    });
+
+    console.log(`🔗 Tool callback executed for ${callback.componentId}`);
+  }
+
+  /**
+   * Enhance prompt with context information
+   *
+   * @param prompt - Base prompt
+   * @param context - User context
+   * @returns Enhanced prompt
+   */
+  private enhancePromptWithContext(prompt: string, context: UserContext): string {
+    let enhancedPrompt = prompt;
+
+    // Add device context
+    enhancedPrompt += `\n\nContext: User is on ${context.device.type} device`;
+
+    // Add accessibility context
+    if (context.accessibility.screenReader) {
+      enhancedPrompt += ', using screen reader';
+    }
+    if (context.accessibility.highContrast) {
+      enhancedPrompt += ', requires high contrast';
+    }
+
+    // Add environment context
+    if (context.environment.noise === 'noisy') {
+      enhancedPrompt += ', in noisy environment';
+    }
+
+    // Add user preference context
+    if (context.user.inputPreference === 'voice') {
+      enhancedPrompt += ', prefers voice interaction';
+    }
+
+    enhancedPrompt += '. Please optimize the response accordingly.';
+
+    return enhancedPrompt;
+  }
+
+  /**
+   * Generate accessibility text for content
+   *
+   * @param content - Content to enhance
+   * @param context - User context
+   * @returns Accessibility text
+   */
+  private generateAccessibilityText(content: string, context: UserContext): string {
+    let accessibilityText = content;
+
+    if (context.accessibility.screenReader) {
+      accessibilityText = `Screen reader optimized: ${content}`;
+    }
+
+    if (context.accessibility.cognitiveSupport) {
+      accessibilityText += ' (Simplified for cognitive accessibility)';
+    }
+
+    return accessibilityText;
+  }
+
+  /**
+   * Simplify content for cognitive accessibility
+   *
+   * @param content - Content to simplify
+   * @returns Simplified content
+   */
+  private simplifyContent(content: string): string {
+    // Basic content simplification
+    return content
+      .replace(/\b\w{10,}\b/g, (match) => match.substring(0, 8) + '...') // Shorten long words
+      .replace(/[;:]/g, '.') // Replace complex punctuation
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
+
+  /**
+   * Select optimal voice for TTS based on context
+   *
+   * @param context - User context
+   * @returns Voice identifier
+   */
+  private selectOptimalVoice(context: UserContext): string {
+    // Select voice based on user preferences and context
+    if (context.accessibility.cognitiveSupport) {
+      return 'clear-slow'; // Clear, slower voice for cognitive support
+    }
+
+    if (context.environment.noise === 'noisy') {
+      return 'enhanced-clarity'; // Enhanced clarity for noisy environments
+    }
+
+    return 'default'; // Default voice
+  }
+
+  /**
+   * Optimize request based on context
+   *
+   * @param request - Original request
+   * @returns Optimized request
+   */
+  private optimizeRequest(request: ContextAwareAPIRequest): ContextAwareAPIRequest {
+    const optimized = { ...request };
+
+    // Add compression if enabled and beneficial
+    if (this.config.optimization.enableCompression && request.optimization?.compress) {
+      optimized.headers = { ...optimized.headers, 'Accept-Encoding': 'gzip, deflate' };
+    }
+
+    // Add authentication if available
+    if (this.config.auth.token) {
+      optimized.headers = { ...optimized.headers, 'Authorization': `Bearer ${this.config.auth.token}` };
+    }
+
+    // Add context information to headers
+    optimized.headers = {
+      ...optimized.headers,
+      'X-Device-Type': request.context.device.type,
+      'X-Network-Speed': request.context.environment.network.speed,
+      'X-Accessibility': JSON.stringify(request.context.accessibility),
+    };
+
+    return optimized;
+  }
+
+  /**
+   * Execute HTTP request
+   *
+   * @param request - Optimized request
+   * @returns Promise resolving to response
+   */
+  private async executeHTTPRequest(request: ContextAwareAPIRequest): Promise<any> {
+    const url = `${this.config.endpoints.api}${request.endpoint}`;
+
+    const fetchOptions: RequestInit = {
+      method: request.method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...request.headers,
+      },
+      signal: AbortSignal.timeout(this.config.optimization.timeoutMs),
+    };
+
+    if (request.data && request.method !== 'GET') {
+      fetchOptions.body = JSON.stringify(request.data);
+    }
+
+    const response = await fetch(url, fetchOptions);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Process response and add enhancements
+   *
+   * @param response - Raw response
+   * @param request - Original request
+   * @param requestId - Request ID
+   * @param startTime - Request start time
+   * @returns Processed response
+   */
+  private processResponse(
+    response: any,
+    request: ContextAwareAPIRequest,
+    requestId: string,
+    startTime: number
+  ): BackendServiceResponse {
+    return {
+      data: response.data || response,
+      metadata: {
+        requestId,
+        timestamp: Date.now(),
+        processingTime: Date.now() - startTime,
+        cached: false,
+        optimized: true,
+      },
+      enhancements: request.accessibility ? {
+        accessibilityText: this.generateAccessibilityText(response.data || response, request.context),
+        simplifiedContent: request.context.accessibility.cognitiveSupport ?
+          this.simplifyContent(response.data || response) : undefined,
+      } : undefined,
+    };
+  }
+
+  /**
+   * Get cached response if available
+   *
+   * @param request - API request
+   * @returns Cached response or null
+   */
+  private getCachedResponse(request: ContextAwareAPIRequest): BackendServiceResponse | null {
+    const cacheKey = this.generateCacheKey(request);
+    const cached = this.requestCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < this.config.optimization.cacheTimeout) {
+      return {
+        ...cached.data,
+        metadata: {
+          ...cached.data.metadata,
+          cached: true,
+        },
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Cache response
+   *
+   * @param request - API request
+   * @param response - Response to cache
+   */
+  private cacheResponse(request: ContextAwareAPIRequest, response: BackendServiceResponse): void {
+    const cacheKey = this.generateCacheKey(request);
+    this.requestCache.set(cacheKey, {
+      data: response,
+      timestamp: Date.now(),
+    });
+
+    // Clean up old cache entries
+    if (this.requestCache.size > 100) {
+      const oldestKey = this.requestCache.keys().next().value;
+      this.requestCache.delete(oldestKey);
+    }
+  }
+
+  /**
+   * Generate cache key for request
+   *
+   * @param request - API request
+   * @returns Cache key
+   */
+  private generateCacheKey(request: ContextAwareAPIRequest): string {
+    return `${request.method}:${request.endpoint}:${JSON.stringify(request.data)}`;
+  }
+
+  /**
+   * Generate unique request ID
+   *
+   * @returns Request ID
+   */
+  private generateRequestId(): string {
+    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Get client statistics
+   *
+   * @returns Statistics object
+   */
+  getStats(): {
+    connected: boolean;
+    cacheSize: number;
+    activeRequests: number;
+    connectionRetries: number;
+    config: BackendServiceConfig;
+  } {
+    return {
+      connected: this.websocket?.readyState === WebSocket.OPEN,
+      cacheSize: this.requestCache.size,
+      activeRequests: this.activeRequests.size,
+      connectionRetries: this.connectionRetries,
+      config: this.config,
+    };
+  }
+
+  /**
+   * Disconnect from backend services
+   */
+  disconnect(): void {
+    if (this.websocket) {
+      this.websocket.close();
+      this.websocket = null;
+    }
+
+    this.requestCache.clear();
+    this.activeRequests.clear();
+
+    console.log('🔌 Disconnected from backend services');
+    this.emit('disconnected');
+  }
+}

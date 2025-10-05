@@ -143,14 +143,14 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
 
   return (
     <VoiceInputContainer
-      variant={variant}
-      size={size}
-      disabled={disabled}
+      $variant={variant}
+      $size={size}
+      $disabled={disabled}
       className={className}
     >
       <VoiceInputButton
-        variant={variant}
-        size={size}
+        $variant={variant}
+        $size={size}
         $isRecording={status.isRecording}
         $hasError={status.hasError}
         onClick={handleButtonClick}

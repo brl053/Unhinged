@@ -14,6 +14,7 @@ import useMediaRecorder from '@wmik/use-media-recorder';
 import { useMutation } from '@tanstack/react-query';
 import { apiHelpers, TranscriptionResponse } from '../services/api';
 import { dbHelpers } from '../services/db';
+import { useLogger, LogLevel } from './useLogger';
 
 // Hook configuration interface
 export interface VoiceRecorderConfig {
@@ -86,6 +87,7 @@ const DEFAULT_CONFIG: Required<VoiceRecorderConfig> = {
  */
 export const useVoiceRecorder = (config: VoiceRecorderConfig = {}): VoiceRecorderReturn => {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const logger = useLogger(LogLevel.DEBUG, 'VoiceRecorder');
   
   // Internal state
   const [duration, setDuration] = useState(0);
@@ -114,21 +116,21 @@ export const useVoiceRecorder = (config: VoiceRecorderConfig = {}): VoiceRecorde
     reset: resetTranscription
   } = useMutation({
     mutationFn: async (blob: Blob): Promise<TranscriptionResponse> => {
-      console.log('🎙️ Starting transcription...', { size: blob.size, type: blob.type });
-      
+      logger('Starting transcription', { size: blob.size, type: blob.type });
+
       try {
         const result = await apiHelpers.transcribeAudio(blob);
-        console.log('✅ Transcription successful:', result);
-        
+        logger('Transcription successful', result);
+
         // Cache audio and transcript if enabled
         if (finalConfig.cacheAudio) {
           await dbHelpers.audioCache.store(blob, result.text);
-          console.log('💾 Audio cached locally');
+          logger('Audio cached locally');
         }
-        
+
         return result;
       } catch (error) {
-        console.error('❌ Transcription failed:', error);
+        logger('Transcription failed', { error: error instanceof Error ? error.message : String(error) });
         throw error;
       }
     },
@@ -143,46 +145,51 @@ export const useVoiceRecorder = (config: VoiceRecorderConfig = {}): VoiceRecorde
   // Duration tracking
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (status === 'recording') {
       const startTime = Date.now();
       interval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         setDuration(elapsed);
-        
+
         // Auto-stop at max duration
         if (elapsed >= finalConfig.maxDuration) {
-          console.log('⏰ Max duration reached, stopping recording');
+          logger('Max duration reached, stopping recording');
           stopMediaRecording();
         }
       }, 100);
-    } else {
-      setDuration(0);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [status, finalConfig.maxDuration, stopMediaRecording]);
 
+  // Reset duration when not recording
+  useEffect(() => {
+    if (status !== 'recording') {
+      setDuration(0);
+    }
+  }, [status]);
+
   // Auto-transcribe when recording stops
   useEffect(() => {
     if (status === 'stopped' && mediaBlob && finalConfig.autoTranscribe) {
-      console.log('🎯 Auto-transcribing recording...');
+      logger('Auto-transcribing recording');
       transcribeAudio(mediaBlob);
     }
   }, [status, mediaBlob, finalConfig.autoTranscribe, transcribeAudio]);
 
   // Enhanced controls
   const startRecording = useCallback(() => {
-    console.log('🎤 Starting voice recording...');
+    logger('Starting voice recording');
     setTranscript(null);
     resetTranscription();
     startMediaRecording();
   }, [startMediaRecording, resetTranscription]);
 
   const stopRecording = useCallback(() => {
-    console.log('🛑 Stopping voice recording...');
+    logger('Stopping voice recording');
     stopMediaRecording();
   }, [stopMediaRecording]);
 
