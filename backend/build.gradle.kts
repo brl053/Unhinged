@@ -44,6 +44,9 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.postgresql)
 
+    // Kafka Dependencies for CDC
+    implementation("org.apache.kafka:kafka-clients:3.5.1")
+
     // Logging
     implementation(libs.logback.classic)
 

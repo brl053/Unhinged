@@ -1,0 +1,127 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    # ============================================================================
+    # CRITICAL: Install protoc and generate code
+    # Generated files are NOT in git, must be created in CI
+    # ============================================================================
+    
+    - name: Install Protocol Buffers Compiler
+      run: |
+        # Download and install protoc
+        cd /tmp
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+        unzip protoc-25.1-linux-x86_64.zip
+        sudo cp bin/protoc /usr/local/bin/
+        sudo chmod +x /usr/local/bin/protoc
+        
+        # Verify installation
+        protoc --version
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Generate Protobuf Code
+      run: |
+        # This step is REQUIRED - generated files are not in git
+        npm run build:proto
+        
+    - name: Validate Generated Files
+      run: |
+        # Ensure all required generated files exist
+        npm run validate:generated
+        
+    # ============================================================================
+    # Build and Test (now that generated files exist)
+    # ============================================================================
+    
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+        
+    - name: Build Backend
+      run: |
+        cd backend
+        ./gradlew build
+        
+    - name: Run Tests
+      run: |
+        npm run test
+        
+    # ============================================================================
+    # Optional: Cache generated files for subsequent jobs
+    # ============================================================================
+    
+    - name: Cache Generated Protobuf Files
+      uses: actions/cache@v3
+      with:
+        path: |
+          frontend/src/types/generated
+          backend/src/main/kotlin/unhinged/document_store
+        key: protobuf-${{ hashFiles('proto/**/*.proto') }}
+        restore-keys: |
+          protobuf-
+          
+  # ============================================================================
+  # Example: Separate job that depends on generated files
+  # ============================================================================
+  
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install protoc
+      run: |
+        cd /tmp
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+        unzip protoc-25.1-linux-x86_64.zip
+        sudo cp bin/protoc /usr/local/bin/
+        sudo chmod +x /usr/local/bin/protoc
+        
+    - name: Install dependencies and generate code
+      run: |
+        npm ci
+        npm run build:proto
+        npm run validate:generated
+        
+    - name: Run Integration Tests
+      run: |
+        # Your integration tests here
+        echo "Running integration tests with generated protobuf types"

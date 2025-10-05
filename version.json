@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "build": "2025.01.04.001",
+  "components": {
+    "proto": {
+      "version": "1.1.0",
+      "hash": "c3c5be7c604bfa726736da0f50b5ed24efc07d59c58207c9aeb5737ae1f8399c",
+      "lastUpdated": "2025-10-05T05:32:10Z",
+      "schemas": {
+        "document_store": {
+          "version": "1.0.0",
+          "hash": "f9cbcea3999af904d402f7d5181d7952a168f57f700e6663ed980a55cf1e0b51",
+          "description": "Document store with versioning and session context"
+        }
+      }
+    },
+    "frontend": {
+      "version": "1.0.0",
+      "components": {
+        "ui-kit": "1.0.0",
+        "hooks": "1.0.0",
+        "utils": "1.0.0"
+      }
+    },
+    "backend": {
+      "version": "1.0.0",
+      "services": {
+        "document-store": "1.0.0",
+        "event-system": "1.0.0"
+      }
+    }
+  },
+  "changelog": {
+    "1.0.0": {
+      "date": "2025-01-04",
+      "changes": [
+        "Initial DocumentStore protobuf schema",
+        "TypeScript and Kotlin code generation",
+        "Versioning and validation system"
+      ],
+      "breaking": false
+    }
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "type": "record",
+  "name": "UniversalEventEnvelope",
+  "namespace": "com.unhinged.cdc.envelope",
+  "doc": "Universal Event Envelope - Infrastructure-level event wrapper. Payload is opaque to infrastructure.",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Unique event identifier (UUID v4)"
+    },
+    {
+      "name": "event_type",
+      "type": "string",
+      "doc": "Hierarchical event type (e.g., 'llm.inference.completed', 'voice.transcription.started')"
+    },
+    {
+      "name": "event_version",
+      "type": "string",
+      "default": "1.0.0",
+      "doc": "Event schema version for backward compatibility"
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "doc": "Event occurrence timestamp in ISO-8601 format"
+    },
+    {
+      "name": "correlation_id",
+      "type": "string",
+      "doc": "Request correlation ID for distributed tracing"
+    },
+    {
+      "name": "causation_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ID of the event that caused this event (causal ordering)"
+    },
+    {
+      "name": "sequence_number",
+      "type": "long",
+      "doc": "Monotonic sequence number within partition for ordering"
+    },
+    {
+      "name": "tenant_id",
+      "type": "string",
+      "doc": "Tenant identifier for multi-tenancy isolation"
+    },
+    {
+      "name": "user_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "User identifier (null for system events)"
+    },
+    {
+      "name": "session_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Session identifier for grouping related user activities"
+    },
+    {
+      "name": "workflow_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Workflow identifier for process tracking"
+    },
+    {
+      "name": "source_service",
+      "type": "string",
+      "doc": "Service that generated this event"
+    },
+    {
+      "name": "source_component",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Specific component within the service"
+    },
+    {
+      "name": "environment",
+      "type": {
+        "type": "enum",
+        "name": "Environment",
+        "symbols": ["DEVELOPMENT", "STAGING", "PRODUCTION"]
+      },
+      "default": "DEVELOPMENT",
+      "doc": "Environment where event was generated"
+    },
+    {
+      "name": "region",
+      "type": "string",
+      "default": "us-east-1",
+      "doc": "Geographic region"
+    },
+    {
+      "name": "instance_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Service instance identifier"
+    },
+    {
+      "name": "request_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "HTTP request ID if applicable"
+    },
+    {
+      "name": "payload",
+      "type": "string",
+      "doc": "JSON-encoded domain-specific event payload (opaque to infrastructure)"
+    },
+    {
+      "name": "payload_schema",
+      "type": "string",
+      "doc": "Schema identifier for payload validation (e.g., 'llm.inference.v1')"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "Additional metadata as key-value pairs"
+    },
+    {
+      "name": "tags",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "Searchable tags for categorization and filtering"
+    },
+    {
+      "name": "pii_fields",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "List of payload fields containing PII (for GDPR compliance)"
+    },
+    {
+      "name": "retention_policy",
+      "type": {
+        "type": "enum",
+        "name": "RetentionPolicy",
+        "symbols": ["OPERATIONAL", "ANALYTICAL", "AUDIT", "TRAINING"]
+      },
+      "default": "OPERATIONAL",
+      "doc": "Data retention policy for this event type"
+    }
+  ]
+}

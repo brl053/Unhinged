@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package unhinged.cdc.minimal;
+
+option java_package = "com.unhinged.cdc.minimal";
+option java_outer_classname = "MinimalEventProto";
+
+// ============================================================================
+// MINIMAL CDC EVENT SCHEMA - MVP VERTICAL SLICE
+// ============================================================================
+
+message UniversalEvent {
+  string event_id = 1;           // UUID
+  string event_type = 2;         // "llm.inference.completed"
+  int64 timestamp_ms = 3;        // Unix epoch milliseconds
+  string user_id = 4;            // User identifier
+  string session_id = 5;         // Session identifier
+  bytes payload = 6;             // Serialized domain event (parse later)
+}
+
+message LLMInferenceEvent {
+  string prompt = 1;             // User prompt
+  string response = 2;           // LLM response
+  string model = 3;              // Model name (e.g., "llama2")
+  int32 prompt_tokens = 4;       // Input token count
+  int32 response_tokens = 5;     // Output token count
+  int64 latency_ms = 6;          // Inference latency
+  bool success = 7;              // Whether inference succeeded
+  string error_message = 8;      // Error message if failed
+  
+  // Minimal rationale for audit
+  string intent = 9;             // What user was trying to achieve
+  float confidence = 10;         // Model confidence (0.0-1.0)
+}

@@ -1,4 +1,121 @@
-.idea
-/frontend/node_modules
-/backend/build
-/backend/.gradle
+# ============================================================================
+# IDE and Editor Files
+# ============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# Node.js / NPM
+# ============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Frontend specific
+/frontend/node_modules/
+/frontend/build/
+/frontend/dist/
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# ============================================================================
+# Kotlin / Gradle / JVM
+# ============================================================================
+/backend/build/
+/backend/.gradle/
+/backend/gradle/
+/backend/gradlew
+/backend/gradlew.bat
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+.gradle/
+build/
+
+# ============================================================================
+# GENERATED PROTOBUF FILES - DO NOT COMMIT
+# ============================================================================
+
+# Frontend TypeScript generated files
+/frontend/src/types/generated/
+/frontend/src/types/proto/
+
+# Backend Kotlin generated files
+/backend/src/main/kotlin/unhinged/document_store/
+/backend/src/main/kotlin/com/unhinged/proto/
+/backend/src/main/java/unhinged/document_store/
+/backend/src/main/java/com/unhinged/proto/
+
+# Python generated files (future)
+/services/*/proto/
+**/*_pb2.py
+**/*_pb2.pyi
+**/*_pb2_grpc.py
+
+# Go generated files (future)
+**/*.pb.go
+**/*_grpc.pb.go
+
+# ============================================================================
+# Database
+# ============================================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================================
+# Logs and Runtime
+# ============================================================================
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================================================
+# OS Generated Files
+# ============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================================================
+# Environment and Secrets
+# ============================================================================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.pem
+*.key
+secrets/
+
+# ============================================================================
+# Temporary and Cache Files
+# ============================================================================
+tmp/
+temp/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+dist/
+coverage/

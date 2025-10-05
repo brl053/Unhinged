@@ -1,0 +1,55 @@
+{
+  "name": "unhinged",
+  "version": "1.0.0",
+  "description": "LLM-native system with document store and agent orchestration",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "cdc-service"
+  ],
+  "scripts": {
+    "build:proto": "cd proto && ./build.sh",
+    "validate:generated": "./scripts/validate-generated.sh",
+    "version:status": "./scripts/version-manager.sh status",
+    "version:update-hashes": "./scripts/version-manager.sh update-hashes",
+    "version:bump-proto": "./scripts/version-manager.sh bump-proto",
+    "version:bump-major": "./scripts/version-manager.sh bump-major",
+    "version:validate": "./scripts/version-manager.sh validate",
+    "prebuild": "npm run build:proto",
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "dev:frontend": "npm run validate:generated && cd frontend && npm start",
+    "dev:backend": "npm run validate:generated && cd backend && npm run dev",
+    "build:frontend": "npm run build:proto && cd frontend && npm run build",
+    "build:backend": "npm run build:proto && cd backend && npm run build",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "npm run validate:generated && cd frontend && npm test",
+    "test:backend": "npm run validate:generated && cd backend && npm test",
+    "clean:generated": "rm -rf frontend/src/types/generated backend/src/main/kotlin/unhinged/document_store"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-proto": "^1.181.2",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  },
+  "keywords": [
+    "llm",
+    "agent",
+    "orchestration",
+    "document-store",
+    "protobuf",
+    "typescript"
+  ],
+  "author": "Unhinged Team",
+  "license": "MIT"
+}

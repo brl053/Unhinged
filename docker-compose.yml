@@ -9,11 +9,25 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - OLLAMA_HOST=http://llm:11434
+      - KAFKA_BROKERS=kafka:29092
     ports:
       - "8080:8080"
     depends_on:
       - database
       - llm
+
+  # CDC Service (Python FastAPI)
+  cdc-service:
+    build: ./cdc-service
+    container_name: cdc-service
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+      - POSTGRES_URL=postgresql://postgres:postgres@database:5432/unhinged_db
+    ports:
+      - "8081:8081"
+    depends_on:
+      - database
+      - kafka
 
   frontend:
     build: ./frontend
@@ -42,6 +56,45 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./sql/init-minimal.sql:/docker-entrypoint-initdb.d/init-cdc.sql
+
+  # Kafka for CDC events
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 1
+    ports:
+      - "9092:9092"
+
+  # Kafka UI for debugging
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - "8090:8080"
 
 volumes:
   llm-models:  # Declare the volume to store the model data

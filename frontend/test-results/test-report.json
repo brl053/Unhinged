@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-10-05T02:45:41.623Z",
+  "summary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "duration": 66845
+  },
+  "results": [
+    {
+      "name": "Unit Tests",
+      "success": false,
+      "duration": 60058,
+      "error": "spawnSync /bin/sh ETIMEDOUT"
+    },
+    {
+      "name": "Build Verification",
+      "success": true,
+      "duration": 6787,
+      "error": null
+    }
+  ]
+}

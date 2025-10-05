@@ -1,0 +1,144 @@
+{
+  "type": "record",
+  "name": "ToolUsagePayload",
+  "namespace": "com.unhinged.cdc.payload.tool",
+  "doc": "Tool usage event payload with detailed rationale and context",
+  "fields": [
+    {
+      "name": "execution_id",
+      "type": "string",
+      "doc": "Unique tool execution identifier"
+    },
+    {
+      "name": "tool_info",
+      "type": {
+        "type": "record",
+        "name": "ToolInfo",
+        "fields": [
+          {"name": "tool_name", "type": "string"},
+          {"name": "tool_version", "type": "string"},
+          {"name": "tool_category", "type": {"type": "enum", "name": "ToolCategory", "symbols": ["WEB_SCRAPING", "API_CALL", "FILE_OPERATION", "DATA_PROCESSING", "UI_GENERATION", "VOICE_PROCESSING", "DATABASE_QUERY", "EXTERNAL_SERVICE"]}},
+          {"name": "tool_provider", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Tool identification and metadata"
+    },
+    {
+      "name": "input",
+      "type": {
+        "type": "record",
+        "name": "ToolInput",
+        "fields": [
+          {"name": "parameters", "type": "string", "doc": "JSON-encoded input parameters"},
+          {"name": "raw_input", "type": ["null", "string"], "default": null},
+          {"name": "validation_passed", "type": "boolean"},
+          {"name": "validation_errors", "type": {"type": "array", "items": "string"}, "default": []},
+          {"name": "input_size_bytes", "type": ["null", "long"], "default": null}
+        ]
+      },
+      "doc": "Tool input information"
+    },
+    {
+      "name": "output",
+      "type": {
+        "type": "record",
+        "name": "ToolOutput",
+        "fields": [
+          {"name": "result", "type": "string", "doc": "JSON-encoded output result"},
+          {"name": "success", "type": "boolean"},
+          {"name": "error_message", "type": ["null", "string"], "default": null},
+          {"name": "output_size_bytes", "type": ["null", "long"], "default": null},
+          {"name": "data_quality_score", "type": ["null", "double"], "default": null}
+        ]
+      },
+      "doc": "Tool output information"
+    },
+    {
+      "name": "rationale",
+      "type": {
+        "type": "record",
+        "name": "ToolRationale",
+        "fields": [
+          {"name": "why_this_tool", "type": "string"},
+          {"name": "expected_outcome", "type": "string"},
+          {"name": "alternative_tools_considered", "type": {"type": "array", "items": "string"}, "default": []},
+          {"name": "risk_assessment", "type": "string"},
+          {"name": "success_criteria", "type": {"type": "array", "items": "string"}, "default": []},
+          {"name": "decision_confidence", "type": ["null", "double"], "default": null}
+        ]
+      },
+      "doc": "Tool selection rationale for AI/ML training"
+    },
+    {
+      "name": "web_scraping_context",
+      "type": ["null", {
+        "type": "record",
+        "name": "WebScrapingContext",
+        "fields": [
+          {"name": "target_url", "type": "string"},
+          {"name": "target_domain", "type": "string"},
+          {"name": "scraping_strategy", "type": "string"},
+          {"name": "data_extraction_rules", "type": {"type": "array", "items": "string"}, "default": []},
+          {"name": "what_looking_for", "type": "string"},
+          {"name": "found_data_summary", "type": "string"},
+          {"name": "robots_txt_compliant", "type": "boolean"},
+          {"name": "rate_limiting_applied", "type": "boolean"},
+          {"name": "pages_scraped", "type": "int", "default": 1},
+          {"name": "data_freshness", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "Web scraping specific context"
+    },
+    {
+      "name": "api_call_context",
+      "type": ["null", {
+        "type": "record",
+        "name": "APICallContext",
+        "fields": [
+          {"name": "endpoint", "type": "string"},
+          {"name": "method", "type": "string"},
+          {"name": "response_status", "type": "int"},
+          {"name": "response_time_ms", "type": "long"},
+          {"name": "retry_count", "type": "int", "default": 0},
+          {"name": "rate_limited", "type": "boolean", "default": false},
+          {"name": "api_version", "type": ["null", "string"], "default": null},
+          {"name": "authentication_method", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "API call specific context"
+    },
+    {
+      "name": "performance",
+      "type": {
+        "type": "record",
+        "name": "ToolPerformance",
+        "fields": [
+          {"name": "execution_time_ms", "type": "long"},
+          {"name": "memory_peak_mb", "type": ["null", "double"], "default": null},
+          {"name": "cpu_usage_percent", "type": ["null", "double"], "default": null},
+          {"name": "network_bytes_transferred", "type": ["null", "long"], "default": null},
+          {"name": "cache_hit", "type": "boolean", "default": false}
+        ]
+      },
+      "doc": "Tool execution performance metrics"
+    },
+    {
+      "name": "outcome_analysis",
+      "type": {
+        "type": "record",
+        "name": "OutcomeAnalysis",
+        "fields": [
+          {"name": "met_expectations", "type": "boolean"},
+          {"name": "quality_score", "type": ["null", "double"], "default": null},
+          {"name": "completeness_score", "type": ["null", "double"], "default": null},
+          {"name": "accuracy_score", "type": ["null", "double"], "default": null},
+          {"name": "lessons_learned", "type": {"type": "array", "items": "string"}, "default": []},
+          {"name": "improvement_suggestions", "type": {"type": "array", "items": "string"}, "default": []}
+        ]
+      },
+      "doc": "Analysis of tool execution outcome for learning"
+    }
+  ]
+}
