@@ -24,7 +24,7 @@
 
 package com.unhinged.di
 
-import com.unhinged.documentstore.*
+import com.unhinged.services.documentstore.*
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.slf4j.LoggerFactory

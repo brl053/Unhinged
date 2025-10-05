@@ -123,8 +123,19 @@ protobuf {
                 create("grpckt")
             }
             it.builtins {
-                create("kotlin")
+                create("kotlin") {
+                    outputSubDir = "generated/kotlin"
+                }
             }
+        }
+    }
+}
+
+// Add generated sources to compilation
+sourceSets {
+    main {
+        kotlin {
+            srcDirs("src/generated/kotlin")
         }
     }
 }

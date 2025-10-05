@@ -23,7 +23,7 @@
 // - Real-time UI updates for collaborative LLM interactions
 // ============================================================================
 
-package com.unhinged.documentstore
+package com.unhinged.services.documentstore
 
 import com.google.protobuf.Struct
 import com.google.protobuf.util.Timestamps

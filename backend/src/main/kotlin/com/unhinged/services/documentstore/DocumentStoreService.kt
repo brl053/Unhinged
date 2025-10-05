@@ -22,7 +22,7 @@
 // - Version management for A/B testing LLM responses
 // ============================================================================
 
-package com.unhinged.documentstore
+package com.unhinged.services.documentstore
 
 import com.google.protobuf.Timestamp
 import io.grpc.Status

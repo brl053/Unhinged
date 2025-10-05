@@ -5,7 +5,7 @@
 // Event emission interface for document operations to integrate with CDC system
 // ============================================================================
 
-package com.unhinged.documentstore
+package com.unhinged.services.documentstore
 
 import unhinged.document_store.DocumentStore
 

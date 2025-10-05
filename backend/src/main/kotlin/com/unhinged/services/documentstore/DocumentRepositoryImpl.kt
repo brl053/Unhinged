@@ -23,7 +23,7 @@
 // - Context-aware document filtering based on conversation flow
 // ============================================================================
 
-package com.unhinged.documentstore
+package com.unhinged.services.documentstore
 
 import com.google.protobuf.Timestamp
 import com.google.protobuf.util.Timestamps

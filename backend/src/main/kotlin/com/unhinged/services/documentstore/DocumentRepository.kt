@@ -5,7 +5,7 @@
 // Repository interface for document storage operations with PostgreSQL backend
 // ============================================================================
 
-package com.unhinged.documentstore
+package com.unhinged.services.documentstore
 
 import com.google.protobuf.Timestamp
 import unhinged.document_store.*

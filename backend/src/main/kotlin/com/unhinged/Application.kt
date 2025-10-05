@@ -12,7 +12,7 @@
 package com.unhinged
 
 import com.unhinged.di.*
-import com.unhinged.documentstore.DocumentStoreService
+import com.unhinged.services.documentstore.DocumentStoreService
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.ktor.server.application.*

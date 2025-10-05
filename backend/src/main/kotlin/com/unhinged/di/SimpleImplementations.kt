@@ -14,7 +14,7 @@
 
 package com.unhinged.di
 
-import com.unhinged.documentstore.DocumentEventEmitter
+import com.unhinged.services.documentstore.DocumentEventEmitter
 import kotlinx.coroutines.delay
 import org.slf4j.LoggerFactory
 import unhinged.cdc.CDCServiceGrpcKt
