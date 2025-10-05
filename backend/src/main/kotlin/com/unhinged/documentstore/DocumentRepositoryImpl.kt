@@ -68,9 +68,10 @@ import javax.sql.DataSource
  * - Separate body table to avoid large row performance issues
  * - Keyset pagination for efficient large result set handling
  */
-@Singleton
-class DocumentRepositoryImpl @Inject constructor(
-    private val dataSource: DataSource
+class DocumentRepositoryImpl(
+    private val primaryDataSource: DataSource,
+    private val readOnlyDataSource: DataSource,
+    private val transactionManager: com.unhinged.di.TransactionManager
 ) : DocumentRepository {
 
     private val logger = LoggerFactory.getLogger(DocumentRepositoryImpl::class.java)

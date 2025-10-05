@@ -66,9 +66,10 @@ import javax.inject.Singleton
  * - Event deduplication to prevent redundant workflow triggers
  * - Intelligent event filtering based on semantic significance
  */
-@Singleton
-class DocumentEventEmitterImpl @Inject constructor(
-    private val cdcService: CDCServiceGrpcKt.CDCServiceCoroutineStub
+class DocumentEventEmitterImpl(
+    private val cdcService: CDCServiceGrpcKt.CDCServiceCoroutineStub,
+    private val eventBatchSize: Int = 100,
+    private val eventTimeoutMs: Long = 5000
 ) : DocumentEventEmitter {
 
     private val logger = LoggerFactory.getLogger(DocumentEventEmitterImpl::class.java)

@@ -58,10 +58,11 @@ import javax.inject.Singleton
  * - Version tagging for LLM response comparison
  * - Event-driven workflow triggers based on document changes
  */
-@Singleton
-class DocumentStoreService @Inject constructor(
+class DocumentStoreService(
     private val documentRepository: DocumentRepository,
-    private val eventEmitter: DocumentEventEmitter
+    private val eventEmitter: DocumentEventEmitter,
+    private val sessionContextOptimizer: com.unhinged.di.SessionContextOptimizer,
+    private val documentAnalyzer: com.unhinged.di.DocumentAnalyzer
 ) : DocumentStoreServiceGrpcKt.DocumentStoreServiceCoroutineImplBase() {
 
     private val logger = LoggerFactory.getLogger(DocumentStoreService::class.java)
