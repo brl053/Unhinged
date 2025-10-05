@@ -59,10 +59,7 @@ import javax.inject.Singleton
  * - Event-driven workflow triggers based on document changes
  */
 class DocumentStoreService(
-    private val documentRepository: DocumentRepository,
-    private val eventEmitter: DocumentEventEmitter,
-    private val sessionContextOptimizer: com.unhinged.di.SessionContextOptimizer,
-    private val documentAnalyzer: com.unhinged.di.DocumentAnalyzer
+    private val documentManager: DocumentManager  // Single dependency - Clean!
 ) : DocumentStoreServiceGrpcKt.DocumentStoreServiceCoroutineImplBase() {
 
     private val logger = LoggerFactory.getLogger(DocumentStoreService::class.java)
@@ -98,6 +95,38 @@ class DocumentStoreService(
      * ```
      */
     override suspend fun putDocument(request: PutDocumentRequest): PutDocumentResponse {
+        return try {
+            // 1. Map protobuf to domain (clean boundary)
+            val domainDocument = mappers.DocumentMapper.fromPutRequest(request)
+
+            // 2. Delegate to manager (business logic)
+            val result = documentManager.storeDocumentWithContext(
+                document = domainDocument.toProto(), // TODO: Fix this - should pass domain model
+                sessionId = domainDocument.sessionId
+            )
+
+            // 3. Map result back to protobuf response
+            when (result) {
+                is DocumentResult.Success -> mappers.DocumentMapper.toPutResponse(
+                    success = true,
+                    message = result.message,
+                    document = mappers.DocumentMapper.toDomain(result.document),
+                    version = result.document.version
+                )
+                is DocumentResult.Failure -> mappers.DocumentMapper.toPutResponse(
+                    success = false,
+                    message = result.error
+                )
+            }
+
+        } catch (e: Exception) {
+            logger.error("Failed to put document: ${e.message}", e)
+            mappers.DocumentMapper.toPutResponse(
+                success = false,
+                message = "Internal server error: ${e.message}"
+            )
+        }
+    }
         return withContext(Dispatchers.IO) {
             try {
                 logger.info("PutDocument request for document: ${request.document.documentUuid}")

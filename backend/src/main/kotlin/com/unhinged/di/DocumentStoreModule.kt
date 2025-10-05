@@ -105,24 +105,36 @@ val documentStoreModule = module {
     // ========================================================================
     
     /**
-     * DocumentStore gRPC service implementation
-     * 
-     * Features:
-     * - Complete gRPC API with 11 endpoints
-     * - LLM-native session context aggregation
-     * - Automatic versioning and tagging
-     * - Real-time event emission for workflow orchestration
-     * - Comprehensive error handling and retry logic
+     * DocumentManager for business logic orchestration
+     *
+     * Coordinates complex operations across multiple repositories
+     * and domain services with proper transaction management.
      */
-    single<DocumentStoreService> {
+    single<com.unhinged.services.documentstore.DocumentManager> {
         val logger = LoggerFactory.getLogger("DocumentStoreModule")
-        logger.info("Initializing DocumentStoreService with LLM-native features")
-        
-        DocumentStoreService(
+        logger.info("Initializing DocumentManager for business logic orchestration")
+
+        com.unhinged.services.documentstore.DocumentManager(
             documentRepository = get(),
             eventEmitter = get(),
             sessionContextOptimizer = get(),
-            documentAnalyzer = get()
+            documentAnalyzer = get(),
+            transactionManager = get()
+        )
+    }
+
+    /**
+     * DocumentStore gRPC service implementation
+     *
+     * Clean service layer that delegates to manager.
+     * Handles only transport protocol concerns.
+     */
+    single<com.unhinged.services.documentstore.DocumentStoreService> {
+        val logger = LoggerFactory.getLogger("DocumentStoreModule")
+        logger.info("Initializing DocumentStoreService with clean architecture")
+
+        com.unhinged.services.documentstore.DocumentStoreService(
+            documentManager = get()  // Single dependency!
         )
     }
     
