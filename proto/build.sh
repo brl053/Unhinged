@@ -100,7 +100,10 @@ protoc \
     --ts_proto_opt=exportCommonSymbols=false \
     --ts_proto_opt=outputServices=grpc-js \
     --proto_path="$PROTO_DIR" \
-    "$PROTO_DIR/document_store.proto"
+    "$PROTO_DIR/document_store.proto" \
+    "$PROTO_DIR/cdc_events.proto" \
+    "$PROTO_DIR/cdc_service.proto" \
+    "$PROTO_DIR/messaging.proto"
 
 # Generate Kotlin bindings for backend
 echo -e "${YELLOW}Generating Kotlin bindings...${NC}"
@@ -110,7 +113,10 @@ protoc \
     --kotlin_out="$PROJECT_ROOT/backend/src/main/kotlin" \
     --java_out="$PROJECT_ROOT/backend/src/main/kotlin" \
     --proto_path="$PROTO_DIR" \
-    "$PROTO_DIR/document_store.proto"
+    "$PROTO_DIR/document_store.proto" \
+    "$PROTO_DIR/cdc_events.proto" \
+    "$PROTO_DIR/cdc_service.proto" \
+    "$PROTO_DIR/messaging.proto"
 
 echo -e "${GREEN}✅ Kotlin bindings generated${NC}"
 

@@ -4,13 +4,28 @@
   "components": {
     "proto": {
       "version": "1.1.0",
-      "hash": "c3c5be7c604bfa726736da0f50b5ed24efc07d59c58207c9aeb5737ae1f8399c",
-      "lastUpdated": "2025-10-05T05:32:10Z",
+      "hash": "428cdba09611d53032ca330a1bf39a453e727421425de962303fd66a5084f283",
+      "lastUpdated": "2025-10-05T05:45:35Z",
       "schemas": {
         "document_store": {
           "version": "1.0.0",
           "hash": "f9cbcea3999af904d402f7d5181d7952a168f57f700e6663ed980a55cf1e0b51",
           "description": "Document store with versioning and session context"
+        },
+        "cdc_events": {
+          "version": "1.0.0",
+          "hash": "",
+          "description": "Change Data Capture events for system-wide event streaming"
+        },
+        "cdc_service": {
+          "version": "1.0.0",
+          "hash": "",
+          "description": "CDC service for event publishing and subscription"
+        },
+        "messaging": {
+          "version": "1.0.0",
+          "hash": "",
+          "description": "Inter-service messaging for LLM interactions and agent communication"
         }
       }
     },
@@ -34,9 +49,12 @@
     "1.0.0": {
       "date": "2025-01-04",
       "changes": [
-        "Initial DocumentStore protobuf schema",
-        "TypeScript and Kotlin code generation",
-        "Versioning and validation system"
+        "Complete DocumentStore protobuf schema with versioning and tagging",
+        "CDC Events schema for system-wide event streaming",
+        "CDC Service schema for event publishing and subscription",
+        "Messaging schema for inter-service communication",
+        "TypeScript and Kotlin code generation with version headers",
+        "Comprehensive versioning and validation system"
       ],
       "breaking": false
     }

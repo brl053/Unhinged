@@ -1,0 +1,370 @@
+syntax = "proto3";
+
+package unhinged.cdc;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "cdc_events.proto";
+
+// ============================================================================
+// CDC Service API v1.0.0
+// ============================================================================
+//
+// @version 1.0.0
+// @author Unhinged Team
+// @date 2025-01-04
+// @description Change Data Capture service for event streaming and subscriptions
+// @breaking false
+//
+// This service provides:
+// - Event publishing for all system components
+// - Event subscription with filtering and routing
+// - Event replay and recovery
+// - Dead letter queue management
+// - Event stream analytics
+// ============================================================================
+
+// ============================================================================
+// Event Publishing
+// ============================================================================
+
+// Publish a single event
+message PublishEventRequest {
+  UniversalEvent event = 1;
+  
+  // Publishing options
+  bool ensure_delivery = 2;
+  int32 retry_attempts = 3;
+  google.protobuf.Timestamp delivery_deadline = 4;
+  
+  // Routing options
+  repeated string target_subscribers = 5;
+  string routing_strategy = 6; // "broadcast", "round_robin", "sticky"
+}
+
+message PublishEventResponse {
+  bool success = 1;
+  string message = 2;
+  string event_id = 3;
+  int64 sequence_number = 4;
+  google.protobuf.Timestamp published_at = 5;
+}
+
+// Publish multiple events in batch
+message PublishEventsRequest {
+  repeated UniversalEvent events = 1;
+  
+  // Batch options
+  bool atomic = 2; // All or nothing
+  bool ensure_delivery = 3;
+  int32 retry_attempts = 4;
+}
+
+message PublishEventResult {
+  string event_id = 1;
+  bool success = 2;
+  string error_message = 3;
+  int64 sequence_number = 4;
+}
+
+message PublishEventsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated PublishEventResult results = 3;
+  int32 successful_count = 4;
+  int32 failed_count = 5;
+}
+
+// ============================================================================
+// Event Subscription
+// ============================================================================
+
+// Subscribe to event stream
+message SubscribeRequest {
+  string subscriber_id = 1;
+  string subscriber_name = 2;
+  
+  // Subscription filters
+  EventFilter filter = 3;
+  
+  // Subscription options
+  SubscriptionOptions options = 4;
+}
+
+message EventFilter {
+  // Event type filters
+  repeated string event_types = 1;
+  repeated string source_services = 2;
+  repeated string user_ids = 3;
+  repeated string session_ids = 4;
+  repeated string tags = 5;
+  
+  // Time range filters
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Timestamp end_time = 7;
+  
+  // Advanced filters
+  string jq_filter = 8; // JQ expression for complex filtering
+  google.protobuf.Struct metadata_filter = 9;
+}
+
+message SubscriptionOptions {
+  // Delivery options
+  string delivery_mode = 1; // "at_least_once", "at_most_once", "exactly_once"
+  int32 batch_size = 2;
+  int32 batch_timeout_ms = 3;
+  
+  // Replay options
+  bool replay_from_beginning = 4;
+  int64 replay_from_sequence = 5;
+  google.protobuf.Timestamp replay_from_time = 6;
+  
+  // Error handling
+  int32 max_retry_attempts = 7;
+  int32 retry_backoff_ms = 8;
+  bool send_to_dlq_on_failure = 9;
+}
+
+// Streaming response for subscriptions
+message EventStreamResponse {
+  oneof response_type {
+    EventBatch event_batch = 1;
+    SubscriptionStatus status = 2;
+    SubscriptionError error = 3;
+    Heartbeat heartbeat = 4;
+  }
+}
+
+message EventBatch {
+  repeated UniversalEvent events = 1;
+  int64 batch_sequence = 2;
+  google.protobuf.Timestamp batch_time = 3;
+  string checkpoint_token = 4;
+}
+
+message SubscriptionStatus {
+  string status = 1; // "active", "paused", "stopped"
+  int64 last_processed_sequence = 2;
+  int32 events_processed = 3;
+  int32 events_failed = 4;
+}
+
+message SubscriptionError {
+  string error_code = 1;
+  string error_message = 2;
+  bool is_recoverable = 3;
+  int32 retry_count = 4;
+}
+
+message Heartbeat {
+  google.protobuf.Timestamp timestamp = 1;
+  int64 current_sequence = 2;
+}
+
+// ============================================================================
+// Event Acknowledgment
+// ============================================================================
+
+message AcknowledgeEventsRequest {
+  string subscriber_id = 1;
+  repeated string event_ids = 2;
+  string checkpoint_token = 3;
+}
+
+message AcknowledgeEventsResponse {
+  bool success = 1;
+  string message = 2;
+  int32 acknowledged_count = 3;
+}
+
+// ============================================================================
+// Event Replay and Recovery
+// ============================================================================
+
+message ReplayEventsRequest {
+  string subscriber_id = 1;
+  
+  // Replay range
+  oneof replay_range {
+    TimeRange time_range = 2;
+    SequenceRange sequence_range = 3;
+    string checkpoint_token = 4;
+  }
+  
+  // Replay options
+  EventFilter filter = 5;
+  int32 batch_size = 6;
+  bool include_failed_events = 7;
+}
+
+message TimeRange {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+}
+
+message SequenceRange {
+  int64 start_sequence = 1;
+  int64 end_sequence = 2;
+}
+
+// ============================================================================
+// Dead Letter Queue Management
+// ============================================================================
+
+message ListDeadLetterEventsRequest {
+  string subscriber_id = 1;
+  google.protobuf.Timestamp since = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListDeadLetterEventsResponse {
+  repeated DeadLetterEvent events = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message DeadLetterEvent {
+  UniversalEvent original_event = 1;
+  string failure_reason = 2;
+  int32 retry_count = 3;
+  google.protobuf.Timestamp failed_at = 4;
+  google.protobuf.Timestamp last_retry_at = 5;
+}
+
+message ReprocessDeadLetterEventsRequest {
+  string subscriber_id = 1;
+  repeated string event_ids = 2;
+  bool reset_retry_count = 3;
+}
+
+message ReprocessDeadLetterEventsResponse {
+  bool success = 1;
+  string message = 2;
+  int32 reprocessed_count = 3;
+}
+
+// ============================================================================
+// Event Stream Analytics
+// ============================================================================
+
+message GetEventStatsRequest {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  repeated string event_types = 3;
+  repeated string source_services = 4;
+  string aggregation_interval = 5; // "1m", "5m", "1h", "1d"
+}
+
+message GetEventStatsResponse {
+  repeated EventStats stats = 1;
+}
+
+message EventStats {
+  google.protobuf.Timestamp timestamp = 1;
+  string event_type = 2;
+  string source_service = 3;
+  int64 event_count = 4;
+  double events_per_second = 5;
+  double avg_processing_time_ms = 6;
+  int64 failed_count = 7;
+}
+
+// ============================================================================
+// Subscription Management
+// ============================================================================
+
+message ListSubscriptionsRequest {
+  string subscriber_id = 1;
+  bool include_inactive = 2;
+}
+
+message ListSubscriptionsResponse {
+  repeated SubscriptionInfo subscriptions = 1;
+}
+
+message SubscriptionInfo {
+  string subscriber_id = 1;
+  string subscriber_name = 2;
+  EventFilter filter = 3;
+  SubscriptionOptions options = 4;
+  string status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp last_active_at = 7;
+  int64 events_processed = 8;
+  int64 events_failed = 9;
+}
+
+message UpdateSubscriptionRequest {
+  string subscriber_id = 1;
+  EventFilter filter = 2;
+  SubscriptionOptions options = 3;
+}
+
+message UpdateSubscriptionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteSubscriptionRequest {
+  string subscriber_id = 1;
+}
+
+message DeleteSubscriptionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ============================================================================
+// Health and Status
+// ============================================================================
+
+message GetServiceStatusRequest {}
+
+message GetServiceStatusResponse {
+  bool healthy = 1;
+  string status = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  ServiceMetrics metrics = 4;
+}
+
+message ServiceMetrics {
+  int64 total_events_published = 1;
+  int64 total_events_delivered = 2;
+  int64 active_subscriptions = 3;
+  int64 events_in_dlq = 4;
+  double avg_publish_latency_ms = 5;
+  double avg_delivery_latency_ms = 6;
+}
+
+// ============================================================================
+// Service Definition
+// ============================================================================
+
+service CDCService {
+  // Event publishing
+  rpc PublishEvent(PublishEventRequest) returns (PublishEventResponse);
+  rpc PublishEvents(PublishEventsRequest) returns (PublishEventsResponse);
+  
+  // Event subscription (streaming)
+  rpc Subscribe(SubscribeRequest) returns (stream EventStreamResponse);
+  rpc AcknowledgeEvents(AcknowledgeEventsRequest) returns (AcknowledgeEventsResponse);
+  
+  // Event replay
+  rpc ReplayEvents(ReplayEventsRequest) returns (stream EventStreamResponse);
+  
+  // Dead letter queue
+  rpc ListDeadLetterEvents(ListDeadLetterEventsRequest) returns (ListDeadLetterEventsResponse);
+  rpc ReprocessDeadLetterEvents(ReprocessDeadLetterEventsRequest) returns (ReprocessDeadLetterEventsResponse);
+  
+  // Analytics
+  rpc GetEventStats(GetEventStatsRequest) returns (GetEventStatsResponse);
+  
+  // Subscription management
+  rpc ListSubscriptions(ListSubscriptionsRequest) returns (ListSubscriptionsResponse);
+  rpc UpdateSubscription(UpdateSubscriptionRequest) returns (UpdateSubscriptionResponse);
+  rpc DeleteSubscription(DeleteSubscriptionRequest) returns (DeleteSubscriptionResponse);
+  
+  // Health and status
+  rpc GetServiceStatus(GetServiceStatusRequest) returns (GetServiceStatusResponse);
+}
