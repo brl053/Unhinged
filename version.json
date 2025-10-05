@@ -4,8 +4,8 @@
   "components": {
     "proto": {
       "version": "1.1.0",
-      "hash": "428cdba09611d53032ca330a1bf39a453e727421425de962303fd66a5084f283",
-      "lastUpdated": "2025-10-05T05:45:35Z",
+      "hash": "9040bc7d7e69f29b577da2626f43570fce959d5db113646999790a8dc92b2fce",
+      "lastUpdated": "2025-10-05T18:41:14Z",
       "schemas": {
         "document_store": {
           "version": "1.0.0",
