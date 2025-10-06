@@ -190,12 +190,48 @@ class MigrationAnalyzer:
             "analysis_date": datetime.now().isoformat()
         }
     
+    def analyze_bundle_impact(self, component_name: str) -> Dict:
+        """Measure production bundle size impact of migration."""
+        print(f"📦 Analyzing bundle impact for {component_name}")
+
+        try:
+            # Run webpack build with stats
+            result = subprocess.run([
+                "npm", "run", "build", "--", "--json"
+            ], capture_output=True, text=True, cwd=self.frontend_path)
+
+            if result.returncode != 0:
+                return {"error": "Bundle build failed", "stderr": result.stderr}
+
+            # Parse webpack stats (simplified - would need full webpack-bundle-analyzer integration)
+            # For now, get basic bundle size info
+            build_dir = self.frontend_path / "dist"
+            if not build_dir.exists():
+                build_dir = self.frontend_path / "build"
+
+            if build_dir.exists():
+                js_files = list(build_dir.glob("**/*.js"))
+                total_size = sum(f.stat().st_size for f in js_files)
+
+                return {
+                    "bundle_files": len(js_files),
+                    "total_bundle_size": total_size,
+                    "total_bundle_size_mb": round(total_size / (1024 * 1024), 2),
+                    "analysis_note": "Basic bundle analysis - integrate webpack-bundle-analyzer for detailed tree-shaking analysis"
+                }
+            else:
+                return {"error": "Build directory not found"}
+
+        except Exception as e:
+            return {"error": f"Bundle analysis failed: {e}"}
+
     def compare_migration(self, component_name: str) -> Dict:
         """Compare pre and post migration metrics."""
         print(f"📊 Comparing migration metrics for {component_name}")
-        
+
         pre_metrics = self.analyze_component(component_name, pre_migration=True)
         post_metrics = self.analyze_component(component_name, pre_migration=False)
+        bundle_metrics = self.analyze_bundle_impact(component_name)
         
         if "error" in pre_metrics or "error" in post_metrics:
             return {
@@ -219,6 +255,7 @@ class MigrationAnalyzer:
             "comparison_date": datetime.now().isoformat(),
             "pre_migration": pre_metrics,
             "post_migration": post_metrics,
+            "bundle_analysis": bundle_metrics,
             "changes": {
                 "loc_before": pre_loc,
                 "loc_after": post_loc,
@@ -229,7 +266,8 @@ class MigrationAnalyzer:
                 "hard_coded_reduction": pre_hard_coded - post_hard_coded,
                 "design_token_coverage": post_metrics["totals"]["design_token_coverage"],
                 "file_count": post_metrics["totals"]["file_count"],
-                "structure_improvement": "monolithic → recursive"
+                "structure_improvement": "monolithic → recursive",
+                "bundle_impact": bundle_metrics.get("total_bundle_size_mb", "unknown")
             }
         }
         

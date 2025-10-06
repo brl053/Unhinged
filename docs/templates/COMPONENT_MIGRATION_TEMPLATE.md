@@ -109,6 +109,16 @@
 - [ ] **Responsive behavior** works across breakpoints
 - [ ] **Theme switching** works (if implemented)
 
+### **⚡ Performance Verification (15 min)**
+- [ ] **Lighthouse score**: `___` (target: >90, baseline: `___`)
+- [ ] **Component render time**: `___` ms (baseline: `___` ms)
+  - Use React DevTools Profiler: Record → Interact → Stop
+  - Compare render duration before/after migration
+- [ ] **Memory footprint**: `___` MB (baseline: `___` MB)
+  - Chrome DevTools → Memory tab → Take heap snapshot
+- [ ] **Bundle size impact**: `___` MB (run: `python scripts/python/analyze_migration.py --component ComponentName --compare`)
+- [ ] **Tree-shaking effectiveness**: Verify unused exports are eliminated
+
 ### **📊 Metrics Collection (10 min)**
 - [ ] **LOC comparison**: 
   - Original: `[XXX]` LOC
