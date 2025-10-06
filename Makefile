@@ -295,6 +295,37 @@ test-vision: ## Test Vision AI service
 		$(call log_success,Vision AI service healthy) || \
 		$(call log_error,Vision AI service test failed)
 
+test-multimodal: ## Run comprehensive multimodal AI architecture tests
+	$(call log_info,🤖 Running multimodal AI integration tests...)
+	$(call log_info,📋 Testing complete gRPC pipeline: Kotlin ↔ Python services)
+	@$(MAKE) test-multimodal-backend
+	@$(MAKE) test-multimodal-e2e
+	$(call log_success,Multimodal architecture tests completed)
+
+test-multimodal-backend: ## Run multimodal backend integration tests
+	$(call log_info,🧪 Running multimodal backend integration tests...)
+	$(call run_gradle,test --tests "*MultimodalIntegrationTest*")
+	$(call run_gradle,test --tests "*MultimodalControllerTest*")
+	$(call log_success,Backend integration tests completed)
+
+test-multimodal-e2e: ## Run multimodal end-to-end tests with Playwright
+	$(call log_info,🎭 Running multimodal E2E tests...)
+	@cd frontend && npx playwright test multimodal-e2e.spec.ts --reporter=html
+	$(call log_success,End-to-end tests completed)
+
+test-multimodal-full: ## Full multimodal test suite with service startup
+	$(call log_info,🚀 Running full multimodal architecture test suite...)
+	@$(MAKE) multimodal-start
+	@sleep 30  # Wait for services to be ready
+	@$(MAKE) test-multimodal || ($(MAKE) multimodal-stop && exit 1)
+	@$(MAKE) multimodal-stop
+	$(call log_success,Full multimodal test suite completed)
+
+test-multimodal-performance: ## Run multimodal performance benchmarks
+	$(call log_info,⚡ Running multimodal performance benchmarks...)
+	@cd frontend && npx playwright test multimodal-e2e.spec.ts --grep "Performance benchmarking"
+	$(call log_success,Performance benchmarks completed)
+
 test-db: ## Test database connection
 	$(call log_info,🗄️ Testing database connection...)
 	@$(call docker_db_exec,psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT 'Database connection successful!' as status;") && \
