@@ -147,9 +147,9 @@ class PreCommitChecker:
     def check_typescript(self) -> bool:
         """Check TypeScript compilation."""
         try:
-            print("  🔍 Running TypeScript type check...")
+            print("  🔍 Running TypeScript compilation check...")
             result = subprocess.run([
-                "npm", "run", "type-check"
+                "npm", "run", "build"
             ], capture_output=True, text=True, cwd=self.frontend_path)
             
             if result.returncode == 0:

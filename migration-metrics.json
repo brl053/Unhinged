@@ -1,0 +1,105 @@
+{
+  "PromptSurgeryPanel_2025-10-05T18:22:45.755821": {
+    "component_name": "PromptSurgeryPanel",
+    "comparison_date": "2025-10-05T18:22:45.755792",
+    "pre_migration": {
+      "source": "PromptSurgeryPanel.tsx (from git HEAD~2)",
+      "loc": 425,
+      "hard_coded_values": 115,
+      "design_tokens": 0,
+      "typescript_safe": false,
+      "has_design_system_import": false,
+      "analysis_date": "2025-10-05T18:22:45.754240"
+    },
+    "post_migration": {
+      "component_name": "PromptSurgeryPanel",
+      "structure_type": "recursive",
+      "analysis_date": "2025-10-05T18:22:45.754383",
+      "files": {
+        "types.ts": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/types.ts",
+          "loc": 118,
+          "hard_coded_values": 0,
+          "design_tokens": 0,
+          "typescript_safe": false,
+          "has_design_system_import": true,
+          "analysis_date": "2025-10-05T18:22:45.754482"
+        },
+        "hooks.ts": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/hooks.ts",
+          "loc": 252,
+          "hard_coded_values": 0,
+          "design_tokens": 0,
+          "typescript_safe": true,
+          "has_design_system_import": false,
+          "analysis_date": "2025-10-05T18:22:45.754755"
+        },
+        "styles.ts": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/styles.ts",
+          "loc": 298,
+          "hard_coded_values": 5,
+          "design_tokens": 94,
+          "typescript_safe": true,
+          "has_design_system_import": false,
+          "analysis_date": "2025-10-05T18:22:45.755127"
+        },
+        "constants.ts": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/constants.ts",
+          "loc": 112,
+          "hard_coded_values": 0,
+          "design_tokens": 0,
+          "typescript_safe": true,
+          "has_design_system_import": false,
+          "analysis_date": "2025-10-05T18:22:45.755246"
+        },
+        "utils.ts": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/utils.ts",
+          "loc": 217,
+          "hard_coded_values": 1,
+          "design_tokens": 36,
+          "typescript_safe": false,
+          "has_design_system_import": true,
+          "analysis_date": "2025-10-05T18:22:45.755479"
+        },
+        "index.ts": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/index.ts",
+          "loc": 8,
+          "hard_coded_values": 0,
+          "design_tokens": 0,
+          "typescript_safe": true,
+          "has_design_system_import": false,
+          "analysis_date": "2025-10-05T18:22:45.755509"
+        },
+        "PromptSurgeryPanel.tsx": {
+          "source": "/home/e-bliss-station-1/projects/Unhinged/frontend/src/components/common/PromptSurgeryPanel/PromptSurgeryPanel.tsx",
+          "loc": 204,
+          "hard_coded_values": 3,
+          "design_tokens": 0,
+          "typescript_safe": true,
+          "has_design_system_import": false,
+          "analysis_date": "2025-10-05T18:22:45.755784"
+        }
+      },
+      "totals": {
+        "file_count": 7,
+        "total_loc": 1209,
+        "total_hard_coded_values": 9,
+        "total_design_tokens": 130,
+        "typescript_safety": false,
+        "design_token_coverage": 93.5
+      }
+    },
+    "changes": {
+      "loc_before": 425,
+      "loc_after": 1209,
+      "loc_change": 784,
+      "loc_change_percent": 184.5,
+      "hard_coded_before": 115,
+      "hard_coded_after": 9,
+      "hard_coded_reduction": 106,
+      "design_token_coverage": 93.5,
+      "file_count": 7,
+      "structure_improvement": "monolithic \u2192 recursive"
+    }
+  }
+}

@@ -1,231 +1,303 @@
-/**
- * @fileoverview Event Log Component
- * 
- * @description
- * Real-time event log viewer for CDC events. Shows raw JSON events
- * with WebSocket updates and basic filtering.
- * 
- * @author LLM Agent
- * @version 1.0.0
- * @since 2025-01-04
- */
+// ============================================================================
+// Event Log - Real-time Event Viewer
+// ============================================================================
+//
+// @file EventLog.tsx
+// @version 2.0.0
+// @author Unhinged Design System Team
+// @date 2025-10-06
+// @description Real-time event log viewer with WebSocket integration
+//
+// This component provides:
+// - Real-time event streaming via WebSocket
+// - Event filtering and search
+// - Auto-scroll functionality
+// - Connection status monitoring
+// - Event type categorization
+// ============================================================================
 
-import React, { useState, useEffect, useRef } from 'react';
-import './EventLog.css';
+import React, { useRef } from 'react';
+import styled from 'styled-components';
+import { EventLogProps } from './common/EventLog/types';
+import { useEventLog, useAutoScroll } from './common/EventLog/hooks';
+import { 
+  formatTimestamp, 
+  formatJSON, 
+  getEventTypeMetadata, 
+  getEventKey,
+  truncateText 
+} from './common/EventLog/utils';
+import { CONNECTION_STATUS_METADATA } from './common/EventLog/constants';
+import {
+  eventLogContainerStyles,
+  eventLogHeaderStyles,
+  eventLogTitleStyles,
+  eventLogControlsStyles,
+  connectionStatusStyles,
+  filterInputStyles,
+  autoScrollToggleStyles,
+  clearButtonStyles,
+  eventCountStyles,
+  eventListContainerStyles,
+  noEventsStyles,
+  eventItemStyles,
+  eventHeaderStyles,
+  eventTypeStyles,
+  eventTimestampStyles,
+  eventIdStyles,
+  eventMetadataStyles,
+  eventPayloadStyles,
+  jsonPayloadStyles,
+  loadingSpinnerStyles,
+  errorMessageStyles
+} from './common/EventLog/styles';
 
-interface Event {
-  event_id: string;
-  event_type: string;
-  timestamp_ms: number;
-  user_id: string;
-  session_id: string;
-  payload: any;
-  created_at: string;
-}
+// ============================================================================
+// Styled Components
+// ============================================================================
 
-export const EventLog: React.FC = () => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [filter, setFilter] = useState('');
-  const [autoScroll, setAutoScroll] = useState(true);
-  const wsRef = useRef<WebSocket | null>(null);
-  const logContainerRef = useRef<HTMLDivElement>(null);
+const EventLogContainer = styled.div`
+  ${eventLogContainerStyles}
+`;
 
-  // Connect to WebSocket and load initial events
-  useEffect(() => {
-    loadInitialEvents();
-    connectWebSocket();
+const EventLogHeader = styled.div`
+  ${eventLogHeaderStyles}
+`;
 
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, []);
+const EventLogTitle = styled.h2`
+  ${eventLogTitleStyles}
+`;
 
-  // Auto-scroll to bottom when new events arrive
-  useEffect(() => {
-    if (autoScroll && logContainerRef.current) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [events, autoScroll]);
+const EventLogControls = styled.div`
+  ${eventLogControlsStyles}
+`;
 
-  /**
-   * Load initial events from API
-   */
-  const loadInitialEvents = async () => {
-    try {
-      const response = await fetch('/api/events');
-      if (response.ok) {
-        const initialEvents = await response.json();
-        setEvents(initialEvents);
-      }
-    } catch (error) {
-      console.error('Failed to load initial events:', error);
-    }
-  };
+const ConnectionStatus = styled.div`
+  ${connectionStatusStyles}
+`;
 
-  /**
-   * Connect to WebSocket for real-time events
-   */
-  const connectWebSocket = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/events/stream`;
-    
-    wsRef.current = new WebSocket(wsUrl);
+const FilterInput = styled.input`
+  ${filterInputStyles}
+`;
 
-    wsRef.current.onopen = () => {
-      console.log('📡 WebSocket connected');
-      setIsConnected(true);
-    };
+const AutoScrollToggle = styled.label`
+  ${autoScrollToggleStyles}
+`;
 
-    wsRef.current.onmessage = (event) => {
-      try {
-        const newEvent = JSON.parse(event.data);
-        setEvents(prev => [newEvent, ...prev].slice(0, 1000)); // Keep last 1000 events
-      } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
-      }
-    };
+const ClearButton = styled.button`
+  ${clearButtonStyles}
+`;
 
-    wsRef.current.onclose = () => {
-      console.log('📡 WebSocket disconnected');
-      setIsConnected(false);
-      
-      // Reconnect after 3 seconds
-      setTimeout(connectWebSocket, 3000);
-    };
+const EventCount = styled.div`
+  ${eventCountStyles}
+`;
 
-    wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setIsConnected(false);
-    };
-  };
+const EventListContainer = styled.div`
+  ${eventListContainerStyles}
+`;
 
-  /**
-   * Clear all events
-   */
-  const clearEvents = () => {
-    setEvents([]);
-  };
+const NoEvents = styled.div`
+  ${noEventsStyles}
+`;
 
-  /**
-   * Format timestamp for display
-   */
-  const formatTimestamp = (timestampMs: number): string => {
-    return new Date(timestampMs).toLocaleString();
-  };
+const EventItem = styled.div`
+  ${eventItemStyles}
+`;
 
-  /**
-   * Format JSON for display
-   */
-  const formatJSON = (obj: any): string => {
-    return JSON.stringify(obj, null, 2);
-  };
+const EventHeader = styled.div`
+  ${eventHeaderStyles}
+`;
 
-  /**
-   * Filter events based on search term
-   */
-  const filteredEvents = events.filter(event => {
-    if (!filter) return true;
-    
-    const searchTerm = filter.toLowerCase();
-    return (
-      event.event_type.toLowerCase().includes(searchTerm) ||
-      event.user_id.toLowerCase().includes(searchTerm) ||
-      event.session_id.toLowerCase().includes(searchTerm) ||
-      JSON.stringify(event.payload).toLowerCase().includes(searchTerm)
-    );
-  });
+const EventType = styled.span`
+  ${eventTypeStyles}
+`;
 
+const EventTimestamp = styled.span`
+  ${eventTimestampStyles}
+`;
+
+const EventId = styled.span`
+  ${eventIdStyles}
+`;
+
+const EventMetadata = styled.div`
+  ${eventMetadataStyles}
+`;
+
+const EventPayload = styled.div`
+  ${eventPayloadStyles}
+`;
+
+const JsonPayload = styled.pre`
+  ${jsonPayloadStyles}
+`;
+
+const LoadingSpinner = styled.div`
+  ${loadingSpinnerStyles}
+`;
+
+const ErrorMessage = styled.div`
+  ${errorMessageStyles}
+`;
+
+// ============================================================================
+// Event Log Component
+// ============================================================================
+
+export const EventLog: React.FC<EventLogProps> = ({
+  maxEvents = 1000,
+  autoScroll: initialAutoScroll = true,
+  initialFilter = '',
+  wsUrl,
+  apiEndpoint = '/api/events',
+  showMetadata = true,
+  showPayload = true,
+  eventTypeColors = {},
+  onEventsUpdate,
+  onConnectionChange,
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  
+  // Use event log hook for state management
+  const { state, actions, filteredEvents, metrics } = useEventLog(
+    maxEvents,
+    wsUrl,
+    apiEndpoint
+  );
+  
+  // Use auto-scroll hook
+  useAutoScroll(containerRef, state.autoScroll, state.events);
+  
+  // Notify parent components of changes
+  React.useEffect(() => {
+    onEventsUpdate?.(state.events);
+  }, [state.events, onEventsUpdate]);
+  
+  React.useEffect(() => {
+    onConnectionChange?.(state.connectionStatus);
+  }, [state.connectionStatus, onConnectionChange]);
+  
+  // Get connection status metadata
+  const connectionMeta = CONNECTION_STATUS_METADATA[state.connectionStatus];
+  
   return (
-    <div className="event-log">
-      {/* Header */}
-      <div className="event-log-header">
-        <h2>🔍 Event Log</h2>
-        <div className="event-log-controls">
-          <div className="connection-status">
-            <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
-              {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
-            </span>
-          </div>
-          
-          <input
+    <EventLogContainer>
+      {/* Header with title and controls */}
+      <EventLogHeader>
+        <EventLogTitle>
+          📊 Event Log
+          <ConnectionStatus 
+            data-status={state.connectionStatus}
+            title={`Connection: ${connectionMeta.label}`}
+          >
+            {connectionMeta.icon} {connectionMeta.label}
+          </ConnectionStatus>
+        </EventLogTitle>
+        
+        <EventLogControls>
+          <FilterInput
             type="text"
             placeholder="Filter events..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="filter-input"
+            value={state.filter}
+            onChange={(e) => actions.setFilter(e.target.value)}
           />
           
-          <label className="auto-scroll-toggle">
+          <AutoScrollToggle>
             <input
               type="checkbox"
-              checked={autoScroll}
-              onChange={(e) => setAutoScroll(e.target.checked)}
+              checked={state.autoScroll}
+              onChange={actions.toggleAutoScroll}
             />
             Auto-scroll
-          </label>
+          </AutoScrollToggle>
           
-          <button onClick={clearEvents} className="clear-button">
+          <ClearButton
+            onClick={actions.clearEvents}
+            disabled={state.events.length === 0}
+          >
             Clear
-          </button>
-        </div>
-      </div>
-
-      {/* Event count */}
-      <div className="event-count">
-        Showing {filteredEvents.length} of {events.length} events
-      </div>
-
-      {/* Event list */}
-      <div 
-        className="event-log-container" 
-        ref={logContainerRef}
-        onScroll={() => {
-          if (logContainerRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
-            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
-            setAutoScroll(isAtBottom);
-          }
-        }}
-      >
-        {filteredEvents.length === 0 ? (
-          <div className="no-events">
-            {events.length === 0 ? (
-              <p>No events yet. Try making an LLM inference request.</p>
-            ) : (
-              <p>No events match the current filter.</p>
-            )}
-          </div>
-        ) : (
-          filteredEvents.map((event) => (
-            <div key={event.event_id} className="event-item">
-              <div className="event-header">
-                <span className="event-type">{event.event_type}</span>
-                <span className="event-timestamp">
-                  {formatTimestamp(event.timestamp_ms)}
-                </span>
-                <span className="event-id">{event.event_id}</span>
-              </div>
-              
-              <div className="event-metadata">
-                <span>User: {event.user_id}</span>
-                <span>Session: {event.session_id}</span>
-              </div>
-              
-              <div className="event-payload">
-                <details>
-                  <summary>Payload</summary>
-                  <pre className="json-payload">
-                    {formatJSON(event.payload)}
-                  </pre>
-                </details>
-              </div>
-            </div>
-          ))
+          </ClearButton>
+        </EventLogControls>
+      </EventLogHeader>
+      
+      {/* Event count information */}
+      <EventCount>
+        Showing {state.filteredCount} of {state.totalCount} events
+        {state.filter && ` (filtered by "${state.filter}")`}
+        {metrics.warnings && metrics.warnings.length > 0 && (
+          <span style={{ color: '#f59e0b', marginLeft: '16px' }}>
+            ⚠️ {metrics.warnings[0]}
+          </span>
         )}
-      </div>
-    </div>
+      </EventCount>
+      
+      {/* Event list */}
+      <EventListContainer ref={containerRef}>
+        {state.isLoading && (
+          <LoadingSpinner>
+            Loading events...
+          </LoadingSpinner>
+        )}
+        
+        {state.error && (
+          <ErrorMessage>
+            {state.error}
+          </ErrorMessage>
+        )}
+        
+        {!state.isLoading && !state.error && filteredEvents.length === 0 && (
+          <NoEvents>
+            {state.filter ? 'No events match your filter' : 'No events to display'}
+          </NoEvents>
+        )}
+        
+        {filteredEvents.map((event) => {
+          const eventMeta = getEventTypeMetadata(event.event_type);
+          const customColor = eventTypeColors[event.event_type];
+          
+          return (
+            <EventItem key={getEventKey(event)}>
+              <EventHeader>
+                <EventType
+                  data-event-type={event.event_type}
+                  style={customColor ? { backgroundColor: customColor } : {}}
+                >
+                  {eventMeta.icon} {eventMeta.displayName || event.event_type}
+                </EventType>
+                
+                <EventTimestamp>
+                  {formatTimestamp(event.timestamp_ms, 'absolute', true)}
+                </EventTimestamp>
+                
+                <EventId>
+                  {truncateText(event.event_id, 12)}
+                </EventId>
+              </EventHeader>
+              
+              {showMetadata && (
+                <EventMetadata>
+                  <span>User: {event.user_id}</span>
+                  <span>Session: {truncateText(event.session_id, 16)}</span>
+                </EventMetadata>
+              )}
+              
+              {showPayload && event.payload && (
+                <EventPayload>
+                  <details>
+                    <summary>Payload</summary>
+                    <JsonPayload>
+                      {formatJSON(event.payload, 2, 2000)}
+                    </JsonPayload>
+                  </details>
+                </EventPayload>
+              )}
+            </EventItem>
+          );
+        })}
+      </EventListContainer>
+    </EventLogContainer>
   );
 };
+
+// Default export for convenience
+export default EventLog;
