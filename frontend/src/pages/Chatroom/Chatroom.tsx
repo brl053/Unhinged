@@ -7,7 +7,7 @@ import { InlineChildren } from "../../../lib/components/InlineChildren/InlineChi
 import React from "react";
 import { InlineChildrenAlignment, InlineChildrenJustification } from "../../../lib/components/InlineChildren/types";
 import { VoiceRecorder } from "../../components/common/VoiceRecorder";
-import { EventFeed, useEventFeed } from "../../components/common/EventFeed";
+import { EventFeed, useEventFeed, createEventItem } from "../../components/common/EventFeed";
 import { PromptSurgeryPanel } from "../../components/common/PromptSurgeryPanel";
 import { frontendEventService } from "../../services/EventService";
 
@@ -16,6 +16,11 @@ export const Chatroom: React.FC = () => {
     const [messageHistroy, setMessageHistory] = useState<ChatMessage[]>([]);
     const { mutate, isPending, isError, data, error } = useSendMessage();
     const { events, addEvent, clearEvents } = useEventFeed();
+
+    // Wrapper for legacy event format
+    const handleLegacyEvent = (event: { type: string; source: string; data: any }) => {
+      addEvent(createEventItem(event.type, event.source, event.data, 'info'));
+    };
 
     // Prompt Surgery Panel state
     const [showSurgeryPanel, setShowSurgeryPanel] = useState(false);
@@ -29,15 +34,16 @@ export const Chatroom: React.FC = () => {
       setMessageHistory([...messageHistroy, newMessage])
 
       // Add event to live feed
-      addEvent({
-        type: 'chat_message_sent',
-        source: 'react-frontend',
-        data: {
+      addEvent(createEventItem(
+        'chat_message_sent',
+        'react-frontend',
+        {
           messageContent: userInput.substring(0, 50),
           messageRole: 'user',
           messageSource: 'text'
-        }
-      });
+        },
+        'info'
+      ));
 
       // Log chat message sent from text
       await frontendEventService.logChatMessageSent(userInput, 'text');
@@ -51,14 +57,15 @@ export const Chatroom: React.FC = () => {
       setMessageHistory([...messageHistroy, newMessage])
 
       // Add event to live feed
-      addEvent({
-        type: 'chat_message_received',
-        source: 'react-frontend',
-        data: {
+      addEvent(createEventItem(
+        'chat_message_received',
+        'react-frontend',
+        {
           messageContent: data.substring(0, 50),
           messageRole: 'assistant'
-        }
-      });
+        },
+        'success'
+      ));
 
       // Log chat message received
       frontendEventService.logChatMessageReceived(data).catch(console.error);
@@ -79,14 +86,15 @@ export const Chatroom: React.FC = () => {
       };
 
       // Add event to live feed
-      addEvent({
-        type: 'voice_transcription_captured',
-        source: 'voice-recorder',
-        data: {
+      addEvent(createEventItem(
+        'voice_transcription_captured',
+        'voice-recorder',
+        {
           transcriptionText: text.substring(0, 50),
           routedToSurgery: true
-        }
-      });
+        },
+        'info'
+      ));
 
       // Route to Prompt Surgery Panel instead of direct chat
       setSurgeryPanelSources([voiceSource]);
@@ -101,13 +109,14 @@ export const Chatroom: React.FC = () => {
       console.error('Voice recording error:', error);
 
       // Add error event to live feed
-      addEvent({
-        type: 'voice_recording_error',
-        source: 'voice-recorder',
-        data: {
+      addEvent(createEventItem(
+        'voice_recording_error',
+        'voice-recorder',
+        {
           error: error
-        }
-      });
+        },
+        'error'
+      ));
 
       // Log error event
       await frontendEventService.logError('voice_recording_ui_error', error, undefined, {
@@ -124,15 +133,16 @@ export const Chatroom: React.FC = () => {
       setMessageHistory([...messageHistroy, newMessage]);
 
       // Add event to live feed
-      addEvent({
-        type: 'prompt_surgery_sent',
-        source: 'prompt-surgery-panel',
-        data: {
+      addEvent(createEventItem(
+        'prompt_surgery_sent',
+        'prompt-surgery-panel',
+        {
           finalPromptLength: finalPrompt.length,
           sourceCount: sources.length,
           messageSource: 'surgery'
-        }
-      });
+        },
+        'success'
+      ));
 
       // Log crafted prompt sent (use 'text' as closest match)
       await frontendEventService.logChatMessageSent(finalPrompt, 'text');
@@ -147,13 +157,14 @@ export const Chatroom: React.FC = () => {
 
     // Handle prompt surgery panel cancel
     const handleSurgeryPanelCancel = () => {
-      addEvent({
-        type: 'prompt_surgery_cancelled',
-        source: 'prompt-surgery-panel',
-        data: {
+      addEvent(createEventItem(
+        'prompt_surgery_cancelled',
+        'prompt-surgery-panel',
+        {
           sourceCount: surgeryPanelSources.length
-        }
-      });
+        },
+        'warn'
+      ));
 
       setShowSurgeryPanel(false);
       setSurgeryPanelSources([]);
@@ -175,13 +186,14 @@ export const Chatroom: React.FC = () => {
       setShowSurgeryPanel(true);
       setUserInput(''); // Clear input since it's now in surgery panel
 
-      addEvent({
-        type: 'prompt_surgery_manual_trigger',
-        source: 'chat-interface',
-        data: {
+      addEvent(createEventItem(
+        'prompt_surgery_manual_trigger',
+        'chat-interface',
+        {
           hasInitialContent: !!userInput
-        }
-      });
+        },
+        'info'
+      ));
     };
 
     console.log(messageHistroy)
@@ -222,7 +234,7 @@ export const Chatroom: React.FC = () => {
             <VoiceRecorder
               onTranscription={handleVoiceTranscription}
               onError={handleVoiceError}
-              onEvent={addEvent}
+              onEvent={handleLegacyEvent}
               disabled={isPending}
             />
             </InlineChildren>
@@ -234,7 +246,7 @@ export const Chatroom: React.FC = () => {
             initialSources={surgeryPanelSources}
             onSendPrompt={handleSurgeryPanelSend}
             onCancel={handleSurgeryPanelCancel}
-            onEvent={addEvent}
+            onEvent={handleLegacyEvent}
             disabled={isPending}
           />
 
