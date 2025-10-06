@@ -19,6 +19,7 @@
     "@tanstack/react-query": "^5.66.0",
     "@types/google-protobuf": "^3.15.12",
     "@types/node": "^24.6.2",
+    "@unhinged/events": "file:../shared/events",
     "grpc-web": "^2.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

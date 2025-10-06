@@ -131,8 +131,8 @@ class ChatDomainService {
             userMessage.length > 100 -> 
                 "That's quite a detailed message! Let me break this down: ${generateDetailedResponse(userMessage, recentHistory)}"
             
-            recentHistory.isNotEmpty() -> 
-                "Building on our previous discussion, ${generateContinuationResponse(recentHistory)}"
+            recentHistory.isNotEmpty() ->
+                "I understand. ${generateNaturalResponse(userMessage, recentHistory)}"
             
             else -> generateGenericResponse()
         }
@@ -171,6 +171,27 @@ class ChatDomainService {
             "continuing from your point about '${lastUserMessage.content.take(50)}...'"
         } else {
             "I can elaborate further on what we were discussing."
+        }
+    }
+
+    private fun generateNaturalResponse(userMessage: String, history: List<ChatMessage>): String {
+        val responses = listOf(
+            "That's interesting! Let me think about that.",
+            "I see what you mean. Here's my perspective on that.",
+            "Good point! That reminds me of something related.",
+            "Absolutely! I can help you with that.",
+            "That's a great question. Let me break it down for you.",
+            "I understand your perspective. Here's what I think.",
+            "Fascinating! That opens up some interesting possibilities.",
+            "You're right to bring that up. It's worth considering.",
+            "That's a thoughtful observation. I agree with your approach.",
+            "Excellent question! The answer depends on a few factors."
+        )
+
+        return responses.random() + " " + when {
+            userMessage.contains("?") -> "The key thing to understand is that this involves multiple aspects."
+            userMessage.length > 50 -> "You've covered a lot of ground there, and I think the main point is valid."
+            else -> "Thanks for sharing that with me."
         }
     }
     

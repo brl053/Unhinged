@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { chatService, ChatRequest, ChatResponse, ChatSession, ConversationResponse } from '../services/ChatService';
+import { audioService, TranscriptionResponse, ServiceHealth } from '../services/AudioService';
 
 /**
  * React Query hooks for chat functionality - Clean Architecture
@@ -52,5 +53,34 @@ export const useHealthCheck = () => {
     queryKey: ['health'],
     queryFn: () => chatService.healthCheck(),
     refetchInterval: 30000, // Check every 30 seconds
+  });
+};
+
+// ============================================================================
+// Audio Query Hooks - Pure Functional Approach
+// ============================================================================
+
+/**
+ * Hook for audio transcription
+ * Pure function: Blob in, transcription out
+ */
+export const useTranscribeAudio = () => {
+  return useMutation({
+    mutationFn: async (audioBlob: Blob): Promise<TranscriptionResponse> => {
+      return await audioService.transcribeAudio(audioBlob);
+    },
+  });
+};
+
+/**
+ * Hook for audio service health monitoring
+ * Same pattern as chat health check
+ */
+export const useAudioHealth = () => {
+  return useQuery({
+    queryKey: ['audio-health'],
+    queryFn: () => audioService.checkHealth(),
+    refetchInterval: 30000, // Check every 30 seconds
+    retry: 3,
   });
 };
