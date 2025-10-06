@@ -44,6 +44,7 @@ DB_USER := postgres
 # Service ports
 PORT_BACKEND := 8080
 PORT_TTS := 8000
+PORT_VISION := 8001
 PORT_DB := 5432
 PORT_KAFKA := 9092
 PORT_GRPC_DEMO := 9090
@@ -103,6 +104,8 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(BLUE)💡 Quick start: make setup && make dev$(RESET)"
+	@echo "$(BLUE)📚 Documentation: make docs-update$(RESET)"
+	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
 
 status: ## Show status of all services
 	$(call log_info,📊 Service Status)
@@ -115,6 +118,8 @@ status: ## Show status of all services
 	@$(call docker_db_exec,pg_isready -U $(DB_USER)) > /dev/null 2>&1 && $(call log_success,Database ready) || $(call log_error,Database not ready)
 	$(call log_warning,Whisper TTS:)
 	$(call check_service,http://localhost:$(PORT_TTS)/health,TTS service)
+	$(call log_warning,Vision AI:)
+	$(call check_service,http://localhost:$(PORT_VISION)/health,Vision service)
 
 # ============================================================================
 # Setup and Installation
@@ -284,6 +289,12 @@ test-tts: ## Test TTS service
 		$(call log_success,TTS test successful - audio saved to /tmp/test_tts.wav) || \
 		$(call log_error,TTS test failed)
 
+test-vision: ## Test Vision AI service
+	$(call log_info,🖼️ Testing Vision AI service...)
+	@curl -f "http://localhost:$(PORT_VISION)/health" > /dev/null && \
+		$(call log_success,Vision AI service healthy) || \
+		$(call log_error,Vision AI service test failed)
+
 test-db: ## Test database connection
 	$(call log_info,🗄️ Testing database connection...)
 	@$(call docker_db_exec,psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT 'Database connection successful!' as status;") && \
@@ -316,6 +327,103 @@ clean-docker: ## Clean Docker resources
 clean-all: clean clean-docker ## Clean everything
 
 # ============================================================================
+# Documentation Commands
+# ============================================================================
+
+docs-update: ## Update all documentation automatically
+	$(call log_info,📚 Updating all documentation...)
+	@python3 scripts/docs/update-all-docs.py
+	$(call log_success,Documentation updated)
+
+docs-makefile: ## Generate Makefile reference documentation
+	$(call log_info,📖 Generating Makefile documentation...)
+	@python3 scripts/docs/generate-makefile-docs.py
+	$(call log_success,Makefile documentation generated)
+
+docs-structure: ## Generate project structure documentation
+	$(call log_info,🏗️ Generating project structure documentation...)
+	@python3 scripts/docs/generate-project-structure.py
+	$(call log_success,Project structure documentation generated)
+
+docs-validate: ## Validate documentation for consistency
+	$(call log_info,🔍 Validating documentation...)
+	@python3 -c "from scripts.docs.update_all_docs import DocumentationUpdater; updater = DocumentationUpdater(); success = updater._validate_docs(); exit(0 if success else 1)"
+	$(call log_success,Documentation validation complete)
+
+docs-serve: ## Serve documentation locally (if supported)
+	$(call log_info,🌐 Starting documentation server...)
+	@command -v mkdocs > /dev/null && mkdocs serve || \
+		(command -v python3 > /dev/null && cd docs && python3 -m http.server 8888) || \
+		$(call log_error,No documentation server available)
+
+docs-watch: ## Watch for changes and auto-update documentation
+	$(call log_info,🔍 Starting documentation watcher...)
+	@python3 scripts/docs/watch-and-update.py watch
+
+docs-ci-setup: ## Set up CI/CD integration for documentation
+	$(call log_info,🔧 Setting up CI integration...)
+	@python3 scripts/docs/watch-and-update.py ci-setup
+	$(call log_success,CI integration setup complete)
+
+docs-comments: ## Extract and generate documentation from LLM comments
+	$(call log_info,🤖 Extracting LLM comments from codebase...)
+	@python3 scripts/docs/extract-llm-comments.py
+	$(call log_success,LLM comment documentation generated)
+
+docs-validate-comments: ## Validate LLM comment consistency and quality
+	$(call log_info,🔍 Validating LLM comments...)
+	@python3 scripts/docs/validate-llm-comments.py
+	$(call log_success,LLM comment validation complete)
+
+# ============================================================================
+# Dependency Tracking Commands
+# ============================================================================
+
+deps-build: ## Build the C dependency tracker
+	$(call log_info,🔨 Building dependency tracker...)
+	@cd tools/dependency-tracker && mkdir -p build && cd build && \
+		cmake .. && make
+	$(call log_success,Dependency tracker built)
+
+deps-test: ## Run dependency tracker tests
+	$(call log_info,🧪 Running dependency tracker tests...)
+	@cd tools/dependency-tracker/build && make test
+	$(call log_success,Dependency tracker tests complete)
+
+deps-analyze: ## Analyze all dependencies in monorepo
+	$(call log_info,🔍 Analyzing dependencies...)
+	@tools/dependency-tracker/build/deptrack analyze --root=. --output=docs/architecture/dependencies.json --verbose
+	$(call log_success,Dependency analysis complete)
+
+deps-graph: ## Generate dependency visualization
+	$(call log_info,📊 Generating dependency graph...)
+	@tools/dependency-tracker/build/deptrack graph --format=mermaid --output=docs/architecture/dependency-graph.md
+	$(call log_success,Dependency graph generated)
+
+deps-validate: ## Validate dependency consistency
+	$(call log_info,🔍 Validating dependencies...)
+	@tools/dependency-tracker/build/deptrack validate --strict
+	$(call log_success,Dependency validation complete)
+
+deps-feature-dag: ## Generate feature dependency DAG
+	$(call log_info,🗺️ Generating feature DAG...)
+	@tools/dependency-tracker/build/deptrack feature-dag --output=docs/architecture/
+	$(call log_success,Feature DAG generated)
+
+deps-clean: ## Clean dependency tracker build
+	$(call log_info,🧹 Cleaning dependency tracker...)
+	@rm -rf tools/dependency-tracker/build
+	$(call log_success,Dependency tracker cleaned)
+
+clean-deps: ## Alias for deps-clean (disk space management)
+	$(MAKE) deps-clean
+
+analyze-deps: ## Run static analysis on dependency tracker
+	$(call log_info,🔍 Running static analysis on dependency tracker...)
+	@cd tools/dependency-tracker/build && make analyze
+	$(call log_success,Static analysis complete)
+
+# ============================================================================
 # Utility Commands
 # ============================================================================
 
@@ -324,18 +432,20 @@ ports: ## Show which ports are in use
 	$(call log_warning,Expected ports:)
 	@echo "  $(PORT_BACKEND) - Backend gRPC/HTTP"
 	@echo "  $(PORT_TTS) - Whisper TTS"
+	@echo "  $(PORT_VISION) - Vision AI"
 	@echo "  $(PORT_DB) - PostgreSQL"
 	@echo "  $(PORT_KAFKA) - Kafka"
 	@echo "  $(PORT_GRPC_DEMO) - Demo gRPC server"
 	@echo ""
 	$(call log_warning,Currently listening:)
-	@netstat -tlnp 2>/dev/null | grep -E ":($(PORT_BACKEND)|$(PORT_TTS)|$(PORT_DB)|$(PORT_KAFKA)|$(PORT_GRPC_DEMO)|2181)" || echo "No services detected"
+	@netstat -tlnp 2>/dev/null | grep -E ":($(PORT_BACKEND)|$(PORT_TTS)|$(PORT_VISION)|$(PORT_DB)|$(PORT_KAFKA)|$(PORT_GRPC_DEMO)|2181)" || echo "No services detected"
 
 health: ## Check health of all services
 	$(call log_info,🏥 Health Check)
 	@$(MAKE) status
 	@$(MAKE) test-db
 	@$(MAKE) test-tts
+	@$(MAKE) test-vision
 
 version: ## Show version information
 	$(call log_info,📋 Version Information)

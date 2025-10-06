@@ -39,6 +39,14 @@ export interface AudioError {
 }
 
 /**
+ * @llm-type service
+ * @llm-legend Provides frontend audio processing capabilities including speech-to-text transcription
+ * @llm-key Uses Fetch API with FormData for audio upload, implements error handling and retry logic
+ * @llm-map Frontend service layer, communicates with whisper-tts service on port 8000
+ * @llm-axiom All audio operations must provide user feedback and handle network failures gracefully
+ * @llm-contract Returns structured responses or throws descriptive errors for UI handling
+ * @llm-token whisper-service: Python microservice providing speech-to-text capabilities
+ *
  * Audio service for pure functional API communication
  * Following the same pattern as ChatService.ts
  */
@@ -50,10 +58,16 @@ export class AudioService {
   }
   
   /**
+   * @llm-type function
+   * @llm-legend Converts user audio recordings to text using AI speech recognition
+   * @llm-key Creates FormData with audio blob, sends POST to whisper service, handles JSON response
+   * @llm-map Core transcription function called by UI components, integrates with whisper-tts service
+   * @llm-contract Accepts audio Blob, returns TranscriptionResponse with text and language, throws on errors
+   *
    * Pure function: Transcribe audio blob to text
    * Input: Blob (audio data)
    * Output: Promise<TranscriptionResponse>
-   * 
+   *
    * Uses the EXACT same approach as our working HTML implementation
    */
   async transcribeAudio(audioBlob: Blob): Promise<TranscriptionResponse> {

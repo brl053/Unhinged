@@ -34,6 +34,36 @@ services:
     restart: unless-stopped
 
   # ============================================================================
+  # Python Vision AI Service (Essential for image processing)
+  # ============================================================================
+  vision-ai:
+    build:
+      context: ./services/vision-ai
+      dockerfile: Dockerfile
+    container_name: vision-ai-service
+    ports:
+      - "8001:8001"  # HTTP API
+      - "9092:9092"  # gRPC API (future)
+    environment:
+      - ENABLE_FLASK=true
+      - ENABLE_GRPC=false
+      - VISION_MODEL=Salesforce/blip-image-captioning-base
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - vision-models:/root/.cache/transformers
+      - image-uploads:/app/uploads
+    networks:
+      - unhinged-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s  # Vision model loading takes time
+    restart: unless-stopped
+
+  # ============================================================================
   # PostgreSQL Database (Optional - can use in-memory for testing)
   # ============================================================================
   postgres:
@@ -73,4 +103,8 @@ volumes:
   audio-uploads:
     driver: local
   whisper-models:
+    driver: local
+  image-uploads:
+    driver: local
+  vision-models:
     driver: local

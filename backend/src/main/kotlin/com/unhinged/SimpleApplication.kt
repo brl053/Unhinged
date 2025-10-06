@@ -12,9 +12,17 @@
 package com.unhinged
 
 import com.unhinged.application.chat.ChatUseCases
+import com.unhinged.application.vision.*
+import com.unhinged.domain.vision.DefaultVisionDomainService
 import com.unhinged.infrastructure.chat.InMemoryChatMessageRepository
 import com.unhinged.infrastructure.chat.InMemoryChatSessionRepository
+import com.unhinged.infrastructure.vision.*
 import com.unhinged.presentation.http.ChatController
+import com.unhinged.presentation.http.VisionController
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -41,11 +49,42 @@ fun main() {
     val messageRepository = InMemoryChatMessageRepository()
     val sessionRepository = InMemoryChatSessionRepository()
 
+    // Initialize vision repositories
+    val visionRepository = InMemoryVisionRepository()
+    val visionSessionRepository = InMemoryVisionSessionRepository()
+
+    // Initialize HTTP client for vision service
+    val httpClient = HttpClient(CIO) {
+        install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+            json(Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            })
+        }
+    }
+
     // Initialize use cases
     val chatUseCases = ChatUseCases(messageRepository, sessionRepository)
 
+    // Initialize vision services and use cases
+    val visionDomainService = DefaultVisionDomainService()
+    val visionProcessingService = HttpVisionProcessingService(httpClient)
+    val imageAnalysisUseCase = ImageAnalysisUseCase(
+        visionProcessingService, visionRepository, visionSessionRepository, visionDomainService
+    )
+    val imageDescriptionUseCase = ImageDescriptionUseCase(
+        visionProcessingService, visionSessionRepository, visionDomainService
+    )
+    val objectDetectionUseCase = ObjectDetectionUseCase(
+        visionProcessingService, visionSessionRepository, visionDomainService
+    )
+    val visionHealthCheckUseCase = VisionHealthCheckUseCase(visionProcessingService)
+
     // Initialize controllers
     val chatController = ChatController(chatUseCases)
+    val visionController = VisionController(
+        imageAnalysisUseCase, imageDescriptionUseCase, objectDetectionUseCase, visionHealthCheckUseCase
+    )
 
     logger.info("✅ Dependencies initialized")
 
@@ -115,6 +154,7 @@ fun main() {
 
             // Configure clean architecture routes
             chatController.configureRoutes(this)
+            visionController.configureRoutes(this)
 
             // Root endpoint
             get("/") {
@@ -129,7 +169,11 @@ fun main() {
                     "- GET    /api/v1/sessions/user/{id} - Get user sessions\n" +
                     "- GET    /api/v1/sessions/{id}      - Get session\n" +
                     "- GET    /api/v1/sessions/{id}/messages - Get conversation\n" +
-                    "- DELETE /api/v1/sessions/{id}      - Delete session\n\n" +
+                    "- DELETE /api/v1/sessions/{id}      - Delete session\n" +
+                    "- POST   /api/v1/vision/analyze     - Analyze image\n" +
+                    "- POST   /api/v1/vision/describe    - Describe image\n" +
+                    "- POST   /api/v1/vision/detect      - Detect objects\n" +
+                    "- GET    /api/v1/vision/health      - Vision service health\n\n" +
                     "🏗️  Architecture: Domain-Driven Design with Clean Architecture\n" +
                     "📦 Layers: Domain → Application → Infrastructure → Presentation\n" +
                     "🔄 Status: Ready for production scaling\n"

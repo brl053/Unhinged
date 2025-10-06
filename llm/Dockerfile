@@ -15,6 +15,7 @@ EXPOSE 11434
 # Set environment variable
 ENV OLLAMA_MODELS=/models
 ENV OLLAMA_HOST=0.0.0.0
+ENV OLLAMA_ORIGINS=*
 
 # Start Ollama and pull the model once the container starts
 CMD ["bash", "-c", "ollama serve & sleep 5 && ollama pull openhermes && tail -f /dev/null"]

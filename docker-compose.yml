@@ -45,6 +45,28 @@ services:
     ports:
       - "11434:11434"
 
+  # @llm-type config
+  # @llm-legend Docker service configuration for AI-powered image analysis microservice
+  # @llm-key Defines Python container with BLIP model, Flask HTTP server, and persistent model storage
+  # @llm-map Part of microservices architecture, connects backend to vision processing capabilities
+  # @llm-axiom Vision service must be accessible on port 8001 for backend integration
+  # @llm-contract Service must respond to health checks within 30 seconds and handle image uploads
+  # @llm-token vision-models: Docker volume for persistent transformer model cache
+  vision-ai:
+    build: ./services/vision-ai
+    container_name: vision-ai-service
+    environment:
+      - ENABLE_FLASK=true
+      - ENABLE_GRPC=false
+      - VISION_MODEL=Salesforce/blip-image-captioning-base
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8001:8001"
+    volumes:
+      - vision-models:/root/.cache/transformers
+      - image-uploads:/app/uploads
+
   database:
     image: postgres:15
     container_name: postgres-db
@@ -99,3 +121,5 @@ services:
 volumes:
   llm-models:  # Declare the volume to store the model data
   postgres-data:
+  vision-models:  # Store vision model cache
+  image-uploads:  # Store uploaded images

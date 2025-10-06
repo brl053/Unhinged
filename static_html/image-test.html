@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🖼️ Image Analysis Test - Unhinged Vision</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .status.healthy {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.unhealthy {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 20px 0;
+        }
+        
+        .upload-area:hover {
+            border-color: #0056b3;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #007bff;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .upload-hint {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .analyze-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 10px 5px;
+        }
+        
+        .analyze-button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .analyze-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .options {
+            margin: 20px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .option-group {
+            margin-bottom: 12px;
+        }
+        
+        .option-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .option-group input, .option-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .option-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .capability {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+        
+        .capability.supported {
+            color: #28a745;
+        }
+        
+        .capability.unsupported {
+            color: #dc3545;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+        }
+        
+        .test-section h2 {
+            color: #212529;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .model-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Image Analysis Test</h1>
+        <p class="subtitle">Test image analysis and description functionality</p>
+        
+        <div class="test-section">
+            <h2>Service Status</h2>
+            <div id="serviceStatus" class="status loading">⏳ Checking Vision service...</div>
+            <div id="modelInfo" class="model-info" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Browser Capabilities</h2>
+            <div id="capabilities"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Image Analysis Test</h2>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Click to select an image or drag and drop</div>
+                <div class="upload-hint">Supports JPEG, PNG, GIF, BMP, WebP (max 10MB)</div>
+            </div>
+            
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+            
+            <div id="imagePreview" style="display: none;">
+                <img id="previewImage" class="image-preview" alt="Preview">
+            </div>
+            
+            <div class="options" id="options" style="display: none;">
+                <div class="option-group">
+                    <label>
+                        <input type="checkbox" id="generateTags" checked>
+                        Generate tags from description
+                    </label>
+                </div>
+                
+                <div class="option-group">
+                    <label>
+                        <input type="checkbox" id="detectObjects">
+                        Detect objects (experimental)
+                    </label>
+                </div>
+                
+                <div class="option-group">
+                    <label for="prompt">Optional prompt for guided description:</label>
+                    <textarea id="prompt" rows="2" placeholder="e.g., 'What is happening in this image?' or 'Describe the colors and mood'"></textarea>
+                </div>
+                
+                <div class="option-group">
+                    <label for="maxLength">Max description length:</label>
+                    <input type="number" id="maxLength" value="100" min="10" max="500">
+                </div>
+            </div>
+            
+            <div id="analyzeButtons" style="display: none;">
+                <button id="analyzeButton" class="analyze-button">🔍 Analyze Image</button>
+                <button id="describeButton" class="analyze-button">📝 Describe Image</button>
+                <button id="detectButton" class="analyze-button">🎯 Detect Objects</button>
+            </div>
+            
+            <div id="result" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Instructions</h2>
+            <div style="font-size: 14px; line-height: 1.6;">
+                <p><strong>To test image analysis:</strong></p>
+                <ol>
+                    <li>Ensure the Vision service is healthy (green status above)</li>
+                    <li>Upload an image by clicking the upload area or dragging and dropping</li>
+                    <li>Adjust options if needed (tags, objects, prompt, etc.)</li>
+                    <li>Click one of the analysis buttons to process the image</li>
+                    <li>Wait for the AI-generated results to appear</li>
+                </ol>
+                
+                <p><strong>Analysis Types:</strong></p>
+                <ul>
+                    <li><strong>Analyze Image:</strong> Complete analysis with description, metadata, and tags</li>
+                    <li><strong>Describe Image:</strong> Detailed natural language description</li>
+                    <li><strong>Detect Objects:</strong> Identify and locate objects in the image</li>
+                </ul>
+                
+                <p><strong>Troubleshooting:</strong></p>
+                <ul>
+                    <li><strong>Service Unavailable:</strong> Ensure Vision AI service is running: <code>docker ps | grep vision</code></li>
+                    <li><strong>CORS Error:</strong> Browser blocks localhost requests. Solutions:
+                        <ul>
+                            <li>Serve this file via HTTP server: <code>python3 -m http.server 8080</code></li>
+                            <li>Test with curl: <code>curl -X POST http://localhost:8001/analyze -F "image=@your_image.jpg"</code></li>
+                        </ul>
+                    </li>
+                    <li><strong>Model Loading:</strong> First request may be slow as BLIP model loads</li>
+                    <li>Check that the image file is under 10MB and in a supported format (JPEG, PNG, GIF, BMP, WebP)</li>
+                    <li>Try refreshing the page if upload doesn't work</li>
+                    <li>Use Chrome or Firefox for best compatibility</li>
+                </ul>
+
+                <p><strong>Alternative Testing Methods:</strong></p>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px;">
+                    <strong>Command Line Testing:</strong><br>
+                    # Check service health<br>
+                    <code>curl http://localhost:8001/health</code><br><br>
+
+                    # Test image analysis<br>
+                    <code>curl -X POST http://localhost:8001/analyze \<br>
+                    &nbsp;&nbsp;-F "image=@path/to/your/image.jpg"</code><br><br>
+
+                    # Test image description with prompt<br>
+                    <code>curl -X POST http://localhost:8001/describe \<br>
+                    &nbsp;&nbsp;-F "image=@path/to/your/image.jpg" \<br>
+                    &nbsp;&nbsp;-F "prompt=What is happening in this image?"</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let selectedFile = null;
+        let serviceHealthy = false;
+
+        // DOM elements
+        const serviceStatus = document.getElementById('serviceStatus');
+        const capabilities = document.getElementById('capabilities');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const options = document.getElementById('options');
+        const analyzeButtons = document.getElementById('analyzeButtons');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const describeButton = document.getElementById('describeButton');
+        const detectButton = document.getElementById('detectButton');
+        const result = document.getElementById('result');
+
+        // Check service health
+        async function checkServiceHealth() {
+            try {
+                // Try direct Vision AI service first (port 8001)
+                const response = await fetch('http://localhost:8001/health', {
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    serviceStatus.className = 'status healthy';
+                    serviceStatus.innerHTML = '✅ Vision AI Service Healthy (Direct)';
+                    serviceHealthy = true;
+
+                    // Display service information
+                    const modelInfo = document.getElementById('modelInfo');
+                    if (modelInfo) {
+                        modelInfo.innerHTML = `
+                            <strong>Service:</strong> ${data.service} v${data.version}<br>
+                            <strong>Status:</strong> ${data.status}<br>
+                            <strong>Model Loaded:</strong> ${data.vision_model_loaded ? 'Yes' : 'No'}<br>
+                            <strong>CUDA Available:</strong> ${data.cuda_available ? 'Yes' : 'No'}<br>
+                            <strong>Capabilities:</strong> ${data.capabilities.join(', ')}
+                        `;
+                        modelInfo.style.display = 'block';
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                // Handle CORS and other errors
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    serviceStatus.className = 'status unhealthy';
+                    serviceStatus.innerHTML = '❌ CORS Error - See instructions below';
+                } else {
+                    serviceStatus.className = 'status unhealthy';
+                    serviceStatus.innerHTML = '❌ Vision Service Unavailable';
+                }
+                serviceHealthy = false;
+            }
+        }
+
+        // Check browser capabilities
+        function checkCapabilities() {
+            const caps = {
+                'File API': typeof File !== 'undefined',
+                'FileReader API': typeof FileReader !== 'undefined',
+                'Drag and Drop': 'draggable' in document.createElement('div'),
+                'Fetch API': typeof fetch !== 'undefined',
+            };
+
+            capabilities.innerHTML = '';
+            for (const [name, supported] of Object.entries(caps)) {
+                const div = document.createElement('div');
+                div.className = `capability ${supported ? 'supported' : 'unsupported'}`;
+                div.innerHTML = `${supported ? '✅' : '❌'} ${name}`;
+                capabilities.appendChild(div);
+            }
+
+            return caps;
+        }
+
+        // Handle file selection
+        function handleFileSelect(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showResult('Please select a valid image file.', true);
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                showResult('File size exceeds 10MB limit.', true);
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                imagePreview.style.display = 'block';
+                options.style.display = 'block';
+                analyzeButtons.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Analyze image
+        async function analyzeImage() {
+            if (!selectedFile || !serviceHealthy) return;
+
+            try {
+                showResult('Analyzing image...', false);
+                analyzeButton.disabled = true;
+
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const response = await fetch('http://localhost:8001/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Analysis failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Format the result nicely
+                const result = {
+                    description: data.description,
+                    metadata: data.metadata,
+                    analysis_type: 'Basic Analysis',
+                    timestamp: new Date().toISOString()
+                };
+
+                showResult(`Image Analysis Result:\n\n${JSON.stringify(result, null, 2)}`, false);
+
+            } catch (error) {
+                showResult(`Analysis error: ${error.message}`, true);
+            } finally {
+                analyzeButton.disabled = false;
+            }
+        }
+
+        // Describe image
+        async function describeImage() {
+            if (!selectedFile || !serviceHealthy) return;
+
+            try {
+                showResult('Generating description...', false);
+                describeButton.disabled = true;
+
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const prompt = document.getElementById('prompt').value.trim();
+                if (prompt) {
+                    formData.append('prompt', prompt);
+                }
+
+                const response = await fetch('http://localhost:8001/describe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Description failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                showResult(`Image Description:\n\n${data.description}\n\nPrompt used: ${data.prompt_used || 'None'}`, false);
+
+            } catch (error) {
+                showResult(`Description error: ${error.message}`, true);
+            } finally {
+                describeButton.disabled = false;
+            }
+        }
+
+        // Detect objects (using analyze endpoint with object detection focus)
+        async function detectObjects() {
+            if (!selectedFile || !serviceHealthy) return;
+
+            try {
+                showResult('Detecting objects...', false);
+                detectButton.disabled = true;
+
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                // Add a prompt to focus on object detection
+                formData.append('prompt', 'What objects can you see in this image? List all the objects you can identify.');
+
+                const response = await fetch('http://localhost:8001/describe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Object detection failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                const result = {
+                    objects_detected: data.description,
+                    detection_method: 'BLIP model with object-focused prompt',
+                    prompt_used: data.prompt_used,
+                    timestamp: new Date().toISOString()
+                };
+
+                showResult(`Object Detection Result:\n\n${JSON.stringify(result, null, 2)}`, false);
+
+            } catch (error) {
+                showResult(`Object detection error: ${error.message}`, true);
+            } finally {
+                detectButton.disabled = false;
+            }
+        }
+
+        // Show result
+        function showResult(text, isError) {
+            result.style.display = 'block';
+            result.className = `result ${isError ? 'error' : ''}`;
+            result.textContent = text;
+        }
+
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Button event listeners
+        analyzeButton.addEventListener('click', analyzeImage);
+        describeButton.addEventListener('click', describeImage);
+        detectButton.addEventListener('click', detectObjects);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkServiceHealth();
+            checkCapabilities();
+        });
+    </script>
+</body>
+</html>
