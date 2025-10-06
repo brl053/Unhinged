@@ -10,7 +10,7 @@ group = "com.unhinged"
 version = "1.0.0"
 
 application {
-    mainClass.set("com.unhinged.SimpleApplicationKt")
+    mainClass.set("com.unhinged.MinimalApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
@@ -123,19 +123,23 @@ protobuf {
                 create("grpckt")
             }
             it.builtins {
-                create("kotlin") {
-                    outputSubDir = "generated/kotlin"
-                }
+                create("kotlin")
             }
         }
     }
 }
 
-// Add generated sources to compilation
+// Configure proto source directories
 sourceSets {
     main {
+        proto {
+            srcDir("../proto")
+            exclude("universal_event.proto") // Temporarily exclude to resolve conflicts
+        }
         kotlin {
-            srcDirs("src/generated/kotlin")
+            srcDirs("build/generated/source/proto/main/kotlin")
+            srcDirs("build/generated/source/proto/main/grpc")
+            srcDirs("build/generated/source/proto/main/grpckt")
         }
     }
 }

@@ -1,23 +1,1043 @@
 {
-  "timestamp": "2025-10-05T02:45:41.623Z",
-  "summary": {
-    "total": 2,
-    "passed": 1,
-    "failed": 1,
-    "duration": 66845
-  },
-  "results": [
-    {
-      "name": "Unit Tests",
-      "success": false,
-      "duration": 60058,
-      "error": "spawnSync /bin/sh ETIMEDOUT"
+  "config": {
+    "configFile": "/home/e-bliss-station-1/projects/Unhinged/frontend/playwright.config.ts",
+    "rootDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests/global-setup.ts",
+    "globalTeardown": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests/global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/test-report.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
     },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/home/e-bliss-station-1/projects/Unhinged/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.1",
+    "workers": 16,
+    "webServer": null
+  },
+  "suites": [
     {
-      "name": "Build Verification",
-      "success": true,
-      "duration": 6787,
-      "error": null
+      "title": "multimodal-e2e.spec.ts",
+      "file": "multimodal-e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "🎯 Multimodal AI Architecture E2E Tests",
+          "file": "multimodal-e2e.spec.ts",
+          "line": 31,
+          "column": 6,
+          "specs": [
+            {
+              "title": "🔄 Complete multimodal analysis workflow - Screenshot",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-a044695469022b7cf839",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "📄 Document analysis workflow with OCR",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-8787d43af5ddd6f2944a",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "🎨 UI component analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-9bdcf71ebb072b1039fe",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "🌄 Natural image analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-159e0af3cbfc1d71cd29",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 201,
+              "column": 7
+            },
+            {
+              "title": "📊 Analysis retrieval and statistics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-6728142f1715e69a9717",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "⚙️ Workflow configuration and availability",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-2c0d19475bfc8604eae7",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 279,
+              "column": 7
+            },
+            {
+              "title": "🚨 Error handling and resilience",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-03e0ad4a0c4c3b66cc6d",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "⚡ Performance benchmarking - gRPC vs HTTP overhead",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-fd308cd563bff1eb911f",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "🔍 Architecture boundary validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-b90dc5b34cdf79e54434",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 436,
+              "column": 7
+            },
+            {
+              "title": "🔄 Complete multimodal analysis workflow - Screenshot",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-f4762ffc754b4a0a1cd4",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "📄 Document analysis workflow with OCR",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-890a90f09c5ed22644b5",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "🎨 UI component analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-30835fb06c505be6f458",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "🌄 Natural image analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-d3b7af25375d47750fa7",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 201,
+              "column": 7
+            },
+            {
+              "title": "📊 Analysis retrieval and statistics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-1f49f097b866ac13b36b",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "⚙️ Workflow configuration and availability",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-60c6ae742ff96925db0d",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 279,
+              "column": 7
+            },
+            {
+              "title": "🚨 Error handling and resilience",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-4edb774f5a21a949d89a",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "⚡ Performance benchmarking - gRPC vs HTTP overhead",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-21cc836557b14b95bdd3",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "🔍 Architecture boundary validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-1716382fbcabcc20114f",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 436,
+              "column": 7
+            },
+            {
+              "title": "🔄 Complete multimodal analysis workflow - Screenshot",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-de3f8a8db48752bddb1c",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "📄 Document analysis workflow with OCR",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-8690cd6fd28ed4a9502d",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "🎨 UI component analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-9a3bdd63c12bb51848bc",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "🌄 Natural image analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-27696c4ef19271043d4b",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 201,
+              "column": 7
+            },
+            {
+              "title": "📊 Analysis retrieval and statistics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-920dd6642086e9bf8895",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "⚙️ Workflow configuration and availability",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-adb6dbd030222b8f41bd",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 279,
+              "column": 7
+            },
+            {
+              "title": "🚨 Error handling and resilience",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-6092554997a77c2a01af",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "⚡ Performance benchmarking - gRPC vs HTTP overhead",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-e217166445facf6f6f6e",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "🔍 Architecture boundary validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-26a126f648edf02a4ca4",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 436,
+              "column": 7
+            },
+            {
+              "title": "🔄 Complete multimodal analysis workflow - Screenshot",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-71e2fa0b544b1d0bd679",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "📄 Document analysis workflow with OCR",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-5acbbfb55072c1382901",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "🎨 UI component analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-319bad4cabaf3ecee4cc",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "🌄 Natural image analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-2e6443497ce32f1b732c",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 201,
+              "column": 7
+            },
+            {
+              "title": "📊 Analysis retrieval and statistics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-d559732956dbba4b837a",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "⚙️ Workflow configuration and availability",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-3fb61b7faf56d5d022f5",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 279,
+              "column": 7
+            },
+            {
+              "title": "🚨 Error handling and resilience",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-1756b057862b1065c8b7",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "⚡ Performance benchmarking - gRPC vs HTTP overhead",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-d51b75be1f8935227794",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "🔍 Architecture boundary validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-8720a7675120c033d819",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 436,
+              "column": 7
+            },
+            {
+              "title": "🔄 Complete multimodal analysis workflow - Screenshot",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-0e26498f0b7be14437db",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "📄 Document analysis workflow with OCR",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-5c27035bc41db2947370",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "🎨 UI component analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-b7eeb75986cf907f6000",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "🌄 Natural image analysis workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-15eafdbfbf8d5965307d",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 201,
+              "column": 7
+            },
+            {
+              "title": "📊 Analysis retrieval and statistics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-a58f831f645004382cc7",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "⚙️ Workflow configuration and availability",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-69a11ba145b7caf32d93",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 279,
+              "column": 7
+            },
+            {
+              "title": "🚨 Error handling and resilience",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-c09cd2d6f313b8437aae",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "⚡ Performance benchmarking - gRPC vs HTTP overhead",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-ed6d64e6d1744ce40abb",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "🔍 Architecture boundary validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7c89ab5d4753c1ded3d7-9fb6422eb1b75a76ea69",
+              "file": "multimodal-e2e.spec.ts",
+              "line": 436,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
-  ]
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-06T07:32:03.112Z",
+    "duration": 46.303,
+    "expected": 0,
+    "skipped": 45,
+    "unexpected": 0,
+    "flaky": 0
+  }
 }

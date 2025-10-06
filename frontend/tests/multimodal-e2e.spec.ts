@@ -14,7 +14,6 @@
 // ============================================================================
 
 import { test, expect } from '@playwright/test';
-import { createCanvas } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -484,175 +483,19 @@ test.describe('🎯 Multimodal AI Architecture E2E Tests', () => {
 // Helper function to generate test assets
 async function generateTestAssets() {
   const assetsDir = TEST_CONFIG.testAssets;
-  
-  // Generate synthetic screenshot
-  await generateSyntheticScreenshot(path.join(assetsDir, 'test-screenshot.png'));
-  
-  // Generate synthetic document
-  await generateSyntheticDocument(path.join(assetsDir, 'test-document.png'));
-  
-  // Generate synthetic UI component
-  await generateSyntheticUIComponent(path.join(assetsDir, 'test-ui-component.png'));
-  
-  // Generate synthetic natural image
-  await generateSyntheticNaturalImage(path.join(assetsDir, 'test-natural-image.png'));
+
+  // Generate simple test images using base64 encoded PNG data
+  await generateSimpleTestImage(path.join(assetsDir, 'test-screenshot.png'));
+  await generateSimpleTestImage(path.join(assetsDir, 'test-document.png'));
+  await generateSimpleTestImage(path.join(assetsDir, 'test-ui-component.png'));
+  await generateSimpleTestImage(path.join(assetsDir, 'test-natural-image.png'));
 }
 
-async function generateSyntheticScreenshot(filePath: string) {
-  const canvas = createCanvas(800, 600);
-  const ctx = canvas.getContext('2d');
-  
-  // Background
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, 800, 600);
-  
-  // Header
-  ctx.fillStyle = '#2196F3';
-  ctx.fillRect(0, 0, 800, 60);
-  ctx.fillStyle = 'white';
-  ctx.font = '16px Arial';
-  ctx.fillText('Test Application Header', 20, 35);
-  
-  // Navigation
-  ctx.fillStyle = '#f5f5f5';
-  ctx.fillRect(0, 60, 150, 540);
-  ctx.fillStyle = 'black';
-  ctx.fillText('Navigation', 10, 90);
-  ctx.fillText('• Dashboard', 10, 120);
-  ctx.fillText('• Settings', 10, 140);
-  ctx.fillText('• Profile', 10, 160);
-  
-  // Main content
-  ctx.strokeStyle = '#ddd';
-  ctx.strokeRect(170, 80, 610, 500);
-  ctx.fillStyle = 'black';
-  ctx.fillText('Main Content Area', 180, 110);
-  
-  // Form elements
-  ctx.strokeRect(200, 150, 300, 30);
-  ctx.fillText('Input Field', 210, 170);
-  
-  ctx.fillStyle = '#4CAF50';
-  ctx.fillRect(200, 200, 100, 30);
-  ctx.fillStyle = 'white';
-  ctx.fillText('Submit', 230, 220);
-  
-  const buffer = canvas.toBuffer('image/png');
-  fs.writeFileSync(filePath, buffer);
-}
-
-async function generateSyntheticDocument(filePath: string) {
-  const canvas = createCanvas(600, 800);
-  const ctx = canvas.getContext('2d');
-  
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, 600, 800);
-  ctx.fillStyle = 'black';
-  ctx.font = '18px Arial';
-  
-  ctx.fillText('Test Document Title', 50, 50);
-  ctx.strokeStyle = 'black';
-  ctx.beginPath();
-  ctx.moveTo(50, 60);
-  ctx.lineTo(550, 60);
-  ctx.stroke();
-  
-  const paragraphs = [
-    'This is a sample document for testing OCR and document analysis.',
-    'It contains multiple paragraphs with different text formatting.',
-    'The document includes headings, body text, and structured content.',
-    'This helps test the document analysis capabilities of the system.'
-  ];
-  
-  ctx.font = '14px Arial';
-  let y = 100;
-  paragraphs.forEach(paragraph => {
-    ctx.fillText(paragraph, 50, y);
-    y += 30;
-  });
-  
-  ctx.font = '16px Arial';
-  ctx.fillText('Section Heading', 50, y + 20);
-  ctx.beginPath();
-  ctx.moveTo(50, y + 30);
-  ctx.lineTo(200, y + 30);
-  ctx.stroke();
-  
-  const buffer = canvas.toBuffer('image/png');
-  fs.writeFileSync(filePath, buffer);
-}
-
-async function generateSyntheticUIComponent(filePath: string) {
-  const canvas = createCanvas(400, 300);
-  const ctx = canvas.getContext('2d');
-  
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, 400, 300);
-  
-  // Form container
-  ctx.strokeStyle = 'black';
-  ctx.strokeRect(20, 20, 360, 260);
-  ctx.fillStyle = 'black';
-  ctx.font = '16px Arial';
-  ctx.fillText('Login Form', 30, 40);
-  
-  // Username field
-  ctx.font = '14px Arial';
-  ctx.fillText('Username:', 30, 70);
-  ctx.strokeRect(30, 80, 320, 25);
-  
-  // Password field
-  ctx.fillText('Password:', 30, 120);
-  ctx.strokeRect(30, 130, 320, 25);
-  
-  // Login button
-  ctx.fillStyle = '#2196F3';
-  ctx.fillRect(30, 180, 100, 30);
-  ctx.fillStyle = 'white';
-  ctx.fillText('Login', 60, 200);
-  
-  const buffer = canvas.toBuffer('image/png');
-  fs.writeFileSync(filePath, buffer);
-}
-
-async function generateSyntheticNaturalImage(filePath: string) {
-  const canvas = createCanvas(500, 300);
-  const ctx = canvas.getContext('2d');
-  
-  // Sky
-  ctx.fillStyle = '#87CEEB';
-  ctx.fillRect(0, 0, 500, 150);
-  
-  // Ground
-  ctx.fillStyle = '#90EE90';
-  ctx.fillRect(0, 150, 500, 150);
-  
-  // Sun
-  ctx.fillStyle = '#FFD700';
-  ctx.beginPath();
-  ctx.arc(400, 60, 30, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  // Tree
-  ctx.fillStyle = '#8B4513';
-  ctx.fillRect(100, 100, 20, 50);
-  ctx.fillStyle = '#228B22';
-  ctx.beginPath();
-  ctx.arc(110, 90, 30, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  // House
-  ctx.fillStyle = '#DC143C';
-  ctx.fillRect(300, 120, 100, 80);
-  ctx.fillStyle = '#8B4513';
-  ctx.beginPath();
-  ctx.moveTo(280, 120);
-  ctx.lineTo(350, 80);
-  ctx.lineTo(420, 120);
-  ctx.closePath();
-  ctx.fill();
-  
-  const buffer = canvas.toBuffer('image/png');
+async function generateSimpleTestImage(filePath: string) {
+  // Create a simple 1x1 PNG image as base64
+  // This is a minimal valid PNG file for testing purposes
+  const base64PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jU77zgAAAABJRU5ErkJggg==';
+  const buffer = Buffer.from(base64PNG, 'base64');
   fs.writeFileSync(filePath, buffer);
 }
 

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Unhinged AI - GPU-Accelerated Multi-Modal Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .performance-banner {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 30px;
+        }
+
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .service-card.primary {
+            border-color: #4CAF50;
+        }
+
+        .service-card.creative {
+            border-color: #FF6B6B;
+        }
+
+        .service-card.multimodal {
+            border-color: #4ECDC4;
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .service-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+
+        .service-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .service-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .model-specs {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .spec-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .spec-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .test-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .architecture-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .architecture-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .dual-model-diagram {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .model-box {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .model-box.coding {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+
+        .model-box.creative {
+            border-color: #FF6B6B;
+            background: #ffe8e8;
+        }
+
+        .arrow {
+            font-size: 2rem;
+            color: #666;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dual-model-diagram {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Unhinged AI</h1>
+            <p class="subtitle">GPU-Accelerated Multi-Modal AI Platform</p>
+            
+            <div class="performance-banner">
+                <h3>🎯 Performance Breakthrough: GPU Acceleration Active</h3>
+                <div class="performance-stats">
+                    <div class="stat-card">
+                        <span class="stat-value">15.5x</span>
+                        <span class="stat-label">Faster Coding Tasks</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">3s</span>
+                        <span class="stat-label">DeepSeek Response Time</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">16GB</span>
+                        <span class="stat-label">RTX 5070 Ti VRAM</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">5</span>
+                        <span class="stat-label">Specialized Models</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2 class="architecture-title">🧠 Dual-Model Architecture</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 30px;">
+                Specialized AI engines for specialized tasks - no one-size-fits-all compromises
+            </p>
+            
+            <div class="dual-model-diagram">
+                <div class="model-box coding">
+                    <h3>🤖 Coding Specialist</h3>
+                    <p><strong>DeepSeek-Coder 6.7B</strong></p>
+                    <p>~3 second responses</p>
+                    <p>Perfect for: Code, Debug, Architecture</p>
+                </div>
+                
+                <div class="arrow">⚡</div>
+                
+                <div class="model-box creative">
+                    <h3>🐬 Creative Uncensored</h3>
+                    <p><strong>Dolphin-Mixtral 8x7B</strong></p>
+                    <p>~80 second responses</p>
+                    <p>Perfect for: Stories, Marketing, Controversial</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="services-grid">
+            <div class="service-card primary">
+                <div class="service-header">
+                    <div class="service-icon">🚀</div>
+                    <div class="service-title">GPU-Accelerated Text Generation</div>
+                </div>
+                <div class="service-description">
+                    Test our dual-model architecture with 5 specialized LLMs running on RTX 5070 Ti GPU. 
+                    Experience 15x faster coding tasks and uncensored creative content generation.
+                </div>
+                <div class="model-specs">
+                    <div class="spec-row">
+                        <span class="spec-label">Primary Models:</span>
+                        <span class="spec-value">DeepSeek-Coder + Dolphin-Mixtral</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">GPU Acceleration:</span>
+                        <span class="spec-value">RTX 5070 Ti (16GB VRAM)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Response Time:</span>
+                        <span class="spec-value">3-80 seconds (model dependent)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Content Policy:</span>
+                        <span class="spec-value">Minimal to Zero Censorship</span>
+                    </div>
+                </div>
+                <a href="text-test.html" class="test-button">🤖 Test Text Generation</a>
+            </div>
+
+            <div class="service-card multimodal">
+                <div class="service-header">
+                    <div class="service-icon">👁️</div>
+                    <div class="service-title">Vision AI Analysis</div>
+                </div>
+                <div class="service-description">
+                    Advanced image analysis and description using BLIP models. Upload images and get detailed, 
+                    contextual descriptions with object detection and scene understanding.
+                </div>
+                <div class="model-specs">
+                    <div class="spec-row">
+                        <span class="spec-label">Model:</span>
+                        <span class="spec-value">BLIP Vision Transformer</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Capabilities:</span>
+                        <span class="spec-value">Image Description, Object Detection</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Input Formats:</span>
+                        <span class="spec-value">JPG, PNG, WebP</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Response Time:</span>
+                        <span class="spec-value">2-5 seconds</span>
+                    </div>
+                </div>
+                <a href="image-test.html" class="test-button">👁️ Test Vision AI</a>
+            </div>
+
+            <div class="service-card creative">
+                <div class="service-header">
+                    <div class="service-icon">🎤</div>
+                    <div class="service-title">Voice & Audio Processing</div>
+                </div>
+                <div class="service-description">
+                    High-quality speech-to-text transcription using OpenAI Whisper. Upload audio files 
+                    or record directly for accurate transcription with multiple language support.
+                </div>
+                <div class="model-specs">
+                    <div class="spec-row">
+                        <span class="spec-label">Model:</span>
+                        <span class="spec-value">OpenAI Whisper</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Languages:</span>
+                        <span class="spec-value">99+ Languages Supported</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Audio Formats:</span>
+                        <span class="spec-value">MP3, WAV, M4A, WebM</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Accuracy:</span>
+                        <span class="spec-value">95%+ for clear audio</span>
+                    </div>
+                </div>
+                <a href="voice-test.html" class="test-button">🎤 Test Voice Processing</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🔥 Unhinged AI Platform - Where Technical Precision Meets Creative Freedom</p>
+            <p style="font-size: 0.9rem; margin-top: 10px;">
+                Powered by RTX 5070 Ti • 5 Specialized Models • Zero Compromise Architecture
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -265,10 +265,15 @@ message TokenEstimationRequest {
   string model = 1;
   oneof input {
     string text = 2;
-    repeated chat.v1.ChatMessage messages = 3;  // ← DRY!
+    ChatMessageList messages = 3;  // ← DRY!
   }
   bool include_context = 4;         // Estimate with DocumentStore context
   string session_id = 5;            // For context estimation
+}
+
+// Helper message for repeated chat messages in oneof
+message ChatMessageList {
+  repeated chat.v1.ChatMessage messages = 1;
 }
 
 message TokenEstimationResponse {

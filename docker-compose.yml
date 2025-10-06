@@ -44,6 +44,18 @@ services:
       - llm-models:/models  # Mount the volume to persist the model
     ports:
       - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - OLLAMA_GPU_MEMORY_FRACTION=0.8
+      - OLLAMA_NUM_PARALLEL=1
 
   # @llm-type config
   # @llm-legend Docker service configuration for AI-powered image analysis microservice

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package multimodal;
 
+import "common.proto";
+
 option java_package = "com.unhinged.multimodal.grpc";
 option java_outer_classname = "VisionServiceProto";
 option java_multiple_files = true;
@@ -132,7 +134,10 @@ message ModelMetricsResponse {
   map<string, double> additional_metrics = 7;
 }
 
-// Health check response
+// Empty message for requests with no parameters
+message Empty {}
+
+// Health check response - using simplified version for now
 message HealthResponse {
   bool healthy = 1;
   string status = 2;
@@ -140,6 +145,3 @@ message HealthResponse {
   int64 uptime_seconds = 4;
   string version = 5;
 }
-
-// Empty message for requests with no parameters
-message Empty {}
