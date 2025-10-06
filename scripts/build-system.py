@@ -27,6 +27,16 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
+# Import Python script registry
+try:
+    from python import PYTHON_SCRIPTS, LEGACY_SHELL_SCRIPTS, list_available_scripts
+except ImportError:
+    # Fallback if python package not available
+    PYTHON_SCRIPTS = {}
+    LEGACY_SHELL_SCRIPTS = {}
+    def list_available_scripts():
+        print("⚠️  Python script registry not available")
+
 class BuildSystem:
     def __init__(self, config_path: str = "build-config.yml"):
         self.project_root = Path(__file__).parent.parent
@@ -236,6 +246,39 @@ class BuildSystem:
         for name, target in self.config.get('targets', {}).items():
             print(f"  • {name}: {target['description']}")
     
+    def run_python_script(self, script_name: str, parameters: Dict[str, str] = None) -> bool:
+        """Run a Python script from the registry"""
+        if script_name not in PYTHON_SCRIPTS:
+            print(f"❌ Unknown Python script: {script_name}")
+            return False
+
+        script_info = PYTHON_SCRIPTS[script_name]
+        script_path = script_info['path']
+
+        print(f"🐍 Running Python script: {script_name}")
+        print(f"📝 Description: {script_info['description']}")
+        print(f"📁 Path: {script_path}")
+
+        # Build command
+        cmd = [sys.executable, script_path]
+
+        # Add parameters if provided
+        if parameters:
+            for key, value in parameters.items():
+                cmd.extend([f"--{key}", value])
+
+        try:
+            result = subprocess.run(cmd, cwd=self.root_dir)
+            if result.returncode == 0:
+                print(f"✅ Python script {script_name} completed successfully")
+                return True
+            else:
+                print(f"❌ Python script {script_name} failed with exit code {result.returncode}")
+                return False
+        except Exception as e:
+            print(f"❌ Error running Python script {script_name}: {e}")
+            return False
+
     def list_workflows(self):
         """List all available workflows"""
         print("🔄 Available workflows:")
@@ -275,15 +318,22 @@ def main():
     if args.env:
         parameters['environment'] = args.env
     
-    # Check if it's a workflow first, then target
+    # Check if it's a workflow first, then target, then Python script
     if args.action in build_system.config.get('workflows', {}):
         success = build_system.run_workflow(args.action, parameters)
     elif args.action in build_system.config.get('targets', {}):
         success = build_system.run_target(args.action, parameters)
+    elif args.action in PYTHON_SCRIPTS:
+        success = build_system.run_python_script(args.action, parameters)
+    elif args.action == 'list-scripts':
+        list_available_scripts()
+        return
     else:
         print(f"❌ Unknown action: {args.action}")
         print("\nAvailable targets:")
         build_system.list_targets()
+        print("\nAvailable Python scripts:")
+        list_available_scripts()
         print("\nAvailable workflows:")
         build_system.list_workflows()
         sys.exit(1)

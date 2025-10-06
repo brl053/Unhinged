@@ -1,37 +1,23 @@
 
+// ============================================================================
+// Theme Compatibility Layer
+// ============================================================================
+//
+// This file provides backward compatibility between the old basicTheme
+// and the new scientific design system. It creates a compatibility theme
+// that includes both structures.
+//
+// MIGRATION STATUS: Compatibility layer for gradual migration
+// ============================================================================
+
+import { lightTheme, createCompatibilityTheme } from './index';
+
+// Legacy theme types for backward compatibility
 enum ThemeName {
     BASIC = 'Basic Theme',
 }
 
-export const basicTheme: Theme = {
-    name: ThemeName.BASIC,
-    color: {
-      palette: {
-        white: '#ffffff',
-      },
-      text: {
-        primary: '#ffffff',
-        secondary: '#000000',
-      },
-      background: {
-        primary: '#562b70',
-        secondary: '#8550a6',
-        hovered: '#f0f0f0',
-      },
-      border: {
-        primary: '#301442',
-        secondary: '#ffffff'
-      },
-
-    },
-    fonts: {
-      main: 'Arial, sans-serif',
-      heading: 'Roboto, sans-serif',
-    },
-  };
-
-
-type Theme = {
+type LegacyTheme = {
     name: ThemeName;
     color : {
       palette: {
@@ -56,3 +42,12 @@ type Theme = {
       heading: string;
     };
 }
+
+// Create compatibility theme that includes both old and new structures
+const compatibilityTheme = createCompatibilityTheme(lightTheme);
+
+// Export the compatibility theme as basicTheme for backward compatibility
+export const basicTheme = compatibilityTheme;
+
+// Also export the legacy Theme type for existing components
+export type Theme = LegacyTheme;

@@ -25,6 +25,14 @@ export type { UnhingedTheme } from './themes/light';
 // Re-export default theme for convenience
 export { default as lightTheme } from './themes/light';
 
+// Compatibility layer exports
+export {
+  createLegacyTheme,
+  createCompatibilityTheme,
+  migrationUtils,
+  migrationChecklist
+} from './legacy/compatibility';
+
 // Utility functions
 import { lightTheme, UnhingedTheme } from './themes/light';
 import { 

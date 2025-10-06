@@ -184,6 +184,19 @@ export interface CompatibilityThemeProviderProps {
  */
 export interface CompatibilityTheme extends UnhingedTheme {
   legacy: ExtendedLegacyTheme;
+  // Add extended colors directly to theme for ErrorBoundary compatibility
+  colors: UnhingedTheme['colors'] & {
+    // Bootstrap-style color names used in some components
+    surface?: string;
+    danger?: string;
+    primary?: string;
+    primaryDark?: string;
+    text?: string;
+    background?: string;
+    border?: string;
+    muted?: string;
+    hover?: string;
+  };
 }
 
 /**
@@ -194,6 +207,20 @@ export interface CompatibilityTheme extends UnhingedTheme {
 export const createCompatibilityTheme = (theme: UnhingedTheme): CompatibilityTheme => ({
   ...theme,
   legacy: createLegacyTheme(theme),
+  // Extend colors with Bootstrap-style properties for ErrorBoundary compatibility
+  colors: {
+    ...theme.colors,
+    // Bootstrap-style color names used in some components
+    surface: theme.colors.semantic.context.background.secondary,
+    danger: theme.colors.semantic.intent.danger,
+    primary: theme.colors.semantic.intent.primary,
+    primaryDark: theme.colors.primitive.chromatic.blue, // Darker variant
+    text: theme.colors.semantic.context.text.primary,
+    background: theme.colors.semantic.context.background.primary,
+    border: theme.colors.semantic.context.border.primary,
+    muted: theme.colors.semantic.context.text.tertiary,
+    hover: theme.colors.semantic.context.background.tertiary,
+  },
 });
 
 /**
