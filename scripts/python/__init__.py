@@ -47,6 +47,17 @@ PYTHON_SCRIPTS = {
             "python scripts/python/fix_theme_properties.py",
         ]
     },
+    "analyze_migration": {
+        "path": "scripts/python/analyze_migration.py",
+        "description": "Analyze component migration metrics with precise LOC, design token coverage, and TypeScript safety scores",
+        "category": "analysis",
+        "usage": "python scripts/python/analyze_migration.py --component ComponentName [--compare] [--save]",
+        "examples": [
+            "python scripts/python/analyze_migration.py --component PromptSurgeryPanel --compare",
+            "python scripts/python/analyze_migration.py --all-components --save",
+            "python scripts/python/analyze_migration.py --component EventFeed --pre-migration",
+        ]
+    },
     # Future scripts will be registered here
 }
 
