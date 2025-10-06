@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+package multimodal;
+
+option java_package = "com.unhinged.multimodal.grpc";
+option java_outer_classname = "ContextServiceProto";
+option java_multiple_files = true;
+
+// Context-Aware LLM Service - Pure LLM operations for prompt enhancement
+service ContextService {
+  // Generate enhanced prompt with project context
+  rpc GeneratePrompt(PromptGenerationRequest) returns (PromptGenerationResponse);
+  
+  // Search project context and documentation
+  rpc SearchContext(ContextSearchRequest) returns (ContextSearchResponse);
+  
+  // Generate text using LLM
+  rpc GenerateText(TextGenerationRequest) returns (TextGenerationResponse);
+  
+  // Get available LLM models
+  rpc GetAvailableModels(Empty) returns (LLMModelsResponse);
+  
+  // Health check for service availability
+  rpc GetHealth(Empty) returns (HealthResponse);
+}
+
+// Request for prompt generation with context
+message PromptGenerationRequest {
+  // Base prompt to enhance
+  string base_prompt = 1;
+  
+  // Type of analysis (screenshot, natural_image, document, ui_component)
+  string analysis_type = 2;
+  
+  // Types of context to include (documentation, ui_components, api_endpoints, architecture)
+  repeated string context_types = 3;
+  
+  // Maximum number of context items to include
+  int32 max_context_items = 4;
+  
+  // Additional context hints
+  map<string, string> context_hints = 5;
+  
+  // LLM model to use for generation
+  string model = 6;
+  
+  // Maximum tokens for enhanced prompt
+  int32 max_tokens = 7;
+  
+  // Temperature for generation
+  float temperature = 8;
+}
+
+// Response with enhanced prompt
+message PromptGenerationResponse {
+  // Enhanced prompt with context
+  string enhanced_prompt = 1;
+  
+  // Number of context items used
+  int32 context_items_used = 2;
+  
+  // Context items that were included
+  repeated ContextItem context_items = 3;
+  
+  // Processing time in seconds
+  double processing_time = 4;
+  
+  // Model used for generation
+  string model_used = 5;
+  
+  // Success status
+  bool success = 6;
+  
+  // Error message if generation failed
+  string error = 7;
+}
+
+// Request for context search
+message ContextSearchRequest {
+  // Search query
+  string query = 1;
+  
+  // Types of context to search (documentation, ui_components, api_endpoints, architecture)
+  repeated string context_types = 2;
+  
+  // Maximum number of results
+  int32 max_results = 3;
+  
+  // Minimum relevance score (0.0 to 1.0)
+  float min_relevance = 4;
+  
+  // Additional search filters
+  map<string, string> filters = 5;
+}
+
+// Response with context search results
+message ContextSearchResponse {
+  // Found context items
+  repeated ContextItem results = 1;
+  
+  // Total number of results found
+  int32 total_results = 2;
+  
+  // Search query that was executed
+  string query = 3;
+  
+  // Processing time in seconds
+  double processing_time = 4;
+}
+
+// Request for text generation
+message TextGenerationRequest {
+  // Input prompt
+  string prompt = 1;
+  
+  // LLM model to use
+  string model = 2;
+  
+  // Maximum tokens to generate
+  int32 max_tokens = 3;
+  
+  // Temperature for generation (0.0 to 1.0)
+  float temperature = 4;
+  
+  // Top-p sampling parameter
+  float top_p = 5;
+  
+  // Stop sequences
+  repeated string stop_sequences = 6;
+  
+  // Additional generation parameters
+  map<string, string> parameters = 7;
+}
+
+// Response with generated text
+message TextGenerationResponse {
+  // Generated text
+  string text = 1;
+  
+  // Model used for generation
+  string model_used = 2;
+  
+  // Number of tokens generated
+  int32 tokens_generated = 3;
+  
+  // Processing time in seconds
+  double processing_time = 4;
+  
+  // Success status
+  bool success = 5;
+  
+  // Error message if generation failed
+  string error = 6;
+}
+
+// Context item from documentation or codebase
+message ContextItem {
+  // Unique identifier
+  string id = 1;
+  
+  // Type of context (documentation, ui_component, api_endpoint, architecture)
+  string type = 2;
+  
+  // Title or name
+  string title = 3;
+  
+  // Content or description
+  string content = 4;
+  
+  // Source file path
+  string file_path = 5;
+  
+  // Associated tags
+  repeated string tags = 6;
+  
+  // Relevance score (0.0 to 1.0)
+  double relevance_score = 7;
+  
+  // Last modified timestamp
+  int64 last_modified = 8;
+  
+  // Additional metadata
+  map<string, string> metadata = 9;
+}
+
+// Response with available LLM models
+message LLMModelsResponse {
+  repeated LLMModelInfo models = 1;
+}
+
+// Information about an LLM model
+message LLMModelInfo {
+  string name = 1;
+  string display_name = 2;
+  string description = 3;
+  bool available = 4;
+  string provider = 5; // ollama, openai, anthropic
+  int32 max_tokens = 6;
+  repeated string capabilities = 7; // text_generation, prompt_enhancement, etc.
+}
+
+// Health check response
+message HealthResponse {
+  bool healthy = 1;
+  string status = 2;
+  map<string, string> details = 3;
+  int64 uptime_seconds = 4;
+  string version = 5;
+}
+
+// Empty message for requests with no parameters
+message Empty {}
