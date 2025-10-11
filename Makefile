@@ -106,6 +106,14 @@ help: ## Show this help message
 	@echo "$(BLUE)💡 Quick start: make setup && make dev$(RESET)"
 	@echo "$(BLUE)📚 Documentation: make docs-update$(RESET)"
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
+	@echo ""
+	@echo "$(PURPLE)🧪 HTML Testing (Walking Skeletons):$(RESET)"
+	@echo "  $(GREEN)make test-ui$(RESET)          Launch HTML testing interfaces"
+	@echo "  $(GREEN)make html-dashboard$(RESET)   Open health monitoring dashboard"
+	@echo "  $(GREEN)make html-vision$(RESET)      Test Vision AI interface"
+	@echo "  $(GREEN)make html-audio$(RESET)       Test Whisper TTS interface"
+	@echo "  $(GREEN)make html-context$(RESET)     Test Context LLM interface"
+	@echo "  $(GREEN)make validate-system$(RESET)  Complete system validation"
 
 status: ## Show status of all services
 	$(call log_info,📊 Service Status)
@@ -216,6 +224,26 @@ proto-count: ## Count generated protobuf files
 	@echo "Generated Kotlin files: $(shell find $(BACKEND_DIR)/build/generated -name "*.kt" 2>/dev/null | wc -l)"
 	@echo "Generated Java files: $(shell find $(BACKEND_DIR)/build/generated -name "*.java" 2>/dev/null | wc -l)"
 	@echo "Proto source files: $(shell find $(PROTO_DIR) -name "*.proto" | wc -l)"
+
+gateway-gen: ## Generate presentation gateway from proto annotations
+	$(call log_info,🌐 Generating presentation gateway...)
+	@chmod +x $(PROTO_DIR)/build-gateway.sh
+	@$(PROTO_DIR)/build-gateway.sh
+	$(call log_success,Presentation gateway generated)
+
+gateway-dev: ## Start presentation gateway in development mode
+	$(call log_info,🚀 Starting presentation gateway...)
+	@cd services/presentation-gateway && npm run dev
+
+gateway-build: ## Build presentation gateway
+	$(call log_info,🔨 Building presentation gateway...)
+	@cd services/presentation-gateway && npm run build
+	$(call log_success,Presentation gateway built)
+
+gateway-test: ## Test presentation gateway
+	$(call log_info,🧪 Testing presentation gateway...)
+	@cd services/presentation-gateway && npm test
+	$(call log_success,Presentation gateway tests completed)
 
 # ============================================================================
 # Backend Development
@@ -455,6 +483,82 @@ analyze-deps: ## Run static analysis on dependency tracker
 	$(call log_success,Static analysis complete)
 
 # ============================================================================
+# HTML Interface Testing (Walking Skeletons)
+# ============================================================================
+
+html-setup: ## Setup HTML interface symlinks and launcher
+	$(call log_info,🔗 Setting up HTML interface access...)
+	@chmod +x scripts/setup-html-links.sh
+	@./scripts/setup-html-links.sh
+	$(call log_success,HTML interfaces ready for testing)
+
+html-test: ## Launch HTML testing interface hub
+	$(call log_info,🧪 Opening HTML testing interfaces...)
+	@./static_html/html-links/open.sh index || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
+	$(call log_success,HTML testing hub opened)
+
+html-dashboard: ## Open health monitoring dashboard
+	$(call log_info,📊 Opening health dashboard...)
+	@./static_html/html-links/open.sh dashboard || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
+
+html-vision: ## Open Vision AI testing interface
+	$(call log_info,👁️ Opening Vision AI testing...)
+	@./static_html/html-links/open.sh vision || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
+
+html-audio: ## Open Whisper TTS testing interface
+	$(call log_info,🎤 Opening Audio processing testing...)
+	@./static_html/html-links/open.sh audio || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
+
+html-context: ## Open Context LLM testing interface
+	$(call log_info,🧠 Opening Context LLM testing...)
+	@./static_html/html-links/open.sh context || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
+
+html-list: ## List all available HTML interfaces
+	$(call log_info,📋 Available HTML interfaces:)
+	@./static_html/html-links/open.sh || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
+
+html-server: ## Start local HTTP server for HTML interfaces
+	$(call log_info,🌐 Starting HTTP server for HTML interfaces...)
+	@echo "$(YELLOW)📍 Server URLs:$(RESET)"
+	@echo "  Main Hub: http://localhost:8080/static_html/"
+	@echo "  Dashboard: http://localhost:8080/unhinged-health-dashboard.html"
+	@echo "  Vision: http://localhost:8080/static_html/image-test.html"
+	@echo "  Audio: http://localhost:8080/static_html/voice-test.html"
+	@echo "  Context: http://localhost:8080/static_html/text-test.html"
+	@echo ""
+	@echo "$(BLUE)💡 Press Ctrl+C to stop server$(RESET)"
+	@python3 -m http.server 8080
+
+html-sanity: ## Run complete HTML interface sanity check
+	$(call log_info,🔍 Running HTML interface sanity check...)
+	@echo "$(YELLOW)📋 Checking HTML interface files...$(RESET)"
+	@test -f static_html/index.html && echo "$(GREEN)✅ Main hub found$(RESET)" || echo "$(RED)❌ Main hub missing$(RESET)"
+	@test -f static_html/image-test.html && echo "$(GREEN)✅ Vision AI interface found$(RESET)" || echo "$(RED)❌ Vision AI interface missing$(RESET)"
+	@test -f static_html/voice-test.html && echo "$(GREEN)✅ Audio interface found$(RESET)" || echo "$(RED)❌ Audio interface missing$(RESET)"
+	@test -f static_html/text-test.html && echo "$(GREEN)✅ Context LLM interface found$(RESET)" || echo "$(RED)❌ Context LLM interface missing$(RESET)"
+	@test -f unhinged-health-dashboard.html && echo "$(GREEN)✅ Health dashboard found$(RESET)" || echo "$(RED)❌ Health dashboard missing$(RESET)"
+	@echo "$(YELLOW)📋 Checking symlink system...$(RESET)"
+	@test -d static_html/html-links && echo "$(GREEN)✅ Symlink directory exists$(RESET)" || echo "$(YELLOW)⚠️ Run 'make html-setup' to create symlinks$(RESET)"
+	@test -x static_html/html-links/open.sh && echo "$(GREEN)✅ Launcher script ready$(RESET)" || echo "$(YELLOW)⚠️ Run 'make html-setup' to create launcher$(RESET)"
+	$(call log_success,HTML interface sanity check complete)
+
+html-clean: ## Clean HTML interface symlinks and generated files
+	$(call log_warning,🧹 Cleaning HTML interface symlinks...)
+	@rm -rf static_html/html-links/
+	@rm -f ~/Desktop/Unhinged-HTML.desktop
+	$(call log_success,HTML interface symlinks cleaned)
+
+# Aliases for convenience
+test-ui: html-test ## Alias for html-test
+ui-setup: html-setup ## Alias for html-setup
+ui-test: html-test ## Alias for html-test
+ui-dashboard: html-dashboard ## Alias for html-dashboard
+ui-vision: html-vision ## Alias for html-vision
+ui-audio: html-audio ## Alias for html-audio
+ui-context: html-context ## Alias for html-context
+ui-sanity: html-sanity ## Alias for html-sanity
+
+# ============================================================================
 # Utility Commands
 # ============================================================================
 
@@ -484,6 +588,62 @@ version: ## Show version information
 	@echo "$(YELLOW)Version:$(RESET) $(shell cat version.json 2>/dev/null | grep version | cut -d'"' -f4 || echo "unknown")"
 	@echo "$(YELLOW)Kotlin:$(RESET) $(shell cd $(BACKEND_DIR) && ./gradlew --version | grep Kotlin | head -1 || echo "unknown")"
 	@echo "$(YELLOW)Docker:$(RESET) $(shell docker --version 2>/dev/null || echo "not installed")"
+
+# ============================================================================
+# Integrated Testing Workflows
+# ============================================================================
+
+test-walking-skeleton: ## Complete walking skeleton validation workflow
+	$(call log_info,🚶‍♂️ Running walking skeleton validation...)
+	@echo "$(YELLOW)📋 Phase 1: Service Health Check$(RESET)"
+	@$(MAKE) status || echo "$(YELLOW)⚠️ Some services may be down$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)📋 Phase 2: HTML Interface Sanity Check$(RESET)"
+	@$(MAKE) html-sanity
+	@echo ""
+	@echo "$(YELLOW)📋 Phase 3: Setup HTML Access$(RESET)"
+	@$(MAKE) html-setup
+	@echo ""
+	@echo "$(YELLOW)📋 Phase 4: Launch Testing Hub$(RESET)"
+	@$(MAKE) html-test
+	$(call log_success,Walking skeleton validation complete)
+
+test-full-ui: ## Complete UI testing workflow with service startup
+	$(call log_info,🚀 Running full UI testing workflow...)
+	@echo "$(YELLOW)📋 Phase 1: Start Core Services$(RESET)"
+	@$(MAKE) multimodal-start || echo "$(YELLOW)⚠️ Some services failed to start$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)📋 Phase 2: Wait for Services$(RESET)"
+	@sleep 30
+	@echo ""
+	@echo "$(YELLOW)📋 Phase 3: Validate Walking Skeletons$(RESET)"
+	@$(MAKE) test-walking-skeleton
+	@echo ""
+	@echo "$(BLUE)💡 Services are running. Test interfaces manually, then run 'make multimodal-stop'$(RESET)"
+
+test-ui-quick: ## Quick UI test without service startup
+	$(call log_info,⚡ Quick UI testing...)
+	@$(MAKE) html-setup
+	@$(MAKE) html-sanity
+	@$(MAKE) html-test
+	$(call log_success,Quick UI test complete)
+
+validate-system: ## Complete system validation using walking skeletons
+	$(call log_info,🔍 Running complete system validation...)
+	@echo "$(YELLOW)📋 Step 1: Infrastructure Check$(RESET)"
+	@$(MAKE) status
+	@echo ""
+	@echo "$(YELLOW)📋 Step 2: Backend Health$(RESET)"
+	@curl -s http://localhost:8080/health > /dev/null && echo "$(GREEN)✅ Backend responding$(RESET)" || echo "$(RED)❌ Backend not responding$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)📋 Step 3: AI Services Check$(RESET)"
+	@curl -s http://localhost:8001/health > /dev/null && echo "$(GREEN)✅ Vision AI responding$(RESET)" || echo "$(YELLOW)⚠️ Vision AI not responding$(RESET)"
+	@curl -s http://localhost:8000/health > /dev/null && echo "$(GREEN)✅ Whisper TTS responding$(RESET)" || echo "$(YELLOW)⚠️ Whisper TTS not responding$(RESET)"
+	@curl -s http://localhost:8002/health > /dev/null && echo "$(GREEN)✅ Context LLM responding$(RESET)" || echo "$(YELLOW)⚠️ Context LLM not responding$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)📋 Step 4: Walking Skeleton Validation$(RESET)"
+	@$(MAKE) test-walking-skeleton
+	$(call log_success,System validation complete)
 
 # ============================================================================
 # Quick Commands (Aliases)

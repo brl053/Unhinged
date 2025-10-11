@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.plugin.serialization)
-    id("com.google.protobuf") version "0.9.4"
+    // Temporarily disabled to fix build issues
+    // id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.unhinged"
@@ -85,6 +86,17 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // ========================================================================
+    // Observability - OpenTelemetry and Metrics
+    // ========================================================================
+    implementation("io.opentelemetry:opentelemetry-api:1.31.0")
+    implementation("io.opentelemetry:opentelemetry-sdk:1.31.0")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.31.0")
+
+    // Micrometer for Prometheus metrics
+    implementation("io.micrometer:micrometer-registry-prometheus:1.11.5")
+    implementation("io.ktor:ktor-server-metrics-micrometer:2.3.6")
+
+    // ========================================================================
     // Configuration
     // ========================================================================
     implementation("com.typesafe:config:1.4.3")
@@ -102,8 +114,9 @@ dependencies {
 }
 
 // ========================================================================
-// Protobuf Configuration
+// Protobuf Configuration - TEMPORARILY DISABLED
 // ========================================================================
+/*
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.25.1"
@@ -143,6 +156,7 @@ sourceSets {
         }
     }
 }
+*/
 
 // ========================================================================
 // Kotlin Compilation

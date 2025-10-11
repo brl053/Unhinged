@@ -1,0 +1,266 @@
+// ============================================================================
+// Gateway Annotations - Custom Proto Options for Presentation Gateway
+// ============================================================================
+//
+// @file gateway_annotations.proto
+// @version 1.0.0
+// @author Unhinged Team
+// @date 2025-10-06
+// @description Custom protocol buffer options for automatic gateway generation
+//
+// This file defines custom annotations that drive the Presentation Gateway
+// Service generation, enabling automatic creation of:
+// - HTTP/REST endpoints from gRPC unary calls
+// - WebSocket handlers from gRPC streaming services
+// - Server-Sent Events from gRPC server streaming
+// - Authentication and rate limiting policies
+//
+// Usage in service definitions:
+//   rpc GetConversation(GetConversationRequest) returns (GetConversationResponse) {
+//     option (unhinged.gateway.http) = {
+//       method: "GET"
+//       path: "/api/v1/conversations/{conversation_id}"
+//       auth_required: true
+//     };
+//   }
+// ============================================================================
+
+syntax = "proto3";
+
+package unhinged.gateway.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option java_package = "unhinged.gateway";
+option java_multiple_files = true;
+option java_outer_classname = "GatewayAnnotationsProto";
+
+// ============================================================================
+// HTTP/REST Annotations
+// ============================================================================
+
+/**
+ * HTTP endpoint configuration for gRPC methods
+ * Generates REST endpoints with automatic request/response translation
+ */
+message HttpRule {
+  // HTTP method and path
+  string method = 1;        // "GET", "POST", "PUT", "DELETE", "PATCH"
+  string path = 2;          // "/api/v1/conversations/{id}"
+
+  // Request body handling
+  string body = 3;          // "*" for entire request, "field_name" for specific field
+  repeated string query_params = 4;  // Fields to extract from query parameters
+
+  // Response configuration
+  bool stream_response = 5;          // Enable streaming response (SSE)
+  string response_wrapper = 6;       // Wrap response in specific field
+
+  // Authentication and authorization
+  bool auth_required = 10;
+  repeated string required_scopes = 11;
+  string auth_type = 12;             // "bearer", "api_key", "session"
+
+  // Rate limiting
+  RateLimitRule rate_limit = 15;
+
+  // Caching
+  CacheRule cache = 16;
+
+  // CORS configuration
+  CorsRule cors = 17;
+
+  // Documentation
+  string summary = 20;
+  string description = 21;
+  repeated string tags = 22;
+}
+
+/**
+ * Rate limiting configuration
+ */
+message RateLimitRule {
+  int32 requests_per_minute = 1;
+  int32 requests_per_hour = 2;
+  int32 requests_per_day = 3;
+  string key_strategy = 4;           // "ip", "user", "api_key", "custom"
+  string custom_key_field = 5;       // Field to use for custom key strategy
+}
+
+/**
+ * Caching configuration
+ */
+message CacheRule {
+  int32 ttl_seconds = 1;
+  repeated string cache_keys = 2;    // Fields to use as cache keys
+  bool private_cache = 3;            // User-specific caching
+  repeated string vary_headers = 4;  // Headers that affect cache
+}
+
+/**
+ * CORS configuration
+ */
+message CorsRule {
+  repeated string allowed_origins = 1;
+  repeated string allowed_methods = 2;
+  repeated string allowed_headers = 3;
+  bool allow_credentials = 4;
+  int32 max_age_seconds = 5;
+}
+
+// ============================================================================
+// WebSocket Annotations
+// ============================================================================
+
+/**
+ * WebSocket configuration for bidirectional streaming
+ * Generates WebSocket handlers with automatic message routing
+ */
+message WebSocketRule {
+  string path = 1;                   // "/ws/chat/{conversation_id}"
+  string event_type = 2;             // Message type identifier
+
+  // Connection management
+  bool auth_required = 10;
+  repeated string required_scopes = 11;
+  int32 max_connections_per_user = 12;
+  int32 idle_timeout_seconds = 13;
+
+  // Message handling
+  string request_field = 15;         // Field containing the actual message
+  string response_field = 16;        // Field to wrap response in
+  bool broadcast = 17;               // Broadcast to all connections
+  string broadcast_filter = 18;      // Filter expression for broadcast
+
+  // Rate limiting
+  RateLimitRule rate_limit = 20;
+
+  // Documentation
+  string summary = 25;
+  string description = 26;
+  repeated string tags = 27;
+}
+
+// ============================================================================
+// Server-Sent Events Annotations
+// ============================================================================
+
+/**
+ * Server-Sent Events configuration for server streaming
+ * Generates SSE endpoints with automatic stream management
+ */
+message ServerSentEventsRule {
+  string path = 1;                   // "/api/v1/events/{stream_id}"
+  string event_type = 2;             // SSE event type
+
+  // Stream configuration
+  bool auth_required = 10;
+  repeated string required_scopes = 11;
+  int32 keepalive_interval_seconds = 12;
+  int32 max_stream_duration_seconds = 13;
+
+  // Message formatting
+  string data_field = 15;            // Field containing event data
+  string id_field = 16;              // Field for event ID
+  bool json_encode = 17;             // JSON encode the data field
+
+  // Filtering and routing
+  repeated string filter_params = 20; // Query params for filtering
+  string routing_key = 21;           // Field for message routing
+
+  // Documentation
+  string summary = 25;
+  string description = 26;
+  repeated string tags = 27;
+}
+
+// ============================================================================
+// Long Polling Annotations
+// ============================================================================
+
+/**
+ * Long polling configuration for legacy client support
+ * Generates long polling endpoints with timeout handling
+ */
+message LongPollingRule {
+  string path = 1;                   // "/api/v1/poll/{resource_id}"
+  int32 timeout_seconds = 2;         // Maximum wait time
+  int32 max_events = 3;              // Maximum events per response
+
+  // Authentication
+  bool auth_required = 10;
+  repeated string required_scopes = 11;
+
+  // Response configuration
+  string events_field = 15;          // Field containing events array
+  string cursor_field = 16;          // Field for pagination cursor
+  bool include_metadata = 17;        // Include timing metadata
+
+  // Documentation
+  string summary = 20;
+  string description = 21;
+  repeated string tags = 22;
+}
+
+// ============================================================================
+// Service-Level Annotations
+// ============================================================================
+
+/**
+ * Service-level gateway configuration
+ * Applied to entire gRPC services
+ */
+message ServiceRule {
+  string base_path = 1;              // "/api/v1/chat"
+  string version = 2;                // "v1", "v2", etc.
+
+  // Default authentication
+  bool default_auth_required = 10;
+  repeated string default_scopes = 11;
+  string auth_provider = 12;         // "jwt", "oauth2", "api_key"
+
+  // Default rate limiting
+  RateLimitRule default_rate_limit = 15;
+
+  // Default CORS
+  CorsRule default_cors = 16;
+
+  // OpenAPI documentation
+  string title = 20;
+  string description = 21;
+  repeated string tags = 22;
+  string contact_email = 23;
+  string license = 24;
+}
+
+// ============================================================================
+// Custom Options Extensions
+// ============================================================================
+
+// Method-level options
+extend google.protobuf.MethodOptions {
+  HttpRule http = 50001;
+  WebSocketRule websocket = 50002;
+  ServerSentEventsRule sse = 50003;
+  LongPollingRule long_polling = 50004;
+}
+
+// Service-level options
+extend google.protobuf.ServiceOptions {
+  ServiceRule service = 50010;
+}
+
+// Message-level options for request/response customization
+extend google.protobuf.MessageOptions {
+  bool gateway_exclude = 50020;      // Exclude from gateway generation
+  string json_name_override = 50021; // Override JSON field names
+}
+
+// Field-level options for parameter handling
+extend google.protobuf.FieldOptions {
+  bool path_param = 50030;           // Extract from URL path
+  bool query_param = 50031;          // Extract from query string
+  bool header_param = 50032;         // Extract from HTTP header
+  string param_name = 50033;         // Override parameter name
+  bool required_param = 50034;       // Mark as required parameter
+}

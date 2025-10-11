@@ -50,8 +50,13 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    print_error "Docker Compose is not installed or not in PATH"
+if ! command -v docker &> /dev/null; then
+    print_error "Docker is not installed or not in PATH"
+    exit 1
+fi
+
+if ! docker compose version &> /dev/null; then
+    print_error "Docker Compose is not available"
     exit 1
 fi
 
@@ -101,7 +106,7 @@ fi
 # Start observability stack
 print_status "Starting LGTM observability stack..."
 
-docker-compose -f docker-compose.observability.yml up -d
+docker compose -f docker-compose.observability.yml up -d
 
 # Wait for services to start
 print_status "Waiting for services to initialize..."
@@ -143,6 +148,6 @@ if $all_healthy; then
     echo "✅ Observability stack setup complete!"
 else
     print_error "Some services are not healthy. Check logs with:"
-    echo "   docker-compose -f docker-compose.observability.yml logs"
+    echo "   docker compose -f docker-compose.observability.yml logs"
     exit 1
 fi

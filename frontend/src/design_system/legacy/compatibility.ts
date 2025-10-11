@@ -184,6 +184,32 @@ export interface CompatibilityThemeProviderProps {
  */
 export interface CompatibilityTheme extends UnhingedTheme {
   legacy: ExtendedLegacyTheme;
+  // Add the old 'color' structure for backward compatibility
+  color: {
+    palette: {
+      white: string;
+    };
+    background: {
+      primary: string;
+      secondary: string;
+      hovered: string;
+    };
+    border: {
+      primary: string;
+      secondary: string;
+    };
+    text: {
+      primary: string;
+      secondary: string;
+    };
+  };
+  // Add the old 'fonts' structure for backward compatibility
+  fonts: {
+    main: string;
+    heading: string;
+  };
+  // Add direct background property for components that access theme.background
+  background?: string;
   // Add extended colors directly to theme for ErrorBoundary compatibility
   colors: UnhingedTheme['colors'] & {
     // Bootstrap-style color names used in some components
@@ -204,24 +230,62 @@ export interface CompatibilityTheme extends UnhingedTheme {
  * @param theme - New UnhingedTheme object
  * @returns Enhanced theme with legacy compatibility
  */
-export const createCompatibilityTheme = (theme: UnhingedTheme): CompatibilityTheme => ({
-  ...theme,
-  legacy: createLegacyTheme(theme),
-  // Extend colors with Bootstrap-style properties for ErrorBoundary compatibility
-  colors: {
-    ...theme.colors,
-    // Bootstrap-style color names used in some components
-    surface: theme.colors.semantic.context.background.secondary,
-    danger: theme.colors.semantic.intent.danger,
-    primary: theme.colors.semantic.intent.primary,
-    primaryDark: theme.colors.primitive.chromatic.blue, // Darker variant
-    text: theme.colors.semantic.context.text.primary,
+export const createCompatibilityTheme = (theme: UnhingedTheme): CompatibilityTheme => {
+  const compatibilityTheme = {
+    ...theme,
+    legacy: createLegacyTheme(theme),
+    // Add the old 'color' structure for backward compatibility
+    color: {
+      palette: {
+        white: theme.colors.primitive.achromatic.white,
+      },
+      background: {
+        primary: theme.colors.semantic.context.background.primary,
+        secondary: theme.colors.semantic.context.background.secondary,
+        hovered: theme.colors.semantic.context.background.tertiary,
+      },
+      border: {
+        primary: theme.colors.semantic.context.border.primary,
+        secondary: theme.colors.semantic.context.border.secondary,
+      },
+      text: {
+        primary: theme.colors.semantic.context.text.primary,
+        secondary: theme.colors.semantic.context.text.secondary,
+      },
+    },
+    // Add the old 'fonts' structure for backward compatibility
+    fonts: {
+      main: theme.typography.families.primary,
+      heading: theme.typography.families.secondary,
+    },
+    // Add direct background property for components that access theme.background
     background: theme.colors.semantic.context.background.primary,
-    border: theme.colors.semantic.context.border.primary,
-    muted: theme.colors.semantic.context.text.tertiary,
-    hover: theme.colors.semantic.context.background.tertiary,
-  },
-});
+    // Extend colors with Bootstrap-style properties for ErrorBoundary compatibility
+    colors: {
+      ...theme.colors,
+      // Bootstrap-style color names used in some components
+      surface: theme.colors.semantic.context.background.secondary,
+      danger: theme.colors.semantic.intent.danger,
+      primary: theme.colors.semantic.intent.primary,
+      primaryDark: theme.colors.primitive.chromatic.blue, // Darker variant
+      text: theme.colors.semantic.context.text.primary,
+      background: theme.colors.semantic.context.background.primary,
+      border: theme.colors.semantic.context.border.primary,
+      muted: theme.colors.semantic.context.text.tertiary,
+      hover: theme.colors.semantic.context.background.tertiary,
+    },
+  };
+
+  // Debug logging
+  console.log('🔧 Compatibility Theme Created:', {
+    hasColor: !!compatibilityTheme.color,
+    hasBackground: !!compatibilityTheme.background,
+    colorBackground: compatibilityTheme.color?.background,
+    directBackground: compatibilityTheme.background,
+  });
+
+  return compatibilityTheme;
+};
 
 /**
  * Styled-components theme type augmentation

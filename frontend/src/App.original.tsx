@@ -18,21 +18,11 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const App: React.FC<IAppRoutersProps> = ({router}) => {
-  // Debug: Log the theme to console to verify it has the expected properties
-  React.useEffect(() => {
-    console.log('🎨 Theme Debug:', {
-      hasColor: !!basicTheme.color,
-      hasBackground: !!basicTheme.background,
-      hasColors: !!basicTheme.colors,
-      colorBackground: basicTheme.color?.background,
-      directBackground: basicTheme.background,
-      theme: basicTheme
-    });
-  }, []);
+
 
   return (
     <ThemeProvider theme={basicTheme}>
-      <GlobalStyle />
+      <GlobalStyle /> 
       <RouterProvider router={router}/>
     </ThemeProvider>
   );

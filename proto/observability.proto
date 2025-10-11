@@ -1,0 +1,178 @@
+// ============================================================================
+// Observability Events - CDC Integration Schema
+// ============================================================================
+//
+// @file observability.proto
+// @version 1.0.0
+// @author Unhinged Team
+// @date 2025-10-06
+// @description Protocol buffer definitions for observability events in CDC stream
+//
+// This schema extends our existing CDC event system to support OpenTelemetry
+// traces, metrics, and logs with proper context preservation and dual persistence
+// to both Kafka CDC stream and data lake storage.
+// ============================================================================
+
+syntax = "proto3";
+
+package unhinged.observability.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+import "common.proto";
+
+option java_package = "unhinged.observability";
+option java_multiple_files = true;
+option java_outer_classname = "ObservabilityProto";
+
+// ============================================================================
+// OpenTelemetry Context Preservation
+// ============================================================================
+
+/**
+ * OpenTelemetry trace context for correlation across services
+ */
+message TraceContext {
+  string trace_id = 1;           // OpenTelemetry trace ID (32 hex chars)
+  string span_id = 2;            // OpenTelemetry span ID (16 hex chars)
+  string parent_span_id = 3;     // Parent span ID for hierarchy
+  TraceFlags trace_flags = 4;    // Trace flags (sampled, etc.)
+  string trace_state = 5;        // W3C trace state for vendor data
+
+  // Additional context for correlation
+  string correlation_id = 10;    // Business correlation ID
+  string request_id = 11;        // Request-specific ID
+  string session_id = 12;        // User session ID
+  string user_id = 13;           // User identifier
+}
+
+/**
+ * OpenTelemetry trace flags
+ */
+message TraceFlags {
+  bool sampled = 1;              // Whether trace is sampled
+  bool random_trace_id = 2;      // Whether trace ID is random
+}
+
+/**
+ * Resource information for service identification
+ */
+message Resource {
+  string service_name = 1;       // Service name (e.g., "chat-service")
+  string service_version = 2;    // Service version
+  string service_instance_id = 3; // Instance identifier
+  string deployment_environment = 4; // Environment (dev/staging/prod)
+  string k8s_cluster_name = 5;   // Kubernetes cluster
+  string k8s_namespace = 6;      // Kubernetes namespace
+  string k8s_pod_name = 7;       // Pod name
+  string host_name = 8;          // Host name
+  string host_arch = 9;          // Host architecture
+
+  // Custom resource attributes
+  map<string, string> attributes = 20;
+}
+
+// ============================================================================
+// Log Events for CDC Stream
+// ============================================================================
+
+/**
+ * Log entry event for CDC stream integration
+ * Extends the existing CDC event pattern with observability data
+ */
+message LogEvent {
+  // Standard CDC event fields
+  string event_id = 1;           // Unique event identifier
+  google.protobuf.Timestamp timestamp = 2; // Event timestamp
+  string event_type = 3;         // Always "log_entry"
+  int64 sequence_number = 4;     // CDC sequence for ordering
+
+  // OpenTelemetry context
+  TraceContext trace_context = 5;
+  Resource resource = 6;
+
+  // Log entry data
+  LogLevel level = 10;           // Log level
+  string message = 11;           // Log message
+  google.protobuf.Struct metadata = 12; // Structured metadata
+
+  // Error information (if applicable)
+  ErrorInfo error = 15;
+
+  // Destination flags for dual persistence
+  DestinationFlags destinations = 20;
+
+  // Data lake partitioning hints
+  PartitionInfo partition_info = 25;
+}
+
+/**
+ * Log levels matching OpenTelemetry severity
+ */
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_TRACE = 1;
+  LOG_LEVEL_DEBUG = 2;
+  LOG_LEVEL_INFO = 3;
+  LOG_LEVEL_WARN = 4;
+  LOG_LEVEL_ERROR = 5;
+  LOG_LEVEL_FATAL = 6;
+}
+
+/**
+ * Error information for exception tracking
+ */
+message ErrorInfo {
+  string error_type = 1;         // Exception class name
+  string error_message = 2;      // Exception message
+  string stack_trace = 3;        // Full stack trace
+  string error_code = 4;         // Application error code
+  map<string, string> error_attributes = 5; // Additional error context
+}
+
+/**
+ * Destination flags for dual persistence routing
+ */
+message DestinationFlags {
+  bool console = 1;              // Output to console (C flag)
+  bool cdc_stream = 2;           // Persist to CDC stream (D flag)
+  bool data_lake = 3;            // Send to data lake (L flag)
+
+  // Data lake specific options
+  DataLakeOptions data_lake_options = 10;
+}
+
+/**
+ * Data lake storage options
+ */
+message DataLakeOptions {
+  string table_name = 1;         // Target table/dataset
+  string partition_strategy = 2; // Partitioning strategy
+  int32 batch_size = 3;          // Batching configuration
+  int32 flush_interval_seconds = 4; // Flush interval
+  CompressionType compression = 5; // Compression type
+}
+
+/**
+ * Compression types for data lake storage
+ */
+enum CompressionType {
+  COMPRESSION_UNSPECIFIED = 0;
+  COMPRESSION_NONE = 1;
+  COMPRESSION_GZIP = 2;
+  COMPRESSION_SNAPPY = 3;
+  COMPRESSION_LZ4 = 4;
+  COMPRESSION_ZSTD = 5;
+}
+
+/**
+ * Partitioning information for data lake optimization
+ */
+message PartitionInfo {
+  string date_partition = 1;     // Date-based partition (YYYY-MM-DD)
+  string hour_partition = 2;     // Hour-based partition (HH)
+  string service_partition = 3;  // Service-based partition
+  string level_partition = 4;    // Log level partition
+  map<string, string> custom_partitions = 10; // Custom partition keys
+}

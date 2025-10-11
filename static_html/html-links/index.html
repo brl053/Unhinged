@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Unhinged HTML Files</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --background-color: #0f172a;
+            --surface-color: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --gradient-primary: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+            --border-radius: 0.75rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .location-info {
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .file-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .file-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .file-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .instructions {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .instructions h3 {
+            color: var(--success-color);
+            margin-bottom: 1rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .instructions li::before {
+            content: "🔗";
+            position: absolute;
+            left: 0;
+        }
+
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .files-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🧠 Unhinged HTML Files</h1>
+            <p class="subtitle">Quick access to all Unhinged consciousness ecosystem interfaces</p>
+            <div class="location-info">
+                <strong>📁 New Location:</strong> All HTML interfaces are now organized under <code>static_html/html-links/</code>
+            </div>
+        </div>
+
+        <div class="files-grid" id="files-grid">
+            <!-- Files will be populated by JavaScript -->
+        </div>
+
+        <div class="instructions">
+            <h3>🚀 Quick Access Methods</h3>
+            <ul>
+                <li><strong>Browser Bookmark:</strong> Bookmark this page for instant access</li>
+                <li><strong>Desktop Shortcut:</strong> Double-click "Unhinged-HTML" on your desktop</li>
+                <li><strong>Command Line:</strong> <span class="code">./static_html/html-links/open.sh dashboard</span></li>
+                <li><strong>Make Commands:</strong> <span class="code">make test-ui</span>, <span class="code">make html-dashboard</span></li>
+                <li><strong>Direct Access:</strong> Navigate to static_html/html-links/ and double-click any file</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // File configurations
+        const files = [
+            {
+                name: 'dashboard.html',
+                icon: '📊',
+                title: 'Health Dashboard',
+                description: 'Real-time monitoring of all Unhinged services with auto-refresh and status indicators'
+            },
+            {
+                name: 'vision.html',
+                icon: '👁️',
+                title: 'Vision AI Testing',
+                description: 'Computer vision service testing - image analysis, object detection, and visual processing'
+            },
+            {
+                name: 'audio.html',
+                icon: '🎤',
+                title: 'Audio Processing',
+                description: 'Whisper TTS service testing - speech-to-text, text-to-speech, and audio analysis'
+            },
+            {
+                name: 'context.html',
+                icon: '🧠',
+                title: 'Context LLM',
+                description: 'Context-aware language model testing - chat interface and text processing'
+            },
+            {
+                name: 'static-main.html',
+                icon: '🏠',
+                title: 'Main Interface',
+                description: 'Central hub for all static HTML interfaces and service testing'
+            },
+            {
+                name: 'static-dashboard.html',
+                icon: '📈',
+                title: 'Static Dashboard',
+                description: 'Alternative dashboard implementation with modular file structure'
+            }
+        ];
+
+        // Populate files grid
+        function populateFilesGrid() {
+            const grid = document.getElementById('files-grid');
+            
+            files.forEach(file => {
+                const card = document.createElement('a');
+                card.href = file.name;
+                card.className = 'file-card';
+                
+                card.innerHTML = `
+                    <div class="file-icon">${file.icon}</div>
+                    <div class="file-name">${file.title}</div>
+                    <div class="file-description">${file.description}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', populateFilesGrid);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '1' && e.key <= '9') {
+                const index = parseInt(e.key) - 1;
+                if (index < files.length) {
+                    window.location.href = files[index].name;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

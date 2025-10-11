@@ -17,6 +17,7 @@ package com.unhinged.observability
 
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
@@ -25,7 +26,7 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
+// Using string constants instead of ResourceAttributes for compatibility
 import org.slf4j.LoggerFactory
 
 /**
@@ -38,10 +39,10 @@ object TelemetrySetup {
     private val resource = Resource.getDefault()
         .merge(Resource.create(
             Attributes.of(
-                ResourceAttributes.SERVICE_NAME, "unhinged-backend",
-                ResourceAttributes.SERVICE_VERSION, "1.0.0",
-                ResourceAttributes.SERVICE_NAMESPACE, "unhinged",
-                ResourceAttributes.DEPLOYMENT_ENVIRONMENT, "development"
+                AttributeKey.stringKey("service.name"), "unhinged-backend",
+                AttributeKey.stringKey("service.version"), "1.0.0",
+                AttributeKey.stringKey("service.namespace"), "unhinged",
+                AttributeKey.stringKey("deployment.environment"), "development"
             )
         ))
     
