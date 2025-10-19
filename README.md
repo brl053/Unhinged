@@ -42,9 +42,29 @@ This will:
 │   ├── src/services/    # API clients
 │   ├── src/components/  # UI components
 │   └── src/pages/       # Route components
+├── 🏗️ platforms/        # Complex multi-technology platforms
+│   ├── persistence/     # Multi-database abstraction platform
+│   ├── agent/          # AI agent orchestration (future)
+│   └── workflow/       # Business process automation (future)
+├── 🔧 services/         # Simple, single-purpose services
+│   ├── speech-to-text/ # Voice transcription
+│   ├── text-to-speech/ # Voice synthesis
+│   └── vision-ai/      # Image processing
 ├── 📚 docs/             # Technical documentation
 └── 🔧 tools/            # Development utilities
 ```
+
+### **Platforms vs Services Architecture**
+
+**🏗️ Platforms** (Complex Multi-Technology Offerings):
+- **Persistence Platform**: Abstracts 8 database technologies behind unified APIs
+- **Agent Platform** (Future): AI agent orchestration and lifecycle management
+- **Workflow Platform** (Future): Business process automation and orchestration
+
+**🔧 Services** (Simple Single-Purpose Offerings):
+- **Speech-to-Text**: Voice transcription service
+- **Text-to-Speech**: Voice synthesis service
+- **Vision-AI**: Image processing and analysis
 
 ## 📋 **LLM Navigation Guide**
 
@@ -116,6 +136,15 @@ make clean               # Clean build artifacts
 - `GET /api/v1/health` - Health check
 - `POST /api/v1/sessions` - Create session
 - `GET /api/v1/sessions/{id}/messages` - Get conversation
+
+### **Persistence Platform (localhost:8090)**
+- `GET /api/v1/health` - Platform health check
+- `GET /api/v1/metrics` - Platform metrics
+- `POST /api/v1/query/{queryName}` - Execute named queries
+- `POST /api/v1/tables/{tableName}` - CRUD operations
+- `POST /api/v1/vector/search/{tableName}` - Vector search
+- `POST /api/v1/graph/traverse/{tableName}` - Graph traversal
+- `POST /api/v1/operations/{operationName}` - Complex operations
 
 ### **Frontend (localhost:8081)**
 - `/` - Chat interface
