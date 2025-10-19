@@ -2,24 +2,24 @@
 
 > **Purpose**: Comprehensive overview of project organization and components
 > **Audience**: Developers and AI assistants working on the platform
-> **Last Updated**: Auto-generated on 2025-10-18 18:37:59
+> **Last Updated**: Auto-generated on 2025-10-18 19:46:46
 
 ## 📊 Project Overview
 
-- **Total Files**: 570
+- **Total Files**: 575
 - **Services**: 10
 - **Key Files**: 42
 
 ### File Type Distribution
 ```
 .kt               185 files
-.md                69 files
+.md                72 files
 .ts                65 files
-.py                38 files
+.py                39 files
 .c                 34 files
 .sh                26 files
 .proto             26 files
-.json              18 files
+.json              19 files
 no_extension       18 files
 .tsx               18 files
 ```
@@ -123,12 +123,12 @@ no_extension       18 files
 
 ### docs
 - **Description**: Project documentation
-- **Files**: 48
-- **Subdirectories**: 14
+- **Files**: 52
+- **Subdirectories**: 15
 
 ### scripts
 - **Description**: Build and automation scripts
-- **Files**: 34
+- **Files**: 37
 - **Subdirectories**: 2
 
 ### infrastructure

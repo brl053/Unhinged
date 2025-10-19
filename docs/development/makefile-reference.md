@@ -2,7 +2,7 @@
 
 > **Purpose**: Comprehensive documentation of all Make targets and development workflows
 > **Audience**: Developers and AI assistants working on the Unhinged platform
-> **Last Updated**: Auto-generated on 2025-10-18 18:37:59
+> **Last Updated**: Auto-generated on 2025-10-18 19:46:46
 
 ## 🎯 Quick Reference
 
@@ -47,6 +47,92 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🔨 Building presentation gateway...)
 - $(call log_success,Presentation gateway built)
+
+#### `make build-enhanced`
+**Purpose**: Use enhanced build system for development
+**Usage**: `make build-enhanced`
+**Actions**:
+- $(call log_info,🚀 Using enhanced build system...)
+- $(call log_success,Enhanced build completed)
+
+#### `make build-enhanced-full`
+**Purpose**: Full enhanced build with all services
+**Usage**: `make build-enhanced-full`
+**Actions**:
+- $(call log_info,🚀 Running full enhanced build...)
+- $(call log_success,Enhanced full build completed)
+
+#### `make build-explain`
+**Purpose**: Explain a build target (usage: make build-explain TARGET=dev-fast)
+**Usage**: `make build-explain`
+**Actions**:
+- $(call log_info,📋 Explaining build target: $(or $(TARGET),dev-fast))
+
+#### `make build-list`
+**Purpose**: List all available enhanced build targets
+**Usage**: `make build-list`
+**Actions**:
+- $(call log_info,📋 Available enhanced build targets...)
+
+#### `make build-profile`
+**Purpose**: Profile build performance (usage: make build-profile TARGET=dev-fast)
+**Usage**: `make build-profile`
+**Actions**:
+- $(call log_info,⚡ Profiling build target: $(or $(TARGET),dev-fast))
+
+#### `make build-watch`
+**Purpose**: Watch mode for continuous building (usage: make build-watch TARGET=backend-compile)
+**Usage**: `make build-watch`
+**Actions**:
+- $(call log_info,👁️ Starting watch mode for: $(or $(TARGET),backend-compile))
+
+#### `make build-context`
+**Purpose**: Generate LLM context for build assistance
+**Usage**: `make build-context`
+**Actions**:
+- $(call log_info,🤖 Generating LLM build context...)
+
+#### `make build-context-json`
+**Purpose**: Generate LLM context in JSON format
+**Usage**: `make build-context-json`
+**Actions**:
+- $(call log_info,🤖 Generating LLM build context (JSON)...)
+
+#### `make build-onboard`
+**Purpose**: Generate developer onboarding guide
+**Usage**: `make build-onboard`
+**Actions**:
+- $(call log_info,📚 Generating developer onboarding guide...)
+
+#### `make build-explain-error`
+**Purpose**: Explain build error (usage: make build-explain-error TARGET=dev-fast ERROR="error message")
+**Usage**: `make build-explain-error`
+**Actions**:
+- $(call log_info,🔍 Explaining build error for: $(or $(TARGET),unknown))
+
+#### `make build-performance-report`
+**Purpose**: Generate build performance report
+**Usage**: `make build-performance-report`
+**Actions**:
+- $(call log_info,📊 Generating performance report...)
+
+#### `make build-performance-metrics`
+**Purpose**: Show current performance metrics
+**Usage**: `make build-performance-metrics`
+**Actions**:
+- $(call log_info,📊 Showing performance metrics...)
+
+#### `make build-performance-json`
+**Purpose**: Get performance data in JSON format
+**Usage**: `make build-performance-json`
+**Actions**:
+- $(call log_info,📊 Generating performance data (JSON)...)
+
+#### `make build-validate`
+**Purpose**: Validate enhanced build system installation
+**Usage**: `make build-validate`
+**Actions**:
+- $(call log_info,✅ Validating enhanced build system...)
 
 #### `make docs-makefile`
 **Purpose**: Generate Makefile reference documentation
@@ -102,6 +188,32 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🔍 Validating LLM comments...)
 - $(call log_success,LLM comment validation complete)
+
+#### `make docs-context-overview`
+**Purpose**: Generate project overview for LLM context warming (YAML)
+**Usage**: `make docs-context-overview`
+**Actions**:
+- $(call log_info,🤖 Generating LLM context overview...)
+- $(call log_success,LLM context overview generated)
+
+#### `make docs-context-paginate`
+**Purpose**: Paginate through all comments (usage: make docs-context-paginate PAGE=1)
+**Usage**: `make docs-context-paginate`
+**Actions**:
+- $(call log_info,📄 Showing comments page $(or $(PAGE),1)...)
+
+#### `make docs-context-json`
+**Purpose**: Generate project overview in JSON format
+**Usage**: `make docs-context-json`
+**Actions**:
+- $(call log_info,🤖 Generating LLM context overview (JSON)...)
+
+#### `make docs-context-enhanced`
+**Purpose**: Generate enhanced project overview with getting started and dependencies
+**Usage**: `make docs-context-enhanced`
+**Actions**:
+- $(call log_info,🚀 Generating enhanced LLM context overview...)
+- $(call log_success,Enhanced LLM context overview generated)
 
 #### `make deps-build`
 **Purpose**: Build the C dependency tracker
@@ -400,6 +512,16 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🚀 Starting full development environment...)
 
+#### `make dev-enhanced`
+**Purpose**: Alias for enhanced development build
+**Usage**: `make dev-enhanced`
+**Dependencies**: build-enhanced
+
+#### `make dev-fast-enhanced`
+**Purpose**: Alias for fast enhanced development build
+**Usage**: `make dev-fast-enhanced`
+**Dependencies**: build-enhanced
+
 ## 🧪 Testing and Debugging
 
 #### `make gateway-test`
@@ -472,6 +594,26 @@ make clean           # Clean all build artifacts
 - $(call log_info,🧠 Memory Usage Information)
 - $(call log_warning,JVM Memory Settings:)
 
+#### `make build-test`
+**Purpose**: Test the enhanced build system
+**Usage**: `make build-test`
+**Actions**:
+- $(call log_info,🧪 Testing enhanced build system...)
+
+#### `make docs-test-context`
+**Purpose**: Run TDD tests for LLM context warming improvements
+**Usage**: `make docs-test-context`
+**Actions**:
+- $(call log_info,🧪 Running LLM context warmer tests...)
+- $(call log_success,LLM context warmer tests completed)
+
+#### `make docs-test-enhancements`
+**Purpose**: Run TDD tests for final LLM context warmer enhancements
+**Usage**: `make docs-test-enhancements`
+**Actions**:
+- $(call log_info,🧪 Running enhanced context warmer tests...)
+- $(call log_success,Enhanced context warmer tests completed)
+
 #### `make deps-test`
 **Purpose**: Run dependency tracker tests
 **Usage**: `make deps-test`
@@ -533,6 +675,13 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_warning,🧹 Cleaning all build artifacts...)
 
+#### `make clean-enhanced`
+**Purpose**: Clean using enhanced build system
+**Usage**: `make clean-enhanced`
+**Actions**:
+- $(call log_warning,🧹 Enhanced cleanup...)
+- $(call log_success,Enhanced cleanup complete)
+
 #### `make clean-docker`
 **Purpose**: Clean Docker resources
 **Usage**: `make clean-docker`
@@ -543,6 +692,11 @@ make clean           # Clean all build artifacts
 **Purpose**: Clean everything
 **Usage**: `make clean-all`
 **Dependencies**: clean, clean-docker
+
+#### `make clean-all-enhanced`
+**Purpose**: Enhanced clean everything
+**Usage**: `make clean-all-enhanced`
+**Dependencies**: clean-enhanced, clean-docker
 
 #### `make deps-clean`
 **Purpose**: Clean dependency tracker build
@@ -576,6 +730,12 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,📊 Service Status)
 - $(call log_warning,Docker Services:)
+
+#### `make build-status`
+**Purpose**: Show enhanced build system status
+**Usage**: `make build-status`
+**Actions**:
+- $(call log_info,📊 Build system status...)
 
 #### `make ports`
 **Purpose**: Show which ports are in use
