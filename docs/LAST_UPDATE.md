@@ -1,8 +1,8 @@
 # 📋 Documentation Update Summary
 
-**Last Update**: 2025-10-05 21:18:04
-**Success Rate**: 6/6
-**Status**: ✅ All Updated
+**Last Update**: 2025-10-18 18:38:00
+**Success Rate**: 5/6
+**Status**: ⚠️ Some Issues
 
 ## Updated Documentation
 
@@ -14,5 +14,5 @@
 
 ## Next Steps
 
-- Documentation is up to date
-- Run `make docs-update` after significant code changes
+- Review and fix documentation generation issues
+- Re-run `make docs-update` after fixes

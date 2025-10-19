@@ -1,26 +1,40 @@
 # 🚀 Services Overview - Auto-Generated
 
-> **Last Updated**: 2025-10-05 21:18:04
+> **Last Updated**: 2025-10-18 18:37:59
 
-**Total Services**: 4
+**Total Services**: 7
 
-## research-orchestrator
+## multimodal-orchestrator
 
-**Path**: `services/research-orchestrator`
+**Path**: `services/multimodal-orchestrator`
 
 **Documentation**: ❌ No README.md
-**Containerized**: ❌ No Dockerfile
-
-## vision-ai
-
-**Path**: `services/vision-ai`
-
-**Documentation**: ✅ Has README.md
 **Containerized**: ✅ Has Dockerfile
 
-## go-services
+## api-gateway
 
-**Path**: `services/go-services`
+**Path**: `services/api-gateway`
+
+**Documentation**: ❌ No README.md
+**Containerized**: ✅ Has Dockerfile
+
+## vision-ai-enhanced
+
+**Path**: `services/vision-ai-enhanced`
+
+**Documentation**: ❌ No README.md
+**Containerized**: ✅ Has Dockerfile
+
+## context-llm
+
+**Path**: `services/context-llm`
+
+**Documentation**: ❌ No README.md
+**Containerized**: ✅ Has Dockerfile
+
+## presentation-gateway
+
+**Path**: `services/presentation-gateway`
 
 **Documentation**: ❌ No README.md
 **Containerized**: ❌ No Dockerfile
@@ -28,6 +42,13 @@
 ## whisper-tts
 
 **Path**: `services/whisper-tts`
+
+**Documentation**: ✅ Has README.md
+**Containerized**: ✅ Has Dockerfile
+
+## vision-ai
+
+**Path**: `services/vision-ai`
 
 **Documentation**: ✅ Has README.md
 **Containerized**: ✅ Has Dockerfile

@@ -2,7 +2,7 @@
 
 > **Purpose**: Comprehensive documentation of all Make targets and development workflows
 > **Audience**: Developers and AI assistants working on the Unhinged platform
-> **Last Updated**: Auto-generated on 2025-10-05 21:18:04
+> **Last Updated**: Auto-generated on 2025-10-18 18:37:59
 
 ## 🎯 Quick Reference
 
@@ -28,6 +28,25 @@ make clean           # Clean all build artifacts
 **Purpose**: Alias for setup
 **Usage**: `make install`
 **Dependencies**: setup
+
+#### `make gateway-gen`
+**Purpose**: Generate presentation gateway from proto annotations
+**Usage**: `make gateway-gen`
+**Actions**:
+- $(call log_info,🌐 Generating presentation gateway...)
+
+#### `make gateway-dev`
+**Purpose**: Start presentation gateway in development mode
+**Usage**: `make gateway-dev`
+**Actions**:
+- $(call log_info,🚀 Starting presentation gateway...)
+
+#### `make gateway-build`
+**Purpose**: Build presentation gateway
+**Usage**: `make gateway-build`
+**Actions**:
+- $(call log_info,🔨 Building presentation gateway...)
+- $(call log_success,Presentation gateway built)
 
 #### `make docs-makefile`
 **Purpose**: Generate Makefile reference documentation
@@ -83,6 +102,132 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🔍 Validating LLM comments...)
 - $(call log_success,LLM comment validation complete)
+
+#### `make deps-build`
+**Purpose**: Build the C dependency tracker
+**Usage**: `make deps-build`
+**Actions**:
+- $(call log_info,🔨 Building dependency tracker...)
+- cmake .. && make
+
+#### `make deps-analyze`
+**Purpose**: Analyze all dependencies in monorepo
+**Usage**: `make deps-analyze`
+**Actions**:
+- $(call log_info,🔍 Analyzing dependencies...)
+- $(call log_success,Dependency analysis complete)
+
+#### `make deps-graph`
+**Purpose**: Generate dependency visualization
+**Usage**: `make deps-graph`
+**Actions**:
+- $(call log_info,📊 Generating dependency graph...)
+- $(call log_success,Dependency graph generated)
+
+#### `make deps-validate`
+**Purpose**: Validate dependency consistency
+**Usage**: `make deps-validate`
+**Actions**:
+- $(call log_info,🔍 Validating dependencies...)
+- $(call log_success,Dependency validation complete)
+
+#### `make deps-feature-dag`
+**Purpose**: Generate feature dependency DAG
+**Usage**: `make deps-feature-dag`
+**Actions**:
+- $(call log_info,🗺️ Generating feature DAG...)
+- $(call log_success,Feature DAG generated)
+
+#### `make analyze-deps`
+**Purpose**: Run static analysis on dependency tracker
+**Usage**: `make analyze-deps`
+**Actions**:
+- $(call log_info,🔍 Running static analysis on dependency tracker...)
+- $(call log_success,Static analysis complete)
+
+#### `make html-setup`
+**Purpose**: Setup HTML interface symlinks and launcher
+**Usage**: `make html-setup`
+**Actions**:
+- $(call log_info,🔗 Setting up HTML interface access...)
+
+#### `make html-dashboard`
+**Purpose**: Open health monitoring dashboard
+**Usage**: `make html-dashboard`
+**Actions**:
+- $(call log_info,📊 Opening health dashboard...)
+
+#### `make html-vision`
+**Purpose**: Open Vision AI testing interface
+**Usage**: `make html-vision`
+**Actions**:
+- $(call log_info,👁️ Opening Vision AI testing...)
+
+#### `make html-audio`
+**Purpose**: Open Whisper TTS testing interface
+**Usage**: `make html-audio`
+**Actions**:
+- $(call log_info,🎤 Opening Audio processing testing...)
+
+#### `make html-context`
+**Purpose**: Open Context LLM testing interface
+**Usage**: `make html-context`
+**Actions**:
+- $(call log_info,🧠 Opening Context LLM testing...)
+
+#### `make html-list`
+**Purpose**: List all available HTML interfaces
+**Usage**: `make html-list`
+**Actions**:
+- $(call log_info,📋 Available HTML interfaces:)
+
+#### `make html-server`
+**Purpose**: Start local HTTP server for HTML interfaces
+**Usage**: `make html-server`
+**Actions**:
+- $(call log_info,🌐 Starting HTTP server for HTML interfaces...)
+
+#### `make html-sanity`
+**Purpose**: Run complete HTML interface sanity check
+**Usage**: `make html-sanity`
+**Actions**:
+- $(call log_info,🔍 Running HTML interface sanity check...)
+
+#### `make ui-setup`
+**Purpose**: Alias for html-setup
+**Usage**: `make ui-setup`
+**Dependencies**: html-setup
+
+#### `make ui-dashboard`
+**Purpose**: Alias for html-dashboard
+**Usage**: `make ui-dashboard`
+**Dependencies**: html-dashboard
+
+#### `make ui-vision`
+**Purpose**: Alias for html-vision
+**Usage**: `make ui-vision`
+**Dependencies**: html-vision
+
+#### `make ui-audio`
+**Purpose**: Alias for html-audio
+**Usage**: `make ui-audio`
+**Dependencies**: html-audio
+
+#### `make ui-context`
+**Purpose**: Alias for html-context
+**Usage**: `make ui-context`
+**Dependencies**: html-context
+
+#### `make ui-sanity`
+**Purpose**: Alias for html-sanity
+**Usage**: `make ui-sanity`
+**Dependencies**: html-sanity
+
+#### `make validate-system`
+**Purpose**: Complete system validation using walking skeletons
+**Usage**: `make validate-system`
+**Actions**:
+- $(call log_info,🔍 Running complete system validation...)
 
 ## 🐳 Docker Services Management
 
@@ -257,6 +402,13 @@ make clean           # Clean all build artifacts
 
 ## 🧪 Testing and Debugging
 
+#### `make gateway-test`
+**Purpose**: Test presentation gateway
+**Usage**: `make gateway-test`
+**Actions**:
+- $(call log_info,🧪 Testing presentation gateway...)
+- $(call log_success,Presentation gateway tests completed)
+
 #### `make test-grpc`
 **Purpose**: Test gRPC endpoints with grpcurl
 **Usage**: `make test-grpc`
@@ -278,6 +430,34 @@ make clean           # Clean all build artifacts
 - $(call log_info,🖼️ Testing Vision AI service...)
 - $(call log_success,Vision AI service healthy) || \
 
+#### `make test-multimodal`
+**Purpose**: Run comprehensive multimodal AI architecture tests
+**Usage**: `make test-multimodal`
+**Actions**:
+- $(call log_info,🤖 Running multimodal AI integration tests...)
+- $(call log_info,📋 Testing complete gRPC pipeline: Kotlin ↔ Python services)
+
+#### `make test-multimodal-backend`
+**Purpose**: Run multimodal backend integration tests
+**Usage**: `make test-multimodal-backend`
+**Actions**:
+- $(call log_info,🧪 Running multimodal backend integration tests...)
+- $(call run_gradle,test --tests "*MultimodalIntegrationTest*")
+- $(call run_gradle,test --tests "*MultimodalControllerTest*")
+
+#### `make test-multimodal-full`
+**Purpose**: Full multimodal test suite with service startup
+**Usage**: `make test-multimodal-full`
+**Actions**:
+- $(call log_info,🚀 Running full multimodal architecture test suite...)
+
+#### `make test-multimodal-performance`
+**Purpose**: Run multimodal performance benchmarks
+**Usage**: `make test-multimodal-performance`
+**Actions**:
+- $(call log_info,⚡ Running multimodal performance benchmarks...)
+- $(call log_success,Performance benchmarks completed)
+
 #### `make test-db`
 **Purpose**: Test database connection
 **Usage**: `make test-db`
@@ -292,11 +472,53 @@ make clean           # Clean all build artifacts
 - $(call log_info,🧠 Memory Usage Information)
 - $(call log_warning,JVM Memory Settings:)
 
+#### `make deps-test`
+**Purpose**: Run dependency tracker tests
+**Usage**: `make deps-test`
+**Actions**:
+- $(call log_info,🧪 Running dependency tracker tests...)
+- $(call log_success,Dependency tracker tests complete)
+
+#### `make html-test`
+**Purpose**: Launch HTML testing interface hub
+**Usage**: `make html-test`
+**Actions**:
+- $(call log_info,🧪 Opening HTML testing interfaces...)
+- $(call log_success,HTML testing hub opened)
+
+#### `make test-ui`
+**Purpose**: Alias for html-test
+**Usage**: `make test-ui`
+**Dependencies**: html-test
+
+#### `make ui-test`
+**Purpose**: Alias for html-test
+**Usage**: `make ui-test`
+**Dependencies**: html-test
+
 #### `make health`
 **Purpose**: Check health of all services
 **Usage**: `make health`
 **Actions**:
 - $(call log_info,🏥 Health Check)
+
+#### `make test-walking-skeleton`
+**Purpose**: Complete walking skeleton validation workflow
+**Usage**: `make test-walking-skeleton`
+**Actions**:
+- $(call log_info,🚶‍♂️ Running walking skeleton validation...)
+
+#### `make test-full-ui`
+**Purpose**: Complete UI testing workflow with service startup
+**Usage**: `make test-full-ui`
+**Actions**:
+- $(call log_info,🚀 Running full UI testing workflow...)
+
+#### `make test-ui-quick`
+**Purpose**: Quick UI test without service startup
+**Usage**: `make test-ui-quick`
+**Actions**:
+- $(call log_info,⚡ Quick UI testing...)
 
 #### `make test`
 **Purpose**: Alias for backend-test
@@ -321,6 +543,25 @@ make clean           # Clean all build artifacts
 **Purpose**: Clean everything
 **Usage**: `make clean-all`
 **Dependencies**: clean, clean-docker
+
+#### `make deps-clean`
+**Purpose**: Clean dependency tracker build
+**Usage**: `make deps-clean`
+**Actions**:
+- $(call log_info,🧹 Cleaning dependency tracker...)
+- $(call log_success,Dependency tracker cleaned)
+
+#### `make clean-deps`
+**Purpose**: Alias for deps-clean (disk space management)
+**Usage**: `make clean-deps`
+**Actions**:
+- $(MAKE) deps-clean
+
+#### `make html-clean`
+**Purpose**: Clean HTML interface symlinks and generated files
+**Usage**: `make html-clean`
+**Actions**:
+- $(call log_warning,🧹 Cleaning HTML interface symlinks...)
 
 ## 📋 Information and Help
 
