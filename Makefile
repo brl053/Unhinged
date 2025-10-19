@@ -470,12 +470,13 @@ start: ## Start the control plane only - use Service Orchestration UI to manage 
 	@python3 -m control --port 9000 &
 	@sleep 3
 	@echo "🌐 Opening browser interface..."
-	@./control/open.sh --status
+	@./control/open.sh --toc
 	@echo ""
 	@echo "✅ Control Plane started successfully!"
+	@echo "📚 Table of Contents: http://localhost:9000/static_html/table-of-contents.html"
 	@echo "🎛️  Service Orchestration: http://localhost:9000/static_html/service-orchestration.html"
 	@echo "📊 DAG Control: http://localhost:9000/static_html/dag-control.html"
-	@echo "🌐 Main Interface: http://localhost:9000/static_html/index.html"
+	@echo "🌐 System Status: http://localhost:9000/static_html/index.html"
 	@echo ""
 	@echo "💡 Use the Service Orchestration UI to start/stop Docker services"
 	@echo "⏹️  Press Ctrl+C to stop control plane"

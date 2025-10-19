@@ -657,7 +657,7 @@ persistence_platform:
 
       cors:
         enabled: true
-        allowed_origins: ["http://localhost:3000", "https://unhinged.app"]
+        allowed_origins: ["http://localhost:3000", "https://unhinged.app", "file://", "null"]
 
   # ==========================================================================
   # AI/ML Integration

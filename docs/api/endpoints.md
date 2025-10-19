@@ -267,6 +267,32 @@ interface ChatResponse {
 }
 ```
 
+## Persistence Platform API
+
+### Base URL: `http://localhost:8090/api/v1`
+
+**Complete documentation**: [Persistence Platform API](persistence-platform.md)
+
+#### Core Operations
+- `POST /api/v1/tables/{tableName}` - Insert record
+- `POST /api/v1/tables/{tableName}/batch` - Batch insert
+- `PUT /api/v1/tables/{tableName}/{id}` - Update record
+- `DELETE /api/v1/tables/{tableName}` - Delete records
+
+#### Query Operations
+- `POST /api/v1/query/{queryName}` - Execute named query
+- `POST /api/v1/query/raw` - Execute raw query
+
+#### Advanced Operations
+- `POST /api/v1/vector/search/{tableName}` - Vector search
+- `POST /api/v1/graph/traverse/{tableName}` - Graph traversal
+- `POST /api/v1/operations/{operationName}` - Complex operations
+
+#### Platform Management
+- `GET /api/v1/health` - Health check
+- `GET /api/v1/info` - Platform information
+- `GET /api/v1/metrics` - Prometheus metrics
+
 ## Frontend Integration
 
 The frontend uses these endpoints through the `ChatService`:

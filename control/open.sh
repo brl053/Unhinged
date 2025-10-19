@@ -65,13 +65,14 @@ show_menu() {
     echo
     echo "Available interfaces:"
     echo "1) DAG Control Dashboard"
-    echo "2) System Status & Monitoring"
-    echo "3) Text Generation Test"
-    echo "4) Vision AI Test"
-    echo "5) Voice Processing Test"
-    echo "6) All Interfaces (opens all tabs)"
-    echo "7) Check DAG Server Status"
-    echo "8) Start DAG Server"
+    echo "2) Table of Contents (Navigation)"
+    echo "3) System Status & Monitoring"
+    echo "4) Text Generation Test"
+    echo "5) Vision AI Test"
+    echo "6) Voice Processing Test"
+    echo "7) All Interfaces (opens all tabs)"
+    echo "8) Check DAG Server Status"
+    echo "9) Start DAG Server"
     echo "q) Quit"
     echo
 }
@@ -85,33 +86,38 @@ handle_choice() {
             open_url "file://$STATIC_HTML_DIR/dag-control.html" "DAG Control Dashboard"
             ;;
         2)
-            open_url "file://$STATIC_HTML_DIR/index.html" "System Status & Monitoring"
+            open_url "file://$STATIC_HTML_DIR/table-of-contents.html" "Table of Contents"
             ;;
         3)
-            open_url "file://$STATIC_HTML_DIR/text-test.html" "Text Generation Test"
+            open_url "file://$STATIC_HTML_DIR/index.html" "System Status & Monitoring"
             ;;
         4)
-            open_url "file://$STATIC_HTML_DIR/image-test.html" "Vision AI Test"
+            open_url "file://$STATIC_HTML_DIR/text-test.html" "Text Generation Test"
             ;;
         5)
-            open_url "file://$STATIC_HTML_DIR/voice-test.html" "Voice Processing Test"
+            open_url "file://$STATIC_HTML_DIR/image-test.html" "Vision AI Test"
             ;;
         6)
-            echo -e "${GREEN}🚀 Opening all interfaces...${NC}"
-            open_url "file://$STATIC_HTML_DIR/dag-control.html" "DAG Control Dashboard"
-            sleep 1
-            open_url "file://$STATIC_HTML_DIR/index.html" "System Status & Monitoring"
-            sleep 1
-            open_url "file://$STATIC_HTML_DIR/text-test.html" "Text Generation Test"
-            sleep 1
-            open_url "file://$STATIC_HTML_DIR/image-test.html" "Vision AI Test"
-            sleep 1
             open_url "file://$STATIC_HTML_DIR/voice-test.html" "Voice Processing Test"
             ;;
         7)
-            check_dag_server
+            echo -e "${GREEN}🚀 Opening all interfaces...${NC}"
+            open_url "file://$STATIC_HTML_DIR/dag-control.html" "DAG Control Dashboard"
+            sleep 1
+            open_url "file://$STATIC_HTML_DIR/table-of-contents.html" "Table of Contents"
+            sleep 1
+            open_url "file://$STATIC_HTML_DIR/index.html" "System Status & Monitoring"
+            sleep 1
+            open_url "file://$STATIC_HTML_DIR/text-test.html" "Text Generation Test"
+            sleep 1
+            open_url "file://$STATIC_HTML_DIR/image-test.html" "Vision AI Test"
+            sleep 1
+            open_url "file://$STATIC_HTML_DIR/voice-test.html" "Voice Processing Test"
             ;;
         8)
+            check_dag_server
+            ;;
+        9)
             echo -e "${BLUE}🎛️ Starting DAG Control Plane server...${NC}"
             echo -e "${YELLOW}   Press Ctrl+C to stop the server${NC}"
             cd "$SCRIPT_DIR/.."
@@ -132,6 +138,9 @@ if [ $# -gt 0 ]; then
     case "$1" in
         --dag|--control)
             open_url "file://$STATIC_HTML_DIR/dag-control.html" "DAG Control Dashboard"
+            ;;
+        --toc|--contents)
+            open_url "file://$STATIC_HTML_DIR/table-of-contents.html" "Table of Contents"
             ;;
         --status|--monitor)
             open_url "file://$STATIC_HTML_DIR/index.html" "System Status & Monitoring"
@@ -155,6 +164,7 @@ if [ $# -gt 0 ]; then
             echo "Usage: $0 [option]"
             echo "Options:"
             echo "  --dag, --control    Open DAG Control Dashboard"
+            echo "  --toc, --contents   Open Table of Contents"
             echo "  --status, --monitor Open System Status & Monitoring"
             echo "  --text              Open Text Generation Test"
             echo "  --vision, --image   Open Vision AI Test"

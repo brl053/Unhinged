@@ -28,7 +28,7 @@
             gap: var(--spacing-lg);
             margin-top: var(--spacing-sm);
             font-size: var(--font-size-sm);
-            color: #6c757d;
+            color: var(--color-text-secondary);
         }
         
         .stat {
@@ -39,7 +39,7 @@
         
         .stat-value {
             font-weight: bold;
-            color: #495057;
+            color: var(--color-text-primary);
         }
     </style>
 </head>
@@ -167,7 +167,7 @@
 
         <div class="test-section">
             <h2>Instructions</h2>
-            <div style="font-size: 14px; line-height: 1.6;">
+            <div style="font-size: var(--font-size-sm); line-height: 1.6;">
                 <p><strong>To test text generation:</strong></p>
                 <ol>
                     <li>Ensure the Ollama service is healthy (green status above)</li>
@@ -208,7 +208,7 @@
                 </ul>
 
                 <p><strong>✅ Verified Working - Command Line Testing:</strong></p>
-                <div style="background: #d4edda; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; border: 1px solid #c3e6cb;">
+                <div style="background: rgba(var(--color-success-rgb), 0.1); padding: var(--spacing-md); border-radius: var(--border-radius); font-family: monospace; font-size: var(--font-size-xs); border: 1px solid rgba(var(--color-success-rgb), 0.2);">
                     <strong>🟢 Service Status (Confirmed Working):</strong><br>
                     <code>docker ps | grep ollama</code><br>
                     <code>curl http://localhost:11434/api/tags</code><br><br>
@@ -227,7 +227,7 @@
                 </div>
 
                 <p><strong>🌐 Web Interface Access:</strong></p>
-                <div style="background: #d4edda; padding: 12px; border-radius: 6px; font-size: 14px; border: 1px solid #c3e6cb;">
+                <div style="background: rgba(var(--color-success-rgb), 0.1); padding: var(--spacing-md); border-radius: var(--border-radius); font-size: var(--font-size-sm); border: 1px solid rgba(var(--color-success-rgb), 0.2);">
                     <strong>✅ Direct File Access (Now Working!):</strong><br>
                     Open directly: <code>file:///home/e-bliss-station-1/projects/Unhinged/static_html/text-test.html</code><br><br>
 

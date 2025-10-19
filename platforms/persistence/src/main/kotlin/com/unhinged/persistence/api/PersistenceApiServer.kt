@@ -119,7 +119,15 @@ class PersistenceApiServer(
         // Configure CORS
         install(CORS) {
             configuration.api.security.cors.allowedOrigins.forEach { origin ->
-                allowHost(origin.removePrefix("http://").removePrefix("https://"))
+                when {
+                    origin == "file://" || origin == "null" -> {
+                        // Allow file:// protocol and null origin for local development
+                        anyHost()
+                    }
+                    else -> {
+                        allowHost(origin.removePrefix("http://").removePrefix("https://"))
+                    }
+                }
             }
             allowMethod(HttpMethod.Get)
             allowMethod(HttpMethod.Post)

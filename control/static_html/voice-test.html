@@ -28,58 +28,33 @@
         
         .subtitle {
             text-align: center;
-            color: #6c757d;
-            margin-bottom: 30px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-2xl);
         }
         
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
+        /* Status indicators now use foundation components from theme.css */
         
-        .status.healthy {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.unhealthy {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.loading {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
+        /* Status indicators removed - now using foundation components from theme.css */
         
         .record-button {
             width: 100px;
             height: 100px;
             border-radius: 50%;
             border: none;
-            font-size: 40px;
+            font-size: var(--font-size-3xl);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             display: block;
-            margin: 20px auto;
+            margin: var(--spacing-lg) auto;
             color: white;
         }
         
         .record-button.ready {
-            background: #007bff;
+            background: var(--color-primary);
         }
-        
+
         .record-button.recording {
-            background: #dc3545;
+            background: var(--color-danger);
             animation: pulse 1s infinite;
         }
         
@@ -102,43 +77,43 @@
         
         .instructions {
             text-align: center;
-            margin: 16px 0;
-            font-size: 14px;
-            color: #6c757d;
+            margin: var(--spacing-md) 0;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
         }
         
         .result {
-            margin-top: 20px;
-            padding: 16px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
             font-family: monospace;
-            font-size: 14px;
+            font-size: var(--font-size-sm);
             white-space: pre-wrap;
             max-height: 300px;
             overflow-y: auto;
         }
         
         .error {
-            background: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
+            background: rgba(var(--color-danger-rgb), 0.1);
+            color: var(--color-danger);
+            border-color: rgba(var(--color-danger-rgb), 0.2);
         }
         
         .capability {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 0;
+            padding: var(--spacing-sm) 0;
         }
         
         .capability.supported {
-            color: #28a745;
+            color: var(--color-success);
         }
         
         .capability.unsupported {
-            color: #dc3545;
+            color: var(--color-danger);
         }
         
         .test-section {
@@ -146,9 +121,9 @@
         }
         
         .test-section h2 {
-            color: #212529;
-            margin-bottom: 16px;
-            font-size: 18px;
+            color: var(--color-text-primary);
+            margin-bottom: var(--spacing-md);
+            font-size: var(--font-size-lg);
         }
 
         /* Navigation styles handled by theme.css */
@@ -202,10 +177,10 @@
             <div style="margin-bottom: 15px;">
                 <label for="ttsText" style="display: block; margin-bottom: 5px; font-weight: bold;">Text to Synthesize:</label>
                 <textarea id="ttsText" placeholder="Enter text to convert to speech..."
-                    style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                    style="width: 100%; height: 80px; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius); resize: vertical;"></textarea>
             </div>
 
-            <button id="synthesizeButton" class="record-button ready" disabled style="width: auto; height: auto; border-radius: 8px; padding: 12px 24px; font-size: 16px;">
+            <button id="synthesizeButton" class="record-button ready" disabled style="width: auto; height: auto; border-radius: var(--border-radius); padding: var(--spacing-md) var(--spacing-xl); font-size: var(--font-size-base);">
                 🔊 Synthesize Speech
             </button>
 
@@ -214,7 +189,7 @@
         
         <div class="test-section">
             <h2>Instructions</h2>
-            <div style="font-size: 14px; line-height: 1.6;">
+            <div style="font-size: var(--font-size-sm); line-height: 1.6;">
                 <p><strong>Speech-to-Text:</strong></p>
                 <ol>
                     <li>Ensure both services are healthy (green status above)</li>
@@ -473,7 +448,7 @@
                 const playButton = document.createElement('button');
                 playButton.textContent = '▶️ Play Audio';
                 playButton.style.padding = '8px 16px';
-                playButton.style.backgroundColor = '#28a745';
+                playButton.style.backgroundColor = 'var(--color-success)';
                 playButton.style.color = 'white';
                 playButton.style.border = 'none';
                 playButton.style.borderRadius = '4px';

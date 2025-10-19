@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Table of Contents</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>📚 Table of Contents</h1>
+            <div class="header-controls">
+                <button onclick="refreshFileStructure()">🔄 Refresh</button>
+                <button onclick="expandAll()">📂 Expand All</button>
+                <button onclick="collapseAll()">📁 Collapse All</button>
+            </div>
+        </header>
+
+        <!-- Navigation Controls -->
+        <section class="nav-controls">
+            <div class="form-group">
+                <label>Current Directory:</label>
+                <input type="text" id="current-path" value="control/static_html" readonly>
+            </div>
+            <div class="form-group">
+                <label>Filter:</label>
+                <input type="text" id="filter-input" placeholder="Filter files..." onkeyup="filterFiles()">
+            </div>
+        </section>
+
+        <!-- File Structure -->
+        <section class="file-structure">
+            <h2>🗂️ File Structure</h2>
+            <div id="file-tree" class="file-tree">
+                <div class="loading">Loading file structure...</div>
+            </div>
+        </section>
+
+        <!-- File Details -->
+        <section class="file-details" id="file-details" style="display: none;">
+            <h2>📄 File Details</h2>
+            <div class="details-content">
+                <div class="detail-item">
+                    <span class="label">File:</span>
+                    <span id="detail-filename" class="value">--</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Path:</span>
+                    <span id="detail-filepath" class="value">--</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Type:</span>
+                    <span id="detail-filetype" class="value">--</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Actions:</span>
+                    <div class="file-actions">
+                        <button onclick="openFile()">📖 Open</button>
+                        <button onclick="copyPath()">📋 Copy Path</button>
+                        <button onclick="showInTree()">🎯 Show in Tree</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>📚 Table of Contents - Navigate the file structure</p>
+        </footer>
+    </div>
+
+    <script src="shared/registry.js"></script>
+    <script>
+        let fileStructure = {};
+        let selectedFile = null;
+        
+        // File structure data (hardcoded for now)
+        const staticFileStructure = {
+            'control/static_html': {
+                type: 'directory',
+                children: {
+                    'index.html': { type: 'file', description: 'Main control interface' },
+                    'chat.html': { type: 'file', description: 'Chat interface' },
+                    'dag-control.html': { type: 'file', description: 'DAG control interface' },
+                    'grpc-test.html': { type: 'file', description: 'gRPC testing interface' },
+                    'image-test.html': { type: 'file', description: 'Image testing interface' },
+                    'persistence-dev-tool.html': { type: 'file', description: 'Persistence platform dev tool' },
+                    'service-orchestration.html': { type: 'file', description: 'Service orchestration interface' },
+                    'table-of-contents.html': { type: 'file', description: 'This file - navigation interface' },
+                    'test-mission-control.html': { type: 'file', description: 'Mission control testing' },
+                    'text-test.html': { type: 'file', description: 'Text processing interface' },
+                    'voice-test.html': { type: 'file', description: 'Voice testing interface' },
+                    'html-links': {
+                        type: 'directory',
+                        children: {
+                            'index.html': { type: 'file', description: 'HTML links index' },
+                            'audio.html': { type: 'file', description: 'Audio service link' },
+                            'context.html': { type: 'file', description: 'Context service link' },
+                            'dashboard.html': { type: 'file', description: 'Dashboard link' },
+                            'vision.html': { type: 'file', description: 'Vision service link' },
+                            'static-dashboard.html': { type: 'file', description: 'Static dashboard link' },
+                            'static-main.html': { type: 'file', description: 'Static main link' },
+                            'aliases.sh': { type: 'file', description: 'Shell aliases' },
+                            'open.sh': { type: 'file', description: 'Open script' }
+                        }
+                    },
+                    'network': {
+                        type: 'directory',
+                        children: {
+                            'grpc-client.js': { type: 'file', description: 'gRPC client implementation' },
+                            'generate-clients.js': { type: 'file', description: 'Client generation script' },
+                            'clients': { type: 'directory', children: {} },
+                            'queries': { type: 'directory', children: {} }
+                        }
+                    },
+                    'shared': {
+                        type: 'directory',
+                        children: {
+                            'styles.css': { type: 'file', description: 'Shared CSS styles' },
+                            'theme.css': { type: 'file', description: 'Theme CSS' },
+                            'config.js': { type: 'file', description: 'Shared configuration' },
+                            'registry.js': { type: 'file', description: 'Service registry' },
+                            'service-orchestration.js': { type: 'file', description: 'Service orchestration logic' },
+                            'README.md': { type: 'file', description: 'Shared components documentation' }
+                        }
+                    }
+                }
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFileStructure();
+            renderFileTree();
+        });
+
+        function loadFileStructure() {
+            // Try to load from registry first
+            if (window.getFileStructure && typeof window.getFileStructure === 'function') {
+                const dynamicStructure = window.getFileStructure();
+                if (dynamicStructure && Object.keys(dynamicStructure).length > 0) {
+                    fileStructure = dynamicStructure;
+                    console.log('✅ Loaded dynamic file structure from registry');
+                    return;
+                }
+            }
+
+            // Fallback to hardcoded structure
+            fileStructure = staticFileStructure;
+            console.warn('⚠️ Using fallback hardcoded file structure');
+        }
+        
+        function renderFileTree() {
+            const treeContainer = document.getElementById('file-tree');
+            treeContainer.innerHTML = '';
+            
+            const rootPath = 'control/static_html';
+            const rootNode = fileStructure[rootPath];
+            
+            if (rootNode) {
+                const treeElement = createTreeNode(rootPath, rootNode, 0);
+                treeContainer.appendChild(treeElement);
+            }
+        }
+        
+        function createTreeNode(name, node, depth) {
+            const div = document.createElement('div');
+            div.className = 'tree-node';
+            div.style.marginLeft = `${depth * 20}px`;
+            
+            if (node.type === 'directory') {
+                const header = document.createElement('div');
+                header.className = 'tree-directory';
+                header.innerHTML = `
+                    <span class="tree-icon" onclick="toggleDirectory(this)">📁</span>
+                    <span class="tree-name">${name.split('/').pop()}</span>
+                `;
+                div.appendChild(header);
+                
+                const children = document.createElement('div');
+                children.className = 'tree-children';
+                children.style.display = depth === 0 ? 'block' : 'none';
+                
+                if (node.children) {
+                    Object.keys(node.children).forEach(childName => {
+                        const childPath = depth === 0 ? childName : `${name}/${childName}`;
+                        const childNode = createTreeNode(childPath, node.children[childName], depth + 1);
+                        children.appendChild(childNode);
+                    });
+                }
+                
+                div.appendChild(children);
+            } else {
+                const file = document.createElement('div');
+                file.className = 'tree-file';
+                file.innerHTML = `
+                    <span class="tree-icon">📄</span>
+                    <span class="tree-name" onclick="selectFile('${name}', '${node.description || ''}')">${name.split('/').pop()}</span>
+                `;
+                div.appendChild(file);
+            }
+            
+            return div;
+        }
+        
+        function toggleDirectory(iconElement) {
+            const children = iconElement.parentElement.parentElement.querySelector('.tree-children');
+            if (children.style.display === 'none') {
+                children.style.display = 'block';
+                iconElement.textContent = '📂';
+            } else {
+                children.style.display = 'none';
+                iconElement.textContent = '📁';
+            }
+        }
+        
+        function selectFile(filepath, description) {
+            selectedFile = filepath;
+            
+            document.getElementById('detail-filename').textContent = filepath.split('/').pop();
+            document.getElementById('detail-filepath').textContent = filepath;
+            document.getElementById('detail-filetype').textContent = getFileType(filepath);
+            document.getElementById('file-details').style.display = 'block';
+            
+            // Highlight selected file
+            document.querySelectorAll('.tree-file').forEach(el => el.classList.remove('selected'));
+            event.target.parentElement.classList.add('selected');
+        }
+        
+        function getFileType(filepath) {
+            const ext = filepath.split('.').pop().toLowerCase();
+            const types = {
+                'html': 'HTML Document',
+                'js': 'JavaScript',
+                'css': 'Stylesheet',
+                'md': 'Markdown',
+                'sh': 'Shell Script'
+            };
+            return types[ext] || 'Unknown';
+        }
+        
+        function refreshFileStructure() {
+            renderFileTree();
+        }
+        
+        function expandAll() {
+            document.querySelectorAll('.tree-children').forEach(el => {
+                el.style.display = 'block';
+            });
+            document.querySelectorAll('.tree-directory .tree-icon').forEach(el => {
+                el.textContent = '📂';
+            });
+        }
+        
+        function collapseAll() {
+            document.querySelectorAll('.tree-children').forEach((el, index) => {
+                if (index > 0) el.style.display = 'none';
+            });
+            document.querySelectorAll('.tree-directory .tree-icon').forEach((el, index) => {
+                if (index > 0) el.textContent = '📁';
+            });
+        }
+        
+        function filterFiles() {
+            const filter = document.getElementById('filter-input').value.toLowerCase();
+            document.querySelectorAll('.tree-file').forEach(fileEl => {
+                const filename = fileEl.querySelector('.tree-name').textContent.toLowerCase();
+                const shouldShow = filename.includes(filter);
+                fileEl.style.display = shouldShow ? 'block' : 'none';
+            });
+        }
+        
+        function openFile() {
+            if (selectedFile) {
+                window.open(selectedFile, '_blank');
+            }
+        }
+        
+        function copyPath() {
+            if (selectedFile) {
+                navigator.clipboard.writeText(selectedFile).then(() => {
+                    alert('Path copied to clipboard!');
+                });
+            }
+        }
+        
+        function showInTree() {
+            if (selectedFile) {
+                // Expand all parent directories
+                expandAll();
+                // Scroll to selected file
+                const selectedEl = document.querySelector('.tree-file.selected');
+                if (selectedEl) {
+                    selectedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .nav-controls {
+            margin-bottom: 20px;
+        }
+        
+        .file-tree {
+            background: var(--surface-color, #1e293b);
+            border: 1px solid var(--border-color, #475569);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .tree-node {
+            margin: var(--spacing-xs) 0;
+        }
+
+        .tree-directory, .tree-file {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+        
+        .tree-directory:hover, .tree-file:hover {
+            background: var(--surface-light, #334155);
+        }
+        
+        .tree-file.selected {
+            background: var(--primary-color, #2563eb);
+            color: white;
+        }
+        
+        .tree-icon {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .tree-name {
+            font-family: monospace;
+            font-size: var(--font-size-sm);
+        }
+        
+        .file-details {
+            margin-top: var(--spacing-lg);
+            background: var(--surface-color, #1e293b);
+            border: 1px solid var(--border-color, #475569);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+        }
+        
+        .details-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .detail-item .label {
+            font-weight: bold;
+            min-width: 80px;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .file-actions button {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border: 1px solid var(--border-color, #475569);
+            background: var(--surface-light, #334155);
+            color: var(--text-primary, #f8fafc);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+        
+        .file-actions button:hover {
+            background: var(--primary-color, #2563eb);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--text-secondary, #cbd5e1);
+        }
+    </style>
+</body>
+</html>
