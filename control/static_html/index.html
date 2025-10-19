@@ -4,66 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏠 Unhinged Control Center - Table of Contents</title>
-    <link rel="stylesheet" href="shared/styles.css">
+    <link rel="stylesheet" href="shared/theme.css">
     <script src="shared/config.js"></script>
     <script src="shared/registry.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+        /* Index page specific styles - theme handles the rest */
         
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: var(--spacing-2xl);
             color: white;
         }
-        
+
         .header h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--spacing-sm);
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .navigation {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .nav-link {
-            background: rgba(255,255,255,0.9);
-            color: #1f2937;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.3);
-            font-weight: 600;
-        }
-
-        .nav-link:hover {
-            background: rgba(255,255,255,1);
-            transform: translateY(-2px);
-            color: #111827;
-        }
-
-        .nav-link.active {
-            background: #10b981;
-            border-color: #10b981;
-            color: white;
         }
         
         .service-card {
