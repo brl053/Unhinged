@@ -88,7 +88,7 @@ DAG_TARGETS = {
         "nodes": [
             "proto-gen",
             "backend-build",
-            "frontend-build", 
+            "frontend-build",
             "start-infrastructure",
             "start-ai-services",
             "health-check"
@@ -102,6 +102,55 @@ DAG_TARGETS = {
         },
         "human_approval_required": False,
         "estimated_duration": 300  # 5 minutes
+    },
+
+    # Service Management Targets
+    "start-all-services": {
+        "description": "Start all Docker services for complete platform",
+        "nodes": [
+            "start-infrastructure",
+            "start-ai-services",
+            "start-app-services"
+        ],
+        "dependencies": {
+            "start-ai-services": ["start-infrastructure"],
+            "start-app-services": ["start-ai-services"]
+        },
+        "human_approval_required": False,
+        "estimated_duration": 120  # 2 minutes
+    },
+
+    "stop-all-services": {
+        "description": "Stop all Docker services",
+        "nodes": ["stop-services"],
+        "dependencies": {},
+        "human_approval_required": True,  # Require confirmation for destructive action
+        "estimated_duration": 30
+    },
+
+    "restart-services": {
+        "description": "Restart all Docker services",
+        "nodes": [
+            "stop-services",
+            "start-infrastructure",
+            "start-ai-services",
+            "start-app-services"
+        ],
+        "dependencies": {
+            "start-infrastructure": ["stop-services"],
+            "start-ai-services": ["start-infrastructure"],
+            "start-app-services": ["start-ai-services"]
+        },
+        "human_approval_required": False,
+        "estimated_duration": 150  # 2.5 minutes
+    },
+
+    "check-docker-status": {
+        "description": "Check Docker daemon and container status",
+        "nodes": ["docker-status"],
+        "dependencies": {},
+        "human_approval_required": False,
+        "estimated_duration": 5
     },
     
     "test-suite": {
@@ -176,10 +225,13 @@ NODE_COMMANDS = {
     "frontend-build": "cd frontend && npm run build",
     "frontend-build-prod": "cd frontend && npm run build:prod",
     
-    # Service management
-    "start-services": "docker compose -f docker-compose.dev.yml up -d backend frontend",
-    "start-infrastructure": "docker compose -f docker-compose.dev.yml up -d database kafka zookeeper",
-    "start-ai-services": "docker compose -f docker-compose.dev.yml up -d whisper-tts vision-ai",
+    # Service management (with sudo for Docker permissions)
+    "start-services": "sudo docker compose up -d backend frontend",
+    "start-infrastructure": "sudo docker compose up -d database kafka zookeeper",
+    "start-ai-services": "sudo docker compose up -d ollama whisper-tts vision-ai",
+    "start-app-services": "sudo docker compose up -d backend frontend",
+    "stop-services": "sudo docker compose down",
+    "docker-status": "sudo docker ps && echo '--- Docker Compose Status ---' && sudo docker compose ps",
     
     # Testing
     "unit-tests-backend": "cd backend && ./gradlew test",

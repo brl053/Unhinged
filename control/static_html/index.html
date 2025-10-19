@@ -3,405 +3,439 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 Unhinged AI - GPU-Accelerated Multi-Modal Platform</title>
+    <title>🏠 Unhinged Control Center - Table of Contents</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/registry.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
-
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-
+        
         .header {
             text-align: center;
             margin-bottom: 40px;
             color: white;
         }
-
+        
         .header h1 {
-            font-size: 3.5rem;
+            font-size: 3rem;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-
-        .header .subtitle {
-            font-size: 1.3rem;
-            opacity: 0.9;
-            margin-bottom: 20px;
+        
+        .navigation {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-
-        .performance-banner {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            margin-bottom: 30px;
-        }
-
-        .performance-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-card {
+        
+        .nav-link {
             background: rgba(255,255,255,0.2);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
             color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
         }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            display: block;
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
+        
+        .nav-link.active {
+            background: #10b981;
+            border-color: #10b981;
         }
-
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
+        
         .service-card {
             background: white;
             border-radius: 15px;
             padding: 25px;
+            margin-bottom: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 2px solid transparent;
+            transition: transform 0.3s ease;
         }
-
+        
         .service-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
-
-        .service-card.primary {
-            border-color: #4CAF50;
-        }
-
-        .service-card.creative {
-            border-color: #FF6B6B;
-        }
-
-        .service-card.multimodal {
-            border-color: #4ECDC4;
-        }
-
+        
         .service-header {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
-
+        
         .service-icon {
             font-size: 2.5rem;
             margin-right: 15px;
         }
-
+        
         .service-title {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: #333;
         }
-
-        .service-description {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .model-specs {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .spec-row {
+        
+        .service-controls {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
         }
-
-        .spec-label {
-            font-weight: 500;
-            color: #555;
-        }
-
-        .spec-value {
-            color: #333;
-            font-weight: bold;
-        }
-
-        .test-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        
+        .service-btn {
+            background: #3b82f6;
             color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
             border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
             cursor: pointer;
-            width: 100%;
-            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
         }
-
-        .test-button:hover {
+        
+        .service-btn:hover {
+            background: #2563eb;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-
-        .architecture-section {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        
+        .service-btn.danger {
+            background: #ef4444;
         }
-
-        .architecture-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            color: #333;
-            text-align: center;
+        
+        .service-btn.danger:hover {
+            background: #dc2626;
         }
-
-        .dual-model-diagram {
+        
+        .kawaii-toc {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .file-grid {
             display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 20px;
-            align-items: center;
-            margin: 30px 0;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
         }
-
-        .model-box {
-            background: #f8f9fa;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
+        
+        .file-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
         }
-
-        .model-box.coding {
-            border-color: #4CAF50;
-            background: #e8f5e8;
+        
+        .file-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
         }
-
-        .model-box.creative {
-            border-color: #FF6B6B;
-            background: #ffe8e8;
+        
+        .file-card.control {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
         }
-
-        .arrow {
-            font-size: 2rem;
+        
+        .file-card.ai-services {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .file-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .file-description {
             color: #666;
+            margin-bottom: 1rem;
         }
-
-        .footer {
-            text-align: center;
+        
+        .file-link {
+            background: #3b82f6;
             color: white;
-            opacity: 0.8;
-            margin-top: 40px;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
         }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5rem;
-            }
-            
-            .services-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .dual-model-diagram {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            
-            .arrow {
-                transform: rotate(90deg);
-            }
+        
+        .file-link:hover {
+            background: #2563eb;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Navigation -->
+        <div class="navigation">
+            <a href="index.html" class="nav-link active">🏠 Home</a>
+            <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
+            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
+            <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
+            <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
+        </div>
+
+        <!-- Header -->
         <div class="header">
-            <h1>🚀 Unhinged AI</h1>
-            <p class="subtitle">GPU-Accelerated Multi-Modal AI Platform</p>
-            
-            <div class="performance-banner">
-                <h3>🎯 Performance Breakthrough: GPU Acceleration Active</h3>
-                <div class="performance-stats">
-                    <div class="stat-card">
-                        <span class="stat-value">15.5x</span>
-                        <span class="stat-label">Faster Coding Tasks</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-value">3s</span>
-                        <span class="stat-label">DeepSeek Response Time</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-value">16GB</span>
-                        <span class="stat-label">RTX 5070 Ti VRAM</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-value">5</span>
-                        <span class="stat-label">Specialized Models</span>
-                    </div>
+            <h1>🏠 Unhinged Control Center</h1>
+            <p>Table of Contents - All Platform Capabilities</p>
+        </div>
+
+        <!-- Service Controls -->
+        <div class="service-card">
+            <div class="service-header">
+                <div class="service-icon">🚀</div>
+                <div class="service-title">Service Management</div>
+            </div>
+            <div class="service-content">
+                <div class="service-controls">
+                    <button class="service-btn" onclick="startAllServices()">
+                        🚀 Start All Services
+                    </button>
+                    <button class="service-btn danger" onclick="stopAllServices()">
+                        🛑 Stop All Services
+                    </button>
+                    <button class="service-btn" onclick="restartAllServices()">
+                        🔄 Restart Services
+                    </button>
+                    <button class="service-btn" onclick="checkServiceStatus()">
+                        📊 Check Status
+                    </button>
+                </div>
+                <div id="service-status" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Kawaii ASCII TOC -->
+        <div class="service-card">
+            <div class="service-header">
+                <div class="service-icon">📋</div>
+                <div class="service-title">File Registry</div>
+            </div>
+            <div class="service-content">
+                <div id="kawaii-toc" class="kawaii-toc">
+                    Loading file registry...
                 </div>
             </div>
         </div>
 
-        <div class="architecture-section">
-            <h2 class="architecture-title">🧠 Dual-Model Architecture</h2>
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">
-                Specialized AI engines for specialized tasks - no one-size-fits-all compromises
-            </p>
-            
-            <div class="dual-model-diagram">
-                <div class="model-box coding">
-                    <h3>🤖 Coding Specialist</h3>
-                    <p><strong>DeepSeek-Coder 6.7B</strong></p>
-                    <p>~3 second responses</p>
-                    <p>Perfect for: Code, Debug, Architecture</p>
-                </div>
-                
-                <div class="arrow">⚡</div>
-                
-                <div class="model-box creative">
-                    <h3>🐬 Creative Uncensored</h3>
-                    <p><strong>Dolphin-Mixtral 8x7B</strong></p>
-                    <p>~80 second responses</p>
-                    <p>Perfect for: Stories, Marketing, Controversial</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="services-grid">
-            <div class="service-card primary">
-                <div class="service-header">
-                    <div class="service-icon">🚀</div>
-                    <div class="service-title">GPU-Accelerated Text Generation</div>
-                </div>
-                <div class="service-description">
-                    Test our dual-model architecture with 5 specialized LLMs running on RTX 5070 Ti GPU. 
-                    Experience 15x faster coding tasks and uncensored creative content generation.
-                </div>
-                <div class="model-specs">
-                    <div class="spec-row">
-                        <span class="spec-label">Primary Models:</span>
-                        <span class="spec-value">DeepSeek-Coder + Dolphin-Mixtral</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">GPU Acceleration:</span>
-                        <span class="spec-value">RTX 5070 Ti (16GB VRAM)</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Response Time:</span>
-                        <span class="spec-value">3-80 seconds (model dependent)</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Content Policy:</span>
-                        <span class="spec-value">Minimal to Zero Censorship</span>
-                    </div>
-                </div>
-                <a href="text-test.html" class="test-button">🤖 Test Text Generation</a>
-            </div>
-
-            <div class="service-card multimodal">
-                <div class="service-header">
-                    <div class="service-icon">👁️</div>
-                    <div class="service-title">Vision AI Analysis</div>
-                </div>
-                <div class="service-description">
-                    Advanced image analysis and description using BLIP models. Upload images and get detailed, 
-                    contextual descriptions with object detection and scene understanding.
-                </div>
-                <div class="model-specs">
-                    <div class="spec-row">
-                        <span class="spec-label">Model:</span>
-                        <span class="spec-value">BLIP Vision Transformer</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Capabilities:</span>
-                        <span class="spec-value">Image Description, Object Detection</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Input Formats:</span>
-                        <span class="spec-value">JPG, PNG, WebP</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Response Time:</span>
-                        <span class="spec-value">2-5 seconds</span>
-                    </div>
-                </div>
-                <a href="image-test.html" class="test-button">👁️ Test Vision AI</a>
-            </div>
-
-            <div class="service-card creative">
-                <div class="service-header">
-                    <div class="service-icon">🎤</div>
-                    <div class="service-title">Voice & Audio Processing</div>
-                </div>
-                <div class="service-description">
-                    High-quality speech-to-text transcription using OpenAI Whisper. Upload audio files 
-                    or record directly for accurate transcription with multiple language support.
-                </div>
-                <div class="model-specs">
-                    <div class="spec-row">
-                        <span class="spec-label">Model:</span>
-                        <span class="spec-value">OpenAI Whisper</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Languages:</span>
-                        <span class="spec-value">99+ Languages Supported</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Audio Formats:</span>
-                        <span class="spec-value">MP3, WAV, M4A, WebM</span>
-                    </div>
-                    <div class="spec-row">
-                        <span class="spec-label">Accuracy:</span>
-                        <span class="spec-value">95%+ for clear audio</span>
-                    </div>
-                </div>
-                <a href="voice-test.html" class="test-button">🎤 Test Voice Processing</a>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>🔥 Unhinged AI Platform - Where Technical Precision Meets Creative Freedom</p>
-            <p style="font-size: 0.9rem; margin-top: 10px;">
-                Powered by RTX 5070 Ti • 5 Specialized Models • Zero Compromise Architecture
-            </p>
+        <!-- File Grid -->
+        <div id="file-grid" class="file-grid">
+            <!-- Populated by JavaScript -->
         </div>
     </div>
+
+    <script>
+        // Service Management Functions
+        async function startAllServices() {
+            showNotification('🚀 Starting all services...', 'info');
+            try {
+                const response = await fetch('http://localhost:9000/dag/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({target: 'start-all-services'})
+                });
+
+                if (response.ok) {
+                    showNotification('✅ Services starting...', 'success');
+                    monitorServiceStartup();
+                } else {
+                    showNotification('❌ Failed to start services', 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function stopAllServices() {
+            const confirmed = confirm('Are you sure you want to stop all services?');
+            if (confirmed) {
+                showNotification('🛑 Stopping all services...', 'info');
+                try {
+                    const response = await fetch('http://localhost:9000/dag/execute', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({target: 'stop-all-services'})
+                    });
+
+                    if (response.ok) {
+                        showNotification('✅ Services stopped', 'success');
+                    } else {
+                        showNotification('❌ Failed to stop services', 'error');
+                    }
+                } catch (error) {
+                    showNotification('❌ Error: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function restartAllServices() {
+            showNotification('🔄 Restarting all services...', 'info');
+            try {
+                const response = await fetch('http://localhost:9000/dag/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({target: 'restart-services'})
+                });
+
+                if (response.ok) {
+                    showNotification('✅ Services restarting...', 'success');
+                    monitorServiceStartup();
+                } else {
+                    showNotification('❌ Failed to restart services', 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function checkServiceStatus() {
+            showNotification('📊 Checking service status...', 'info');
+
+            // First check if Docker is running
+            try {
+                const dockerCheck = await fetch('http://localhost:9000/dag/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({target: 'check-docker-status'})
+                });
+            } catch (error) {
+                console.log('Docker status check failed:', error);
+            }
+
+            const services = [
+                {name: 'Database', url: 'http://localhost:5432', type: 'tcp'},
+                {name: 'Backend', url: 'http://localhost:8080/health'},
+                {name: 'Frontend', url: 'http://localhost:3000'},
+                {name: 'Ollama', url: 'http://localhost:11434/api/tags'},
+                {name: 'Whisper TTS', url: 'http://localhost:8000/health'},
+                {name: 'Vision AI', url: 'http://localhost:8001/health'}
+            ];
+
+            let statusHtml = '<h4>Service Status:</h4>';
+            let anyStarting = false;
+
+            for (const service of services) {
+                try {
+                    const isReady = await checkServiceHealth(service.url);
+                    if (isReady) {
+                        statusHtml += `<div>✅ ${service.name} - Ready</div>`;
+                    } else {
+                        statusHtml += `<div>⏳ ${service.name} - Starting...</div>`;
+                        anyStarting = true;
+                    }
+                } catch (error) {
+                    statusHtml += `<div>❌ ${service.name} - Not available</div>`;
+                }
+            }
+
+            if (anyStarting) {
+                statusHtml += '<div style="margin-top: 1rem; color: #666; font-style: italic;">Services are starting up. This can take 1-2 minutes...</div>';
+            }
+
+            document.getElementById('service-status').innerHTML = statusHtml;
+        }
+
+        async function checkServiceHealth(url) {
+            try {
+                const response = await fetch(url, {timeout: 5000});
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function monitorServiceStartup() {
+            const interval = setInterval(async () => {
+                await checkServiceStatus();
+            }, 3000);
+
+            // Stop monitoring after 2 minutes
+            setTimeout(() => clearInterval(interval), 120000);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 2rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load registry and generate TOC
+            if (window.UNHINGED_REGISTRY) {
+                generateFileGrid();
+                generateKawaiiTOC();
+            } else {
+                document.getElementById('kawaii-toc').textContent = 'Registry not loaded';
+            }
+        });
+
+        function generateFileGrid() {
+            const grid = document.getElementById('file-grid');
+            const files = Object.entries(window.UNHINGED_REGISTRY || {});
+
+            grid.innerHTML = files.map(([path, meta]) => `
+                <div class="file-card ${meta.category}">
+                    <div class="file-title">${meta.title}</div>
+                    <div class="file-description">${meta.description || 'No description available'}</div>
+                    <a href="${path.replace('/control/static_html/', '')}" class="file-link">
+                        Open ${meta.category === 'control' ? '🎛️' : meta.category === 'ai-services' ? '🤖' : '📄'}
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function generateKawaiiTOC() {
+            if (window.generateKawaiiTOC) {
+                document.getElementById('kawaii-toc').textContent = window.generateKawaiiTOC();
+            } else {
+                document.getElementById('kawaii-toc').textContent = 'TOC generator not available';
+            }
+        }
+    </script>
 </body>
 </html>

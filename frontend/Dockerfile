@@ -4,9 +4,10 @@ FROM node:18-alpine AS build
 WORKDIR /app
 
 # Copy package files first for caching
-COPY package.json package-lock.json ./
-# Use 'npm ci' for deterministic installs
-RUN npm ci 
+COPY package.json ./
+COPY package-lock.json* ./
+# Use 'npm install' since package-lock.json might not exist
+RUN npm install
 
 # Copy the rest of the frontend code
 COPY . ./

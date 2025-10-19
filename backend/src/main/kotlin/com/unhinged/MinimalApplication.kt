@@ -100,7 +100,7 @@ fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         configureSerialization()
         configureCORS()
-        configureMetrics()
+        // configureMetrics() // Temporarily disabled due to Docker cgroups issue
         configureRouting()
 
         logger.info("✅ Server configured with observability and ready")
@@ -140,10 +140,10 @@ fun Application.configureMetrics() {
 
 fun Application.configureRouting() {
     routing {
-        // Prometheus metrics endpoint
-        get("/metrics") {
-            call.respond(prometheusMeterRegistry.scrape())
-        }
+        // Prometheus metrics endpoint (temporarily disabled)
+        // get("/metrics") {
+        //     call.respond(prometheusMeterRegistry.scrape())
+        // }
 
         get("/") {
             call.respond(

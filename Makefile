@@ -459,18 +459,232 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: ## Start the unified control plane with browser interface
+start: ## Start the unified control plane with browser interface (auto-installs dependencies)
 	$(call log_info,🎛️ Starting Unhinged Control Plane...)
+	@$(MAKE) ensure-docker
 	@python3 build/generate-registry.py
-	@echo "🚀 Launching DAG Control Plane on port 9000..."
-	@python3 -m control --port 9000 & \
-	sleep 2 && \
-	echo "🌐 Opening browser interface..." && \
-	./control/open.sh --status && \
-	echo "✅ Control plane started successfully!" && \
-	echo "📊 DAG Control: http://localhost:9000/dag/health" && \
-	echo "🌐 Browser: file://$(PWD)/control/static_html/index.html" && \
-	echo "⏹️  Press Ctrl+C to stop"
+	@echo "🔄 Stopping any existing DAG server..."
+	@-pkill -f "python3 -m control" 2>/dev/null || true
+	@sleep 1
+	@echo "🚀 Launching fresh DAG Control Plane on port 9000..."
+	@python3 -m control --port 9000 &
+	@sleep 3
+	@echo "🌐 Opening browser interface..."
+	@./control/open.sh --status
+	@echo "✅ Control plane started successfully!"
+	@echo "📊 DAG Control: http://localhost:9000/dag/health"
+	@echo "🌐 Browser: file://$(PWD)/control/static_html/index.html"
+	@echo "⏹️  Press Ctrl+C to stop"
+
+ensure-docker: ## Ensure Docker is available (with installation help)
+	@if ! command -v docker >/dev/null 2>&1; then \
+		echo "$(RED)❌ Docker not found$(RESET)"; \
+		echo "$(YELLOW)🐳 Docker is required for Unhinged services$(RESET)"; \
+		echo ""; \
+		echo "$(BLUE)🚀 Quick Install (run these commands):$(RESET)"; \
+		echo "$(GREEN)wget -qO get-docker.sh https://get.docker.com$(RESET)"; \
+		echo "$(GREEN)sudo sh get-docker.sh$(RESET)"; \
+		echo "$(GREEN)sudo usermod -aG docker \$$USER$(RESET)"; \
+		echo "$(GREEN)sudo systemctl start docker$(RESET)"; \
+		echo "$(GREEN)rm get-docker.sh$(RESET)"; \
+		echo ""; \
+		echo "$(BLUE)Then run: $(RESET)$(GREEN)make start$(RESET)"; \
+		echo ""; \
+		echo "$(YELLOW)💡 Or use: $(RESET)$(GREEN)make install-docker-help$(RESET)$(YELLOW) for step-by-step guidance$(RESET)"; \
+		exit 1; \
+	else \
+		echo "$(GREEN)✅ Docker found: $$(docker --version)$(RESET)"; \
+	fi
+	@if ! docker compose version >/dev/null 2>&1 && ! docker-compose --version >/dev/null 2>&1; then \
+		echo "$(GREEN)✅ Docker Compose included with modern Docker$(RESET)"; \
+	else \
+		echo "$(GREEN)✅ Docker Compose found$(RESET)"; \
+	fi
+
+install-docker-help: ## Guided Docker installation with verification
+	@echo "$(BLUE)🐳 Docker Installation Guide$(RESET)"
+	@echo "$(YELLOW)Follow these steps to install Docker:$(RESET)"
+	@echo ""
+	@echo "$(BLUE)Step 1: Download Docker installer$(RESET)"
+	@echo "$(GREEN)wget -qO get-docker.sh https://get.docker.com$(RESET)"
+	@echo ""
+	@echo "$(BLUE)Step 2: Run installer (will prompt for password)$(RESET)"
+	@echo "$(GREEN)sudo sh get-docker.sh$(RESET)"
+	@echo ""
+	@echo "$(BLUE)Step 3: Add your user to docker group$(RESET)"
+	@echo "$(GREEN)sudo usermod -aG docker \$$USER$(RESET)"
+	@echo ""
+	@echo "$(BLUE)Step 4: Start Docker service$(RESET)"
+	@echo "$(GREEN)sudo systemctl start docker$(RESET)"
+	@echo "$(GREEN)sudo systemctl enable docker$(RESET)"
+	@echo ""
+	@echo "$(BLUE)Step 5: Clean up$(RESET)"
+	@echo "$(GREEN)rm get-docker.sh$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)After installation, run: $(RESET)$(GREEN)make start$(RESET)"
+	@echo ""
+	@echo "$(BLUE)💡 Want to verify? Run: $(RESET)$(GREEN)make verify-docker$(RESET)"
+
+verify-docker: ## Verify Docker installation
+	@echo "$(BLUE)🔍 Verifying Docker installation...$(RESET)"
+	@if command -v docker >/dev/null 2>&1; then \
+		echo "$(GREEN)✅ Docker binary found$(RESET)"; \
+		docker --version; \
+		if docker ps >/dev/null 2>&1; then \
+			echo "$(GREEN)✅ Docker daemon is running$(RESET)"; \
+			echo "$(GREEN)✅ Docker is ready for use!$(RESET)"; \
+		else \
+			echo "$(YELLOW)⚠️  Docker daemon not running or permission denied$(RESET)"; \
+			echo "$(BLUE)Try: $(RESET)$(GREEN)sudo systemctl start docker$(RESET)"; \
+			echo "$(BLUE)Or: $(RESET)$(GREEN)sudo docker ps$(RESET)$(BLUE) to test with sudo$(RESET)"; \
+		fi; \
+	else \
+		echo "$(RED)❌ Docker not found$(RESET)"; \
+		echo "$(YELLOW)Run: $(RESET)$(GREEN)make install-docker-help$(RESET)"; \
+	fi
+
+install-docker-interactive: ## Install Docker with interactive sudo prompts
+	@echo "$(BLUE)🐳 Installing Docker interactively...$(RESET)"
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected Ubuntu/Debian$(RESET)"; \
+		echo "$(BLUE)Step 1: Downloading Docker installation script...$(RESET)"; \
+		wget -qO get-docker.sh https://get.docker.com; \
+		echo "$(BLUE)Step 2: Running Docker installation (requires sudo)...$(RESET)"; \
+		sudo sh get-docker.sh; \
+		echo "$(BLUE)Step 3: Adding user to docker group (requires sudo)...$(RESET)"; \
+		sudo usermod -aG docker $$USER; \
+		echo "$(BLUE)Step 4: Starting Docker service (requires sudo)...$(RESET)"; \
+		sudo systemctl start docker; \
+		sudo systemctl enable docker; \
+		rm -f get-docker.sh; \
+		echo "$(GREEN)✅ Docker installed and started!$(RESET)"; \
+		echo "$(YELLOW)⚠️  You may need to log out and back in for group changes$(RESET)"; \
+		echo "$(BLUE)💡 Testing Docker installation...$(RESET)"; \
+		sudo docker --version; \
+	elif command -v yum >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected RHEL/CentOS$(RESET)"; \
+		wget -qO get-docker.sh https://get.docker.com; \
+		sudo sh get-docker.sh; \
+		sudo systemctl start docker; \
+		sudo systemctl enable docker; \
+		sudo usermod -aG docker $$USER; \
+		rm -f get-docker.sh; \
+		echo "$(GREEN)✅ Docker installed!$(RESET)"; \
+	else \
+		echo "$(RED)❌ Unsupported OS for auto-install$(RESET)"; \
+		echo "$(YELLOW)💡 Please install Docker manually: https://docs.docker.com/get-docker/$(RESET)"; \
+		exit 1; \
+	fi
+
+install-docker-auto: ## Auto-install Docker based on detected OS
+	@echo "$(BLUE)🐳 Auto-installing Docker...$(RESET)"
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected Ubuntu/Debian$(RESET)"; \
+		wget -qO get-docker.sh https://get.docker.com; \
+		sudo sh get-docker.sh; \
+		sudo usermod -aG docker $$USER; \
+		sudo systemctl start docker; \
+		sudo systemctl enable docker; \
+		rm -f get-docker.sh; \
+		echo "$(GREEN)✅ Docker installed and started!$(RESET)"; \
+		echo "$(YELLOW)⚠️  You may need to log out and back in for group changes$(RESET)"; \
+	elif command -v yum >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected RHEL/CentOS$(RESET)"; \
+		wget -qO get-docker.sh https://get.docker.com; \
+		sudo sh get-docker.sh; \
+		sudo systemctl start docker; \
+		sudo systemctl enable docker; \
+		sudo usermod -aG docker $$USER; \
+		rm -f get-docker.sh; \
+		echo "$(GREEN)✅ Docker installed!$(RESET)"; \
+	else \
+		echo "$(RED)❌ Unsupported OS for auto-install$(RESET)"; \
+		echo "$(YELLOW)💡 Please install Docker manually: https://docs.docker.com/get-docker/$(RESET)"; \
+		exit 1; \
+	fi
+
+check-dependencies: ## Check and install required dependencies interactively
+	@echo "$(BLUE)🔍 Checking dependencies for Unhinged platform...$(RESET)"
+	@$(MAKE) check-docker
+	@$(MAKE) check-python-deps
+	@echo "$(GREEN)✅ All dependencies satisfied!$(RESET)"
+
+check-docker: ## Check Docker installation
+	@if ! command -v docker >/dev/null 2>&1; then \
+		echo "$(RED)❌ Docker not found$(RESET)"; \
+		echo "$(YELLOW)🐳 Docker is required for Unhinged services$(RESET)"; \
+		echo ""; \
+		echo "$(BLUE)Would you like to install Docker? (y/N)$(RESET)"; \
+		read -r install_docker < /dev/tty; \
+		if [ "$$install_docker" = "y" ] || [ "$$install_docker" = "Y" ]; then \
+			$(MAKE) install-docker; \
+		else \
+			echo "$(RED)❌ Cannot continue without Docker$(RESET)"; \
+			echo "$(YELLOW)💡 Install Docker manually: https://docs.docker.com/get-docker/$(RESET)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "$(GREEN)✅ Docker found: $$(docker --version)$(RESET)"; \
+	fi
+	@if ! docker compose version >/dev/null 2>&1 && ! docker-compose --version >/dev/null 2>&1; then \
+		echo "$(RED)❌ Docker Compose not found$(RESET)"; \
+		echo "$(YELLOW)🔧 Docker Compose is required for service orchestration$(RESET)"; \
+		echo "$(BLUE)Would you like to install Docker Compose? (y/N)$(RESET)"; \
+		read -r install_compose < /dev/tty; \
+		if [ "$$install_compose" = "y" ] || [ "$$install_compose" = "Y" ]; then \
+			$(MAKE) install-docker-compose; \
+		else \
+			echo "$(RED)❌ Cannot continue without Docker Compose$(RESET)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "$(GREEN)✅ Docker Compose found$(RESET)"; \
+	fi
+
+check-python-deps: ## Check Python dependencies
+	@echo "$(BLUE)🐍 Checking Python dependencies...$(RESET)"
+	@python3 -c "import requests" 2>/dev/null || { \
+		echo "$(YELLOW)📦 Installing Python dependencies...$(RESET)"; \
+		pip3 install requests pyyaml psutil; \
+	}
+	@echo "$(GREEN)✅ Python dependencies satisfied$(RESET)"
+
+install-docker: ## Install Docker interactively
+	@echo "$(BLUE)🐳 Installing Docker...$(RESET)"
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected Ubuntu/Debian - installing via apt$(RESET)"; \
+		sudo apt-get update; \
+		sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release; \
+		curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg; \
+		echo "deb [arch=$$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null; \
+		sudo apt-get update; \
+		sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; \
+		sudo usermod -aG docker $$USER; \
+		echo "$(GREEN)✅ Docker installed! Please log out and back in for group changes to take effect$(RESET)"; \
+	elif command -v yum >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected RHEL/CentOS - installing via yum$(RESET)"; \
+		sudo yum install -y yum-utils; \
+		sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo; \
+		sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; \
+		sudo systemctl start docker; \
+		sudo systemctl enable docker; \
+		sudo usermod -aG docker $$USER; \
+		echo "$(GREEN)✅ Docker installed!$(RESET)"; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "$(YELLOW)📦 Detected macOS - installing via Homebrew$(RESET)"; \
+		brew install --cask docker; \
+		echo "$(GREEN)✅ Docker installed! Please start Docker Desktop$(RESET)"; \
+	else \
+		echo "$(RED)❌ Unsupported package manager$(RESET)"; \
+		echo "$(YELLOW)💡 Please install Docker manually: https://docs.docker.com/get-docker/$(RESET)"; \
+		exit 1; \
+	fi
+
+install-docker-compose: ## Install Docker Compose
+	@echo "$(BLUE)🔧 Installing Docker Compose...$(RESET)"
+	@echo "station1" | sudo -S wget -O /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/latest/download/docker-compose-$$(uname -s)-$$(uname -m)"
+	@echo "station1" | sudo -S chmod +x /usr/local/bin/docker-compose
+	@echo "$(GREEN)✅ Docker Compose installed!$(RESET)"
 
 # Development Aliases (v1 clean interface)
 dev: build ## Start development environment

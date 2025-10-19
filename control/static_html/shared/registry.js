@@ -1,5 +1,5 @@
 // Auto-generated registry - DO NOT EDIT MANUALLY
-// Generated at: 2025-10-18T22:44:01.060371
+// Generated at: 2025-10-18T23:49:33.660028
 // Run 'make start' to regenerate
 
 /**
@@ -22,13 +22,13 @@ window.UNHINGED_REGISTRY = {
     "size": 30808
   },
   "/control/static_html/index.html": {
-    "title": "\ud83d\ude80 Unhinged AI - GPU-Accelerated Multi-Modal Platform",
+    "title": "\ud83c\udfe0 Unhinged Control Center - Table of Contents",
     "description": "",
     "category": "root",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760830716.0698452,
-    "size": 13548
+    "lastModified": 1760855935.428048,
+    "size": 14909
   },
   "/control/static_html/image-test.html": {
     "title": "\ud83d\udc41\ufe0f Vision AI Test - Unhinged Multi-Modal Platform",
