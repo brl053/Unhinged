@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 gRPC Direct Client Test - Unhinged Control Plane</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <style>
+        .grpc-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        .service-section {
+            background: var(--color-background);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .service-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-healthy { background: #d4edda; color: #155724; }
+        .status-unhealthy { background: #f8d7da; color: #721c24; }
+        .status-checking { background: #fff3cd; color: #856404; }
+
+        .test-controls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--spacing-md);
+            align-items: end;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .test-input {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+        }
+
+        .test-button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .test-button:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .test-button:disabled {
+            background: var(--color-muted);
+            cursor: not-allowed;
+        }
+
+        .result-area {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .streaming-indicator {
+            display: none;
+            color: var(--color-primary);
+            font-style: italic;
+            margin-top: var(--spacing-sm);
+        }
+
+        .streaming-indicator.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="grpc-container">
+        <header style="text-align: center; margin-bottom: var(--spacing-xl);">
+            <h1>🔧 gRPC Direct Client Test</h1>
+            <p class="subtitle">Direct protobuf communication with services - No HTTP gateway needed!</p>
+        </header>
+
+        <!-- Service Health Overview -->
+        <div class="service-section">
+            <h2>🏥 Service Health Check</h2>
+            <div id="healthStatus">Checking services...</div>
+            <button id="refreshHealth" class="test-button" style="margin-top: var(--spacing-md);">
+                🔄 Refresh Health
+            </button>
+        </div>
+
+        <!-- Audio Service Tests -->
+        <div class="service-section">
+            <div class="service-header">
+                <h2>🎤 Audio Service (gRPC)</h2>
+                <span id="audioStatus" class="service-status status-checking">Checking...</span>
+            </div>
+            
+            <div class="test-controls">
+                <input type="text" id="audioText" class="test-input" 
+                       placeholder="Enter text to test audio processing..." 
+                       value="Hello from gRPC direct client!">
+                <button id="testAudio" class="test-button">🎵 Test Audio gRPC</button>
+            </div>
+            
+            <div id="audioResult" class="result-area">Ready for audio gRPC test...</div>
+            <div id="audioStreaming" class="streaming-indicator">🔄 Streaming audio data...</div>
+        </div>
+
+        <!-- Chat Service Tests -->
+        <div class="service-section">
+            <div class="service-header">
+                <h2>💬 Chat Service (gRPC)</h2>
+                <span id="chatStatus" class="service-status status-checking">Checking...</span>
+            </div>
+            
+            <div class="test-controls">
+                <input type="text" id="chatMessage" class="test-input" 
+                       placeholder="Enter message to send via gRPC..." 
+                       value="Hello LLM via gRPC!">
+                <button id="testChat" class="test-button">💬 Test Chat gRPC</button>
+            </div>
+            
+            <div id="chatResult" class="result-area">Ready for chat gRPC test...</div>
+            <div id="chatStreaming" class="streaming-indicator">🔄 Streaming chat response...</div>
+        </div>
+
+        <!-- Vision Service Tests -->
+        <div class="service-section">
+            <div class="service-header">
+                <h2>👁️ Vision Service (gRPC)</h2>
+                <span id="visionStatus" class="service-status status-checking">Checking...</span>
+            </div>
+            
+            <div class="test-controls">
+                <input type="file" id="visionFile" class="test-input" accept="image/*">
+                <button id="testVision" class="test-button">👁️ Test Vision gRPC</button>
+            </div>
+            
+            <div id="visionResult" class="result-area">Ready for vision gRPC test...</div>
+            <div id="visionStreaming" class="streaming-indicator">🔄 Processing image...</div>
+        </div>
+
+        <!-- Raw gRPC Test -->
+        <div class="service-section">
+            <h2>⚡ Raw gRPC Call Test</h2>
+            <p style="color: var(--color-muted); margin-bottom: var(--spacing-md);">
+                Test direct protobuf communication without service wrappers
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                <input type="text" id="rawService" class="test-input" placeholder="Service" value="AudioService">
+                <input type="text" id="rawMethod" class="test-input" placeholder="Method" value="SpeechToText">
+                <input type="text" id="rawPayload" class="test-input" placeholder="JSON Payload" value='{"text":"test"}'>
+                <button id="testRaw" class="test-button">⚡ Raw Call</button>
+            </div>
+            
+            <div id="rawResult" class="result-area">Ready for raw gRPC test...</div>
+        </div>
+    </div>
+
+    <!-- Load gRPC Client -->
+    <script src="network/grpc-client.js"></script>
+    
+    <script>
+        // Global state
+        let serviceHealth = {};
+
+        // DOM elements
+        const elements = {
+            healthStatus: document.getElementById('healthStatus'),
+            refreshHealth: document.getElementById('refreshHealth'),
+            audioStatus: document.getElementById('audioStatus'),
+            audioText: document.getElementById('audioText'),
+            testAudio: document.getElementById('testAudio'),
+            audioResult: document.getElementById('audioResult'),
+            audioStreaming: document.getElementById('audioStreaming'),
+            chatStatus: document.getElementById('chatStatus'),
+            chatMessage: document.getElementById('chatMessage'),
+            testChat: document.getElementById('testChat'),
+            chatResult: document.getElementById('chatResult'),
+            chatStreaming: document.getElementById('chatStreaming'),
+            visionStatus: document.getElementById('visionStatus'),
+            visionFile: document.getElementById('visionFile'),
+            testVision: document.getElementById('testVision'),
+            visionResult: document.getElementById('visionResult'),
+            visionStreaming: document.getElementById('visionStreaming'),
+            rawService: document.getElementById('rawService'),
+            rawMethod: document.getElementById('rawMethod'),
+            rawPayload: document.getElementById('rawPayload'),
+            testRaw: document.getElementById('testRaw'),
+            rawResult: document.getElementById('rawResult')
+        };
+
+        // Health check function
+        async function checkHealth() {
+            elements.healthStatus.textContent = 'Checking services...';
+            
+            try {
+                serviceHealth = await UnhingedServices.healthCheck();
+                
+                let healthText = 'Service Health Status:\n';
+                Object.entries(serviceHealth).forEach(([service, status]) => {
+                    healthText += `• ${service}: ${status}\n`;
+                    
+                    // Update individual service status
+                    const statusElement = elements[`${service}Status`];
+                    if (statusElement) {
+                        statusElement.textContent = status;
+                        statusElement.className = `service-status status-${status}`;
+                    }
+                });
+                
+                elements.healthStatus.textContent = healthText;
+                
+            } catch (error) {
+                elements.healthStatus.textContent = `Health check failed: ${error.message}`;
+                console.error('Health check error:', error);
+            }
+        }
+
+        // Test audio service
+        async function testAudio() {
+            const text = elements.audioText.value;
+            if (!text) return;
+
+            elements.audioStreaming.classList.add('active');
+            elements.testAudio.disabled = true;
+            elements.audioResult.textContent = 'Testing audio gRPC call...';
+
+            try {
+                const result = await UnhingedServices.audio.transcribeAudio(text);
+                elements.audioResult.textContent = `Audio gRPC Response:\n${JSON.stringify(result, null, 2)}`;
+            } catch (error) {
+                elements.audioResult.textContent = `Audio gRPC Error:\n${error.message}`;
+                console.error('Audio test error:', error);
+            } finally {
+                elements.audioStreaming.classList.remove('active');
+                elements.testAudio.disabled = false;
+            }
+        }
+
+        // Test chat service
+        async function testChat() {
+            const message = elements.chatMessage.value;
+            if (!message) return;
+
+            elements.chatStreaming.classList.add('active');
+            elements.testChat.disabled = true;
+            elements.chatResult.textContent = 'Testing chat gRPC call...';
+
+            try {
+                const result = await UnhingedServices.chat.sendMessage('test-conversation', message);
+                elements.chatResult.textContent = `Chat gRPC Response:\n${JSON.stringify(result, null, 2)}`;
+            } catch (error) {
+                elements.chatResult.textContent = `Chat gRPC Error:\n${error.message}`;
+                console.error('Chat test error:', error);
+            } finally {
+                elements.chatStreaming.classList.remove('active');
+                elements.testChat.disabled = false;
+            }
+        }
+
+        // Test vision service
+        async function testVision() {
+            const file = elements.visionFile.files[0];
+            if (!file) {
+                elements.visionResult.textContent = 'Please select an image file first.';
+                return;
+            }
+
+            elements.visionStreaming.classList.add('active');
+            elements.testVision.disabled = true;
+            elements.visionResult.textContent = 'Testing vision gRPC call...';
+
+            try {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const imageData = e.target.result;
+                    const result = await UnhingedServices.vision.analyzeImage(imageData);
+                    elements.visionResult.textContent = `Vision gRPC Response:\n${JSON.stringify(result, null, 2)}`;
+                    elements.visionStreaming.classList.remove('active');
+                    elements.testVision.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            } catch (error) {
+                elements.visionResult.textContent = `Vision gRPC Error:\n${error.message}`;
+                console.error('Vision test error:', error);
+                elements.visionStreaming.classList.remove('active');
+                elements.testVision.disabled = false;
+            }
+        }
+
+        // Test raw gRPC call
+        async function testRaw() {
+            const service = elements.rawService.value;
+            const method = elements.rawMethod.value;
+            const payload = elements.rawPayload.value;
+
+            if (!service || !method) return;
+
+            elements.testRaw.disabled = true;
+            elements.rawResult.textContent = 'Testing raw gRPC call...';
+
+            try {
+                const client = new UnhingedGRPCClient('http://localhost:50051');
+                const request = JSON.parse(payload || '{}');
+                const result = await client.call(service, method, request, 'GenericResponse');
+                elements.rawResult.textContent = `Raw gRPC Response:\n${JSON.stringify(result, null, 2)}`;
+            } catch (error) {
+                elements.rawResult.textContent = `Raw gRPC Error:\n${error.message}`;
+                console.error('Raw gRPC test error:', error);
+            } finally {
+                elements.testRaw.disabled = false;
+            }
+        }
+
+        // Event listeners
+        elements.refreshHealth.addEventListener('click', checkHealth);
+        elements.testAudio.addEventListener('click', testAudio);
+        elements.testChat.addEventListener('click', testChat);
+        elements.testVision.addEventListener('click', testVision);
+        elements.testRaw.addEventListener('click', testRaw);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔧 gRPC Direct Client Test Page Loaded');
+            console.log('Available services:', Object.keys(UnhingedServices));
+            checkHealth();
+        });
+    </script>
+</body>
+</html>

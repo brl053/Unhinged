@@ -1,5 +1,5 @@
 // Auto-generated registry - DO NOT EDIT MANUALLY
-// Generated at: 2025-10-19T00:50:26.946839
+// Generated at: 2025-10-19T02:25:42.998885
 // Run 'make start' to regenerate
 
 /**
@@ -20,6 +20,24 @@ window.UNHINGED_REGISTRY = {
     "exists": true,
     "lastModified": 1760859494.8106725,
     "size": 31133
+  },
+  "/control/static_html/grpc-test.html": {
+    "title": "\ud83d\udd27 gRPC Direct Client Test - Unhinged Control Plane",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760865581.042664,
+    "size": 14676
+  },
+  "/control/static_html/chat.html": {
+    "title": "\ud83d\udcac Chat Interface - Unhinged Control Plane",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760865900.3650227,
+    "size": 20979
   },
   "/control/static_html/index.html": {
     "title": "\ud83c\udfe0 Unhinged Control Center - Table of Contents",
@@ -63,8 +81,8 @@ window.UNHINGED_REGISTRY = {
     "category": "ai-services",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760859618.1959364,
-    "size": 13812
+    "lastModified": 1760865909.4404428,
+    "size": 19725
   },
   "/control/static_html/html-links/index.html": {
     "title": "\ud83e\udde0 Unhinged HTML Files",

@@ -160,6 +160,7 @@
             <a href="index.html" class="nav-link">🏠 Home</a>
             <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
             <a href="service-orchestration.html" class="nav-link">🎛️ Service Orchestration</a>
+            <a href="chat.html" class="nav-link">💬 Chat Interface</a>
             <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
             <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
             <a href="voice-test.html" class="nav-link active">🎤 Voice Processing</a>
@@ -168,11 +169,12 @@
         <div class="voice-container">
 
         <h1>🎤 Voice & Audio Processing</h1>
-        <p class="subtitle">Multi-Modal AI Platform - High-Quality Speech-to-Text Transcription</p>
-        
+        <p class="subtitle">Local Speech-to-Text & Text-to-Speech Services</p>
+
         <div class="test-section">
             <h2>Service Status</h2>
-            <div id="serviceStatus" class="status loading">⏳ Checking Whisper service...</div>
+            <div id="sttServiceStatus" class="status loading">⏳ Checking Speech-to-Text service...</div>
+            <div id="ttsServiceStatus" class="status loading">⏳ Checking Text-to-Speech service...</div>
         </div>
         
         <div class="test-section">
@@ -181,39 +183,55 @@
         </div>
         
         <div class="test-section">
-            <h2>Voice Recording Test</h2>
-            
+            <h2>🎤 Speech-to-Text Test</h2>
+
             <button id="recordButton" class="record-button ready" disabled>
                 🎤
             </button>
-            
+
             <div class="instructions" id="instructions">
                 Checking service status...
             </div>
-            
+
             <div id="result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔊 Text-to-Speech Test</h2>
+
+            <div style="margin-bottom: 15px;">
+                <label for="ttsText" style="display: block; margin-bottom: 5px; font-weight: bold;">Text to Synthesize:</label>
+                <textarea id="ttsText" placeholder="Enter text to convert to speech..."
+                    style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+
+            <button id="synthesizeButton" class="record-button ready" disabled style="width: auto; height: auto; border-radius: 8px; padding: 12px 24px; font-size: 16px;">
+                🔊 Synthesize Speech
+            </button>
+
+            <div id="ttsResult" class="result" style="display: none;"></div>
         </div>
         
         <div class="test-section">
             <h2>Instructions</h2>
             <div style="font-size: 14px; line-height: 1.6;">
-                <p><strong>To test voice recording:</strong></p>
+                <p><strong>Speech-to-Text:</strong></p>
                 <ol>
-                    <li>Ensure the Whisper service is healthy (green status above)</li>
-                    <li>Grant microphone permissions when prompted by your browser</li>
+                    <li>Ensure both services are healthy (green status above)</li>
+                    <li>Grant microphone permissions when prompted</li>
                     <li>Click the microphone button to start recording</li>
-                    <li>Speak clearly into your microphone</li>
-                    <li>Click the stop button to end recording</li>
-                    <li>Wait for the transcription result to appear</li>
+                    <li>Speak clearly and click stop when finished</li>
+                    <li>View the transcription result</li>
                 </ol>
-                
-                <p><strong>Troubleshooting:</strong></p>
-                <ul>
-                    <li>If service is unhealthy, ensure Docker containers are running: <code>docker compose -f docker-compose.simple.yml ps</code></li>
-                    <li>If microphone access is denied, check browser permissions</li>
-                    <li>Try refreshing the page if recording doesn't work</li>
-                    <li>Use Chrome or Firefox for best compatibility</li>
-                </ul>
+
+                <p><strong>Text-to-Speech:</strong></p>
+                <ol>
+                    <li>Enter text in the text area</li>
+                    <li>Click "Synthesize Speech" to generate audio</li>
+                    <li>The audio file will be downloaded automatically</li>
+                </ol>
+
+                <p><strong>Note:</strong> Both services run locally using neural AI models for privacy and performance.</p>
             </div>
         </div>
     </div>
@@ -223,34 +241,58 @@
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let serviceHealthy = false;
+        let sttServiceHealthy = false;
+        let ttsServiceHealthy = false;
 
         // DOM elements
-        const serviceStatus = document.getElementById('serviceStatus');
+        const sttServiceStatus = document.getElementById('sttServiceStatus');
+        const ttsServiceStatus = document.getElementById('ttsServiceStatus');
         const capabilities = document.getElementById('capabilities');
         const recordButton = document.getElementById('recordButton');
+        const synthesizeButton = document.getElementById('synthesizeButton');
+        const ttsText = document.getElementById('ttsText');
         const instructions = document.getElementById('instructions');
         const result = document.getElementById('result');
+        const ttsResult = document.getElementById('ttsResult');
 
-        // Check service health
-        async function checkServiceHealth() {
+        // Check STT service health
+        async function checkSTTServiceHealth() {
             try {
                 const response = await fetch('http://localhost:8000/health');
                 if (response.ok) {
                     const data = await response.json();
-                    serviceStatus.className = 'status healthy';
-                    serviceStatus.innerHTML = '✅ Whisper Service Healthy';
-                    serviceHealthy = true;
-                    updateInstructions();
+                    sttServiceStatus.className = 'status healthy';
+                    sttServiceStatus.innerHTML = '✅ Speech-to-Text Service Healthy';
+                    sttServiceHealthy = true;
                 } else {
                     throw new Error(`HTTP ${response.status}`);
                 }
             } catch (error) {
-                serviceStatus.className = 'status unhealthy';
-                serviceStatus.innerHTML = '❌ Whisper Service Unavailable';
-                serviceHealthy = false;
-                updateInstructions();
+                sttServiceStatus.className = 'status unhealthy';
+                sttServiceStatus.innerHTML = '❌ Speech-to-Text Service Unavailable';
+                sttServiceHealthy = false;
             }
+            updateButtons();
+        }
+
+        // Check TTS service health
+        async function checkTTSServiceHealth() {
+            try {
+                const response = await fetch('http://localhost:8002/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    ttsServiceStatus.className = 'status healthy';
+                    ttsServiceStatus.innerHTML = '✅ Text-to-Speech Service Healthy';
+                    ttsServiceHealthy = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                ttsServiceStatus.className = 'status unhealthy';
+                ttsServiceStatus.innerHTML = '❌ Text-to-Speech Service Unavailable';
+                ttsServiceHealthy = false;
+            }
+            updateButtons();
         }
 
         // Check browser capabilities
@@ -273,12 +315,13 @@
             return caps;
         }
 
-        // Update instructions based on status
-        function updateInstructions() {
+        // Update button states based on service status
+        function updateButtons() {
             const caps = checkCapabilities();
-            
-            if (!serviceHealthy) {
-                instructions.textContent = 'Service unavailable - please start Docker services';
+
+            // Update STT button
+            if (!sttServiceHealthy) {
+                instructions.textContent = 'Speech-to-Text service unavailable';
                 recordButton.disabled = true;
             } else if (!caps['getUserMedia Support']) {
                 instructions.textContent = 'Microphone access not supported in this browser';
@@ -287,6 +330,9 @@
                 instructions.textContent = isRecording ? 'Recording... Click to stop' : 'Click to start recording';
                 recordButton.disabled = false;
             }
+
+            // Update TTS button
+            synthesizeButton.disabled = !ttsServiceHealthy || !ttsText.value.trim();
         }
 
         // Start recording
@@ -327,7 +373,7 @@
                 isRecording = true;
                 recordButton.className = 'record-button recording';
                 recordButton.innerHTML = '⏹️';
-                updateInstructions();
+                updateButtons();
                 showResult('Recording started... Speak now!', false);
 
             } catch (error) {
@@ -343,7 +389,7 @@
                 isRecording = false;
                 recordButton.className = 'record-button ready';
                 recordButton.innerHTML = '🎤';
-                updateInstructions();
+                updateButtons();
                 showResult('Processing recording...', false);
             }
         }
@@ -377,6 +423,83 @@
             }
         }
 
+        // Synthesize speech
+        async function synthesizeSpeech() {
+            const text = ttsText.value.trim();
+            if (!text || !ttsServiceHealthy) return;
+
+            try {
+                showTTSResult('Synthesizing speech...', false);
+                synthesizeButton.disabled = true;
+
+                const response = await fetch('http://localhost:8002/synthesize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Synthesis failed: ${response.status} ${response.statusText}`);
+                }
+
+                // Create audio element for playback and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                // Create audio player
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = url;
+                audio.style.width = '100%';
+                audio.style.marginTop = '10px';
+
+                // Create download link
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = `speech_${Date.now()}.wav`;
+                downloadLink.textContent = '💾 Download Audio';
+                downloadLink.style.display = 'inline-block';
+                downloadLink.style.marginTop = '10px';
+                downloadLink.style.padding = '8px 16px';
+                downloadLink.style.backgroundColor = '#007bff';
+                downloadLink.style.color = 'white';
+                downloadLink.style.textDecoration = 'none';
+                downloadLink.style.borderRadius = '4px';
+                downloadLink.style.marginLeft = '10px';
+
+                // Create play button
+                const playButton = document.createElement('button');
+                playButton.textContent = '▶️ Play Audio';
+                playButton.style.padding = '8px 16px';
+                playButton.style.backgroundColor = '#28a745';
+                playButton.style.color = 'white';
+                playButton.style.border = 'none';
+                playButton.style.borderRadius = '4px';
+                playButton.style.cursor = 'pointer';
+                playButton.onclick = () => audio.play();
+
+                // Clear previous results and add new elements
+                ttsResult.innerHTML = '';
+                ttsResult.appendChild(document.createTextNode('✅ Speech synthesized successfully!'));
+                ttsResult.appendChild(document.createElement('br'));
+                ttsResult.appendChild(playButton);
+                ttsResult.appendChild(downloadLink);
+                ttsResult.appendChild(document.createElement('br'));
+                ttsResult.appendChild(audio);
+
+                // Auto-play the audio
+                audio.play().catch(e => console.log('Auto-play prevented by browser'));
+
+            } catch (error) {
+                showTTSResult(`Synthesis error: ${error.message}`, true);
+                console.error('TTS error:', error);
+            } finally {
+                synthesizeButton.disabled = !ttsServiceHealthy || !ttsText.value.trim();
+            }
+        }
+
         // Show result
         function showResult(text, isError) {
             result.style.display = 'block';
@@ -384,7 +507,14 @@
             result.textContent = text;
         }
 
-        // Record button click handler
+        // Show TTS result
+        function showTTSResult(text, isError) {
+            ttsResult.style.display = 'block';
+            ttsResult.className = `result ${isError ? 'error' : ''}`;
+            ttsResult.textContent = text;
+        }
+
+        // Event handlers
         recordButton.addEventListener('click', () => {
             if (isRecording) {
                 stopRecording();
@@ -393,11 +523,16 @@
             }
         });
 
+        synthesizeButton.addEventListener('click', synthesizeSpeech);
+
+        ttsText.addEventListener('input', updateButtons);
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            checkServiceHealth();
+            checkSTTServiceHealth();
+            checkTTSServiceHealth();
             checkCapabilities();
-            updateInstructions();
+            updateButtons();
         });
     </script>
 </body>

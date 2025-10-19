@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 Chat Interface - Unhinged Control Plane</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <style>
+        .chat-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: var(--spacing-lg);
+            height: 100vh;
+        }
+
+        .chat-main {
+            display: flex;
+            flex-direction: column;
+            background: var(--color-background);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--color-primary);
+            color: white;
+            padding: var(--spacing-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: var(--spacing-md);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            min-height: 400px;
+            max-height: 500px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+        }
+
+        .message.system {
+            align-self: center;
+            background: var(--color-warning);
+            color: var(--color-text);
+            font-style: italic;
+            text-align: center;
+        }
+
+        .chat-input {
+            border-top: 1px solid var(--color-border);
+            padding: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: flex-end;
+        }
+
+        .input-area {
+            flex: 1;
+            min-height: 40px;
+            max-height: 120px;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .chat-button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .chat-button:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .chat-button:disabled {
+            background: var(--color-muted);
+            cursor: not-allowed;
+        }
+
+        .chat-button.secondary {
+            background: var(--color-secondary);
+        }
+
+        .chat-button.voice {
+            background: var(--color-success);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .sidebar-section {
+            background: var(--color-background);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-md);
+        }
+
+        .sidebar-section h3 {
+            margin: 0 0 var(--spacing-sm) 0;
+            color: var(--color-primary);
+        }
+
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .session-item:hover {
+            background: var(--color-primary-light);
+        }
+
+        .session-item.active {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .event-feed {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .event-item {
+            padding: var(--spacing-xs);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .event-item.info { border-left: 3px solid var(--color-info); }
+        .event-item.success { border-left: 3px solid var(--color-success); }
+        .event-item.warning { border-left: 3px solid var(--color-warning); }
+        .event-item.error { border-left: 3px solid var(--color-error); }
+
+        .loading-dots {
+            display: none;
+            align-self: flex-start;
+            padding: var(--spacing-sm);
+        }
+
+        .loading-dots.active {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots div {
+            width: 8px;
+            height: 8px;
+            background: var(--color-muted);
+            border-radius: 50%;
+            animation: loading 1.4s infinite ease-in-out;
+        }
+
+        .loading-dots div:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots div:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .prompt-surgery {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--color-background);
+            border: 2px solid var(--color-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .prompt-surgery.active {
+            display: block;
+        }
+
+        .surgery-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .surgery-overlay.active {
+            display: block;
+        }
+
+        .surgery-textarea {
+            width: 100%;
+            height: 150px;
+            margin: var(--spacing-md) 0;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .surgery-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+        <a href="index.html" class="nav-link">🏠 Home</a>
+        <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
+        <a href="service-orchestration.html" class="nav-link">🎛️ Service Orchestration</a>
+        <a href="chat.html" class="nav-link active">💬 Chat Interface</a>
+        <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
+        <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
+        <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
+    </div>
+
+    <div class="chat-container">
+        <!-- Main Chat Area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <h2>💬 Chat Interface</h2>
+                <div>
+                    <span id="sessionTitle">New Session</span>
+                    <button id="newSessionBtn" class="chat-button secondary" style="margin-left: 10px;">
+                        ➕ New
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    Welcome to the Unhinged Chat Interface! Start a conversation or create a new session.
+                </div>
+            </div>
+
+            <div class="loading-dots" id="loadingDots">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+            <div class="chat-input">
+                <textarea 
+                    id="messageInput" 
+                    class="input-area" 
+                    placeholder="Type your message here... (Shift+Enter for new line)"
+                    rows="1"></textarea>
+                <button id="voiceBtn" class="chat-button voice">🎤</button>
+                <button id="surgeryBtn" class="chat-button secondary">🔧</button>
+                <button id="sendBtn" class="chat-button">Send</button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Session Management -->
+            <div class="sidebar-section">
+                <h3>📁 Sessions</h3>
+                <div class="session-list" id="sessionList">
+                    <div class="session-item active" data-session-id="default">
+                        Default Session
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Status -->
+            <div class="sidebar-section">
+                <h3>🔧 Services</h3>
+                <div id="serviceStatus">
+                    <div>Chat: <span id="chatServiceStatus">Checking...</span></div>
+                    <div>Audio: <span id="audioServiceStatus">Checking...</span></div>
+                    <div>TTS: <span id="ttsServiceStatus">Checking...</span></div>
+                </div>
+            </div>
+
+            <!-- Event Feed -->
+            <div class="sidebar-section">
+                <h3>📊 Events</h3>
+                <div class="event-feed" id="eventFeed">
+                    <div class="event-item info">
+                        <span>Chat interface loaded</span>
+                        <small>now</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Surgery Modal -->
+    <div class="surgery-overlay" id="surgeryOverlay"></div>
+    <div class="prompt-surgery" id="promptSurgery">
+        <h3>🔧 Prompt Surgery</h3>
+        <p>Edit your prompt before sending:</p>
+        <textarea id="surgeryTextarea" class="surgery-textarea" placeholder="Edit your prompt here..."></textarea>
+        <div class="surgery-actions">
+            <button id="surgeryCancelBtn" class="chat-button secondary">Cancel</button>
+            <button id="surgerySendBtn" class="chat-button">Send Edited</button>
+        </div>
+    </div>
+
+    <!-- Load Dependencies -->
+    <script src="network/grpc-client.js"></script>
+    
+    <script>
+        // Chat state
+        let currentSessionId = 'default';
+        let messageHistory = [];
+        let isProcessing = false;
+
+        // DOM elements
+        const elements = {
+            chatMessages: document.getElementById('chatMessages'),
+            messageInput: document.getElementById('messageInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            voiceBtn: document.getElementById('voiceBtn'),
+            surgeryBtn: document.getElementById('surgeryBtn'),
+            newSessionBtn: document.getElementById('newSessionBtn'),
+            sessionTitle: document.getElementById('sessionTitle'),
+            sessionList: document.getElementById('sessionList'),
+            loadingDots: document.getElementById('loadingDots'),
+            eventFeed: document.getElementById('eventFeed'),
+            serviceStatus: {
+                chat: document.getElementById('chatServiceStatus'),
+                audio: document.getElementById('audioServiceStatus'),
+                tts: document.getElementById('ttsServiceStatus')
+            },
+            surgery: {
+                overlay: document.getElementById('surgeryOverlay'),
+                modal: document.getElementById('promptSurgery'),
+                textarea: document.getElementById('surgeryTextarea'),
+                cancelBtn: document.getElementById('surgeryCancelBtn'),
+                sendBtn: document.getElementById('surgerySendBtn')
+            }
+        };
+
+        // Initialize chat interface
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('💬 Chat Interface Loaded');
+            
+            // Check service health
+            checkServiceHealth();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Add welcome event
+            addEvent('chat_interface_loaded', 'control-plane', 'Chat interface initialized', 'info');
+        });
+
+        // Event listeners setup
+        function setupEventListeners() {
+            // Send message
+            elements.sendBtn.addEventListener('click', sendMessage);
+            
+            // Enter key handling
+            elements.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Voice recording (placeholder)
+            elements.voiceBtn.addEventListener('click', startVoiceRecording);
+            
+            // Prompt surgery
+            elements.surgeryBtn.addEventListener('click', openPromptSurgery);
+            elements.surgery.cancelBtn.addEventListener('click', closePromptSurgery);
+            elements.surgery.sendBtn.addEventListener('click', sendEditedPrompt);
+            elements.surgery.overlay.addEventListener('click', closePromptSurgery);
+            
+            // New session
+            elements.newSessionBtn.addEventListener('click', createNewSession);
+        }
+
+        // Check service health
+        async function checkServiceHealth() {
+            const services = ['chat', 'audio', 'tts'];
+            
+            for (const service of services) {
+                try {
+                    // Placeholder health check - would use actual gRPC calls
+                    elements.serviceStatus[service].textContent = 'Healthy';
+                    elements.serviceStatus[service].style.color = 'var(--color-success)';
+                } catch (error) {
+                    elements.serviceStatus[service].textContent = 'Unhealthy';
+                    elements.serviceStatus[service].style.color = 'var(--color-error)';
+                }
+            }
+        }
+
+        // Send message function
+        async function sendMessage() {
+            const message = elements.messageInput.value.trim();
+            if (!message || isProcessing) return;
+
+            // Add user message
+            addMessage('user', message);
+            elements.messageInput.value = '';
+            
+            // Show loading
+            setProcessing(true);
+            addEvent('message_sent', 'user', `Message: ${message.substring(0, 30)}...`, 'info');
+
+            try {
+                // Simulate API call - would use actual gRPC client
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                
+                const response = `Echo: ${message} (This is a placeholder response from the control plane chat interface)`;
+                
+                // Add assistant response
+                addMessage('assistant', response);
+                addEvent('message_received', 'assistant', 'Response generated', 'success');
+                
+            } catch (error) {
+                addMessage('system', `Error: ${error.message}`);
+                addEvent('message_error', 'system', error.message, 'error');
+            } finally {
+                setProcessing(false);
+            }
+        }
+
+        // Add message to chat
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.textContent = content;
+            
+            elements.chatMessages.appendChild(messageDiv);
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+            
+            // Store in history
+            messageHistory.push({ role, content, timestamp: new Date().toISOString() });
+        }
+
+        // Set processing state
+        function setProcessing(processing) {
+            isProcessing = processing;
+            elements.sendBtn.disabled = processing;
+            elements.voiceBtn.disabled = processing;
+            elements.surgeryBtn.disabled = processing;
+            
+            if (processing) {
+                elements.loadingDots.classList.add('active');
+                elements.sendBtn.textContent = 'Sending...';
+            } else {
+                elements.loadingDots.classList.remove('active');
+                elements.sendBtn.textContent = 'Send';
+            }
+        }
+
+        // Voice recording placeholder
+        function startVoiceRecording() {
+            addEvent('voice_recording_started', 'voice-recorder', 'Voice recording feature coming soon', 'info');
+            alert('Voice recording will be integrated with the existing voice-test.html functionality');
+        }
+
+        // Prompt surgery functions
+        function openPromptSurgery() {
+            const currentText = elements.messageInput.value;
+            elements.surgery.textarea.value = currentText;
+            elements.surgery.overlay.classList.add('active');
+            elements.surgery.modal.classList.add('active');
+            elements.surgery.textarea.focus();
+            
+            addEvent('prompt_surgery_opened', 'surgery-panel', 'Prompt surgery panel opened', 'info');
+        }
+
+        function closePromptSurgery() {
+            elements.surgery.overlay.classList.remove('active');
+            elements.surgery.modal.classList.remove('active');
+        }
+
+        function sendEditedPrompt() {
+            const editedText = elements.surgery.textarea.value.trim();
+            if (editedText) {
+                elements.messageInput.value = editedText;
+                closePromptSurgery();
+                sendMessage();
+                addEvent('prompt_surgery_sent', 'surgery-panel', 'Edited prompt sent', 'success');
+            }
+        }
+
+        // Session management
+        function createNewSession() {
+            const sessionId = `session_${Date.now()}`;
+            currentSessionId = sessionId;
+            
+            // Clear chat
+            elements.chatMessages.innerHTML = '<div class="message system">New session started</div>';
+            messageHistory = [];
+            
+            // Update UI
+            elements.sessionTitle.textContent = `Session ${sessionId.slice(-6)}`;
+            
+            // Add to session list
+            const sessionItem = document.createElement('div');
+            sessionItem.className = 'session-item active';
+            sessionItem.dataset.sessionId = sessionId;
+            sessionItem.textContent = `Session ${sessionId.slice(-6)}`;
+            
+            // Remove active from others
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            elements.sessionList.appendChild(sessionItem);
+            
+            addEvent('session_created', 'session-manager', `New session: ${sessionId}`, 'success');
+        }
+
+        // Add event to feed
+        function addEvent(type, source, data, level = 'info') {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event-item ${level}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            eventDiv.innerHTML = `
+                <span>${type}: ${data}</span>
+                <small>${timestamp}</small>
+            `;
+            
+            elements.eventFeed.insertBefore(eventDiv, elements.eventFeed.firstChild);
+            
+            // Keep only last 20 events
+            while (elements.eventFeed.children.length > 20) {
+                elements.eventFeed.removeChild(elements.eventFeed.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>
