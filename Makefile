@@ -459,22 +459,36 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: ## Start the unified control plane with browser interface (auto-installs dependencies)
+start: ## Start the control plane only - use Service Orchestration UI to manage Docker services
 	$(call log_info,🎛️ Starting Unhinged Control Plane...)
 	@$(MAKE) ensure-docker
 	@python3 build/generate-registry.py
 	@echo "🔄 Stopping any existing DAG server..."
 	@-pkill -f "python3 -m control" 2>/dev/null || true
 	@sleep 1
-	@echo "🚀 Launching fresh DAG Control Plane on port 9000..."
+	@echo "🚀 Launching Control Plane on port 9000..."
 	@python3 -m control --port 9000 &
 	@sleep 3
 	@echo "🌐 Opening browser interface..."
 	@./control/open.sh --status
-	@echo "✅ Control plane started successfully!"
-	@echo "📊 DAG Control: http://localhost:9000/dag/health"
-	@echo "🌐 Browser: file://$(PWD)/control/static_html/index.html"
-	@echo "⏹️  Press Ctrl+C to stop"
+	@echo ""
+	@echo "✅ Control Plane started successfully!"
+	@echo "🎛️  Service Orchestration: http://localhost:9000/static_html/service-orchestration.html"
+	@echo "📊 DAG Control: http://localhost:9000/static_html/dag-control.html"
+	@echo "🌐 Main Interface: http://localhost:9000/static_html/index.html"
+	@echo ""
+	@echo "💡 Use the Service Orchestration UI to start/stop Docker services"
+	@echo "⏹️  Press Ctrl+C to stop control plane"
+
+start-all: ## Start control plane AND all Docker services (legacy - use Service Orchestration UI instead)
+	$(call log_info,🚀 Starting Control Plane + All Services...)
+	@$(MAKE) start &
+	@sleep 5
+	@echo "🐳 Starting Docker services..."
+	@docker compose up -d database zookeeper kafka kafka-ui
+	@sleep 10
+	@docker compose up -d backend frontend cdc-service llm
+	@echo "✅ All services started! Use Service Orchestration UI for management."
 
 ensure-docker: ## Ensure Docker is available (with installation help)
 	@if ! command -v docker >/dev/null 2>&1; then \
