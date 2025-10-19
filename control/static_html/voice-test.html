@@ -4,27 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎤 Voice & Audio Processing - Unhinged Multi-Modal Platform</title>
+    <link rel="stylesheet" href="shared/theme.css">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        /* Voice processing specific styles */
+        .page-container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
-            background: #f8f9fa;
         }
-        
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+
+        .voice-container {
+            background: var(--color-background);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: var(--spacing-lg);
         }
-        
+
         h1 {
             text-align: center;
-            color: #212529;
-            margin-bottom: 8px;
+            color: var(--color-text-primary);
+            margin-bottom: var(--spacing-sm);
         }
         
         .subtitle {
@@ -152,43 +151,21 @@
             font-size: 18px;
         }
 
-        .navigation {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .nav-link {
-            display: inline-block;
-            margin: 0 10px;
-            padding: 8px 16px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 20px;
-            font-size: 14px;
-            transition: background 0.3s ease;
-        }
-
-        .nav-link:hover {
-            background: #0056b3;
-        }
-
-        .nav-link.active {
-            background: #28a745;
-        }
+        /* Navigation styles handled by theme.css */
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="page-container">
         <div class="navigation">
             <a href="index.html" class="nav-link">🏠 Home</a>
+            <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
+            <a href="service-orchestration.html" class="nav-link">🎛️ Service Orchestration</a>
             <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
             <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
             <a href="voice-test.html" class="nav-link active">🎤 Voice Processing</a>
         </div>
+
+        <div class="voice-container">
 
         <h1>🎤 Voice & Audio Processing</h1>
         <p class="subtitle">Multi-Modal AI Platform - High-Quality Speech-to-Text Transcription</p>
