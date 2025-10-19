@@ -105,6 +105,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)💡 Quick start: make setup && make dev$(RESET)"
 	@echo "$(BLUE)📚 Documentation: make docs-update$(RESET)"
+	@echo "$(BLUE)🤖 LLM Context: make docs-context-overview$(RESET)"
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
 	@echo ""
 	@echo "$(PURPLE)🧪 HTML Testing (Walking Skeletons):$(RESET)"
@@ -433,6 +434,19 @@ docs-validate-comments: ## Validate LLM comment consistency and quality
 	$(call log_info,🔍 Validating LLM comments...)
 	@python3 scripts/docs/validate-llm-comments.py
 	$(call log_success,LLM comment validation complete)
+
+docs-context-overview: ## Generate project overview for LLM context warming (YAML)
+	$(call log_info,🤖 Generating LLM context overview...)
+	@python3 scripts/docs/llm-context-warmer.py overview --format yaml
+	$(call log_success,LLM context overview generated)
+
+docs-context-paginate: ## Paginate through all comments (usage: make docs-context-paginate PAGE=1)
+	$(call log_info,📄 Showing comments page $(or $(PAGE),1)...)
+	@python3 scripts/docs/llm-context-warmer.py paginate --page $(or $(PAGE),1) --format yaml
+
+docs-context-json: ## Generate project overview in JSON format
+	$(call log_info,🤖 Generating LLM context overview (JSON)...)
+	@python3 scripts/docs/llm-context-warmer.py overview --format json
 
 # ============================================================================
 # Dependency Tracking Commands
