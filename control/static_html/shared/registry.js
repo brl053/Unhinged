@@ -1,5 +1,5 @@
 // Auto-generated registry - DO NOT EDIT MANUALLY
-// Generated at: 2025-10-18T23:49:33.660028
+// Generated at: 2025-10-19T00:50:26.946839
 // Run 'make start' to regenerate
 
 /**
@@ -18,8 +18,8 @@ window.UNHINGED_REGISTRY = {
     "category": "ai-services",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760830716.070069,
-    "size": 30808
+    "lastModified": 1760859494.8106725,
+    "size": 31133
   },
   "/control/static_html/index.html": {
     "title": "\ud83c\udfe0 Unhinged Control Center - Table of Contents",
@@ -27,8 +27,8 @@ window.UNHINGED_REGISTRY = {
     "category": "root",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760855935.428048,
-    "size": 14909
+    "lastModified": 1760859654.3378036,
+    "size": 13961
   },
   "/control/static_html/image-test.html": {
     "title": "\ud83d\udc41\ufe0f Vision AI Test - Unhinged Multi-Modal Platform",
@@ -36,8 +36,17 @@ window.UNHINGED_REGISTRY = {
     "category": "ai-services",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760830716.0698452,
-    "size": 23318
+    "lastModified": 1760859563.7175355,
+    "size": 23724
+  },
+  "/control/static_html/service-orchestration.html": {
+    "title": "\ud83c\udf9b\ufe0f Service Orchestration - Unhinged Control",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760859291.9278266,
+    "size": 11687
   },
   "/control/static_html/dag-control.html": {
     "title": "\ud83c\udf9b\ufe0f DAG Control Plane - Unhinged AI",
@@ -45,8 +54,8 @@ window.UNHINGED_REGISTRY = {
     "category": "control",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760850680.5197256,
-    "size": 15918
+    "lastModified": 1760859452.1413724,
+    "size": 16140
   },
   "/control/static_html/voice-test.html": {
     "title": "\ud83c\udfa4 Voice & Audio Processing - Unhinged Multi-Modal Platform",
@@ -54,8 +63,8 @@ window.UNHINGED_REGISTRY = {
     "category": "ai-services",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760830716.070069,
-    "size": 14162
+    "lastModified": 1760859618.1959364,
+    "size": 13812
   },
   "/control/static_html/html-links/index.html": {
     "title": "\ud83e\udde0 Unhinged HTML Files",
