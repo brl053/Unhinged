@@ -29,6 +29,7 @@ class LLMComment:
     llm_axiom: Optional[str] = None
     llm_contract: Optional[str] = None
     llm_token: Optional[str] = None
+    llm_context: Optional[str] = None  # NEW: @llm-context support
     raw_comment: str = ""
     context: str = ""
 
@@ -149,7 +150,8 @@ class TypeScriptParser(LanguageParser):
             'llm_map': r'@llm-map\s+(.+?)(?=@llm-|\n\n|\Z)',
             'llm_axiom': r'@llm-axiom\s+(.+?)(?=@llm-|\n\n|\Z)',
             'llm_contract': r'@llm-contract\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_token': r'@llm-token\s+(.+?)(?=@llm-|\n\n|\Z)'
+            'llm_token': r'@llm-token\s+(.+?)(?=@llm-|\n\n|\Z)',
+            'llm_context': r'@llm-context\s+(.+?)(?=@llm-|\n\n|\Z)'  # NEW
         }
         
         for attr, pattern in tag_patterns.items():
@@ -562,6 +564,93 @@ def main():
     print(f"💾 Saved detailed results to {output_path}")
 
     return comments
+
+# ============================================================================
+# TDD Interface Functions
+# ============================================================================
+
+def extract_comments_from_file(file_path: str) -> List[LLMComment]:
+    """Extract LLM comments from a single file.
+
+    @llm-type function
+    @llm-legend Extracts all @llm-* comments from a single source file using appropriate language parser
+    @llm-context TDD interface function for testing individual file processing
+    """
+    extractor = LLMCommentExtractor()
+    parser = extractor._get_parser_for_file(file_path)
+    if not parser:
+        return []
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        rel_path = os.path.relpath(file_path, extractor.root_path)
+        return parser.extract_comments(content, rel_path)
+    except Exception:
+        return []
+
+def extract_comments_from_codebase(root_path: Path) -> List[LLMComment]:
+    """Extract LLM comments from entire codebase.
+
+    @llm-type function
+    @llm-legend Extracts all @llm-* comments from entire codebase using multi-language parsers
+    @llm-context TDD interface function for testing full codebase processing
+    """
+    extractor = LLMCommentExtractor(str(root_path))
+    return extractor.extract_all_comments()
+
+def parse_llm_tags(text: str) -> Dict[str, str]:
+    """Parse @llm-* tags from comment text.
+
+    @llm-type function
+    @llm-legend Parses individual @llm-* tags from comment text using regex patterns
+    @llm-context TDD interface function for testing tag parsing logic
+    """
+    if '@llm-' not in text:
+        return {}
+
+    tag_patterns = {
+        'llm_type': r'@llm-type\s+(\w+)',
+        'llm_legend': r'@llm-legend\s+(.+?)(?=@llm-|\n\n|\Z)',
+        'llm_key': r'@llm-key\s+(.+?)(?=@llm-|\n\n|\Z)',
+        'llm_map': r'@llm-map\s+(.+?)(?=@llm-|\n\n|\Z)',
+        'llm_axiom': r'@llm-axiom\s+(.+?)(?=@llm-|\n\n|\Z)',
+        'llm_contract': r'@llm-contract\s+(.+?)(?=@llm-|\n\n|\Z)',
+        'llm_token': r'@llm-token\s+(.+?)(?=@llm-|\n\n|\Z)',
+        'llm_context': r'@llm-context\s+(.+?)(?=@llm-|\n\n|\Z)'
+    }
+
+    result = {}
+    for attr, pattern in tag_patterns.items():
+        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+        if match:
+            value = match.group(1).strip().replace('\n', ' ')
+            result[attr] = value
+
+    return result
+
+def save_extraction_results(comments: List[LLMComment], output_path: Path) -> Dict:
+    """Save extraction results to JSON file.
+
+    @llm-type function
+    @llm-legend Saves extracted comments to JSON with metadata
+    @llm-context TDD interface function for testing result serialization
+    """
+    from datetime import datetime
+
+    result = {
+        'comments': [asdict(comment) for comment in comments],
+        'total_files_scanned': len(set(c.file_path for c in comments)),
+        'files_with_comments': len(set(c.file_path for c in comments if c.llm_type)),
+        'extraction_timestamp': datetime.now().isoformat()
+    }
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(result, f, indent=2)
+
+    return result
 
 if __name__ == "__main__":
     main()

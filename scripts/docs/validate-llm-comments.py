@@ -11,7 +11,7 @@ import re
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from collections import defaultdict
 
 @dataclass
@@ -44,7 +44,8 @@ class LLMCommentValidator:
         # Valid values for llm_type
         self.valid_types = {
             'function', 'class', 'service', 'config', 'type-definition',
-            'constant', 'interface', 'endpoint', 'repository', 'entity'
+            'constant', 'interface', 'endpoint', 'repository', 'entity',
+            'component', 'validator', 'contract', 'test', 'tool'
         }
         
         # Quality thresholds
@@ -62,7 +63,7 @@ class LLMCommentValidator:
             import importlib.util
 
             # Load the extractor module dynamically
-            extractor_path = self.root_path / "scripts" / "docs" / "extract-llm-comments.py"
+            extractor_path = Path("scripts/docs/extract-llm-comments.py")
             spec = importlib.util.spec_from_file_location("extract_llm_comments", extractor_path)
             extractor_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(extractor_module)
@@ -277,6 +278,97 @@ def main():
     
     # Return appropriate exit code
     return validator.get_exit_code()
+
+# ============================================================================
+# TDD Interface Functions
+# ============================================================================
+
+def validate_comment(comment) -> List[Dict]:
+    """Validate a single LLM comment.
+
+    @llm-type function
+    @llm-legend Validates individual comment for completeness and quality
+    @llm-context TDD interface function for testing single comment validation
+    """
+    validator = LLMCommentValidator()
+    validator.issues = []
+    validator._validate_comment(comment)
+    return [asdict(issue) for issue in validator.issues]
+
+def validate_all_comments(comments: List) -> Dict:
+    """Validate all LLM comments.
+
+    @llm-type function
+    @llm-legend Validates batch of comments and returns summary
+    @llm-context TDD interface function for testing batch validation
+    """
+    from datetime import datetime
+
+    validator = LLMCommentValidator()
+    validator.issues = []
+
+    for comment in comments:
+        validator._validate_comment(comment)
+
+    validator._validate_consistency(comments)
+    validator._validate_coverage(comments)
+
+    return {
+        'issues': [asdict(issue) for issue in validator.issues],
+        'total_comments_validated': len(comments),
+        'passed': len([i for i in validator.issues if i.severity == 'error']) == 0,
+        'validation_timestamp': datetime.now().isoformat()
+    }
+
+def check_required_tags(comment) -> List[Dict]:
+    """Check if comment has required tags.
+
+    @llm-type function
+    @llm-legend Validates comment has all required tags for its type
+    @llm-context TDD interface function for testing required tag validation
+    """
+    validator = LLMCommentValidator()
+    validator.issues = []
+
+    if comment.type:
+        required = validator.required_tags.get(comment.type, ['type', 'legend'])
+
+        for tag in required:
+            attr_name = f'llm_{tag}' if not tag.startswith('llm_') else tag
+            if not hasattr(comment, attr_name) or not getattr(comment, attr_name, None):
+                validator.issues.append(ValidationIssue(
+                    file_path=comment.file_path,
+                    line_number=comment.line_number,
+                    element_name=getattr(comment, 'element_name', 'unknown'),
+                    issue_type="missing_tag",
+                    message=f"Missing required @{tag.replace('_', '-')} tag for {comment.type}",
+                    severity="error"
+                ))
+
+    return [asdict(issue) for issue in validator.issues]
+
+def check_tag_format(comment) -> List[Dict]:
+    """Check tag format and content quality.
+
+    @llm-type function
+    @llm-legend Validates tag content meets quality standards
+    @llm-context TDD interface function for testing tag format validation
+    """
+    validator = LLMCommentValidator()
+    validator.issues = []
+
+    # Check for empty required fields
+    if hasattr(comment, 'legend') and comment.legend is not None and len(comment.legend.strip()) == 0:
+        validator.issues.append(ValidationIssue(
+            file_path=comment.file_path,
+            line_number=comment.line_number,
+            element_name=getattr(comment, 'element_name', 'unknown'),
+            issue_type="empty_tag",
+            message="@llm-legend cannot be empty",
+            severity="error"
+        ))
+
+    return [asdict(issue) for issue in validator.issues]
 
 if __name__ == "__main__":
     exit(main())
