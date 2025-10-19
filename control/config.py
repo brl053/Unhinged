@@ -207,6 +207,55 @@ DAG_TARGETS = {
         },
         "human_approval_required": True,  # Deployment requires approval
         "estimated_duration": 480  # 8 minutes
+    },
+
+    # Service Orchestration DAGs
+    "start-infrastructure-services": {
+        "description": "Start infrastructure tier services",
+        "nodes": ["start-infrastructure"],
+        "dependencies": {},
+        "human_approval_required": False,
+        "estimated_duration": 60
+    },
+
+    "start-applications-services": {
+        "description": "Start application tier services",
+        "nodes": ["start-app-services"],
+        "dependencies": {},
+        "human_approval_required": False,
+        "estimated_duration": 90
+    },
+
+    "start-ai_services-services": {
+        "description": "Start AI services tier",
+        "nodes": ["start-ai-services"],
+        "dependencies": {},
+        "human_approval_required": False,
+        "estimated_duration": 120
+    },
+
+    "stop-infrastructure-services": {
+        "description": "Stop infrastructure tier services",
+        "nodes": ["stop-infrastructure"],
+        "dependencies": {},
+        "human_approval_required": True,
+        "estimated_duration": 30
+    },
+
+    "stop-applications-services": {
+        "description": "Stop application tier services",
+        "nodes": ["stop-app-services"],
+        "dependencies": {},
+        "human_approval_required": False,
+        "estimated_duration": 30
+    },
+
+    "stop-ai_services-services": {
+        "description": "Stop AI services tier",
+        "nodes": ["stop-ai-services"],
+        "dependencies": {},
+        "human_approval_required": False,
+        "estimated_duration": 30
     }
 }
 
@@ -227,10 +276,13 @@ NODE_COMMANDS = {
     
     # Service management (with sudo for Docker permissions)
     "start-services": "sudo docker compose up -d backend frontend",
-    "start-infrastructure": "sudo docker compose up -d database kafka zookeeper",
+    "start-infrastructure": "sudo docker compose up -d database kafka zookeeper kafka-ui",
     "start-ai-services": "sudo docker compose up -d ollama whisper-tts vision-ai",
-    "start-app-services": "sudo docker compose up -d backend frontend",
+    "start-app-services": "sudo docker compose up -d backend frontend cdc-service",
     "stop-services": "sudo docker compose down",
+    "stop-infrastructure": "sudo docker compose stop database kafka zookeeper kafka-ui",
+    "stop-ai-services": "sudo docker compose stop ollama whisper-tts vision-ai",
+    "stop-app-services": "sudo docker compose stop backend frontend cdc-service",
     "docker-status": "sudo docker ps && echo '--- Docker Compose Status ---' && sudo docker compose ps",
     
     # Testing

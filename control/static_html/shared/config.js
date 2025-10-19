@@ -190,10 +190,126 @@ function getTestUrl(serviceType) {
     return config.baseUrl + config.testEndpoint;
 }
 
+/**
+ * Service Orchestration Configuration
+ * Defines service tiers and dependencies for the orchestration UI
+ */
+const SERVICE_TIERS = {
+    infrastructure: {
+        name: 'Infrastructure',
+        icon: '🏗️',
+        description: 'Core system services required by all other components',
+        required: true,
+        services: ['database', 'zookeeper', 'kafka', 'kafka-ui'],
+        compose_command: 'docker compose up -d database zookeeper kafka kafka-ui'
+    },
+    applications: {
+        name: 'Applications',
+        icon: '🚀',
+        description: 'Main application services and APIs',
+        depends_on: ['infrastructure'],
+        services: ['backend', 'frontend', 'cdc-service'],
+        compose_command: 'docker compose up -d backend frontend cdc-service'
+    },
+    ai_services: {
+        name: 'AI Services',
+        icon: '🤖',
+        description: 'Artificial intelligence and machine learning services',
+        depends_on: ['infrastructure'],
+        services: ['llm', 'whisper-tts', 'vision-ai'],
+        compose_command: 'docker compose -f docker-compose.simple.yml up -d'
+    }
+};
+
+const SERVICE_DEFINITIONS = {
+    // Infrastructure tier
+    'database': {
+        name: 'PostgreSQL',
+        port: 5432,
+        tier: 'infrastructure',
+        description: 'Primary database for application data',
+        container: 'postgres-db'
+    },
+    'zookeeper': {
+        name: 'Zookeeper',
+        port: 2181,
+        tier: 'infrastructure',
+        description: 'Coordination service for distributed systems',
+        container: 'zookeeper'
+    },
+    'kafka': {
+        name: 'Kafka',
+        port: 9092,
+        tier: 'infrastructure',
+        description: 'Distributed event streaming platform',
+        container: 'kafka'
+    },
+    'kafka-ui': {
+        name: 'Kafka UI',
+        port: 8090,
+        tier: 'infrastructure',
+        description: 'Web interface for Kafka monitoring',
+        container: 'kafka-ui'
+    },
+
+    // Application tier
+    'backend': {
+        name: 'Backend API',
+        port: 8080,
+        tier: 'applications',
+        description: 'Core application backend services',
+        container: 'backend-service',
+        health_path: '/'
+    },
+    'frontend': {
+        name: 'Frontend',
+        port: 3000,
+        tier: 'applications',
+        description: 'Web application user interface',
+        container: 'frontend-service',
+        health_path: '/'
+    },
+    'cdc-service': {
+        name: 'CDC Service',
+        port: 8081,
+        tier: 'applications',
+        description: 'Change data capture and event processing',
+        container: 'cdc-service'
+    },
+
+    // AI Services tier
+    'llm': {
+        name: 'LLM (Ollama)',
+        port: 11434,
+        tier: 'ai_services',
+        description: 'Large Language Model inference',
+        container: 'ollama-service',
+        health_path: '/api/tags'
+    },
+    'whisper-tts': {
+        name: 'Voice Processing',
+        port: 8000,
+        tier: 'ai_services',
+        description: 'Speech-to-text and text-to-speech',
+        container: 'whisper-tts-service',
+        health_path: '/health'
+    },
+    'vision-ai': {
+        name: 'Vision AI',
+        port: 8001,
+        tier: 'ai_services',
+        description: 'Computer vision and image analysis',
+        container: 'vision-ai-service',
+        health_path: '/health'
+    }
+};
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         SERVICE_CONFIG,
+        SERVICE_TIERS,
+        SERVICE_DEFINITIONS,
         COMMON_ENDPOINTS,
         COMMON_HEADERS,
         CORS_CONFIG,

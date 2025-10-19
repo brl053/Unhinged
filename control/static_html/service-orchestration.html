@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎛️ Service Orchestration - Unhinged Control</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/service-orchestration.js"></script>
+    <style>
+        /* Service Orchestration specific styles */
+        .orchestration-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .orchestration-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .orchestration-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .orchestration-header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* Service Tiers */
+        .service-tiers {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .tier {
+            background: var(--surface-color);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .tier:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .tier-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .tier-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .tier-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .tier-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .tier-toggle {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 80px;
+        }
+
+        .tier-toggle:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .tier-toggle:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .tier-toggle.stop {
+            background: #ef4444;
+        }
+
+        .tier-toggle.stop:hover {
+            background: #dc2626;
+        }
+
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .service-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            transition: var(--transition);
+        }
+
+        .service-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .service-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0 0 1rem 0;
+            line-height: 1.4;
+        }
+
+        .service-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .service-port {
+            font-family: 'Courier New', monospace;
+            background: var(--surface-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .service-container {
+            font-family: 'Courier New', monospace;
+            opacity: 0.7;
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .status-indicator.status-running {
+            background: var(--success-color);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .status-indicator.status-stopped {
+            background: #6b7280;
+            border-color: #9ca3af;
+        }
+
+        .status-indicator.status-unhealthy {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .status-indicator.status-partial {
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .status-indicator.status-unknown {
+            background: #6b7280;
+            border: 2px dashed #9ca3af;
+        }
+
+        .status-indicator.status-healthy {
+            background: var(--success-color);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Resource Monitor */
+        .resource-monitor {
+            background: var(--surface-color);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .resource-monitor h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .resource-bars {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .resource-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .resource-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .resource-progress {
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .resource-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+            transition: width 0.3s ease;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quick-action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .quick-action.danger {
+            background: #ef4444;
+        }
+
+        .quick-action.danger:hover {
+            background: #dc2626;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-info {
+            background: var(--primary-color);
+        }
+
+        .notification-success {
+            background: var(--success-color);
+        }
+
+        .notification-error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .orchestration-container {
+                padding: 1rem;
+            }
+
+            .tier-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .tier-controls {
+                justify-content: space-between;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orchestration-container">
+        <!-- Header -->
+        <div class="orchestration-header">
+            <h1>🎛️ Service Orchestration</h1>
+            <p>Manage service composition and resource allocation with scientific precision</p>
+            
+            <!-- Navigation -->
+            <div class="quick-actions">
+                <button class="quick-action" onclick="location.href='index.html'">
+                    ← Back to Control Plane
+                </button>
+                <button class="quick-action" onclick="location.href='dag-control.html'">
+                    🎛️ DAG Control
+                </button>
+                <button class="quick-action danger" onclick="confirmStopAll()">
+                    🛑 Stop All Services
+                </button>
+            </div>
+        </div>
+
+        <!-- Service Tiers -->
+        <div id="service-tiers" class="service-tiers">
+            <!-- Dynamically populated by JavaScript -->
+        </div>
+
+        <!-- Resource Monitor -->
+        <div class="resource-monitor">
+            <h3>📊 System Resources</h3>
+            <div class="resource-bars">
+                <div class="resource-bar">
+                    <div class="resource-label">
+                        <span>CPU Usage</span>
+                        <span id="cpu-usage">--</span>
+                    </div>
+                    <div class="resource-progress">
+                        <div class="resource-fill" id="cpu-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="resource-bar">
+                    <div class="resource-label">
+                        <span>Memory Usage</span>
+                        <span id="memory-usage">--</span>
+                    </div>
+                    <div class="resource-progress">
+                        <div class="resource-fill" id="memory-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="resource-bar">
+                    <div class="resource-label">
+                        <span>Active Services</span>
+                        <span id="service-count">--</span>
+                    </div>
+                    <div class="resource-progress">
+                        <div class="resource-fill" id="service-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quick action handlers
+        function confirmStopAll() {
+            if (confirm('Are you sure you want to stop all services? This will shut down the entire platform.')) {
+                if (window.serviceOrchestrator) {
+                    // Stop all tiers in reverse dependency order
+                    Object.keys(SERVICE_TIERS).reverse().forEach(async (tierId) => {
+                        try {
+                            await window.serviceOrchestrator.stopTier(tierId);
+                        } catch (error) {
+                            console.error(`Failed to stop ${tierId}:`, error);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Update resource monitoring (placeholder - would connect to real metrics)
+        function updateResourceMonitoring() {
+            // Placeholder values - in real implementation, these would come from Docker stats
+            const cpuUsage = Math.random() * 60 + 20; // 20-80%
+            const memoryUsage = Math.random() * 40 + 30; // 30-70%
+            const activeServices = Object.values(window.serviceOrchestrator?.serviceStatus || {})
+                .filter(s => s.status === 'running').length;
+            const totalServices = Object.keys(SERVICE_DEFINITIONS).length;
+            
+            document.getElementById('cpu-usage').textContent = `${cpuUsage.toFixed(1)}%`;
+            document.getElementById('cpu-fill').style.width = `${cpuUsage}%`;
+            
+            document.getElementById('memory-usage').textContent = `${memoryUsage.toFixed(1)}%`;
+            document.getElementById('memory-fill').style.width = `${memoryUsage}%`;
+            
+            document.getElementById('service-count').textContent = `${activeServices}/${totalServices}`;
+            document.getElementById('service-fill').style.width = `${(activeServices / totalServices) * 100}%`;
+        }
+
+        // Start resource monitoring
+        setInterval(updateResourceMonitoring, 5000);
+        setTimeout(updateResourceMonitoring, 1000); // Initial update
+    </script>
+</body>
+</html>
