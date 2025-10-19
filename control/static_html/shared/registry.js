@@ -1,5 +1,5 @@
 // Auto-generated registry - DO NOT EDIT MANUALLY
-// Generated at: 2025-10-19T02:25:42.998885
+// Generated at: 2025-10-19T10:58:34.980710
 // Run 'make start' to regenerate
 
 /**
@@ -36,8 +36,8 @@ window.UNHINGED_REGISTRY = {
     "category": "other",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760865900.3650227,
-    "size": 20979
+    "lastModified": 1760866092.004268,
+    "size": 21388
   },
   "/control/static_html/index.html": {
     "title": "\ud83c\udfe0 Unhinged Control Center - Table of Contents",
