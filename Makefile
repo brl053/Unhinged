@@ -104,9 +104,27 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(BLUE)💡 Quick start: make setup && make dev$(RESET)"
+	@echo "$(BLUE)⚡ Enhanced build: make build-enhanced$(RESET)"
 	@echo "$(BLUE)📚 Documentation: make docs-update$(RESET)"
 	@echo "$(BLUE)🤖 LLM Context: make docs-context-overview$(RESET)"
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
+	@echo ""
+	@echo "$(PURPLE)🚀 Enhanced Build System:$(RESET)"
+	@echo "  $(GREEN)make build-enhanced$(RESET)     Fast development build with caching"
+	@echo "  $(GREEN)make build-status$(RESET)       Show build system status and cache info"
+	@echo "  $(GREEN)make build-list$(RESET)         List all available build targets"
+	@echo "  $(GREEN)make build-explain TARGET=X$(RESET) Explain what a build target does"
+	@echo "  $(GREEN)make build-watch TARGET=X$(RESET)   Watch mode with auto-rebuild"
+	@echo "  $(GREEN)make build-test$(RESET)         Test the enhanced build system"
+	@echo ""
+	@echo "$(PURPLE)🤖 AI-Powered Features:$(RESET)"
+	@echo "  $(GREEN)make build-context$(RESET)      Generate LLM context for AI assistance"
+	@echo "  $(GREEN)make build-onboard$(RESET)      Generate developer onboarding guide"
+	@echo "  $(GREEN)make build-explain-error$(RESET) Get AI explanation for build errors"
+	@echo ""
+	@echo "$(PURPLE)📊 Performance Monitoring:$(RESET)"
+	@echo "  $(GREEN)make build-performance-report$(RESET) Generate performance report"
+	@echo "  $(GREEN)make build-performance-metrics$(RESET) Show current performance metrics"
 	@echo ""
 	@echo "$(PURPLE)🧪 HTML Testing (Walking Skeletons):$(RESET)"
 	@echo "  $(GREEN)make test-ui$(RESET)          Launch HTML testing interfaces"
@@ -369,6 +387,83 @@ debug-memory: ## Show memory usage for compilation
 	@free -h || echo "Memory info not available"
 
 # ============================================================================
+# Enhanced Build System Integration
+# ============================================================================
+
+build-enhanced: ## Use enhanced build system for development
+	$(call log_info,🚀 Using enhanced build system...)
+	@python3 build/cli.py build dev-fast --parallel
+	$(call log_success,Enhanced build completed)
+
+build-enhanced-full: ## Full enhanced build with all services
+	$(call log_info,🚀 Running full enhanced build...)
+	@python3 build/cli.py build dev-full --parallel
+	$(call log_success,Enhanced full build completed)
+
+build-status: ## Show enhanced build system status
+	$(call log_info,📊 Build system status...)
+	@python3 build/cli.py status
+
+build-explain: ## Explain a build target (usage: make build-explain TARGET=dev-fast)
+	$(call log_info,📋 Explaining build target: $(or $(TARGET),dev-fast))
+	@python3 build/cli.py explain $(or $(TARGET),dev-fast) --dependencies
+
+build-list: ## List all available enhanced build targets
+	$(call log_info,📋 Available enhanced build targets...)
+	@python3 build/cli.py list --detailed
+
+build-profile: ## Profile build performance (usage: make build-profile TARGET=dev-fast)
+	$(call log_info,⚡ Profiling build target: $(or $(TARGET),dev-fast))
+	@python3 build/cli.py profile $(or $(TARGET),dev-fast)
+
+build-watch: ## Watch mode for continuous building (usage: make build-watch TARGET=backend-compile)
+	$(call log_info,👁️ Starting watch mode for: $(or $(TARGET),backend-compile))
+	@python3 build/cli.py watch $(or $(TARGET),backend-compile)
+
+# LLM Integration Commands
+build-context: ## Generate LLM context for build assistance
+	$(call log_info,🤖 Generating LLM build context...)
+	@python3 build/cli.py llm context --format yaml
+
+build-context-json: ## Generate LLM context in JSON format
+	$(call log_info,🤖 Generating LLM build context (JSON)...)
+	@python3 build/cli.py llm context --format json
+
+build-onboard: ## Generate developer onboarding guide
+	$(call log_info,📚 Generating developer onboarding guide...)
+	@python3 build/cli.py llm onboard
+
+build-explain-error: ## Explain build error (usage: make build-explain-error TARGET=dev-fast ERROR="error message")
+	$(call log_info,🔍 Explaining build error for: $(or $(TARGET),unknown))
+	@python3 build/cli.py llm explain-error $(or $(TARGET),unknown) --error-message "$(or $(ERROR),Unknown error)"
+
+# Performance Monitoring Commands
+build-performance-report: ## Generate build performance report
+	$(call log_info,📊 Generating performance report...)
+	@python3 build/cli.py performance report --hours 24
+
+build-performance-metrics: ## Show current performance metrics
+	$(call log_info,📊 Showing performance metrics...)
+	@python3 build/cli.py performance metrics
+
+build-performance-json: ## Get performance data in JSON format
+	$(call log_info,📊 Generating performance data (JSON)...)
+	@python3 build/cli.py performance report --format json
+
+# Testing and Validation Commands
+build-test: ## Test the enhanced build system
+	$(call log_info,🧪 Testing enhanced build system...)
+	@python3 build/test_enhanced_system.py
+
+build-validate: ## Validate enhanced build system installation
+	$(call log_info,✅ Validating enhanced build system...)
+	@python3 build/test_enhanced_system.py
+
+# Enhanced aliases that use the new build system
+dev-enhanced: build-enhanced ## Alias for enhanced development build
+dev-fast-enhanced: build-enhanced ## Alias for fast enhanced development build
+
+# ============================================================================
 # Cleanup Operations
 # ============================================================================
 
@@ -378,6 +473,11 @@ clean: ## Clean all build artifacts
 	@$(MAKE) proto-clean
 	$(call log_success,Cleanup complete)
 
+clean-enhanced: ## Clean using enhanced build system
+	$(call log_warning,🧹 Enhanced cleanup...)
+	@python3 build/cli.py clean --smart
+	$(call log_success,Enhanced cleanup complete)
+
 clean-docker: ## Clean Docker resources
 	$(call log_warning,🧹 Cleaning Docker resources...)
 	@docker compose down --volumes --remove-orphans
@@ -385,6 +485,8 @@ clean-docker: ## Clean Docker resources
 	$(call log_success,Docker cleanup complete)
 
 clean-all: clean clean-docker ## Clean everything
+
+clean-all-enhanced: clean-enhanced clean-docker ## Enhanced clean everything
 
 # ============================================================================
 # Documentation Commands
@@ -435,7 +537,15 @@ docs-validate-comments: ## Validate LLM comment consistency and quality
 	@python3 scripts/docs/validate-llm-comments.py
 	$(call log_success,LLM comment validation complete)
 
-docs-context-overview: ## Generate project overview for LLM context warming (YAML)
+# @llm-type config
+# @llm-legend LLM context warming system for onboarding new AI agents to the codebase
+# @llm-key Provides comprehensive project overview, paginated comment browsing, and getting started information
+# @llm-map Build system integration that generates structured context for LLM onboarding workflows
+# @llm-axiom Context warming must provide complete, accurate, and digestible information for new engineers
+# @llm-contract Returns YAML/JSON formatted project overview with architecture, dependencies, and setup instructions
+# @llm-token llm-context-warmer: AI agent onboarding system with structured codebase summaries
+
+docs-context-overview: ## Generate comprehensive project overview for LLM context warming
 	$(call log_info,🤖 Generating LLM context overview...)
 	@python3 scripts/docs/llm-context-warmer.py overview --format yaml
 	$(call log_success,LLM context overview generated)
@@ -447,21 +557,6 @@ docs-context-paginate: ## Paginate through all comments (usage: make docs-contex
 docs-context-json: ## Generate project overview in JSON format
 	$(call log_info,🤖 Generating LLM context overview (JSON)...)
 	@python3 scripts/docs/llm-context-warmer.py overview --format json
-
-docs-test-context: ## Run TDD tests for LLM context warming improvements
-	$(call log_info,🧪 Running LLM context warmer tests...)
-	@cd scripts/docs && python3 -m unittest test_llm_extraction.TestLLMContextWarmerImprovements -v
-	$(call log_success,LLM context warmer tests completed)
-
-docs-context-enhanced: ## Generate enhanced project overview with getting started and dependencies
-	$(call log_info,🚀 Generating enhanced LLM context overview...)
-	@python3 scripts/docs/llm-context-warmer.py enhanced-overview --format yaml
-	$(call log_success,Enhanced LLM context overview generated)
-
-docs-test-enhancements: ## Run TDD tests for final LLM context warmer enhancements
-	$(call log_info,🧪 Running enhanced context warmer tests...)
-	@cd scripts/docs && python3 -m unittest test_llm_extraction.TestLLMContextWarmerEnhancements -v
-	$(call log_success,Enhanced context warmer tests completed)
 
 # ============================================================================
 # Dependency Tracking Commands

@@ -380,7 +380,7 @@ class LLMContextWarmer:
 
 def main():
     parser = argparse.ArgumentParser(description='LLM Context Warming System')
-    parser.add_argument('command', choices=['overview', 'enhanced-overview', 'paginate'],
+    parser.add_argument('command', choices=['overview', 'paginate'],
                        help='Command to execute')
     parser.add_argument('--page', type=int, default=1,
                        help='Page number for pagination (default: 1)')
@@ -395,8 +395,6 @@ def main():
         warmer = LLMContextWarmer(args.comments_file)
 
         if args.command == 'overview':
-            data = warmer.generate_project_overview()
-        elif args.command == 'enhanced-overview':
             data = warmer.generate_enhanced_project_overview()
         elif args.command == 'paginate':
             data = warmer.paginate_comments(args.page)
