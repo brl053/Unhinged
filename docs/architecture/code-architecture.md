@@ -2,7 +2,7 @@
 
 > **Purpose**: System architecture extracted from code comments
 > **Source**: Auto-generated from @llm-map and @llm-type comments
-> **Last Updated**: 2025-10-18 18:37:59
+> **Last Updated**: 2025-10-18 19:47:57
 
 ## Config Components
 
@@ -14,6 +14,76 @@
 **Implementation**: Defines Python container with BLIP model, Flask HTTP server, and persistent model storage
 
 ## Service Components
+
+### unknown
+**File**: `build/llm_integration.py`
+**Language**: python
+**Purpose**: LLM integration for enhanced build system with context generation and error explanation
+**Architecture**: LLM integration layer that connects build system with existing documentation system for enhanced developer experience
+**Implementation**: Provides AI-powered build assistance, error explanation, and context generation for developer onboarding
+
+### unknown
+**File**: `build/cli.py`
+**Language**: python
+**Purpose**: Enhanced CLI interface for the Unhinged build system
+**Architecture**: CLI layer that wraps the build orchestrator with enhanced user experience and developer tools
+**Implementation**: Provides developer-friendly command-line interface with progress indicators, build status, and LLM integration
+
+### unknown
+**File**: `build/test_enhanced_system.py`
+**Language**: python
+**Purpose**: Test suite for the enhanced build system
+**Architecture**: Test suite that validates all components of the enhanced build system
+**Implementation**: Provides comprehensive testing and validation of the enhanced build system features
+
+### unknown
+**File**: `build/orchestrator.py`
+**Language**: python
+**Purpose**: Enhanced build orchestrator for Unhinged polyglot monorepo
+**Architecture**: Central build coordination system that integrates with existing Makefile and Docker Compose workflows
+**Implementation**: Provides intelligent dependency tracking, parallel execution, caching, and multi-language build coordination
+
+### unknown
+**File**: `build/monitoring.py`
+**Language**: python
+**Purpose**: Build performance monitoring and metrics collection system
+**Architecture**: Performance monitoring system that tracks build metrics and provides optimization recommendations
+**Implementation**: Provides comprehensive build performance tracking, caching analytics, and optimization insights
+
+### unknown
+**File**: `build/developer_experience.py`
+**Language**: python
+**Purpose**: Developer experience enhancements for the enhanced build system
+**Architecture**: Developer experience layer that makes the build system more accessible and productive for developers
+**Implementation**: Provides developer-friendly features like progress indicators, quick commands, and better error messages
+
+### unknown
+**File**: `build/build.py`
+**Language**: python
+**Purpose**: Main entry point for the enhanced Unhinged build system
+**Architecture**: Entry point script that integrates enhanced build system with existing workflows
+**Implementation**: Provides unified access to enhanced build orchestration with backward compatibility
+
+### unknown
+**File**: `build/modules/typescript_builder.py`
+**Language**: python
+**Purpose**: TypeScript/npm build module with webpack optimization and hot reloading
+**Architecture**: TypeScript build module that integrates with npm/webpack build system and provides enhanced caching
+**Implementation**: Provides optimized npm builds with webpack, hot module replacement, and intelligent caching
+
+### unknown
+**File**: `build/modules/python_builder.py`
+**Language**: python
+**Purpose**: Python build module with virtual environment management and dependency caching
+**Architecture**: Python build module that integrates with pip/poetry build systems and provides enhanced caching
+**Implementation**: Provides optimized Python builds with pip/poetry, virtual environments, and intelligent caching
+
+### unknown
+**File**: `build/modules/kotlin_builder.py`
+**Language**: python
+**Purpose**: Kotlin/Gradle build module with incremental compilation and caching
+**Architecture**: Kotlin build module that integrates with Gradle build system and provides enhanced caching
+**Implementation**: Provides optimized Gradle builds with parallel execution, incremental compilation, and intelligent caching
 
 ### AudioService
 **File**: `frontend/src/services/AudioService.ts`
@@ -35,6 +105,15 @@
 **Purpose**: Enables backend to request AI-powered image analysis from vision-ai microservice
 **Architecture**: Infrastructure layer implementation, called by application services, connects to vision-ai on port 8001
 **Implementation**: Uses Ktor HTTP client with JSON serialization, implements retry logic and error handling
+
+## Contract Components
+
+### unknown
+**File**: `build/modules/__init__.py`
+**Language**: python
+**Purpose**: Language-specific build modules for enhanced build orchestration
+**Architecture**: Build module system that integrates with main orchestrator for multi-language support
+**Implementation**: Provides specialized builders for Kotlin, TypeScript, Python, and Protobuf with caching and optimization
 
 ## Function Components
 

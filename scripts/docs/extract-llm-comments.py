@@ -392,7 +392,7 @@ class LLMCommentExtractor:
             YAMLParser()
         ]
         self.ignore_dirs = {
-            '.git', 'node_modules', 'build', 'target', 'dist',
+            '.git', 'node_modules', 'target', 'dist',
             '.gradle', '__pycache__', '.pytest_cache', 'coverage'
         }
     
