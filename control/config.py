@@ -277,11 +277,11 @@ NODE_COMMANDS = {
     # Service management (with sudo for Docker permissions)
     "start-services": "sudo docker compose up -d backend frontend",
     "start-infrastructure": "sudo docker compose up -d database kafka zookeeper kafka-ui",
-    "start-ai-services": "sudo docker compose up -d ollama whisper-tts vision-ai",
+    "start-ai-services": "sudo docker compose up -d llm whisper-tts vision-ai",
     "start-app-services": "sudo docker compose up -d backend frontend cdc-service",
     "stop-services": "sudo docker compose down",
     "stop-infrastructure": "sudo docker compose stop database kafka zookeeper kafka-ui",
-    "stop-ai-services": "sudo docker compose stop ollama whisper-tts vision-ai",
+    "stop-ai-services": "sudo docker compose stop llm whisper-tts vision-ai",
     "stop-app-services": "sudo docker compose stop backend frontend cdc-service",
     "docker-status": "sudo docker ps && echo '--- Docker Compose Status ---' && sudo docker compose ps",
     

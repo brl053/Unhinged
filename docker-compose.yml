@@ -80,6 +80,37 @@ services:
       - vision-models:/root/.cache/transformers
       - image-uploads:/app/uploads
 
+  # @llm-key Whisper TTS service for voice transcription and text-to-speech
+  # @llm-map Essential for voice recording functionality in control plane
+  # @llm-axiom Service must be accessible on port 8000 for voice test page
+  # @llm-contract Service must respond to health checks and handle audio uploads
+  # @llm-token whisper-models: Docker volume for persistent Whisper model cache
+  whisper-tts:
+    build:
+      context: ./services/whisper-tts
+      dockerfile: Dockerfile
+    container_name: whisper-tts-service
+    ports:
+      - "8000:8000"  # HTTP API
+      - "9091:9091"  # gRPC API
+    environment:
+      - ENABLE_FLASK=true
+      - ENABLE_GRPC=true
+      - WHISPER_MODEL=base
+      - TTS_ENGINE=gtts
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - whisper-models:/root/.cache/whisper
+      - audio-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
   database:
     image: postgres:15
     container_name: postgres-db
@@ -136,3 +167,5 @@ volumes:
   postgres-data:
   vision-models:  # Store vision model cache
   image-uploads:  # Store uploaded images
+  whisper-models:  # Store Whisper model cache
+  audio-uploads:  # Store uploaded audio files
