@@ -1,10 +1,16 @@
 /**
- * Unhinged gRPC Client - Lightweight gRPC-Web for Control Plane
- * 
- * Custom gRPC client optimized for internal control plane usage.
- * Bypasses HTTP gateway complexity and communicates directly with gRPC services.
- * 
- * Features:
+ * 🚧 REVERSE HEADLESS UI - gRPC Client Shell 🚧
+ *
+ * PLACEHOLDER IMPLEMENTATION - Complete interface, needs backend integration
+ *
+ * This is a fully-featured gRPC client architecture ready for real implementation.
+ * All methods, error handling, and streaming support are designed and ready.
+ *
+ * TODO: Replace placeholder logic with actual protobuf encoding/decoding
+ * TODO: Connect to real gRPC services instead of mock responses
+ * TODO: Implement proper authentication and connection pooling
+ *
+ * Features (UI Complete, Logic Placeholder):
  * - Direct protobuf message encoding/decoding
  * - Streaming support for real-time operations
  * - Type-safe service clients
