@@ -414,5 +414,169 @@ class TestLLMContextWarmerImprovements(unittest.TestCase):
         self.assertEqual(len(page2['comments']), 10)
         self.assertEqual(len(page3['comments']), 5)  # Last page partial
 
+class TestLLMContextWarmerEnhancements(unittest.TestCase):
+    """
+    @llm-type test
+    @llm-legend Test suite for final LLM context warmer enhancements addressing 9/10 feedback
+    @llm-context Validates getting started section, dependency info, and complete legend handling
+    """
+
+    def test_getting_started_section_generation(self):
+        """
+        @llm-type test
+        @llm-legend Test generation of getting started section with setup and dependency information
+        @llm-context Addresses LLM feedback about missing getting started section in overview
+        """
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer with mock data
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = [
+            {
+                'file_path': 'Makefile',
+                'llm_type': 'config',
+                'llm_legend': 'Build system configuration',
+                'llm_key': 'Defines setup, dev, and deployment targets',
+                'llm_map': 'Entry point for all development workflows'
+            },
+            {
+                'file_path': 'docker-compose.yml',
+                'llm_type': 'config',
+                'llm_legend': 'Container orchestration configuration',
+                'llm_key': 'Defines all microservices and their dependencies',
+                'llm_map': 'Infrastructure layer for local development'
+            }
+        ]
+
+        getting_started = warmer._generate_getting_started_section()
+
+        # Should include setup commands and dependency information
+        self.assertIsInstance(getting_started, dict)
+        self.assertIn('quick_start_commands', getting_started)
+        self.assertIn('prerequisites', getting_started)
+
+        # Check content includes expected terms
+        content_str = str(getting_started).lower()
+        self.assertIn('setup', content_str)
+        self.assertIn('make', content_str)
+        self.assertIn('docker', content_str)
+
+    def test_dependency_information_extraction(self):
+        """
+        @llm-type test
+        @llm-legend Test extraction of dependency and setup information from build files
+        @llm-context Addresses LLM feedback about missing dependency/setup information in overview
+        """
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer with mock build system data
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = [
+            {
+                'file_path': 'package.json',
+                'llm_type': 'config',
+                'llm_legend': 'Node.js dependencies and scripts',
+                'llm_key': 'Defines frontend build pipeline and dependencies'
+            },
+            {
+                'file_path': 'backend/build.gradle.kts',
+                'llm_type': 'config',
+                'llm_legend': 'Kotlin backend build configuration',
+                'llm_key': 'Defines JVM dependencies and build tasks'
+            }
+        ]
+
+        dependencies = warmer._extract_dependency_information()
+
+        # Should identify different dependency systems
+        self.assertIsInstance(dependencies, dict)
+        self.assertIn('frontend', dependencies)
+        self.assertIn('backend', dependencies)
+        self.assertGreater(len(dependencies), 0)
+
+    def test_complete_legend_validation(self):
+        """
+        @llm-type test
+        @llm-legend Test validation that legends are complete and not truncated
+        @llm-context Addresses LLM feedback about incomplete/truncated @llm-legend entries
+        """
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer with test data including truncated legends
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+
+        comments = [
+            {
+                'file_path': 'test1.py',
+                'llm_type': 'service',
+                'llm_legend': 'Complete service description with full details',
+                'element_name': 'complete_service'
+            },
+            {
+                'file_path': 'test2.py',
+                'llm_type': 'service',
+                'llm_legend': 'Truncated',  # Too short
+                'element_name': 'truncated_service'
+            },
+            {
+                'file_path': 'test3.py',
+                'llm_type': 'service',
+                'llm_legend': 'Extracts all',  # Appears truncated
+                'element_name': 'partial_service'
+            }
+        ]
+
+        truncated_legends = warmer._validate_legend_completeness(comments)
+
+        # Should identify truncated or incomplete legends
+        self.assertGreater(len(truncated_legends), 0)
+        self.assertTrue(any('truncated' in item['element_name'] for item in truncated_legends))
+        self.assertTrue(any('partial' in item['element_name'] for item in truncated_legends))
+
+    def test_enhanced_overview_with_getting_started(self):
+        """
+        @llm-type test
+        @llm-legend Test that enhanced overview includes getting started and dependency sections
+        @llm-context Validates complete overview addresses all LLM feedback points for 10/10 rating
+        """
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer with comprehensive test data
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = [
+            {
+                'file_path': 'Makefile',
+                'llm_type': 'config',
+                'llm_legend': 'Build system with setup and development targets',
+                'llm_key': 'Provides make setup, make dev, make test commands'
+            }
+        ]
+
+        overview = warmer.generate_enhanced_project_overview()
+
+        # Should include all sections addressing LLM feedback
+        self.assertIn('getting_started', overview)
+        self.assertIn('dependencies', overview)
+        self.assertIn('quick_start_commands', overview['getting_started'])
+        self.assertIn('prerequisites', overview['getting_started'])
+        self.assertIn('frontend', overview['dependencies'])
+        self.assertIn('backend', overview['dependencies'])
+
 if __name__ == '__main__':
     unittest.main()

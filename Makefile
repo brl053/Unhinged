@@ -453,6 +453,16 @@ docs-test-context: ## Run TDD tests for LLM context warming improvements
 	@cd scripts/docs && python3 -m unittest test_llm_extraction.TestLLMContextWarmerImprovements -v
 	$(call log_success,LLM context warmer tests completed)
 
+docs-context-enhanced: ## Generate enhanced project overview with getting started and dependencies
+	$(call log_info,🚀 Generating enhanced LLM context overview...)
+	@python3 scripts/docs/llm-context-warmer.py enhanced-overview --format yaml
+	$(call log_success,Enhanced LLM context overview generated)
+
+docs-test-enhancements: ## Run TDD tests for final LLM context warmer enhancements
+	$(call log_info,🧪 Running enhanced context warmer tests...)
+	@cd scripts/docs && python3 -m unittest test_llm_extraction.TestLLMContextWarmerEnhancements -v
+	$(call log_success,Enhanced context warmer tests completed)
+
 # ============================================================================
 # Dependency Tracking Commands
 # ============================================================================
