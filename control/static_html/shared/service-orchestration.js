@@ -27,15 +27,11 @@ class ServiceOrchestrator {
      */
     async loadServiceStatus() {
         try {
-            const response = await fetch(`${this.dagEndpoint}/api/docker/status`);
-            if (response.ok) {
-                this.serviceStatus = await response.json();
-            } else {
-                // Fallback: check individual services
-                await this.checkIndividualServices();
-            }
+            // Control plane doesn't have /api/docker/status endpoint
+            // Fall back to checking individual services directly
+            await this.checkIndividualServices();
         } catch (error) {
-            console.warn('Failed to load service status from DAG, checking individually:', error);
+            console.warn('Failed to load service status, checking individually:', error);
             await this.checkIndividualServices();
         }
     }
@@ -114,7 +110,7 @@ class ServiceOrchestrator {
         }
 
         // Execute via DAG control plane
-        const response = await fetch(`${this.dagEndpoint}/execute`, {
+        const response = await fetch(`${this.dagEndpoint}/dag/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -150,7 +146,7 @@ class ServiceOrchestrator {
         }
 
         // Stop services
-        const response = await fetch(`${this.dagEndpoint}/execute`, {
+        const response = await fetch(`${this.dagEndpoint}/dag/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
