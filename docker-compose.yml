@@ -80,24 +80,20 @@ services:
       - vision-models:/root/.cache/transformers
       - image-uploads:/app/uploads
 
-  # @llm-key Whisper TTS service for voice transcription and text-to-speech
+  # @llm-key Speech-to-Text service for voice transcription using Whisper
   # @llm-map Essential for voice recording functionality in control plane
   # @llm-axiom Service must be accessible on port 8000 for voice test page
   # @llm-contract Service must respond to health checks and handle audio uploads
   # @llm-token whisper-models: Docker volume for persistent Whisper model cache
-  whisper-tts:
+  speech-to-text:
     build:
-      context: ./services/whisper-tts
+      context: ./services/speech-to-text
       dockerfile: Dockerfile
-    container_name: whisper-tts-service
+    container_name: speech-to-text-service
     ports:
       - "8000:8000"  # HTTP API
-      - "9091:9091"  # gRPC API
     environment:
-      - ENABLE_FLASK=true
-      - ENABLE_GRPC=true
       - WHISPER_MODEL=base
-      - TTS_ENGINE=gtts
       - LOG_LEVEL=INFO
       - PYTHONUNBUFFERED=1
     volumes:
@@ -105,6 +101,34 @@ services:
       - audio-uploads:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
+  # @llm-key Text-to-Speech service for voice synthesis using Coqui TTS
+  # @llm-map Provides local neural voice synthesis capabilities
+  # @llm-axiom Service must be accessible on port 8002 for TTS functionality
+  # @llm-contract Service must respond to health checks and generate audio files
+  # @llm-token tts-models: Docker volume for persistent TTS model cache
+  text-to-speech:
+    build:
+      context: ./services/text-to-speech
+      dockerfile: Dockerfile
+    container_name: text-to-speech-service
+    ports:
+      - "8002:8001"  # HTTP API
+    environment:
+      - TTS_MODEL_NAME=tts_models/en/ljspeech/tacotron2-DDC
+      - TTS_CACHE_DIR=/app/models
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - tts-models:/app/models
+      - audio-outputs:/app/outputs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -169,3 +193,5 @@ volumes:
   image-uploads:  # Store uploaded images
   whisper-models:  # Store Whisper model cache
   audio-uploads:  # Store uploaded audio files
+  tts-models:  # Store TTS model cache
+  audio-outputs:  # Store generated audio files

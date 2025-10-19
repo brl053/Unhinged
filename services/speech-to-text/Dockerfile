@@ -21,8 +21,8 @@ COPY . .
 # Create directories for uploads
 RUN mkdir -p /app/uploads
 
-# Expose both HTTP and gRPC ports
-EXPOSE 8000 9091
+# Expose HTTP port
+EXPOSE 8000
 
 # Environment variables for server configuration
 ENV ENABLE_FLASK=true

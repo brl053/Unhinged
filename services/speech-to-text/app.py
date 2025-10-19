@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-Whisper TTS Service for Unhinged Project
-Provides both Speech-to-Text (Whisper) and Text-to-Speech (gTTS) capabilities
+Speech-to-Text Service for Unhinged Project
+Provides Speech-to-Text capabilities using OpenAI Whisper
 """
 
 import os
 import tempfile
 import logging
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-from gtts import gTTS
 import whisper
 import torch
 
@@ -40,6 +39,20 @@ def load_whisper_model():
         logger.error(f"Failed to load Whisper model: {e}")
         return False
 
+# Load Whisper model when module is imported
+logger.info("Initializing Whisper TTS Service...")
+if not load_whisper_model():
+    logger.error("Failed to load Whisper model during initialization")
+    # Don't exit here since we're being imported, just log the error
+
+def ensure_model_loaded():
+    """Ensure the Whisper model is loaded, load it if not"""
+    global whisper_model
+    if whisper_model is None:
+        logger.info("Model not loaded, loading now...")
+        load_whisper_model()
+    return whisper_model is not None
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -54,16 +67,16 @@ def health_check():
             'status': 'healthy',
             'whisper_model_loaded': model_status,
             'cuda_available': cuda_available,
-            'service': 'whisper-tts',
+            'service': 'speech-to-text',
             'version': '1.0.0',
-            'capabilities': ['speech-to-text', 'text-to-speech']
+            'capabilities': ['speech-to-text']
         }), 200
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
-            'service': 'whisper-tts'
+            'service': 'speech-to-text'
         }), 500
 
 @app.route('/transcribe', methods=['POST'])
@@ -81,6 +94,13 @@ def transcribe_audio():
         temp_path = os.path.join(UPLOAD_FOLDER, audio_file.filename)
         audio_file.save(temp_path)
 
+        # Ensure model is loaded before transcribing
+        global whisper_model
+        if whisper_model is None:
+            logger.info("Loading Whisper model on-demand...")
+            if not load_whisper_model():
+                return jsonify({'error': 'Whisper model failed to load'}), 500
+
         # Transcribe using Whisper
         result = whisper_model.transcribe(temp_path)
 
@@ -96,56 +116,33 @@ def transcribe_audio():
         logger.error(f"Transcription failed: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/synthesize', methods=['POST'])
-def synthesize_speech():
-    """Convert text to speech using gTTS"""
-    try:
-        data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({'error': 'No text provided'}), 400
-        
-        text = data['text']
-        language = data.get('language', 'en')
-        
-        # Generate speech using gTTS
-        tts = gTTS(text=text, lang=language, slow=False)
-        
-        # Save to temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-            tts.save(temp_file.name)
-            
-            return send_file(
-                temp_file.name,
-                as_attachment=True,
-                download_name='speech.mp3',
-                mimetype='audio/mpeg'
-            )
-            
-    except Exception as e:
-        logger.error(f"Speech synthesis failed: {e}")
-        return jsonify({'error': str(e)}), 500
+# TTS functionality removed - now handled by dedicated text-to-speech service
 
 @app.route('/info', methods=['GET'])
 def service_info():
     """Get service information"""
     return jsonify({
-        'service': 'whisper-tts',
+        'service': 'speech-to-text',
         'version': '1.0.0',
-        'capabilities': ['speech-to-text', 'text-to-speech'],
+        'capabilities': ['speech-to-text'],
         'whisper_model': 'base',
-        'tts_engine': 'gTTS',
-        'supported_languages': ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh']
+        'supported_languages': ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh'],
+        'endpoints': {
+            '/transcribe': 'POST - Convert speech to text',
+            '/health': 'GET - Health check',
+            '/info': 'GET - Service information'
+        }
     }), 200
 
 if __name__ == '__main__':
-    logger.info("Starting Whisper TTS Service...")
+    logger.info("Starting Speech-to-Text Service...")
 
     # Load Whisper model on startup
     if not load_whisper_model():
         logger.error("Failed to load Whisper model, exiting...")
         exit(1)
 
-    logger.info("Whisper TTS Service ready!")
+    logger.info("Speech-to-Text Service ready!")
 
     # Run the Flask app
     app.run(host='0.0.0.0', port=8000, debug=False)

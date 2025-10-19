@@ -286,12 +286,20 @@ const SERVICE_DEFINITIONS = {
         container: 'ollama-service',
         health_path: '/api/tags'
     },
-    'whisper-tts': {
-        name: 'Voice Processing',
+    'speech-to-text': {
+        name: 'Speech-to-Text',
         port: 8000,
         tier: 'ai_services',
-        description: 'Speech-to-text and text-to-speech',
-        container: 'whisper-tts-service',
+        description: 'Speech-to-text using Whisper',
+        container: 'speech-to-text-service',
+        health_path: '/health'
+    },
+    'text-to-speech': {
+        name: 'Text-to-Speech',
+        port: 8002,
+        tier: 'ai_services',
+        description: 'Text-to-speech using Coqui TTS',
+        container: 'text-to-speech-service',
         health_path: '/health'
     },
     'vision-ai': {

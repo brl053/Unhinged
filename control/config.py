@@ -46,10 +46,15 @@ SERVICE_INTEGRATION = {
             "health_endpoint": "/",
             "description": "React frontend service"
         },
-        "whisper_tts": {
+        "speech_to_text": {
             "port": 8000,
             "health_endpoint": "/health",
-            "description": "Whisper TTS service"
+            "description": "Speech-to-Text service using Whisper"
+        },
+        "text_to_speech": {
+            "port": 8002,
+            "health_endpoint": "/health",
+            "description": "Text-to-Speech service using Coqui TTS"
         },
         "vision_ai": {
             "port": 8001,
@@ -277,11 +282,11 @@ NODE_COMMANDS = {
     # Service management (with sudo for Docker permissions)
     "start-services": "sudo docker compose up -d backend frontend",
     "start-infrastructure": "sudo docker compose up -d database kafka zookeeper kafka-ui",
-    "start-ai-services": "sudo docker compose up -d llm whisper-tts vision-ai",
+    "start-ai-services": "sudo docker compose up -d llm speech-to-text text-to-speech vision-ai",
     "start-app-services": "sudo docker compose up -d backend frontend cdc-service",
     "stop-services": "sudo docker compose down",
     "stop-infrastructure": "sudo docker compose stop database kafka zookeeper kafka-ui",
-    "stop-ai-services": "sudo docker compose stop llm whisper-tts vision-ai",
+    "stop-ai-services": "sudo docker compose stop llm speech-to-text text-to-speech vision-ai",
     "stop-app-services": "sudo docker compose stop backend frontend cdc-service",
     "docker-status": "sudo docker ps && echo '--- Docker Compose Status ---' && sudo docker compose ps",
     

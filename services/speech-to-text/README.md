@@ -1,13 +1,13 @@
-# Whisper TTS Service
+# Speech-to-Text Service
 
-This service provides both Speech-to-Text (STT) and Text-to-Speech (TTS) capabilities for the Unhinged project.
+This service provides Speech-to-Text (STT) capabilities for the Unhinged project using OpenAI's Whisper model.
 
 ## Features
 
 - **Speech-to-Text**: Uses OpenAI's Whisper model for accurate transcription
-- **Text-to-Speech**: Uses Google Text-to-Speech (gTTS) for speech synthesis
 - **Health Checks**: Built-in health monitoring
-- **Multi-language Support**: Supports multiple languages for both STT and TTS
+- **Multi-language Support**: Supports 99+ languages
+- **Local Processing**: Runs completely offline, no external API calls
 
 ## API Endpoints
 
@@ -19,10 +19,8 @@ This service provides both Speech-to-Text (STT) and Text-to-Speech (TTS) capabil
   - Form data: `audio` (audio file)
   - Returns: `{"text": "transcribed text", "language": "detected_language"}`
 
-### Text-to-Speech
-- **POST** `/synthesize` - Convert text to speech
-  - JSON body: `{"text": "text to speak", "language": "en"}`
-  - Returns: MP3 audio file
+# Text-to-Speech functionality has been moved to a dedicated service
+# See services/text-to-speech for TTS capabilities
 
 ### Service Info
 - **GET** `/info` - Returns service capabilities and configuration
