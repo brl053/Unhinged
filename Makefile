@@ -448,6 +448,11 @@ docs-context-json: ## Generate project overview in JSON format
 	$(call log_info,🤖 Generating LLM context overview (JSON)...)
 	@python3 scripts/docs/llm-context-warmer.py overview --format json
 
+docs-test-context: ## Run TDD tests for LLM context warming improvements
+	$(call log_info,🧪 Running LLM context warmer tests...)
+	@cd scripts/docs && python3 -m unittest test_llm_extraction.TestLLMContextWarmerImprovements -v
+	$(call log_success,LLM context warmer tests completed)
+
 # ============================================================================
 # Dependency Tracking Commands
 # ============================================================================

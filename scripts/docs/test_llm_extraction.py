@@ -199,5 +199,220 @@ class TestLLMValidation(unittest.TestCase):
         self.assertFalse(result['passed'])  # Should fail due to bad.py
         self.assertGreater(len(result['issues']), 0)
 
+class TestLLMContextWarmerImprovements(unittest.TestCase):
+    """
+    @llm-type test
+    @llm-legend Test suite for LLM context warmer improvements based on feedback
+    @llm-context Validates element name detection, cross-references, and context completeness
+    """
+
+    def test_element_name_detection_from_service_path(self):
+        """
+        @llm-type test
+        @llm-legend Test element name extraction from services directory paths
+        @llm-context Addresses LLM feedback about unknown element names in service files
+        """
+        # Test data with unknown element name but clear service path
+        comment = LLMComment(
+            file_path="services/vision-ai/main.py",
+            line_number=1,
+            language="python",
+            element_name="unknown",
+            type="service",
+            legend="Vision AI service for image analysis"
+        )
+
+        # This will be implemented in llm-context-warmer.py
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer without loading file
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = []  # Empty for testing
+        improved_name = warmer._improve_element_name(comment.__dict__)
+
+        # Should extract "vision-ai" from the service path
+        self.assertEqual(improved_name, "vision-ai")
+
+    def test_element_name_detection_from_python_file(self):
+        """
+        @llm-type test
+        @llm-legend Test element name extraction from Python file names
+        @llm-context Ensures Python modules get proper names instead of unknown
+        """
+        comment = LLMComment(
+            file_path="scripts/docs/extract-llm-comments.py",
+            line_number=1,
+            language="python",
+            element_name="unknown",
+            type="tool",
+            legend="LLM comment extraction tool"
+        )
+
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer without loading file
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = []  # Empty for testing
+        improved_name = warmer._improve_element_name(comment.__dict__)
+
+        # Should extract "extract-llm-comments" from the file name
+        self.assertEqual(improved_name, "extract-llm-comments")
+
+    def test_find_related_services_by_port_references(self):
+        """
+        @llm-type test
+        @llm-legend Test cross-reference detection between services using port numbers
+        @llm-context Addresses LLM feedback about lack of cross-reference navigation
+        """
+        comments = [
+            LLMComment(
+                file_path="services/vision-ai/main.py",
+                line_number=1,
+                language="python",
+                element_name="vision-ai",
+                type="service",
+                legend="Vision AI service",
+                key="Serves on port 8001",
+                map="Backend vision processing"
+            ),
+            LLMComment(
+                file_path="frontend/src/services/VisionService.ts",
+                line_number=1,
+                language="typescript",
+                element_name="VisionService",
+                type="service",
+                legend="Frontend vision client",
+                key="Connects to vision-ai on port 8001",
+                map="Frontend service layer"
+            )
+        ]
+
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer without loading file
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = [comment.__dict__ for comment in comments]
+
+        related = warmer._find_related_services(comments[0].__dict__)
+
+        # Should find VisionService as related due to port 8001 reference
+        self.assertGreater(len(related), 0)
+        self.assertIn("VisionService", str(related))
+
+    def test_context_completeness_validation(self):
+        """
+        @llm-type test
+        @llm-legend Test validation of context completeness for service components
+        @llm-context Addresses LLM feedback about null llm_context fields where context should exist
+        """
+        comments = [
+            LLMComment(
+                file_path="services/audio-service/main.py",
+                line_number=1,
+                language="python",
+                element_name="audio-service",
+                type="service",
+                legend="Audio processing service",
+                llm_context=None  # Missing context - should be flagged
+            ),
+            LLMComment(
+                file_path="scripts/utils/helper.py",
+                line_number=1,
+                language="python",
+                element_name="helper",
+                type="function",
+                legend="Utility function",
+                llm_context=None  # OK for utility functions
+            )
+        ]
+
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer without loading file
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = []  # Empty for testing
+        missing_context = warmer._validate_context_completeness([comment.__dict__ for comment in comments])
+
+        # Should flag the service with missing context but not the utility function
+        self.assertEqual(len(missing_context), 1)
+        self.assertEqual(missing_context[0]['element_name'], 'audio-service')
+
+    def test_pagination_data_integrity(self):
+        """
+        @llm-type test
+        @llm-legend Test that pagination maintains complete data integrity across pages
+        @llm-context Ensures no data loss or corruption when browsing paginated comments
+        """
+        # Create test comments
+        test_comments = []
+        for i in range(25):  # More than 2 pages worth
+            test_comments.append({
+                'file_path': f'test/file_{i}.py',
+                'line_number': 1,
+                'element_name': f'element_{i}',
+                'language': 'python',
+                'llm_type': 'function',
+                'llm_legend': f'Test function {i}'
+            })
+
+        import sys
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
+        warmer_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(warmer_module)
+
+        # Create warmer without loading file
+        warmer = warmer_module.LLMContextWarmer.__new__(warmer_module.LLMContextWarmer)
+        warmer.comments = test_comments
+        warmer.page_size = 10
+
+        # Get all pages
+        page1 = warmer.paginate_comments(1)
+        page2 = warmer.paginate_comments(2)
+        page3 = warmer.paginate_comments(3)
+
+        # Verify pagination metadata
+        self.assertEqual(page1['pagination']['total_comments'], 25)
+        self.assertEqual(page1['pagination']['total_pages'], 3)
+        self.assertTrue(page1['pagination']['has_next'])
+        self.assertFalse(page1['pagination']['has_previous'])
+
+        self.assertTrue(page2['pagination']['has_next'])
+        self.assertTrue(page2['pagination']['has_previous'])
+
+        self.assertFalse(page3['pagination']['has_next'])
+        self.assertTrue(page3['pagination']['has_previous'])
+
+        # Verify no data overlap or gaps
+        all_elements = []
+        all_elements.extend([c['element_name'] for c in page1['comments']])
+        all_elements.extend([c['element_name'] for c in page2['comments']])
+        all_elements.extend([c['element_name'] for c in page3['comments']])
+
+        # Should have all 25 elements with no duplicates
+        self.assertEqual(len(all_elements), 25)
+        self.assertEqual(len(set(all_elements)), 25)  # No duplicates
+
+        # Verify correct page sizes
+        self.assertEqual(len(page1['comments']), 10)
+        self.assertEqual(len(page2['comments']), 10)
+        self.assertEqual(len(page3['comments']), 5)  # Last page partial
+
 if __name__ == '__main__':
     unittest.main()
