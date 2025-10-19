@@ -5,6 +5,24 @@
  */
 
 const SERVICE_CONFIG = {
+    'dag_control': {
+        name: 'DAG Control Plane',
+        icon: '🎛️',
+        subtitle: 'Intelligent Build Orchestration with Human Oversight',
+        baseUrl: 'http://localhost:9000',
+        healthEndpoint: '/dag/health',
+        testEndpoint: '/dag/status',
+        port: 9000,
+        description: 'Unified control plane for build orchestration, dependency management, and human-in-the-loop workflows.',
+        capabilities: [
+            'DAG-based build execution with cycle detection',
+            'Parallel execution with dependency awareness',
+            'Human approval workflows for critical operations',
+            'Real-time performance monitoring and metrics',
+            'LLM-powered error explanation and optimization',
+            'Self-serve debugging and report generation'
+        ]
+    },
     'text': {
         name: 'GPU-Accelerated LLM Test',
         icon: '🚀',

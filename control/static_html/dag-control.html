@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎛️ DAG Control Plane - Unhinged AI</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <style>
+        /* DAG-specific styles extending existing design language */
+        .dag-node {
+            background: var(--surface-color);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin: 0.5rem;
+            transition: var(--transition);
+            position: relative;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .dag-node.pending {
+            border-color: var(--border-color);
+            background: var(--surface-color);
+        }
+
+        .dag-node.running {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+            animation: pulse 2s infinite;
+        }
+
+        .dag-node.complete {
+            border-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .dag-node.failed {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .dag-visualization {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .dag-group {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .dag-group-label {
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .target-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            margin: 0.5rem;
+        }
+
+        .target-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .target-button:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .execution-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .stop-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .stop-button:hover {
+            background: #dc2626;
+        }
+
+        .execution-log {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+
+        .reports-section {
+            margin-top: 2rem;
+        }
+
+        .report-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            margin: 0.25rem;
+        }
+
+        .report-button:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation using existing patterns -->
+        <div class="navigation">
+            <a href="index.html" class="nav-link">🏠 Home</a>
+            <a href="dag-control.html" class="nav-link active">🎛️ DAG Control</a>
+            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
+            <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
+            <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>🎛️ DAG Control Plane</h1>
+            <p>Intelligent Build Orchestration with Human Oversight</p>
+        </div>
+
+        <!-- Service status using existing patterns -->
+        <div class="service-status">
+            <div class="status" id="dag-status">⏳ Checking DAG Control Plane...</div>
+        </div>
+
+        <!-- Main content grid -->
+        <div class="services-grid">
+            <!-- Available Build Targets -->
+            <div class="service-card primary">
+                <div class="service-header">
+                    <div class="service-icon">🎯</div>
+                    <div class="service-title">Available Build Targets</div>
+                </div>
+                <div class="service-content">
+                    <div id="targets-container">
+                        <button class="target-button" onclick="executeTarget('dev-fast')">
+                            🚀 dev-fast
+                        </button>
+                        <button class="target-button" onclick="executeTarget('dev-full')">
+                            🏗️ dev-full
+                        </button>
+                        <button class="target-button" onclick="executeTarget('test-suite')">
+                            🧪 test-suite
+                        </button>
+                        <button class="target-button" onclick="executeTarget('production-build')">
+                            📦 production-build
+                        </button>
+                        <button class="target-button" onclick="executeTarget('deploy-staging')">
+                            🚀 deploy-staging
+                        </button>
+                    </div>
+                    
+                    <div class="execution-controls" id="execution-controls" style="display: none;">
+                        <button class="stop-button" onclick="stopExecution()">
+                            🛑 Stop Execution
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DAG Execution Visualization -->
+            <div class="service-card multimodal">
+                <div class="service-header">
+                    <div class="service-icon">📊</div>
+                    <div class="service-title">DAG Execution Status</div>
+                </div>
+                <div class="service-content">
+                    <div id="dag-visualization" class="dag-visualization">
+                        <div class="dag-group-label">Select a target to see execution plan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Log -->
+            <div class="service-card">
+                <div class="service-header">
+                    <div class="service-icon">📝</div>
+                    <div class="service-title">Execution Log</div>
+                </div>
+                <div class="service-content">
+                    <div id="execution-log" class="execution-log">
+DAG Control Plane Ready
+Waiting for target selection...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Self-Serve Reports -->
+            <div class="service-card reports-section">
+                <div class="service-header">
+                    <div class="service-icon">📋</div>
+                    <div class="service-title">Self-Serve Reports & Debug</div>
+                </div>
+                <div class="service-content">
+                    <p>Generate LLM-ready reports for copy-paste debugging:</p>
+                    <button class="report-button" onclick="generateSystemReport()">
+                        📊 System Status Report
+                    </button>
+                    <button class="report-button" onclick="generateBuildAnalysis()">
+                        🔍 Build Performance Analysis
+                    </button>
+                    <button class="report-button" onclick="generateErrorReport()">
+                        🚨 Error Analysis Report
+                    </button>
+                    <button class="report-button" onclick="generateDependencyReport()">
+                        🔗 Dependency Graph Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DAG Control Plane JavaScript
+        const DAG_SERVICE = getServiceConfig('dag_control');
+        let currentExecution = null;
+        let executionInterval = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkDagHealth();
+            setInterval(checkDagHealth, 5000); // Check every 5 seconds
+        });
+
+        async function checkDagHealth() {
+            try {
+                const response = await fetch(getHealthUrl('dag_control'));
+                const health = await response.json();
+
+                const statusElement = document.getElementById('dag-status');
+                if (health.status === 'healthy') {
+                    statusElement.className = STATUS_CONFIG.healthy.class;
+                    statusElement.innerHTML = STATUS_CONFIG.healthy.icon + ' DAG Control Plane Ready';
+                } else {
+                    statusElement.className = STATUS_CONFIG.unhealthy.class;
+                    statusElement.innerHTML = STATUS_CONFIG.unhealthy.icon + ' DAG Control Plane Unavailable';
+                }
+            } catch (error) {
+                const statusElement = document.getElementById('dag-status');
+                statusElement.className = STATUS_CONFIG.unhealthy.class;
+                statusElement.innerHTML = STATUS_CONFIG.unhealthy.icon + ' DAG Control Plane Unavailable';
+            }
+        }
+
+        async function executeTarget(target) {
+            try {
+                logMessage(`🎯 Starting execution of target: ${target}`);
+                
+                // Get execution plan first
+                const planResponse = await fetch(`${DAG_SERVICE.baseUrl}/dag/plan/${target}`);
+                const plan = await planResponse.json();
+                
+                displayExecutionPlan(plan);
+                
+                // Start execution
+                const executeResponse = await fetch(`${DAG_SERVICE.baseUrl}/dag/execute`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({target: target})
+                });
+                
+                if (executeResponse.ok) {
+                    currentExecution = target;
+                    document.getElementById('execution-controls').style.display = 'flex';
+                    disableTargetButtons(true);
+                    
+                    // Start monitoring execution
+                    executionInterval = setInterval(updateExecutionStatus, 1000);
+                    
+                    logMessage(`✅ Execution started for ${target}`);
+                } else {
+                    const error = await executeResponse.json();
+                    logMessage(`❌ Failed to start execution: ${error.message}`);
+                }
+                
+            } catch (error) {
+                logMessage(`❌ Error executing target: ${error.message}`);
+            }
+        }
+
+        function displayExecutionPlan(plan) {
+            const visualization = document.getElementById('dag-visualization');
+            visualization.innerHTML = '';
+            
+            plan.execution_groups.forEach((group, index) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.innerHTML = `
+                    <div class="dag-group-label">Group ${index + 1}</div>
+                    <div class="dag-group">
+                        ${group.map(node => `
+                            <div class="dag-node pending" id="node-${node}">
+                                ${node}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                visualization.appendChild(groupDiv);
+            });
+        }
+
+        async function updateExecutionStatus() {
+            try {
+                const response = await fetch(`${DAG_SERVICE.baseUrl}/dag/status`);
+                const status = await response.json();
+                
+                // Update node statuses
+                Object.entries(status.nodes).forEach(([nodeName, nodeData]) => {
+                    const nodeElement = document.getElementById(`node-${nodeName}`);
+                    if (nodeElement) {
+                        nodeElement.className = `dag-node ${nodeData.status}`;
+                    }
+                });
+                
+                // Check if execution is complete
+                if (!status.current_execution && currentExecution) {
+                    logMessage(`🎉 Execution completed for ${currentExecution}`);
+                    currentExecution = null;
+                    clearInterval(executionInterval);
+                    document.getElementById('execution-controls').style.display = 'none';
+                    disableTargetButtons(false);
+                }
+                
+            } catch (error) {
+                console.error('Error updating execution status:', error);
+            }
+        }
+
+        function disableTargetButtons(disabled) {
+            const buttons = document.querySelectorAll('.target-button');
+            buttons.forEach(button => button.disabled = disabled);
+        }
+
+        function logMessage(message) {
+            const log = document.getElementById('execution-log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.textContent += `\n[${timestamp}] ${message}`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Report generation functions
+        async function generateSystemReport() {
+            logMessage('📊 Generating system status report...');
+            // TODO: Implement system report generation
+            alert('System report generation coming soon!');
+        }
+
+        async function generateBuildAnalysis() {
+            logMessage('🔍 Generating build performance analysis...');
+            // TODO: Implement build analysis
+            alert('Build analysis coming soon!');
+        }
+
+        async function generateErrorReport() {
+            logMessage('🚨 Generating error analysis report...');
+            // TODO: Implement error report
+            alert('Error report generation coming soon!');
+        }
+
+        async function generateDependencyReport() {
+            logMessage('🔗 Generating dependency graph report...');
+            // TODO: Implement dependency report
+            alert('Dependency report generation coming soon!');
+        }
+
+        function stopExecution() {
+            if (currentExecution) {
+                logMessage(`🛑 Stopping execution of ${currentExecution}`);
+                // TODO: Implement stop execution API call
+                currentExecution = null;
+                clearInterval(executionInterval);
+                document.getElementById('execution-controls').style.display = 'none';
+                disableTargetButtons(false);
+            }
+        }
+    </script>
+</body>
+</html>

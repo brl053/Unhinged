@@ -1,23 +1,31 @@
-# 🔥 Unhinged - Clean Architecture Chat Platform
+# 🎛️ Unhinged AI Platform
 
-> **LLM-Optimized Repository**: This README is designed for AI assistants. Navigate to `/docs` for detailed technical documentation.
+> **Unified Control Plane**: Voice-driven UI generation with LLM intelligence and human oversight
 
-## 🎯 **Quick Start for LLMs**
+## 🚀 **Quick Start**
+
+**Run `make start` from monorepo root.**
 
 ```bash
-# Backend (Clean Architecture - Kotlin/Ktor)
-cd backend && ./gradlew run
-# → http://localhost:8080
-
-# Frontend (React/TypeScript)
-cd frontend && npm start  
-# → http://localhost:8081
-
-# Test the system
-curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Hello!"}'
+# From the root of this monorepo
+make start
 ```
+
+This will:
+1. 🔍 Scan and generate file registry
+2. 🎛️ Start the DAG Control Plane
+3. 🌐 Open browser interface automatically
+
+## 📁 **What You Get**
+
+- **DAG Control Plane**: Build orchestration with human oversight
+- **AI Services**: Text generation, vision AI, voice processing
+- **Self-Organizing Interface**: Auto-discovers all capabilities
+- **Plug-and-Play**: Works immediately with zero setup
+
+---
+
+**Everything else is discoverable through the browser interface.**
 
 ## 🏗️ **Architecture Overview**
 

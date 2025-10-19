@@ -104,27 +104,31 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(BLUE)💡 Quick start: make setup && make dev$(RESET)"
-	@echo "$(BLUE)⚡ Enhanced build: make build-enhanced$(RESET)"
 	@echo "$(BLUE)📚 Documentation: make docs-update$(RESET)"
-	@echo "$(BLUE)🤖 LLM Context: make docs-context-overview$(RESET)"
+	@echo "$(BLUE)🤖 AI Context: make context$(RESET)"
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
 	@echo ""
-	@echo "$(PURPLE)🚀 Enhanced Build System:$(RESET)"
-	@echo "  $(GREEN)make build-enhanced$(RESET)     Fast development build with caching"
-	@echo "  $(GREEN)make build-status$(RESET)       Show build system status and cache info"
-	@echo "  $(GREEN)make build-list$(RESET)         List all available build targets"
-	@echo "  $(GREEN)make build-explain TARGET=X$(RESET) Explain what a build target does"
-	@echo "  $(GREEN)make build-watch TARGET=X$(RESET)   Watch mode with auto-rebuild"
-	@echo "  $(GREEN)make build-test$(RESET)         Test the enhanced build system"
+	@echo "$(PURPLE)🚀 Core Build Commands (v1):$(RESET)"
+	@echo "  $(GREEN)make build$(RESET)              Fast development build with intelligent caching"
+	@echo "  $(GREEN)make dev$(RESET)                Start development environment"
+	@echo "  $(GREEN)make test$(RESET)               Run tests and validate system"
+	@echo "  $(GREEN)make clean$(RESET)              Smart cleanup of build artifacts"
+	@echo "  $(GREEN)make status$(RESET)             Show build system status and performance"
 	@echo ""
-	@echo "$(PURPLE)🤖 AI-Powered Features:$(RESET)"
-	@echo "  $(GREEN)make build-context$(RESET)      Generate LLM context for AI assistance"
-	@echo "  $(GREEN)make build-onboard$(RESET)      Generate developer onboarding guide"
-	@echo "  $(GREEN)make build-explain-error$(RESET) Get AI explanation for build errors"
+	@echo "$(PURPLE)🎯 Development Tools:$(RESET)"
+	@echo "  $(GREEN)make list$(RESET)               List all available build targets"
+	@echo "  $(GREEN)make explain TARGET=X$(RESET)   Explain what a build target does"
+	@echo "  $(GREEN)make watch TARGET=X$(RESET)     Watch mode with auto-rebuild"
+	@echo "  $(GREEN)make profile TARGET=X$(RESET)   Profile build performance"
 	@echo ""
-	@echo "$(PURPLE)📊 Performance Monitoring:$(RESET)"
-	@echo "  $(GREEN)make build-performance-report$(RESET) Generate performance report"
-	@echo "  $(GREEN)make build-performance-metrics$(RESET) Show current performance metrics"
+	@echo "$(PURPLE)🤖 AI-Powered Assistance:$(RESET)"
+	@echo "  $(GREEN)make context$(RESET)            Generate AI context for development"
+	@echo "  $(GREEN)make onboard$(RESET)            Generate developer onboarding guide"
+	@echo "  $(GREEN)make explain-error$(RESET)      Get AI explanation for build errors"
+	@echo ""
+	@echo "$(PURPLE)📊 Performance & Analytics:$(RESET)"
+	@echo "  $(GREEN)make performance$(RESET)        Generate performance report"
+	@echo "  $(GREEN)make metrics$(RESET)            Show current performance metrics"
 	@echo ""
 	@echo "$(PURPLE)🧪 HTML Testing (Walking Skeletons):$(RESET)"
 	@echo "  $(GREEN)make test-ui$(RESET)          Launch HTML testing interfaces"
@@ -134,7 +138,7 @@ help: ## Show this help message
 	@echo "  $(GREEN)make html-context$(RESET)     Test Context LLM interface"
 	@echo "  $(GREEN)make validate-system$(RESET)  Complete system validation"
 
-status: ## Show status of all services
+services-status: ## Show status of all services
 	$(call log_info,📊 Service Status)
 	$(call log_warning,Docker Services:)
 	@docker compose ps || $(call log_error,Docker Compose not running)
@@ -387,96 +391,105 @@ debug-memory: ## Show memory usage for compilation
 	@free -h || echo "Memory info not available"
 
 # ============================================================================
-# Enhanced Build System Integration
+# V1 Build System (Consolidated)
 # ============================================================================
 
-build-enhanced: ## Use enhanced build system for development
-	$(call log_info,🚀 Using enhanced build system...)
-	@python3 build/cli.py build dev-fast --parallel
-	$(call log_success,Enhanced build completed)
+build: ## Build development environment (v1 enhanced system)
+	$(call log_info,🚀 Building development environment...)
+	@python3 build/build.py build dev-fast --parallel
+	$(call log_success,Build completed)
 
-build-enhanced-full: ## Full enhanced build with all services
-	$(call log_info,🚀 Running full enhanced build...)
-	@python3 build/cli.py build dev-full --parallel
-	$(call log_success,Enhanced full build completed)
+build-full: ## Build complete environment with all services
+	$(call log_info,🚀 Building complete environment...)
+	@python3 build/build.py build dev-full --parallel
+	$(call log_success,Full build completed)
 
-build-status: ## Show enhanced build system status
+status: ## Show build system status and performance metrics
 	$(call log_info,📊 Build system status...)
-	@python3 build/cli.py status
+	@python3 build/build.py status
 
-build-explain: ## Explain a build target (usage: make build-explain TARGET=dev-fast)
+explain: ## Explain a build target (usage: make explain TARGET=dev-fast)
 	$(call log_info,📋 Explaining build target: $(or $(TARGET),dev-fast))
-	@python3 build/cli.py explain $(or $(TARGET),dev-fast) --dependencies
+	@python3 build/build.py explain $(or $(TARGET),dev-fast) --dependencies
 
-build-list: ## List all available enhanced build targets
-	$(call log_info,📋 Available enhanced build targets...)
-	@python3 build/cli.py list --detailed
+list: ## List all available build targets
+	$(call log_info,📋 Available build targets...)
+	@python3 build/build.py list --detailed
 
-build-profile: ## Profile build performance (usage: make build-profile TARGET=dev-fast)
+profile: ## Profile build performance (usage: make profile TARGET=dev-fast)
 	$(call log_info,⚡ Profiling build target: $(or $(TARGET),dev-fast))
-	@python3 build/cli.py profile $(or $(TARGET),dev-fast)
+	@python3 build/build.py profile $(or $(TARGET),dev-fast)
 
-build-watch: ## Watch mode for continuous building (usage: make build-watch TARGET=backend-compile)
+watch: ## Watch mode for continuous building (usage: make watch TARGET=backend-compile)
 	$(call log_info,👁️ Starting watch mode for: $(or $(TARGET),backend-compile))
-	@python3 build/cli.py watch $(or $(TARGET),backend-compile)
+	@python3 build/build.py watch $(or $(TARGET),backend-compile)
 
-# LLM Integration Commands
-build-context: ## Generate LLM context for build assistance
-	$(call log_info,🤖 Generating LLM build context...)
-	@python3 build/cli.py llm context --format yaml
+# AI-Powered Development Assistance
+context: ## Generate AI context for development assistance
+	$(call log_info,🤖 Generating development context...)
+	@python3 build/build.py llm context --format yaml
 
-build-context-json: ## Generate LLM context in JSON format
-	$(call log_info,🤖 Generating LLM build context (JSON)...)
-	@python3 build/cli.py llm context --format json
-
-build-onboard: ## Generate developer onboarding guide
+onboard: ## Generate developer onboarding guide
 	$(call log_info,📚 Generating developer onboarding guide...)
-	@python3 build/cli.py llm onboard
+	@python3 build/build.py llm onboard
 
-build-explain-error: ## Explain build error (usage: make build-explain-error TARGET=dev-fast ERROR="error message")
+explain-error: ## Explain build error (usage: make explain-error TARGET=dev-fast ERROR="error message")
 	$(call log_info,🔍 Explaining build error for: $(or $(TARGET),unknown))
-	@python3 build/cli.py llm explain-error $(or $(TARGET),unknown) --error-message "$(or $(ERROR),Unknown error)"
+	@python3 build/build.py llm explain-error $(or $(TARGET),unknown) --error-message "$(or $(ERROR),Unknown error)"
 
-# Performance Monitoring Commands
-build-performance-report: ## Generate build performance report
+# Performance and Analytics
+performance: ## Generate build performance report
 	$(call log_info,📊 Generating performance report...)
-	@python3 build/cli.py performance report --hours 24
+	@python3 build/build.py performance report --hours 24
 
-build-performance-metrics: ## Show current performance metrics
+metrics: ## Show current performance metrics
 	$(call log_info,📊 Showing performance metrics...)
-	@python3 build/cli.py performance metrics
+	@python3 build/build.py performance metrics
 
-build-performance-json: ## Get performance data in JSON format
-	$(call log_info,📊 Generating performance data (JSON)...)
-	@python3 build/cli.py performance report --format json
-
-# Testing and Validation Commands
-build-test: ## Test the enhanced build system
-	$(call log_info,🧪 Testing enhanced build system...)
+# System Validation
+test: ## Test the build system
+	$(call log_info,🧪 Testing build system...)
 	@python3 build/test_enhanced_system.py
 
-build-validate: ## Validate enhanced build system installation
-	$(call log_info,✅ Validating enhanced build system...)
+validate: ## Validate build system installation
+	$(call log_info,✅ Validating build system...)
 	@python3 build/test_enhanced_system.py
 
-# Enhanced aliases that use the new build system
-dev-enhanced: build-enhanced ## Alias for enhanced development build
-dev-fast-enhanced: build-enhanced ## Alias for fast enhanced development build
+# ============================================================================
+# UNIFIED CONTROL PLANE ENTRY POINT
+# ============================================================================
+
+start: ## Start the unified control plane with browser interface
+	$(call log_info,🎛️ Starting Unhinged Control Plane...)
+	@python3 build/generate-registry.py
+	@echo "🚀 Launching DAG Control Plane on port 9000..."
+	@python3 -m control --port 9000 & \
+	sleep 2 && \
+	echo "🌐 Opening browser interface..." && \
+	./control/open.sh --status && \
+	echo "✅ Control plane started successfully!" && \
+	echo "📊 DAG Control: http://localhost:9000/dag/health" && \
+	echo "🌐 Browser: file://$(PWD)/control/static_html/index.html" && \
+	echo "⏹️  Press Ctrl+C to stop"
+
+# Development Aliases (v1 clean interface)
+dev: build ## Start development environment
+dev-full: build-full ## Start complete development environment
 
 # ============================================================================
 # Cleanup Operations
 # ============================================================================
 
-clean: ## Clean all build artifacts
-	$(call log_warning,🧹 Cleaning all build artifacts...)
-	@$(MAKE) backend-clean
-	@$(MAKE) proto-clean
+clean: ## Clean build artifacts (smart cleanup)
+	$(call log_warning,🧹 Cleaning build artifacts...)
+	@python3 build/build.py clean --smart
 	$(call log_success,Cleanup complete)
 
-clean-enhanced: ## Clean using enhanced build system
-	$(call log_warning,🧹 Enhanced cleanup...)
-	@python3 build/cli.py clean --smart
-	$(call log_success,Enhanced cleanup complete)
+clean-all: ## Clean everything including Docker
+	$(call log_warning,🧹 Cleaning everything...)
+	@python3 build/build.py clean --all
+	@$(MAKE) clean-docker
+	$(call log_success,Complete cleanup finished)
 
 clean-docker: ## Clean Docker resources
 	$(call log_warning,🧹 Cleaning Docker resources...)
@@ -484,9 +497,7 @@ clean-docker: ## Clean Docker resources
 	@docker system prune -f
 	$(call log_success,Docker cleanup complete)
 
-clean-all: clean clean-docker ## Clean everything
 
-clean-all-enhanced: clean-enhanced clean-docker ## Enhanced clean everything
 
 # ============================================================================
 # Documentation Commands

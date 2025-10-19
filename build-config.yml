@@ -16,6 +16,35 @@ name: "unhinged-universal-system"
 description: "Voice-driven UI generation with LLM intelligence and CDC audit trail"
 
 # ============================================================================
+# BUILD SYSTEM FEATURES (V1 ENHANCED)
+# ============================================================================
+
+build_system:
+  cache:
+    enabled: true
+    storage: "local"
+    ttl: "7d"
+    compression: true
+
+  parallelism:
+    max_workers: 4
+    dependency_aware: true
+
+  monitoring:
+    metrics_enabled: true
+    performance_tracking: true
+
+  ai_integration:
+    context_generation: true
+    error_explanation: true
+    onboarding_assistance: true
+
+  optimization:
+    incremental_builds: true
+    smart_invalidation: true
+    parallel_proto_gen: true
+
+# ============================================================================
 # ENVIRONMENTS
 # ============================================================================
 
@@ -260,6 +289,74 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "2181:2181"
+
+  # Static HTML registry generation
+  generate-registry:
+    description: "Generate static HTML file registry for control plane"
+    module: "registry_builder"
+    cache_strategy: "content_based"
+    parallel: false
+    inputs:
+      - "control/static_html/**/*.html"
+    outputs:
+      - "control/static_html/shared/registry.js"
+    steps:
+      - name: "Scan static HTML files"
+        command: "python3 -c 'from build.modules.registry_builder import RegistryBuilder; from build.modules import BuildContext; from pathlib import Path; rb = RegistryBuilder(); ctx = BuildContext(Path(\".\"), \"generate-registry\", {}); result = rb.build(ctx); exit(0 if result.success else 1)'"
+        cache_key: "static_html_registry"
+
+  # Enhanced development targets (v1)
+  dev-fast:
+    description: "Fast development build with intelligent caching"
+    dependencies: ["generate-registry"]  # Add registry dependency
+    cache_strategy: "aggressive"
+    parallel: true
+    incremental: true
+    steps:
+      - name: "Generate protobuf (if changed)"
+        command: "cd proto && ./build.sh"
+        condition: "proto_files_changed"
+        cache_key: "proto_generation"
+
+      - name: "Start infrastructure (parallel)"
+        command: "docker compose -f docker-compose.dev.yml up -d database kafka zookeeper"
+        parallel_group: "infrastructure"
+
+      - name: "Build backend (incremental)"
+        command: "cd backend && ./gradlew compileKotlin --build-cache"
+        parallel_group: "services"
+        cache_key: "backend_compile"
+
+      - name: "Build frontend (incremental)"
+        command: "cd frontend && npm run build:dev"
+        parallel_group: "services"
+        cache_key: "frontend_compile"
+
+  dev-full:
+    description: "Complete development environment with all services"
+    dependencies: ["dev-fast"]
+    steps:
+      - name: "Start all services"
+        command: "docker compose -f docker-compose.dev.yml up -d"
+        wait_for:
+          - "http://localhost:8080/health"
+          - "http://localhost:3000"
+
+      - name: "Run health checks"
+        command: "make status"
+
+  test-fast:
+    description: "Fast test suite for development"
+    dependencies: ["dev-fast"]
+    parallel: true
+    steps:
+      - name: "Backend unit tests"
+        command: "cd backend && ./gradlew test --parallel"
+        parallel_group: "unit_tests"
+
+      - name: "Frontend unit tests"
+        command: "cd frontend && npm run test:unit"
+        parallel_group: "unit_tests"
 
 # ============================================================================
 # WORKFLOWS
