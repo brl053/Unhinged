@@ -4,117 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎛️ Service Orchestration - Unhinged Control</title>
-    <link rel="stylesheet" href="shared/styles.css">
+    <link rel="stylesheet" href="shared/theme.css">
     <script src="shared/config.js"></script>
     <script src="shared/service-orchestration.js"></script>
     <style>
         /* Service Orchestration specific styles */
-        .orchestration-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .orchestration-header {
+        .page-header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: var(--spacing-2xl);
+            background: var(--color-background);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
         }
 
-        .orchestration-header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        .page-header h1 {
+            background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .orchestration-header p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
         /* Service Tiers */
-        .service-tiers {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
         .tier {
-            background: var(--surface-color);
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
+            background: var(--color-background);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow);
             transition: var(--transition);
         }
 
         .tier:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-lg);
         }
 
         .tier-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1.5rem;
+            margin-bottom: var(--spacing-lg);
             flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .tier-info h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
+            gap: var(--spacing-md);
         }
 
         .tier-description {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
             margin: 0;
         }
 
         .tier-controls {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: var(--spacing-md);
         }
 
         .tier-status {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
+            gap: var(--spacing-sm);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
         }
 
         .tier-toggle {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            min-width: 80px;
-        }
-
-        .tier-toggle:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        .tier-toggle:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            min-width: 100px;
         }
 
         .tier-toggle.stop {
-            background: #ef4444;
+            background: var(--color-danger);
         }
 
         .tier-toggle.stop:hover {
@@ -125,39 +86,39 @@
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
+            gap: var(--spacing-md);
         }
 
         .service-card {
-            background: var(--background-color);
-            border: 1px solid var(--border-color);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
             border-radius: var(--border-radius);
-            padding: 1rem;
+            padding: var(--spacing-md);
             transition: var(--transition);
         }
 
         .service-card:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow);
         }
 
         .service-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: var(--spacing-sm);
         }
 
         .service-header h4 {
             margin: 0;
-            font-size: 1.1rem;
-            color: var(--text-primary);
+            font-size: var(--font-size-lg);
+            color: var(--color-text-primary);
         }
 
         .service-description {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin: 0 0 1rem 0;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin: 0 0 var(--spacing-md) 0;
             line-height: 1.4;
         }
 
@@ -165,14 +126,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
         }
 
         .service-port {
             font-family: 'Courier New', monospace;
-            background: var(--surface-color);
-            padding: 0.25rem 0.5rem;
+            background: var(--color-background);
+            padding: var(--spacing-xs) var(--spacing-sm);
             border-radius: 4px;
             font-weight: 600;
         }
@@ -182,130 +143,70 @@
             opacity: 0.7;
         }
 
-        /* Status Indicators */
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            transition: var(--transition);
-        }
-
-        .status-indicator.status-running {
-            background: var(--success-color);
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-        }
-
-        .status-indicator.status-stopped {
-            background: #6b7280;
-            border-color: #9ca3af;
-        }
-
-        .status-indicator.status-unhealthy {
-            background: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
-        }
-
+        /* Status Indicators - extend theme */
         .status-indicator.status-partial {
-            background: #f59e0b;
+            background: var(--color-warning);
             box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
         }
 
-        .status-indicator.status-unknown {
-            background: #6b7280;
-            border: 2px dashed #9ca3af;
+        .status-indicator.status-healthy {
+            background: var(--color-success);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
         }
 
-        .status-indicator.status-healthy {
-            background: var(--success-color);
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        .status-indicator.status-unknown {
+            background: var(--color-text-secondary);
+            border: 2px dashed #9ca3af;
         }
 
         /* Resource Monitor */
         .resource-monitor {
-            background: var(--surface-color);
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .resource-monitor h3 {
-            margin-bottom: 1rem;
-            color: var(--text-primary);
+            background: var(--color-background);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            margin-top: var(--spacing-xl);
+            box-shadow: var(--shadow);
         }
 
         .resource-bars {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            gap: var(--spacing-md);
         }
 
         .resource-bar {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: var(--spacing-sm);
         }
 
         .resource-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
             display: flex;
             justify-content: space-between;
         }
 
         .resource-progress {
             height: 8px;
-            background: var(--border-color);
+            background: var(--color-border);
             border-radius: 4px;
             overflow: hidden;
         }
 
         .resource-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+            background: linear-gradient(90deg, var(--color-success), var(--color-primary));
             transition: width 0.3s ease;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .quick-action {
-            background: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .quick-action:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .quick-action.danger {
-            background: #ef4444;
-        }
-
-        .quick-action.danger:hover {
-            background: #dc2626;
         }
 
         /* Notifications */
         .notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
+            top: var(--spacing-lg);
+            right: var(--spacing-lg);
+            padding: var(--spacing-md) var(--spacing-lg);
             border-radius: var(--border-radius);
             color: white;
             font-weight: 600;
@@ -313,77 +214,46 @@
             animation: slideIn 0.3s ease;
         }
 
-        .notification-info {
-            background: var(--primary-color);
-        }
-
-        .notification-success {
-            background: var(--success-color);
-        }
-
-        .notification-error {
-            background: #ef4444;
-        }
+        .notification-info { background: var(--color-primary); }
+        .notification-success { background: var(--color-success); }
+        .notification-error { background: var(--color-danger); }
 
         @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .orchestration-container {
-                padding: 1rem;
-            }
-
-            .tier-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .tier-controls {
-                justify-content: space-between;
-            }
-
-            .services-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                flex-direction: column;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="orchestration-container">
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navigation">
+            <a href="index.html" class="nav-link">🏠 Home</a>
+            <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
+            <a href="service-orchestration.html" class="nav-link active">🎛️ Service Orchestration</a>
+            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
+            <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
+            <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
+        </nav>
+
         <!-- Header -->
-        <div class="orchestration-header">
+        <div class="page-header">
             <h1>🎛️ Service Orchestration</h1>
             <p>Manage service composition and resource allocation with scientific precision</p>
-            
-            <!-- Navigation -->
-            <div class="quick-actions">
-                <button class="quick-action" onclick="location.href='index.html'">
-                    ← Back to Control Plane
-                </button>
-                <button class="quick-action" onclick="location.href='dag-control.html'">
+
+            <!-- Quick Actions -->
+            <div class="flex flex--gap-md flex--wrap flex--center mt-lg">
+                <button class="button button--secondary" onclick="location.href='dag-control.html'">
                     🎛️ DAG Control
                 </button>
-                <button class="quick-action danger" onclick="confirmStopAll()">
+                <button class="button button--danger" onclick="confirmStopAll()">
                     🛑 Stop All Services
                 </button>
             </div>
         </div>
 
         <!-- Service Tiers -->
-        <div id="service-tiers" class="service-tiers">
+        <div id="service-tiers">
             <!-- Dynamically populated by JavaScript -->
         </div>
 

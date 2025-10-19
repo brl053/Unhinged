@@ -229,7 +229,7 @@ class ServiceOrchestrator {
                         <span class="status-indicator"></span>
                         <span class="status-text">Checking...</span>
                     </div>
-                    <button class="tier-toggle" data-tier="${tierId}">
+                    <button class="button tier-toggle" data-tier="${tierId}">
                         Toggle
                     </button>
                 </div>
