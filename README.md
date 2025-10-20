@@ -12,10 +12,11 @@ Opens a health dashboard in your browser.
 
 ## 📁 **What's Here**
 
-- A health dashboard that shows if things are working
-- Some AI services (speech, text, images)
-- A few databases
-- Some web pages
+- A health dashboard (HTML/JS)
+- Three AI services (Python)
+- A persistence platform (Kotlin)
+- Some databases (Docker)
+- A build system
 
 That's about it.
 
@@ -23,13 +24,13 @@ That's about it.
 
 ```
 📦 Unhinged/
-├── backend/             # Server code
-├── frontend/            # Web interface
-├── services/            # AI stuff
+├── services/            # AI services (Python)
 │   ├── speech-to-text/  # Converts voice to text
 │   ├── text-to-speech/  # Converts text to voice
 │   └── vision-ai/       # Looks at images
-├── control/             # Health dashboard
+├── platforms/           # Persistence platform (Kotlin)
+├── control/             # Health dashboard (HTML/JS)
+├── build/               # Build system
 └── docs/                # Some notes
 ```
 
