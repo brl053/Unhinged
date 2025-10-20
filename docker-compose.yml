@@ -179,6 +179,34 @@ services:
   # MongoDB removed - using Cassandra for NoSQL/column store instead
 
   # ==========================================================================
+  # Elasticsearch - General Text Search & Full-Text Indexing
+  # ==========================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: unhinged-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================================================
   # Weaviate - Vector Database
   # ==========================================================================
   weaviate:
@@ -234,7 +262,7 @@ services:
     image: chromadb/chroma:latest
     container_name: unhinged-chroma
     ports:
-      - "8000:8000"
+      - "8084:8000"
     environment:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_HTTP_PORT=8000
@@ -249,10 +277,42 @@ services:
       retries: 3
 
   # ==========================================================================
-  # Apache Spark - Data Lake Processing Engine
+  # Apache Flink - Stream Processing Engine (Polyglot Events)
+  # ==========================================================================
+  flink-jobmanager:
+    image: flink:latest
+    container_name: flink-jobmanager
+    ports:
+      - "8081:8081"  # Flink Web UI
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    command: jobmanager
+    volumes:
+      - flink-data:/opt/flink/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  flink-taskmanager:
+    image: flink:latest
+    container_name: flink-taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    command: taskmanager
+    volumes:
+      - flink-data:/opt/flink/data
+    depends_on:
+      - flink-jobmanager
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Apache Spark - Data Lake Processing Engine (Batch)
   # ==========================================================================
   spark-master:
-    image: bitnami/spark:3.5.0
+    image: apache/spark:3.5.0
     container_name: unhinged-spark-master
     environment:
       - SPARK_MODE=master
@@ -277,7 +337,7 @@ services:
       retries: 3
 
   spark-worker:
-    image: bitnami/spark:3.5.0
+    image: apache/spark:3.5.0
     container_name: unhinged-spark-worker
     environment:
       - SPARK_MODE=worker
@@ -339,7 +399,7 @@ services:
       KAFKA_CLUSTERS_0_NAME: local-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     ports:
-      - "8090:8080"
+      - "8085:8080"
 
 volumes:
   llm-models:  # Declare the volume to store the model data
@@ -348,6 +408,8 @@ volumes:
   cassandra-data:  # Cassandra NoSQL and column data
   chroma-data:  # Chroma vector database data
   weaviate-data:  # Weaviate vector database data
+  elasticsearch-data:  # Elasticsearch full-text search data
+  flink-data:  # Flink stream processing data
   # mongodb-data removed - using Cassandra instead
   spark-work:  # Spark working directory
   vision-models:  # Store vision model cache
