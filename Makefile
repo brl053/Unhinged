@@ -499,38 +499,38 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: ## Start the control plane only - use Service Orchestration UI to manage Docker services
-	$(call log_info,🎛️ Starting Unhinged Control Plane...)
+start: ## Generate HTML files and open control interface
+	$(call log_info,🎛️ Generating Unhinged Control Interface...)
 	@$(MAKE) ensure-docker
-	@mkdir -p generated/static_html
-	@python3 build/generate-registry.py
-	@echo "🔄 Stopping any existing DAG server..."
-	@-pkill -f "python3 -m control" 2>/dev/null || true
-	@sleep 1
-	@echo "🚀 Launching Control Plane on port 9000..."
-	@python3 -m control --port 9000 &
-	@sleep 3
-	@echo "🌐 Opening browser interface..."
-	@./control/open.sh --toc
+	@$(MAKE) generate
 	@echo ""
-	@echo "✅ Control Plane started successfully!"
-	@echo "📚 Table of Contents: http://localhost:9000/static_html/table-of-contents.html"
-	@echo "🎛️  Service Orchestration: http://localhost:9000/static_html/service-orchestration.html"
-	@echo "📊 DAG Control: http://localhost:9000/static_html/dag-control.html"
-	@echo "🌐 System Status: http://localhost:9000/static_html/index.html"
+	@echo "✅ Control Interface ready!"
+	@echo "📚 Table of Contents: file://$(PWD)/control/static_html/table-of-contents.html"
+	@echo "🎛️  Service Orchestration: file://$(PWD)/control/static_html/index.html"
+	@echo "📝 Blog Editor: file://$(PWD)/control/static_html/blog-editor.html"
+	@echo "🔍 Persistence Platform: file://$(PWD)/control/static_html/persistence-platform.html"
 	@echo ""
-	@echo "💡 Use the Service Orchestration UI to start/stop Docker services"
-	@echo "⏹️  Press Ctrl+C to stop control plane"
+	@echo "💡 Open any HTML file directly in your browser"
+	@echo "🔄 Run 'make watch-html' to auto-rebuild on changes"
 
-start-all: ## Start control plane AND all Docker services (legacy - use Service Orchestration UI instead)
-	$(call log_info,🚀 Starting Control Plane + All Services...)
-	@$(MAKE) start &
-	@sleep 5
-	@echo "🐳 Starting Docker services..."
+watch-html: ## Watch for changes and auto-rebuild HTML files
+	$(call log_info,👀 Starting HTML build watcher...)
+	@python3 build/watch.py --interval 2
+
+watch-html-verbose: ## Watch HTML files with verbose output
+	$(call log_info,👀 Starting HTML build watcher (verbose)...)
+	@python3 build/watch.py --interval 2 --verbose
+
+start-services: ## Start Docker services only (database, kafka, etc.)
+	$(call log_info,🐳 Starting Docker services...)
+	@$(MAKE) ensure-docker
 	@docker compose up -d database zookeeper kafka kafka-ui
-	@sleep 10
-	@docker compose up -d backend frontend cdc-service llm
-	@echo "✅ All services started! Use Service Orchestration UI for management."
+	@sleep 5
+	@echo "✅ Docker services started!"
+	@echo "🗄️  Database: localhost:5432"
+	@echo "📊 Kafka UI: http://localhost:8080"
+	@echo ""
+	@echo "⏹️  Use 'make stop' to stop services"
 
 ensure-docker: ## Ensure Docker is available (with installation help)
 	@if ! command -v docker >/dev/null 2>&1; then \
