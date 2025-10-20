@@ -1,1 +1,0 @@
-../../../generated/static_html/registry.js

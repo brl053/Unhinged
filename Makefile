@@ -245,8 +245,7 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry)
 	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel" || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Static HTML registry generation$(RESET)"
 	@bash -c "source venv/bin/activate && python3 build/build.py build generate-registry" || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
-	@echo "$(YELLOW)📋 Creating symlinks for generated files...$(RESET)"
-	@$(MAKE) link-generated-files
+
 	$(call log_success,Build artifacts generation completed)
 
 generate-clients: ## Generate client libraries from protos
@@ -267,12 +266,7 @@ python-deps: ## Install/update Python dependencies
 	@bash -c "source venv/bin/activate && pip install -r requirements.txt"
 	$(call log_success,Python dependencies installed)
 
-link-generated-files: ## Create symlinks from /generated to expected locations
-	$(call log_info,🔗 Creating symlinks for generated files...)
-	@mkdir -p control/static_html/shared
-	@test -f generated/static_html/registry.js && ln -sf ../../../generated/static_html/registry.js control/static_html/shared/registry.js || echo "$(YELLOW)⚠️ registry.js not found$(RESET)"
-	@test -f generated/static_html/api-clients.js && ln -sf ../../../generated/static_html/api-clients.js control/static_html/shared/api-clients.js || echo "$(YELLOW)⚠️ api-clients.js not found$(RESET)"
-	$(call log_success,Generated file symlinks created)
+
 
 # ============================================================================
 # Protobuf Operations
@@ -510,7 +504,6 @@ start: ## Start the control plane only - use Service Orchestration UI to manage 
 	@$(MAKE) ensure-docker
 	@mkdir -p generated/static_html
 	@python3 build/generate-registry.py
-	@$(MAKE) link-generated-files
 	@echo "🔄 Stopping any existing DAG server..."
 	@-pkill -f "python3 -m control" 2>/dev/null || true
 	@sleep 1
@@ -766,14 +759,7 @@ clean-all: ## Clean everything including Docker
 	$(call log_warning,🧹 Cleaning everything...)
 	@python3 build/build.py clean --all
 	@$(MAKE) clean-docker
-	@$(MAKE) clean-generated-symlinks
 	$(call log_success,Complete cleanup finished)
-
-clean-generated-symlinks: ## Clean symlinks to generated files
-	$(call log_warning,🧹 Cleaning generated file symlinks...)
-	@rm -f control/static_html/shared/registry.js
-	@rm -f control/static_html/shared/api-clients.js
-	$(call log_success,Generated symlinks cleaned)
 
 clean-docker: ## Clean Docker resources
 	$(call log_warning,🧹 Cleaning Docker resources...)
