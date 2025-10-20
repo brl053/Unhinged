@@ -1,0 +1,12 @@
+# pkg-config file for Unhinged Proto Clients (C++)
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: unhinged-proto-clients
+Description: Unhinged Protocol Buffer Client Libraries (C++)
+Version: 1.0.0
+Requires: protobuf grpc++
+Libs: -L${libdir} -lunhinged-proto-clients
+Cflags: -I${includedir}

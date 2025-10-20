@@ -109,8 +109,9 @@ help: ## Show this help message
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
 	@echo ""
 	@echo "$(PURPLE)🚀 Core Build Commands (v1):$(RESET)"
-	@echo "  $(GREEN)make generate$(RESET)           Generate all build artifacts (protos, clients, registry, docs)"
-	@echo "  $(GREEN)make generate-fast$(RESET)      Generate essential artifacts only (protos + clients)"
+	@echo "  $(GREEN)make setup-python$(RESET)       Setup Python virtual environment and dependencies"
+	@echo "  $(GREEN)make generate$(RESET)           Generate all build artifacts (polyglot proto clients, registry)"
+	@echo "  $(GREEN)make generate-clients$(RESET)   Generate client libraries from protos"
 	@echo "  $(GREEN)make build$(RESET)              Fast development build with intelligent caching"
 	@echo "  $(GREEN)make dev$(RESET)                Start development environment"
 	@echo "  $(GREEN)make test$(RESET)               Run tests and validate system"
@@ -234,19 +235,35 @@ db-backup: ## Backup database
 # Code Generation Operations
 # ============================================================================
 
-generate: ## Generate all build artifacts (protos, clients, registry)
+generate: ## Generate all build artifacts (polyglot proto clients, registry)
 	$(call log_info,🔧 Generating all build artifacts...)
-	@echo "$(YELLOW)📋 Creating generated directory...$(RESET)"
-	@mkdir -p generated/typescript/clients generated/javascript/clients generated/python/clients generated/kotlin/clients generated/go/clients
-	@echo "$(YELLOW)📋 Proto generation skipped - dependencies missing$(RESET)"
-	@echo "$(YELLOW)📋 Client generation skipped - dependencies missing$(RESET)"
-	@echo "$(YELLOW)📋 Registry generation skipped - dependencies missing$(RESET)"
-	$(call log_success,Generated directory structure created)
+	@echo "$(YELLOW)📋 Activating Python virtual environment...$(RESET)"
+	@test -d venv || (echo "$(RED)❌ Virtual environment not found. Run: python3 -m venv venv$(RESET)" && exit 1)
+	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
+	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
+	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel" || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
+	@echo "$(YELLOW)📋 Static HTML registry generation$(RESET)"
+	@bash -c "source venv/bin/activate && python3 build/build.py build generate-registry" || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
+	$(call log_success,Build artifacts generation completed)
 
 generate-clients: ## Generate client libraries from protos
 	$(call log_info,🔧 Generating client libraries...)
-	@python3 build/build.py build proto-clients-all --parallel
+	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel"
 	$(call log_success,Client libraries generated)
+
+setup-python: ## Setup Python virtual environment and install dependencies
+	$(call log_info,🐍 Setting up Python virtual environment...)
+	@test -d venv || python3 -m venv venv
+	@bash -c "source venv/bin/activate && pip install --upgrade pip"
+	@bash -c "source venv/bin/activate && pip install -r requirements.txt"
+	$(call log_success,Python environment setup complete)
+
+python-deps: ## Install/update Python dependencies
+	$(call log_info,📦 Installing Python dependencies...)
+	@test -d venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
+	@bash -c "source venv/bin/activate && pip install -r requirements.txt"
+	$(call log_success,Python dependencies installed)
 
 # ============================================================================
 # Protobuf Operations
@@ -254,7 +271,7 @@ generate-clients: ## Generate client libraries from protos
 
 proto-gen: ## Generate protobuf code
 	$(call log_info,🔧 Generating protobuf code...)
-	@cd proto && ./build.sh || echo "$(YELLOW)⚠️ Proto generation failed$(RESET)"
+	@python3 build/build.py build proto-clients-kotlin
 	$(call log_success,Protobuf code generated)
 
 proto-clean: ## Clean generated protobuf code

@@ -1,5 +1,5 @@
 // Auto-generated registry - DO NOT EDIT MANUALLY
-// Generated at: 2025-10-19T17:20:44.212986
+// Generated at: 2025-10-19T21:30:10.946154
 // Run 'make start' to regenerate
 
 /**
@@ -12,43 +12,52 @@
  * @llm-token unhinged-registry: Complete file registry for static HTML interface
  */
 window.UNHINGED_REGISTRY = {
-  "/control/static_html/persistence-dev-tool.html": {
-    "title": "\ud83c\udfd7\ufe0f Persistence Platform Dev Tool",
-    "description": "",
-    "category": "other",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760918328.2993157,
-    "size": 16023
-  },
-  "/control/static_html/text-test.html": {
-    "title": "\ud83d\ude80 GPU-Accelerated LLM Test - Unhinged AI",
-    "description": "",
-    "category": "ai-services",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760918328.3125508,
-    "size": 31241
-  },
-  "/control/static_html/grpc-test.html": {
-    "title": "\ud83d\udd27 gRPC Direct Client Test - Unhinged Control Plane",
-    "description": "",
-    "category": "other",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760918328.306252,
-    "size": 15214
-  },
   "/control/static_html/table-of-contents.html": {
     "title": "\ud83d\udcda Table of Contents",
     "description": "",
     "category": "other",
     "capabilities": [],
     "exists": true,
-    "lastModified": 1760918328.3093898,
-    "size": 16481
+    "lastModified": 1760919867.4941573,
+    "size": 16656
   },
-  "/control/static_html/chat.html": {
+  "/control/static_html/index2.html": {
+    "title": "\ud83c\udf9b\ufe0f Unhinged Mission Control v2 - Tab-Based Operations Center",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760928152.1506603,
+    "size": 40578
+  },
+  "/control/static_html/validate-standardization.html": {
+    "title": "\ud83d\udd0d Standardization Validator - Unhinged Control Plane",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760919948.2730174,
+    "size": 23978
+  },
+  "/control/static_html/persistence-platform.html": {
+    "title": "\ud83d\udcbe Persistence Platform - Unified Database Management",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760929148.0366623,
+    "size": 24686
+  },
+  "/control/static_html/legacy/grpc-test.html": {
+    "title": "\ud83d\udd27 gRPC Direct Client Test - Unhinged Control Plane",
+    "description": "",
+    "category": "other",
+    "capabilities": [],
+    "exists": true,
+    "lastModified": 1760919860.7174625,
+    "size": 15390
+  },
+  "/control/static_html/legacy/chat.html": {
     "title": "\ud83d\udcac Chat Interface - Unhinged Control Plane",
     "description": "",
     "category": "other",
@@ -57,16 +66,7 @@ window.UNHINGED_REGISTRY = {
     "lastModified": 1760918328.320376,
     "size": 21138
   },
-  "/control/static_html/index.html": {
-    "title": "\ud83c\udf9b\ufe0f Unhinged Mission Control - System Operations Center",
-    "description": "",
-    "category": "root",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760918342.9448032,
-    "size": 46130
-  },
-  "/control/static_html/accessibility-test.html": {
+  "/control/static_html/legacy/accessibility-test.html": {
     "title": "\ud83e\uddea Accessibility & Responsive Design Test - Unhinged Control Plane",
     "description": "",
     "category": "other",
@@ -75,7 +75,7 @@ window.UNHINGED_REGISTRY = {
     "lastModified": 1760919587.920255,
     "size": 16102
   },
-  "/control/static_html/image-test.html": {
+  "/control/static_html/legacy/image-test.html": {
     "title": "\ud83d\udc41\ufe0f Vision AI Test - Unhinged Multi-Modal Platform",
     "description": "",
     "category": "ai-services",
@@ -84,16 +84,7 @@ window.UNHINGED_REGISTRY = {
     "lastModified": 1760918296.8305762,
     "size": 24050
   },
-  "/control/static_html/service-orchestration.html": {
-    "title": "\ud83c\udf9b\ufe0f Service Orchestration - Unhinged Control",
-    "description": "",
-    "category": "other",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760918328.3182955,
-    "size": 12084
-  },
-  "/control/static_html/dag-control.html": {
+  "/control/static_html/legacy/dag-control.html": {
     "title": "\ud83c\udf9b\ufe0f DAG Control Plane - Unhinged AI",
     "description": "",
     "category": "control",
@@ -101,78 +92,6 @@ window.UNHINGED_REGISTRY = {
     "exists": true,
     "lastModified": 1760918328.3154469,
     "size": 16190
-  },
-  "/control/static_html/voice-test.html": {
-    "title": "\ud83c\udfa4 Voice & Audio Processing - Unhinged Multi-Modal Platform",
-    "description": "",
-    "category": "ai-services",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760918328.3027406,
-    "size": 19497
-  },
-  "/control/static_html/html-links/index.html": {
-    "title": "\ud83e\udde0 Unhinged HTML Files",
-    "description": "",
-    "category": "root",
-    "capabilities": [],
-    "exists": true,
-    "lastModified": 1760830716.0698452,
-    "size": 8295
-  },
-  "/control/static_html/html-links/static-dashboard.html": {
-    "title": "static-dashboard.html",
-    "description": "Error reading file: [Errno 2] No such file or directory: '/home/e-bliss-station-1/Projects/Unhinged/control/static_html/html-links/static-dashboard.html'",
-    "category": "error",
-    "capabilities": [],
-    "exists": false,
-    "lastModified": 0,
-    "size": 0
-  },
-  "/control/static_html/html-links/audio.html": {
-    "title": "audio.html",
-    "description": "Error reading file: [Errno 2] No such file or directory: '/home/e-bliss-station-1/Projects/Unhinged/control/static_html/html-links/audio.html'",
-    "category": "error",
-    "capabilities": [],
-    "exists": false,
-    "lastModified": 0,
-    "size": 0
-  },
-  "/control/static_html/html-links/context.html": {
-    "title": "context.html",
-    "description": "Error reading file: [Errno 2] No such file or directory: '/home/e-bliss-station-1/Projects/Unhinged/control/static_html/html-links/context.html'",
-    "category": "error",
-    "capabilities": [],
-    "exists": false,
-    "lastModified": 0,
-    "size": 0
-  },
-  "/control/static_html/html-links/static-main.html": {
-    "title": "static-main.html",
-    "description": "Error reading file: [Errno 2] No such file or directory: '/home/e-bliss-station-1/Projects/Unhinged/control/static_html/html-links/static-main.html'",
-    "category": "error",
-    "capabilities": [],
-    "exists": false,
-    "lastModified": 0,
-    "size": 0
-  },
-  "/control/static_html/html-links/dashboard.html": {
-    "title": "dashboard.html",
-    "description": "Error reading file: [Errno 2] No such file or directory: '/home/e-bliss-station-1/Projects/Unhinged/control/static_html/html-links/dashboard.html'",
-    "category": "error",
-    "capabilities": [],
-    "exists": false,
-    "lastModified": 0,
-    "size": 0
-  },
-  "/control/static_html/html-links/vision.html": {
-    "title": "vision.html",
-    "description": "Error reading file: [Errno 2] No such file or directory: '/home/e-bliss-station-1/Projects/Unhinged/control/static_html/html-links/vision.html'",
-    "category": "error",
-    "capabilities": [],
-    "exists": false,
-    "lastModified": 0,
-    "size": 0
   }
 };
 
@@ -189,109 +108,64 @@ window.UNHINGED_FILE_STRUCTURE = {
   "control/static_html": {
     "type": "directory",
     "children": {
-      "MISSION-CONTROL-IMPROVEMENTS.md": {
+      "index2.html": {
         "type": "file",
-        "title": "MISSION-CONTROL-IMPROVEMENTS.md",
-        "description": ".MD file",
-        "category": "resource",
-        "size": 8046,
-        "lastModified": 1760897575.5016174,
-        "exists": true
-      },
-      "README-REVERSE-HEADLESS.md": {
-        "type": "file",
-        "title": "README-REVERSE-HEADLESS.md",
-        "description": ".MD file",
-        "category": "resource",
-        "size": 7756,
-        "lastModified": 1760866143.508998,
-        "exists": true
-      },
-      "accessibility-test.html": {
-        "type": "file",
-        "title": "\ud83e\uddea Accessibility & Responsive Design Test - Unhinged Control Plane",
+        "title": "\ud83c\udf9b\ufe0f Unhinged Mission Control v2 - Tab-Based Operations Center",
         "description": "",
         "category": "other",
-        "size": 16102,
-        "lastModified": 1760919587.920255,
+        "size": 40578,
+        "lastModified": 1760928152.1506603,
         "exists": true
       },
-      "chat.html": {
-        "type": "file",
-        "title": "\ud83d\udcac Chat Interface - Unhinged Control Plane",
-        "description": "",
-        "category": "other",
-        "size": 21138,
-        "lastModified": 1760918328.320376,
-        "exists": true
-      },
-      "dag-control.html": {
-        "type": "file",
-        "title": "\ud83c\udf9b\ufe0f DAG Control Plane - Unhinged AI",
-        "description": "",
-        "category": "control",
-        "size": 16190,
-        "lastModified": 1760918328.3154469,
-        "exists": true
-      },
-      "grpc-test.html": {
-        "type": "file",
-        "title": "\ud83d\udd27 gRPC Direct Client Test - Unhinged Control Plane",
-        "description": "",
-        "category": "other",
-        "size": 15214,
-        "lastModified": 1760918328.306252,
-        "exists": true
-      },
-      "html-links": {
+      "legacy": {
         "type": "directory",
         "children": {
-          "aliases.sh": {
+          "accessibility-test.html": {
             "type": "file",
-            "title": "aliases.sh",
-            "description": ".SH file",
-            "category": "resource",
-            "size": 1734,
-            "lastModified": 1760830716.0698261,
-            "exists": true
-          },
-          "index.html": {
-            "type": "file",
-            "title": "\ud83e\udde0 Unhinged HTML Files",
+            "title": "\ud83e\uddea Accessibility & Responsive Design Test - Unhinged Control Plane",
             "description": "",
-            "category": "root",
-            "size": 8295,
-            "lastModified": 1760830716.0698452,
+            "category": "other",
+            "size": 16102,
+            "lastModified": 1760919587.920255,
             "exists": true
           },
-          "open.sh": {
+          "chat.html": {
             "type": "file",
-            "title": "open.sh",
-            "description": ".SH file",
-            "category": "resource",
-            "size": 2872,
-            "lastModified": 1760830716.0698452,
+            "title": "\ud83d\udcac Chat Interface - Unhinged Control Plane",
+            "description": "",
+            "category": "other",
+            "size": 21138,
+            "lastModified": 1760918328.320376,
+            "exists": true
+          },
+          "dag-control.html": {
+            "type": "file",
+            "title": "\ud83c\udf9b\ufe0f DAG Control Plane - Unhinged AI",
+            "description": "",
+            "category": "control",
+            "size": 16190,
+            "lastModified": 1760918328.3154469,
+            "exists": true
+          },
+          "grpc-test.html": {
+            "type": "file",
+            "title": "\ud83d\udd27 gRPC Direct Client Test - Unhinged Control Plane",
+            "description": "",
+            "category": "other",
+            "size": 15390,
+            "lastModified": 1760919860.7174625,
+            "exists": true
+          },
+          "image-test.html": {
+            "type": "file",
+            "title": "\ud83d\udc41\ufe0f Vision AI Test - Unhinged Multi-Modal Platform",
+            "description": "",
+            "category": "ai-services",
+            "size": 24050,
+            "lastModified": 1760918296.8305762,
             "exists": true
           }
         }
-      },
-      "image-test.html": {
-        "type": "file",
-        "title": "\ud83d\udc41\ufe0f Vision AI Test - Unhinged Multi-Modal Platform",
-        "description": "",
-        "category": "ai-services",
-        "size": 24050,
-        "lastModified": 1760918296.8305762,
-        "exists": true
-      },
-      "index.html": {
-        "type": "file",
-        "title": "\ud83c\udf9b\ufe0f Unhinged Mission Control - System Operations Center",
-        "description": "",
-        "category": "root",
-        "size": 46130,
-        "lastModified": 1760918342.9448032,
-        "exists": true
       },
       "network": {
         "type": "directory",
@@ -398,22 +272,13 @@ window.UNHINGED_FILE_STRUCTURE = {
           }
         }
       },
-      "persistence-dev-tool.html": {
+      "persistence-platform.html": {
         "type": "file",
-        "title": "\ud83c\udfd7\ufe0f Persistence Platform Dev Tool",
+        "title": "\ud83d\udcbe Persistence Platform - Unified Database Management",
         "description": "",
         "category": "other",
-        "size": 16023,
-        "lastModified": 1760918328.2993157,
-        "exists": true
-      },
-      "service-orchestration.html": {
-        "type": "file",
-        "title": "\ud83c\udf9b\ufe0f Service Orchestration - Unhinged Control",
-        "description": "",
-        "category": "other",
-        "size": 12084,
-        "lastModified": 1760918328.3182955,
+        "size": 24686,
+        "lastModified": 1760929148.0366623,
         "exists": true
       },
       "shared": {
@@ -437,13 +302,31 @@ window.UNHINGED_FILE_STRUCTURE = {
             "lastModified": 1760915038.0957146,
             "exists": true
           },
+          "api-clients.js": {
+            "type": "file",
+            "title": "api-clients.js",
+            "description": ".JS file",
+            "category": "resource",
+            "size": 1749,
+            "lastModified": 1760934609.8521924,
+            "exists": true
+          },
+          "api-integration.js": {
+            "type": "file",
+            "title": "api-integration.js",
+            "description": ".JS file",
+            "category": "resource",
+            "size": 10409,
+            "lastModified": 1760928139.2517772,
+            "exists": true
+          },
           "components.js": {
             "type": "file",
             "title": "components.js",
             "description": ".JS file",
             "category": "resource",
-            "size": 15034,
-            "lastModified": 1760919528.0441518,
+            "size": 29254,
+            "lastModified": 1760926065.953242,
             "exists": true
           },
           "config.js": {
@@ -460,8 +343,8 @@ window.UNHINGED_FILE_STRUCTURE = {
             "title": "registry.js",
             "description": ".JS file",
             "category": "resource",
-            "size": 21111,
-            "lastModified": 1760918392.540615,
+            "size": 17316,
+            "lastModified": 1760934540.5332897,
             "exists": true
           },
           "service-orchestration.js": {
@@ -478,8 +361,8 @@ window.UNHINGED_FILE_STRUCTURE = {
             "title": "styles.css",
             "description": ".CSS file",
             "category": "resource",
-            "size": 14716,
-            "lastModified": 1760919470.0786147,
+            "size": 23229,
+            "lastModified": 1760925622.0519125,
             "exists": true
           },
           "theme.css": {
@@ -507,26 +390,8 @@ window.UNHINGED_FILE_STRUCTURE = {
         "title": "\ud83d\udcda Table of Contents",
         "description": "",
         "category": "other",
-        "size": 16481,
-        "lastModified": 1760918328.3093898,
-        "exists": true
-      },
-      "text-test.html": {
-        "type": "file",
-        "title": "\ud83d\ude80 GPU-Accelerated LLM Test - Unhinged AI",
-        "description": "",
-        "category": "ai-services",
-        "size": 31241,
-        "lastModified": 1760918328.3125508,
-        "exists": true
-      },
-      "text-test.html.backup": {
-        "type": "file",
-        "title": "text-test.html.backup",
-        "description": ".BACKUP file",
-        "category": "resource",
-        "size": 38056,
-        "lastModified": 1760830716.070069,
+        "size": 16656,
+        "lastModified": 1760919867.4941573,
         "exists": true
       },
       "update-navigation.sh": {
@@ -547,13 +412,13 @@ window.UNHINGED_FILE_STRUCTURE = {
         "lastModified": 1760916818.356188,
         "exists": true
       },
-      "voice-test.html": {
+      "validate-standardization.html": {
         "type": "file",
-        "title": "\ud83c\udfa4 Voice & Audio Processing - Unhinged Multi-Modal Platform",
+        "title": "\ud83d\udd0d Standardization Validator - Unhinged Control Plane",
         "description": "",
-        "category": "ai-services",
-        "size": 19497,
-        "lastModified": 1760918328.3027406,
+        "category": "other",
+        "size": 23978,
+        "lastModified": 1760919948.2730174,
         "exists": true
       }
     }

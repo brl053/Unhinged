@@ -1,0 +1,28 @@
+{
+  "name": "@unhinged/proto-clients-typescript",
+  "version": "1.0.0",
+  "description": "Generated TypeScript protobuf clients for Unhinged platform",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.9.0",
+    "grpc-web": "^1.4.0",
+    "google-protobuf": "^3.21.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/google-protobuf": "^3.15.0"
+  },
+  "keywords": [
+    "protobuf",
+    "grpc",
+    "typescript",
+    "unhinged"
+  ],
+  "author": "Unhinged Team",
+  "license": "MIT"
+}

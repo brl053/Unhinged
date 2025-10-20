@@ -1,9 +1,0 @@
-{
-  "version": "2.1.0",
-  "build": "2025.10.20",
-  "components": {
-    "proto": {
-      "hash": "06db344577ccba4271a458f7b5a8eed426a095b6f92ad515874b1b61db8e3cc9"
-    }
-  }
-}

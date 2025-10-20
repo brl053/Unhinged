@@ -326,22 +326,40 @@ services:
         cache_key: "proto_client_generation"
 
   proto-clients-all:
-    description: "Generate client libraries for all supported languages"
+    description: "Generate client libraries for all supported languages (TypeScript, C, Python, Kotlin)"
     module: "proto_client_builder"
     cache_strategy: "content_based"
     parallel: true
     inputs:
       - "proto/**/*.proto"
+      - "build/modules/polyglot_proto_engine.py"
+      - "build/modules/*_proto_handler.py"
     outputs:
       - "generated/typescript/clients/**/*.ts"
-      - "generated/javascript/clients/**/*.js"
+      - "generated/c/clients/**/*.h"
+      - "generated/c/clients/**/*.cc"
       - "generated/python/clients/**/*.py"
       - "generated/kotlin/clients/**/*.kt"
-      - "generated/go/clients/**/*.go"
+      - "control/static_html/shared/api-clients.js"
     steps:
-      - name: "Generate all language clients"
+      - name: "Generate polyglot proto clients"
         command: "python3 build/build.py build proto-clients-all"
-        cache_key: "proto_client_all_generation"
+        cache_key: "polyglot_proto_client_generation"
+
+  proto-clients-c:
+    description: "Generate C/C++ client libraries for high-performance services"
+    module: "proto_client_builder"
+    cache_strategy: "content_based"
+    parallel: false
+    inputs:
+      - "proto/**/*.proto"
+    outputs:
+      - "generated/c/clients/**/*.h"
+      - "generated/c/clients/**/*.cc"
+      - "generated/c/clients/CMakeLists.txt"
+    steps:
+      - name: "Generate C++ clients"
+        command: "python3 build/build.py build proto-clients-c"
 
   proto-clients-typescript:
     description: "Generate TypeScript client libraries only"

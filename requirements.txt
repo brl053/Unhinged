@@ -1,0 +1,45 @@
+# Unhinged Project Python Dependencies
+# Core build system dependencies
+pyyaml>=6.0
+psutil>=5.9.0
+
+# Protocol buffer and gRPC dependencies
+protobuf>=4.21.0
+grpcio>=1.50.0
+grpcio-tools>=1.50.0
+
+# AI/ML service dependencies
+torch>=2.0.0
+transformers>=4.30.0
+numpy>=1.24.0
+pillow>=9.5.0
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# Web framework dependencies
+fastapi>=0.100.0
+uvicorn>=0.22.0
+websockets>=11.0.0
+aiofiles>=23.0.0
+
+# Database client dependencies
+asyncpg>=0.28.0
+redis>=4.5.0
+cassandra-driver>=3.28.0
+
+# Development and testing dependencies
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.4.0
+
+# Documentation dependencies
+mkdocs>=1.5.0
+mkdocs-material>=9.1.0
+
+# Utility dependencies
+requests>=2.31.0
+aiohttp>=3.8.0
+click>=8.1.0
+rich>=13.4.0
