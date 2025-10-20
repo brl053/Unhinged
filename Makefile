@@ -235,23 +235,41 @@ db-backup: ## Backup database
 # Code Generation Operations
 # ============================================================================
 
-generate: ## Generate all build artifacts (polyglot proto clients, registry)
+# Force rebuild option (use FORCE=1 to bypass cache)
+CACHE_OPTION := $(if $(FORCE),--no-cache,)
+
+generate: ## Generate all build artifacts (polyglot proto clients, registry) [use FORCE=1 to bypass cache]
 	$(call log_info,🔧 Generating all build artifacts...)
+	$(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
 	@echo "$(YELLOW)📋 Activating Python virtual environment...$(RESET)"
 	@test -d venv || (echo "$(RED)❌ Virtual environment not found. Run: python3 -m venv venv$(RESET)" && exit 1)
 	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
 	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
 	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
-	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel" || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
+	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel $(CACHE_OPTION)" || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Static HTML registry generation$(RESET)"
-	@bash -c "source venv/bin/activate && python3 build/build.py build generate-registry" || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
+	@bash -c "source venv/bin/activate && python3 build/build.py build generate-registry $(CACHE_OPTION)" || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
 
 	$(call log_success,Build artifacts generation completed)
 
-generate-clients: ## Generate client libraries from protos
+generate-clients: ## Generate client libraries from protos [use FORCE=1 to bypass cache]
 	$(call log_info,🔧 Generating client libraries...)
-	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel"
+	$(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
+	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel $(CACHE_OPTION)"
 	$(call log_success,Client libraries generated)
+
+generate-force: ## Force regenerate all build artifacts (bypass cache)
+	$(call log_info,🔥 Force regenerating all build artifacts...)
+	@$(MAKE) generate FORCE=1
+
+generate-clients-force: ## Force regenerate client libraries (bypass cache)
+	$(call log_info,🔥 Force regenerating client libraries...)
+	@$(MAKE) generate-clients FORCE=1
+
+clean-cache: ## Clean build cache to force fresh builds
+	$(call log_info,🗑️ Cleaning build cache...)
+	@bash -c "source venv/bin/activate && python3 build/build.py clean --all" || echo "$(YELLOW)⚠️ Cache clean failed$(RESET)"
+	$(call log_success,Build cache cleaned)
 
 setup-python: ## Setup Python virtual environment and install dependencies
 	$(call log_info,🐍 Setting up Python virtual environment...)
