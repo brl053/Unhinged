@@ -12,16 +12,21 @@
       "framework": "spring-boot",
       "build_tool": "gradle",
       "port": 8080,
-      "dependencies": ["database", "llm"]
+      "dependencies": [
+        "database",
+        "llm"
+      ]
     },
     "frontend": {
-      "path": "./frontend", 
+      "path": "./frontend",
       "language": "typescript",
       "framework": "react",
       "build_tool": "webpack",
       "package_manager": "npm",
       "port": 3000,
-      "dependencies": ["backend"]
+      "dependencies": [
+        "backend"
+      ]
     },
     "database": {
       "path": "./database",
@@ -53,8 +58,16 @@
   },
   "docker": {
     "compose_file": "./docker-compose.yml",
-    "services": ["backend", "frontend", "database", "llm"],
-    "volumes": ["llm-models", "postgres-data"]
+    "services": [
+      "backend",
+      "frontend",
+      "database",
+      "llm"
+    ],
+    "volumes": [
+      "llm-models",
+      "postgres-data"
+    ]
   },
   "coding_standards": {
     "backend": {

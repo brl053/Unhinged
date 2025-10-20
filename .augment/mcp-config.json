@@ -2,27 +2,42 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem", "/Users/puyamoayer/projects/Unhinged"],
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/puyamoayer/projects/Unhinged"
+      ],
       "description": "File system access for the Unhinged monorepo"
     },
     "git": {
-      "command": "npx", 
-      "args": ["@modelcontextprotocol/server-git", "--repository", "/Users/puyamoayer/projects/Unhinged"],
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "/Users/puyamoayer/projects/Unhinged"
+      ],
       "description": "Git operations for version control"
     },
     "postgres": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-postgres", "--connection-string", "postgresql://postgres:postgres@localhost:5432/unhinged_db"],
+      "args": [
+        "@modelcontextprotocol/server-postgres",
+        "--connection-string",
+        "postgresql://postgres:postgres@localhost:5432/unhinged_db"
+      ],
       "description": "PostgreSQL database access (when running locally)"
     },
     "docker": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-docker"],
+      "args": [
+        "@modelcontextprotocol/server-docker"
+      ],
       "description": "Docker container management"
     },
     "web-search": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-brave-search"],
+      "args": [
+        "@modelcontextprotocol/server-brave-search"
+      ],
       "description": "Web search capabilities for research and documentation",
       "env": {
         "BRAVE_API_KEY": "${BRAVE_API_KEY}"
@@ -32,7 +47,7 @@
   "tools": {
     "enabled": [
       "filesystem",
-      "git", 
+      "git",
       "postgres",
       "docker",
       "web-search"
@@ -46,7 +61,7 @@
   "project_context": {
     "include_patterns": [
       "**/*.kt",
-      "**/*.ts", 
+      "**/*.ts",
       "**/*.tsx",
       "**/*.js",
       "**/*.jsx",
