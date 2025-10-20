@@ -258,19 +258,6 @@ generate-clients: ## Generate client libraries from protos [use FORCE=1 to bypas
 	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel $(CACHE_OPTION)"
 	$(call log_success,Client libraries generated)
 
-generate-force: ## Force regenerate all build artifacts (bypass cache)
-	$(call log_info,🔥 Force regenerating all build artifacts...)
-	@$(MAKE) generate FORCE=1
-
-generate-clients-force: ## Force regenerate client libraries (bypass cache)
-	$(call log_info,🔥 Force regenerating client libraries...)
-	@$(MAKE) generate-clients FORCE=1
-
-clean-cache: ## Clean build cache to force fresh builds
-	$(call log_info,🗑️ Cleaning build cache...)
-	@bash -c "source venv/bin/activate && python3 build/build.py clean --all" || echo "$(YELLOW)⚠️ Cache clean failed$(RESET)"
-	$(call log_success,Build cache cleaned)
-
 setup-python: ## Setup Python virtual environment and install dependencies
 	$(call log_info,🐍 Setting up Python virtual environment...)
 	@test -d venv || python3 -m venv venv
