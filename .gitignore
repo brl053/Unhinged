@@ -74,7 +74,10 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
+# Python build artifacts (but not our /build framework)
+**/build/lib/
+**/build/bdist*/
+**/build/temp*/
 develop-eggs/
 dist/
 downloads/
