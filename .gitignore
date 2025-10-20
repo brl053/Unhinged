@@ -55,6 +55,10 @@ yarn-error.log*
 /generated/reports/
 /generated/docs/architecture/
 
+# Build system cache and metrics (generated artifacts)
+.build-cache/
+.build-metrics/
+
 # Legacy generated protobuf files (being migrated to /generated)
 /frontend/src/types/generated/
 /frontend/src/types/proto/
