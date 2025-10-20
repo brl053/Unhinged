@@ -857,13 +857,13 @@ deps-test: ## Run dependency tracker tests
 deps-analyze: ## Analyze all dependencies in monorepo
 	$(call log_info,🔍 Analyzing dependencies...)
 	@mkdir -p generated/docs/architecture
-	@tools/dependency-tracker/build/deptrack analyze --root=. --output=generated/docs/architecture/dependencies.json --verbose
+	@build/tools/dependency-tracker/build/deptrack analyze --root=. --output=generated/docs/architecture/dependencies.json --verbose
 	$(call log_success,Dependency analysis complete)
 
 deps-graph: ## Generate dependency visualization
 	$(call log_info,📊 Generating dependency graph...)
 	@mkdir -p generated/docs/architecture
-	@tools/dependency-tracker/build/deptrack graph --format=mermaid --output=generated/docs/architecture/dependency-graph.md
+	@build/tools/dependency-tracker/build/deptrack graph --format=mermaid --output=generated/docs/architecture/dependency-graph.md
 	$(call log_success,Dependency graph generated)
 
 deps-validate: ## Validate dependency consistency
@@ -874,8 +874,24 @@ deps-validate: ## Validate dependency consistency
 deps-feature-dag: ## Generate feature dependency DAG
 	$(call log_info,🗺️ Generating feature DAG...)
 	@mkdir -p generated/docs/architecture
-	@tools/dependency-tracker/build/deptrack feature-dag --output=generated/docs/architecture/
+	@build/tools/dependency-tracker/build/deptrack feature-dag --output=generated/docs/architecture/
 	$(call log_success,Feature DAG generated)
+
+lint: ## Run polyglot linter on codebase
+	$(call log_info,🔍 Running polyglot linter...)
+	@python3 build/tools/polyglot-linter.py . --format=text
+	$(call log_success,Linting complete)
+
+lint-llm: ## Run polyglot linter with LLM-specific rationale
+	$(call log_info,🤖 Running LLM-biased polyglot linter...)
+	@python3 build/tools/polyglot-linter.py . --llm --format=text
+	$(call log_success,LLM-biased linting complete)
+
+lint-json: ## Run polyglot linter with JSON output
+	$(call log_info,📊 Running polyglot linter (JSON output)...)
+	@mkdir -p generated/reports
+	@python3 build/tools/polyglot-linter.py . --format=json > generated/reports/lint-report.json
+	$(call log_success,Lint report generated: generated/reports/lint-report.json)
 
 deps-clean: ## Clean dependency tracker build
 	$(call log_info,🧹 Cleaning dependency tracker...)

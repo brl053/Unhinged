@@ -51,6 +51,10 @@ yarn-error.log*
 /generated/*
 !/generated/.gitkeep
 
+# Generated reports and analysis
+/generated/reports/
+/generated/docs/architecture/
+
 # Legacy generated protobuf files (being migrated to /generated)
 /frontend/src/types/generated/
 /frontend/src/types/proto/

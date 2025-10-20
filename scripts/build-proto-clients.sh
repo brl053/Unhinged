@@ -271,7 +271,7 @@ fi
 
 echo -e "\n${YELLOW}Output locations:${NC}"
 echo -e "  • Generated clients: $GENERATED_DIR/"
-echo -e "  • Browser API registry: generated/static_html/api-clients.js (symlinked)"
+echo -e "  • Browser API registry: generated/static_html/api-clients.js"
 echo -e "  • Tab integration: control/static_html/shared/api-integration.js"
 
 if [ "$VALIDATION_PASSED" = true ]; then
