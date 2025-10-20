@@ -141,7 +141,7 @@ help: ## Show this help message
 	@echo "  $(GREEN)make html-context$(RESET)     Test Context LLM interface"
 	@echo "  $(GREEN)make validate-system$(RESET)  Complete system validation"
 
-services-status: ## Show status of all services
+status-services: ## Show status of all services
 	$(call log_info,📊 Service Status)
 	$(call log_warning,Docker Services:)
 	@docker compose ps || $(call log_error,Docker Compose not running)
@@ -170,7 +170,7 @@ setup: ## Initial project setup
 	@$(MAKE) proto-gen
 	$(call log_success,Setup complete!)
 
-install: setup ## Alias for setup
+# install alias removed - use 'setup' directly
 
 # ============================================================================
 # Docker Services Management
@@ -187,7 +187,10 @@ down: ## Stop all services
 	@docker compose down
 	$(call log_success,Services stopped)
 
-restart: down up ## Restart all services
+restart: ## Restart all services (atomic: down then up)
+	$(call log_info,🔄 Restarting all services...)
+	@$(MAKE) down
+	@$(MAKE) up
 
 logs: ## Show logs from all services
 	@docker compose logs -f
@@ -506,7 +509,7 @@ validate: ## Validate build system installation
 
 start: ## Generate HTML files and open control interface
 	$(call log_info,🎛️ Generating Unhinged Control Interface...)
-	@$(MAKE) ensure-docker
+	@$(MAKE) check-docker
 	@$(MAKE) generate
 	@echo ""
 	@echo "✅ Control Interface ready!"
@@ -533,7 +536,7 @@ standardize-html: ## Standardize all HTML files to use consistent design system
 
 start-services: ## Start Docker services only (database, kafka, etc.)
 	$(call log_info,🐳 Starting Docker services...)
-	@$(MAKE) ensure-docker
+	@$(MAKE) check-docker
 	@docker compose up -d database zookeeper kafka kafka-ui
 	@sleep 5
 	@echo "✅ Docker services started!"
@@ -542,7 +545,7 @@ start-services: ## Start Docker services only (database, kafka, etc.)
 	@echo ""
 	@echo "⏹️  Use 'make stop' to stop services"
 
-ensure-docker: ## Ensure Docker is available (with installation help)
+check-docker: ## Check Docker availability (with installation help)
 	@if ! command -v docker >/dev/null 2>&1; then \
 		echo "$(RED)❌ Docker not found$(RESET)"; \
 		echo "$(YELLOW)🐳 Docker is required for Unhinged services$(RESET)"; \
@@ -556,7 +559,7 @@ ensure-docker: ## Ensure Docker is available (with installation help)
 		echo ""; \
 		echo "$(BLUE)Then run: $(RESET)$(GREEN)make start$(RESET)"; \
 		echo ""; \
-		echo "$(YELLOW)💡 Or use: $(RESET)$(GREEN)make install-docker-help$(RESET)$(YELLOW) for step-by-step guidance$(RESET)"; \
+		echo "$(YELLOW)💡 Or use: $(RESET)$(GREEN)make help-docker-install$(RESET)$(YELLOW) for step-by-step guidance$(RESET)"; \
 		exit 1; \
 	else \
 		echo "$(GREEN)✅ Docker found: $$(docker --version)$(RESET)"; \
@@ -567,7 +570,7 @@ ensure-docker: ## Ensure Docker is available (with installation help)
 		echo "$(GREEN)✅ Docker Compose found$(RESET)"; \
 	fi
 
-install-docker-help: ## Guided Docker installation with verification
+help-docker-install: ## Guided Docker installation with verification
 	@echo "$(BLUE)🐳 Docker Installation Guide$(RESET)"
 	@echo "$(YELLOW)Follow these steps to install Docker:$(RESET)"
 	@echo ""
@@ -606,7 +609,7 @@ verify-docker: ## Verify Docker installation
 		fi; \
 	else \
 		echo "$(RED)❌ Docker not found$(RESET)"; \
-		echo "$(YELLOW)Run: $(RESET)$(GREEN)make install-docker-help$(RESET)"; \
+		echo "$(YELLOW)Run: $(RESET)$(GREEN)make help-docker-install$(RESET)"; \
 	fi
 
 install-docker-interactive: ## Install Docker with interactive sudo prompts
@@ -642,7 +645,7 @@ install-docker-interactive: ## Install Docker with interactive sudo prompts
 		exit 1; \
 	fi
 
-install-docker-auto: ## Auto-install Docker based on detected OS
+install-docker-automated: ## Auto-install Docker based on detected OS
 	@echo "$(BLUE)🐳 Auto-installing Docker...$(RESET)"
 	@if command -v apt-get >/dev/null 2>&1; then \
 		echo "$(YELLOW)📦 Detected Ubuntu/Debian$(RESET)"; \
@@ -671,11 +674,11 @@ install-docker-auto: ## Auto-install Docker based on detected OS
 
 check-dependencies: ## Check and install required dependencies interactively
 	@echo "$(BLUE)🔍 Checking dependencies for Unhinged platform...$(RESET)"
-	@$(MAKE) check-docker
+	@$(MAKE) check-docker-interactive
 	@$(MAKE) check-python-deps
 	@echo "$(GREEN)✅ All dependencies satisfied!$(RESET)"
 
-check-docker: ## Check Docker installation
+check-docker-interactive: ## Check Docker installation with interactive prompts
 	@if ! command -v docker >/dev/null 2>&1; then \
 		echo "$(RED)❌ Docker not found$(RESET)"; \
 		echo "$(YELLOW)🐳 Docker is required for Unhinged services$(RESET)"; \
@@ -752,9 +755,7 @@ install-docker-compose: ## Install Docker Compose
 	@echo "station1" | sudo -S chmod +x /usr/local/bin/docker-compose
 	@echo "$(GREEN)✅ Docker Compose installed!$(RESET)"
 
-# Development Aliases (v1 clean interface)
-dev: build ## Start development environment
-dev-full: build-full ## Start complete development environment
+# Development aliases removed - use original dev/dev-full commands
 
 # ============================================================================
 # Cleanup Operations
@@ -1019,8 +1020,7 @@ deps-clean: ## Clean dependency tracker build
 	@rm -rf tools/dependency-tracker/build
 	$(call log_success,Dependency tracker cleaned)
 
-clean-deps: ## Alias for deps-clean (disk space management)
-	$(MAKE) deps-clean
+# clean-deps alias removed - use 'deps-clean' directly
 
 analyze-deps: ## Run static analysis on dependency tracker
 	$(call log_info,🔍 Running static analysis on dependency tracker...)
@@ -1093,15 +1093,7 @@ html-clean: ## Clean HTML interface symlinks and generated files
 	@rm -f ~/Desktop/Unhinged-HTML.desktop
 	$(call log_success,HTML interface symlinks cleaned)
 
-# Aliases for convenience
-test-ui: html-test ## Alias for html-test
-ui-setup: html-setup ## Alias for html-setup
-ui-test: html-test ## Alias for html-test
-ui-dashboard: html-dashboard ## Alias for html-dashboard
-ui-vision: html-vision ## Alias for html-vision
-ui-audio: html-audio ## Alias for html-audio
-ui-context: html-context ## Alias for html-context
-ui-sanity: html-sanity ## Alias for html-sanity
+# Aliases removed for etymological modularity
 
 # ============================================================================
 # Utility Commands
@@ -1190,11 +1182,4 @@ validate-system: ## Complete system validation using walking skeletons
 	@$(MAKE) test-walking-skeleton
 	$(call log_success,System validation complete)
 
-# ============================================================================
-# Quick Commands (Aliases)
-# ============================================================================
-
-build: backend-build ## Alias for backend-build
-run: backend-run ## Alias for backend-run
-demo: backend-demo ## Alias for backend-demo
-test: backend-test ## Alias for backend-test
+# Quick command aliases removed for etymological modularity
