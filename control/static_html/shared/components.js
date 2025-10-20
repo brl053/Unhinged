@@ -117,7 +117,6 @@ class UnhingedComponents {
         static render(activePage = '') {
             const navItems = [
                 { id: 'index', href: 'index.html', icon: '🎛️', label: 'Mission Control' },
-                { id: 'index2', href: 'index2.html', icon: '🗂️', label: 'Mission Control v2' },
                 { id: 'dag', href: 'dag-control.html', icon: '🎯', label: 'DAG Control' },
                 { id: 'orchestration', href: 'service-orchestration.html', icon: '🎛️', label: 'Service Orchestration' },
                 { id: 'text', href: 'text-test.html', icon: '🚀', label: 'Text Generation' },
@@ -126,6 +125,8 @@ class UnhingedComponents {
                 { id: 'chat', href: 'chat.html', icon: '💬', label: 'AI Chat' },
                 { id: 'grpc', href: 'grpc-test.html', icon: '🔧', label: 'Service Testing' },
                 { id: 'persistence', href: 'persistence-dev-tool.html', icon: '💾', label: 'Data Management' },
+                { id: 'blog-list', href: 'blog-list.html', icon: '📚', label: 'Blog Posts' },
+                { id: 'blog-editor', href: 'blog-editor.html', icon: '✍️', label: 'Blog Editor' },
                 { id: 'toc', href: 'table-of-contents.html', icon: '📚', label: 'Table of Contents' },
                 { id: 'test', href: 'accessibility-test.html', icon: '🧪', label: 'Accessibility Test' },
                 { id: 'validator', href: 'validate-standardization.html', icon: '🔍', label: 'Validator' },
@@ -452,11 +453,19 @@ class UnhingedComponents {
                             </ul>
                         </div>
                         <div class="toc-section">
+                            <h4>Content & Data</h4>
+                            <ul class="toc-list">
+                                <li><a href="blog-list.html">📚 Blog Posts</a></li>
+                                <li><a href="blog-editor.html">✍️ Blog Editor</a></li>
+                                <li><a href="#" data-tab-content="persistence-dev-tool">💾 Data Management</a></li>
+                            </ul>
+                        </div>
+                        <div class="toc-section">
                             <h4>Development Tools</h4>
                             <ul class="toc-list">
                                 <li><a href="#" data-tab-content="chat">💬 AI Chat</a></li>
                                 <li><a href="#" data-tab-content="grpc-test">🔧 gRPC Testing</a></li>
-                                <li><a href="#" data-tab-content="persistence-dev-tool">💾 Data Management</a></li>
+                                <li><a href="test-blog-integration.html">🧪 Blog Integration Test</a></li>
                             </ul>
                         </div>
                     </div>
