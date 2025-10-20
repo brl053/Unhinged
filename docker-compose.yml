@@ -146,7 +146,7 @@ services:
     ports:
       - "26257:26257"  # SQL port (PostgreSQL wire protocol compatible)
       - "8080:8080"    # Admin UI
-    command: start-single-node --insecure --store=attrs=ssd,path=/cockroach/cockroach-data --listen-addr=0.0.0.0:26257 --http-addr=0.0.0.0:8080
+    command: start-single-node --insecure --store=attrs=ssd,path=/cockroach/cockroach-data --listen-addr=127.0.0.1:26257 --http-addr=127.0.0.1:8080
     volumes:
       - cockroachdb-data:/cockroach/cockroach-data
       - ./sql/init-minimal.sql:/docker-entrypoint-initdb.d/init-cdc.sql
@@ -176,26 +176,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # ==========================================================================
-  # MongoDB - Document Store
-  # ==========================================================================
-  mongodb:
-    image: mongo:7.0
-    container_name: unhinged-mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=unhinged
-    volumes:
-      - mongodb-data:/data/db
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # MongoDB removed - using Cassandra for NoSQL/column store instead
 
   # ==========================================================================
   # Weaviate - Vector Database
@@ -366,6 +347,8 @@ volumes:
   redis-data:  # Redis cache and session data
   cassandra-data:  # Cassandra NoSQL and column data
   chroma-data:  # Chroma vector database data
+  weaviate-data:  # Weaviate vector database data
+  # mongodb-data removed - using Cassandra instead
   spark-work:  # Spark working directory
   vision-models:  # Store vision model cache
   image-uploads:  # Store uploaded images
