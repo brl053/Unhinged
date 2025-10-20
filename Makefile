@@ -240,11 +240,13 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry)
 	@echo "$(YELLOW)📋 Activating Python virtual environment...$(RESET)"
 	@test -d venv || (echo "$(RED)❌ Virtual environment not found. Run: python3 -m venv venv$(RESET)" && exit 1)
 	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
-	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
 	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
 	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel" || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Static HTML registry generation$(RESET)"
 	@bash -c "source venv/bin/activate && python3 build/build.py build generate-registry" || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
+	@echo "$(YELLOW)📋 Creating symlinks for generated files...$(RESET)"
+	@$(MAKE) link-generated-files
 	$(call log_success,Build artifacts generation completed)
 
 generate-clients: ## Generate client libraries from protos
@@ -264,6 +266,13 @@ python-deps: ## Install/update Python dependencies
 	@test -d venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
 	@bash -c "source venv/bin/activate && pip install -r requirements.txt"
 	$(call log_success,Python dependencies installed)
+
+link-generated-files: ## Create symlinks from /generated to expected locations
+	$(call log_info,🔗 Creating symlinks for generated files...)
+	@mkdir -p control/static_html/shared
+	@test -f generated/static_html/registry.js && ln -sf ../../../generated/static_html/registry.js control/static_html/shared/registry.js || echo "$(YELLOW)⚠️ registry.js not found$(RESET)"
+	@test -f generated/static_html/api-clients.js && ln -sf ../../../generated/static_html/api-clients.js control/static_html/shared/api-clients.js || echo "$(YELLOW)⚠️ api-clients.js not found$(RESET)"
+	$(call log_success,Generated file symlinks created)
 
 # ============================================================================
 # Protobuf Operations
@@ -499,7 +508,9 @@ validate: ## Validate build system installation
 start: ## Start the control plane only - use Service Orchestration UI to manage Docker services
 	$(call log_info,🎛️ Starting Unhinged Control Plane...)
 	@$(MAKE) ensure-docker
+	@mkdir -p generated/static_html
 	@python3 build/generate-registry.py
+	@$(MAKE) link-generated-files
 	@echo "🔄 Stopping any existing DAG server..."
 	@-pkill -f "python3 -m control" 2>/dev/null || true
 	@sleep 1
@@ -755,7 +766,14 @@ clean-all: ## Clean everything including Docker
 	$(call log_warning,🧹 Cleaning everything...)
 	@python3 build/build.py clean --all
 	@$(MAKE) clean-docker
+	@$(MAKE) clean-generated-symlinks
 	$(call log_success,Complete cleanup finished)
+
+clean-generated-symlinks: ## Clean symlinks to generated files
+	$(call log_warning,🧹 Cleaning generated file symlinks...)
+	@rm -f control/static_html/shared/registry.js
+	@rm -f control/static_html/shared/api-clients.js
+	$(call log_success,Generated symlinks cleaned)
 
 clean-docker: ## Clean Docker resources
 	$(call log_warning,🧹 Cleaning Docker resources...)
@@ -852,12 +870,14 @@ deps-test: ## Run dependency tracker tests
 
 deps-analyze: ## Analyze all dependencies in monorepo
 	$(call log_info,🔍 Analyzing dependencies...)
-	@tools/dependency-tracker/build/deptrack analyze --root=. --output=docs/architecture/dependencies.json --verbose
+	@mkdir -p generated/docs/architecture
+	@tools/dependency-tracker/build/deptrack analyze --root=. --output=generated/docs/architecture/dependencies.json --verbose
 	$(call log_success,Dependency analysis complete)
 
 deps-graph: ## Generate dependency visualization
 	$(call log_info,📊 Generating dependency graph...)
-	@tools/dependency-tracker/build/deptrack graph --format=mermaid --output=docs/architecture/dependency-graph.md
+	@mkdir -p generated/docs/architecture
+	@tools/dependency-tracker/build/deptrack graph --format=mermaid --output=generated/docs/architecture/dependency-graph.md
 	$(call log_success,Dependency graph generated)
 
 deps-validate: ## Validate dependency consistency
@@ -867,7 +887,8 @@ deps-validate: ## Validate dependency consistency
 
 deps-feature-dag: ## Generate feature dependency DAG
 	$(call log_info,🗺️ Generating feature DAG...)
-	@tools/dependency-tracker/build/deptrack feature-dag --output=docs/architecture/
+	@mkdir -p generated/docs/architecture
+	@tools/dependency-tracker/build/deptrack feature-dag --output=generated/docs/architecture/
 	$(call log_success,Feature DAG generated)
 
 deps-clean: ## Clean dependency tracker build

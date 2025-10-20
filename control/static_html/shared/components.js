@@ -30,11 +30,7 @@ class UnhingedComponents {
                 window.location.href = 'index.html';
             }
 
-            // Alt + D: Go to DAG control
-            if (event.altKey && event.key === 'd') {
-                event.preventDefault();
-                window.location.href = 'dag-control.html';
-            }
+
 
             // Alt + S: Go to service orchestration
             if (event.altKey && event.key === 's') {
@@ -117,20 +113,12 @@ class UnhingedComponents {
         static render(activePage = '') {
             const navItems = [
                 { id: 'index', href: 'index.html', icon: '🎛️', label: 'Mission Control' },
-                { id: 'dag', href: 'dag-control.html', icon: '🎯', label: 'DAG Control' },
-                { id: 'orchestration', href: 'service-orchestration.html', icon: '🎛️', label: 'Service Orchestration' },
-                { id: 'text', href: 'text-test.html', icon: '🚀', label: 'Text Generation' },
-                { id: 'image', href: 'image-test.html', icon: '👁️', label: 'Vision AI' },
-                { id: 'voice', href: 'voice-test.html', icon: '🎤', label: 'Voice Processing' },
-                { id: 'chat', href: 'chat.html', icon: '💬', label: 'AI Chat' },
-                { id: 'grpc', href: 'grpc-test.html', icon: '🔧', label: 'Service Testing' },
-                { id: 'persistence', href: 'persistence-dev-tool.html', icon: '💾', label: 'Data Management' },
                 { id: 'blog-list', href: 'blog-list.html', icon: '📚', label: 'Blog Posts' },
                 { id: 'blog-editor', href: 'blog-editor.html', icon: '✍️', label: 'Blog Editor' },
+                { id: 'persistence', href: 'persistence-platform.html', icon: '💾', label: 'Persistence Platform' },
                 { id: 'toc', href: 'table-of-contents.html', icon: '📚', label: 'Table of Contents' },
-                { id: 'test', href: 'accessibility-test.html', icon: '🧪', label: 'Accessibility Test' },
                 { id: 'validator', href: 'validate-standardization.html', icon: '🔍', label: 'Validator' },
-                { id: 'tab-demo', href: 'tab-system-demo.html', icon: '🗂️', label: 'Tab Demo' }
+                { id: 'test', href: 'test-blog-integration.html', icon: '🧪', label: 'Blog Integration Test' }
             ];
 
             const navHTML = navItems.map(item => {
@@ -437,35 +425,25 @@ class UnhingedComponents {
                     <h3>🎛️ Control Plane Interfaces</h3>
                     <div class="toc-grid">
                         <div class="toc-section">
-                            <h4>Core Control</h4>
+                            <h4>Core Interfaces</h4>
                             <ul class="toc-list">
-                                <li><a href="#" data-tab-content="mission-control">🎛️ Mission Control</a></li>
-                                <li><a href="#" data-tab-content="dag-control">🎯 DAG Control</a></li>
-                                <li><a href="#" data-tab-content="service-orchestration">🎛️ Service Orchestration</a></li>
+                                <li><a href="index.html">🎛️ Mission Control</a></li>
+                                <li><a href="persistence-platform.html">💾 Persistence Platform</a></li>
+                                <li><a href="table-of-contents.html">📚 Table of Contents</a></li>
                             </ul>
                         </div>
                         <div class="toc-section">
-                            <h4>AI Services</h4>
-                            <ul class="toc-list">
-                                <li><a href="#" data-tab-content="text-test">🚀 Text Generation</a></li>
-                                <li><a href="#" data-tab-content="image-test">👁️ Vision AI</a></li>
-                                <li><a href="#" data-tab-content="voice-test">🎤 Voice Processing</a></li>
-                            </ul>
-                        </div>
-                        <div class="toc-section">
-                            <h4>Content & Data</h4>
+                            <h4>Blog System</h4>
                             <ul class="toc-list">
                                 <li><a href="blog-list.html">📚 Blog Posts</a></li>
                                 <li><a href="blog-editor.html">✍️ Blog Editor</a></li>
-                                <li><a href="#" data-tab-content="persistence-dev-tool">💾 Data Management</a></li>
+                                <li><a href="test-blog-integration.html">🧪 Blog Integration Test</a></li>
                             </ul>
                         </div>
                         <div class="toc-section">
                             <h4>Development Tools</h4>
                             <ul class="toc-list">
-                                <li><a href="#" data-tab-content="chat">💬 AI Chat</a></li>
-                                <li><a href="#" data-tab-content="grpc-test">🔧 gRPC Testing</a></li>
-                                <li><a href="test-blog-integration.html">🧪 Blog Integration Test</a></li>
+                                <li><a href="validate-standardization.html">🔍 Validator</a></li>
                             </ul>
                         </div>
                     </div>
@@ -521,7 +499,7 @@ class UnhingedComponents {
         addTabFromContent(contentType) {
             const contentMap = {
                 'mission-control': { icon: '🎛️', label: 'Mission Control', content: this.getMissionControlContent() },
-                'dag-control': { icon: '🎯', label: 'DAG Control', content: this.getDAGControlContent() },
+
                 'service-orchestration': { icon: '🎛️', label: 'Service Orchestration', content: this.getServiceOrchestrationContent() },
                 'text-test': { icon: '🚀', label: 'Text Generation', content: this.getTextTestContent() },
                 'image-test': { icon: '👁️', label: 'Vision AI', content: this.getImageTestContent() },
@@ -582,19 +560,7 @@ class UnhingedComponents {
             `;
         }
 
-        getDAGControlContent() {
-            return `
-                <div class="dag-control-tab">
-                    <h2>🎯 DAG Control</h2>
-                    <p>Build orchestration and dependency management.</p>
-                    <div class="dag-actions">
-                        <button class="action-button">▶️ Run Build</button>
-                        <button class="action-button">⏸️ Pause Build</button>
-                        <button class="action-button">🔄 Refresh DAG</button>
-                    </div>
-                </div>
-            `;
-        }
+
 
         getServiceOrchestrationContent() {
             return `

@@ -44,10 +44,14 @@ yarn-error.log*
 .gradle/
 
 # ============================================================================
-# GENERATED PROTOBUF FILES - DO NOT COMMIT
+# GENERATED FILES - DO NOT COMMIT (Artifactory Pattern)
 # ============================================================================
 
-# Frontend TypeScript generated files
+# Generated directory - track the directory but ignore all contents
+/generated/*
+!/generated/.gitkeep
+
+# Legacy generated protobuf files (being migrated to /generated)
 /frontend/src/types/generated/
 /frontend/src/types/proto/
 

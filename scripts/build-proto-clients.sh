@@ -220,7 +220,7 @@ fi
 # Check JavaScript clients
 if [[ "$LANGUAGES" == *"javascript"* ]] || [ "$LANGUAGES" = "all" ]; then
     JS_DIR="$GENERATED_DIR/javascript/clients"
-    API_REGISTRY="$PROJECT_ROOT/control/static_html/shared/api-clients.js"
+    API_REGISTRY="$PROJECT_ROOT/generated/static_html/api-clients.js"
     
     if [ -d "$JS_DIR" ] && [ "$(find "$JS_DIR" -name "*.js" | wc -l)" -gt 0 ]; then
         echo -e "${GREEN}✅ JavaScript clients generated${NC}"
@@ -271,7 +271,7 @@ fi
 
 echo -e "\n${YELLOW}Output locations:${NC}"
 echo -e "  • Generated clients: $GENERATED_DIR/"
-echo -e "  • Browser API registry: control/static_html/shared/api-clients.js"
+echo -e "  • Browser API registry: generated/static_html/api-clients.js (symlinked)"
 echo -e "  • Tab integration: control/static_html/shared/api-integration.js"
 
 if [ "$VALIDATION_PASSED" = true ]; then

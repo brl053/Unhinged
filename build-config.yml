@@ -299,7 +299,7 @@ services:
     inputs:
       - "control/static_html/**/*.html"
     outputs:
-      - "control/static_html/shared/registry.js"
+      - "generated/static_html/registry.js"
     steps:
       - name: "Scan static HTML files"
         command: "python3 -c 'from build.modules.registry_builder import RegistryBuilder; from build.modules import BuildContext; from pathlib import Path; rb = RegistryBuilder(); ctx = BuildContext(Path(\".\"), \"generate-registry\", {}); result = rb.build(ctx); exit(0 if result.success else 1)'"
@@ -319,7 +319,7 @@ services:
     outputs:
       - "generated/typescript/clients/**/*.ts"
       - "generated/javascript/clients/**/*.js"
-      - "control/static_html/shared/api-clients.js"
+      - "generated/static_html/api-clients.js"
     steps:
       - name: "Generate TypeScript and JavaScript clients"
         command: "python3 build/build.py build proto-clients"
@@ -340,7 +340,7 @@ services:
       - "generated/c/clients/**/*.cc"
       - "generated/python/clients/**/*.py"
       - "generated/kotlin/clients/**/*.kt"
-      - "control/static_html/shared/api-clients.js"
+      - "generated/static_html/api-clients.js"
     steps:
       - name: "Generate polyglot proto clients"
         command: "python3 build/build.py build proto-clients-all"
@@ -383,7 +383,7 @@ services:
       - "proto/**/*.proto"
     outputs:
       - "generated/javascript/clients/**/*.js"
-      - "control/static_html/shared/api-clients.js"
+      - "generated/static_html/api-clients.js"
     steps:
       - name: "Generate JavaScript clients"
         command: "python3 build/build.py build proto-clients-javascript"
