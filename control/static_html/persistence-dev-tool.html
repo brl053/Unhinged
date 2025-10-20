@@ -5,18 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏗️ Persistence Platform Dev Tool</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/components.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1>🏗️ Persistence Platform Dev Tool</h1>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Data Management"
+             data-subtitle="Persistence Platform Development Tool"
+             data-icon="💾"></div>
             <div class="header-controls">
                 <span id="lastUpdate">Last Update: --</span>
                 <button onclick="refreshPlatformStatus()">🔄 Refresh</button>
             </div>
         </header>
+
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="persistence"></div>
 
         <!-- Platform Status -->
         <section class="status-section">
@@ -354,5 +362,8 @@
             }
         }
     </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>

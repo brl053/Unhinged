@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎛️ Service Orchestration - Unhinged Control</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/components.js"></script>
     <script src="shared/config.js"></script>
     <script src="shared/service-orchestration.js"></script>
     <style>
@@ -226,19 +227,16 @@
 </head>
 <body>
     <div class="container">
-        <!-- Navigation -->
-        <nav class="navigation">
-            <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
-            <a href="service-orchestration.html" class="nav-link active">🎛️ Service Orchestration</a>
-            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
-            <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
-            <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
-        </nav>
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="orchestration"></div>
 
         <!-- Header -->
         <div class="page-header">
-            <h1>🎛️ Service Orchestration</h1>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Service Orchestration"
+             data-subtitle="Docker Container Management"
+             data-icon="🎛️"></div>
             <p>Manage service composition and resource allocation with scientific precision</p>
 
             <!-- Quick Actions -->
@@ -332,5 +330,8 @@
         setInterval(updateResourceMonitoring, 5000);
         setTimeout(updateResourceMonitoring, 1000); // Initial update
     </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>

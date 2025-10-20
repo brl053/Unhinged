@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎛️ DAG Control Plane - Unhinged AI</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/components.js"></script>
     <script src="shared/config.js"></script>
     <style>
         /* DAG-specific styles extending theme */
@@ -150,18 +151,16 @@
 <body>
     <div class="container">
         <!-- Navigation using existing patterns -->
-        <div class="navigation">
-            <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="dag-control.html" class="nav-link active">🎛️ DAG Control</a>
-            <a href="service-orchestration.html" class="nav-link">🎛️ Service Orchestration</a>
-            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
-            <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
-            <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
-        </div>
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="dag"></div>
 
         <!-- Header -->
         <div class="header">
-            <h1>🎛️ DAG Control Plane</h1>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="DAG Control Center"
+             data-subtitle="Workflow Orchestration & Task Management"
+             data-icon="🎯"></div>
             <p>Intelligent Build Orchestration with Human Oversight</p>
         </div>
 
@@ -420,5 +419,8 @@ Waiting for target selection...
             }
         }
     </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>

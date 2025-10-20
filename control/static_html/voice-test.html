@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎤 Voice & Audio Processing - Unhinged Multi-Modal Platform</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/components.js"></script>
     <style>
         /* Voice processing specific styles */
         .page-container {
@@ -131,20 +132,16 @@
 </head>
 <body>
     <div class="page-container">
-        <div class="navigation">
-            <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
-            <a href="service-orchestration.html" class="nav-link">🎛️ Service Orchestration</a>
-            <a href="chat.html" class="nav-link">💬 Chat Interface</a>
-            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
-            <a href="image-test.html" class="nav-link">👁️ Vision AI</a>
-            <a href="voice-test.html" class="nav-link active">🎤 Voice Processing</a>
-        </div>
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="voice"></div>
 
         <div class="voice-container">
 
-        <h1>🎤 Voice & Audio Processing</h1>
-        <p class="subtitle">Local Speech-to-Text & Text-to-Speech Services</p>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Voice Processing Test"
+             data-subtitle="Speech Recognition & Synthesis Platform"
+             data-icon="🎤"></div>
 
         <div class="test-section">
             <h2>Service Status</h2>
@@ -510,5 +507,8 @@
             updateButtons();
         });
     </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>

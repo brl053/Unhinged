@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+@llm-type test-interface
+@llm-legend Comprehensive accessibility and responsive design testing interface for control plane enhancements
+@llm-key Tests keyboard navigation, visual affordances, responsive design, and accessibility features
+@llm-map Testing interface for validating control plane UI/UX enhancements and design token implementation
+@llm-axiom All interface elements must be accessible via keyboard and provide clear visual feedback
+@llm-contract Validates accessibility compliance and responsive behavior across different viewport sizes
+@llm-token accessibility-test: Comprehensive UI/UX testing interface for control plane
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Accessibility & Responsive Design Test - Unhinged Control Plane</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/components.js"></script>
+    <style>
+        /*
+        @llm-type test-styles
+        @llm-legend Test-specific styling for accessibility and responsive design validation
+        @llm-key Provides visual indicators for testing focus states, touch targets, and responsive behavior
+        @llm-map Extends shared styling with test-specific visual aids and debugging helpers
+        @llm-axiom Test styles must not interfere with production styling patterns
+        @llm-contract Provides clear visual feedback for accessibility and responsive testing
+        @llm-token test-ui: Visual testing aids for accessibility validation
+        */
+        
+        .test-section {
+            margin-bottom: var(--spacing-2xl, 32px);
+            padding: var(--spacing-xl, 24px);
+            border: 2px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius-lg, 12px);
+            background: var(--color-background, white);
+        }
+        
+        .test-section h2 {
+            color: var(--color-primary, #2563eb);
+            margin-bottom: var(--spacing-lg, 16px);
+            font-size: var(--font-size-xl, 1.25rem);
+            border-bottom: 2px solid var(--color-border, #dee2e6);
+            padding-bottom: var(--spacing-sm, 8px);
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md, 16px);
+            margin: var(--spacing-lg, 16px) 0;
+        }
+        
+        .test-item {
+            padding: var(--spacing-md, 16px);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 8px);
+            background: var(--color-surface, #f8f9fa);
+        }
+        
+        .keyboard-shortcuts {
+            background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.1);
+            padding: var(--spacing-lg, 16px);
+            border-radius: var(--border-radius, 8px);
+            margin: var(--spacing-lg, 16px) 0;
+        }
+        
+        .shortcut-key {
+            background: var(--color-surface-dark, #374151);
+            color: var(--color-text-primary, white);
+            padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+            border-radius: var(--border-radius, 4px);
+            font-family: monospace;
+            font-size: var(--font-size-sm, 14px);
+            margin: 0 var(--spacing-xs, 4px);
+        }
+        
+        .focus-indicator {
+            outline: 3px solid var(--color-warning, #f59e0b);
+            outline-offset: 2px;
+        }
+        
+        /* Visual debugging aids */
+        .debug-mode .test-item {
+            position: relative;
+        }
+        
+        .debug-mode .test-item::after {
+            content: attr(data-test-id);
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--color-danger, #ef4444);
+            color: white;
+            padding: 2px 6px;
+            font-size: 10px;
+            border-radius: 0 var(--border-radius, 8px) 0 var(--border-radius, 8px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-content">
+        <h1>🧪 Accessibility & Responsive Design Test</h1>
+        <p class="subtitle">Comprehensive testing interface for control plane UI/UX enhancements</p>
+        
+        <!-- Navigation Test -->
+        <div data-component="navigation" data-active="test" id="nav-test"></div>
+        
+        <!-- Keyboard Shortcuts Guide -->
+        <div class="keyboard-shortcuts">
+            <h3>🎹 Keyboard Shortcuts</h3>
+            <p>Test these keyboard shortcuts:</p>
+            <ul>
+                <li><span class="shortcut-key">Alt + H</span> - Go to Mission Control</li>
+                <li><span class="shortcut-key">Alt + D</span> - Go to DAG Control</li>
+                <li><span class="shortcut-key">Alt + S</span> - Go to Service Orchestration</li>
+                <li><span class="shortcut-key">Tab</span> - Navigate between elements</li>
+                <li><span class="shortcut-key">Enter/Space</span> - Activate buttons</li>
+                <li><span class="shortcut-key">Escape</span> - Clear focus/close overlays</li>
+            </ul>
+        </div>
+        
+        <!-- Button Testing Section -->
+        <div class="test-section">
+            <h2>🔘 Button & Interactive Element Testing</h2>
+            <div class="test-grid">
+                <div class="test-item" data-test-id="primary-buttons">
+                    <h4>Primary Buttons</h4>
+                    <button class="generate-button">Primary Action</button>
+                    <button class="action-button">Secondary Action</button>
+                    <button class="generate-button" disabled>Disabled Button</button>
+                </div>
+                
+                <div class="test-item" data-test-id="loading-states">
+                    <h4>Loading States</h4>
+                    <button class="generate-button loading">Loading...</button>
+                    <div class="loading"></div>
+                    <div class="loading loading-large"></div>
+                    <div class="loading loading-small"></div>
+                </div>
+                
+                <div class="test-item" data-test-id="navigation-links">
+                    <h4>Navigation Links</h4>
+                    <a href="#" class="nav-link">Standard Link</a>
+                    <a href="#" class="nav-link active">Active Link</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Indicators Testing -->
+        <div class="test-section">
+            <h2>📊 Status Indicators Testing</h2>
+            <div class="test-grid">
+                <div class="test-item" data-test-id="status-healthy">
+                    <div class="status healthy" tabindex="0">
+                        <span>✅</span>
+                        <span>Service Healthy</span>
+                    </div>
+                </div>
+                
+                <div class="test-item" data-test-id="status-unhealthy">
+                    <div class="status unhealthy" tabindex="0">
+                        <span>❌</span>
+                        <span>Service Unavailable</span>
+                    </div>
+                </div>
+                
+                <div class="test-item" data-test-id="status-loading">
+                    <div class="status loading" tabindex="0">
+                        <span>⏳</span>
+                        <span>Checking service...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Elements Testing -->
+        <div class="test-section">
+            <h2>📝 Form Elements Testing</h2>
+            <div class="test-grid">
+                <div class="test-item" data-test-id="text-inputs">
+                    <h4>Text Inputs</h4>
+                    <div class="option-group">
+                        <label>Standard Input:</label>
+                        <input type="text" placeholder="Enter text here...">
+                    </div>
+                    <div class="option-group">
+                        <label>Email Input:</label>
+                        <input type="email" placeholder="email@example.com">
+                    </div>
+                </div>
+                
+                <div class="test-item" data-test-id="select-inputs">
+                    <h4>Select Elements</h4>
+                    <div class="option-group">
+                        <label>Model Selection:</label>
+                        <select class="model-select">
+                            <option>DeepSeek-Coder 6.7B</option>
+                            <option>Dolphin-Mixtral 8x7B</option>
+                            <option>Llama 3.1 8B</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="test-item" data-test-id="range-inputs">
+                    <h4>Range Inputs</h4>
+                    <div class="option-group">
+                        <label>Temperature:</label>
+                        <input type="range" min="0" max="1" step="0.1" value="0.7">
+                        <span class="range-value">0.7</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Display Testing -->
+        <div class="test-section">
+            <h2>📋 Results Display Testing</h2>
+            <div class="test-grid">
+                <div class="test-item" data-test-id="result-success">
+                    <h4>Success Result</h4>
+                    <div class="result success">
+Operation completed successfully!
+Status: 200 OK
+Response time: 1.2s
+                    </div>
+                </div>
+                
+                <div class="test-item" data-test-id="result-error">
+                    <h4>Error Result</h4>
+                    <div class="result error">
+Error: Connection failed
+Status: 500 Internal Server Error
+Details: Service unavailable
+                    </div>
+                </div>
+                
+                <div class="test-item" data-test-id="result-standard">
+                    <h4>Standard Result</h4>
+                    <div class="result">
+Standard output display
+Multiple lines supported
+Monospace font for code
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Responsive Testing Controls -->
+        <div class="test-section">
+            <h2>📱 Responsive Design Testing</h2>
+            <p>Resize your browser window or use developer tools to test responsive behavior:</p>
+            <ul>
+                <li><strong>Mobile:</strong> ≤ 768px width</li>
+                <li><strong>Tablet:</strong> 769px - 1024px width</li>
+                <li><strong>Desktop:</strong> > 1024px width</li>
+            </ul>
+            
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Current Viewport</h4>
+                    <div id="viewport-info">
+                        <span id="viewport-width">Width: --</span><br>
+                        <span id="viewport-height">Height: --</span><br>
+                        <span id="viewport-type">Type: --</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Debug Controls -->
+        <div class="test-section">
+            <h2>🔧 Debug Controls</h2>
+            <button class="action-button" onclick="toggleDebugMode()">Toggle Debug Mode</button>
+            <button class="action-button" onclick="testFocusOrder()">Test Focus Order</button>
+            <button class="action-button" onclick="validateAccessibility()">Validate Accessibility</button>
+        </div>
+    </div>
+    
+    <script>
+        // Viewport information display
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            let type = 'Desktop';
+            
+            if (width <= 768) type = 'Mobile';
+            else if (width <= 1024) type = 'Tablet';
+            
+            document.getElementById('viewport-width').textContent = `Width: ${width}px`;
+            document.getElementById('viewport-height').textContent = `Height: ${height}px`;
+            document.getElementById('viewport-type').textContent = `Type: ${type}`;
+        }
+        
+        // Debug mode toggle
+        function toggleDebugMode() {
+            document.body.classList.toggle('debug-mode');
+        }
+        
+        // Focus order testing
+        function testFocusOrder() {
+            const focusableElements = document.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            
+            let index = 0;
+            function highlightNext() {
+                // Remove previous highlight
+                document.querySelectorAll('.focus-indicator').forEach(el => {
+                    el.classList.remove('focus-indicator');
+                });
+                
+                if (index < focusableElements.length) {
+                    const element = focusableElements[index];
+                    element.classList.add('focus-indicator');
+                    element.focus();
+                    index++;
+                    setTimeout(highlightNext, 1000);
+                }
+            }
+            
+            highlightNext();
+        }
+        
+        // Basic accessibility validation
+        function validateAccessibility() {
+            const issues = [];
+            
+            // Check for missing alt text on images
+            document.querySelectorAll('img:not([alt])').forEach(img => {
+                issues.push('Image missing alt text');
+            });
+            
+            // Check for buttons without accessible names
+            document.querySelectorAll('button:not([aria-label]):not([title])').forEach(btn => {
+                if (!btn.textContent.trim()) {
+                    issues.push('Button missing accessible name');
+                }
+            });
+            
+            // Check for form inputs without labels
+            document.querySelectorAll('input:not([aria-label]):not([title])').forEach(input => {
+                const id = input.id;
+                if (!id || !document.querySelector(`label[for="${id}"]`)) {
+                    const parentLabel = input.closest('label');
+                    if (!parentLabel) {
+                        issues.push('Input missing associated label');
+                    }
+                }
+            });
+            
+            // Display results
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result ' + (issues.length ? 'error' : 'success');
+            resultDiv.textContent = issues.length 
+                ? `Accessibility Issues Found:\n${issues.join('\n')}` 
+                : 'No accessibility issues detected!';
+            
+            // Replace any existing results
+            const existingResult = document.querySelector('.accessibility-result');
+            if (existingResult) {
+                existingResult.remove();
+            }
+            
+            resultDiv.className += ' accessibility-result';
+            document.querySelector('.test-section:last-child').appendChild(resultDiv);
+        }
+        
+        // Initialize viewport tracking
+        window.addEventListener('resize', updateViewportInfo);
+        document.addEventListener('DOMContentLoaded', updateViewportInfo);
+        
+        // Range input value display
+        document.addEventListener('input', (event) => {
+            if (event.target.type === 'range') {
+                const valueSpan = event.target.parentNode.querySelector('.range-value');
+                if (valueSpan) {
+                    valueSpan.textContent = event.target.value;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

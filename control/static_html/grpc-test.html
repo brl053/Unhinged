@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🔧 gRPC Direct Client Test - Unhinged Control Plane</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/components.js"></script>
     <style>
         .grpc-container {
             max-width: 1000px;
@@ -108,9 +110,15 @@
 </head>
 <body>
     <div class="grpc-container">
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="grpc"></div>
+
         <header style="text-align: center; margin-bottom: var(--spacing-xl);">
-            <h1>🔧 gRPC Direct Client Test</h1>
-            <p class="subtitle">Direct protobuf communication with services - No HTTP gateway needed!</p>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Service Testing Hub"
+             data-subtitle="gRPC Service Health & Testing"
+             data-icon="🔧"></div>
         </header>
 
         <!-- Service Health Overview -->
@@ -362,5 +370,8 @@
             checkHealth();
         });
     </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>👁️ Vision AI Test - Unhinged Multi-Modal Platform</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/components.js"></script>
     <style>
         /* Vision AI specific styles */
         .page-container {
@@ -238,17 +239,14 @@
 </head>
 <body>
     <div class="page-container">
-        <div class="navigation">
-            <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="dag-control.html" class="nav-link">🎛️ DAG Control</a>
-            <a href="service-orchestration.html" class="nav-link">🎛️ Service Orchestration</a>
-            <a href="text-test.html" class="nav-link">🚀 Text Generation</a>
-            <a href="image-test.html" class="nav-link active">👁️ Vision AI</a>
-            <a href="voice-test.html" class="nav-link">🎤 Voice Processing</a>
-        </div>
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="image"></div>
 
-        <h1>👁️ Vision AI Test</h1>
-        <p class="subtitle">Multi-Modal AI Platform - Advanced Image Analysis & Description</p>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Vision AI Test"
+             data-subtitle="Multi-Modal AI Platform - Advanced Image Analysis & Description"
+             data-icon="👁️"></div>
         
         <div class="test-section">
             <h2>Service Status</h2>
@@ -631,5 +629,8 @@
             checkCapabilities();
         });
     </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>

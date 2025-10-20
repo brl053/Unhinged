@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📚 Table of Contents</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/components.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
 </head>
 <body>
     <div class="container">
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="toc"></div>
+
         <!-- Header -->
         <header class="header">
-            <h1>📚 Table of Contents</h1>
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Interface Directory"
+             data-subtitle="Complete Platform Navigation"
+             data-icon="📚"></div>
             <div class="header-controls">
                 <button onclick="refreshFileStructure()">🔄 Refresh</button>
                 <button onclick="expandAll()">📂 Expand All</button>
@@ -393,5 +402,8 @@
             color: var(--text-secondary, #cbd5e1);
         }
     </style>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
 </body>
 </html>
