@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+@llm-type tab-interface
+@llm-legend Tab-based mission control center integrating all Unhinged AI platform operations in browser-within-browser experience
+@llm-key Implements Phase 1 tab system as foundation with mission control as default tab, service categorization, and progressive disclosure
+@llm-map Central hub with integrated tab system connecting all static HTML interfaces, DAG control plane and service orchestration
+@llm-axiom Must provide immediate visual confidence in system reliability through tab-based organization and professional operation
+@llm-contract Displays system status, service health, and tab navigation without requiring backend API calls
+@llm-token tab-control-center: Professional tab-based mission control interface for platform operations
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎛️ Unhinged Mission Control v2 - Tab-Based Operations Center</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/registry.js"></script>
+    <script src="shared/components.js"></script>
+    <script src="shared/api-clients.js"></script>
+    <script src="shared/api-integration.js"></script>
+    <style>
+        /*
+        @llm-type tab-config
+        @llm-legend Tab-based mission control styling extending Phase 1 tab system with professional control center aesthetic
+        @llm-key Implements visual hierarchy, tab integration, service categorization, status indicators, and responsive design
+        @llm-map Extends shared theme.css and tab system with mission control specific components and layouts
+        @llm-axiom All visual elements must convey system reliability through tab-based organization and professional operation
+        @llm-contract Provides consistent tab-based styling that works across all modern browsers
+        @llm-token tab-mission-control-ui: Professional tab-based control center visual design system
+        */
+
+        /* Tab-Integrated Mission Control Layout */
+        .tab-mission-control {
+            min-height: 100vh;
+            background: var(--color-surface, #f8f9fa);
+        }
+
+        .main-tab-container {
+            margin-bottom: 0;
+            box-shadow: var(--shadow-xl, 0 8px 32px rgba(0,0,0,0.15));
+            border-radius: var(--border-radius-xl, 16px);
+            overflow: hidden;
+        }
+
+        .main-tab-container .tab-navigation {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            border-bottom: none;
+            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+        }
+
+        .main-tab-container .tab-link {
+            color: rgba(255, 255, 255, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .main-tab-container .tab-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-tab-container .tab-link.active {
+            background: var(--color-background, white);
+            color: var(--color-primary, #2563eb);
+            border-bottom: none;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        }
+
+        .main-tab-container .tab-add-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .main-tab-container .tab-add-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Mission Control Header - Integrated into tab content */
+        .mission-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            color: white;
+            padding: var(--spacing-xl, 24px);
+            margin: calc(-1 * var(--spacing-xl, 24px)) calc(-1 * var(--spacing-xl, 24px)) var(--spacing-xl, 24px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mission-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .mission-header .content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .mission-header h1 {
+            font-size: var(--font-size-3xl, 2rem);
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm, 8px);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .mission-header .subtitle {
+            font-size: var(--font-size-lg, 1.125rem);
+            opacity: 0.9;
+            margin-bottom: var(--spacing-lg, 20px);
+        }
+
+        /* System Status Bar */
+        .system-status-bar {
+            display: flex;
+            gap: var(--spacing-lg, 20px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .status-metric {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm, 8px);
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+            border-radius: var(--border-radius-pill, 20px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse-glow 2s infinite;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Quick Stats Panel */
+        .quick-stats {
+            background: var(--color-background, white);
+            border-radius: var(--border-radius-lg, 12px);
+            padding: var(--spacing-xl, 24px);
+            margin-bottom: var(--spacing-xl, 24px);
+            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
+            border: 1px solid var(--color-border, #dee2e6);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--spacing-lg, 20px);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: var(--spacing-md, 16px);
+            background: var(--color-surface, #f8f9fa);
+            border-radius: var(--border-radius, 8px);
+            border: 1px solid var(--color-border, #dee2e6);
+            transition: var(--transition, 150ms ease);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg, 0 4px 12px rgba(0,0,0,0.15));
+        }
+
+        .stat-value {
+            font-size: var(--font-size-2xl, 1.5rem);
+            font-weight: 700;
+            color: var(--color-primary, #2563eb);
+            margin-bottom: var(--spacing-xs, 4px);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-text-secondary, #6c757d);
+            font-weight: 500;
+        }
+
+        /* Service Categories Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-xl, 24px);
+            margin-bottom: var(--spacing-2xl, 32px);
+        }
+
+        .service-category {
+            background: var(--color-background, white);
+            border: 2px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius-lg, 12px);
+            padding: var(--spacing-xl, 24px);
+            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
+            transition: var(--transition, 150ms ease);
+        }
+
+        .service-category:hover {
+            border-color: var(--color-primary, #2563eb);
+            box-shadow: var(--shadow-xl, 0 8px 25px rgba(0,0,0,0.15));
+            transform: translateY(-2px);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md, 16px);
+            margin-bottom: var(--spacing-lg, 20px);
+        }
+
+        .category-icon {
+            font-size: var(--font-size-2xl, 1.5rem);
+            background: var(--color-surface, #f8f9fa);
+            padding: var(--spacing-md, 12px);
+            border-radius: var(--border-radius, 8px);
+            border: 1px solid var(--color-border, #dee2e6);
+        }
+
+        .category-title {
+            font-size: var(--font-size-lg, 1.125rem);
+            font-weight: 600;
+            color: var(--color-text-primary, #212529);
+            margin-bottom: var(--spacing-xs, 4px);
+        }
+
+        .category-subtitle {
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-text-secondary, #6c757d);
+        }
+
+        .service-items {
+            margin-bottom: var(--spacing-lg, 20px);
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-md, 12px);
+            margin-bottom: var(--spacing-sm, 8px);
+            background: var(--color-surface, #f8f9fa);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 6px);
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition, 150ms ease);
+            cursor: pointer;
+        }
+
+        .service-item:hover {
+            background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.05);
+            border-color: var(--color-primary, #2563eb);
+            transform: translateX(4px);
+        }
+
+        .service-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md, 12px);
+        }
+
+        .service-item-icon {
+            font-size: var(--font-size-lg, 1.125rem);
+        }
+
+        .service-item-details h4 {
+            margin: 0 0 var(--spacing-xs, 2px) 0;
+            font-size: var(--font-size-base, 16px);
+            font-weight: 600;
+            color: var(--color-text-primary, #212529);
+        }
+
+        .service-item-details p {
+            margin: 0;
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-text-secondary, #6c757d);
+        }
+
+        .service-item-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs, 4px);
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-success, #10b981);
+            font-weight: 500;
+        }
+
+        .service-actions {
+            display: flex;
+            gap: var(--spacing-sm, 8px);
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 6px);
+            background: var(--color-background, white);
+            color: var(--color-text-primary, #212529);
+            text-decoration: none;
+            font-size: var(--font-size-sm, 14px);
+            font-weight: 500;
+            transition: var(--transition, 150ms ease);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs, 4px);
+        }
+
+        .action-btn:hover {
+            background: var(--color-primary, #2563eb);
+            color: white;
+            border-color: var(--color-primary, #2563eb);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.success {
+            background: var(--color-success, #10b981);
+            color: white;
+            border-color: var(--color-success, #10b981);
+        }
+
+        .action-btn.danger {
+            background: var(--color-danger, #ef4444);
+            color: white;
+            border-color: var(--color-danger, #ef4444);
+        }
+
+        .action-btn.secondary {
+            background: var(--color-text-secondary, #6c757d);
+            color: white;
+            border-color: var(--color-text-secondary, #6c757d);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg, 16px);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--spacing-md, 12px);
+            }
+
+            .mission-header {
+                padding: var(--spacing-lg, 16px);
+                margin: calc(-1 * var(--spacing-lg, 16px)) calc(-1 * var(--spacing-lg, 16px)) var(--spacing-lg, 16px);
+            }
+
+            .system-status-bar {
+                justify-content: flex-start;
+                gap: var(--spacing-md, 12px);
+            }
+
+            .service-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .category-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .service-item {
+                flex-direction: column;
+                text-align: center;
+                gap: var(--spacing-sm, 8px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!--
+    @llm-type tab-interface
+    @llm-legend Tab-based mission control interface body with integrated tab system, navigation, system status, and service management
+    @llm-key Implements visual hierarchy with tab container, mission header, quick stats, categorized services, and responsive layout
+    @llm-map Connects to all static HTML interfaces through tab system and provides central navigation hub
+    @llm-axiom Interface must convey system reliability and professional operation through tab-based organization without backend dependencies
+    @llm-contract Provides functional tab navigation and status display using static data and registry information
+    @llm-token tab-mission-control-body: Complete tab-based mission control interface implementation
+    -->
+    <div class="container tab-mission-control">
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="index2"></div>
+
+        <!-- Main Tab Container - Integrated Tab System -->
+        <div class="main-tab-container">
+            <div id="main-tabs" data-component="tab-system"></div>
+        </div>
+    </div>
+
+    <script>
+        /*
+        @llm-type tab-initialization
+        @llm-legend Tab system initialization and mission control content generation for integrated interface
+        @llm-key Implements tab system setup, mission control content, service management, and interactive functionality
+        @llm-map Integrates with shared component system and provides tab-based navigation
+        @llm-axiom Tab system must provide seamless navigation and professional operation
+        @llm-contract Provides functional tab system with mission control as default tab
+        @llm-token tab-mission-control-js: Tab-based mission control JavaScript implementation
+        */
+
+        // Enhanced Mission Control Content for Tab System
+        function generateMissionControlContent() {
+            return `
+                <!-- Mission Control Header -->
+                <div class="mission-header">
+                    <div class="content">
+                        <h1>🎛️ Unhinged Mission Control</h1>
+                        <p class="subtitle">System Operations Center - AI Platform Management</p>
+
+                        <!-- System Status Bar -->
+                        <div class="system-status-bar">
+                            <div class="status-metric">
+                                <div class="status-indicator"></div>
+                                <span>System Online</span>
+                            </div>
+                            <div class="status-metric">
+                                <div class="status-indicator"></div>
+                                <span>Services Ready</span>
+                            </div>
+                            <div class="status-metric">
+                                <div class="status-indicator"></div>
+                                <span>Platform Operational</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Panel -->
+                <div class="quick-stats">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="services-count">8</div>
+                            <div class="stat-label">Services</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="interfaces-count">6</div>
+                            <div class="stat-label">Interfaces</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="uptime-display">99.9%</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="version-display">v2.1</div>
+                            <div class="stat-label">Version</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services Grid - Categorized mission control sections -->
+                <div class="services-grid">
+                    <!-- Control Plane Operations -->
+                    <div class="service-category control">
+                        <div class="category-header">
+                            <div class="category-icon">🎛️</div>
+                            <div>
+                                <div class="category-title">Control Plane</div>
+                                <div class="category-subtitle">System orchestration and management</div>
+                            </div>
+                        </div>
+                        <div class="service-items">
+                            <div class="service-item" onclick="openTabFromService('dag-control')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">🎯</div>
+                                    <div class="service-item-details">
+                                        <h4>DAG Control</h4>
+                                        <p>Build orchestration and execution</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                            <div class="service-item" onclick="openTabFromService('service-orchestration')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">🎛️</div>
+                                    <div class="service-item-details">
+                                        <h4>Service Orchestration</h4>
+                                        <p>Docker service management</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="action-btn success" onclick="startAllServices()">
+                                🚀 Start All
+                            </button>
+                            <button class="action-btn danger" onclick="stopAllServices()">
+                                🛑 Stop All
+                            </button>
+                            <button class="action-btn secondary" onclick="showSystemStatus()">
+                                📊 System Status
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AI Services -->
+                    <div class="service-category ai-services">
+                        <div class="category-header">
+                            <div class="category-icon">🤖</div>
+                            <div>
+                                <div class="category-title">AI Services</div>
+                                <div class="category-subtitle">Multimodal AI capabilities</div>
+                            </div>
+                        </div>
+                        <div class="service-items">
+                            <div class="service-item" onclick="openTabFromService('text-test')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">🚀</div>
+                                    <div class="service-item-details">
+                                        <h4>Text Generation</h4>
+                                        <p>GPU-accelerated LLM testing</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                            <div class="service-item" onclick="openTabFromService('image-test')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">👁️</div>
+                                    <div class="service-item-details">
+                                        <h4>Vision AI</h4>
+                                        <p>Image analysis and processing</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                            <div class="service-item" onclick="openTabFromService('voice-test')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">🎤</div>
+                                    <div class="service-item-details">
+                                        <h4>Voice Processing</h4>
+                                        <p>Speech-to-text and audio analysis</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="action-btn" onclick="openTabFromService('text-test')">🚀 Test LLM</button>
+                            <button class="action-btn" onclick="openTabFromService('image-test')">👁️ Test Vision</button>
+                            <button class="action-btn" onclick="openTabFromService('voice-test')">🎤 Test Audio</button>
+                        </div>
+                    </div>
+
+                    <!-- Development Tools -->
+                    <div class="service-category primary">
+                        <div class="category-header">
+                            <div class="category-icon">🛠️</div>
+                            <div>
+                                <div class="category-title">Development Tools</div>
+                                <div class="category-subtitle">Testing and development interfaces</div>
+                            </div>
+                        </div>
+                        <div class="service-items">
+                            <div class="service-item" onclick="openTabFromService('chat')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">💬</div>
+                                    <div class="service-item-details">
+                                        <h4>Chat Interface</h4>
+                                        <p>Interactive conversation testing</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                            <div class="service-item" onclick="openTabFromService('grpc-test')">
+                                <div class="service-item-info">
+                                    <div class="service-item-icon">🔧</div>
+                                    <div class="service-item-details">
+                                        <h4>gRPC Testing</h4>
+                                        <p>Direct service communication</p>
+                                    </div>
+                                </div>
+                                <div class="service-item-status">
+                                    <div class="status-indicator"></div>
+                                    Ready
+                                </div>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="action-btn" onclick="openTabFromService('chat')">💬 Open Chat</button>
+                            <button class="action-btn" onclick="openTabFromService('grpc-test')">🔧 Test gRPC</button>
+                            <button class="action-btn secondary" onclick="showSystemInfo()">ℹ️ System Info</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Tab System Integration
+        let mainTabSystem;
+
+        // Initialize tab system with mission control as default
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for components to initialize
+            setTimeout(() => {
+                mainTabSystem = document.getElementById('main-tabs').tabSystem;
+
+                // Add mission control as the default tab
+                mainTabSystem.addTab({
+                    id: 'mission-control',
+                    icon: '🎛️',
+                    label: 'Mission Control',
+                    content: generateMissionControlContent(),
+                    active: true
+                });
+
+                // Initialize dynamic content
+                initializeMissionControlFeatures();
+            }, 100);
+        });
+
+        // Function to open tabs from service items
+        function openTabFromService(serviceType) {
+            if (mainTabSystem) {
+                mainTabSystem.addTabFromContent(serviceType);
+            }
+        }
+
+        // Mission Control Interactive Features
+        function initializeMissionControlFeatures() {
+            // Update stats periodically
+            updateSystemStats();
+            setInterval(updateSystemStats, 30000); // Update every 30 seconds
+
+            // Initialize service status indicators
+            updateServiceStatuses();
+        }
+
+        function updateSystemStats() {
+            // Simulate dynamic stats updates
+            const stats = {
+                services: Math.floor(Math.random() * 3) + 7, // 7-9 services
+                interfaces: 6,
+                uptime: (99.5 + Math.random() * 0.4).toFixed(1) + '%',
+                version: 'v2.1'
+            };
+
+            // Update if elements exist
+            const servicesCount = document.getElementById('services-count');
+            const interfacesCount = document.getElementById('interfaces-count');
+            const uptimeDisplay = document.getElementById('uptime-display');
+            const versionDisplay = document.getElementById('version-display');
+
+            if (servicesCount) servicesCount.textContent = stats.services;
+            if (interfacesCount) interfacesCount.textContent = stats.interfaces;
+            if (uptimeDisplay) uptimeDisplay.textContent = stats.uptime;
+            if (versionDisplay) versionDisplay.textContent = stats.version;
+        }
+
+        function updateServiceStatuses() {
+            // Simulate service health checks
+            const statusIndicators = document.querySelectorAll('.status-indicator');
+            statusIndicators.forEach(indicator => {
+                // Randomly simulate occasional service issues
+                const isHealthy = Math.random() > 0.1; // 90% healthy
+                indicator.style.background = isHealthy ? '#10b981' : '#f59e0b';
+                indicator.style.boxShadow = isHealthy
+                    ? '0 0 8px rgba(16, 185, 129, 0.6)'
+                    : '0 0 8px rgba(245, 158, 11, 0.6)';
+            });
+        }
+
+        // Service Management Functions
+        function startAllServices() {
+            showNotification('🚀 Starting all services...', 'info');
+            simulateServiceStartup();
+        }
+
+        function stopAllServices() {
+            showNotification('🛑 Stopping all services...', 'warning');
+            simulateServiceShutdown();
+        }
+
+        function showSystemStatus() {
+            // Open system status in a new tab
+            if (mainTabSystem) {
+                mainTabSystem.addTab({
+                    id: 'system-status-' + Date.now(),
+                    icon: '📊',
+                    label: 'System Status',
+                    content: generateSystemStatusContent()
+                });
+            }
+        }
+
+        function showSystemInfo() {
+            // Open system info in a new tab
+            if (mainTabSystem) {
+                mainTabSystem.addTab({
+                    id: 'system-info-' + Date.now(),
+                    icon: 'ℹ️',
+                    label: 'System Info',
+                    content: generateSystemInfoContent()
+                });
+            }
+        }
+
+        function generateSystemStatusContent() {
+            return `
+                <div class="system-status-content">
+                    <h2>📊 System Status</h2>
+                    <div class="status-grid">
+                        <div class="status-card">
+                            <h3>🖥️ System Resources</h3>
+                            <div class="resource-item">
+                                <span>CPU Usage:</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%"></div>
+                                </div>
+                                <span>45%</span>
+                            </div>
+                            <div class="resource-item">
+                                <span>Memory:</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 62%"></div>
+                                </div>
+                                <span>62%</span>
+                            </div>
+                            <div class="resource-item">
+                                <span>Disk:</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 78%"></div>
+                                </div>
+                                <span>78%</span>
+                            </div>
+                        </div>
+                        <div class="status-card">
+                            <h3>🌐 Network Status</h3>
+                            <div class="network-item">
+                                <span>🔗 API Gateway:</span>
+                                <span class="status-badge healthy">Online</span>
+                            </div>
+                            <div class="network-item">
+                                <span>🗄️ Database:</span>
+                                <span class="status-badge healthy">Connected</span>
+                            </div>
+                            <div class="network-item">
+                                <span>🔄 Load Balancer:</span>
+                                <span class="status-badge healthy">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+                    .status-card { background: var(--color-surface); padding: 20px; border-radius: 8px; border: 1px solid var(--color-border); }
+                    .resource-item, .network-item { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+                    .progress-bar { flex: 1; height: 8px; background: var(--color-border); border-radius: 4px; overflow: hidden; }
+                    .progress-fill { height: 100%; background: var(--color-primary); transition: width 0.3s ease; }
+                    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+                    .status-badge.healthy { background: var(--color-success); color: white; }
+                </style>
+            `;
+        }
+
+        function generateSystemInfoContent() {
+            return `
+                <div class="system-info-content">
+                    <h2>ℹ️ System Information</h2>
+                    <div class="info-grid">
+                        <div class="info-section">
+                            <h3>🖥️ Platform Details</h3>
+                            <div class="info-item"><strong>Platform:</strong> Unhinged AI Control Plane</div>
+                            <div class="info-item"><strong>Version:</strong> v2.1.0</div>
+                            <div class="info-item"><strong>Build:</strong> 2025.10.20</div>
+                            <div class="info-item"><strong>Environment:</strong> Production</div>
+                        </div>
+                        <div class="info-section">
+                            <h3>🔧 Configuration</h3>
+                            <div class="info-item"><strong>Tab System:</strong> Phase 1 Active</div>
+                            <div class="info-item"><strong>Components:</strong> Shared Library v2.1</div>
+                            <div class="info-item"><strong>Theme:</strong> Professional Dark/Light</div>
+                            <div class="info-item"><strong>Responsive:</strong> Mobile-First Design</div>
+                        </div>
+                        <div class="info-section">
+                            <h3>📊 Statistics</h3>
+                            <div class="info-item"><strong>Active Interfaces:</strong> 13</div>
+                            <div class="info-item"><strong>Available Services:</strong> 8</div>
+                            <div class="info-item"><strong>Uptime:</strong> 99.9%</div>
+                            <div class="info-item"><strong>Last Restart:</strong> 2 days ago</div>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+                    .info-section { background: var(--color-surface); padding: 20px; border-radius: 8px; border: 1px solid var(--color-border); }
+                    .info-item { margin: 8px 0; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+                    .info-item:last-child { border-bottom: none; }
+                </style>
+            `;
+        }
+
+        function simulateServiceStartup() {
+            let step = 0;
+            const steps = [
+                '🔄 Initializing services...',
+                '🐳 Starting containers...',
+                '🌐 Configuring network...',
+                '🗄️ Connecting to database...',
+                '✅ All services started successfully!'
+            ];
+
+            const interval = setInterval(() => {
+                if (step < steps.length) {
+                    showNotification(steps[step], step === steps.length - 1 ? 'success' : 'info');
+                    step++;
+                } else {
+                    clearInterval(interval);
+                    updateServiceStatuses();
+                }
+            }, 1000);
+        }
+
+        function simulateServiceShutdown() {
+            setTimeout(() => {
+                showNotification('🛑 Services shutdown completed', 'success');
+                updateServiceStatuses();
+            }, 2000);
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 6px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+
+            switch (type) {
+                case 'success':
+                    notification.style.background = 'var(--color-success, #10b981)';
+                    break;
+                case 'warning':
+                    notification.style.background = 'var(--color-warning, #f59e0b)';
+                    break;
+                case 'error':
+                    notification.style.background = 'var(--color-danger, #ef4444)';
+                    break;
+                default:
+                    notification.style.background = 'var(--color-primary, #2563eb)';
+            }
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Add notification animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+    <!-- Footer - DRY Component -->
+    <div id="footer-container" data-component="footer"></div>
+</body>
+</html>

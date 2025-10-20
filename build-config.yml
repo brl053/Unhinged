@@ -27,7 +27,7 @@ build_system:
     compression: true
 
   parallelism:
-    max_workers: 4
+    max_workers: 16  # Optimized for AMD 9000s series 16-core
     dependency_aware: true
 
   monitoring:
@@ -305,18 +305,88 @@ services:
         command: "python3 -c 'from build.modules.registry_builder import RegistryBuilder; from build.modules import BuildContext; from pathlib import Path; rb = RegistryBuilder(); ctx = BuildContext(Path(\".\"), \"generate-registry\", {}); result = rb.build(ctx); exit(0 if result.success else 1)'"
         cache_key: "static_html_registry"
 
+  # Proto client library generation
+  proto-clients:
+    description: "Generate polyglot client libraries from protobuf definitions"
+    module: "proto_client_builder"
+    cache_strategy: "content_based"
+    parallel: true
+    incremental: true
+    inputs:
+      - "proto/**/*.proto"
+      - "build-config.yml"
+      - "package.json"
+    outputs:
+      - "generated/typescript/clients/**/*.ts"
+      - "generated/javascript/clients/**/*.js"
+      - "control/static_html/shared/api-clients.js"
+    steps:
+      - name: "Generate TypeScript and JavaScript clients"
+        command: "python3 build/build.py build proto-clients"
+        cache_key: "proto_client_generation"
+
+  proto-clients-all:
+    description: "Generate client libraries for all supported languages"
+    module: "proto_client_builder"
+    cache_strategy: "content_based"
+    parallel: true
+    inputs:
+      - "proto/**/*.proto"
+    outputs:
+      - "generated/typescript/clients/**/*.ts"
+      - "generated/javascript/clients/**/*.js"
+      - "generated/python/clients/**/*.py"
+      - "generated/kotlin/clients/**/*.kt"
+      - "generated/go/clients/**/*.go"
+    steps:
+      - name: "Generate all language clients"
+        command: "python3 build/build.py build proto-clients-all"
+        cache_key: "proto_client_all_generation"
+
+  proto-clients-typescript:
+    description: "Generate TypeScript client libraries only"
+    module: "proto_client_builder"
+    cache_strategy: "content_based"
+    parallel: false
+    inputs:
+      - "proto/**/*.proto"
+    outputs:
+      - "generated/typescript/clients/**/*.ts"
+    steps:
+      - name: "Generate TypeScript clients"
+        command: "python3 build/build.py build proto-clients-typescript"
+
+  proto-clients-javascript:
+    description: "Generate JavaScript client libraries for browsers"
+    module: "proto_client_builder"
+    cache_strategy: "content_based"
+    parallel: false
+    inputs:
+      - "proto/**/*.proto"
+    outputs:
+      - "generated/javascript/clients/**/*.js"
+      - "control/static_html/shared/api-clients.js"
+    steps:
+      - name: "Generate JavaScript clients"
+        command: "python3 build/build.py build proto-clients-javascript"
+
   # Enhanced development targets (v1)
   dev-fast:
     description: "Fast development build with intelligent caching"
-    dependencies: ["generate-registry"]  # Add registry dependency
+    dependencies: ["generate-registry", "proto-clients"]  # Add proto client dependency
     cache_strategy: "aggressive"
     parallel: true
     incremental: true
     steps:
-      - name: "Generate protobuf (if changed)"
+      - name: "Generate protobuf and clients (if changed)"
         command: "cd proto && ./build.sh"
         condition: "proto_files_changed"
         cache_key: "proto_generation"
+
+      - name: "Generate API clients (parallel)"
+        command: "python3 build/build.py build proto-clients"
+        parallel_group: "codegen"
+        cache_key: "api_client_generation"
 
       - name: "Start infrastructure (parallel)"
         command: "docker compose -f docker-compose.dev.yml up -d database kafka zookeeper"

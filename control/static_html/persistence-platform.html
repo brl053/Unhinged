@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+@llm-type persistence-ui
+@llm-legend Unified persistence platform UI for multi-database operations and management
+@llm-key Provides CRUD operations, named queries, vector search, and graph traversal across 8 database technologies
+@llm-map Central persistence management interface connecting to persistence_platform.proto gRPC service
+@llm-axiom Must provide immediate access to all database operations with real-time status and error handling
+@llm-contract Displays unified database operations without requiring complex backend configuration
+@llm-token persistence-platform-ui: Multi-database management interface for unified persistence operations
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💾 Persistence Platform - Unified Database Management</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/registry.js"></script>
+    <script src="shared/components.js"></script>
+    <script src="shared/api-clients.js"></script>
+    <script src="shared/api-integration.js"></script>
+    <style>
+        /*
+        @llm-type persistence-styling
+        @llm-legend Persistence platform UI styling with database-specific visual indicators
+        @llm-key Implements multi-database visual hierarchy, operation categorization, and real-time status
+        @llm-map Extends shared theme with persistence-specific components and database technology indicators
+        @llm-axiom Visual design must clearly distinguish between different database technologies and operations
+        @llm-contract Provides consistent styling for CRUD, queries, vector search, and graph operations
+        @llm-token persistence-ui-design: Visual design system for multi-database management interface
+        */
+
+        .persistence-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl, 24px);
+        }
+
+        .database-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--spacing-xl, 24px);
+            margin-bottom: var(--spacing-2xl, 32px);
+        }
+
+        .database-card {
+            background: var(--color-background, white);
+            border: 2px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius-lg, 12px);
+            padding: var(--spacing-xl, 24px);
+            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
+            transition: var(--transition, 150ms ease);
+            position: relative;
+        }
+
+        .database-card:hover {
+            border-color: var(--color-primary, #2563eb);
+            box-shadow: var(--shadow-xl, 0 8px 25px rgba(0,0,0,0.15));
+            transform: translateY(-2px);
+        }
+
+        .database-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md, 16px);
+            margin-bottom: var(--spacing-lg, 20px);
+        }
+
+        .database-icon {
+            font-size: var(--font-size-2xl, 1.5rem);
+            padding: var(--spacing-md, 12px);
+            border-radius: var(--border-radius, 8px);
+            border: 1px solid var(--color-border, #dee2e6);
+        }
+
+        .database-icon.redis { background: #dc382d; color: white; }
+        .database-icon.cockroach { background: #6933ff; color: white; }
+        .database-icon.mongodb { background: #47a248; color: white; }
+        .database-icon.weaviate { background: #ff6b35; color: white; }
+        .database-icon.elasticsearch { background: #005571; color: white; }
+        .database-icon.cassandra { background: #1287b1; color: white; }
+        .database-icon.neo4j { background: #008cc1; color: white; }
+        .database-icon.datalake { background: #ff9900; color: white; }
+
+        .database-info h3 {
+            margin: 0 0 var(--spacing-xs, 4px) 0;
+            font-size: var(--font-size-lg, 1.125rem);
+            font-weight: 600;
+            color: var(--color-text-primary, #212529);
+        }
+
+        .database-info p {
+            margin: 0;
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-text-secondary, #6c757d);
+        }
+
+        .database-status {
+            position: absolute;
+            top: var(--spacing-md, 16px);
+            right: var(--spacing-md, 16px);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs, 4px);
+            font-size: var(--font-size-sm, 14px);
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success, #10b981);
+            animation: pulse-glow 2s infinite;
+        }
+
+        .database-operations {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-sm, 8px);
+            margin-bottom: var(--spacing-lg, 20px);
+        }
+
+        .operation-btn {
+            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 6px);
+            background: var(--color-surface, #f8f9fa);
+            color: var(--color-text-primary, #212529);
+            text-decoration: none;
+            font-size: var(--font-size-sm, 14px);
+            font-weight: 500;
+            transition: var(--transition, 150ms ease);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs, 4px);
+        }
+
+        .operation-btn:hover {
+            background: var(--color-primary, #2563eb);
+            color: white;
+            border-color: var(--color-primary, #2563eb);
+            transform: translateY(-1px);
+        }
+
+        .operation-panel {
+            background: var(--color-surface, #f8f9fa);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 8px);
+            padding: var(--spacing-lg, 20px);
+            margin-bottom: var(--spacing-xl, 24px);
+            display: none;
+        }
+
+        .operation-panel.active {
+            display: block;
+        }
+
+        .operation-form {
+            display: grid;
+            gap: var(--spacing-md, 16px);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs, 4px);
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--color-text-primary, #212529);
+            font-size: var(--font-size-sm, 14px);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 6px);
+            font-size: var(--font-size-base, 16px);
+            transition: var(--transition, 150ms ease);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-primary, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .execute-btn {
+            padding: var(--spacing-md, 12px) var(--spacing-lg, 20px);
+            background: var(--color-primary, #2563eb);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius, 6px);
+            font-size: var(--font-size-base, 16px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition, 150ms ease);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm, 8px);
+        }
+
+        .execute-btn:hover {
+            background: var(--color-primary-dark, #1d4ed8);
+            transform: translateY(-1px);
+        }
+
+        .execute-btn:disabled {
+            background: var(--color-text-secondary, #6c757d);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-panel {
+            background: var(--color-background, white);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 8px);
+            padding: var(--spacing-lg, 20px);
+            margin-top: var(--spacing-lg, 20px);
+            display: none;
+        }
+
+        .results-panel.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md, 16px);
+            padding-bottom: var(--spacing-sm, 8px);
+            border-bottom: 1px solid var(--color-border, #dee2e6);
+        }
+
+        .results-content {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: var(--font-size-sm, 14px);
+            background: var(--color-surface, #f8f9fa);
+            padding: var(--spacing-md, 16px);
+            border-radius: var(--border-radius, 6px);
+            border: 1px solid var(--color-border, #dee2e6);
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: var(--spacing-md, 16px);
+            margin-bottom: var(--spacing-xl, 24px);
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            padding: var(--spacing-md, 12px) var(--spacing-lg, 20px);
+            background: var(--color-background, white);
+            border: 2px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius-lg, 12px);
+            text-decoration: none;
+            color: var(--color-text-primary, #212529);
+            font-weight: 600;
+            transition: var(--transition, 150ms ease);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm, 8px);
+        }
+
+        .quick-action:hover {
+            border-color: var(--color-primary, #2563eb);
+            background: rgba(37, 99, 235, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .database-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg, 16px);
+            }
+
+            .database-operations {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+
+            .persistence-container {
+                padding: var(--spacing-lg, 16px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!--
+    @llm-type persistence-interface
+    @llm-legend Persistence platform interface body with multi-database management and unified operations
+    @llm-key Implements database grid, operation panels, CRUD forms, and real-time results display
+    @llm-map Connects to persistence_platform.proto service through generated gRPC-Web clients
+    @llm-axiom Interface must provide immediate access to all 8 database technologies with clear operation feedback
+    @llm-contract Provides functional database operations using static data and API integration
+    @llm-token persistence-platform-body: Complete multi-database management interface implementation
+    -->
+    <div class="container">
+        <!-- Navigation - DRY Component -->
+        <div id="nav-container" data-component="navigation" data-active="persistence-platform"></div>
+
+        <!-- Page Header - DRY Component -->
+        <div id="header-container" data-component="page-header"></div>
+
+        <main class="persistence-container" id="main-content">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="#" class="quick-action" onclick="showAllDatabases()">
+                    <span>🗄️</span>
+                    <span>View All Databases</span>
+                </a>
+                <a href="#" class="quick-action" onclick="executeNamedQuery()">
+                    <span>⚡</span>
+                    <span>Named Queries</span>
+                </a>
+                <a href="#" class="quick-action" onclick="vectorSearch()">
+                    <span>🔍</span>
+                    <span>Vector Search</span>
+                </a>
+                <a href="#" class="quick-action" onclick="graphTraversal()">
+                    <span>🕸️</span>
+                    <span>Graph Traversal</span>
+                </a>
+                <a href="#" class="quick-action" onclick="showSystemHealth()">
+                    <span>💚</span>
+                    <span>System Health</span>
+                </a>
+            </div>
+
+            <!-- Database Technologies Grid -->
+            <div class="database-grid">
+                <!-- Redis -->
+                <div class="database-card" data-database="redis">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon redis">⚡</div>
+                        <div class="database-info">
+                            <h3>Redis</h3>
+                            <p>Caching & Sessions</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('redis', 'get')">
+                            📖 GET
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('redis', 'set')">
+                            ✏️ SET
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('redis', 'delete')">
+                            🗑️ DEL
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('redis', 'scan')">
+                            🔍 SCAN
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CockroachDB -->
+                <div class="database-card" data-database="cockroach">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon cockroach">🪳</div>
+                        <div class="database-info">
+                            <h3>CockroachDB</h3>
+                            <p>Distributed SQL</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('cockroach', 'select')">
+                            📊 SELECT
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('cockroach', 'insert')">
+                            ➕ INSERT
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('cockroach', 'update')">
+                            ✏️ UPDATE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('cockroach', 'delete')">
+                            🗑️ DELETE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MongoDB -->
+                <div class="database-card" data-database="mongodb">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon mongodb">🍃</div>
+                        <div class="database-info">
+                            <h3>MongoDB</h3>
+                            <p>Document Store</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('mongodb', 'find')">
+                            🔍 FIND
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('mongodb', 'insert')">
+                            ➕ INSERT
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('mongodb', 'update')">
+                            ✏️ UPDATE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('mongodb', 'delete')">
+                            🗑️ DELETE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Weaviate -->
+                <div class="database-card" data-database="weaviate">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon weaviate">🧠</div>
+                        <div class="database-info">
+                            <h3>Weaviate</h3>
+                            <p>Vector Database</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('weaviate', 'search')">
+                            🔍 SEARCH
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('weaviate', 'insert')">
+                            ➕ INSERT
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('weaviate', 'update')">
+                            ✏️ UPDATE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('weaviate', 'delete')">
+                            🗑️ DELETE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Elasticsearch -->
+                <div class="database-card" data-database="elasticsearch">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon elasticsearch">🔍</div>
+                        <div class="database-info">
+                            <h3>Elasticsearch</h3>
+                            <p>Search & Analytics</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('elasticsearch', 'search')">
+                            🔍 SEARCH
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('elasticsearch', 'index')">
+                            📝 INDEX
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('elasticsearch', 'update')">
+                            ✏️ UPDATE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('elasticsearch', 'delete')">
+                            🗑️ DELETE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cassandra -->
+                <div class="database-card" data-database="cassandra">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon cassandra">🏛️</div>
+                        <div class="database-info">
+                            <h3>Cassandra</h3>
+                            <p>Wide-Column Store</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('cassandra', 'select')">
+                            📊 SELECT
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('cassandra', 'insert')">
+                            ➕ INSERT
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('cassandra', 'update')">
+                            ✏️ UPDATE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('cassandra', 'delete')">
+                            🗑️ DELETE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Neo4j -->
+                <div class="database-card" data-database="neo4j">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon neo4j">🕸️</div>
+                        <div class="database-info">
+                            <h3>Neo4j</h3>
+                            <p>Graph Database</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('neo4j', 'match')">
+                            🔍 MATCH
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('neo4j', 'create')">
+                            ➕ CREATE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('neo4j', 'merge')">
+                            🔄 MERGE
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('neo4j', 'delete')">
+                            🗑️ DELETE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Lake -->
+                <div class="database-card" data-database="datalake">
+                    <div class="database-status">
+                        <div class="status-indicator"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="database-header">
+                        <div class="database-icon datalake">🏞️</div>
+                        <div class="database-info">
+                            <h3>Data Lake</h3>
+                            <p>OLAP Warehouse</p>
+                        </div>
+                    </div>
+                    <div class="database-operations">
+                        <button class="operation-btn" onclick="showOperation('datalake', 'query')">
+                            📊 QUERY
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('datalake', 'load')">
+                            📥 LOAD
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('datalake', 'transform')">
+                            🔄 TRANSFORM
+                        </button>
+                        <button class="operation-btn" onclick="showOperation('datalake', 'export')">
+                            📤 EXPORT
+                        </button>
+                    </div>
+                </div>
+            </div>

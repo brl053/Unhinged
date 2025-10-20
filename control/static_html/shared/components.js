@@ -117,6 +117,7 @@ class UnhingedComponents {
         static render(activePage = '') {
             const navItems = [
                 { id: 'index', href: 'index.html', icon: '🎛️', label: 'Mission Control' },
+                { id: 'index2', href: 'index2.html', icon: '🗂️', label: 'Mission Control v2' },
                 { id: 'dag', href: 'dag-control.html', icon: '🎯', label: 'DAG Control' },
                 { id: 'orchestration', href: 'service-orchestration.html', icon: '🎛️', label: 'Service Orchestration' },
                 { id: 'text', href: 'text-test.html', icon: '🚀', label: 'Text Generation' },
@@ -127,7 +128,8 @@ class UnhingedComponents {
                 { id: 'persistence', href: 'persistence-dev-tool.html', icon: '💾', label: 'Data Management' },
                 { id: 'toc', href: 'table-of-contents.html', icon: '📚', label: 'Table of Contents' },
                 { id: 'test', href: 'accessibility-test.html', icon: '🧪', label: 'Accessibility Test' },
-                { id: 'validator', href: 'validate-standardization.html', icon: '🔍', label: 'Validator' }
+                { id: 'validator', href: 'validate-standardization.html', icon: '🔍', label: 'Validator' },
+                { id: 'tab-demo', href: 'tab-system-demo.html', icon: '🗂️', label: 'Tab Demo' }
             ];
 
             const navHTML = navItems.map(item => {
@@ -367,6 +369,325 @@ class UnhingedComponents {
     }
 
     /**
+     * Tab System Component
+     * Provides browser-within-browser tab functionality
+     */
+    static TabSystem = class {
+        constructor(container) {
+            this.container = container;
+            this.tabs = [];
+            this.activeTab = null;
+            this.init();
+        }
+
+        init() {
+            this.render();
+            this.setupEventListeners();
+        }
+
+        render() {
+            this.container.innerHTML = `
+                <div class="tab-container ${this.tabs.length === 0 ? 'empty-state' : ''}">
+                    <div class="tab-navigation">
+                        ${this.renderTabs()}
+                        <button class="tab-add-button" data-action="add-tab">
+                            <span>+</span>
+                            <span>Add Tab</span>
+                        </button>
+                    </div>
+                    <div class="tab-content">
+                        ${this.renderContent()}
+                    </div>
+                </div>
+            `;
+        }
+
+        renderTabs() {
+            return this.tabs.map((tab, index) => `
+                <button class="tab-link ${tab.active ? 'active' : ''}"
+                        data-tab-id="${tab.id}"
+                        data-action="switch-tab">
+                    <span class="tab-icon">${tab.icon}</span>
+                    <span class="tab-label">${tab.label}</span>
+                    ${this.tabs.length > 1 ? `<button class="tab-close" data-action="close-tab" data-tab-id="${tab.id}">×</button>` : ''}
+                </button>
+            `).join('');
+        }
+
+        renderContent() {
+            if (this.tabs.length === 0) {
+                return `
+                    <div class="tab-empty-icon">📚</div>
+                    <div class="tab-empty-title">No tabs open</div>
+                    <div class="tab-empty-subtitle">Add a tab to get started, or browse the table of contents below</div>
+                    <div class="tab-default-content">
+                        ${this.getTableOfContents()}
+                    </div>
+                `;
+            }
+
+            const activeTab = this.tabs.find(tab => tab.active);
+            return activeTab ? activeTab.content : '';
+        }
+
+        getTableOfContents() {
+            return `
+                <div class="toc-container">
+                    <h3>🎛️ Control Plane Interfaces</h3>
+                    <div class="toc-grid">
+                        <div class="toc-section">
+                            <h4>Core Control</h4>
+                            <ul class="toc-list">
+                                <li><a href="#" data-tab-content="mission-control">🎛️ Mission Control</a></li>
+                                <li><a href="#" data-tab-content="dag-control">🎯 DAG Control</a></li>
+                                <li><a href="#" data-tab-content="service-orchestration">🎛️ Service Orchestration</a></li>
+                            </ul>
+                        </div>
+                        <div class="toc-section">
+                            <h4>AI Services</h4>
+                            <ul class="toc-list">
+                                <li><a href="#" data-tab-content="text-test">🚀 Text Generation</a></li>
+                                <li><a href="#" data-tab-content="image-test">👁️ Vision AI</a></li>
+                                <li><a href="#" data-tab-content="voice-test">🎤 Voice Processing</a></li>
+                            </ul>
+                        </div>
+                        <div class="toc-section">
+                            <h4>Development Tools</h4>
+                            <ul class="toc-list">
+                                <li><a href="#" data-tab-content="chat">💬 AI Chat</a></li>
+                                <li><a href="#" data-tab-content="grpc-test">🔧 gRPC Testing</a></li>
+                                <li><a href="#" data-tab-content="persistence-dev-tool">💾 Data Management</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        setupEventListeners() {
+            this.container.addEventListener('click', (event) => {
+                const action = event.target.dataset.action;
+                const tabId = event.target.dataset.tabId;
+                const tabContent = event.target.dataset.tabContent;
+
+                switch (action) {
+                    case 'add-tab':
+                        this.addTab();
+                        break;
+                    case 'switch-tab':
+                        this.switchTab(tabId);
+                        break;
+                    case 'close-tab':
+                        event.stopPropagation();
+                        this.closeTab(tabId);
+                        break;
+                }
+
+                if (tabContent) {
+                    event.preventDefault();
+                    this.addTabFromContent(tabContent);
+                }
+            });
+        }
+
+        addTab(options = {}) {
+            const defaultOptions = {
+                id: `tab-${Date.now()}`,
+                icon: '📄',
+                label: 'New Tab',
+                content: '<div class="tab-placeholder">Tab content goes here</div>',
+                active: true
+            };
+
+            const tab = { ...defaultOptions, ...options };
+
+            // Deactivate other tabs
+            this.tabs.forEach(t => t.active = false);
+
+            this.tabs.push(tab);
+            this.activeTab = tab.id;
+            this.render();
+        }
+
+        addTabFromContent(contentType) {
+            const contentMap = {
+                'mission-control': { icon: '🎛️', label: 'Mission Control', content: this.getMissionControlContent() },
+                'dag-control': { icon: '🎯', label: 'DAG Control', content: this.getDAGControlContent() },
+                'service-orchestration': { icon: '🎛️', label: 'Service Orchestration', content: this.getServiceOrchestrationContent() },
+                'text-test': { icon: '🚀', label: 'Text Generation', content: this.getTextTestContent() },
+                'image-test': { icon: '👁️', label: 'Vision AI', content: this.getImageTestContent() },
+                'voice-test': { icon: '🎤', label: 'Voice Processing', content: this.getVoiceTestContent() },
+                'chat': { icon: '💬', label: 'AI Chat', content: this.getChatContent() },
+                'grpc-test': { icon: '🔧', label: 'gRPC Testing', content: this.getGRPCTestContent() },
+                'persistence-dev-tool': { icon: '💾', label: 'Data Management', content: this.getPersistenceContent() }
+            };
+
+            const config = contentMap[contentType];
+            if (config) {
+                this.addTab({
+                    id: contentType,
+                    ...config
+                });
+            }
+        }
+
+        switchTab(tabId) {
+            this.tabs.forEach(tab => {
+                tab.active = tab.id === tabId;
+            });
+            this.activeTab = tabId;
+            this.render();
+        }
+
+        closeTab(tabId) {
+            const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
+            if (tabIndex === -1) return;
+
+            const wasActive = this.tabs[tabIndex].active;
+            this.tabs.splice(tabIndex, 1);
+
+            if (wasActive && this.tabs.length > 0) {
+                // Activate the tab to the left, or the first tab if we closed the first one
+                const newActiveIndex = Math.max(0, tabIndex - 1);
+                this.tabs[newActiveIndex].active = true;
+                this.activeTab = this.tabs[newActiveIndex].id;
+            } else if (this.tabs.length === 0) {
+                this.activeTab = null;
+            }
+
+            this.render();
+        }
+
+        // Content generators for different tab types
+        getMissionControlContent() {
+            return `
+                <div class="mission-control-tab">
+                    <h2>🎛️ Mission Control</h2>
+                    <p>System operations center for the Unhinged platform.</p>
+                    <div class="quick-actions">
+                        <button class="action-button">🚀 Start All Services</button>
+                        <button class="action-button">🛑 Stop All Services</button>
+                        <button class="action-button">📊 View Metrics</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        getDAGControlContent() {
+            return `
+                <div class="dag-control-tab">
+                    <h2>🎯 DAG Control</h2>
+                    <p>Build orchestration and dependency management.</p>
+                    <div class="dag-actions">
+                        <button class="action-button">▶️ Run Build</button>
+                        <button class="action-button">⏸️ Pause Build</button>
+                        <button class="action-button">🔄 Refresh DAG</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        getServiceOrchestrationContent() {
+            return `
+                <div class="service-orchestration-tab">
+                    <h2>🎛️ Service Orchestration</h2>
+                    <p>Docker service management and orchestration.</p>
+                    <div class="service-actions">
+                        <button class="action-button">🐳 Start Containers</button>
+                        <button class="action-button">📋 View Logs</button>
+                        <button class="action-button">🔧 Configure Services</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        getTextTestContent() {
+            return `
+                <div class="text-test-tab">
+                    <h2>🚀 Text Generation</h2>
+                    <p>GPU-accelerated language model testing interface.</p>
+                    <textarea placeholder="Enter your prompt here..." rows="4" style="width: 100%; margin: 16px 0;"></textarea>
+                    <button class="generate-button">Generate Text</button>
+                </div>
+            `;
+        }
+
+        getImageTestContent() {
+            return `
+                <div class="image-test-tab">
+                    <h2>👁️ Vision AI</h2>
+                    <p>Image analysis and processing capabilities.</p>
+                    <div class="upload-area" style="border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 16px 0;">
+                        <div>📁 Drop image here or click to upload</div>
+                    </div>
+                    <button class="action-button">Analyze Image</button>
+                </div>
+            `;
+        }
+
+        getVoiceTestContent() {
+            return `
+                <div class="voice-test-tab">
+                    <h2>🎤 Voice Processing</h2>
+                    <p>Speech-to-text and audio analysis tools.</p>
+                    <div class="voice-controls" style="text-align: center; margin: 24px 0;">
+                        <button class="action-button">🎤 Start Recording</button>
+                        <button class="action-button">⏹️ Stop Recording</button>
+                        <button class="action-button">▶️ Play Audio</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        getChatContent() {
+            return `
+                <div class="chat-tab">
+                    <h2>💬 AI Chat</h2>
+                    <div class="chat-messages" style="height: 300px; border: 1px solid #ddd; padding: 16px; margin: 16px 0; overflow-y: auto;">
+                        <div class="chat-message">Welcome to AI Chat!</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" placeholder="Type your message..." style="flex: 1; padding: 8px;">
+                        <button class="action-button">Send</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        getGRPCTestContent() {
+            return `
+                <div class="grpc-test-tab">
+                    <h2>🔧 gRPC Testing</h2>
+                    <p>Direct service communication testing.</p>
+                    <div class="grpc-controls">
+                        <select style="width: 100%; margin: 8px 0; padding: 8px;">
+                            <option>Select Service</option>
+                            <option>Text Generation Service</option>
+                            <option>Vision AI Service</option>
+                            <option>Voice Processing Service</option>
+                        </select>
+                        <button class="action-button">Test Connection</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        getPersistenceContent() {
+            return `
+                <div class="persistence-tab">
+                    <h2>💾 Data Management</h2>
+                    <p>Database and storage management tools.</p>
+                    <div class="persistence-actions">
+                        <button class="action-button">📊 View Database</button>
+                        <button class="action-button">🔄 Backup Data</button>
+                        <button class="action-button">🗑️ Clear Cache</button>
+                    </div>
+                </div>
+            `;
+        }
+    };
+
+    /**
      * Initialize all components
      */
     static init() {
@@ -378,6 +699,12 @@ class UnhingedComponents {
             const buttons = document.querySelectorAll('button, .generate-button, .action-button, .nav-link');
             buttons.forEach(button => {
                 this.KeyboardManager.enhanceButtonAccessibility?.(button);
+            });
+
+            // Initialize tab systems
+            const tabContainers = document.querySelectorAll('[data-component="tab-system"]');
+            tabContainers.forEach(container => {
+                container.tabSystem = new this.TabSystem(container);
             });
         });
     }

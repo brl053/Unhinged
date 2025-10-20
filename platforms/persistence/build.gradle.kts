@@ -125,6 +125,46 @@ application {
     mainClass.set("com.unhinged.persistence.PersistencePlatformApplicationKt")
 }
 
+// Custom task for generating database clients
+tasks.register("generateDatabaseClients") {
+    group = "build"
+    description = "Generate database client registry and configuration"
+
+    doLast {
+        println("🔧 Generating database client registry...")
+
+        // Create database client registry
+        val registryFile = file("src/main/kotlin/com/unhinged/persistence/client/GeneratedDatabaseRegistry.kt")
+        registryFile.parentFile.mkdirs()
+
+        registryFile.writeText("""
+// Auto-generated database client registry
+// Generated at: ${java.time.Instant.now()}
+
+package com.unhinged.persistence.client
+
+object GeneratedDatabaseRegistry {
+    val databases = mapOf(
+        "cockroachdb" to DatabaseConfig("CockroachDB", "localhost", 26257, "distributed-sql"),
+        "redis" to DatabaseConfig("Redis", "localhost", 6379, "cache"),
+        "cassandra" to DatabaseConfig("Cassandra", "localhost", 9042, "nosql"),
+        "chroma" to DatabaseConfig("Chroma", "localhost", 8000, "vector"),
+        "spark" to DatabaseConfig("Spark", "localhost", 8082, "data-lake")
+    )
+}
+
+data class DatabaseConfig(
+    val name: String,
+    val host: String,
+    val port: Int,
+    val type: String
+)
+        """.trimIndent())
+
+        println("✅ Database client registry generated")
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }

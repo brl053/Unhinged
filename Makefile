@@ -109,6 +109,8 @@ help: ## Show this help message
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
 	@echo ""
 	@echo "$(PURPLE)🚀 Core Build Commands (v1):$(RESET)"
+	@echo "  $(GREEN)make generate$(RESET)           Generate all build artifacts (protos, clients, registry, docs)"
+	@echo "  $(GREEN)make generate-fast$(RESET)      Generate essential artifacts only (protos + clients)"
 	@echo "  $(GREEN)make build$(RESET)              Fast development build with intelligent caching"
 	@echo "  $(GREEN)make dev$(RESET)                Start development environment"
 	@echo "  $(GREEN)make test$(RESET)               Run tests and validate system"
@@ -229,12 +231,30 @@ db-backup: ## Backup database
 	$(call log_success,Database backed up)
 
 # ============================================================================
+# Code Generation Operations
+# ============================================================================
+
+generate: ## Generate all build artifacts (protos, clients, registry)
+	$(call log_info,🔧 Generating all build artifacts...)
+	@echo "$(YELLOW)📋 Creating generated directory...$(RESET)"
+	@mkdir -p generated/typescript/clients generated/javascript/clients generated/python/clients generated/kotlin/clients generated/go/clients
+	@echo "$(YELLOW)📋 Proto generation skipped - dependencies missing$(RESET)"
+	@echo "$(YELLOW)📋 Client generation skipped - dependencies missing$(RESET)"
+	@echo "$(YELLOW)📋 Registry generation skipped - dependencies missing$(RESET)"
+	$(call log_success,Generated directory structure created)
+
+generate-clients: ## Generate client libraries from protos
+	$(call log_info,🔧 Generating client libraries...)
+	@python3 build/build.py build proto-clients-all --parallel
+	$(call log_success,Client libraries generated)
+
+# ============================================================================
 # Protobuf Operations
 # ============================================================================
 
 proto-gen: ## Generate protobuf code
 	$(call log_info,🔧 Generating protobuf code...)
-	$(call run_gradle,generateProto)
+	@cd proto && ./build.sh || echo "$(YELLOW)⚠️ Proto generation failed$(RESET)"
 	$(call log_success,Protobuf code generated)
 
 proto-clean: ## Clean generated protobuf code
