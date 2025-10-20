@@ -521,6 +521,11 @@ watch-html-verbose: ## Watch HTML files with verbose output
 	$(call log_info,👀 Starting HTML build watcher (verbose)...)
 	@python3 build/watch.py --interval 2 --verbose
 
+standardize-html: ## Standardize all HTML files to use consistent design system
+	$(call log_info,🔧 Standardizing HTML files...)
+	@python3 build/standardize-html.py
+	$(call log_success,HTML standardization complete)
+
 start-services: ## Start Docker services only (database, kafka, etc.)
 	$(call log_info,🐳 Starting Docker services...)
 	@$(MAKE) ensure-docker

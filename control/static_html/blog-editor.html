@@ -1,18 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-@llm-type blog-editor-ui
-@llm-legend Blog post editor interface using persistence platform TypeScript clients
-@llm-key Provides rich text editing, real-time preview, and direct CRDB storage via gRPC
-@llm-map Connects to persistence_platform.proto service through generated TypeScript clients
-@llm-axiom Must provide seamless blog writing experience with immediate persistence
-@llm-contract Uses generated TS clients to store blog posts as structured entities in CockroachDB
-@llm-token blog-editor: Rich blog post editor with persistence platform integration
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✍️ Blog Editor - Persistence Platform</title>
+    <title>✍️ Blog Editor</title>
     <link rel="stylesheet" href="shared/theme.css">
     <link rel="stylesheet" href="shared/styles.css">
     <script src="shared/config.js"></script>
@@ -20,286 +11,22 @@
     <script src="shared/components.js"></script>
     <script src="../generated/static_html/api-clients.js"></script>
     <script src="shared/api-integration.js"></script>
-    <script src="shared/persistence-client.js"></script>
-    <style>
-        /*
-        @llm-type blog-editor-styling
-        @llm-legend Blog editor UI styling with writing-focused design
-        @llm-key Implements clean writing interface, live preview, and persistence status indicators
-        @llm-map Extends shared theme with blog-specific components and editor layouts
-        @llm-axiom Visual design must prioritize writing experience and content clarity
-        @llm-contract Provides distraction-free writing environment with clear persistence feedback
-        @llm-token blog-editor-design: Writing-focused design system for blog post creation
-        */
-
-        .blog-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: var(--spacing-xl, 24px);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-2xl, 32px);
-            min-height: calc(100vh - 200px);
-        }
-
-        .editor-panel {
-            background: var(--color-background, white);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-xl, 24px);
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-            display: flex;
-            flex-direction: column;
-        }
-
-        .preview-panel {
-            background: var(--color-surface, #f8f9fa);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-xl, 24px);
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-            overflow-y: auto;
-        }
-
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--spacing-lg, 20px);
-            padding-bottom: var(--spacing-md, 16px);
-            border-bottom: 2px solid var(--color-border, #dee2e6);
-        }
-
-        .panel-title {
-            font-size: var(--font-size-lg, 1.125rem);
-            font-weight: 600;
-            color: var(--color-text-primary, #212529);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm, 8px);
-        }
-
-        .persistence-status {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs, 4px);
-            font-size: var(--font-size-sm, 14px);
-            font-weight: 500;
-            padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
-            border-radius: var(--border-radius, 6px);
-            border: 1px solid var(--color-border, #dee2e6);
-        }
-
-        .persistence-status.saved {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: var(--color-success, #10b981);
-            color: var(--color-success, #10b981);
-        }
-
-        .persistence-status.saving {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: var(--color-warning, #f59e0b);
-            color: var(--color-warning, #f59e0b);
-        }
-
-        .persistence-status.error {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: var(--color-error, #ef4444);
-            color: var(--color-error, #ef4444);
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .form-group {
-            margin-bottom: var(--spacing-lg, 20px);
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            color: var(--color-text-primary, #212529);
-            margin-bottom: var(--spacing-xs, 4px);
-            font-size: var(--font-size-sm, 14px);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: var(--spacing-md, 12px);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 8px);
-            font-size: var(--font-size-lg, 1.125rem);
-            font-weight: 600;
-            transition: var(--transition, 150ms ease);
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--color-primary, #2563eb);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .content-editor {
-            flex: 1;
-            width: 100%;
-            padding: var(--spacing-lg, 20px);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 8px);
-            font-size: var(--font-size-base, 16px);
-            line-height: 1.6;
-            font-family: 'Georgia', 'Times New Roman', serif;
-            resize: none;
-            transition: var(--transition, 150ms ease);
-        }
-
-        .content-editor:focus {
-            outline: none;
-            border-color: var(--color-primary, #2563eb);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .editor-toolbar {
-            display: flex;
-            gap: var(--spacing-sm, 8px);
-            margin-bottom: var(--spacing-lg, 20px);
-            flex-wrap: wrap;
-        }
-
-        .toolbar-btn {
-            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 6px);
-            background: var(--color-background, white);
-            color: var(--color-text-primary, #212529);
-            font-size: var(--font-size-sm, 14px);
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition, 150ms ease);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs, 4px);
-        }
-
-        .toolbar-btn:hover {
-            background: var(--color-primary, #2563eb);
-            color: white;
-            border-color: var(--color-primary, #2563eb);
-        }
-
-        .save-btn {
-            background: var(--color-success, #10b981);
-            color: white;
-            border-color: var(--color-success, #10b981);
-            font-weight: 600;
-        }
-
-        .save-btn:hover {
-            background: var(--color-success-dark, #059669);
-        }
-
-        .save-btn:disabled {
-            background: var(--color-text-secondary, #6c757d);
-            border-color: var(--color-text-secondary, #6c757d);
-            cursor: not-allowed;
-        }
-
-        .preview-content {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            line-height: 1.6;
-            color: var(--color-text-primary, #212529);
-        }
-
-        .preview-content h1 {
-            font-size: var(--font-size-3xl, 2rem);
-            font-weight: 700;
-            margin-bottom: var(--spacing-lg, 20px);
-            color: var(--color-text-primary, #212529);
-            border-bottom: 3px solid var(--color-primary, #2563eb);
-            padding-bottom: var(--spacing-md, 16px);
-        }
-
-        .preview-content h2 {
-            font-size: var(--font-size-xl, 1.25rem);
-            font-weight: 600;
-            margin: var(--spacing-xl, 24px) 0 var(--spacing-md, 16px) 0;
-            color: var(--color-text-primary, #212529);
-        }
-
-        .preview-content p {
-            margin-bottom: var(--spacing-md, 16px);
-            text-align: justify;
-        }
-
-        .preview-content blockquote {
-            border-left: 4px solid var(--color-primary, #2563eb);
-            padding-left: var(--spacing-lg, 20px);
-            margin: var(--spacing-lg, 20px) 0;
-            font-style: italic;
-            color: var(--color-text-secondary, #6c757d);
-        }
-
-        .preview-content code {
-            background: var(--color-surface, #f8f9fa);
-            padding: var(--spacing-xs, 2px) var(--spacing-sm, 6px);
-            border-radius: var(--border-radius, 4px);
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: var(--font-size-sm, 14px);
-        }
-
-        .blog-meta {
-            display: flex;
-            gap: var(--spacing-lg, 20px);
-            margin-bottom: var(--spacing-xl, 24px);
-            padding: var(--spacing-md, 16px);
-            background: var(--color-surface, #f8f9fa);
-            border-radius: var(--border-radius, 8px);
-            border: 1px solid var(--color-border, #dee2e6);
-        }
-
-        .meta-item {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-xs, 4px);
-        }
-
-        .meta-label {
-            font-size: var(--font-size-xs, 12px);
-            font-weight: 600;
-            color: var(--color-text-secondary, #6c757d);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .meta-value {
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-primary, #212529);
-            font-weight: 500;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .blog-container {
-                grid-template-columns: 1fr;
-                gap: var(--spacing-lg, 20px);
-            }
-
-            .editor-toolbar {
-                justify-content: center;
-            }
-
-            .blog-meta {
-                flex-direction: column;
-                gap: var(--spacing-md, 12px);
-            }
-        }
-    </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✍️</text></svg>">
 </head>
 <body>
-    <!--
+    <div class="container">
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="blog"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Blog Editor"
+             data-subtitle="Content Management System"
+             data-icon="✍️"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+<!--
     @llm-type blog-editor-interface
     @llm-legend Blog editor interface body with dual-pane editing and live preview
     @llm-key Implements rich text editor, markdown preview, and persistence platform integration
@@ -308,12 +35,10 @@
     @llm-contract Provides functional blog editing using generated gRPC TypeScript clients
     @llm-token blog-editor-body: Complete blog post editor with persistence integration
     -->
-    <div class="container">
+    
         <!-- Navigation - DRY Component -->
-        <div id="nav-container" data-component="navigation" data-active="blog-editor"></div>
 
         <!-- Page Header - DRY Component -->
-        <div id="header-container" data-component="page-header"></div>
 
         <main class="blog-container" id="main-content">
             <!-- Editor Panel -->
@@ -657,5 +382,10 @@ Your content will be automatically saved to CockroachDB via the persistence plat
             window.blogEditor = new BlogEditor();
         });
     </script>
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
 </body>
 </html>

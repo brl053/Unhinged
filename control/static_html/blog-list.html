@@ -1,18 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-@llm-type blog-list-ui
-@llm-legend Blog post listing interface using persistence platform TypeScript clients
-@llm-key Displays saved blog posts from CockroachDB with search, filter, and management
-@llm-map Connects to persistence_platform.proto service through generated TypeScript clients
-@llm-axiom Must provide efficient blog post browsing and management interface
-@llm-contract Uses generated TS clients to query and display blog posts from CockroachDB
-@llm-token blog-list: Blog post listing and management interface
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📚 Blog Posts - Persistence Platform</title>
+    <title>📝 Blog Posts</title>
     <link rel="stylesheet" href="shared/theme.css">
     <link rel="stylesheet" href="shared/styles.css">
     <script src="shared/config.js"></script>
@@ -20,294 +11,22 @@
     <script src="shared/components.js"></script>
     <script src="../generated/static_html/api-clients.js"></script>
     <script src="shared/api-integration.js"></script>
-    <script src="shared/persistence-client.js"></script>
-    <style>
-        /*
-        @llm-type blog-list-styling
-        @llm-legend Blog list UI styling with card-based layout and management controls
-        @llm-key Implements responsive grid, search interface, and post preview cards
-        @llm-map Extends shared theme with blog-specific listing and management components
-        @llm-axiom Visual design must prioritize content discovery and management efficiency
-        @llm-contract Provides clear blog post browsing with intuitive management controls
-        @llm-token blog-list-design: Content-focused design system for blog post management
-        */
-
-        .blog-list-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: var(--spacing-xl, 24px);
-        }
-
-        .list-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--spacing-2xl, 32px);
-            padding-bottom: var(--spacing-lg, 20px);
-            border-bottom: 2px solid var(--color-border, #dee2e6);
-        }
-
-        .list-title {
-            font-size: var(--font-size-2xl, 1.5rem);
-            font-weight: 700;
-            color: var(--color-text-primary, #212529);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md, 12px);
-        }
-
-        .list-actions {
-            display: flex;
-            gap: var(--spacing-md, 12px);
-            align-items: center;
-        }
-
-        .search-box {
-            padding: var(--spacing-md, 12px);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 8px);
-            font-size: var(--font-size-base, 16px);
-            width: 300px;
-            transition: var(--transition, 150ms ease);
-        }
-
-        .search-box:focus {
-            outline: none;
-            border-color: var(--color-primary, #2563eb);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .new-post-btn {
-            padding: var(--spacing-md, 12px) var(--spacing-lg, 20px);
-            background: var(--color-primary, #2563eb);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius, 8px);
-            font-size: var(--font-size-base, 16px);
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition, 150ms ease);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm, 8px);
-        }
-
-        .new-post-btn:hover {
-            background: var(--color-primary-dark, #1d4ed8);
-        }
-
-        .blog-stats {
-            display: flex;
-            gap: var(--spacing-xl, 24px);
-            margin-bottom: var(--spacing-2xl, 32px);
-        }
-
-        .stat-card {
-            background: var(--color-background, white);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-lg, 20px);
-            flex: 1;
-            text-align: center;
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-        }
-
-        .stat-value {
-            font-size: var(--font-size-2xl, 1.5rem);
-            font-weight: 700;
-            color: var(--color-primary, #2563eb);
-            margin-bottom: var(--spacing-xs, 4px);
-        }
-
-        .stat-label {
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-secondary, #6c757d);
-            font-weight: 500;
-        }
-
-        .blog-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: var(--spacing-xl, 24px);
-            margin-bottom: var(--spacing-2xl, 32px);
-        }
-
-        .blog-card {
-            background: var(--color-background, white);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-xl, 24px);
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-            transition: var(--transition, 150ms ease);
-            cursor: pointer;
-        }
-
-        .blog-card:hover {
-            border-color: var(--color-primary, #2563eb);
-            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .blog-card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: var(--spacing-md, 16px);
-        }
-
-        .blog-title {
-            font-size: var(--font-size-lg, 1.125rem);
-            font-weight: 600;
-            color: var(--color-text-primary, #212529);
-            margin: 0;
-            line-height: 1.4;
-            flex: 1;
-        }
-
-        .blog-actions {
-            display: flex;
-            gap: var(--spacing-xs, 4px);
-            margin-left: var(--spacing-md, 12px);
-        }
-
-        .action-btn {
-            padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 6px);
-            background: var(--color-background, white);
-            color: var(--color-text-secondary, #6c757d);
-            font-size: var(--font-size-sm, 14px);
-            cursor: pointer;
-            transition: var(--transition, 150ms ease);
-        }
-
-        .action-btn:hover {
-            background: var(--color-primary, #2563eb);
-            color: white;
-            border-color: var(--color-primary, #2563eb);
-        }
-
-        .action-btn.delete:hover {
-            background: var(--color-error, #ef4444);
-            border-color: var(--color-error, #ef4444);
-        }
-
-        .blog-preview {
-            color: var(--color-text-secondary, #6c757d);
-            font-size: var(--font-size-sm, 14px);
-            line-height: 1.5;
-            margin-bottom: var(--spacing-md, 16px);
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .blog-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: var(--font-size-xs, 12px);
-            color: var(--color-text-secondary, #6c757d);
-            padding-top: var(--spacing-md, 16px);
-            border-top: 1px solid var(--color-border, #dee2e6);
-        }
-
-        .blog-date {
-            font-weight: 500;
-        }
-
-        .blog-word-count {
-            background: var(--color-surface, #f8f9fa);
-            padding: var(--spacing-xs, 2px) var(--spacing-sm, 6px);
-            border-radius: var(--border-radius, 4px);
-            font-weight: 500;
-        }
-
-        .loading-state {
-            text-align: center;
-            padding: var(--spacing-2xl, 32px);
-            color: var(--color-text-secondary, #6c757d);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: var(--spacing-3xl, 48px);
-            color: var(--color-text-secondary, #6c757d);
-        }
-
-        .empty-state h3 {
-            font-size: var(--font-size-xl, 1.25rem);
-            margin-bottom: var(--spacing-md, 16px);
-            color: var(--color-text-primary, #212529);
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: var(--spacing-md, 12px);
-            margin-top: var(--spacing-2xl, 32px);
-        }
-
-        .pagination-btn {
-            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 6px);
-            background: var(--color-background, white);
-            color: var(--color-text-primary, #212529);
-            font-size: var(--font-size-sm, 14px);
-            cursor: pointer;
-            transition: var(--transition, 150ms ease);
-        }
-
-        .pagination-btn:hover:not(:disabled) {
-            background: var(--color-primary, #2563eb);
-            color: white;
-            border-color: var(--color-primary, #2563eb);
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-info {
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-secondary, #6c757d);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .list-header {
-                flex-direction: column;
-                gap: var(--spacing-lg, 20px);
-                align-items: stretch;
-            }
-
-            .list-actions {
-                justify-content: space-between;
-            }
-
-            .search-box {
-                width: 100%;
-                max-width: 300px;
-            }
-
-            .blog-stats {
-                flex-direction: column;
-                gap: var(--spacing-md, 16px);
-            }
-
-            .blog-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body>
-    <!--
+    <div class="container">
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="blog"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Blog Posts"
+             data-subtitle="Content Library"
+             data-icon="📝"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+<!--
     @llm-type blog-list-interface
     @llm-legend Blog list interface body with search, filtering, and post management
     @llm-key Implements blog post grid, search functionality, and CRUD operations
@@ -316,12 +35,10 @@
     @llm-contract Provides functional blog listing using generated gRPC TypeScript clients
     @llm-token blog-list-body: Complete blog post listing with persistence integration
     -->
-    <div class="container">
+    
         <!-- Navigation - DRY Component -->
-        <div id="nav-container" data-component="navigation" data-active="blog-list"></div>
 
         <!-- Page Header - DRY Component -->
-        <div id="header-container" data-component="page-header"></div>
 
         <main class="blog-list-container" id="main-content">
             <!-- List Header -->
@@ -675,5 +392,10 @@
             window.blogList = new BlogList();
         });
     </script>
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧪 Blog Integration Test</title>
+    <title>🧪 Blog Testing</title>
     <link rel="stylesheet" href="shared/theme.css">
     <link rel="stylesheet" href="shared/styles.css">
     <script src="shared/config.js"></script>
@@ -11,109 +11,24 @@
     <script src="shared/components.js"></script>
     <script src="../generated/static_html/api-clients.js"></script>
     <script src="shared/api-integration.js"></script>
-    <script src="shared/persistence-client.js"></script>
-    <style>
-        .test-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: var(--spacing-xl, 24px);
-        }
-
-        .test-section {
-            background: var(--color-background, white);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-xl, 24px);
-            margin-bottom: var(--spacing-xl, 24px);
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-        }
-
-        .test-title {
-            font-size: var(--font-size-lg, 1.125rem);
-            font-weight: 600;
-            color: var(--color-text-primary, #212529);
-            margin-bottom: var(--spacing-md, 16px);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm, 8px);
-        }
-
-        .test-button {
-            padding: var(--spacing-md, 12px) var(--spacing-lg, 20px);
-            background: var(--color-primary, #2563eb);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius, 8px);
-            font-size: var(--font-size-base, 16px);
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition, 150ms ease);
-            margin-right: var(--spacing-md, 12px);
-            margin-bottom: var(--spacing-sm, 8px);
-        }
-
-        .test-button:hover {
-            background: var(--color-primary-dark, #1d4ed8);
-        }
-
-        .test-button:disabled {
-            background: var(--color-text-secondary, #6c757d);
-            cursor: not-allowed;
-        }
-
-        .test-result {
-            background: var(--color-surface, #f8f9fa);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 8px);
-            padding: var(--spacing-md, 16px);
-            margin-top: var(--spacing-md, 16px);
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: var(--font-size-sm, 14px);
-            white-space: pre-wrap;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .test-result.success {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: var(--color-success, #10b981);
-            color: var(--color-success-dark, #059669);
-        }
-
-        .test-result.error {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: var(--color-error, #ef4444);
-            color: var(--color-error-dark, #dc2626);
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: var(--spacing-xs, 4px);
-        }
-
-        .status-indicator.success {
-            background: var(--color-success, #10b981);
-        }
-
-        .status-indicator.error {
-            background: var(--color-error, #ef4444);
-        }
-
-        .status-indicator.pending {
-            background: var(--color-warning, #f59e0b);
-        }
-    </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
 </head>
 <body>
     <div class="container">
-        <!-- Navigation -->
-        <div id="nav-container" data-component="navigation" data-active="test"></div>
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="testing"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Blog Integration Test"
+             data-subtitle="End-to-End Testing"
+             data-icon="🧪"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+<!-- Navigation -->
 
         <!-- Page Header -->
-        <div id="header-container" data-component="page-header"></div>
 
         <main class="test-container" id="main-content">
             <h1>🧪 Blog Integration Test</h1>
@@ -438,5 +353,10 @@ The post should be stored in CockroachDB via the persistence platform.`;
             }
         }
     </script>
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
 </body>
 </html>

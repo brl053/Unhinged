@@ -1,140 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-@llm-type validation-interface
-@llm-legend Comprehensive validation interface for control plane standardization compliance
-@llm-key Validates navigation components, design token usage, accessibility compliance, and component standardization
-@llm-map Testing interface for ensuring all HTML files comply with control plane standardization requirements
-@llm-axiom All interface files must use standardized components and design tokens for consistency
-@llm-contract Provides automated validation of standardization compliance across all control plane interfaces
-@llm-token standardization-validator: Automated compliance validation for control plane interfaces
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 Standardization Validator - Unhinged Control Plane</title>
+    <title>✅ Validation</title>
     <link rel="stylesheet" href="shared/theme.css">
     <link rel="stylesheet" href="shared/styles.css">
     <script src="shared/config.js"></script>
+    <script src="../generated/static_html/registry.js"></script>
     <script src="shared/components.js"></script>
-    <style>
-        /*
-        @llm-type validation-styles
-        @llm-legend Validation-specific styling for compliance testing and reporting
-        @llm-key Provides visual indicators for validation results, compliance status, and test reporting
-        @llm-map Extends shared styling with validation-specific visual aids and status indicators
-        @llm-axiom Validation styles must clearly indicate compliance status and provide actionable feedback
-        @llm-contract Provides clear visual feedback for standardization compliance testing
-        @llm-token validation-ui: Visual validation aids for standardization compliance
-        */
-        
-        .validation-section {
-            margin-bottom: var(--spacing-2xl, 32px);
-            padding: var(--spacing-xl, 24px);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            background: var(--color-background, white);
-        }
-        
-        .validation-section.pass {
-            border-color: var(--color-success, #10b981);
-            background: rgba(var(--color-success-rgb, 16, 185, 129), 0.05);
-        }
-        
-        .validation-section.fail {
-            border-color: var(--color-danger, #ef4444);
-            background: rgba(var(--color-danger-rgb, 239, 68, 68), 0.05);
-        }
-        
-        .validation-section.warning {
-            border-color: var(--color-warning, #f59e0b);
-            background: rgba(var(--color-warning-rgb, 245, 158, 11), 0.05);
-        }
-        
-        .validation-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--spacing-md, 16px);
-            margin: var(--spacing-lg, 16px) 0;
-        }
-        
-        .file-status {
-            padding: var(--spacing-md, 16px);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 8px);
-            background: var(--color-surface, #f8f9fa);
-            position: relative;
-        }
-        
-        .file-status.compliant {
-            border-color: var(--color-success, #10b981);
-            background: rgba(var(--color-success-rgb, 16, 185, 129), 0.1);
-        }
-        
-        .file-status.non-compliant {
-            border-color: var(--color-danger, #ef4444);
-            background: rgba(var(--color-danger-rgb, 239, 68, 68), 0.1);
-        }
-        
-        .file-status.partial {
-            border-color: var(--color-warning, #f59e0b);
-            background: rgba(var(--color-warning-rgb, 245, 158, 11), 0.1);
-        }
-        
-        .status-indicator {
-            position: absolute;
-            top: var(--spacing-sm, 8px);
-            right: var(--spacing-sm, 8px);
-            font-size: var(--font-size-lg, 1.125rem);
-        }
-        
-        .validation-details {
-            margin-top: var(--spacing-md, 16px);
-            padding: var(--spacing-sm, 8px);
-            background: var(--color-background, white);
-            border-radius: var(--border-radius, 4px);
-            font-family: monospace;
-            font-size: var(--font-size-sm, 14px);
-        }
-        
-        .test-controls {
-            display: flex;
-            gap: var(--spacing-md, 16px);
-            margin: var(--spacing-lg, 16px) 0;
-            flex-wrap: wrap;
-        }
-        
-        .summary-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: var(--spacing-md, 16px);
-            margin: var(--spacing-lg, 16px) 0;
-        }
-        
-        .stat-card {
-            text-align: center;
-            padding: var(--spacing-lg, 16px);
-            border-radius: var(--border-radius, 8px);
-            background: var(--color-surface, #f8f9fa);
-            border: 1px solid var(--color-border, #dee2e6);
-        }
-        
-        .stat-number {
-            font-size: var(--font-size-3xl, 2rem);
-            font-weight: 700;
-            color: var(--color-primary, #2563eb);
-        }
-        
-        .stat-label {
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-secondary, #6c757d);
-            margin-top: var(--spacing-xs, 4px);
-        }
-    </style>
+    <script src="../generated/static_html/api-clients.js"></script>
+    <script src="shared/api-integration.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
 </head>
 <body>
-    <div class="container" id="main-content">
-        <h1>🔍 Standardization Validator</h1>
+    <div class="container">
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="validation"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Design Validation"
+             data-subtitle="Component Standardization"
+             data-icon="✅"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+<h1>🔍 Standardization Validator</h1>
         <p class="subtitle">Comprehensive compliance validation for control plane interfaces</p>
         
         <!-- Navigation Test -->
@@ -563,5 +455,10 @@
             updateSummaryStats('--', '--', '--', '--%');
         });
     </script>
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
 </body>
 </html>

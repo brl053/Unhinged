@@ -1,18 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-@llm-type tab-interface
-@llm-legend Tab-based mission control center integrating all Unhinged AI platform operations in browser-within-browser experience
-@llm-key Implements Phase 1 tab system as foundation with mission control as default tab, service categorization, and progressive disclosure
-@llm-map Central hub with integrated tab system connecting all static HTML interfaces, DAG control plane and service orchestration
-@llm-axiom Must provide immediate visual confidence in system reliability through tab-based organization and professional operation
-@llm-contract Displays system status, service health, and tab navigation without requiring backend API calls
-@llm-token tab-control-center: Professional tab-based mission control interface for platform operations
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎛️ Unhinged Mission Control v2 - Tab-Based Operations Center</title>
+    <title>🎛️ Unhinged Mission Control</title>
     <link rel="stylesheet" href="shared/theme.css">
     <link rel="stylesheet" href="shared/styles.css">
     <script src="shared/config.js"></script>
@@ -20,386 +11,22 @@
     <script src="shared/components.js"></script>
     <script src="../generated/static_html/api-clients.js"></script>
     <script src="shared/api-integration.js"></script>
-    <style>
-        /*
-        @llm-type tab-config
-        @llm-legend Tab-based mission control styling extending Phase 1 tab system with professional control center aesthetic
-        @llm-key Implements visual hierarchy, tab integration, service categorization, status indicators, and responsive design
-        @llm-map Extends shared theme.css and tab system with mission control specific components and layouts
-        @llm-axiom All visual elements must convey system reliability through tab-based organization and professional operation
-        @llm-contract Provides consistent tab-based styling that works across all modern browsers
-        @llm-token tab-mission-control-ui: Professional tab-based control center visual design system
-        */
-
-        /* Tab-Integrated Mission Control Layout */
-        .tab-mission-control {
-            min-height: 100vh;
-            background: var(--color-surface, #f8f9fa);
-        }
-
-        .main-tab-container {
-            margin-bottom: 0;
-            box-shadow: var(--shadow-xl, 0 8px 32px rgba(0,0,0,0.15));
-            border-radius: var(--border-radius-xl, 16px);
-            overflow: hidden;
-        }
-
-        .main-tab-container .tab-navigation {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
-            border-bottom: none;
-            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
-        }
-
-        .main-tab-container .tab-link {
-            color: rgba(255, 255, 255, 0.8);
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-            font-weight: 600;
-        }
-
-        .main-tab-container .tab-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .main-tab-container .tab-link.active {
-            background: var(--color-background, white);
-            color: var(--color-primary, #2563eb);
-            border-bottom: none;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-        }
-
-        .main-tab-container .tab-add-button {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .main-tab-container .tab-add-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        /* Mission Control Header - Integrated into tab content */
-        .mission-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
-            color: white;
-            padding: var(--spacing-xl, 24px);
-            margin: calc(-1 * var(--spacing-xl, 24px)) calc(-1 * var(--spacing-xl, 24px)) var(--spacing-xl, 24px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .mission-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-            z-index: 1;
-        }
-
-        .mission-header .content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .mission-header h1 {
-            font-size: var(--font-size-3xl, 2rem);
-            font-weight: 700;
-            margin-bottom: var(--spacing-sm, 8px);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .mission-header .subtitle {
-            font-size: var(--font-size-lg, 1.125rem);
-            opacity: 0.9;
-            margin-bottom: var(--spacing-lg, 20px);
-        }
-
-        /* System Status Bar */
-        .system-status-bar {
-            display: flex;
-            gap: var(--spacing-lg, 20px);
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .status-metric {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm, 8px);
-            background: rgba(255, 255, 255, 0.1);
-            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
-            border-radius: var(--border-radius-pill, 20px);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse-glow 2s infinite;
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        /* Quick Stats Panel */
-        .quick-stats {
-            background: var(--color-background, white);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-xl, 24px);
-            margin-bottom: var(--spacing-xl, 24px);
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-            border: 1px solid var(--color-border, #dee2e6);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: var(--spacing-lg, 20px);
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: var(--spacing-md, 16px);
-            background: var(--color-surface, #f8f9fa);
-            border-radius: var(--border-radius, 8px);
-            border: 1px solid var(--color-border, #dee2e6);
-            transition: var(--transition, 150ms ease);
-        }
-
-        .stat-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg, 0 4px 12px rgba(0,0,0,0.15));
-        }
-
-        .stat-value {
-            font-size: var(--font-size-2xl, 1.5rem);
-            font-weight: 700;
-            color: var(--color-primary, #2563eb);
-            margin-bottom: var(--spacing-xs, 4px);
-        }
-
-        .stat-label {
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-secondary, #6c757d);
-            font-weight: 500;
-        }
-
-        /* Service Categories Grid */
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: var(--spacing-xl, 24px);
-            margin-bottom: var(--spacing-2xl, 32px);
-        }
-
-        .service-category {
-            background: var(--color-background, white);
-            border: 2px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius-lg, 12px);
-            padding: var(--spacing-xl, 24px);
-            box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.1));
-            transition: var(--transition, 150ms ease);
-        }
-
-        .service-category:hover {
-            border-color: var(--color-primary, #2563eb);
-            box-shadow: var(--shadow-xl, 0 8px 25px rgba(0,0,0,0.15));
-            transform: translateY(-2px);
-        }
-
-        .category-header {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--spacing-md, 16px);
-            margin-bottom: var(--spacing-lg, 20px);
-        }
-
-        .category-icon {
-            font-size: var(--font-size-2xl, 1.5rem);
-            background: var(--color-surface, #f8f9fa);
-            padding: var(--spacing-md, 12px);
-            border-radius: var(--border-radius, 8px);
-            border: 1px solid var(--color-border, #dee2e6);
-        }
-
-        .category-title {
-            font-size: var(--font-size-lg, 1.125rem);
-            font-weight: 600;
-            color: var(--color-text-primary, #212529);
-            margin-bottom: var(--spacing-xs, 4px);
-        }
-
-        .category-subtitle {
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-secondary, #6c757d);
-        }
-
-        .service-items {
-            margin-bottom: var(--spacing-lg, 20px);
-        }
-
-        .service-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-md, 12px);
-            margin-bottom: var(--spacing-sm, 8px);
-            background: var(--color-surface, #f8f9fa);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 6px);
-            text-decoration: none;
-            color: inherit;
-            transition: var(--transition, 150ms ease);
-            cursor: pointer;
-        }
-
-        .service-item:hover {
-            background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.05);
-            border-color: var(--color-primary, #2563eb);
-            transform: translateX(4px);
-        }
-
-        .service-item-info {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md, 12px);
-        }
-
-        .service-item-icon {
-            font-size: var(--font-size-lg, 1.125rem);
-        }
-
-        .service-item-details h4 {
-            margin: 0 0 var(--spacing-xs, 2px) 0;
-            font-size: var(--font-size-base, 16px);
-            font-weight: 600;
-            color: var(--color-text-primary, #212529);
-        }
-
-        .service-item-details p {
-            margin: 0;
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-text-secondary, #6c757d);
-        }
-
-        .service-item-status {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs, 4px);
-            font-size: var(--font-size-sm, 14px);
-            color: var(--color-success, #10b981);
-            font-weight: 500;
-        }
-
-        .service-actions {
-            display: flex;
-            gap: var(--spacing-sm, 8px);
-            flex-wrap: wrap;
-        }
-
-        .action-btn {
-            padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
-            border: 1px solid var(--color-border, #dee2e6);
-            border-radius: var(--border-radius, 6px);
-            background: var(--color-background, white);
-            color: var(--color-text-primary, #212529);
-            text-decoration: none;
-            font-size: var(--font-size-sm, 14px);
-            font-weight: 500;
-            transition: var(--transition, 150ms ease);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs, 4px);
-        }
-
-        .action-btn:hover {
-            background: var(--color-primary, #2563eb);
-            color: white;
-            border-color: var(--color-primary, #2563eb);
-            transform: translateY(-1px);
-        }
-
-        .action-btn.success {
-            background: var(--color-success, #10b981);
-            color: white;
-            border-color: var(--color-success, #10b981);
-        }
-
-        .action-btn.danger {
-            background: var(--color-danger, #ef4444);
-            color: white;
-            border-color: var(--color-danger, #ef4444);
-        }
-
-        .action-btn.secondary {
-            background: var(--color-text-secondary, #6c757d);
-            color: white;
-            border-color: var(--color-text-secondary, #6c757d);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .services-grid {
-                grid-template-columns: 1fr;
-                gap: var(--spacing-lg, 16px);
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: var(--spacing-md, 12px);
-            }
-
-            .mission-header {
-                padding: var(--spacing-lg, 16px);
-                margin: calc(-1 * var(--spacing-lg, 16px)) calc(-1 * var(--spacing-lg, 16px)) var(--spacing-lg, 16px);
-            }
-
-            .system-status-bar {
-                justify-content: flex-start;
-                gap: var(--spacing-md, 12px);
-            }
-
-            .service-actions {
-                flex-direction: column;
-            }
-
-            .action-btn {
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .category-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .service-item {
-                flex-direction: column;
-                text-align: center;
-                gap: var(--spacing-sm, 8px);
-            }
-        }
-    </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎛️</text></svg>">
 </head>
 <body>
-    <!--
+    <div class="container">
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="control"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="Mission Control"
+             data-subtitle="System Operations Center"
+             data-icon="🎛️"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+<!--
     @llm-type tab-interface
     @llm-legend Tab-based mission control interface body with integrated tab system, navigation, system status, and service management
     @llm-key Implements visual hierarchy with tab container, mission header, quick stats, categorized services, and responsive layout
@@ -410,7 +37,6 @@
     -->
     <div class="container tab-mission-control">
         <!-- Navigation - DRY Component -->
-        <div id="nav-container" data-component="navigation" data-active="index2"></div>
 
         <!-- Main Tab Container - Integrated Tab System -->
         <div class="main-tab-container">
@@ -927,6 +553,11 @@
     </script>
 
     <!-- Footer - DRY Component -->
-    <div id="footer-container" data-component="footer"></div>
+    <div id="footer-container" data-component="footer">
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
 </body>
 </html>

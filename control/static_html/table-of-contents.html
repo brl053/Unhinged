@@ -5,28 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📚 Table of Contents</title>
     <link rel="stylesheet" href="shared/theme.css">
+    <link rel="stylesheet" href="shared/styles.css">
     <script src="shared/config.js"></script>
+    <script src="../generated/static_html/registry.js"></script>
     <script src="shared/components.js"></script>
+    <script src="../generated/static_html/api-clients.js"></script>
+    <script src="shared/api-integration.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
 </head>
 <body>
     <div class="container">
-        <!-- Navigation - DRY Component -->
+        <!-- Navigation - Standardized Component -->
         <div id="nav-container" data-component="navigation" data-active="toc"></div>
-
-        <!-- Header -->
-        <header class="header">
-        <!-- Page Header - DRY Component -->
+        
+        <!-- Page Header - Standardized Component -->
         <div id="header-container" data-component="page-header"
              data-title="Interface Directory"
              data-subtitle="Complete Platform Navigation"
              data-icon="📚"></div>
-            <div class="header-controls">
-                <button onclick="refreshFileStructure()">🔄 Refresh</button>
-                <button onclick="expandAll()">📂 Expand All</button>
-                <button onclick="collapseAll()">📁 Collapse All</button>
-            </div>
-        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+<!-- Navigation - DRY Component -->
+
+        <!-- Header -->
 
         <!-- Navigation Controls -->
         <section class="nav-controls">
@@ -76,9 +78,7 @@
         </section>
 
         <!-- Footer -->
-        <footer class="footer">
-            <p>📚 Table of Contents - Navigate the file structure</p>
-        </footer>
+        
     </div>
 
     <script src="../generated/static_html/registry.js"></script>
@@ -404,6 +404,11 @@
     </style>
 
     <!-- Footer - DRY Component -->
-    <div id="footer-container" data-component="footer"></div>
+    <div id="footer-container" data-component="footer">
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
 </body>
 </html>
