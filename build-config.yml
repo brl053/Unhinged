@@ -305,6 +305,23 @@ services:
         command: "python3 -c 'from build.modules.registry_builder import RegistryBuilder; from build.modules import BuildContext; from pathlib import Path; rb = RegistryBuilder(); ctx = BuildContext(Path(\".\"), \"generate-registry\", {}); result = rb.build(ctx); exit(0 if result.success else 1)'"
         cache_key: "static_html_registry"
 
+  # Service discovery for system health dashboard
+  service-discovery:
+    description: "Discover services at build time for system health dashboard"
+    module: "service_discovery_builder"
+    cache_strategy: "content_based"
+    parallel: false
+    inputs:
+      - "docker-compose.yml"
+      - "proto/**/*.proto"
+      - "build-config.yml"
+    outputs:
+      - "generated/static_html/service-registry.js"
+    steps:
+      - name: "Discover Docker and gRPC services"
+        command: "python3 -c 'from build.modules.service_discovery_builder import ServiceDiscoveryBuilder; from build.modules import BuildContext; from pathlib import Path; sdb = ServiceDiscoveryBuilder(BuildContext(Path(\".\"), \"service-discovery\", {})); result = sdb.build(\"service-discovery\"); exit(0 if result.success else 1)'"
+        cache_key: "service_discovery"
+
   # Proto client library generation
   proto-clients:
     description: "Generate polyglot client libraries from protobuf definitions"
@@ -391,7 +408,7 @@ services:
   # Enhanced development targets (v1)
   dev-fast:
     description: "Fast development build with intelligent caching"
-    dependencies: ["generate-registry", "proto-clients"]  # Add proto client dependency
+    dependencies: ["generate-registry", "service-discovery", "proto-clients"]  # Add service discovery
     cache_strategy: "aggressive"
     parallel: true
     incremental: true

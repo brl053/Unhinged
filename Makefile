@@ -507,19 +507,23 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: ## Generate HTML files and open control interface
-	$(call log_info,🎛️ Generating Unhinged Control Interface...)
+start: ## Generate service registry and open system health dashboard
+	$(call log_info,🏥 Starting System Health Command Center...)
 	@$(MAKE) check-docker
+	@python3 build/build.py build service-discovery
 	@$(MAKE) generate
 	@echo ""
-	@echo "✅ Control Interface ready!"
-	@echo "📚 Table of Contents: file://$(PWD)/control/static_html/table-of-contents.html"
-	@echo "🎛️  Service Orchestration: file://$(PWD)/control/static_html/index.html"
-	@echo "📝 Blog Editor: file://$(PWD)/control/static_html/blog-editor.html"
+	@echo "✅ System Health Dashboard ready!"
+	@echo "🏥 Health Command Center: file://$(PWD)/control/static_html/system-health.html"
+	@echo "🎛️ Mission Control: file://$(PWD)/control/static_html/index.html"
+	@echo "📚 All Interfaces: file://$(PWD)/control/static_html/table-of-contents.html"
 	@echo "🔍 Persistence Platform: file://$(PWD)/control/static_html/persistence-platform.html"
 	@echo ""
-	@echo "💡 Open any HTML file directly in your browser"
-	@echo "🔄 Run 'make watch-html' to auto-rebuild on changes"
+	@if command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open "file://$(PWD)/control/static_html/system-health.html"; \
+	elif command -v open >/dev/null 2>&1; then \
+		open "file://$(PWD)/control/static_html/system-health.html"; \
+	fi
 
 watch-html: ## Watch for changes and auto-rebuild HTML files
 	$(call log_info,👀 Starting HTML build watcher...)

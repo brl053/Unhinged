@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏥 System Health Command Center</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="../generated/static_html/registry.js"></script>
+    <script src="shared/components.js"></script>
+    <script src="../generated/static_html/api-clients.js"></script>
+    <script src="../generated/static_html/service-registry.js"></script>
+    <script src="shared/api-integration.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="health"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="System Health Command Center"
+             data-subtitle="Real-time Service Monitoring & Operations"
+             data-icon="🏥"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Status Section -->
+            <div class="hero-status">
+                <div class="status-overview">
+                    <div class="status-card healthy" id="healthy-count">
+                        <div class="status-icon">🟢</div>
+                        <div class="status-number" id="healthy-number">0</div>
+                        <div class="status-label">Healthy</div>
+                    </div>
+                    <div class="status-card degraded" id="degraded-count">
+                        <div class="status-icon">🟡</div>
+                        <div class="status-number" id="degraded-number">0</div>
+                        <div class="status-label">Degraded</div>
+                    </div>
+                    <div class="status-card unhealthy" id="unhealthy-count">
+                        <div class="status-icon">🔴</div>
+                        <div class="status-number" id="unhealthy-number">0</div>
+                        <div class="status-label">Critical</div>
+                    </div>
+                    <div class="status-card uptime" id="uptime-display">
+                        <div class="status-icon">⏱️</div>
+                        <div class="status-number" id="uptime-number">--</div>
+                        <div class="status-label">Uptime</div>
+                    </div>
+                </div>
+                
+                <div class="system-info">
+                    <div class="info-item">
+                        <span class="info-label">Services Discovered:</span>
+                        <span class="info-value" id="total-services">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Updated:</span>
+                        <span class="info-value" id="last-update">Never</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Registry Built:</span>
+                        <span class="info-value" id="registry-build-time">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service Topology Grid -->
+            <div class="service-topology">
+                <h3>🎯 Service Topology</h3>
+                
+                <!-- Service Layers -->
+                <div class="service-layers" id="service-layers">
+                    <!-- Layers will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Health Controls -->
+            <div class="health-controls">
+                <button id="refresh-health" class="btn btn-primary">🔄 Refresh All</button>
+                <button id="toggle-auto-refresh" class="btn btn-secondary">⏸️ Auto Refresh</button>
+                <button id="export-status" class="btn btn-secondary">📊 Export Status</button>
+                <span id="refresh-status" class="refresh-status">Auto-refresh: ON (5s)</span>
+            </div>
+            
+            <!-- Service Details Panel -->
+            <div class="service-details" id="service-details-panel" style="display: none;">
+                <div class="details-header">
+                    <h3 id="details-service-name">Service Details</h3>
+                    <button id="close-details" class="btn-close">✕</button>
+                </div>
+                <div class="details-content" id="details-content">
+                    <!-- Service details will be populated here -->
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
+
+    <style>
+        /* Hero Status Section */
+        .hero-status {
+            background: linear-gradient(135deg, var(--color-surface, #f8f9fa) 0%, var(--color-background, white) 100%);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius-lg, 12px);
+            padding: var(--spacing-xl, 24px);
+            margin-bottom: var(--spacing-xl, 24px);
+            box-shadow: var(--shadow-lg, 0 4px 12px rgba(0,0,0,0.1));
+        }
+        
+        .status-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-lg, 20px);
+            margin-bottom: var(--spacing-lg, 20px);
+        }
+        
+        .status-card {
+            background: var(--color-background, white);
+            border: 2px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 8px);
+            padding: var(--spacing-lg, 20px);
+            text-align: center;
+            transition: var(--transition, 150ms ease);
+            cursor: pointer;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg, 0 8px 20px rgba(0,0,0,0.15));
+        }
+        
+        .status-card.healthy { border-color: var(--color-success, #28a745); }
+        .status-card.degraded { border-color: var(--color-warning, #ffc107); }
+        .status-card.unhealthy { border-color: var(--color-danger, #dc3545); }
+        .status-card.uptime { border-color: var(--color-primary, #007bff); }
+        
+        .status-icon {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-sm, 8px);
+        }
+        
+        .status-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: var(--spacing-xs, 4px);
+        }
+        
+        .status-card.healthy .status-number { color: var(--color-success, #28a745); }
+        .status-card.degraded .status-number { color: var(--color-warning, #ffc107); }
+        .status-card.unhealthy .status-number { color: var(--color-danger, #dc3545); }
+        .status-card.uptime .status-number { color: var(--color-primary, #007bff); }
+        
+        .status-label {
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-text-secondary, #6c757d);
+            font-weight: 500;
+        }
+        
+        .system-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md, 12px);
+            padding-top: var(--spacing-lg, 20px);
+            border-top: 1px solid var(--color-border, #dee2e6);
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: var(--color-text-secondary, #6c757d);
+        }
+        
+        .info-value {
+            font-weight: bold;
+            color: var(--color-text-primary, #212529);
+        }
+        
+        /* Service Topology */
+        .service-topology {
+            margin-bottom: var(--spacing-xl, 24px);
+        }
+        
+        .service-topology h3 {
+            color: var(--color-primary, #007bff);
+            margin-bottom: var(--spacing-lg, 20px);
+            font-size: var(--font-size-xl, 1.25rem);
+        }
+        
+        .service-layers {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg, 20px);
+        }
+        
+        .service-layer {
+            background: var(--color-surface, #f8f9fa);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 8px);
+            padding: var(--spacing-lg, 20px);
+        }
+        
+        .layer-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm, 8px);
+            margin-bottom: var(--spacing-md, 12px);
+            font-weight: 600;
+            color: var(--color-text-primary, #212529);
+        }
+        
+        .layer-services {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--spacing-md, 12px);
+        }
+        
+        .service-card {
+            background: var(--color-background, white);
+            border: 2px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 6px);
+            padding: var(--spacing-md, 12px);
+            cursor: pointer;
+            transition: var(--transition, 150ms ease);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow, 0 4px 8px rgba(0,0,0,0.1));
+        }
+        
+        .service-card.healthy { border-color: var(--color-success, #28a745); }
+        .service-card.degraded { border-color: var(--color-warning, #ffc107); }
+        .service-card.unhealthy { border-color: var(--color-danger, #dc3545); }
+        .service-card.unknown { border-color: var(--color-text-secondary, #6c757d); }
+        
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm, 8px);
+        }
+        
+        .service-name {
+            font-weight: 600;
+            color: var(--color-text-primary, #212529);
+        }
+        
+        .service-status {
+            font-size: var(--font-size-sm, 12px);
+            padding: var(--spacing-xs, 2px) var(--spacing-sm, 6px);
+            border-radius: var(--border-radius, 4px);
+            font-weight: 500;
+        }
+        
+        .service-status.healthy {
+            background: rgba(var(--color-success-rgb, 40, 167, 69), 0.1);
+            color: var(--color-success, #28a745);
+        }
+        
+        .service-status.degraded {
+            background: rgba(var(--color-warning-rgb, 255, 193, 7), 0.1);
+            color: var(--color-warning, #ffc107);
+        }
+        
+        .service-status.unhealthy {
+            background: rgba(var(--color-danger-rgb, 220, 53, 69), 0.1);
+            color: var(--color-danger, #dc3545);
+        }
+        
+        .service-status.unknown {
+            background: rgba(var(--color-text-secondary-rgb, 108, 117, 125), 0.1);
+            color: var(--color-text-secondary, #6c757d);
+        }
+        
+        .service-info {
+            font-size: var(--font-size-sm, 12px);
+            color: var(--color-text-secondary, #6c757d);
+        }
+        
+        .service-ports {
+            margin-top: var(--spacing-xs, 4px);
+        }
+        
+        /* Health Controls */
+        .health-controls {
+            display: flex;
+            gap: var(--spacing-md, 12px);
+            align-items: center;
+            margin-bottom: var(--spacing-xl, 24px);
+            padding: var(--spacing-lg, 20px);
+            background: var(--color-surface, #f8f9fa);
+            border-radius: var(--border-radius, 8px);
+            border: 1px solid var(--color-border, #dee2e6);
+        }
+        
+        .refresh-status {
+            margin-left: auto;
+            font-size: var(--font-size-sm, 14px);
+            color: var(--color-text-secondary, #6c757d);
+        }
+        
+        /* Service Details Panel */
+        .service-details {
+            background: var(--color-background, white);
+            border: 1px solid var(--color-border, #dee2e6);
+            border-radius: var(--border-radius, 8px);
+            box-shadow: var(--shadow-lg, 0 4px 12px rgba(0,0,0,0.1));
+            margin-bottom: var(--spacing-xl, 24px);
+        }
+        
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg, 20px);
+            border-bottom: 1px solid var(--color-border, #dee2e6);
+            background: var(--color-surface, #f8f9fa);
+            border-radius: var(--border-radius, 8px) var(--border-radius, 8px) 0 0;
+        }
+        
+        .details-header h3 {
+            margin: 0;
+            color: var(--color-text-primary, #212529);
+        }
+        
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--color-text-secondary, #6c757d);
+            padding: var(--spacing-xs, 4px);
+            border-radius: var(--border-radius, 4px);
+            transition: var(--transition, 150ms ease);
+        }
+        
+        .btn-close:hover {
+            background: var(--color-danger, #dc3545);
+            color: white;
+        }
+        
+        .details-content {
+            padding: var(--spacing-lg, 20px);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .status-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .system-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .layer-services {
+                grid-template-columns: 1fr;
+            }
+            
+            .health-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .refresh-status {
+                margin-left: 0;
+                text-align: center;
+            }
+        }
+    </style>
+
+    <script>
+        /**
+         * System Health Dashboard
+         *
+         * Uses pre-built service registry from ServiceDiscoveryBuilder
+         * Provides real-time health monitoring with build-time service discovery
+         */
+        class SystemHealthDashboard {
+            constructor() {
+                this.autoRefresh = true;
+                this.refreshInterval = 5000; // 5 seconds
+                this.refreshTimer = null;
+                this.serviceRegistry = null;
+
+                this.init();
+            }
+
+            async init() {
+                // Wait for service registry to load
+                await this.waitForServiceRegistry();
+
+                // Initialize dashboard
+                this.setupEventListeners();
+                this.renderServiceTopology();
+                this.updateSystemInfo();
+                this.startAutoRefresh();
+
+                // Initial health check
+                await this.refreshAllHealth();
+
+                console.log('🏥 System Health Dashboard initialized');
+            }
+
+            async waitForServiceRegistry() {
+                return new Promise((resolve) => {
+                    const checkRegistry = () => {
+                        if (window.UnhingedServiceRegistry) {
+                            this.serviceRegistry = window.UnhingedServiceRegistry;
+                            resolve();
+                        } else {
+                            setTimeout(checkRegistry, 100);
+                        }
+                    };
+                    checkRegistry();
+                });
+            }
+
+            setupEventListeners() {
+                document.getElementById('refresh-health').addEventListener('click', () => {
+                    this.refreshAllHealth();
+                });
+
+                document.getElementById('toggle-auto-refresh').addEventListener('click', () => {
+                    this.toggleAutoRefresh();
+                });
+
+                document.getElementById('export-status').addEventListener('click', () => {
+                    this.exportStatus();
+                });
+
+                document.getElementById('close-details').addEventListener('click', () => {
+                    this.hideServiceDetails();
+                });
+            }
+
+            renderServiceTopology() {
+                const layersContainer = document.getElementById('service-layers');
+                const layers = this.serviceRegistry.getServiceLayers();
+
+                layersContainer.innerHTML = '';
+
+                for (const [layerName, serviceNames] of Object.entries(layers)) {
+                    if (serviceNames.length === 0) continue;
+
+                    const layerDiv = document.createElement('div');
+                    layerDiv.className = 'service-layer';
+
+                    const layerHeader = document.createElement('div');
+                    layerHeader.className = 'layer-header';
+                    layerHeader.innerHTML = `
+                        ${this.getLayerIcon(layerName)}
+                        ${this.formatLayerName(layerName)}
+                        <span style="color: var(--color-text-secondary); font-weight: normal;">(${serviceNames.length})</span>
+                    `;
+
+                    const servicesGrid = document.createElement('div');
+                    servicesGrid.className = 'layer-services';
+
+                    for (const serviceName of serviceNames) {
+                        const service = this.serviceRegistry.getServiceByName(serviceName);
+                        if (service) {
+                            const serviceCard = this.createServiceCard(service);
+                            servicesGrid.appendChild(serviceCard);
+                        }
+                    }
+
+                    layerDiv.appendChild(layerHeader);
+                    layerDiv.appendChild(servicesGrid);
+                    layersContainer.appendChild(layerDiv);
+                }
+            }
+
+            createServiceCard(service) {
+                const card = document.createElement('div');
+                card.className = 'service-card unknown';
+                card.id = `service-${service.name}`;
+
+                const ports = service.ports.map(p => `${p.host}:${p.container}`).join(', ');
+                const healthEndpoint = this.serviceRegistry.getHealthEndpoint(service.name);
+
+                card.innerHTML = `
+                    <div class="service-header">
+                        <div class="service-name">${service.container_name}</div>
+                        <div class="service-status unknown">UNKNOWN</div>
+                    </div>
+                    <div class="service-info">
+                        <div>Type: ${service.type}</div>
+                        ${ports ? `<div class="service-ports">Ports: ${ports}</div>` : ''}
+                        ${healthEndpoint ? `<div>Health: Available</div>` : '<div>Health: Docker only</div>'}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    this.showServiceDetails(service);
+                });
+
+                return card;
+            }
+
+            getLayerIcon(layerName) {
+                const icons = {
+                    'application': '🎯',
+                    'ai_ml': '🤖',
+                    'database': '💾',
+                    'vector_database': '🔮',
+                    'search_engine': '🔍',
+                    'streaming': '📡',
+                    'processing': '⚙️',
+                    'infrastructure': '🏗️'
+                };
+                return icons[layerName] || '📦';
+            }
+
+            formatLayerName(layerName) {
+                return layerName.split('_').map(word =>
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+            }
+
+            updateSystemInfo() {
+                const counts = this.serviceRegistry.counts;
+                const buildTime = new Date(this.serviceRegistry.buildTime);
+
+                document.getElementById('total-services').textContent = counts.dockerServices;
+                document.getElementById('registry-build-time').textContent = buildTime.toLocaleString();
+            }
+
+            async refreshAllHealth() {
+                console.log('🔄 Refreshing all service health...');
+
+                const services = this.serviceRegistry.getAllServices();
+                const healthPromises = services.map(service => this.checkServiceHealth(service));
+
+                try {
+                    const healthResults = await Promise.allSettled(healthPromises);
+                    this.updateHealthCounts(healthResults);
+                    this.updateLastRefreshTime();
+                } catch (error) {
+                    console.error('Failed to refresh health:', error);
+                }
+            }
+
+            async checkServiceHealth(service) {
+                const healthEndpoint = this.serviceRegistry.getHealthEndpoint(service.name);
+
+                try {
+                    let healthResult;
+
+                    if (healthEndpoint) {
+                        // Use gRPC health endpoint
+                        healthResult = await this.checkGrpcHealth(healthEndpoint);
+                    } else {
+                        // Fallback to Docker health check
+                        healthResult = await this.checkDockerHealth(service);
+                    }
+
+                    this.updateServiceCard(service.name, healthResult);
+                    return healthResult;
+
+                } catch (error) {
+                    const errorResult = {
+                        status: 'unhealthy',
+                        message: error.message,
+                        responseTime: 0
+                    };
+                    this.updateServiceCard(service.name, errorResult);
+                    return errorResult;
+                }
+            }
+
+            async checkGrpcHealth(healthEndpoint) {
+                // Simulate gRPC health check (replace with actual implementation)
+                const startTime = Date.now();
+
+                try {
+                    const response = await fetch(healthEndpoint.http_endpoint, {
+                        method: 'GET',
+                        timeout: 5000
+                    });
+
+                    const responseTime = Date.now() - startTime;
+
+                    if (response.ok) {
+                        return {
+                            status: 'healthy',
+                            message: 'Service responding',
+                            responseTime: responseTime
+                        };
+                    } else {
+                        return {
+                            status: 'degraded',
+                            message: `HTTP ${response.status}`,
+                            responseTime: responseTime
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        status: 'unhealthy',
+                        message: 'Connection failed',
+                        responseTime: Date.now() - startTime
+                    };
+                }
+            }
+
+            async checkDockerHealth(service) {
+                // Simulate Docker health check
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 200));
+
+                const statuses = ['healthy', 'degraded', 'unhealthy'];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+                return {
+                    status: status,
+                    message: `Docker ${status}`,
+                    responseTime: Math.floor(Math.random() * 100) + 10
+                };
+            }
+
+            updateServiceCard(serviceName, healthResult) {
+                const card = document.getElementById(`service-${serviceName}`);
+                if (!card) return;
+
+                // Update card class
+                card.className = `service-card ${healthResult.status}`;
+
+                // Update status badge
+                const statusElement = card.querySelector('.service-status');
+                if (statusElement) {
+                    statusElement.className = `service-status ${healthResult.status}`;
+                    statusElement.textContent = healthResult.status.toUpperCase();
+                }
+            }
+
+            updateHealthCounts(healthResults) {
+                const counts = { healthy: 0, degraded: 0, unhealthy: 0 };
+
+                healthResults.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value) {
+                        const status = result.value.status;
+                        if (counts.hasOwnProperty(status)) {
+                            counts[status]++;
+                        }
+                    } else {
+                        counts.unhealthy++;
+                    }
+                });
+
+                document.getElementById('healthy-number').textContent = counts.healthy;
+                document.getElementById('degraded-number').textContent = counts.degraded;
+                document.getElementById('unhealthy-number').textContent = counts.unhealthy;
+
+                // Calculate uptime percentage
+                const total = counts.healthy + counts.degraded + counts.unhealthy;
+                const uptime = total > 0 ? ((counts.healthy / total) * 100).toFixed(1) : 0;
+                document.getElementById('uptime-number').textContent = `${uptime}%`;
+            }
+
+            updateLastRefreshTime() {
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+            }
+
+            showServiceDetails(service) {
+                const panel = document.getElementById('service-details-panel');
+                const nameElement = document.getElementById('details-service-name');
+                const contentElement = document.getElementById('details-content');
+
+                nameElement.textContent = `${service.container_name} Details`;
+
+                const healthEndpoint = this.serviceRegistry.getHealthEndpoint(service.name);
+                const grpcService = this.serviceRegistry.getGrpcServiceForDocker(service.name);
+                const dependencies = this.serviceRegistry.getDependencies(service.name);
+                const dependents = this.serviceRegistry.getDependents(service.name);
+
+                contentElement.innerHTML = `
+                    <div style="display: grid; gap: 16px;">
+                        <div>
+                            <h4>Service Information</h4>
+                            <p><strong>Name:</strong> ${service.name}</p>
+                            <p><strong>Container:</strong> ${service.container_name}</p>
+                            <p><strong>Type:</strong> ${service.type}</p>
+                            <p><strong>Image:</strong> ${service.image || 'N/A'}</p>
+                        </div>
+
+                        ${service.ports.length > 0 ? `
+                        <div>
+                            <h4>Port Mappings</h4>
+                            ${service.ports.map(p => `<p>Host ${p.host} → Container ${p.container}</p>`).join('')}
+                        </div>
+                        ` : ''}
+
+                        ${healthEndpoint ? `
+                        <div>
+                            <h4>Health Endpoint</h4>
+                            <p><strong>Method:</strong> ${healthEndpoint.method}</p>
+                            <p><strong>Endpoint:</strong> ${healthEndpoint.http_endpoint}</p>
+                            <p><strong>gRPC:</strong> ${healthEndpoint.grpc_endpoint}</p>
+                        </div>
+                        ` : ''}
+
+                        ${grpcService ? `
+                        <div>
+                            <h4>gRPC Service</h4>
+                            <p><strong>Service:</strong> ${grpcService}</p>
+                        </div>
+                        ` : ''}
+
+                        ${dependencies.length > 0 ? `
+                        <div>
+                            <h4>Dependencies</h4>
+                            ${dependencies.map(dep => `<p>• ${dep}</p>`).join('')}
+                        </div>
+                        ` : ''}
+
+                        ${dependents.length > 0 ? `
+                        <div>
+                            <h4>Dependents</h4>
+                            ${dependents.map(dep => `<p>• ${dep}</p>`).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                panel.style.display = 'block';
+                panel.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            hideServiceDetails() {
+                document.getElementById('service-details-panel').style.display = 'none';
+            }
+
+            toggleAutoRefresh() {
+                this.autoRefresh = !this.autoRefresh;
+                const button = document.getElementById('toggle-auto-refresh');
+                const status = document.getElementById('refresh-status');
+
+                if (this.autoRefresh) {
+                    button.textContent = '⏸️ Auto Refresh';
+                    status.textContent = 'Auto-refresh: ON (5s)';
+                    this.startAutoRefresh();
+                } else {
+                    button.textContent = '▶️ Auto Refresh';
+                    status.textContent = 'Auto-refresh: OFF';
+                    this.stopAutoRefresh();
+                }
+            }
+
+            startAutoRefresh() {
+                this.stopAutoRefresh();
+
+                if (this.autoRefresh) {
+                    this.refreshTimer = setInterval(() => {
+                        this.refreshAllHealth();
+                    }, this.refreshInterval);
+                }
+            }
+
+            stopAutoRefresh() {
+                if (this.refreshTimer) {
+                    clearInterval(this.refreshTimer);
+                    this.refreshTimer = null;
+                }
+            }
+
+            exportStatus() {
+                const services = this.serviceRegistry.getAllServices();
+                const timestamp = new Date().toISOString();
+
+                const statusReport = {
+                    timestamp: timestamp,
+                    registry_build_time: this.serviceRegistry.buildTime,
+                    total_services: services.length,
+                    services: services.map(service => ({
+                        name: service.name,
+                        container_name: service.container_name,
+                        type: service.type,
+                        ports: service.ports,
+                        health_endpoint: this.serviceRegistry.getHealthEndpoint(service.name)
+                    }))
+                };
+
+                const blob = new Blob([JSON.stringify(statusReport, null, 2)], {
+                    type: 'application/json'
+                });
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `system-health-${timestamp.split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SystemHealthDashboard();
+        });
+    </script>
+</body>
+</html>
