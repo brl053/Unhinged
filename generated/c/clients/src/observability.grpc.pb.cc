@@ -23,6 +23,424 @@ namespace unhinged {
 namespace observability {
 namespace v1 {
 
+static const char* ObservabilityService_method_names[] = {
+  "/unhinged.observability.v1.ObservabilityService/IngestLogs",
+  "/unhinged.observability.v1.ObservabilityService/IngestTraces",
+  "/unhinged.observability.v1.ObservabilityService/IngestMetrics",
+  "/unhinged.observability.v1.ObservabilityService/ReportHealth",
+  "/unhinged.observability.v1.ObservabilityService/ReportIncident",
+  "/unhinged.observability.v1.ObservabilityService/UpdateIncident",
+  "/unhinged.observability.v1.ObservabilityService/GetServiceHealth",
+  "/unhinged.observability.v1.ObservabilityService/GetActiveIncidents",
+  "/unhinged.observability.v1.ObservabilityService/GetMetrics",
+  "/unhinged.observability.v1.ObservabilityService/GetTraces",
+};
+
+std::unique_ptr< ObservabilityService::Stub> ObservabilityService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+  (void)options;
+  std::unique_ptr< ObservabilityService::Stub> stub(new ObservabilityService::Stub(channel, options));
+  return stub;
+}
+
+ObservabilityService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
+  : channel_(channel), rpcmethod_IngestLogs_(ObservabilityService_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::CLIENT_STREAMING, channel)
+  , rpcmethod_IngestTraces_(ObservabilityService_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::CLIENT_STREAMING, channel)
+  , rpcmethod_IngestMetrics_(ObservabilityService_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::CLIENT_STREAMING, channel)
+  , rpcmethod_ReportHealth_(ObservabilityService_method_names[3], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_ReportIncident_(ObservabilityService_method_names[4], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_UpdateIncident_(ObservabilityService_method_names[5], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetServiceHealth_(ObservabilityService_method_names[6], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetActiveIncidents_(ObservabilityService_method_names[7], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetMetrics_(ObservabilityService_method_names[8], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetTraces_(ObservabilityService_method_names[9], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  {}
+
+::grpc::ClientWriter< ::unhinged::observability::v1::LogEvent>* ObservabilityService::Stub::IngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+  return ::grpc::internal::ClientWriterFactory< ::unhinged::observability::v1::LogEvent>::Create(channel_.get(), rpcmethod_IngestLogs_, context, response);
+}
+
+void ObservabilityService::Stub::async::IngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::LogEvent>* reactor) {
+  ::grpc::internal::ClientCallbackWriterFactory< ::unhinged::observability::v1::LogEvent>::Create(stub_->channel_.get(), stub_->rpcmethod_IngestLogs_, context, response, reactor);
+}
+
+::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>* ObservabilityService::Stub::AsyncIngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::unhinged::observability::v1::LogEvent>::Create(channel_.get(), cq, rpcmethod_IngestLogs_, context, response, true, tag);
+}
+
+::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>* ObservabilityService::Stub::PrepareAsyncIngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::unhinged::observability::v1::LogEvent>::Create(channel_.get(), cq, rpcmethod_IngestLogs_, context, response, false, nullptr);
+}
+
+::grpc::ClientWriter< ::unhinged::observability::v1::TraceEvent>* ObservabilityService::Stub::IngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+  return ::grpc::internal::ClientWriterFactory< ::unhinged::observability::v1::TraceEvent>::Create(channel_.get(), rpcmethod_IngestTraces_, context, response);
+}
+
+void ObservabilityService::Stub::async::IngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::TraceEvent>* reactor) {
+  ::grpc::internal::ClientCallbackWriterFactory< ::unhinged::observability::v1::TraceEvent>::Create(stub_->channel_.get(), stub_->rpcmethod_IngestTraces_, context, response, reactor);
+}
+
+::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>* ObservabilityService::Stub::AsyncIngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::unhinged::observability::v1::TraceEvent>::Create(channel_.get(), cq, rpcmethod_IngestTraces_, context, response, true, tag);
+}
+
+::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>* ObservabilityService::Stub::PrepareAsyncIngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::unhinged::observability::v1::TraceEvent>::Create(channel_.get(), cq, rpcmethod_IngestTraces_, context, response, false, nullptr);
+}
+
+::grpc::ClientWriter< ::unhinged::observability::v1::MetricEvent>* ObservabilityService::Stub::IngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+  return ::grpc::internal::ClientWriterFactory< ::unhinged::observability::v1::MetricEvent>::Create(channel_.get(), rpcmethod_IngestMetrics_, context, response);
+}
+
+void ObservabilityService::Stub::async::IngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::MetricEvent>* reactor) {
+  ::grpc::internal::ClientCallbackWriterFactory< ::unhinged::observability::v1::MetricEvent>::Create(stub_->channel_.get(), stub_->rpcmethod_IngestMetrics_, context, response, reactor);
+}
+
+::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>* ObservabilityService::Stub::AsyncIngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::unhinged::observability::v1::MetricEvent>::Create(channel_.get(), cq, rpcmethod_IngestMetrics_, context, response, true, tag);
+}
+
+::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>* ObservabilityService::Stub::PrepareAsyncIngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::unhinged::observability::v1::MetricEvent>::Create(channel_.get(), cq, rpcmethod_IngestMetrics_, context, response, false, nullptr);
+}
+
+::grpc::Status ObservabilityService::Stub::ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::unhinged::observability::v1::HealthResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_ReportHealth_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_ReportHealth_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_ReportHealth_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>* ObservabilityService::Stub::PrepareAsyncReportHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::HealthResponse, ::unhinged::observability::v1::ServiceHealthEvent, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_ReportHealth_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>* ObservabilityService::Stub::AsyncReportHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncReportHealthRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ObservabilityService::Stub::ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::unhinged::observability::v1::IncidentResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_ReportIncident_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_ReportIncident_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_ReportIncident_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* ObservabilityService::Stub::PrepareAsyncReportIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::IncidentResponse, ::unhinged::observability::v1::IncidentEvent, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_ReportIncident_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* ObservabilityService::Stub::AsyncReportIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncReportIncidentRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ObservabilityService::Stub::UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::unhinged::observability::v1::IncidentResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_UpdateIncident_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_UpdateIncident_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_UpdateIncident_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* ObservabilityService::Stub::PrepareAsyncUpdateIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::IncidentResponse, ::unhinged::observability::v1::IncidentEvent, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_UpdateIncident_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* ObservabilityService::Stub::AsyncUpdateIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncUpdateIncidentRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ObservabilityService::Stub::GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::unhinged::observability::v1::HealthQueryResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetServiceHealth_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetServiceHealth_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetServiceHealth_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>* ObservabilityService::Stub::PrepareAsyncGetServiceHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::HealthQueryResponse, ::unhinged::observability::v1::HealthQuery, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetServiceHealth_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>* ObservabilityService::Stub::AsyncGetServiceHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncGetServiceHealthRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ObservabilityService::Stub::GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::unhinged::observability::v1::IncidentQueryResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetActiveIncidents_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetActiveIncidents_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetActiveIncidents_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>* ObservabilityService::Stub::PrepareAsyncGetActiveIncidentsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::IncidentQueryResponse, ::unhinged::observability::v1::IncidentQuery, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetActiveIncidents_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>* ObservabilityService::Stub::AsyncGetActiveIncidentsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncGetActiveIncidentsRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ObservabilityService::Stub::GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::unhinged::observability::v1::MetricQueryResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetMetrics_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetMetrics_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetMetrics_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>* ObservabilityService::Stub::PrepareAsyncGetMetricsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::MetricQueryResponse, ::unhinged::observability::v1::MetricQuery, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetMetrics_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>* ObservabilityService::Stub::AsyncGetMetricsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncGetMetricsRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ObservabilityService::Stub::GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::unhinged::observability::v1::TraceQueryResponse* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetTraces_, context, request, response);
+}
+
+void ObservabilityService::Stub::async::GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetTraces_, context, request, response, std::move(f));
+}
+
+void ObservabilityService::Stub::async::GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetTraces_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>* ObservabilityService::Stub::PrepareAsyncGetTracesRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::unhinged::observability::v1::TraceQueryResponse, ::unhinged::observability::v1::TraceQuery, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetTraces_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>* ObservabilityService::Stub::AsyncGetTracesRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncGetTracesRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+ObservabilityService::Service::Service() {
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[0],
+      ::grpc::internal::RpcMethod::CLIENT_STREAMING,
+      new ::grpc::internal::ClientStreamingHandler< ObservabilityService::Service, ::unhinged::observability::v1::LogEvent, ::unhinged::observability::v1::IngestResponse>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             ::grpc::ServerReader<::unhinged::observability::v1::LogEvent>* reader,
+             ::unhinged::observability::v1::IngestResponse* resp) {
+               return service->IngestLogs(ctx, reader, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[1],
+      ::grpc::internal::RpcMethod::CLIENT_STREAMING,
+      new ::grpc::internal::ClientStreamingHandler< ObservabilityService::Service, ::unhinged::observability::v1::TraceEvent, ::unhinged::observability::v1::IngestResponse>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             ::grpc::ServerReader<::unhinged::observability::v1::TraceEvent>* reader,
+             ::unhinged::observability::v1::IngestResponse* resp) {
+               return service->IngestTraces(ctx, reader, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[2],
+      ::grpc::internal::RpcMethod::CLIENT_STREAMING,
+      new ::grpc::internal::ClientStreamingHandler< ObservabilityService::Service, ::unhinged::observability::v1::MetricEvent, ::unhinged::observability::v1::IngestResponse>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             ::grpc::ServerReader<::unhinged::observability::v1::MetricEvent>* reader,
+             ::unhinged::observability::v1::IngestResponse* resp) {
+               return service->IngestMetrics(ctx, reader, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[3],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::ServiceHealthEvent* req,
+             ::unhinged::observability::v1::HealthResponse* resp) {
+               return service->ReportHealth(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[4],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::IncidentEvent* req,
+             ::unhinged::observability::v1::IncidentResponse* resp) {
+               return service->ReportIncident(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[5],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::IncidentEvent* req,
+             ::unhinged::observability::v1::IncidentResponse* resp) {
+               return service->UpdateIncident(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[6],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::HealthQuery* req,
+             ::unhinged::observability::v1::HealthQueryResponse* resp) {
+               return service->GetServiceHealth(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[7],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::IncidentQuery* req,
+             ::unhinged::observability::v1::IncidentQueryResponse* resp) {
+               return service->GetActiveIncidents(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[8],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::MetricQuery* req,
+             ::unhinged::observability::v1::MetricQueryResponse* resp) {
+               return service->GetMetrics(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ObservabilityService_method_names[9],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ObservabilityService::Service, ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ObservabilityService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::unhinged::observability::v1::TraceQuery* req,
+             ::unhinged::observability::v1::TraceQueryResponse* resp) {
+               return service->GetTraces(ctx, req, resp);
+             }, this)));
+}
+
+ObservabilityService::Service::~Service() {
+}
+
+::grpc::Status ObservabilityService::Service::IngestLogs(::grpc::ServerContext* context, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* reader, ::unhinged::observability::v1::IngestResponse* response) {
+  (void) context;
+  (void) reader;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::IngestTraces(::grpc::ServerContext* context, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* reader, ::unhinged::observability::v1::IngestResponse* response) {
+  (void) context;
+  (void) reader;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::IngestMetrics(::grpc::ServerContext* context, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* reader, ::unhinged::observability::v1::IngestResponse* response) {
+  (void) context;
+  (void) reader;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::ReportHealth(::grpc::ServerContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::ReportIncident(::grpc::ServerContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::UpdateIncident(::grpc::ServerContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::GetServiceHealth(::grpc::ServerContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::GetActiveIncidents(::grpc::ServerContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::GetMetrics(::grpc::ServerContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ObservabilityService::Service::GetTraces(::grpc::ServerContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+
 }  // namespace unhinged
 }  // namespace observability
 }  // namespace v1

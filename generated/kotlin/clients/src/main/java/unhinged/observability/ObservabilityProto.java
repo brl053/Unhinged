@@ -69,6 +69,271 @@ public final class ObservabilityProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_unhinged_observability_v1_PartitionInfo_CustomPartitionsEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_TraceEvent_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_TraceEvent_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanData_AttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanData_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanStatus_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanStatus_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanEvent_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanEvent_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanEvent_AttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanEvent_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanLink_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanLink_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SpanLink_AttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SpanLink_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_InstrumentationLibrary_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_InstrumentationLibrary_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_AttributeValue_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_AttributeValue_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_AttributeArray_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_AttributeArray_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_AttributeKeyValueList_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_AttributeKeyValueList_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_AttributeKeyValue_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_AttributeKeyValue_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_MetricEvent_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_MetricEvent_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_MetricData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_MetricData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_GaugeData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_GaugeData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_CounterData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_CounterData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HistogramData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HistogramData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SummaryData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SummaryData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_NumberDataPoint_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_NumberDataPoint_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_NumberDataPoint_AttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_NumberDataPoint_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HistogramDataPoint_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HistogramDataPoint_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HistogramDataPoint_AttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HistogramDataPoint_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SummaryDataPoint_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SummaryDataPoint_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SummaryDataPoint_AttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SummaryDataPoint_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_QuantileValue_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_QuantileValue_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_Exemplar_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_Exemplar_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_Exemplar_FilteredAttributesEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_Exemplar_FilteredAttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_ServiceHealthEvent_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_ServiceHealthEvent_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_ServiceHealth_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_ServiceHealth_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HealthCheck_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HealthCheck_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HealthCheck_MetadataEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HealthCheck_MetadataEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_DependencyHealth_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_DependencyHealth_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_ServiceLevelIndicators_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_ServiceLevelIndicators_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_SystemMetrics_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_SystemMetrics_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_UptimeInfo_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_UptimeInfo_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentEvent_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentEvent_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentData_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentData_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentUpdate_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentUpdate_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentImpact_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentImpact_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentResolution_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentResolution_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IngestResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IngestResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HealthResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HealthResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HealthQuery_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HealthQuery_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_HealthQueryResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_HealthQueryResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentQuery_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentQuery_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_IncidentQueryResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_IncidentQueryResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_MetricQuery_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_MetricQuery_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_MetricQuery_LabelsEntry_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_MetricQuery_LabelsEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_MetricQueryResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_MetricQueryResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_TraceQuery_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_TraceQuery_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_unhinged_observability_v1_TraceQueryResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_unhinged_observability_v1_TraceQueryResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -132,16 +397,321 @@ public final class ObservabilityProto {
       "_partitions\030\n \003(\0132>.unhinged.observabili" +
       "ty.v1.PartitionInfo.CustomPartitionsEntr" +
       "y\0327\n\025CustomPartitionsEntry\022\013\n\003key\030\001 \001(\t\022" +
-      "\r\n\005value\030\002 \001(\t:\0028\001*\241\001\n\010LogLevel\022\031\n\025LOG_L" +
-      "EVEL_UNSPECIFIED\020\000\022\023\n\017LOG_LEVEL_TRACE\020\001\022" +
-      "\023\n\017LOG_LEVEL_DEBUG\020\002\022\022\n\016LOG_LEVEL_INFO\020\003" +
-      "\022\022\n\016LOG_LEVEL_WARN\020\004\022\023\n\017LOG_LEVEL_ERROR\020" +
-      "\005\022\023\n\017LOG_LEVEL_FATAL\020\006*\235\001\n\017CompressionTy" +
-      "pe\022\033\n\027COMPRESSION_UNSPECIFIED\020\000\022\024\n\020COMPR" +
-      "ESSION_NONE\020\001\022\024\n\020COMPRESSION_GZIP\020\002\022\026\n\022C" +
-      "OMPRESSION_SNAPPY\020\003\022\023\n\017COMPRESSION_LZ4\020\004" +
-      "\022\024\n\020COMPRESSION_ZSTD\020\005B.\n\026unhinged.obser" +
-      "vabilityB\022ObservabilityProtoP\001b\006proto3"
+      "\r\n\005value\030\002 \001(\t:\0028\001\"\251\003\n\nTraceEvent\022\020\n\010eve" +
+      "nt_id\030\001 \001(\t\022-\n\ttimestamp\030\002 \001(\0132\032.google." +
+      "protobuf.Timestamp\022\022\n\nevent_type\030\003 \001(\t\022\027" +
+      "\n\017sequence_number\030\004 \001(\003\022>\n\rtrace_context" +
+      "\030\005 \001(\0132\'.unhinged.observability.v1.Trace" +
+      "Context\0225\n\010resource\030\006 \001(\0132#.unhinged.obs" +
+      "ervability.v1.Resource\0221\n\004span\030\n \001(\0132#.u" +
+      "nhinged.observability.v1.SpanData\022A\n\014des" +
+      "tinations\030\024 \001(\0132+.unhinged.observability" +
+      ".v1.DestinationFlags\022@\n\016partition_info\030\031" +
+      " \001(\0132(.unhinged.observability.v1.Partiti" +
+      "onInfo\"\335\004\n\010SpanData\022\014\n\004name\030\001 \001(\t\0221\n\004kin" +
+      "d\030\002 \001(\0162#.unhinged.observability.v1.Span" +
+      "Kind\022.\n\nstart_time\030\003 \001(\0132\032.google.protob" +
+      "uf.Timestamp\022,\n\010end_time\030\004 \001(\0132\032.google." +
+      "protobuf.Timestamp\022\026\n\016duration_nanos\030\005 \001" +
+      "(\003\0225\n\006status\030\n \001(\0132%.unhinged.observabil" +
+      "ity.v1.SpanStatus\022G\n\nattributes\030\017 \003(\01323." +
+      "unhinged.observability.v1.SpanData.Attri" +
+      "butesEntry\0224\n\006events\030\024 \003(\0132$.unhinged.ob" +
+      "servability.v1.SpanEvent\0222\n\005links\030\031 \003(\0132" +
+      "#.unhinged.observability.v1.SpanLink\022R\n\027" +
+      "instrumentation_library\030\036 \001(\01321.unhinged" +
+      ".observability.v1.InstrumentationLibrary" +
+      "\032\\\n\017AttributesEntry\022\013\n\003key\030\001 \001(\t\0228\n\005valu" +
+      "e\030\002 \001(\0132).unhinged.observability.v1.Attr" +
+      "ibuteValue:\0028\001\"R\n\nSpanStatus\0223\n\004code\030\001 \001" +
+      "(\0162%.unhinged.observability.v1.StatusCod" +
+      "e\022\017\n\007message\030\002 \001(\t\"\360\001\n\tSpanEvent\022-\n\ttime" +
+      "stamp\030\001 \001(\0132\032.google.protobuf.Timestamp\022" +
+      "\014\n\004name\030\002 \001(\t\022H\n\nattributes\030\003 \003(\01324.unhi" +
+      "nged.observability.v1.SpanEvent.Attribut" +
+      "esEntry\032\\\n\017AttributesEntry\022\013\n\003key\030\001 \001(\t\022" +
+      "8\n\005value\030\002 \001(\0132).unhinged.observability." +
+      "v1.AttributeValue:\0028\001\"\361\001\n\010SpanLink\022>\n\rtr" +
+      "ace_context\030\001 \001(\0132\'.unhinged.observabili" +
+      "ty.v1.TraceContext\022G\n\nattributes\030\002 \003(\01323" +
+      ".unhinged.observability.v1.SpanLink.Attr" +
+      "ibutesEntry\032\\\n\017AttributesEntry\022\013\n\003key\030\001 " +
+      "\001(\t\0228\n\005value\030\002 \001(\0132).unhinged.observabil" +
+      "ity.v1.AttributeValue:\0028\001\"K\n\026Instrumenta" +
+      "tionLibrary\022\014\n\004name\030\001 \001(\t\022\017\n\007version\030\002 \001" +
+      "(\t\022\022\n\nschema_url\030\003 \001(\t\"\227\002\n\016AttributeValu" +
+      "e\022\026\n\014string_value\030\001 \001(\tH\000\022\024\n\nbool_value\030" +
+      "\002 \001(\010H\000\022\023\n\tint_value\030\003 \001(\003H\000\022\026\n\014double_v" +
+      "alue\030\004 \001(\001H\000\022\025\n\013bytes_value\030\005 \001(\014H\000\022@\n\013a" +
+      "rray_value\030\006 \001(\0132).unhinged.observabilit" +
+      "y.v1.AttributeArrayH\000\022H\n\014kvlist_value\030\007 " +
+      "\001(\01320.unhinged.observability.v1.Attribut" +
+      "eKeyValueListH\000B\007\n\005value\"K\n\016AttributeArr" +
+      "ay\0229\n\006values\030\001 \003(\0132).unhinged.observabil" +
+      "ity.v1.AttributeValue\"U\n\025AttributeKeyVal" +
+      "ueList\022<\n\006values\030\001 \003(\0132,.unhinged.observ" +
+      "ability.v1.AttributeKeyValue\"Z\n\021Attribut" +
+      "eKeyValue\022\013\n\003key\030\001 \001(\t\0228\n\005value\030\002 \001(\0132)." +
+      "unhinged.observability.v1.AttributeValue" +
+      "\"\256\003\n\013MetricEvent\022\020\n\010event_id\030\001 \001(\t\022-\n\tti" +
+      "mestamp\030\002 \001(\0132\032.google.protobuf.Timestam" +
+      "p\022\022\n\nevent_type\030\003 \001(\t\022\027\n\017sequence_number" +
+      "\030\004 \001(\003\022>\n\rtrace_context\030\005 \001(\0132\'.unhinged" +
+      ".observability.v1.TraceContext\0225\n\010resour" +
+      "ce\030\006 \001(\0132#.unhinged.observability.v1.Res" +
+      "ource\0225\n\006metric\030\n \001(\0132%.unhinged.observa" +
+      "bility.v1.MetricData\022A\n\014destinations\030\024 \001" +
+      "(\0132+.unhinged.observability.v1.Destinati" +
+      "onFlags\022@\n\016partition_info\030\031 \001(\0132(.unhing" +
+      "ed.observability.v1.PartitionInfo\"\205\003\n\nMe" +
+      "tricData\022\014\n\004name\030\001 \001(\t\022\023\n\013description\030\002 " +
+      "\001(\t\022\014\n\004unit\030\003 \001(\t\0225\n\005gauge\030\n \001(\0132$.unhin" +
+      "ged.observability.v1.GaugeDataH\000\0229\n\007coun" +
+      "ter\030\013 \001(\0132&.unhinged.observability.v1.Co" +
+      "unterDataH\000\022=\n\thistogram\030\014 \001(\0132(.unhinge" +
+      "d.observability.v1.HistogramDataH\000\0229\n\007su" +
+      "mmary\030\r \001(\0132&.unhinged.observability.v1." +
+      "SummaryDataH\000\022R\n\027instrumentation_library" +
+      "\030\024 \001(\01321.unhinged.observability.v1.Instr" +
+      "umentationLibraryB\006\n\004data\"L\n\tGaugeData\022?" +
+      "\n\013data_points\030\001 \003(\0132*.unhinged.observabi" +
+      "lity.v1.NumberDataPoint\"d\n\013CounterData\022?" +
+      "\n\013data_points\030\001 \003(\0132*.unhinged.observabi" +
+      "lity.v1.NumberDataPoint\022\024\n\014is_monotonic\030" +
+      "\002 \001(\010\"\247\001\n\rHistogramData\022B\n\013data_points\030\001" +
+      " \003(\0132-.unhinged.observability.v1.Histogr" +
+      "amDataPoint\022R\n\027aggregation_temporality\030\002" +
+      " \001(\01621.unhinged.observability.v1.Aggrega" +
+      "tionTemporality\"O\n\013SummaryData\022@\n\013data_p" +
+      "oints\030\001 \003(\0132+.unhinged.observability.v1." +
+      "SummaryDataPoint\"\201\003\n\017NumberDataPoint\022N\n\n" +
+      "attributes\030\001 \003(\0132:.unhinged.observabilit" +
+      "y.v1.NumberDataPoint.AttributesEntry\022.\n\n" +
+      "start_time\030\002 \001(\0132\032.google.protobuf.Times" +
+      "tamp\022(\n\004time\030\003 \001(\0132\032.google.protobuf.Tim" +
+      "estamp\022\023\n\tas_double\030\n \001(\001H\000\022\020\n\006as_int\030\013 " +
+      "\001(\003H\000\0226\n\texemplars\030\024 \003(\0132#.unhinged.obse" +
+      "rvability.v1.Exemplar\032\\\n\017AttributesEntry" +
+      "\022\013\n\003key\030\001 \001(\t\0228\n\005value\030\002 \001(\0132).unhinged." +
+      "observability.v1.AttributeValue:\0028\001B\007\n\005v" +
+      "alue\"\243\003\n\022HistogramDataPoint\022Q\n\nattribute" +
+      "s\030\001 \003(\0132=.unhinged.observability.v1.Hist" +
+      "ogramDataPoint.AttributesEntry\022.\n\nstart_" +
+      "time\030\002 \001(\0132\032.google.protobuf.Timestamp\022(" +
+      "\n\004time\030\003 \001(\0132\032.google.protobuf.Timestamp" +
+      "\022\r\n\005count\030\n \001(\004\022\013\n\003sum\030\013 \001(\001\022\027\n\017explicit" +
+      "_bounds\030\014 \003(\001\022\025\n\rbucket_counts\030\r \003(\004\0226\n\t" +
+      "exemplars\030\024 \003(\0132#.unhinged.observability" +
+      ".v1.Exemplar\032\\\n\017AttributesEntry\022\013\n\003key\030\001" +
+      " \001(\t\0228\n\005value\030\002 \001(\0132).unhinged.observabi" +
+      "lity.v1.AttributeValue:\0028\001\"\372\002\n\020SummaryDa" +
+      "taPoint\022O\n\nattributes\030\001 \003(\0132;.unhinged.o" +
+      "bservability.v1.SummaryDataPoint.Attribu" +
+      "tesEntry\022.\n\nstart_time\030\002 \001(\0132\032.google.pr" +
+      "otobuf.Timestamp\022(\n\004time\030\003 \001(\0132\032.google." +
+      "protobuf.Timestamp\022\r\n\005count\030\n \001(\004\022\013\n\003sum" +
+      "\030\013 \001(\001\022A\n\017quantile_values\030\014 \003(\0132(.unhing" +
+      "ed.observability.v1.QuantileValue\032\\\n\017Att" +
+      "ributesEntry\022\013\n\003key\030\001 \001(\t\0228\n\005value\030\002 \001(\013" +
+      "2).unhinged.observability.v1.AttributeVa" +
+      "lue:\0028\001\"0\n\rQuantileValue\022\020\n\010quantile\030\001 \001" +
+      "(\001\022\r\n\005value\030\002 \001(\001\"\314\002\n\010Exemplar\022X\n\023filter" +
+      "ed_attributes\030\001 \003(\0132;.unhinged.observabi" +
+      "lity.v1.Exemplar.FilteredAttributesEntry" +
+      "\022-\n\ttimestamp\030\002 \001(\0132\032.google.protobuf.Ti" +
+      "mestamp\022\023\n\tas_double\030\n \001(\001H\000\022\020\n\006as_int\030\013" +
+      " \001(\003H\000\022\017\n\007span_id\030\024 \001(\t\022\020\n\010trace_id\030\025 \001(" +
+      "\t\032d\n\027FilteredAttributesEntry\022\013\n\003key\030\001 \001(" +
+      "\t\0228\n\005value\030\002 \001(\0132).unhinged.observabilit" +
+      "y.v1.AttributeValue:\0028\001B\007\n\005value\"\370\002\n\022Ser" +
+      "viceHealthEvent\022\020\n\010event_id\030\001 \001(\t\022-\n\ttim" +
+      "estamp\030\002 \001(\0132\032.google.protobuf.Timestamp" +
+      "\022\022\n\nevent_type\030\003 \001(\t\022\027\n\017sequence_number\030" +
+      "\004 \001(\003\0225\n\010resource\030\005 \001(\0132#.unhinged.obser" +
+      "vability.v1.Resource\0228\n\006health\030\n \001(\0132(.u" +
+      "nhinged.observability.v1.ServiceHealth\022A" +
+      "\n\014destinations\030\024 \001(\0132+.unhinged.observab" +
+      "ility.v1.DestinationFlags\022@\n\016partition_i" +
+      "nfo\030\031 \001(\0132(.unhinged.observability.v1.Pa" +
+      "rtitionInfo\"\262\003\n\rServiceHealth\022\024\n\014service" +
+      "_name\030\001 \001(\t\0227\n\006status\030\002 \001(\0162\'.unhinged.o" +
+      "bservability.v1.HealthStatus\022\026\n\016status_m" +
+      "essage\030\003 \001(\t\022=\n\rhealth_checks\030\n \003(\0132&.un" +
+      "hinged.observability.v1.HealthCheck\022A\n\014d" +
+      "ependencies\030\017 \003(\0132+.unhinged.observabili" +
+      "ty.v1.DependencyHealth\022?\n\004slis\030\024 \001(\01321.u" +
+      "nhinged.observability.v1.ServiceLevelInd" +
+      "icators\022@\n\016system_metrics\030\031 \001(\0132(.unhing" +
+      "ed.observability.v1.SystemMetrics\0225\n\006upt" +
+      "ime\030\036 \001(\0132%.unhinged.observability.v1.Up" +
+      "timeInfo\"\250\002\n\013HealthCheck\022\014\n\004name\030\001 \001(\t\0227" +
+      "\n\006status\030\002 \001(\0162\'.unhinged.observability." +
+      "v1.HealthStatus\022\017\n\007message\030\003 \001(\t\022.\n\nlast" +
+      "_check\030\004 \001(\0132\032.google.protobuf.Timestamp" +
+      "\022\030\n\020response_time_ms\030\005 \001(\003\022F\n\010metadata\030\n" +
+      " \003(\01324.unhinged.observability.v1.HealthC" +
+      "heck.MetadataEntry\032/\n\rMetadataEntry\022\013\n\003k" +
+      "ey\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\324\001\n\020Dependen" +
+      "cyHealth\022\014\n\004name\030\001 \001(\t\022\014\n\004type\030\002 \001(\t\0227\n\006" +
+      "status\030\003 \001(\0162\'.unhinged.observability.v1" +
+      ".HealthStatus\022\020\n\010endpoint\030\004 \001(\t\022\030\n\020respo" +
+      "nse_time_ms\030\005 \001(\003\022\017\n\007version\030\006 \001(\t\022.\n\nla" +
+      "st_check\030\n \001(\0132\032.google.protobuf.Timesta" +
+      "mp\"\224\002\n\026ServiceLevelIndicators\022\034\n\024availab" +
+      "ility_percent\030\001 \001(\001\022\032\n\022error_rate_percen" +
+      "t\030\002 \001(\001\022\026\n\016latency_p50_ms\030\003 \001(\001\022\026\n\016laten" +
+      "cy_p95_ms\030\004 \001(\001\022\026\n\016latency_p99_ms\030\005 \001(\001\022" +
+      "\026\n\016throughput_rps\030\006 \001(\001\0220\n\014window_start\030" +
+      "\n \001(\0132\032.google.protobuf.Timestamp\022.\n\nwin" +
+      "dow_end\030\013 \001(\0132\032.google.protobuf.Timestam" +
+      "p\"\224\004\n\rSystemMetrics\022\031\n\021cpu_usage_percent" +
+      "\030\001 \001(\001\022\023\n\013cpu_load_1m\030\002 \001(\001\022\023\n\013cpu_load_" +
+      "5m\030\003 \001(\001\022\024\n\014cpu_load_15m\030\004 \001(\001\022\032\n\022memory" +
+      "_total_bytes\030\n \001(\004\022\031\n\021memory_used_bytes\030" +
+      "\013 \001(\004\022\036\n\026memory_available_bytes\030\014 \001(\004\022\034\n" +
+      "\024memory_usage_percent\030\r \001(\001\022\030\n\020disk_tota" +
+      "l_bytes\030\024 \001(\004\022\027\n\017disk_used_bytes\030\025 \001(\004\022\034" +
+      "\n\024disk_available_bytes\030\026 \001(\004\022\032\n\022disk_usa" +
+      "ge_percent\030\027 \001(\001\022\032\n\022network_bytes_sent\030\036" +
+      " \001(\004\022\036\n\026network_bytes_received\030\037 \001(\004\022\034\n\024" +
+      "network_packets_sent\030  \001(\004\022 \n\030network_pa" +
+      "ckets_received\030! \001(\004\022\025\n\rprocess_count\030( " +
+      "\001(\r\022\024\n\014thread_count\030) \001(\r\022\035\n\025file_descri" +
+      "ptor_count\030* \001(\r\"\235\001\n\nUptimeInfo\022.\n\nstart" +
+      "_time\030\001 \001(\0132\032.google.protobuf.Timestamp\022" +
+      "\026\n\016uptime_seconds\030\002 \001(\003\022\025\n\rrestart_count" +
+      "\030\003 \001(\r\0220\n\014last_restart\030\004 \001(\0132\032.google.pr" +
+      "otobuf.Timestamp\"\275\002\n\rIncidentEvent\022\020\n\010ev" +
+      "ent_id\030\001 \001(\t\022-\n\ttimestamp\030\002 \001(\0132\032.google" +
+      ".protobuf.Timestamp\022\022\n\nevent_type\030\003 \001(\t\022" +
+      "\027\n\017sequence_number\030\004 \001(\003\0229\n\010incident\030\n \001" +
+      "(\0132\'.unhinged.observability.v1.IncidentD" +
+      "ata\022A\n\014destinations\030\024 \001(\0132+.unhinged.obs" +
+      "ervability.v1.DestinationFlags\022@\n\016partit" +
+      "ion_info\030\031 \001(\0132(.unhinged.observability." +
+      "v1.PartitionInfo\"\304\004\n\014IncidentData\022\023\n\013inc" +
+      "ident_id\030\001 \001(\t\022\r\n\005title\030\002 \001(\t\022\023\n\013descrip" +
+      "tion\030\003 \001(\t\022=\n\010severity\030\004 \001(\0162+.unhinged." +
+      "observability.v1.IncidentSeverity\0229\n\006sta" +
+      "tus\030\005 \001(\0162).unhinged.observability.v1.In" +
+      "cidentStatus\022.\n\ncreated_at\030\n \001(\0132\032.googl" +
+      "e.protobuf.Timestamp\022.\n\nupdated_at\030\013 \001(\013" +
+      "2\032.google.protobuf.Timestamp\022/\n\013resolved" +
+      "_at\030\014 \001(\0132\032.google.protobuf.Timestamp\022\031\n" +
+      "\021affected_services\030\017 \003(\t\022\033\n\023affected_com" +
+      "ponents\030\020 \003(\t\022:\n\007updates\030\024 \003(\0132).unhinge" +
+      "d.observability.v1.IncidentUpdate\0229\n\006imp" +
+      "act\030\031 \001(\0132).unhinged.observability.v1.In" +
+      "cidentImpact\022A\n\nresolution\030\036 \001(\0132-.unhin" +
+      "ged.observability.v1.IncidentResolution\"" +
+      "\343\001\n\016IncidentUpdate\022\021\n\tupdate_id\030\001 \001(\t\022-\n" +
+      "\ttimestamp\030\002 \001(\0132\032.google.protobuf.Times" +
+      "tamp\0229\n\006status\030\003 \001(\0162).unhinged.observab" +
+      "ility.v1.IncidentStatus\022\017\n\007message\030\004 \001(\t" +
+      "\022\016\n\006author\030\005 \001(\t\0223\n\004type\030\006 \001(\0162%.unhinge" +
+      "d.observability.v1.UpdateType\"\224\001\n\016Incide" +
+      "ntImpact\022\033\n\023availability_impact\030\001 \001(\001\022\032\n" +
+      "\022performance_impact\030\002 \001(\001\022\026\n\016affected_us" +
+      "ers\030\003 \001(\r\022\030\n\020affected_regions\030\004 \003(\t\022\027\n\017b" +
+      "usiness_impact\030\005 \001(\t\"\220\001\n\022IncidentResolut" +
+      "ion\022\022\n\nroot_cause\030\001 \001(\t\022\030\n\020resolution_st" +
+      "eps\030\002 \001(\t\022\033\n\023prevention_measures\030\003 \001(\t\022\027" +
+      "\n\017lessons_learned\030\004 \003(\t\022\026\n\016postmortem_ur" +
+      "l\030\005 \001(\t\"a\n\016IngestResponse\022\017\n\007success\030\001 \001" +
+      "(\010\022\017\n\007message\030\002 \001(\t\022\027\n\017processed_count\030\003" +
+      " \001(\r\022\024\n\014failed_count\030\004 \001(\r\"b\n\016HealthResp" +
+      "onse\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\022." +
+      "\n\nnext_check\030\003 \001(\0132\032.google.protobuf.Tim" +
+      "estamp\"I\n\020IncidentResponse\022\017\n\007success\030\001 " +
+      "\001(\010\022\017\n\007message\030\002 \001(\t\022\023\n\013incident_id\030\003 \001(" +
+      "\t\"O\n\013HealthQuery\022\025\n\rservice_names\030\001 \003(\t\022" +
+      ")\n\005since\030\002 \001(\0132\032.google.protobuf.Timesta" +
+      "mp\"Q\n\023HealthQueryResponse\022:\n\010services\030\001 " +
+      "\003(\0132(.unhinged.observability.v1.ServiceH" +
+      "ealth\"\270\001\n\rIncidentQuery\022;\n\010statuses\030\001 \003(" +
+      "\0162).unhinged.observability.v1.IncidentSt" +
+      "atus\022?\n\nseverities\030\002 \003(\0162+.unhinged.obse" +
+      "rvability.v1.IncidentSeverity\022)\n\005since\030\003" +
+      " \001(\0132\032.google.protobuf.Timestamp\"S\n\025Inci" +
+      "dentQueryResponse\022:\n\tincidents\030\001 \003(\0132\'.u" +
+      "nhinged.observability.v1.IncidentData\"\363\001" +
+      "\n\013MetricQuery\022\023\n\013metric_name\030\001 \001(\t\022B\n\006la" +
+      "bels\030\002 \003(\01322.unhinged.observability.v1.M" +
+      "etricQuery.LabelsEntry\022.\n\nstart_time\030\003 \001" +
+      "(\0132\032.google.protobuf.Timestamp\022,\n\010end_ti" +
+      "me\030\004 \001(\0132\032.google.protobuf.Timestamp\032-\n\013" +
+      "LabelsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:" +
+      "\0028\001\"M\n\023MetricQueryResponse\0226\n\007metrics\030\001 " +
+      "\003(\0132%.unhinged.observability.v1.MetricDa" +
+      "ta\"\241\001\n\nTraceQuery\022\020\n\010trace_id\030\001 \001(\t\022\024\n\014s" +
+      "ervice_name\030\002 \001(\t\022.\n\nstart_time\030\003 \001(\0132\032." +
+      "google.protobuf.Timestamp\022,\n\010end_time\030\004 " +
+      "\001(\0132\032.google.protobuf.Timestamp\022\r\n\005limit" +
+      "\030\005 \001(\005\"K\n\022TraceQueryResponse\0225\n\006traces\030\001" +
+      " \003(\0132%.unhinged.observability.v1.TraceEv" +
+      "ent*\241\001\n\010LogLevel\022\031\n\025LOG_LEVEL_UNSPECIFIE" +
+      "D\020\000\022\023\n\017LOG_LEVEL_TRACE\020\001\022\023\n\017LOG_LEVEL_DE" +
+      "BUG\020\002\022\022\n\016LOG_LEVEL_INFO\020\003\022\022\n\016LOG_LEVEL_W" +
+      "ARN\020\004\022\023\n\017LOG_LEVEL_ERROR\020\005\022\023\n\017LOG_LEVEL_" +
+      "FATAL\020\006*\235\001\n\017CompressionType\022\033\n\027COMPRESSI" +
+      "ON_UNSPECIFIED\020\000\022\024\n\020COMPRESSION_NONE\020\001\022\024" +
+      "\n\020COMPRESSION_GZIP\020\002\022\026\n\022COMPRESSION_SNAP" +
+      "PY\020\003\022\023\n\017COMPRESSION_LZ4\020\004\022\024\n\020COMPRESSION" +
+      "_ZSTD\020\005*\231\001\n\010SpanKind\022\031\n\025SPAN_KIND_UNSPEC" +
+      "IFIED\020\000\022\026\n\022SPAN_KIND_INTERNAL\020\001\022\024\n\020SPAN_" +
+      "KIND_SERVER\020\002\022\024\n\020SPAN_KIND_CLIENT\020\003\022\026\n\022S" +
+      "PAN_KIND_PRODUCER\020\004\022\026\n\022SPAN_KIND_CONSUME" +
+      "R\020\005*N\n\nStatusCode\022\025\n\021STATUS_CODE_UNSET\020\000" +
+      "\022\022\n\016STATUS_CODE_OK\020\001\022\025\n\021STATUS_CODE_ERRO" +
+      "R\020\002*\214\001\n\026AggregationTemporality\022\'\n#AGGREG" +
+      "ATION_TEMPORALITY_UNSPECIFIED\020\000\022!\n\035AGGRE" +
+      "GATION_TEMPORALITY_DELTA\020\001\022&\n\"AGGREGATIO" +
+      "N_TEMPORALITY_CUMULATIVE\020\002*\234\001\n\014HealthSta" +
+      "tus\022\031\n\025HEALTH_STATUS_UNKNOWN\020\000\022\031\n\025HEALTH" +
+      "_STATUS_HEALTHY\020\001\022\032\n\026HEALTH_STATUS_DEGRA" +
+      "DED\020\002\022\033\n\027HEALTH_STATUS_UNHEALTHY\020\003\022\035\n\031HE" +
+      "ALTH_STATUS_MAINTENANCE\020\004*\246\001\n\020IncidentSe" +
+      "verity\022\035\n\031INCIDENT_SEVERITY_UNKNOWN\020\000\022\031\n" +
+      "\025INCIDENT_SEVERITY_LOW\020\001\022\034\n\030INCIDENT_SEV" +
+      "ERITY_MEDIUM\020\002\022\032\n\026INCIDENT_SEVERITY_HIGH" +
+      "\020\003\022\036\n\032INCIDENT_SEVERITY_CRITICAL\020\004*\316\001\n\016I" +
+      "ncidentStatus\022\033\n\027INCIDENT_STATUS_UNKNOWN" +
+      "\020\000\022!\n\035INCIDENT_STATUS_INVESTIGATING\020\001\022\036\n" +
+      "\032INCIDENT_STATUS_IDENTIFIED\020\002\022\036\n\032INCIDEN" +
+      "T_STATUS_MONITORING\020\003\022\034\n\030INCIDENT_STATUS" +
+      "_RESOLVED\020\004\022\036\n\032INCIDENT_STATUS_POSTMORTE" +
+      "M\020\005*\222\001\n\nUpdateType\022\027\n\023UPDATE_TYPE_UNKNOW" +
+      "N\020\000\022\035\n\031UPDATE_TYPE_INVESTIGATING\020\001\022\026\n\022UP" +
+      "DATE_TYPE_UPDATE\020\002\022\030\n\024UPDATE_TYPE_RESOLV" +
+      "ED\020\003\022\032\n\026UPDATE_TYPE_POSTMORTEM\020\0042\243\010\n\024Obs" +
+      "ervabilityService\022^\n\nIngestLogs\022#.unhing" +
+      "ed.observability.v1.LogEvent\032).unhinged." +
+      "observability.v1.IngestResponse(\001\022b\n\014Ing" +
+      "estTraces\022%.unhinged.observability.v1.Tr" +
+      "aceEvent\032).unhinged.observability.v1.Ing" +
+      "estResponse(\001\022d\n\rIngestMetrics\022&.unhinge" +
+      "d.observability.v1.MetricEvent\032).unhinge" +
+      "d.observability.v1.IngestResponse(\001\022h\n\014R" +
+      "eportHealth\022-.unhinged.observability.v1." +
+      "ServiceHealthEvent\032).unhinged.observabil" +
+      "ity.v1.HealthResponse\022g\n\016ReportIncident\022" +
+      "(.unhinged.observability.v1.IncidentEven" +
+      "t\032+.unhinged.observability.v1.IncidentRe" +
+      "sponse\022g\n\016UpdateIncident\022(.unhinged.obse" +
+      "rvability.v1.IncidentEvent\032+.unhinged.ob" +
+      "servability.v1.IncidentResponse\022j\n\020GetSe" +
+      "rviceHealth\022&.unhinged.observability.v1." +
+      "HealthQuery\032..unhinged.observability.v1." +
+      "HealthQueryResponse\022p\n\022GetActiveIncident" +
+      "s\022(.unhinged.observability.v1.IncidentQu" +
+      "ery\0320.unhinged.observability.v1.Incident" +
+      "QueryResponse\022d\n\nGetMetrics\022&.unhinged.o" +
+      "bservability.v1.MetricQuery\032..unhinged.o" +
+      "bservability.v1.MetricQueryResponse\022a\n\tG" +
+      "etTraces\022%.unhinged.observability.v1.Tra" +
+      "ceQuery\032-.unhinged.observability.v1.Trac" +
+      "eQueryResponseB.\n\026unhinged.observability" +
+      "B\022ObservabilityProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -217,6 +787,324 @@ public final class ObservabilityProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_unhinged_observability_v1_PartitionInfo_CustomPartitionsEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_TraceEvent_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_unhinged_observability_v1_TraceEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_TraceEvent_descriptor,
+        new java.lang.String[] { "EventId", "Timestamp", "EventType", "SequenceNumber", "TraceContext", "Resource", "Span", "Destinations", "PartitionInfo", });
+    internal_static_unhinged_observability_v1_SpanData_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_unhinged_observability_v1_SpanData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanData_descriptor,
+        new java.lang.String[] { "Name", "Kind", "StartTime", "EndTime", "DurationNanos", "Status", "Attributes", "Events", "Links", "InstrumentationLibrary", });
+    internal_static_unhinged_observability_v1_SpanData_AttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_SpanData_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_SpanData_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanData_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_SpanStatus_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_unhinged_observability_v1_SpanStatus_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanStatus_descriptor,
+        new java.lang.String[] { "Code", "Message", });
+    internal_static_unhinged_observability_v1_SpanEvent_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_unhinged_observability_v1_SpanEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanEvent_descriptor,
+        new java.lang.String[] { "Timestamp", "Name", "Attributes", });
+    internal_static_unhinged_observability_v1_SpanEvent_AttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_SpanEvent_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_SpanEvent_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanEvent_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_SpanLink_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_unhinged_observability_v1_SpanLink_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanLink_descriptor,
+        new java.lang.String[] { "TraceContext", "Attributes", });
+    internal_static_unhinged_observability_v1_SpanLink_AttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_SpanLink_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_SpanLink_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SpanLink_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_InstrumentationLibrary_descriptor =
+      getDescriptor().getMessageTypes().get(13);
+    internal_static_unhinged_observability_v1_InstrumentationLibrary_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_InstrumentationLibrary_descriptor,
+        new java.lang.String[] { "Name", "Version", "SchemaUrl", });
+    internal_static_unhinged_observability_v1_AttributeValue_descriptor =
+      getDescriptor().getMessageTypes().get(14);
+    internal_static_unhinged_observability_v1_AttributeValue_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_AttributeValue_descriptor,
+        new java.lang.String[] { "StringValue", "BoolValue", "IntValue", "DoubleValue", "BytesValue", "ArrayValue", "KvlistValue", "Value", });
+    internal_static_unhinged_observability_v1_AttributeArray_descriptor =
+      getDescriptor().getMessageTypes().get(15);
+    internal_static_unhinged_observability_v1_AttributeArray_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_AttributeArray_descriptor,
+        new java.lang.String[] { "Values", });
+    internal_static_unhinged_observability_v1_AttributeKeyValueList_descriptor =
+      getDescriptor().getMessageTypes().get(16);
+    internal_static_unhinged_observability_v1_AttributeKeyValueList_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_AttributeKeyValueList_descriptor,
+        new java.lang.String[] { "Values", });
+    internal_static_unhinged_observability_v1_AttributeKeyValue_descriptor =
+      getDescriptor().getMessageTypes().get(17);
+    internal_static_unhinged_observability_v1_AttributeKeyValue_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_AttributeKeyValue_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_MetricEvent_descriptor =
+      getDescriptor().getMessageTypes().get(18);
+    internal_static_unhinged_observability_v1_MetricEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_MetricEvent_descriptor,
+        new java.lang.String[] { "EventId", "Timestamp", "EventType", "SequenceNumber", "TraceContext", "Resource", "Metric", "Destinations", "PartitionInfo", });
+    internal_static_unhinged_observability_v1_MetricData_descriptor =
+      getDescriptor().getMessageTypes().get(19);
+    internal_static_unhinged_observability_v1_MetricData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_MetricData_descriptor,
+        new java.lang.String[] { "Name", "Description", "Unit", "Gauge", "Counter", "Histogram", "Summary", "InstrumentationLibrary", "Data", });
+    internal_static_unhinged_observability_v1_GaugeData_descriptor =
+      getDescriptor().getMessageTypes().get(20);
+    internal_static_unhinged_observability_v1_GaugeData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_GaugeData_descriptor,
+        new java.lang.String[] { "DataPoints", });
+    internal_static_unhinged_observability_v1_CounterData_descriptor =
+      getDescriptor().getMessageTypes().get(21);
+    internal_static_unhinged_observability_v1_CounterData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_CounterData_descriptor,
+        new java.lang.String[] { "DataPoints", "IsMonotonic", });
+    internal_static_unhinged_observability_v1_HistogramData_descriptor =
+      getDescriptor().getMessageTypes().get(22);
+    internal_static_unhinged_observability_v1_HistogramData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HistogramData_descriptor,
+        new java.lang.String[] { "DataPoints", "AggregationTemporality", });
+    internal_static_unhinged_observability_v1_SummaryData_descriptor =
+      getDescriptor().getMessageTypes().get(23);
+    internal_static_unhinged_observability_v1_SummaryData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SummaryData_descriptor,
+        new java.lang.String[] { "DataPoints", });
+    internal_static_unhinged_observability_v1_NumberDataPoint_descriptor =
+      getDescriptor().getMessageTypes().get(24);
+    internal_static_unhinged_observability_v1_NumberDataPoint_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_NumberDataPoint_descriptor,
+        new java.lang.String[] { "Attributes", "StartTime", "Time", "AsDouble", "AsInt", "Exemplars", "Value", });
+    internal_static_unhinged_observability_v1_NumberDataPoint_AttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_NumberDataPoint_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_NumberDataPoint_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_NumberDataPoint_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_HistogramDataPoint_descriptor =
+      getDescriptor().getMessageTypes().get(25);
+    internal_static_unhinged_observability_v1_HistogramDataPoint_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HistogramDataPoint_descriptor,
+        new java.lang.String[] { "Attributes", "StartTime", "Time", "Count", "Sum", "ExplicitBounds", "BucketCounts", "Exemplars", });
+    internal_static_unhinged_observability_v1_HistogramDataPoint_AttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_HistogramDataPoint_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_HistogramDataPoint_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HistogramDataPoint_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_SummaryDataPoint_descriptor =
+      getDescriptor().getMessageTypes().get(26);
+    internal_static_unhinged_observability_v1_SummaryDataPoint_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SummaryDataPoint_descriptor,
+        new java.lang.String[] { "Attributes", "StartTime", "Time", "Count", "Sum", "QuantileValues", });
+    internal_static_unhinged_observability_v1_SummaryDataPoint_AttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_SummaryDataPoint_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_SummaryDataPoint_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SummaryDataPoint_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_QuantileValue_descriptor =
+      getDescriptor().getMessageTypes().get(27);
+    internal_static_unhinged_observability_v1_QuantileValue_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_QuantileValue_descriptor,
+        new java.lang.String[] { "Quantile", "Value", });
+    internal_static_unhinged_observability_v1_Exemplar_descriptor =
+      getDescriptor().getMessageTypes().get(28);
+    internal_static_unhinged_observability_v1_Exemplar_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_Exemplar_descriptor,
+        new java.lang.String[] { "FilteredAttributes", "Timestamp", "AsDouble", "AsInt", "SpanId", "TraceId", "Value", });
+    internal_static_unhinged_observability_v1_Exemplar_FilteredAttributesEntry_descriptor =
+      internal_static_unhinged_observability_v1_Exemplar_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_Exemplar_FilteredAttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_Exemplar_FilteredAttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_ServiceHealthEvent_descriptor =
+      getDescriptor().getMessageTypes().get(29);
+    internal_static_unhinged_observability_v1_ServiceHealthEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_ServiceHealthEvent_descriptor,
+        new java.lang.String[] { "EventId", "Timestamp", "EventType", "SequenceNumber", "Resource", "Health", "Destinations", "PartitionInfo", });
+    internal_static_unhinged_observability_v1_ServiceHealth_descriptor =
+      getDescriptor().getMessageTypes().get(30);
+    internal_static_unhinged_observability_v1_ServiceHealth_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_ServiceHealth_descriptor,
+        new java.lang.String[] { "ServiceName", "Status", "StatusMessage", "HealthChecks", "Dependencies", "Slis", "SystemMetrics", "Uptime", });
+    internal_static_unhinged_observability_v1_HealthCheck_descriptor =
+      getDescriptor().getMessageTypes().get(31);
+    internal_static_unhinged_observability_v1_HealthCheck_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HealthCheck_descriptor,
+        new java.lang.String[] { "Name", "Status", "Message", "LastCheck", "ResponseTimeMs", "Metadata", });
+    internal_static_unhinged_observability_v1_HealthCheck_MetadataEntry_descriptor =
+      internal_static_unhinged_observability_v1_HealthCheck_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_HealthCheck_MetadataEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HealthCheck_MetadataEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_DependencyHealth_descriptor =
+      getDescriptor().getMessageTypes().get(32);
+    internal_static_unhinged_observability_v1_DependencyHealth_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_DependencyHealth_descriptor,
+        new java.lang.String[] { "Name", "Type", "Status", "Endpoint", "ResponseTimeMs", "Version", "LastCheck", });
+    internal_static_unhinged_observability_v1_ServiceLevelIndicators_descriptor =
+      getDescriptor().getMessageTypes().get(33);
+    internal_static_unhinged_observability_v1_ServiceLevelIndicators_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_ServiceLevelIndicators_descriptor,
+        new java.lang.String[] { "AvailabilityPercent", "ErrorRatePercent", "LatencyP50Ms", "LatencyP95Ms", "LatencyP99Ms", "ThroughputRps", "WindowStart", "WindowEnd", });
+    internal_static_unhinged_observability_v1_SystemMetrics_descriptor =
+      getDescriptor().getMessageTypes().get(34);
+    internal_static_unhinged_observability_v1_SystemMetrics_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_SystemMetrics_descriptor,
+        new java.lang.String[] { "CpuUsagePercent", "CpuLoad1M", "CpuLoad5M", "CpuLoad15M", "MemoryTotalBytes", "MemoryUsedBytes", "MemoryAvailableBytes", "MemoryUsagePercent", "DiskTotalBytes", "DiskUsedBytes", "DiskAvailableBytes", "DiskUsagePercent", "NetworkBytesSent", "NetworkBytesReceived", "NetworkPacketsSent", "NetworkPacketsReceived", "ProcessCount", "ThreadCount", "FileDescriptorCount", });
+    internal_static_unhinged_observability_v1_UptimeInfo_descriptor =
+      getDescriptor().getMessageTypes().get(35);
+    internal_static_unhinged_observability_v1_UptimeInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_UptimeInfo_descriptor,
+        new java.lang.String[] { "StartTime", "UptimeSeconds", "RestartCount", "LastRestart", });
+    internal_static_unhinged_observability_v1_IncidentEvent_descriptor =
+      getDescriptor().getMessageTypes().get(36);
+    internal_static_unhinged_observability_v1_IncidentEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentEvent_descriptor,
+        new java.lang.String[] { "EventId", "Timestamp", "EventType", "SequenceNumber", "Incident", "Destinations", "PartitionInfo", });
+    internal_static_unhinged_observability_v1_IncidentData_descriptor =
+      getDescriptor().getMessageTypes().get(37);
+    internal_static_unhinged_observability_v1_IncidentData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentData_descriptor,
+        new java.lang.String[] { "IncidentId", "Title", "Description", "Severity", "Status", "CreatedAt", "UpdatedAt", "ResolvedAt", "AffectedServices", "AffectedComponents", "Updates", "Impact", "Resolution", });
+    internal_static_unhinged_observability_v1_IncidentUpdate_descriptor =
+      getDescriptor().getMessageTypes().get(38);
+    internal_static_unhinged_observability_v1_IncidentUpdate_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentUpdate_descriptor,
+        new java.lang.String[] { "UpdateId", "Timestamp", "Status", "Message", "Author", "Type", });
+    internal_static_unhinged_observability_v1_IncidentImpact_descriptor =
+      getDescriptor().getMessageTypes().get(39);
+    internal_static_unhinged_observability_v1_IncidentImpact_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentImpact_descriptor,
+        new java.lang.String[] { "AvailabilityImpact", "PerformanceImpact", "AffectedUsers", "AffectedRegions", "BusinessImpact", });
+    internal_static_unhinged_observability_v1_IncidentResolution_descriptor =
+      getDescriptor().getMessageTypes().get(40);
+    internal_static_unhinged_observability_v1_IncidentResolution_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentResolution_descriptor,
+        new java.lang.String[] { "RootCause", "ResolutionSteps", "PreventionMeasures", "LessonsLearned", "PostmortemUrl", });
+    internal_static_unhinged_observability_v1_IngestResponse_descriptor =
+      getDescriptor().getMessageTypes().get(41);
+    internal_static_unhinged_observability_v1_IngestResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IngestResponse_descriptor,
+        new java.lang.String[] { "Success", "Message", "ProcessedCount", "FailedCount", });
+    internal_static_unhinged_observability_v1_HealthResponse_descriptor =
+      getDescriptor().getMessageTypes().get(42);
+    internal_static_unhinged_observability_v1_HealthResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HealthResponse_descriptor,
+        new java.lang.String[] { "Success", "Message", "NextCheck", });
+    internal_static_unhinged_observability_v1_IncidentResponse_descriptor =
+      getDescriptor().getMessageTypes().get(43);
+    internal_static_unhinged_observability_v1_IncidentResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentResponse_descriptor,
+        new java.lang.String[] { "Success", "Message", "IncidentId", });
+    internal_static_unhinged_observability_v1_HealthQuery_descriptor =
+      getDescriptor().getMessageTypes().get(44);
+    internal_static_unhinged_observability_v1_HealthQuery_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HealthQuery_descriptor,
+        new java.lang.String[] { "ServiceNames", "Since", });
+    internal_static_unhinged_observability_v1_HealthQueryResponse_descriptor =
+      getDescriptor().getMessageTypes().get(45);
+    internal_static_unhinged_observability_v1_HealthQueryResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_HealthQueryResponse_descriptor,
+        new java.lang.String[] { "Services", });
+    internal_static_unhinged_observability_v1_IncidentQuery_descriptor =
+      getDescriptor().getMessageTypes().get(46);
+    internal_static_unhinged_observability_v1_IncidentQuery_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentQuery_descriptor,
+        new java.lang.String[] { "Statuses", "Severities", "Since", });
+    internal_static_unhinged_observability_v1_IncidentQueryResponse_descriptor =
+      getDescriptor().getMessageTypes().get(47);
+    internal_static_unhinged_observability_v1_IncidentQueryResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_IncidentQueryResponse_descriptor,
+        new java.lang.String[] { "Incidents", });
+    internal_static_unhinged_observability_v1_MetricQuery_descriptor =
+      getDescriptor().getMessageTypes().get(48);
+    internal_static_unhinged_observability_v1_MetricQuery_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_MetricQuery_descriptor,
+        new java.lang.String[] { "MetricName", "Labels", "StartTime", "EndTime", });
+    internal_static_unhinged_observability_v1_MetricQuery_LabelsEntry_descriptor =
+      internal_static_unhinged_observability_v1_MetricQuery_descriptor.getNestedTypes().get(0);
+    internal_static_unhinged_observability_v1_MetricQuery_LabelsEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_MetricQuery_LabelsEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_unhinged_observability_v1_MetricQueryResponse_descriptor =
+      getDescriptor().getMessageTypes().get(49);
+    internal_static_unhinged_observability_v1_MetricQueryResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_MetricQueryResponse_descriptor,
+        new java.lang.String[] { "Metrics", });
+    internal_static_unhinged_observability_v1_TraceQuery_descriptor =
+      getDescriptor().getMessageTypes().get(50);
+    internal_static_unhinged_observability_v1_TraceQuery_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_TraceQuery_descriptor,
+        new java.lang.String[] { "TraceId", "ServiceName", "StartTime", "EndTime", "Limit", });
+    internal_static_unhinged_observability_v1_TraceQueryResponse_descriptor =
+      getDescriptor().getMessageTypes().get(51);
+    internal_static_unhinged_observability_v1_TraceQueryResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_unhinged_observability_v1_TraceQueryResponse_descriptor,
+        new java.lang.String[] { "Traces", });
     com.google.protobuf.TimestampProto.getDescriptor();
     com.google.protobuf.AnyProto.getDescriptor();
     com.google.protobuf.StructProto.getDescriptor();

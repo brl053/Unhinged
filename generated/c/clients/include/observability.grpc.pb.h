@@ -45,6 +45,1566 @@ namespace unhinged {
 namespace observability {
 namespace v1 {
 
+// ============================================================================
+// Observability Service Definitions
+// ============================================================================
+//
+// *
+// Observability service for collecting and querying telemetry data
+class ObservabilityService final {
+ public:
+  static constexpr char const* service_full_name() {
+    return "unhinged.observability.v1.ObservabilityService";
+  }
+  class StubInterface {
+   public:
+    virtual ~StubInterface() {}
+    // Log ingestion
+    std::unique_ptr< ::grpc::ClientWriterInterface< ::unhinged::observability::v1::LogEvent>> IngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+      return std::unique_ptr< ::grpc::ClientWriterInterface< ::unhinged::observability::v1::LogEvent>>(IngestLogsRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::LogEvent>> AsyncIngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::LogEvent>>(AsyncIngestLogsRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::LogEvent>> PrepareAsyncIngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::LogEvent>>(PrepareAsyncIngestLogsRaw(context, response, cq));
+    }
+    // Trace ingestion
+    std::unique_ptr< ::grpc::ClientWriterInterface< ::unhinged::observability::v1::TraceEvent>> IngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+      return std::unique_ptr< ::grpc::ClientWriterInterface< ::unhinged::observability::v1::TraceEvent>>(IngestTracesRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::TraceEvent>> AsyncIngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::TraceEvent>>(AsyncIngestTracesRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::TraceEvent>> PrepareAsyncIngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::TraceEvent>>(PrepareAsyncIngestTracesRaw(context, response, cq));
+    }
+    // Metric ingestion
+    std::unique_ptr< ::grpc::ClientWriterInterface< ::unhinged::observability::v1::MetricEvent>> IngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+      return std::unique_ptr< ::grpc::ClientWriterInterface< ::unhinged::observability::v1::MetricEvent>>(IngestMetricsRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::MetricEvent>> AsyncIngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::MetricEvent>>(AsyncIngestMetricsRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::MetricEvent>> PrepareAsyncIngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::MetricEvent>>(PrepareAsyncIngestMetricsRaw(context, response, cq));
+    }
+    // Health monitoring
+    virtual ::grpc::Status ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::unhinged::observability::v1::HealthResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthResponse>> AsyncReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthResponse>>(AsyncReportHealthRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthResponse>> PrepareAsyncReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthResponse>>(PrepareAsyncReportHealthRaw(context, request, cq));
+    }
+    // Incident management
+    virtual ::grpc::Status ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::unhinged::observability::v1::IncidentResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>> AsyncReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>>(AsyncReportIncidentRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>> PrepareAsyncReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>>(PrepareAsyncReportIncidentRaw(context, request, cq));
+    }
+    virtual ::grpc::Status UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::unhinged::observability::v1::IncidentResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>> AsyncUpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>>(AsyncUpdateIncidentRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>> PrepareAsyncUpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>>(PrepareAsyncUpdateIncidentRaw(context, request, cq));
+    }
+    // Query APIs for status page
+    virtual ::grpc::Status GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::unhinged::observability::v1::HealthQueryResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthQueryResponse>> AsyncGetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthQueryResponse>>(AsyncGetServiceHealthRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthQueryResponse>> PrepareAsyncGetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthQueryResponse>>(PrepareAsyncGetServiceHealthRaw(context, request, cq));
+    }
+    virtual ::grpc::Status GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::unhinged::observability::v1::IncidentQueryResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentQueryResponse>> AsyncGetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentQueryResponse>>(AsyncGetActiveIncidentsRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentQueryResponse>> PrepareAsyncGetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentQueryResponse>>(PrepareAsyncGetActiveIncidentsRaw(context, request, cq));
+    }
+    virtual ::grpc::Status GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::unhinged::observability::v1::MetricQueryResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::MetricQueryResponse>> AsyncGetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::MetricQueryResponse>>(AsyncGetMetricsRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::MetricQueryResponse>> PrepareAsyncGetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::MetricQueryResponse>>(PrepareAsyncGetMetricsRaw(context, request, cq));
+    }
+    virtual ::grpc::Status GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::unhinged::observability::v1::TraceQueryResponse* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::TraceQueryResponse>> AsyncGetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::TraceQueryResponse>>(AsyncGetTracesRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::TraceQueryResponse>> PrepareAsyncGetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::TraceQueryResponse>>(PrepareAsyncGetTracesRaw(context, request, cq));
+    }
+    class async_interface {
+     public:
+      virtual ~async_interface() {}
+      // Log ingestion
+      virtual void IngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::LogEvent>* reactor) = 0;
+      // Trace ingestion
+      virtual void IngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::TraceEvent>* reactor) = 0;
+      // Metric ingestion
+      virtual void IngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::MetricEvent>* reactor) = 0;
+      // Health monitoring
+      virtual void ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      // Incident management
+      virtual void ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      // Query APIs for status page
+      virtual void GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+    };
+    typedef class async_interface experimental_async_interface;
+    virtual class async_interface* async() { return nullptr; }
+    class async_interface* experimental_async() { return async(); }
+   private:
+    virtual ::grpc::ClientWriterInterface< ::unhinged::observability::v1::LogEvent>* IngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::LogEvent>* AsyncIngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::LogEvent>* PrepareAsyncIngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientWriterInterface< ::unhinged::observability::v1::TraceEvent>* IngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::TraceEvent>* AsyncIngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::TraceEvent>* PrepareAsyncIngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientWriterInterface< ::unhinged::observability::v1::MetricEvent>* IngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::MetricEvent>* AsyncIngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::unhinged::observability::v1::MetricEvent>* PrepareAsyncIngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthResponse>* AsyncReportHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthResponse>* PrepareAsyncReportHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>* AsyncReportIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>* PrepareAsyncReportIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>* AsyncUpdateIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentResponse>* PrepareAsyncUpdateIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthQueryResponse>* AsyncGetServiceHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::HealthQueryResponse>* PrepareAsyncGetServiceHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentQueryResponse>* AsyncGetActiveIncidentsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::IncidentQueryResponse>* PrepareAsyncGetActiveIncidentsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::MetricQueryResponse>* AsyncGetMetricsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::MetricQueryResponse>* PrepareAsyncGetMetricsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::TraceQueryResponse>* AsyncGetTracesRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::unhinged::observability::v1::TraceQueryResponse>* PrepareAsyncGetTracesRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) = 0;
+  };
+  class Stub final : public StubInterface {
+   public:
+    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+    std::unique_ptr< ::grpc::ClientWriter< ::unhinged::observability::v1::LogEvent>> IngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+      return std::unique_ptr< ::grpc::ClientWriter< ::unhinged::observability::v1::LogEvent>>(IngestLogsRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>> AsyncIngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>>(AsyncIngestLogsRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>> PrepareAsyncIngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>>(PrepareAsyncIngestLogsRaw(context, response, cq));
+    }
+    std::unique_ptr< ::grpc::ClientWriter< ::unhinged::observability::v1::TraceEvent>> IngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+      return std::unique_ptr< ::grpc::ClientWriter< ::unhinged::observability::v1::TraceEvent>>(IngestTracesRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>> AsyncIngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>>(AsyncIngestTracesRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>> PrepareAsyncIngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>>(PrepareAsyncIngestTracesRaw(context, response, cq));
+    }
+    std::unique_ptr< ::grpc::ClientWriter< ::unhinged::observability::v1::MetricEvent>> IngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) {
+      return std::unique_ptr< ::grpc::ClientWriter< ::unhinged::observability::v1::MetricEvent>>(IngestMetricsRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>> AsyncIngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>>(AsyncIngestMetricsRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>> PrepareAsyncIngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>>(PrepareAsyncIngestMetricsRaw(context, response, cq));
+    }
+    ::grpc::Status ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::unhinged::observability::v1::HealthResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>> AsyncReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>>(AsyncReportHealthRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>> PrepareAsyncReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>>(PrepareAsyncReportHealthRaw(context, request, cq));
+    }
+    ::grpc::Status ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::unhinged::observability::v1::IncidentResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>> AsyncReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>>(AsyncReportIncidentRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>> PrepareAsyncReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>>(PrepareAsyncReportIncidentRaw(context, request, cq));
+    }
+    ::grpc::Status UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::unhinged::observability::v1::IncidentResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>> AsyncUpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>>(AsyncUpdateIncidentRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>> PrepareAsyncUpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>>(PrepareAsyncUpdateIncidentRaw(context, request, cq));
+    }
+    ::grpc::Status GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::unhinged::observability::v1::HealthQueryResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>> AsyncGetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>>(AsyncGetServiceHealthRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>> PrepareAsyncGetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>>(PrepareAsyncGetServiceHealthRaw(context, request, cq));
+    }
+    ::grpc::Status GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::unhinged::observability::v1::IncidentQueryResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>> AsyncGetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>>(AsyncGetActiveIncidentsRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>> PrepareAsyncGetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>>(PrepareAsyncGetActiveIncidentsRaw(context, request, cq));
+    }
+    ::grpc::Status GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::unhinged::observability::v1::MetricQueryResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>> AsyncGetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>>(AsyncGetMetricsRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>> PrepareAsyncGetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>>(PrepareAsyncGetMetricsRaw(context, request, cq));
+    }
+    ::grpc::Status GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::unhinged::observability::v1::TraceQueryResponse* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>> AsyncGetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>>(AsyncGetTracesRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>> PrepareAsyncGetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>>(PrepareAsyncGetTracesRaw(context, request, cq));
+    }
+    class async final :
+      public StubInterface::async_interface {
+     public:
+      void IngestLogs(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::LogEvent>* reactor) override;
+      void IngestTraces(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::TraceEvent>* reactor) override;
+      void IngestMetrics(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::ClientWriteReactor< ::unhinged::observability::v1::MetricEvent>* reactor) override;
+      void ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response, std::function<void(::grpc::Status)>) override;
+      void ReportHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, std::function<void(::grpc::Status)>) override;
+      void ReportIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, std::function<void(::grpc::Status)>) override;
+      void UpdateIncident(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response, std::function<void(::grpc::Status)>) override;
+      void GetServiceHealth(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response, std::function<void(::grpc::Status)>) override;
+      void GetActiveIncidents(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response, std::function<void(::grpc::Status)>) override;
+      void GetMetrics(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response, std::function<void(::grpc::Status)>) override;
+      void GetTraces(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
+     private:
+      friend class Stub;
+      explicit async(Stub* stub): stub_(stub) { }
+      Stub* stub() { return stub_; }
+      Stub* stub_;
+    };
+    class async* async() override { return &async_stub_; }
+
+   private:
+    std::shared_ptr< ::grpc::ChannelInterface> channel_;
+    class async async_stub_{this};
+    ::grpc::ClientWriter< ::unhinged::observability::v1::LogEvent>* IngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) override;
+    ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>* AsyncIngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::LogEvent>* PrepareAsyncIngestLogsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientWriter< ::unhinged::observability::v1::TraceEvent>* IngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) override;
+    ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>* AsyncIngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::TraceEvent>* PrepareAsyncIngestTracesRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientWriter< ::unhinged::observability::v1::MetricEvent>* IngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response) override;
+    ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>* AsyncIngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncWriter< ::unhinged::observability::v1::MetricEvent>* PrepareAsyncIngestMetricsRaw(::grpc::ClientContext* context, ::unhinged::observability::v1::IngestResponse* response, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>* AsyncReportHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthResponse>* PrepareAsyncReportHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::ServiceHealthEvent& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* AsyncReportIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* PrepareAsyncReportIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* AsyncUpdateIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentResponse>* PrepareAsyncUpdateIncidentRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentEvent& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>* AsyncGetServiceHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::HealthQueryResponse>* PrepareAsyncGetServiceHealthRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::HealthQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>* AsyncGetActiveIncidentsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::IncidentQueryResponse>* PrepareAsyncGetActiveIncidentsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::IncidentQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>* AsyncGetMetricsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::MetricQueryResponse>* PrepareAsyncGetMetricsRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::MetricQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>* AsyncGetTracesRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::unhinged::observability::v1::TraceQueryResponse>* PrepareAsyncGetTracesRaw(::grpc::ClientContext* context, const ::unhinged::observability::v1::TraceQuery& request, ::grpc::CompletionQueue* cq) override;
+    const ::grpc::internal::RpcMethod rpcmethod_IngestLogs_;
+    const ::grpc::internal::RpcMethod rpcmethod_IngestTraces_;
+    const ::grpc::internal::RpcMethod rpcmethod_IngestMetrics_;
+    const ::grpc::internal::RpcMethod rpcmethod_ReportHealth_;
+    const ::grpc::internal::RpcMethod rpcmethod_ReportIncident_;
+    const ::grpc::internal::RpcMethod rpcmethod_UpdateIncident_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetServiceHealth_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetActiveIncidents_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetMetrics_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetTraces_;
+  };
+  static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+
+  class Service : public ::grpc::Service {
+   public:
+    Service();
+    virtual ~Service();
+    // Log ingestion
+    virtual ::grpc::Status IngestLogs(::grpc::ServerContext* context, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* reader, ::unhinged::observability::v1::IngestResponse* response);
+    // Trace ingestion
+    virtual ::grpc::Status IngestTraces(::grpc::ServerContext* context, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* reader, ::unhinged::observability::v1::IngestResponse* response);
+    // Metric ingestion
+    virtual ::grpc::Status IngestMetrics(::grpc::ServerContext* context, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* reader, ::unhinged::observability::v1::IngestResponse* response);
+    // Health monitoring
+    virtual ::grpc::Status ReportHealth(::grpc::ServerContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response);
+    // Incident management
+    virtual ::grpc::Status ReportIncident(::grpc::ServerContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response);
+    virtual ::grpc::Status UpdateIncident(::grpc::ServerContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response);
+    // Query APIs for status page
+    virtual ::grpc::Status GetServiceHealth(::grpc::ServerContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response);
+    virtual ::grpc::Status GetActiveIncidents(::grpc::ServerContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response);
+    virtual ::grpc::Status GetMetrics(::grpc::ServerContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response);
+    virtual ::grpc::Status GetTraces(::grpc::ServerContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response);
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_IngestLogs : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_IngestLogs() {
+      ::grpc::Service::MarkMethodAsync(0);
+    }
+    ~WithAsyncMethod_IngestLogs() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestLogs(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestIngestLogs(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::unhinged::observability::v1::IngestResponse, ::unhinged::observability::v1::LogEvent>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(0, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_IngestTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_IngestTraces() {
+      ::grpc::Service::MarkMethodAsync(1);
+    }
+    ~WithAsyncMethod_IngestTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestTraces(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestIngestTraces(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::unhinged::observability::v1::IngestResponse, ::unhinged::observability::v1::TraceEvent>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(1, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_IngestMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_IngestMetrics() {
+      ::grpc::Service::MarkMethodAsync(2);
+    }
+    ~WithAsyncMethod_IngestMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestMetrics(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestIngestMetrics(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::unhinged::observability::v1::IngestResponse, ::unhinged::observability::v1::MetricEvent>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(2, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_ReportHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_ReportHealth() {
+      ::grpc::Service::MarkMethodAsync(3);
+    }
+    ~WithAsyncMethod_ReportHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestReportHealth(::grpc::ServerContext* context, ::unhinged::observability::v1::ServiceHealthEvent* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::HealthResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_ReportIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_ReportIncident() {
+      ::grpc::Service::MarkMethodAsync(4);
+    }
+    ~WithAsyncMethod_ReportIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestReportIncident(::grpc::ServerContext* context, ::unhinged::observability::v1::IncidentEvent* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::IncidentResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_UpdateIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_UpdateIncident() {
+      ::grpc::Service::MarkMethodAsync(5);
+    }
+    ~WithAsyncMethod_UpdateIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUpdateIncident(::grpc::ServerContext* context, ::unhinged::observability::v1::IncidentEvent* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::IncidentResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_GetServiceHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_GetServiceHealth() {
+      ::grpc::Service::MarkMethodAsync(6);
+    }
+    ~WithAsyncMethod_GetServiceHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetServiceHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetServiceHealth(::grpc::ServerContext* context, ::unhinged::observability::v1::HealthQuery* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::HealthQueryResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_GetActiveIncidents : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_GetActiveIncidents() {
+      ::grpc::Service::MarkMethodAsync(7);
+    }
+    ~WithAsyncMethod_GetActiveIncidents() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetActiveIncidents(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetActiveIncidents(::grpc::ServerContext* context, ::unhinged::observability::v1::IncidentQuery* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::IncidentQueryResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_GetMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_GetMetrics() {
+      ::grpc::Service::MarkMethodAsync(8);
+    }
+    ~WithAsyncMethod_GetMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetMetrics(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetMetrics(::grpc::ServerContext* context, ::unhinged::observability::v1::MetricQuery* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::MetricQueryResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_GetTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_GetTraces() {
+      ::grpc::Service::MarkMethodAsync(9);
+    }
+    ~WithAsyncMethod_GetTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTraces(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetTraces(::grpc::ServerContext* context, ::unhinged::observability::v1::TraceQuery* request, ::grpc::ServerAsyncResponseWriter< ::unhinged::observability::v1::TraceQueryResponse>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef WithAsyncMethod_IngestLogs<WithAsyncMethod_IngestTraces<WithAsyncMethod_IngestMetrics<WithAsyncMethod_ReportHealth<WithAsyncMethod_ReportIncident<WithAsyncMethod_UpdateIncident<WithAsyncMethod_GetServiceHealth<WithAsyncMethod_GetActiveIncidents<WithAsyncMethod_GetMetrics<WithAsyncMethod_GetTraces<Service > > > > > > > > > > AsyncService;
+  template <class BaseClass>
+  class WithCallbackMethod_IngestLogs : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_IngestLogs() {
+      ::grpc::Service::MarkMethodCallback(0,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::unhinged::observability::v1::LogEvent, ::unhinged::observability::v1::IngestResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::unhinged::observability::v1::IngestResponse* response) { return this->IngestLogs(context, response); }));
+    }
+    ~WithCallbackMethod_IngestLogs() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestLogs(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::unhinged::observability::v1::LogEvent>* IngestLogs(
+      ::grpc::CallbackServerContext* /*context*/, ::unhinged::observability::v1::IngestResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_IngestTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_IngestTraces() {
+      ::grpc::Service::MarkMethodCallback(1,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::unhinged::observability::v1::TraceEvent, ::unhinged::observability::v1::IngestResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::unhinged::observability::v1::IngestResponse* response) { return this->IngestTraces(context, response); }));
+    }
+    ~WithCallbackMethod_IngestTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestTraces(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::unhinged::observability::v1::TraceEvent>* IngestTraces(
+      ::grpc::CallbackServerContext* /*context*/, ::unhinged::observability::v1::IngestResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_IngestMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_IngestMetrics() {
+      ::grpc::Service::MarkMethodCallback(2,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::unhinged::observability::v1::MetricEvent, ::unhinged::observability::v1::IngestResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::unhinged::observability::v1::IngestResponse* response) { return this->IngestMetrics(context, response); }));
+    }
+    ~WithCallbackMethod_IngestMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestMetrics(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::unhinged::observability::v1::MetricEvent>* IngestMetrics(
+      ::grpc::CallbackServerContext* /*context*/, ::unhinged::observability::v1::IngestResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_ReportHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_ReportHealth() {
+      ::grpc::Service::MarkMethodCallback(3,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::ServiceHealthEvent* request, ::unhinged::observability::v1::HealthResponse* response) { return this->ReportHealth(context, request, response); }));}
+    void SetMessageAllocatorFor_ReportHealth(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_ReportHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* ReportHealth(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_ReportIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_ReportIncident() {
+      ::grpc::Service::MarkMethodCallback(4,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response) { return this->ReportIncident(context, request, response); }));}
+    void SetMessageAllocatorFor_ReportIncident(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(4);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_ReportIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* ReportIncident(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_UpdateIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_UpdateIncident() {
+      ::grpc::Service::MarkMethodCallback(5,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::IncidentEvent* request, ::unhinged::observability::v1::IncidentResponse* response) { return this->UpdateIncident(context, request, response); }));}
+    void SetMessageAllocatorFor_UpdateIncident(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_UpdateIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* UpdateIncident(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_GetServiceHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_GetServiceHealth() {
+      ::grpc::Service::MarkMethodCallback(6,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::HealthQuery* request, ::unhinged::observability::v1::HealthQueryResponse* response) { return this->GetServiceHealth(context, request, response); }));}
+    void SetMessageAllocatorFor_GetServiceHealth(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(6);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_GetServiceHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetServiceHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetServiceHealth(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_GetActiveIncidents : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_GetActiveIncidents() {
+      ::grpc::Service::MarkMethodCallback(7,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::IncidentQuery* request, ::unhinged::observability::v1::IncidentQueryResponse* response) { return this->GetActiveIncidents(context, request, response); }));}
+    void SetMessageAllocatorFor_GetActiveIncidents(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(7);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_GetActiveIncidents() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetActiveIncidents(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetActiveIncidents(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_GetMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_GetMetrics() {
+      ::grpc::Service::MarkMethodCallback(8,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::MetricQuery* request, ::unhinged::observability::v1::MetricQueryResponse* response) { return this->GetMetrics(context, request, response); }));}
+    void SetMessageAllocatorFor_GetMetrics(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(8);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_GetMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetMetrics(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetMetrics(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_GetTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_GetTraces() {
+      ::grpc::Service::MarkMethodCallback(9,
+          new ::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::unhinged::observability::v1::TraceQuery* request, ::unhinged::observability::v1::TraceQueryResponse* response) { return this->GetTraces(context, request, response); }));}
+    void SetMessageAllocatorFor_GetTraces(
+        ::grpc::MessageAllocator< ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(9);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_GetTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTraces(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetTraces(
+      ::grpc::CallbackServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/)  { return nullptr; }
+  };
+  typedef WithCallbackMethod_IngestLogs<WithCallbackMethod_IngestTraces<WithCallbackMethod_IngestMetrics<WithCallbackMethod_ReportHealth<WithCallbackMethod_ReportIncident<WithCallbackMethod_UpdateIncident<WithCallbackMethod_GetServiceHealth<WithCallbackMethod_GetActiveIncidents<WithCallbackMethod_GetMetrics<WithCallbackMethod_GetTraces<Service > > > > > > > > > > CallbackService;
+  typedef CallbackService ExperimentalCallbackService;
+  template <class BaseClass>
+  class WithGenericMethod_IngestLogs : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_IngestLogs() {
+      ::grpc::Service::MarkMethodGeneric(0);
+    }
+    ~WithGenericMethod_IngestLogs() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestLogs(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_IngestTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_IngestTraces() {
+      ::grpc::Service::MarkMethodGeneric(1);
+    }
+    ~WithGenericMethod_IngestTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestTraces(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_IngestMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_IngestMetrics() {
+      ::grpc::Service::MarkMethodGeneric(2);
+    }
+    ~WithGenericMethod_IngestMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestMetrics(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_ReportHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_ReportHealth() {
+      ::grpc::Service::MarkMethodGeneric(3);
+    }
+    ~WithGenericMethod_ReportHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_ReportIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_ReportIncident() {
+      ::grpc::Service::MarkMethodGeneric(4);
+    }
+    ~WithGenericMethod_ReportIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_UpdateIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_UpdateIncident() {
+      ::grpc::Service::MarkMethodGeneric(5);
+    }
+    ~WithGenericMethod_UpdateIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_GetServiceHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_GetServiceHealth() {
+      ::grpc::Service::MarkMethodGeneric(6);
+    }
+    ~WithGenericMethod_GetServiceHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetServiceHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_GetActiveIncidents : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_GetActiveIncidents() {
+      ::grpc::Service::MarkMethodGeneric(7);
+    }
+    ~WithGenericMethod_GetActiveIncidents() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetActiveIncidents(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_GetMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_GetMetrics() {
+      ::grpc::Service::MarkMethodGeneric(8);
+    }
+    ~WithGenericMethod_GetMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetMetrics(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_GetTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_GetTraces() {
+      ::grpc::Service::MarkMethodGeneric(9);
+    }
+    ~WithGenericMethod_GetTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTraces(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_IngestLogs : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_IngestLogs() {
+      ::grpc::Service::MarkMethodRaw(0);
+    }
+    ~WithRawMethod_IngestLogs() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestLogs(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestIngestLogs(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(0, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_IngestTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_IngestTraces() {
+      ::grpc::Service::MarkMethodRaw(1);
+    }
+    ~WithRawMethod_IngestTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestTraces(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestIngestTraces(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(1, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_IngestMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_IngestMetrics() {
+      ::grpc::Service::MarkMethodRaw(2);
+    }
+    ~WithRawMethod_IngestMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestMetrics(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestIngestMetrics(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(2, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_ReportHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_ReportHealth() {
+      ::grpc::Service::MarkMethodRaw(3);
+    }
+    ~WithRawMethod_ReportHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestReportHealth(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_ReportIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_ReportIncident() {
+      ::grpc::Service::MarkMethodRaw(4);
+    }
+    ~WithRawMethod_ReportIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestReportIncident(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_UpdateIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_UpdateIncident() {
+      ::grpc::Service::MarkMethodRaw(5);
+    }
+    ~WithRawMethod_UpdateIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUpdateIncident(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_GetServiceHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_GetServiceHealth() {
+      ::grpc::Service::MarkMethodRaw(6);
+    }
+    ~WithRawMethod_GetServiceHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetServiceHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetServiceHealth(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_GetActiveIncidents : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_GetActiveIncidents() {
+      ::grpc::Service::MarkMethodRaw(7);
+    }
+    ~WithRawMethod_GetActiveIncidents() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetActiveIncidents(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetActiveIncidents(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_GetMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_GetMetrics() {
+      ::grpc::Service::MarkMethodRaw(8);
+    }
+    ~WithRawMethod_GetMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetMetrics(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetMetrics(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_GetTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_GetTraces() {
+      ::grpc::Service::MarkMethodRaw(9);
+    }
+    ~WithRawMethod_GetTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTraces(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetTraces(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_IngestLogs : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_IngestLogs() {
+      ::grpc::Service::MarkMethodRawCallback(0,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::grpc::ByteBuffer* response) { return this->IngestLogs(context, response); }));
+    }
+    ~WithRawCallbackMethod_IngestLogs() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestLogs(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::LogEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::grpc::ByteBuffer>* IngestLogs(
+      ::grpc::CallbackServerContext* /*context*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_IngestTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_IngestTraces() {
+      ::grpc::Service::MarkMethodRawCallback(1,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::grpc::ByteBuffer* response) { return this->IngestTraces(context, response); }));
+    }
+    ~WithRawCallbackMethod_IngestTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestTraces(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::TraceEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::grpc::ByteBuffer>* IngestTraces(
+      ::grpc::CallbackServerContext* /*context*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_IngestMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_IngestMetrics() {
+      ::grpc::Service::MarkMethodRawCallback(2,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::grpc::ByteBuffer* response) { return this->IngestMetrics(context, response); }));
+    }
+    ~WithRawCallbackMethod_IngestMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status IngestMetrics(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::unhinged::observability::v1::MetricEvent>* /*reader*/, ::unhinged::observability::v1::IngestResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::grpc::ByteBuffer>* IngestMetrics(
+      ::grpc::CallbackServerContext* /*context*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_ReportHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_ReportHealth() {
+      ::grpc::Service::MarkMethodRawCallback(3,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->ReportHealth(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_ReportHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* ReportHealth(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_ReportIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_ReportIncident() {
+      ::grpc::Service::MarkMethodRawCallback(4,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->ReportIncident(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_ReportIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ReportIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* ReportIncident(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_UpdateIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_UpdateIncident() {
+      ::grpc::Service::MarkMethodRawCallback(5,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->UpdateIncident(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_UpdateIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* UpdateIncident(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_GetServiceHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_GetServiceHealth() {
+      ::grpc::Service::MarkMethodRawCallback(6,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetServiceHealth(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_GetServiceHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetServiceHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetServiceHealth(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_GetActiveIncidents : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_GetActiveIncidents() {
+      ::grpc::Service::MarkMethodRawCallback(7,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetActiveIncidents(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_GetActiveIncidents() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetActiveIncidents(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetActiveIncidents(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_GetMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_GetMetrics() {
+      ::grpc::Service::MarkMethodRawCallback(8,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetMetrics(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_GetMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetMetrics(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetMetrics(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_GetTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_GetTraces() {
+      ::grpc::Service::MarkMethodRawCallback(9,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetTraces(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_GetTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTraces(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetTraces(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_ReportHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_ReportHealth() {
+      ::grpc::Service::MarkMethodStreamed(3,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::ServiceHealthEvent, ::unhinged::observability::v1::HealthResponse>* streamer) {
+                       return this->StreamedReportHealth(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_ReportHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status ReportHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::ServiceHealthEvent* /*request*/, ::unhinged::observability::v1::HealthResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedReportHealth(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::ServiceHealthEvent,::unhinged::observability::v1::HealthResponse>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_ReportIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_ReportIncident() {
+      ::grpc::Service::MarkMethodStreamed(4,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>* streamer) {
+                       return this->StreamedReportIncident(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_ReportIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status ReportIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedReportIncident(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::IncidentEvent,::unhinged::observability::v1::IncidentResponse>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_UpdateIncident : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_UpdateIncident() {
+      ::grpc::Service::MarkMethodStreamed(5,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::IncidentEvent, ::unhinged::observability::v1::IncidentResponse>* streamer) {
+                       return this->StreamedUpdateIncident(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_UpdateIncident() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status UpdateIncident(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentEvent* /*request*/, ::unhinged::observability::v1::IncidentResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedUpdateIncident(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::IncidentEvent,::unhinged::observability::v1::IncidentResponse>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_GetServiceHealth : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_GetServiceHealth() {
+      ::grpc::Service::MarkMethodStreamed(6,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::HealthQuery, ::unhinged::observability::v1::HealthQueryResponse>* streamer) {
+                       return this->StreamedGetServiceHealth(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_GetServiceHealth() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetServiceHealth(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::HealthQuery* /*request*/, ::unhinged::observability::v1::HealthQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetServiceHealth(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::HealthQuery,::unhinged::observability::v1::HealthQueryResponse>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_GetActiveIncidents : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_GetActiveIncidents() {
+      ::grpc::Service::MarkMethodStreamed(7,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::IncidentQuery, ::unhinged::observability::v1::IncidentQueryResponse>* streamer) {
+                       return this->StreamedGetActiveIncidents(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_GetActiveIncidents() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetActiveIncidents(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::IncidentQuery* /*request*/, ::unhinged::observability::v1::IncidentQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetActiveIncidents(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::IncidentQuery,::unhinged::observability::v1::IncidentQueryResponse>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_GetMetrics : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_GetMetrics() {
+      ::grpc::Service::MarkMethodStreamed(8,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::MetricQuery, ::unhinged::observability::v1::MetricQueryResponse>* streamer) {
+                       return this->StreamedGetMetrics(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_GetMetrics() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetMetrics(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::MetricQuery* /*request*/, ::unhinged::observability::v1::MetricQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetMetrics(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::MetricQuery,::unhinged::observability::v1::MetricQueryResponse>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_GetTraces : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_GetTraces() {
+      ::grpc::Service::MarkMethodStreamed(9,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::unhinged::observability::v1::TraceQuery, ::unhinged::observability::v1::TraceQueryResponse>* streamer) {
+                       return this->StreamedGetTraces(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_GetTraces() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetTraces(::grpc::ServerContext* /*context*/, const ::unhinged::observability::v1::TraceQuery* /*request*/, ::unhinged::observability::v1::TraceQueryResponse* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetTraces(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::unhinged::observability::v1::TraceQuery,::unhinged::observability::v1::TraceQueryResponse>* server_unary_streamer) = 0;
+  };
+  typedef WithStreamedUnaryMethod_ReportHealth<WithStreamedUnaryMethod_ReportIncident<WithStreamedUnaryMethod_UpdateIncident<WithStreamedUnaryMethod_GetServiceHealth<WithStreamedUnaryMethod_GetActiveIncidents<WithStreamedUnaryMethod_GetMetrics<WithStreamedUnaryMethod_GetTraces<Service > > > > > > > StreamedUnaryService;
+  typedef Service SplitStreamedService;
+  typedef WithStreamedUnaryMethod_ReportHealth<WithStreamedUnaryMethod_ReportIncident<WithStreamedUnaryMethod_UpdateIncident<WithStreamedUnaryMethod_GetServiceHealth<WithStreamedUnaryMethod_GetActiveIncidents<WithStreamedUnaryMethod_GetMetrics<WithStreamedUnaryMethod_GetTraces<Service > > > > > > > StreamedService;
+};
+
 }  // namespace v1
 }  // namespace observability
 }  // namespace unhinged
