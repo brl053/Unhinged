@@ -47,8 +47,8 @@ PYTHON_RUN := build/python/run.py
 # Native GUI
 NATIVE_GUI := python3 control/gui/native_app.py
 
-# HTML Native GUI (Primary GUI System)
-HTML_NATIVE := python3 control/gui/html_native.py
+# Native GTK GUI (Primary GUI System - NO WEBKIT!)
+HTML_NATIVE := python3 control/native_gui/launcher.py
 
 # Service ports
 PORT_BACKEND := 8080
@@ -578,9 +578,10 @@ start: validate-independence ## Generate service registry and launch native GUI 
 	@$(MAKE) generate
 	@echo ""
 	@echo "✅ System Health Dashboard ready!"
-	@echo "🎮 Launching INDEPENDENT Native HTML GUI..."
+	@echo "🎮 Launching INDEPENDENT Native GTK GUI..."
 	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
-	@$(HTML_NATIVE) --html control/static_html/index.html
+	@echo "🔥 FUCK WEBKIT - GOING NATIVE!"
+	@$(HTML_NATIVE)
 
 watch-html: ## Watch for changes and auto-rebuild HTML files
 	$(call log_info,👀 Starting HTML build watcher...)
