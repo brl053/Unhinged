@@ -24,6 +24,20 @@
         <!-- Main Content -->
         <main class="main-content">
             <div class="api-dev-container">
+                <!-- Proto Files Section -->
+                <div class="proto-section">
+                    <h3>📁 Proto Files</h3>
+                    <div class="proto-controls">
+                        <button id="scan-proto-button" class="scan-button">🔍 Scan Proto Files</button>
+                        <span id="proto-count" class="proto-count"></span>
+                    </div>
+                    <div id="proto-files-list" class="proto-files-list">
+                        <div class="proto-placeholder">
+                            Click "Scan Proto Files" to discover .proto files in the project
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Request Builder -->
                 <div class="request-section">
                     <h3>🌐 Send Request</h3>
@@ -79,7 +93,74 @@
         function initializeAPIDevTool() {
             const sendButton = document.getElementById('send-button');
             const responseContainer = document.getElementById('response-container');
-            
+            const scanProtoButton = document.getElementById('scan-proto-button');
+            const protoFilesList = document.getElementById('proto-files-list');
+            const protoCount = document.getElementById('proto-count');
+
+            let currentProtoFiles = [];
+            let selectedProtoFile = null;
+
+            // Proto file scanning
+            scanProtoButton.addEventListener('click', async () => {
+                scanProtoButton.disabled = true;
+                scanProtoButton.textContent = '🔄 Scanning...';
+                protoFilesList.innerHTML = '<div class="proto-placeholder">Scanning for .proto files...</div>';
+
+                try {
+                    const result = await window.unhinged.scanProtoFiles();
+
+                    if (result.success) {
+                        currentProtoFiles = result.proto_files;
+                        displayProtoFiles(result.proto_files);
+                        protoCount.textContent = `Found ${result.count} proto files`;
+                    } else {
+                        protoFilesList.innerHTML = `<div class="proto-placeholder">Error: ${result.error}</div>`;
+                        protoCount.textContent = '';
+                    }
+                } catch (error) {
+                    protoFilesList.innerHTML = `<div class="proto-placeholder">Error: ${error.message}</div>`;
+                    protoCount.textContent = '';
+                } finally {
+                    scanProtoButton.disabled = false;
+                    scanProtoButton.textContent = '🔍 Scan Proto Files';
+                }
+            });
+
+            function displayProtoFiles(protoFiles) {
+                if (protoFiles.length === 0) {
+                    protoFilesList.innerHTML = '<div class="proto-placeholder">No .proto files found in project</div>';
+                    return;
+                }
+
+                const filesHTML = protoFiles.map(file => `
+                    <div class="proto-file-item" data-path="${file.path}">
+                        <div class="proto-file-name">${file.name}</div>
+                        <div class="proto-file-path">${file.path}</div>
+                    </div>
+                `).join('');
+
+                protoFilesList.innerHTML = filesHTML;
+
+                // Add click handlers for proto files
+                protoFilesList.querySelectorAll('.proto-file-item').forEach(item => {
+                    item.addEventListener('click', () => selectProtoFile(item.dataset.path));
+                });
+            }
+
+            async function selectProtoFile(path) {
+                // Update selection UI
+                protoFilesList.querySelectorAll('.proto-file-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                protoFilesList.querySelector(`[data-path="${path}"]`).classList.add('selected');
+
+                selectedProtoFile = path;
+
+                // TODO: In next phase, we'll read and parse the proto file content
+                console.log('Selected proto file:', path);
+            }
+
+            // HTTP request sending
             sendButton.addEventListener('click', async () => {
                 const method = document.getElementById('http-method').value;
                 const url = document.getElementById('request-url').value;
@@ -191,12 +272,12 @@
     <style>
         .api-dev-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 300px 1fr 1fr;
             gap: var(--spacing-lg);
             margin-top: var(--spacing-lg);
         }
         
-        .request-section, .response-section {
+        .proto-section, .request-section, .response-section {
             background: var(--color-surface);
             padding: var(--spacing-lg);
             border-radius: var(--border-radius-lg);
@@ -305,6 +386,91 @@
             font-size: var(--font-size-sm);
         }
         
+        .proto-controls {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .scan-button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--color-secondary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+        }
+
+        .scan-button:hover {
+            background: var(--color-secondary-hover);
+        }
+
+        .scan-button:disabled {
+            background: var(--color-border);
+            cursor: not-allowed;
+        }
+
+        .proto-count {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+
+        .proto-files-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .proto-placeholder {
+            text-align: center;
+            color: var(--color-text-secondary);
+            padding: var(--spacing-lg);
+            font-style: italic;
+        }
+
+        .proto-file-item {
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: var(--spacing-sm);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .proto-file-item:hover {
+            background: var(--color-background);
+        }
+
+        .proto-file-item.selected {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .proto-file-name {
+            font-weight: bold;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .proto-file-path {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            font-family: monospace;
+        }
+
+        .proto-file-item.selected .proto-file-path {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        @media (max-width: 1024px) {
+            .api-dev-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            .proto-section {
+                grid-column: 1 / -1;
+            }
+        }
+
         @media (max-width: 768px) {
             .api-dev-container {
                 grid-template-columns: 1fr;

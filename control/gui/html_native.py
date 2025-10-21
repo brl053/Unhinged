@@ -173,6 +173,10 @@ class UnhingedHTMLNative:
                             data.get('headers', {}),
                             data.get('body', '')
                         )
+                    elif self.path == '/api/scanproto':
+                        result = self.gui.scan_proto_files()
+                    elif self.path == '/api/readproto':
+                        result = self.gui.read_proto_file(data.get('path', ''))
                     else:
                         result = {"error": "Unknown endpoint"}
                     
@@ -426,6 +430,79 @@ class UnhingedHTMLNative:
         except Exception as e:
             return {"error": f"Unexpected error: {str(e)}"}
 
+    def scan_proto_files(self):
+        """Scan project for .proto files"""
+        try:
+            proto_files = []
+
+            # Search for .proto files in common locations
+            search_paths = [
+                self.project_root / "proto",
+                self.project_root / "protos",
+                self.project_root / "services",
+                self.project_root / "platforms",
+                self.project_root
+            ]
+
+            for search_path in search_paths:
+                if search_path.exists() and search_path.is_dir():
+                    # Recursively find .proto files
+                    for proto_file in search_path.rglob("*.proto"):
+                        relative_path = proto_file.relative_to(self.project_root)
+
+                        # Get file info
+                        stat = proto_file.stat()
+                        proto_files.append({
+                            "path": str(relative_path),
+                            "absolute_path": str(proto_file),
+                            "name": proto_file.name,
+                            "size": stat.st_size,
+                            "modified": stat.st_mtime,
+                            "directory": str(relative_path.parent)
+                        })
+
+            # Sort by path for consistent ordering
+            proto_files.sort(key=lambda x: x["path"])
+
+            return {
+                "success": True,
+                "proto_files": proto_files,
+                "count": len(proto_files),
+                "search_paths": [str(p) for p in search_paths if p.exists()]
+            }
+
+        except Exception as e:
+            return {"error": f"Failed to scan proto files: {str(e)}"}
+
+    def read_proto_file(self, file_path):
+        """Read and return proto file content"""
+        try:
+            # Resolve path relative to project root
+            if not file_path.startswith('/'):
+                full_path = self.project_root / file_path
+            else:
+                full_path = Path(file_path)
+
+            if not full_path.exists():
+                return {"error": f"Proto file not found: {file_path}"}
+
+            if not full_path.suffix == '.proto':
+                return {"error": f"Not a proto file: {file_path}"}
+
+            with open(full_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            return {
+                "success": True,
+                "path": file_path,
+                "content": content,
+                "size": len(content),
+                "lines": len(content.splitlines())
+            }
+
+        except Exception as e:
+            return {"error": f"Failed to read proto file: {str(e)}"}
+
     def get_bridge_javascript(self):
         """Get JavaScript bridge code for injection"""
         return f"""
@@ -490,6 +567,24 @@ window.unhinged = {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
             body: JSON.stringify({{ method, url, headers, body }})
+        }});
+        return await response.json();
+    }},
+
+    async scanProtoFiles() {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/scanproto`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{}})
+        }});
+        return await response.json();
+    }},
+
+    async readProtoFile(path) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/readproto`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ path }})
         }});
         return await response.json();
     }}
