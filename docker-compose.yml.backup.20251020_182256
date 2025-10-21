@@ -13,7 +13,7 @@ services:
       - OLLAMA_HOST=http://llm:11434
       - KAFKA_BROKERS=kafka:29092
     ports:
-      - "8082:8080"
+      - "8080:8080"
     depends_on:
       - database
       - llm
@@ -26,7 +26,7 @@ services:
       - KAFKA_BROKERS=kafka:29092
       - DATABASE_URL=postgresql://root@database:26257/unhinged_db?sslmode=disable
     ports:
-      - "8083:8081"
+      - "8081:8081"
     depends_on:
       - database
       - kafka
@@ -45,7 +45,7 @@ services:
     volumes:
       - llm-models:/models  # Mount the volume to persist the model
     ports:
-      - "11534:11434"
+      - "11434:11434"
     # deploy:
     #   resources:
     #     reservations:
@@ -77,7 +77,7 @@ services:
       - LOG_LEVEL=INFO
       - PYTHONUNBUFFERED=1
     ports:
-      - "8101:8001"
+      - "8001:8001"
     volumes:
       - vision-models:/root/.cache/transformers
       - image-uploads:/app/uploads
@@ -93,7 +93,7 @@ services:
       dockerfile: Dockerfile
     container_name: speech-to-text-service
     ports:
-      - "8100:8000"  # HTTP API
+      - "8000:8000"  # HTTP API
     environment:
       - WHISPER_MODEL=base
       - LOG_LEVEL=INFO
@@ -144,8 +144,8 @@ services:
       COCKROACH_DATABASE: unhinged_db
       COCKROACH_USER: root
     ports:
-      - "26357:26257"  # SQL port (PostgreSQL wire protocol compatible)
-      - "8082:8080"    # Admin UI
+      - "26257:26257"  # SQL port (PostgreSQL wire protocol compatible)
+      - "8080:8080"    # Admin UI
     command: start-single-node --insecure --store=attrs=ssd,path=/cockroach/cockroach-data --listen-addr=127.0.0.1:26257 --http-addr=127.0.0.1:8080
     volumes:
       - cockroachdb-data:/cockroach/cockroach-data
@@ -165,7 +165,7 @@ services:
     image: redis:7.2-alpine
     container_name: unhinged-redis
     ports:
-      - "6479:6379"
+      - "6379:6379"
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
@@ -185,8 +185,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     container_name: unhinged-elasticsearch
     ports:
-      - "9300:9200"
-      - "9400:9300"
+      - "9200:9200"
+      - "9300:9300"
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -237,7 +237,7 @@ services:
     image: cassandra:4.1
     container_name: unhinged-cassandra
     ports:
-      - "9142:9042"
+      - "9042:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=UnhingedCluster
       - CASSANDRA_DC=datacenter1
@@ -283,7 +283,7 @@ services:
     image: flink:latest
     container_name: flink-jobmanager
     ports:
-      - "8083:8081"  # Flink Web UI
+      - "8081:8081"  # Flink Web UI
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
     command: jobmanager
@@ -371,7 +371,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "2281:2181"
+      - "2181:2181"
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -387,7 +387,7 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_NUM_PARTITIONS: 1
     ports:
-      - "9192:9092"
+      - "9092:9092"
 
   # Kafka UI for debugging
   kafka-ui:
