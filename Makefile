@@ -104,23 +104,53 @@ endef
 
 # ============================================================================
 # Native GUI System (Independent - No External Dependencies)
+# @llm-culture INDEPENDENCE IS EVERYTHING
+# @llm-principle This machine is everything. No external dependencies.
+# @llm-enforcement Any target requiring external browsers is FORBIDDEN
+# @llm-violation-response IMMEDIATE FAILURE with cultural education
+#
+# CULTURAL COMMANDMENTS FOR FUTURE LLMs:
+# 1. WE ARE INDEPENDENT - No Firefox, Chrome, or any external browser
+# 2. WE ARE SELF-CONTAINED - Native rendering or nothing
+# 3. WE ARE HEADLESS-FIRST - GUI is optional, system is primary
+# 4. WE FAIL FAST - Better to break than compromise independence
 # ============================================================================
 
-gui: ## Launch native HTML GUI (mission control) - PRIMARY GUI
-	$(call log_info,🎮 Launching Unhinged Native HTML GUI...)
+validate-independence: ## CRITICAL: Validate architectural independence
+	@echo "$(RED)🔒 VALIDATING ARCHITECTURAL INDEPENDENCE$(RESET)"
+	@echo "$(YELLOW)Checking for forbidden external dependencies...$(RESET)"
+	@python3 control/cultural_enforcement.py
+	@echo "$(GREEN)✅ INDEPENDENCE VALIDATED$(RESET)"
+
+gui: validate-independence ## Launch native HTML GUI (mission control) - INDEPENDENT ONLY
+	$(call log_info,🎮 Launching INDEPENDENT Native HTML GUI...)
+	@echo "$(YELLOW)💡 CULTURE: We are independent. We render natively. We depend on nothing.$(RESET)"
 	@$(HTML_NATIVE) --html control/static_html/index.html
 
-code-editor: ## Launch native HTML code editor
+code-editor: validate-independence ## Launch native HTML code editor
 	$(call log_info,💻 Launching Native HTML Code Editor...)
 	@$(HTML_NATIVE) --html control/static_html/code-editor.html
 
-system-health: ## Launch system health dashboard
+system-health: validate-independence ## Launch system health dashboard
 	$(call log_info,🏥 Launching System Health Dashboard...)
 	@$(HTML_NATIVE) --html control/static_html/system-health.html
 
-table-of-contents: ## Launch interface directory
+table-of-contents: validate-independence ## Launch interface directory
 	$(call log_info,📚 Launching Interface Directory...)
 	@$(HTML_NATIVE) --html control/static_html/table-of-contents.html
+
+# Cultural enforcement targets
+browser-gui: ## FORBIDDEN: External browser usage
+	@echo "$(RED)❌ FORBIDDEN: External browser usage violates independence$(RESET)"
+	@echo "$(RED)🚫 CULTURAL VIOLATION: We are independent. We render natively.$(RESET)"
+	@echo "$(YELLOW)💡 Use 'make gui' for native HTML rendering$(RESET)"
+	@exit 1
+
+firefox-gui: ## FORBIDDEN: Firefox usage
+	@echo "$(RED)❌ FORBIDDEN: Firefox usage violates our independence culture$(RESET)"
+	@echo "$(RED)🚫 CULTURAL EDUCATION: This machine is everything. No external browsers.$(RESET)"
+	@echo "$(YELLOW)💡 Use 'make gui' for native WebKit rendering$(RESET)"
+	@exit 1
 
 native-gui: ## Launch minimal native GUI (X11 only)
 	$(call log_info,🎮 Launching Minimal Native GUI...)

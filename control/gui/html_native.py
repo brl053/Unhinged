@@ -27,6 +27,13 @@ from urllib.parse import urlparse, parse_qs
 import logging
 from datetime import datetime
 
+# Cultural enforcement
+try:
+    from control.cultural_enforcement import CulturalEnforcer, IndependenceError
+    CULTURAL_ENFORCEMENT_AVAILABLE = True
+except ImportError:
+    CULTURAL_ENFORCEMENT_AVAILABLE = False
+
 class UnhingedHTMLNative:
     """
     @llm-type html-system-bridge
@@ -55,6 +62,16 @@ class UnhingedHTMLNative:
         # Setup logging for performance monitoring
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+
+        # Cultural enforcement
+        if CULTURAL_ENFORCEMENT_AVAILABLE:
+            self.cultural_enforcer = CulturalEnforcer()
+            try:
+                self.cultural_enforcer.enforce_culture()
+                print("🔒 CULTURAL COMPLIANCE: Independence validated")
+            except IndependenceError as e:
+                print(f"🚫 CULTURAL VIOLATION: {e}")
+                raise
 
         print(f"🎮 Unhinged HTML Native GUI initializing...")
         print(f"📄 HTML file: {self.html_file}")

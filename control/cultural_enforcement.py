@@ -24,9 +24,15 @@ import os
 import re
 import sys
 import subprocess
-import psutil
 from pathlib import Path
 from typing import List, Dict, Any
+
+# Optional dependency - graceful degradation
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 
 class IndependenceError(Exception):
@@ -160,11 +166,15 @@ class ArchitecturalGuard:
         for py_file in self.project_root.rglob("*.py"):
             if 'venv' in str(py_file) or '__pycache__' in str(py_file):
                 continue
-                
+
+            # Skip cultural enforcement file itself (contains patterns for detection)
+            if py_file.name == 'cultural_enforcement.py':
+                continue
+
             try:
                 with open(py_file, 'r', encoding='utf-8') as f:
                     content = f.read()
-                    
+
                 for pattern, description in self.FORBIDDEN_PATTERNS:
                     if re.search(pattern, content, re.IGNORECASE):
                         self.violations.append(f"FORBIDDEN PATTERN: {description} in {py_file.relative_to(self.project_root)}")
@@ -173,6 +183,10 @@ class ArchitecturalGuard:
     
     def _validate_processes(self):
         """Check for forbidden browser processes"""
+        if not PSUTIL_AVAILABLE:
+            print("⚠️ Process monitoring unavailable (psutil not installed)")
+            return
+
         try:
             for proc in psutil.process_iter(['pid', 'name']):
                 proc_name = proc.info['name'].lower()
