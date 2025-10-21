@@ -105,6 +105,7 @@
 
             let currentProtoFiles = [];
             let selectedProtoFile = null;
+            let currentGRPCMethod = null; // Track selected gRPC method
 
             // Proto file scanning
             scanProtoButton.addEventListener('click', async () => {
@@ -241,8 +242,104 @@
                 // Select current method
                 event.target.closest('.method-item').classList.add('selected');
 
-                // TODO: In next phase, we'll populate the request builder with gRPC details
-                console.log('Selected method:', { serviceName, methodName, requestType, responseType });
+                // Store gRPC method details
+                currentGRPCMethod = {
+                    serviceName,
+                    methodName,
+                    requestType,
+                    responseType,
+                    protoFile: selectedProtoFile
+                };
+
+                // Populate request builder with gRPC details
+                populateGRPCRequest(serviceName, methodName, requestType, responseType);
+            }
+
+            function populateGRPCRequest(serviceName, methodName, requestType, responseType) {
+                // Update HTTP method to POST (gRPC over HTTP)
+                document.getElementById('http-method').value = 'POST';
+
+                // Generate gRPC endpoint URL
+                const baseUrl = 'http://localhost:9090'; // Default gRPC-Web proxy
+                const grpcUrl = `${baseUrl}/${selectedProtoFile.replace('.proto', '')}/${serviceName}/${methodName}`;
+                document.getElementById('request-url').value = grpcUrl;
+
+                // Set gRPC headers
+                const grpcHeaders = {
+                    "Content-Type": "application/grpc-web+proto",
+                    "grpc-timeout": "30S",
+                    "x-grpc-web": "1"
+                };
+                document.getElementById('request-headers').value = JSON.stringify(grpcHeaders, null, 2);
+
+                // Generate sample request body based on request type
+                generateSampleRequestBody(requestType);
+
+                // Update UI to show gRPC mode
+                showGRPCMode(serviceName, methodName, requestType, responseType);
+            }
+
+            async function generateSampleRequestBody(requestType) {
+                try {
+                    // Use backend template generation
+                    const result = await window.unhinged.generateMessageTemplate(requestType, selectedProtoFile);
+
+                    if (result.success) {
+                        document.getElementById('request-body').value = JSON.stringify(result.template, null, 2);
+                    } else {
+                        throw new Error(result.error || 'Template generation failed');
+                    }
+                } catch (error) {
+                    // Fallback to basic template
+                    const basicTemplate = {
+                        "// TODO": `Fill in ${requestType} fields`,
+                        "// Error": error.message,
+                        "message": "Sample request for " + requestType
+                    };
+                    document.getElementById('request-body').value = JSON.stringify(basicTemplate, null, 2);
+                }
+            }
+
+            async function generateMessageTemplate(messageType) {
+                // Basic message templates for common types
+                const templates = {
+                    "CompletionRequest": {
+                        "prompt": "Hello, world!",
+                        "max_tokens": 100,
+                        "temperature": 0.7
+                    },
+                    "ChatRequest": {
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": "Hello!"
+                            }
+                        ]
+                    },
+                    "HealthCheckRequest": {},
+                    "Empty": {},
+                    "GetModelsRequest": {},
+                    "VisionAnalysisRequest": {
+                        "image_data": "base64_encoded_image_data",
+                        "analysis_type": "describe"
+                    }
+                };
+
+                return templates[messageType] || {
+                    "// Note": `Template for ${messageType} not available`,
+                    "// Action": "Fill in the required fields manually"
+                };
+            }
+
+            function showGRPCMode(serviceName, methodName, requestType, responseType) {
+                // Add gRPC indicator to the request section
+                const requestSection = document.querySelector('.request-section h3');
+                requestSection.innerHTML = `🌐 Send Request <span class="grpc-badge">gRPC: ${serviceName}.${methodName}</span>`;
+
+                // Update send button text
+                const sendButton = document.getElementById('send-button');
+                sendButton.textContent = 'Send gRPC';
+                sendButton.classList.add('grpc-mode');
             }
 
             // HTTP request sending
@@ -268,9 +365,17 @@
                     if (headersText.trim()) {
                         headers = JSON.parse(headersText);
                     }
-                    
-                    // Send request via bridge
-                    const response = await sendHTTPRequest(method, url, headers, body);
+
+                    // Check if this is a gRPC request
+                    let response;
+                    if (currentGRPCMethod && sendButton.classList.contains('grpc-mode')) {
+                        // Send gRPC request
+                        response = await sendGRPCRequest(currentGRPCMethod, body);
+                    } else {
+                        // Send regular HTTP request
+                        response = await sendHTTPRequest(method, url, headers, body);
+                    }
+
                     displayResponse(response);
                     
                 } catch (error) {
@@ -282,6 +387,49 @@
             });
         }
         
+        async function sendGRPCRequest(grpcMethod, body) {
+            try {
+                // Parse request body
+                let requestData = {};
+                if (body && body.trim()) {
+                    requestData = JSON.parse(body);
+                }
+
+                const startTime = Date.now();
+                const response = await window.unhinged.sendGRPCRequest(
+                    grpcMethod.serviceName,
+                    grpcMethod.methodName,
+                    requestData,
+                    grpcMethod.protoFile
+                );
+                const endTime = Date.now();
+
+                // Format response for display
+                return {
+                    status: response.success ? 200 : 500,
+                    statusText: response.success ? 'OK' : 'gRPC Error',
+                    headers: {
+                        'content-type': 'application/grpc+json',
+                        'grpc-service': grpcMethod.serviceName,
+                        'grpc-method': grpcMethod.methodName
+                    },
+                    body: JSON.stringify(response, null, 2),
+                    duration: endTime - startTime,
+                    isGRPC: true
+                };
+
+            } catch (error) {
+                return {
+                    status: 500,
+                    statusText: 'gRPC Client Error',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ error: error.message }, null, 2),
+                    duration: 0,
+                    isGRPC: true
+                };
+            }
+        }
+
         async function sendHTTPRequest(method, url, headers, body) {
             // Use the system bridge to send HTTP request
             if (window.unhinged && window.unhinged.sendHTTPRequest) {
@@ -315,7 +463,7 @@
         
         function displayResponse(response) {
             const container = document.getElementById('response-container');
-            
+
             let bodyFormatted = response.body;
             try {
                 const parsed = JSON.parse(response.body);
@@ -323,19 +471,23 @@
             } catch (e) {
                 // Not JSON, keep as is
             }
-            
+
+            // Add gRPC badge if this is a gRPC response
+            const grpcBadge = response.isGRPC ? '<span class="grpc-badge">gRPC Response</span>' : '';
+
             container.innerHTML = `
                 <div class="response-status">
                     <span class="status-code status-${Math.floor(response.status / 100)}xx">${response.status}</span>
                     <span class="status-text">${response.statusText}</span>
                     <span class="response-time">${response.duration}ms</span>
+                    ${grpcBadge}
                 </div>
-                
+
                 <div class="response-headers">
                     <h4>📋 Response Headers</h4>
                     <pre>${JSON.stringify(response.headers, null, 2)}</pre>
                 </div>
-                
+
                 <div class="response-body">
                     <h4>📄 Response Body</h4>
                     <pre>${bodyFormatted}</pre>
@@ -634,6 +786,24 @@
 
         .method-item.selected .method-signature {
             color: rgba(255, 255, 255, 0.8);
+        }
+
+        .grpc-badge {
+            background: var(--color-success);
+            color: white;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: normal;
+            margin-left: var(--spacing-sm);
+        }
+
+        .send-button.grpc-mode {
+            background: var(--color-success);
+        }
+
+        .send-button.grpc-mode:hover {
+            background: var(--color-success-hover, #28a745);
         }
 
         @media (max-width: 1024px) {

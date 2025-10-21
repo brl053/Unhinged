@@ -179,6 +179,18 @@ class UnhingedHTMLNative:
                         result = self.gui.read_proto_file(data.get('path', ''))
                     elif self.path == '/api/parseproto':
                         result = self.gui.parse_proto_services(data.get('path', ''))
+                    elif self.path == '/api/grpcrequest':
+                        result = self.gui.send_grpc_request(
+                            data.get('service_name', ''),
+                            data.get('method_name', ''),
+                            data.get('request_data', {}),
+                            data.get('proto_file_path', '')
+                        )
+                    elif self.path == '/api/generatetemplate':
+                        result = self.gui.generate_message_template(
+                            data.get('message_type', ''),
+                            data.get('proto_file_path', '')
+                        )
                     else:
                         result = {"error": "Unknown endpoint"}
                     
@@ -573,6 +585,125 @@ class UnhingedHTMLNative:
         except Exception as e:
             return {"error": f"Failed to parse proto file: {str(e)}"}
 
+    def send_grpc_request(self, service_name, method_name, request_data, proto_file_path):
+        """Send gRPC request using the existing gRPC infrastructure"""
+        try:
+            # Use the existing grpc_call method from the GUI
+            # Format: service.method
+            grpc_method = f"{service_name}.{method_name}"
+
+            # Convert JSON request data to dict if it's a string
+            if isinstance(request_data, str):
+                import json
+                request_data = json.loads(request_data)
+
+            # Call the existing gRPC method
+            result = self.grpc_call(service_name, method_name, request_data)
+
+            # Add gRPC-specific metadata
+            result.update({
+                "grpc_service": service_name,
+                "grpc_method": method_name,
+                "proto_file": proto_file_path,
+                "request_type": "gRPC"
+            })
+
+            return result
+
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid JSON in gRPC request: {str(e)}"}
+        except Exception as e:
+            return {"error": f"gRPC request failed: {str(e)}"}
+
+    def generate_message_template(self, message_type, proto_file_path):
+        """Generate a template for a proto message type"""
+        try:
+            # Enhanced message templates based on common proto patterns
+            templates = {
+                # LLM Service
+                "CompletionRequest": {
+                    "prompt": "Hello, world!",
+                    "max_tokens": 100,
+                    "temperature": 0.7,
+                    "model": "gpt-3.5-turbo"
+                },
+                "StreamCompletionRequest": {
+                    "prompt": "Tell me a story",
+                    "max_tokens": 200,
+                    "temperature": 0.8,
+                    "stream": True
+                },
+
+                # Chat Service
+                "ChatRequest": {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "Hello! How are you?"
+                        }
+                    ],
+                    "model": "gpt-3.5-turbo"
+                },
+                "SendMessageRequest": {
+                    "conversation_id": "conv_123",
+                    "message": {
+                        "role": "user",
+                        "content": "What's the weather like?"
+                    }
+                },
+
+                # Vision Service
+                "VisionAnalysisRequest": {
+                    "image_data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+                    "analysis_type": "describe",
+                    "max_tokens": 150
+                },
+                "ImageGenerationRequest": {
+                    "prompt": "A beautiful sunset over mountains",
+                    "size": "1024x1024",
+                    "quality": "standard"
+                },
+
+                # Health and Common
+                "HealthCheckRequest": {},
+                "Empty": {},
+                "GetModelsRequest": {},
+                "GetCapabilitiesRequest": {},
+
+                # Persistence
+                "StoreDocumentRequest": {
+                    "document": {
+                        "id": "doc_123",
+                        "content": "Sample document content",
+                        "metadata": {
+                            "title": "Sample Document",
+                            "author": "User"
+                        }
+                    }
+                },
+                "QueryDocumentsRequest": {
+                    "query": "search terms",
+                    "limit": 10,
+                    "filters": {}
+                }
+            }
+
+            template = templates.get(message_type, {
+                f"// Note": f"Template for {message_type} not available",
+                f"// Action": "Fill in the required fields manually",
+                f"// Proto": f"Check {proto_file_path} for field definitions"
+            })
+
+            return {
+                "success": True,
+                "message_type": message_type,
+                "template": template,
+                "proto_file": proto_file_path
+            }
+
+        except Exception as e:
+            return {"error": f"Failed to generate template: {str(e)}"}
+
     def get_bridge_javascript(self):
         """Get JavaScript bridge code for injection"""
         return f"""
@@ -664,6 +795,32 @@ window.unhinged = {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
             body: JSON.stringify({{ path }})
+        }});
+        return await response.json();
+    }},
+
+    async sendGRPCRequest(serviceName, methodName, requestData, protoFilePath) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/grpcrequest`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{
+                service_name: serviceName,
+                method_name: methodName,
+                request_data: requestData,
+                proto_file_path: protoFilePath
+            }})
+        }});
+        return await response.json();
+    }},
+
+    async generateMessageTemplate(messageType, protoFilePath) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/generatetemplate`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{
+                message_type: messageType,
+                proto_file_path: protoFilePath
+            }})
         }});
         return await response.json();
     }}
