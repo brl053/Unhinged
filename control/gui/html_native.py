@@ -208,8 +208,8 @@ class UnhingedHTMLNative:
                     self.wfile.write(json.dumps({"error": str(e)}).encode())
             
             def log_message(self, format, *args):
-                """Suppress HTTP server logs"""
-                pass
+                """Log HTTP server requests for debugging"""
+                print(f"🌉 Bridge: {format % args}")
         
         # Create handler with GUI instance
         handler = lambda *args, **kwargs: SystemBridgeHandler(self, *args, **kwargs)
@@ -446,6 +446,7 @@ class UnhingedHTMLNative:
 
     def scan_proto_files(self):
         """Scan project for .proto files"""
+        print("🔍 Starting proto file scan...")
         try:
             proto_files = []
 

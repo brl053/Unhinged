@@ -28,7 +28,7 @@
                 <div class="proto-section">
                     <h3>📁 Proto Files</h3>
                     <div class="proto-controls">
-                        <button id="scan-proto-button" class="scan-button" disabled>⏳ Loading...</button>
+                        <button id="scan-proto-button" class="scan-button">🔍 Scan Proto Files</button>
                         <span id="proto-count" class="proto-count"></span>
                     </div>
                     <div id="proto-files-list" class="proto-files-list">
@@ -94,18 +94,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             UnhingedComponents.initializeComponents();
 
-            // Wait for bridge to be available before initializing
-            const waitForBridge = () => {
-                if (window.unhinged) {
-                    console.log('Bridge available, initializing API dev tool');
-                    initializeAPIDevTool();
-                } else {
-                    console.log('Waiting for bridge...');
-                    setTimeout(waitForBridge, 100);
-                }
-            };
-
-            waitForBridge();
+            // Initialize immediately - we'll handle bridge availability in the button click
+            initializeAPIDevTool();
         });
 
         function initializeAPIDevTool() {
@@ -119,7 +109,7 @@
             let selectedProtoFile = null;
             let currentGRPCMethod = null; // Track selected gRPC method
 
-            // Enable the scan button now that bridge is ready
+            // Enable the scan button immediately
             scanProtoButton.disabled = false;
             scanProtoButton.textContent = '🔍 Scan Proto Files';
 
