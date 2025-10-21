@@ -54,7 +54,7 @@ services:
     image: prom/prometheus:v2.47.0
     container_name: unhinged-prometheus
     ports:
-      - "9190:9090"
+      - "9090:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'

@@ -11,7 +11,7 @@ services:
       dockerfile: Dockerfile
     container_name: whisper-tts-service
     ports:
-      - "8100:8000"  # HTTP API
+      - "8000:8000"  # HTTP API
       - "9091:9091"  # gRPC API
     environment:
       - ENABLE_FLASK=true
@@ -43,7 +43,7 @@ services:
     container_name: vision-ai-service
     ports:
       - "8001:8001"  # HTTP API
-      - "9192:9092"  # gRPC API (future)
+      - "9092:9092"  # gRPC API (future)
     environment:
       - ENABLE_FLASK=true
       - ENABLE_GRPC=false

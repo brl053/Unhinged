@@ -322,7 +322,7 @@ services:
       - SPARK_SSL_ENABLED=no
       - SPARK_MASTER_WEBUI_PORT=8082
     ports:
-      - "8182:8082"  # Spark Master Web UI (avoid CockroachDB conflict)
+      - "8082:8082"  # Spark Master Web UI (avoid CockroachDB conflict)
       - "7077:7077"  # Spark Master port
     volumes:
       - ./data-lake:/opt/spark/data-lake  # Direct filesystem mount

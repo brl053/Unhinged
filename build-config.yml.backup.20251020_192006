@@ -233,7 +233,7 @@ services:
       dockerfile: "Dockerfile"
       context: "backend"
     ports:
-      - "8082:8080"
+      - "8080:8080"
 
   llm:
     type: "ollama"
@@ -253,7 +253,7 @@ services:
       dockerfile: "Dockerfile"
       context: "whisper-tts"
     ports:
-      - "8100:8000"
+      - "8000:8000"
     volumes:
       - "whisper-models:/app/models"
 
@@ -280,7 +280,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     ports:
-      - "9192:9092"
+      - "9092:9092"
 
   zookeeper:
     type: "zookeeper"

@@ -1,40 +1,41 @@
 # ============================================================================
-# Unhinged Platforms - Complete Docker Compose Configuration
+# Unhinged Persistence Platform - Docker Compose Configuration
 # ============================================================================
 #
-# @file docker-compose.all.yml
+# @file docker-compose.yml
 # @version 1.0.0
 # @author Unhinged Team
 # @date 2025-10-19
-# @description Docker Compose setup for all Unhinged platforms
+# @description Docker Compose setup for the persistence platform
 #
-# This Docker Compose file orchestrates all platform-level services
-# including persistence, agent (future), and workflow (future) platforms
-# with shared infrastructure and cross-platform networking.
+# This Docker Compose file sets up all database technologies and the
+# persistence platform service with proper networking, volumes, and
+# environment configuration for development and testing.
 #
+# Location: platforms/persistence/docker-compose.yml
 # ============================================================================
 
 version: '3.8'
 
 services:
   # ==========================================================================
-  # Persistence Platform
+  # Persistence Platform Service
   # ==========================================================================
   persistence-platform:
     build:
-      context: ./persistence
+      context: .
       dockerfile: Dockerfile
     container_name: unhinged-persistence-platform
     ports:
-      - "8190:8090"  # REST API
-      - "9190:9090"  # gRPC API
+      - "8090:8090"  # REST API
+      - "9090:9090"  # gRPC API
     environment:
       - JAVA_OPTS=-Xmx2g -Xms1g
       - CONFIG_PATH=/app/config/persistence-platform.yaml
       - LOG_LEVEL=INFO
     volumes:
-      - ./persistence/config:/app/config:ro
-      - ./persistence/logs:/app/logs
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
     depends_on:
       - redis
       - cockroachdb
@@ -43,9 +44,8 @@ services:
       - elasticsearch
       - cassandra
       - neo4j
-      - minio
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/api/v1/health"]
@@ -55,50 +55,18 @@ services:
       start_period: 60s
 
   # ==========================================================================
-  # Future: Agent Platform
+  # Redis - Cache and Session Store
   # ==========================================================================
-  # agent-platform:
-  #   build:
-  #     context: ./agent
-  #     dockerfile: Dockerfile
-  #   container_name: unhinged-agent-platform
-  #   ports:
-  #     - "8091:8090"  # REST API
-  #     - "9091:9090"  # gRPC API
-  #   networks:
-  #     - unhinged-platforms
-  #   restart: unless-stopped
-
-  # ==========================================================================
-  # Future: Workflow Platform
-  # ==========================================================================
-  # workflow-platform:
-  #   build:
-  #     context: ./workflow
-  #     dockerfile: Dockerfile
-  #   container_name: unhinged-workflow-platform
-  #   ports:
-  #     - "8092:8090"  # REST API
-  #     - "9092:9090"  # gRPC API
-  #   networks:
-  #     - unhinged-platforms
-  #   restart: unless-stopped
-
-  # ==========================================================================
-  # Shared Database Infrastructure
-  # ==========================================================================
-  
-  # Redis - Shared caching and session store
   redis:
     image: redis:7.2-alpine
     container_name: unhinged-redis
     ports:
-      - "6479:6379"
+      - "6379:6379"
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -106,13 +74,15 @@ services:
       timeout: 5s
       retries: 3
 
+  # ==========================================================================
   # CockroachDB - Distributed SQL
+  # ==========================================================================
   cockroachdb:
     image: cockroachdb/cockroach:v23.1.11
     container_name: unhinged-cockroachdb
     ports:
-      - "26357:26257"  # SQL port
-      - "8084:8080"    # Admin UI
+      - "26257:26257"  # SQL port
+      - "8080:8080"    # Admin UI
     command: start-single-node --insecure --store=attrs=ssd,path=/cockroach/cockroach-data --listen-addr=0.0.0.0:26257 --http-addr=0.0.0.0:8080
     volumes:
       - cockroachdb-data:/cockroach/cockroach-data
@@ -120,7 +90,7 @@ services:
       - COCKROACH_DATABASE=defaultdb
       - COCKROACH_USER=root
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health?ready=1"]
@@ -128,20 +98,23 @@ services:
       timeout: 10s
       retries: 3
 
-  # MongoDB - Document store
+  # ==========================================================================
+  # MongoDB - Document Store
+  # ==========================================================================
   mongodb:
     image: mongo:7.0
     container_name: unhinged-mongodb
     ports:
-      - "27117:27017"
+      - "27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
       - MONGO_INITDB_DATABASE=unhinged
     volumes:
       - mongodb-data:/data/db
+      - ./scripts/mongodb-init.js:/docker-entrypoint-initdb.d/init.js:ro
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
@@ -149,7 +122,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Weaviate - Vector database
+  # ==========================================================================
+  # Weaviate - Vector Database
+  # ==========================================================================
   weaviate:
     image: semitechnologies/weaviate:1.22.4
     container_name: unhinged-weaviate
@@ -165,7 +140,7 @@ services:
     volumes:
       - weaviate-data:/var/lib/weaviate
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/v1/.well-known/ready"]
@@ -173,13 +148,15 @@ services:
       timeout: 10s
       retries: 3
 
-  # Elasticsearch - Search and analytics
+  # ==========================================================================
+  # Elasticsearch - Search and Analytics
+  # ==========================================================================
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     container_name: unhinged-elasticsearch
     ports:
-      - "9300:9200"
-      - "9400:9300"
+      - "9200:9200"
+      - "9300:9300"
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -188,7 +165,7 @@ services:
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
@@ -196,12 +173,14 @@ services:
       timeout: 10s
       retries: 3
 
-  # Cassandra - Wide column store
+  # ==========================================================================
+  # Cassandra - Wide Column Store
+  # ==========================================================================
   cassandra:
     image: cassandra:4.1
     container_name: unhinged-cassandra
     ports:
-      - "9142:9042"
+      - "9042:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=UnhingedCluster
       - CASSANDRA_DC=datacenter1
@@ -212,7 +191,7 @@ services:
     volumes:
       - cassandra-data:/var/lib/cassandra
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
@@ -221,13 +200,15 @@ services:
       retries: 5
       start_period: 60s
 
-  # Neo4j - Graph database
+  # ==========================================================================
+  # Neo4j - Graph Database
+  # ==========================================================================
   neo4j:
     image: neo4j:5.13-community
     container_name: unhinged-neo4j
     ports:
-      - "7574:7474"  # HTTP
-      - "7787:7687"  # Bolt
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_PLUGINS=["apoc"]
@@ -238,7 +219,7 @@ services:
       - neo4j-data:/data
       - neo4j-logs:/logs
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
@@ -246,13 +227,15 @@ services:
       timeout: 10s
       retries: 3
 
-  # MinIO - S3-compatible storage for data lake
+  # ==========================================================================
+  # MinIO - S3-Compatible Storage for Data Lake
+  # ==========================================================================
   minio:
     image: minio/minio:RELEASE.2023-11-01T18-37-25Z
     container_name: unhinged-minio
     ports:
-      - "9002:9000"  # API
-      - "9101:9001"  # Console
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
@@ -260,7 +243,7 @@ services:
     volumes:
       - minio-data:/data
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -269,15 +252,15 @@ services:
       retries: 3
 
   # ==========================================================================
-  # Shared Observability Infrastructure
+  # Monitoring and Observability
   # ==========================================================================
   
-  # Prometheus - Metrics collection
+  # Prometheus - Metrics Collection
   prometheus:
     image: prom/prometheus:v2.47.2
     container_name: unhinged-prometheus
     ports:
-      - "9190:9090"
+      - "9090:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -289,15 +272,15 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
 
-  # Grafana - Metrics visualization
+  # Grafana - Metrics Visualization
   grafana:
     image: grafana/grafana:10.2.0
     container_name: unhinged-grafana
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -307,31 +290,31 @@ services:
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
 
-  # Jaeger - Distributed tracing
+  # Jaeger - Distributed Tracing
   jaeger:
     image: jaegertracing/all-in-one:1.50
     container_name: unhinged-jaeger
     ports:
-      - "16786:16686"  # UI
-      - "14368:14268"  # HTTP collector
+      - "16686:16686"  # UI
+      - "14268:14268"  # HTTP collector
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     networks:
-      - unhinged-platforms
+      - persistence-network
     restart: unless-stopped
 
 # ==========================================================================
 # Networks
 # ==========================================================================
 networks:
-  unhinged-platforms:
+  persistence-network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.30.0.0/16
+        - subnet: 172.20.0.0/16
 
 # ==========================================================================
 # Volumes
