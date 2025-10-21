@@ -41,6 +41,15 @@ DOCKER_DB := postgres-db
 DB_NAME := unhinged_db
 DB_USER := postgres
 
+# Universal Python Runner
+PYTHON_RUN := build/python/run.py
+
+# Native GUI
+NATIVE_GUI := python3 control/gui/native_app.py
+
+# HTML Native GUI (Primary GUI System)
+HTML_NATIVE := python3 control/gui/html_native.py
+
 # Service ports
 PORT_BACKEND := 8080
 PORT_TTS := 8000
@@ -92,6 +101,34 @@ define wait_for_db
 	done
 	@echo " ready!"
 endef
+
+# ============================================================================
+# Native GUI System (Independent - No External Dependencies)
+# ============================================================================
+
+gui: ## Launch native HTML GUI (mission control) - PRIMARY GUI
+	$(call log_info,🎮 Launching Unhinged Native HTML GUI...)
+	@$(HTML_NATIVE) --html control/static_html/index.html
+
+code-editor: ## Launch native HTML code editor
+	$(call log_info,💻 Launching Native HTML Code Editor...)
+	@$(HTML_NATIVE) --html control/static_html/code-editor.html
+
+system-health: ## Launch system health dashboard
+	$(call log_info,🏥 Launching System Health Dashboard...)
+	@$(HTML_NATIVE) --html control/static_html/system-health.html
+
+table-of-contents: ## Launch interface directory
+	$(call log_info,📚 Launching Interface Directory...)
+	@$(HTML_NATIVE) --html control/static_html/table-of-contents.html
+
+native-gui: ## Launch minimal native GUI (X11 only)
+	$(call log_info,🎮 Launching Minimal Native GUI...)
+	@$(NATIVE_GUI)
+
+native-gui-large: ## Launch minimal native GUI with large window
+	$(call log_info,🎮 Launching Large Minimal GUI...)
+	@$(NATIVE_GUI) --width 1200 --height 800 --title "Unhinged Minimal GUI"
 
 # ============================================================================
 # Help and Information
