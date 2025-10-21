@@ -113,12 +113,7 @@ class UnhingedComponents {
         static render(activePage = '') {
             const navItems = [
                 { id: 'index', href: 'index.html', icon: '🎛️', label: 'Mission Control' },
-                { id: 'blog-list', href: 'blog-list.html', icon: '📚', label: 'Blog Posts' },
-                { id: 'blog-editor', href: 'blog-editor.html', icon: '✍️', label: 'Blog Editor' },
-                { id: 'persistence', href: 'persistence-platform.html', icon: '💾', label: 'Persistence Platform' },
-                { id: 'toc', href: 'table-of-contents.html', icon: '📚', label: 'Table of Contents' },
-                { id: 'validator', href: 'validate-standardization.html', icon: '🔍', label: 'Validator' },
-                { id: 'test', href: 'test-blog-integration.html', icon: '🧪', label: 'Blog Integration Test' }
+                { id: 'toc', href: 'table-of-contents.html', icon: '📚', label: 'Table of Contents' }
             ];
 
             const navHTML = navItems.map(item => {
@@ -428,22 +423,7 @@ class UnhingedComponents {
                             <h4>Core Interfaces</h4>
                             <ul class="toc-list">
                                 <li><a href="index.html">🎛️ Mission Control</a></li>
-                                <li><a href="persistence-platform.html">💾 Persistence Platform</a></li>
                                 <li><a href="table-of-contents.html">📚 Table of Contents</a></li>
-                            </ul>
-                        </div>
-                        <div class="toc-section">
-                            <h4>Blog System</h4>
-                            <ul class="toc-list">
-                                <li><a href="blog-list.html">📚 Blog Posts</a></li>
-                                <li><a href="blog-editor.html">✍️ Blog Editor</a></li>
-                                <li><a href="test-blog-integration.html">🧪 Blog Integration Test</a></li>
-                            </ul>
-                        </div>
-                        <div class="toc-section">
-                            <h4>Development Tools</h4>
-                            <ul class="toc-list">
-                                <li><a href="validate-standardization.html">🔍 Validator</a></li>
                             </ul>
                         </div>
                     </div>
@@ -505,8 +485,7 @@ class UnhingedComponents {
                 'image-test': { icon: '👁️', label: 'Vision AI', content: this.getImageTestContent() },
                 'voice-test': { icon: '🎤', label: 'Voice Processing', content: this.getVoiceTestContent() },
                 'chat': { icon: '💬', label: 'AI Chat', content: this.getChatContent() },
-                'grpc-test': { icon: '🔧', label: 'gRPC Testing', content: this.getGRPCTestContent() },
-                'persistence-dev-tool': { icon: '💾', label: 'Data Management', content: this.getPersistenceContent() }
+                'grpc-test': { icon: '🔧', label: 'gRPC Testing', content: this.getGRPCTestContent() }
             };
 
             const config = contentMap[contentType];
@@ -647,19 +626,7 @@ class UnhingedComponents {
             `;
         }
 
-        getPersistenceContent() {
-            return `
-                <div class="persistence-tab">
-                    <h2>💾 Data Management</h2>
-                    <p>Database and storage management tools.</p>
-                    <div class="persistence-actions">
-                        <button class="action-button">📊 View Database</button>
-                        <button class="action-button">🔄 Backup Data</button>
-                        <button class="action-button">🗑️ Clear Cache</button>
-                    </div>
-                </div>
-            `;
-        }
+
     };
 
     /**
