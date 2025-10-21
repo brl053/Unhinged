@@ -1,0 +1,169 @@
+# Unhinged Observability Stack - Clean Categorical Port Allocation
+# @llm-type infrastructure-config
+# @llm-legend Clean observability services with conflict-free categorical port allocation
+# @llm-key Monitoring, logging, and tracing services using systematic 1800-1899 port range
+# @llm-map Clean observability stack with logical port organization for static validation
+# @llm-axiom All observability ports must be within 1800-1899 range for conflict prevention
+# @llm-token docker-compose-observability-clean: Conflict-free monitoring stack with categorical ports
+
+version: '3.8'
+
+services:
+  # =============================================================================
+  # OBSERVABILITY/MONITORING (1800-1899)
+  # Monitoring, logging, and tracing services
+  # =============================================================================
+  
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "1800:16686"  # External 1800 → Internal 16686 (UI)
+      - "1801:14268"  # External 1801 → Internal 14268 (Collector)
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - unhinged-observability
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "1802:3100"  # External 1802 → Internal 3100
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    networks:
+      - unhinged-observability
+
+  tempo:
+    image: grafana/tempo:latest
+    ports:
+      - "1803:3200"  # External 1803 → Internal 3200 (HTTP)
+      - "1804:4317"  # External 1804 → Internal 4317 (gRPC)
+      - "1805:4318"  # External 1805 → Internal 4318 (OTLP)
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./config/tempo.yaml:/etc/tempo.yaml
+      - tempo_data:/tmp/tempo
+    networks:
+      - unhinged-observability
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "1806:9090"  # External 1806 → Internal 9090
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - unhinged-observability
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "1807:3000"  # External 1807 → Internal 3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - unhinged-observability
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    ports:
+      - "1808:4317"  # External 1808 → Internal 4317 (gRPC)
+      - "1809:4318"  # External 1809 → Internal 4318 (HTTP)
+      - "1810:8889"  # External 1810 → Internal 8889 (Metrics)
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    depends_on:
+      - jaeger
+      - prometheus
+      - tempo
+    networks:
+      - unhinged-observability
+
+  # =============================================================================
+  # ADDITIONAL MONITORING AGENTS
+  # =============================================================================
+  
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "1811:9100"  # External 1811 → Internal 9100
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - unhinged-observability
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "1812:8080"  # External 1812 → Internal 8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - unhinged-observability
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "1813:9093"  # External 1813 → Internal 9093
+    volumes:
+      - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - unhinged-observability
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+
+networks:
+  unhinged-observability:
+    driver: bridge
+    name: unhinged-observability
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+
+volumes:
+  loki_data:
+    name: unhinged-loki-data
+  tempo_data:
+    name: unhinged-tempo-data
+  prometheus_data:
+    name: unhinged-prometheus-data
+  grafana_data:
+    name: unhinged-grafana-data
+  alertmanager_data:
+    name: unhinged-alertmanager-data
