@@ -13,6 +13,7 @@ import yaml
 from pathlib import Path
 import logging
 import psutil
+import subprocess
 import shutil
 
 
@@ -257,10 +258,36 @@ class ResourceValidator:
         
         required_tools = {
             'docker': 'Docker is required for container orchestration',
-            'docker-compose': 'Docker Compose is required for multi-container applications',
             'python3': 'Python 3 is required for build scripts',
             'git': 'Git is required for version control'
         }
+
+        # Check for Docker Compose (v2 or v1)
+        docker_compose_available = False
+        try:
+            # Try modern docker compose (v2)
+            result = subprocess.run(['docker', 'compose', 'version'],
+                                  capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                docker_compose_available = True
+        except:
+            try:
+                # Try legacy docker-compose (v1)
+                result = subprocess.run(['docker-compose', '--version'],
+                                      capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    docker_compose_available = True
+            except:
+                pass
+
+        if not docker_compose_available:
+            issues.append(ResourceIssue(
+                resource_type="tool",
+                description="Docker Compose is required for multi-container applications",
+                severity="error",
+                current_value="not found",
+                recommended_value="docker compose v2 or docker-compose v1"
+            ))
         
         for tool, description in required_tools.items():
             if not shutil.which(tool):

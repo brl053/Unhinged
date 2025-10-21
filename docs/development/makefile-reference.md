@@ -2,17 +2,17 @@
 
 > **Purpose**: Comprehensive documentation of all Make targets and development workflows
 > **Audience**: Developers and AI assistants working on the Unhinged platform
-> **Last Updated**: Auto-generated on 2025-10-18 19:46:46
+> **Last Updated**: Auto-generated on 2025-10-20 19:14:38
 
 ## 🎯 Quick Reference
 
 ### Most Used Commands
 ```bash
 make help            # Show this help message
-make status          # Show status of all services
+make status          # Show build system status and performance metrics
 make setup           # Initial project setup
 make dev             # Start development environment
-make clean           # Clean all build artifacts
+make clean           # Clean build artifacts (smart cleanup)
 ```
 
 ## 🔧 Setup and Installation
@@ -24,10 +24,31 @@ make clean           # Clean all build artifacts
 - $(call require,docker)
 - $(call require,curl)
 
-#### `make install`
-**Purpose**: Alias for setup
-**Usage**: `make install`
-**Dependencies**: setup
+#### `make generate`
+**Purpose**: Generate all build artifacts (polyglot proto clients, registry) [use FORCE=1 to bypass cache]
+**Usage**: `make generate`
+**Actions**:
+- $(call log_info,🔧 Generating all build artifacts...)
+- $(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
+
+#### `make generate-clients`
+**Purpose**: Generate client libraries from protos [use FORCE=1 to bypass cache]
+**Usage**: `make generate-clients`
+**Actions**:
+- $(call log_info,🔧 Generating client libraries...)
+- $(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
+
+#### `make setup-python`
+**Purpose**: Setup Python virtual environment and install dependencies
+**Usage**: `make setup-python`
+**Actions**:
+- $(call log_info,🐍 Setting up Python virtual environment...)
+
+#### `make python-deps`
+**Purpose**: Install/update Python dependencies
+**Usage**: `make python-deps`
+**Actions**:
+- $(call log_info,📦 Installing Python dependencies...)
 
 #### `make gateway-gen`
 **Purpose**: Generate presentation gateway from proto annotations
@@ -48,91 +69,162 @@ make clean           # Clean all build artifacts
 - $(call log_info,🔨 Building presentation gateway...)
 - $(call log_success,Presentation gateway built)
 
-#### `make build-enhanced`
-**Purpose**: Use enhanced build system for development
-**Usage**: `make build-enhanced`
+#### `make build-full`
+**Purpose**: Build complete environment with all services
+**Usage**: `make build-full`
 **Actions**:
-- $(call log_info,🚀 Using enhanced build system...)
-- $(call log_success,Enhanced build completed)
+- $(call log_info,🚀 Building complete environment...)
+- $(call log_success,Full build completed)
 
-#### `make build-enhanced-full`
-**Purpose**: Full enhanced build with all services
-**Usage**: `make build-enhanced-full`
-**Actions**:
-- $(call log_info,🚀 Running full enhanced build...)
-- $(call log_success,Enhanced full build completed)
-
-#### `make build-explain`
-**Purpose**: Explain a build target (usage: make build-explain TARGET=dev-fast)
-**Usage**: `make build-explain`
+#### `make explain`
+**Purpose**: Explain a build target (usage: make explain TARGET=dev-fast)
+**Usage**: `make explain`
 **Actions**:
 - $(call log_info,📋 Explaining build target: $(or $(TARGET),dev-fast))
 
-#### `make build-list`
-**Purpose**: List all available enhanced build targets
-**Usage**: `make build-list`
+#### `make list`
+**Purpose**: List all available build targets
+**Usage**: `make list`
 **Actions**:
-- $(call log_info,📋 Available enhanced build targets...)
+- $(call log_info,📋 Available build targets...)
 
-#### `make build-profile`
-**Purpose**: Profile build performance (usage: make build-profile TARGET=dev-fast)
-**Usage**: `make build-profile`
+#### `make profile`
+**Purpose**: Profile build performance (usage: make profile TARGET=dev-fast)
+**Usage**: `make profile`
 **Actions**:
 - $(call log_info,⚡ Profiling build target: $(or $(TARGET),dev-fast))
 
-#### `make build-watch`
-**Purpose**: Watch mode for continuous building (usage: make build-watch TARGET=backend-compile)
-**Usage**: `make build-watch`
+#### `make watch`
+**Purpose**: Watch mode for continuous building (usage: make watch TARGET=backend-compile)
+**Usage**: `make watch`
 **Actions**:
 - $(call log_info,👁️ Starting watch mode for: $(or $(TARGET),backend-compile))
 
-#### `make build-context`
-**Purpose**: Generate LLM context for build assistance
-**Usage**: `make build-context`
+#### `make context`
+**Purpose**: Generate AI context for development assistance
+**Usage**: `make context`
 **Actions**:
-- $(call log_info,🤖 Generating LLM build context...)
+- $(call log_info,🤖 Generating development context...)
 
-#### `make build-context-json`
-**Purpose**: Generate LLM context in JSON format
-**Usage**: `make build-context-json`
-**Actions**:
-- $(call log_info,🤖 Generating LLM build context (JSON)...)
-
-#### `make build-onboard`
+#### `make onboard`
 **Purpose**: Generate developer onboarding guide
-**Usage**: `make build-onboard`
+**Usage**: `make onboard`
 **Actions**:
 - $(call log_info,📚 Generating developer onboarding guide...)
 
-#### `make build-explain-error`
-**Purpose**: Explain build error (usage: make build-explain-error TARGET=dev-fast ERROR="error message")
-**Usage**: `make build-explain-error`
+#### `make explain-error`
+**Purpose**: Explain build error (usage: make explain-error TARGET=dev-fast ERROR="error message")
+**Usage**: `make explain-error`
 **Actions**:
 - $(call log_info,🔍 Explaining build error for: $(or $(TARGET),unknown))
 
-#### `make build-performance-report`
+#### `make performance`
 **Purpose**: Generate build performance report
-**Usage**: `make build-performance-report`
+**Usage**: `make performance`
 **Actions**:
 - $(call log_info,📊 Generating performance report...)
 
-#### `make build-performance-metrics`
+#### `make metrics`
 **Purpose**: Show current performance metrics
-**Usage**: `make build-performance-metrics`
+**Usage**: `make metrics`
 **Actions**:
 - $(call log_info,📊 Showing performance metrics...)
 
-#### `make build-performance-json`
-**Purpose**: Get performance data in JSON format
-**Usage**: `make build-performance-json`
+#### `make validate`
+**Purpose**: Validate build system installation
+**Usage**: `make validate`
 **Actions**:
-- $(call log_info,📊 Generating performance data (JSON)...)
+- $(call log_info,✅ Validating build system...)
 
-#### `make build-validate`
-**Purpose**: Validate enhanced build system installation
-**Usage**: `make build-validate`
+#### `make start`
+**Purpose**: Generate service registry and open system health dashboard
+**Usage**: `make start`
 **Actions**:
-- $(call log_info,✅ Validating enhanced build system...)
+- $(call log_info,🏥 Starting System Health Command Center...)
+
+#### `make watch-html`
+**Purpose**: Watch for changes and auto-rebuild HTML files
+**Usage**: `make watch-html`
+**Actions**:
+- $(call log_info,👀 Starting HTML build watcher...)
+
+#### `make watch-html-verbose`
+**Purpose**: Watch HTML files with verbose output
+**Usage**: `make watch-html-verbose`
+**Actions**:
+- $(call log_info,👀 Starting HTML build watcher (verbose)...)
+
+#### `make standardize-html`
+**Purpose**: Standardize all HTML files to use consistent design system
+**Usage**: `make standardize-html`
+**Actions**:
+- $(call log_info,🔧 Standardizing HTML files...)
+- $(call log_success,HTML standardization complete)
+
+#### `make start-services`
+**Purpose**: Start Docker services only (database, kafka, etc.)
+**Usage**: `make start-services`
+**Actions**:
+- $(call log_info,🐳 Starting Docker services...)
+
+#### `make check-docker`
+**Purpose**: Check Docker availability (with installation help)
+**Usage**: `make check-docker`
+**Actions**:
+- echo "$(RED)❌ Docker not found$(RESET)"; \
+- echo "$(YELLOW)🐳 Docker is required for Unhinged services$(RESET)"; \
+
+#### `make help-docker-install`
+**Purpose**: Guided Docker installation with verification
+**Usage**: `make help-docker-install`
+**Actions**:
+
+#### `make verify-docker`
+**Purpose**: Verify Docker installation
+**Usage**: `make verify-docker`
+**Actions**:
+- echo "$(GREEN)✅ Docker binary found$(RESET)"; \
+
+#### `make install-docker-interactive`
+**Purpose**: Install Docker with interactive sudo prompts
+**Usage**: `make install-docker-interactive`
+**Actions**:
+- echo "$(YELLOW)📦 Detected Ubuntu/Debian$(RESET)"; \
+
+#### `make install-docker-automated`
+**Purpose**: Auto-install Docker based on detected OS
+**Usage**: `make install-docker-automated`
+**Actions**:
+- echo "$(YELLOW)📦 Detected Ubuntu/Debian$(RESET)"; \
+
+#### `make check-dependencies`
+**Purpose**: Check and install required dependencies interactively
+**Usage**: `make check-dependencies`
+**Actions**:
+
+#### `make check-docker-interactive`
+**Purpose**: Check Docker installation with interactive prompts
+**Usage**: `make check-docker-interactive`
+**Actions**:
+- echo "$(RED)❌ Docker not found$(RESET)"; \
+- echo "$(YELLOW)🐳 Docker is required for Unhinged services$(RESET)"; \
+
+#### `make check-python-deps`
+**Purpose**: Check Python dependencies
+**Usage**: `make check-python-deps`
+**Actions**:
+- echo "$(YELLOW)📦 Installing Python dependencies...$(RESET)"; \
+
+#### `make install-docker`
+**Purpose**: Install Docker interactively
+**Usage**: `make install-docker`
+**Actions**:
+- echo "$(YELLOW)📦 Detected Ubuntu/Debian - installing via apt$(RESET)"; \
+
+#### `make install-docker-compose`
+**Purpose**: Install Docker Compose
+**Usage**: `make install-docker-compose`
+**Actions**:
 
 #### `make docs-makefile`
 **Purpose**: Generate Makefile reference documentation
@@ -190,7 +282,7 @@ make clean           # Clean all build artifacts
 - $(call log_success,LLM comment validation complete)
 
 #### `make docs-context-overview`
-**Purpose**: Generate project overview for LLM context warming (YAML)
+**Purpose**: Generate comprehensive project overview for LLM context warming
 **Usage**: `make docs-context-overview`
 **Actions**:
 - $(call log_info,🤖 Generating LLM context overview...)
@@ -208,13 +300,6 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🤖 Generating LLM context overview (JSON)...)
 
-#### `make docs-context-enhanced`
-**Purpose**: Generate enhanced project overview with getting started and dependencies
-**Usage**: `make docs-context-enhanced`
-**Actions**:
-- $(call log_info,🚀 Generating enhanced LLM context overview...)
-- $(call log_success,Enhanced LLM context overview generated)
-
 #### `make deps-build`
 **Purpose**: Build the C dependency tracker
 **Usage**: `make deps-build`
@@ -227,14 +312,12 @@ make clean           # Clean all build artifacts
 **Usage**: `make deps-analyze`
 **Actions**:
 - $(call log_info,🔍 Analyzing dependencies...)
-- $(call log_success,Dependency analysis complete)
 
 #### `make deps-graph`
 **Purpose**: Generate dependency visualization
 **Usage**: `make deps-graph`
 **Actions**:
 - $(call log_info,📊 Generating dependency graph...)
-- $(call log_success,Dependency graph generated)
 
 #### `make deps-validate`
 **Purpose**: Validate dependency consistency
@@ -248,7 +331,115 @@ make clean           # Clean all build artifacts
 **Usage**: `make deps-feature-dag`
 **Actions**:
 - $(call log_info,🗺️ Generating feature DAG...)
-- $(call log_success,Feature DAG generated)
+
+#### `make lint`
+**Purpose**: Run polyglot linter on codebase
+**Usage**: `make lint`
+**Actions**:
+- $(call log_info,🔍 Running polyglot linter...)
+- $(call log_success,Linting complete)
+
+#### `make lint-llm`
+**Purpose**: Run polyglot linter with LLM-specific rationale
+**Usage**: `make lint-llm`
+**Actions**:
+- $(call log_info,🤖 Running LLM-biased polyglot linter...)
+- $(call log_success,LLM-biased linting complete)
+
+#### `make lint-json`
+**Purpose**: Run polyglot linter with JSON output
+**Usage**: `make lint-json`
+**Actions**:
+- $(call log_info,📊 Running polyglot linter (JSON output)...)
+
+#### `make check-lint`
+**Purpose**: Pure function: Run linting analysis
+**Usage**: `make check-lint`
+**Actions**:
+
+#### `make check-format-python`
+**Purpose**: Pure function: Check Python code formatting
+**Usage**: `make check-format-python`
+**Actions**:
+
+#### `make check-format-typescript`
+**Purpose**: Pure function: Check TypeScript/JavaScript formatting
+**Usage**: `make check-format-typescript`
+**Actions**:
+
+#### `make check-format-json`
+**Purpose**: Pure function: Validate JSON files
+**Usage**: `make check-format-json`
+**Actions**:
+
+#### `make check-deps-available`
+**Purpose**: Pure function: Verify dependency consistency
+**Usage**: `make check-deps-available`
+**Actions**:
+
+#### `make check-generated-files`
+**Purpose**: Pure function: Verify generated files are up-to-date
+**Usage**: `make check-generated-files`
+**Actions**:
+
+#### `make check-build-system`
+**Purpose**: Pure function: Validate build system integrity
+**Usage**: `make check-build-system`
+**Actions**:
+
+#### `make format-python`
+**Purpose**: Pure function: Format Python code (if black available)
+**Usage**: `make format-python`
+**Actions**:
+
+#### `make format-typescript`
+**Purpose**: Pure function: Format TypeScript/JavaScript (if prettier available)
+**Usage**: `make format-typescript`
+**Actions**:
+
+#### `make format-json`
+**Purpose**: Pure function: Format JSON files (if jq available)
+**Usage**: `make format-json`
+**Actions**:
+
+#### `make check-syntax`
+**Purpose**: Compose: All syntax checks
+**Usage**: `make check-syntax`
+**Dependencies**: check-format-python, check-format-typescript, check-format-json
+**Actions**:
+- $(call log_success,All syntax checks passed)
+
+#### `make check-quality`
+**Purpose**: Compose: All quality checks
+**Usage**: `make check-quality`
+**Dependencies**: check-lint, check-deps-available, check-generated-files
+**Actions**:
+- $(call log_success,All quality checks passed)
+
+#### `make check-system`
+**Purpose**: Compose: All system checks
+**Usage**: `make check-system`
+**Dependencies**: check-build-system
+**Actions**:
+- $(call log_success,All system checks passed)
+
+#### `make check`
+**Purpose**: Comprehensive code quality pipeline (functional paradigm)
+**Usage**: `make check`
+**Actions**:
+- $(call log_info,🚀 Starting comprehensive code quality pipeline...)
+
+#### `make check-install-formatters`
+**Purpose**: Install missing formatters (side effect function)
+**Usage**: `make check-install-formatters`
+**Actions**:
+- $(call log_info,📦 Installing code formatters...)
+
+#### `make check-fix`
+**Purpose**: Apply all available formatters (impure: modifies files)
+**Usage**: `make check-fix`
+**Actions**:
+- $(call log_warning,🔧 Applying code formatters (this will modify files)...)
 
 #### `make analyze-deps`
 **Purpose**: Run static analysis on dependency tracker
@@ -305,36 +496,6 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🔍 Running HTML interface sanity check...)
 
-#### `make ui-setup`
-**Purpose**: Alias for html-setup
-**Usage**: `make ui-setup`
-**Dependencies**: html-setup
-
-#### `make ui-dashboard`
-**Purpose**: Alias for html-dashboard
-**Usage**: `make ui-dashboard`
-**Dependencies**: html-dashboard
-
-#### `make ui-vision`
-**Purpose**: Alias for html-vision
-**Usage**: `make ui-vision`
-**Dependencies**: html-vision
-
-#### `make ui-audio`
-**Purpose**: Alias for html-audio
-**Usage**: `make ui-audio`
-**Dependencies**: html-audio
-
-#### `make ui-context`
-**Purpose**: Alias for html-context
-**Usage**: `make ui-context`
-**Dependencies**: html-context
-
-#### `make ui-sanity`
-**Purpose**: Alias for html-sanity
-**Usage**: `make ui-sanity`
-**Dependencies**: html-sanity
-
 #### `make validate-system`
 **Purpose**: Complete system validation using walking skeletons
 **Usage**: `make validate-system`
@@ -358,9 +519,10 @@ make clean           # Clean all build artifacts
 - $(call log_success,Services stopped)
 
 #### `make restart`
-**Purpose**: Restart all services
+**Purpose**: Restart all services (atomic: down then up)
 **Usage**: `make restart`
-**Dependencies**: down, up
+**Actions**:
+- $(call log_info,🔄 Restarting all services...)
 
 #### `make logs`
 **Purpose**: Show logs from all services
@@ -425,7 +587,6 @@ make clean           # Clean all build artifacts
 **Usage**: `make proto-gen`
 **Actions**:
 - $(call log_info,🔧 Generating protobuf code...)
-- $(call run_gradle,generateProto)
 - $(call log_success,Protobuf code generated)
 
 #### `make proto-clean`
@@ -512,16 +673,6 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🚀 Starting full development environment...)
 
-#### `make dev-enhanced`
-**Purpose**: Alias for enhanced development build
-**Usage**: `make dev-enhanced`
-**Dependencies**: build-enhanced
-
-#### `make dev-fast-enhanced`
-**Purpose**: Alias for fast enhanced development build
-**Usage**: `make dev-fast-enhanced`
-**Dependencies**: build-enhanced
-
 ## 🧪 Testing and Debugging
 
 #### `make gateway-test`
@@ -594,25 +745,11 @@ make clean           # Clean all build artifacts
 - $(call log_info,🧠 Memory Usage Information)
 - $(call log_warning,JVM Memory Settings:)
 
-#### `make build-test`
-**Purpose**: Test the enhanced build system
-**Usage**: `make build-test`
+#### `make test`
+**Purpose**: Test the build system
+**Usage**: `make test`
 **Actions**:
-- $(call log_info,🧪 Testing enhanced build system...)
-
-#### `make docs-test-context`
-**Purpose**: Run TDD tests for LLM context warming improvements
-**Usage**: `make docs-test-context`
-**Actions**:
-- $(call log_info,🧪 Running LLM context warmer tests...)
-- $(call log_success,LLM context warmer tests completed)
-
-#### `make docs-test-enhancements`
-**Purpose**: Run TDD tests for final LLM context warmer enhancements
-**Usage**: `make docs-test-enhancements`
-**Actions**:
-- $(call log_info,🧪 Running enhanced context warmer tests...)
-- $(call log_success,Enhanced context warmer tests completed)
+- $(call log_info,🧪 Testing build system...)
 
 #### `make deps-test`
 **Purpose**: Run dependency tracker tests
@@ -627,16 +764,6 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,🧪 Opening HTML testing interfaces...)
 - $(call log_success,HTML testing hub opened)
-
-#### `make test-ui`
-**Purpose**: Alias for html-test
-**Usage**: `make test-ui`
-**Dependencies**: html-test
-
-#### `make ui-test`
-**Purpose**: Alias for html-test
-**Usage**: `make ui-test`
-**Dependencies**: html-test
 
 #### `make health`
 **Purpose**: Check health of all services
@@ -662,25 +789,20 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_info,⚡ Quick UI testing...)
 
-#### `make test`
-**Purpose**: Alias for backend-test
-**Usage**: `make test`
-**Dependencies**: backend-test
-
 ## 🧹 Cleanup Operations
 
 #### `make clean`
-**Purpose**: Clean all build artifacts
+**Purpose**: Clean build artifacts (smart cleanup)
 **Usage**: `make clean`
 **Actions**:
-- $(call log_warning,🧹 Cleaning all build artifacts...)
+- $(call log_warning,🧹 Cleaning build artifacts...)
+- $(call log_success,Cleanup complete)
 
-#### `make clean-enhanced`
-**Purpose**: Clean using enhanced build system
-**Usage**: `make clean-enhanced`
+#### `make clean-all`
+**Purpose**: Clean everything including Docker
+**Usage**: `make clean-all`
 **Actions**:
-- $(call log_warning,🧹 Enhanced cleanup...)
-- $(call log_success,Enhanced cleanup complete)
+- $(call log_warning,🧹 Cleaning everything...)
 
 #### `make clean-docker`
 **Purpose**: Clean Docker resources
@@ -688,28 +810,12 @@ make clean           # Clean all build artifacts
 **Actions**:
 - $(call log_warning,🧹 Cleaning Docker resources...)
 
-#### `make clean-all`
-**Purpose**: Clean everything
-**Usage**: `make clean-all`
-**Dependencies**: clean, clean-docker
-
-#### `make clean-all-enhanced`
-**Purpose**: Enhanced clean everything
-**Usage**: `make clean-all-enhanced`
-**Dependencies**: clean-enhanced, clean-docker
-
 #### `make deps-clean`
 **Purpose**: Clean dependency tracker build
 **Usage**: `make deps-clean`
 **Actions**:
 - $(call log_info,🧹 Cleaning dependency tracker...)
 - $(call log_success,Dependency tracker cleaned)
-
-#### `make clean-deps`
-**Purpose**: Alias for deps-clean (disk space management)
-**Usage**: `make clean-deps`
-**Actions**:
-- $(MAKE) deps-clean
 
 #### `make html-clean`
 **Purpose**: Clean HTML interface symlinks and generated files
@@ -724,16 +830,16 @@ make clean           # Clean all build artifacts
 **Usage**: `make help`
 **Actions**:
 
-#### `make status`
+#### `make status-services`
 **Purpose**: Show status of all services
-**Usage**: `make status`
+**Usage**: `make status-services`
 **Actions**:
 - $(call log_info,📊 Service Status)
 - $(call log_warning,Docker Services:)
 
-#### `make build-status`
-**Purpose**: Show enhanced build system status
-**Usage**: `make build-status`
+#### `make status`
+**Purpose**: Show build system status and performance metrics
+**Usage**: `make status`
 **Actions**:
 - $(call log_info,📊 Build system status...)
 
@@ -753,19 +859,11 @@ make clean           # Clean all build artifacts
 ## 🔗 Aliases
 
 #### `make build`
-**Purpose**: Alias for backend-build
+**Purpose**: Build development environment (v1 enhanced system)
 **Usage**: `make build`
-**Dependencies**: backend-build
-
-#### `make run`
-**Purpose**: Alias for backend-run
-**Usage**: `make run`
-**Dependencies**: backend-run
-
-#### `make demo`
-**Purpose**: Alias for backend-demo
-**Usage**: `make demo`
-**Dependencies**: backend-demo
+**Actions**:
+- $(call log_info,🚀 Building development environment...)
+- $(call log_success,Build completed)
 
 ## 🔧 Configuration Variables
 
@@ -790,6 +888,7 @@ make clean           # Clean all build artifacts
 - **PORT_DB**: 5432
 - **PORT_KAFKA**: 9092
 - **PORT_GRPC_DEMO**: 9090
+- **CACHE_OPTION**: $(if $(FORCE),--no-cache,) - Force rebuild option (use FORCE=1 to bypass cache)
 
 ---
 

@@ -169,8 +169,8 @@ Examples:
     parser.add_argument(
         '--project-root',
         type=Path,
-        default=Path.cwd(),
-        help='Project root directory (default: current directory)'
+        default=None,
+        help='Project root directory (default: auto-detect from script location)'
     )
     
     parser.add_argument(
@@ -180,9 +180,21 @@ Examples:
     )
     
     args = parser.parse_args()
-    
+
+    # Auto-detect project root if not specified
+    if args.project_root is None:
+        # If running from build/ directory, go up one level
+        script_dir = Path(__file__).parent
+        if script_dir.name == 'build':
+            project_root = script_dir.parent
+        else:
+            project_root = Path.cwd()
+        logger.info(f"🔍 Auto-detected project root: {project_root}")
+    else:
+        project_root = args.project_root
+
     # Initialize port fixer
-    fixer = PortFixer(args.project_root)
+    fixer = PortFixer(project_root)
     
     try:
         if args.command == 'analyze':

@@ -15,7 +15,7 @@ from pathlib import Path
 class DocumentationUpdater:
     def __init__(self, root_path: str = "."):
         self.root_path = Path(root_path)
-        self.scripts_dir = self.root_path / "scripts" / "docs"
+        self.scripts_dir = self.root_path / "build" / "docs-generation"
         self.docs_dir = self.root_path / "docs"
         
     def update_all(self):

@@ -790,22 +790,22 @@ clean-docker: ## Clean Docker resources
 
 docs-update: ## Update all documentation automatically
 	$(call log_info,📚 Updating all documentation...)
-	@python3 scripts/docs/update-all-docs.py
+	@python3 build/docs-generation/update-all-docs.py
 	$(call log_success,Documentation updated)
 
 docs-makefile: ## Generate Makefile reference documentation
 	$(call log_info,📖 Generating Makefile documentation...)
-	@python3 scripts/docs/generate-makefile-docs.py
+	@python3 build/docs-generation/generate-makefile-docs.py
 	$(call log_success,Makefile documentation generated)
 
 docs-structure: ## Generate project structure documentation
 	$(call log_info,🏗️ Generating project structure documentation...)
-	@python3 scripts/docs/generate-project-structure.py
+	@python3 build/docs-generation/generate-project-structure.py
 	$(call log_success,Project structure documentation generated)
 
 docs-validate: ## Validate documentation for consistency
 	$(call log_info,🔍 Validating documentation...)
-	@python3 -c "from scripts.docs.update_all_docs import DocumentationUpdater; updater = DocumentationUpdater(); success = updater._validate_docs(); exit(0 if success else 1)"
+	@python3 -c "import sys; sys.path.append('build/docs-generation'); from update_all_docs import DocumentationUpdater; updater = DocumentationUpdater(); success = updater._validate_docs(); exit(0 if success else 1)"
 	$(call log_success,Documentation validation complete)
 
 docs-serve: ## Serve documentation locally (if supported)
@@ -816,21 +816,21 @@ docs-serve: ## Serve documentation locally (if supported)
 
 docs-watch: ## Watch for changes and auto-update documentation
 	$(call log_info,🔍 Starting documentation watcher...)
-	@python3 scripts/docs/watch-and-update.py watch
+	@python3 build/docs-generation/watch-and-update.py watch
 
 docs-ci-setup: ## Set up CI/CD integration for documentation
 	$(call log_info,🔧 Setting up CI integration...)
-	@python3 scripts/docs/watch-and-update.py ci-setup
+	@python3 build/docs-generation/watch-and-update.py ci-setup
 	$(call log_success,CI integration setup complete)
 
 docs-comments: ## Extract and generate documentation from LLM comments
 	$(call log_info,🤖 Extracting LLM comments from codebase...)
-	@python3 scripts/docs/extract-llm-comments.py
+	@python3 build/docs-generation/extract-llm-comments.py
 	$(call log_success,LLM comment documentation generated)
 
 docs-validate-comments: ## Validate LLM comment consistency and quality
 	$(call log_info,🔍 Validating LLM comments...)
-	@python3 scripts/docs/validate-llm-comments.py
+	@python3 build/docs-generation/validate-llm-comments.py
 	$(call log_success,LLM comment validation complete)
 
 # @llm-type config
@@ -843,16 +843,16 @@ docs-validate-comments: ## Validate LLM comment consistency and quality
 
 docs-context-overview: ## Generate comprehensive project overview for LLM context warming
 	$(call log_info,🤖 Generating LLM context overview...)
-	@python3 scripts/docs/llm-context-warmer.py overview --format yaml
+	@python3 build/docs-generation/llm-context-warmer.py overview --format yaml
 	$(call log_success,LLM context overview generated)
 
 docs-context-paginate: ## Paginate through all comments (usage: make docs-context-paginate PAGE=1)
 	$(call log_info,📄 Showing comments page $(or $(PAGE),1)...)
-	@python3 scripts/docs/llm-context-warmer.py paginate --page $(or $(PAGE),1) --format yaml
+	@python3 build/docs-generation/llm-context-warmer.py paginate --page $(or $(PAGE),1) --format yaml
 
 docs-context-json: ## Generate project overview in JSON format
 	$(call log_info,🤖 Generating LLM context overview (JSON)...)
-	@python3 scripts/docs/llm-context-warmer.py overview --format json
+	@python3 build/docs-generation/llm-context-warmer.py overview --format json
 
 # ============================================================================
 # Dependency Tracking Commands

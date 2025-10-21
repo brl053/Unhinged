@@ -1,47 +1,19 @@
 # 🚀 Services Overview - Auto-Generated
 
-> **Last Updated**: 2025-10-18 19:46:46
+> **Last Updated**: 2025-10-20 19:14:38
 
-**Total Services**: 7
+**Total Services**: 3
 
-## multimodal-orchestrator
+## speech-to-text
 
-**Path**: `services/multimodal-orchestrator`
+**Path**: `services/speech-to-text`
 
-**Documentation**: ❌ No README.md
+**Documentation**: ✅ Has README.md
 **Containerized**: ✅ Has Dockerfile
 
-## api-gateway
+## text-to-speech
 
-**Path**: `services/api-gateway`
-
-**Documentation**: ❌ No README.md
-**Containerized**: ✅ Has Dockerfile
-
-## vision-ai-enhanced
-
-**Path**: `services/vision-ai-enhanced`
-
-**Documentation**: ❌ No README.md
-**Containerized**: ✅ Has Dockerfile
-
-## context-llm
-
-**Path**: `services/context-llm`
-
-**Documentation**: ❌ No README.md
-**Containerized**: ✅ Has Dockerfile
-
-## presentation-gateway
-
-**Path**: `services/presentation-gateway`
-
-**Documentation**: ❌ No README.md
-**Containerized**: ❌ No Dockerfile
-
-## whisper-tts
-
-**Path**: `services/whisper-tts`
+**Path**: `services/text-to-speech`
 
 **Documentation**: ✅ Has README.md
 **Containerized**: ✅ Has Dockerfile

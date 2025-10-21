@@ -1,7 +1,7 @@
 # 📡 API Reference - Auto-Generated
 
-> **Last Updated**: 2025-10-18 19:46:46
-> **Proto Files**: 15
+> **Last Updated**: 2025-10-20 19:14:38
+> **Proto Files**: 16
 
 ## messaging.proto
 
@@ -44,11 +44,19 @@
 **Services**:
 - ChatService
 
+## persistence_platform.proto
+
+**Path**: `proto/persistence_platform.proto`
+
+**Services**:
+- PersistencePlatformService
+
 ## observability.proto
 
 **Path**: `proto/observability.proto`
 
 **Services**:
+- ObservabilityService
 
 ## gateway_annotations.proto
 
