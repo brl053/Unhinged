@@ -40,6 +40,18 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Any
 import yaml
 
+# Import validation system
+try:
+    from validators import PortValidator, DependencyValidator, ResourceValidator
+    VALIDATION_AVAILABLE = True
+except ImportError:
+    try:
+        from .validators import PortValidator, DependencyValidator, ResourceValidator
+        VALIDATION_AVAILABLE = True
+    except ImportError:
+        VALIDATION_AVAILABLE = False
+        logger.warning("⚠️ Build validators not available")
+
 # Import monitoring system
 try:
     from monitoring import BuildPerformanceMonitor
@@ -520,8 +532,90 @@ class BuildOrchestrator:
                 error_message=error_msg
             )
     
+    def validate_build_configuration(self) -> List[str]:
+        """
+        Validate build configuration at compile time
+
+        @llm-future This becomes part of Unhinged OS resource allocation compiler
+        Returns list of validation errors that must be fixed before build
+        """
+        if not VALIDATION_AVAILABLE:
+            logger.warning("⚠️ Build validation skipped - validators not available")
+            return []
+
+        validation_errors = []
+        project_root = Path(self.config.project_root)
+
+        logger.info("🔍 Running build-time validation...")
+
+        # Port conflict validation
+        try:
+            port_validator = PortValidator(project_root)
+            port_conflicts = port_validator.validate_project()
+
+            for conflict in port_conflicts:
+                if conflict.severity == "error":
+                    validation_errors.append(f"PORT CONFLICT: {conflict}")
+                else:
+                    logger.warning(f"⚠️ PORT WARNING: {conflict}")
+
+            if port_conflicts:
+                logger.info(f"🔍 Found {len(port_conflicts)} port issues")
+
+        except Exception as e:
+            logger.error(f"❌ Port validation failed: {e}")
+
+        # Dependency validation
+        try:
+            dep_validator = DependencyValidator(project_root)
+            dep_issues = dep_validator.validate_dependencies()
+
+            for issue in dep_issues:
+                if issue.severity == "error":
+                    validation_errors.append(f"DEPENDENCY ERROR: {issue.description}")
+                else:
+                    logger.warning(f"⚠️ DEPENDENCY WARNING: {issue.description}")
+
+        except Exception as e:
+            logger.error(f"❌ Dependency validation failed: {e}")
+
+        # Resource validation
+        try:
+            resource_validator = ResourceValidator(project_root)
+            resource_issues = resource_validator.validate_resources()
+
+            for issue in resource_issues:
+                if issue.severity == "error":
+                    validation_errors.append(f"RESOURCE ERROR: {issue.description}")
+                else:
+                    logger.warning(f"⚠️ RESOURCE WARNING: {issue.description}")
+
+        except Exception as e:
+            logger.error(f"❌ Resource validation failed: {e}")
+
+        if validation_errors:
+            logger.error("❌ Build validation failed! Fix these issues before proceeding:")
+            for error in validation_errors:
+                logger.error(f"   • {error}")
+        else:
+            logger.info("✅ Build validation passed - no blocking issues found")
+
+        return validation_errors
+
     async def build_targets(self, target_names: List[str]) -> List[BuildResult]:
         """Build multiple targets with dependency resolution and parallelization"""
+
+        # COMPILE-TIME VALIDATION: Prevent runtime errors
+        validation_errors = self.validate_build_configuration()
+        if validation_errors:
+            logger.error("🚫 Build aborted due to validation failures")
+            return [BuildResult(
+                target="validation",
+                success=False,
+                duration=0.0,
+                error_message=f"Build validation failed: {'; '.join(validation_errors)}"
+            )]
+
         try:
             execution_groups = self.dependency_graph.get_execution_order(target_names)
             all_results = []
