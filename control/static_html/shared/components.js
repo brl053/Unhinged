@@ -113,6 +113,7 @@ class UnhingedComponents {
         static render(activePage = '') {
             const navItems = [
                 { id: 'index', href: 'index.html', icon: '🎛️', label: 'Mission Control' },
+                { id: 'api-dev', href: 'api-dev-tool.html', icon: '🔧', label: 'API Dev Tool' },
                 { id: 'toc', href: 'table-of-contents.html', icon: '📚', label: 'Table of Contents' }
             ];
 

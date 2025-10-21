@@ -166,6 +166,13 @@ class UnhingedHTMLNative:
                             data.get('path', ''),
                             data.get('content', '')
                         )
+                    elif self.path == '/api/httprequest':
+                        result = self.gui.send_http_request(
+                            data.get('method', 'GET'),
+                            data.get('url', ''),
+                            data.get('headers', {}),
+                            data.get('body', '')
+                        )
                     else:
                         result = {"error": "Unknown endpoint"}
                     
@@ -369,6 +376,56 @@ class UnhingedHTMLNative:
         except Exception as e:
             return {"error": f"Failed to get performance stats: {str(e)}"}
 
+    def send_http_request(self, method, url, headers, body):
+        """Send HTTP request and return response"""
+        try:
+            import requests
+            from datetime import datetime
+
+            start_time = datetime.now()
+
+            # Prepare request
+            request_kwargs = {
+                'method': method.upper(),
+                'url': url,
+                'headers': headers,
+                'timeout': 30
+            }
+
+            # Add body for non-GET requests
+            if method.upper() != 'GET' and body:
+                if headers.get('Content-Type', '').startswith('application/json'):
+                    request_kwargs['json'] = json.loads(body) if isinstance(body, str) else body
+                else:
+                    request_kwargs['data'] = body
+
+            # Send request
+            response = requests.request(**request_kwargs)
+            end_time = datetime.now()
+
+            # Calculate duration
+            duration_ms = int((end_time - start_time).total_seconds() * 1000)
+
+            return {
+                "success": True,
+                "status": response.status_code,
+                "statusText": response.reason,
+                "headers": dict(response.headers),
+                "body": response.text,
+                "duration": duration_ms,
+                "url": url,
+                "method": method.upper()
+            }
+
+        except ImportError:
+            return {"error": "requests library not available - install with: pip install requests"}
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid JSON in request body: {str(e)}"}
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Request failed: {str(e)}"}
+        except Exception as e:
+            return {"error": f"Unexpected error: {str(e)}"}
+
     def get_bridge_javascript(self):
         """Get JavaScript bridge code for injection"""
         return f"""
@@ -425,6 +482,15 @@ window.unhinged = {{
 
     async getPerformanceStats() {{
         const response = await fetch(`${{this.bridgeUrl}}/api/performance`);
+        return await response.json();
+    }},
+
+    async sendHTTPRequest(method, url, headers = {{}}, body = '') {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/httprequest`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ method, url, headers, body }})
+        }});
         return await response.json();
     }}
 }};

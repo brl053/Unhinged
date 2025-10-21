@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 API Dev Tool</title>
+    <link rel="stylesheet" href="shared/theme.css">
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="shared/config.js"></script>
+    <script src="shared/components.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation - Standardized Component -->
+        <div id="nav-container" data-component="navigation" data-active="api-dev"></div>
+        
+        <!-- Page Header - Standardized Component -->
+        <div id="header-container" data-component="page-header"
+             data-title="API Dev Tool"
+             data-subtitle="HTTP Request Testing - Minimal Implementation"
+             data-icon="🔧"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="api-dev-container">
+                <!-- Request Builder -->
+                <div class="request-section">
+                    <h3>🌐 Send Request</h3>
+                    
+                    <div class="request-form">
+                        <div class="method-url-row">
+                            <select id="http-method" class="method-select">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                            </select>
+                            <input type="text" id="request-url" placeholder="https://api.example.com/endpoint" class="url-input">
+                            <button id="send-button" class="send-button">Send</button>
+                        </div>
+                        
+                        <div class="headers-section">
+                            <h4>📋 Headers</h4>
+                            <textarea id="request-headers" placeholder='{"Content-Type": "application/json"}' class="headers-input"></textarea>
+                        </div>
+                        
+                        <div class="body-section">
+                            <h4>📝 Body</h4>
+                            <textarea id="request-body" placeholder='{"key": "value"}' class="body-input"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Response Viewer -->
+                <div class="response-section">
+                    <h3>📊 Response</h3>
+                    <div id="response-container" class="response-container">
+                        <div class="response-placeholder">
+                            Send a request to see the response here
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer - Standardized Component -->
+        <div id="footer-container" data-component="footer"></div>
+    </div>
+
+    <script>
+        // Initialize components
+        document.addEventListener('DOMContentLoaded', () => {
+            UnhingedComponents.initializeComponents();
+            initializeAPIDevTool();
+        });
+
+        function initializeAPIDevTool() {
+            const sendButton = document.getElementById('send-button');
+            const responseContainer = document.getElementById('response-container');
+            
+            sendButton.addEventListener('click', async () => {
+                const method = document.getElementById('http-method').value;
+                const url = document.getElementById('request-url').value;
+                const headersText = document.getElementById('request-headers').value;
+                const body = document.getElementById('request-body').value;
+                
+                if (!url) {
+                    alert('Please enter a URL');
+                    return;
+                }
+                
+                // Show loading
+                responseContainer.innerHTML = '<div class="loading">🔄 Sending request...</div>';
+                sendButton.disabled = true;
+                sendButton.textContent = 'Sending...';
+                
+                try {
+                    // Parse headers
+                    let headers = {};
+                    if (headersText.trim()) {
+                        headers = JSON.parse(headersText);
+                    }
+                    
+                    // Send request via bridge
+                    const response = await sendHTTPRequest(method, url, headers, body);
+                    displayResponse(response);
+                    
+                } catch (error) {
+                    displayError(error);
+                } finally {
+                    sendButton.disabled = false;
+                    sendButton.textContent = 'Send';
+                }
+            });
+        }
+        
+        async function sendHTTPRequest(method, url, headers, body) {
+            // Use the system bridge to send HTTP request
+            if (window.unhinged && window.unhinged.sendHTTPRequest) {
+                return await window.unhinged.sendHTTPRequest(method, url, headers, body);
+            } else {
+                // Fallback to fetch for now
+                const options = {
+                    method: method,
+                    headers: headers
+                };
+                
+                if (body && method !== 'GET') {
+                    options.body = body;
+                }
+                
+                const startTime = Date.now();
+                const response = await fetch(url, options);
+                const endTime = Date.now();
+                
+                const responseText = await response.text();
+                
+                return {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    body: responseText,
+                    duration: endTime - startTime
+                };
+            }
+        }
+        
+        function displayResponse(response) {
+            const container = document.getElementById('response-container');
+            
+            let bodyFormatted = response.body;
+            try {
+                const parsed = JSON.parse(response.body);
+                bodyFormatted = JSON.stringify(parsed, null, 2);
+            } catch (e) {
+                // Not JSON, keep as is
+            }
+            
+            container.innerHTML = `
+                <div class="response-status">
+                    <span class="status-code status-${Math.floor(response.status / 100)}xx">${response.status}</span>
+                    <span class="status-text">${response.statusText}</span>
+                    <span class="response-time">${response.duration}ms</span>
+                </div>
+                
+                <div class="response-headers">
+                    <h4>📋 Response Headers</h4>
+                    <pre>${JSON.stringify(response.headers, null, 2)}</pre>
+                </div>
+                
+                <div class="response-body">
+                    <h4>📄 Response Body</h4>
+                    <pre>${bodyFormatted}</pre>
+                </div>
+            `;
+        }
+        
+        function displayError(error) {
+            const container = document.getElementById('response-container');
+            container.innerHTML = `
+                <div class="response-error">
+                    <h4>❌ Error</h4>
+                    <pre>${error.message || error}</pre>
+                </div>
+            `;
+        }
+    </script>
+
+    <style>
+        .api-dev-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .request-section, .response-section {
+            background: var(--color-surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--color-border);
+        }
+        
+        .method-url-row {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .method-select {
+            width: 100px;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            background: var(--color-background);
+            color: var(--color-text-primary);
+        }
+        
+        .url-input {
+            flex: 1;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            background: var(--color-background);
+            color: var(--color-text-primary);
+        }
+        
+        .send-button {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .send-button:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .send-button:disabled {
+            background: var(--color-border);
+            cursor: not-allowed;
+        }
+        
+        .headers-input, .body-input {
+            width: 100%;
+            min-height: 100px;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            background: var(--color-background);
+            color: var(--color-text-primary);
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .response-container {
+            min-height: 200px;
+        }
+        
+        .response-placeholder, .loading {
+            text-align: center;
+            color: var(--color-text-secondary);
+            padding: var(--spacing-xl);
+        }
+        
+        .response-status {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            padding: var(--spacing-sm);
+            background: var(--color-background);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .status-code {
+            font-weight: bold;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .status-2xx { background: var(--color-success); color: white; }
+        .status-3xx { background: var(--color-warning); color: white; }
+        .status-4xx, .status-5xx { background: var(--color-danger); color: white; }
+        
+        .response-time {
+            margin-left: auto;
+            color: var(--color-text-secondary);
+        }
+        
+        .response-headers, .response-body, .response-error {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .response-headers pre, .response-body pre, .response-error pre {
+            background: var(--color-background);
+            padding: var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            overflow-x: auto;
+            font-size: var(--font-size-sm);
+        }
+        
+        @media (max-width: 768px) {
+            .api-dev-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>
