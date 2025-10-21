@@ -204,6 +204,12 @@ Examples:
         metrics_parser = perf_subparsers.add_parser('metrics', help='Show current performance metrics')
         metrics_parser.add_argument('--json', action='store_true', help='Output in JSON format')
 
+        # Port validation commands
+        port_parser = subparsers.add_parser('validate-ports', help='Validate and fix port conflicts')
+        port_parser.add_argument('--fix', action='store_true', help='Generate fix script')
+        port_parser.add_argument('--auto-fix', action='store_true', help='Automatically apply fixes')
+        port_parser.add_argument('--report', action='store_true', help='Generate allocation report')
+
         return parser
     
     async def run_build(self, args) -> int:
@@ -600,6 +606,37 @@ Examples:
         print(f"💾 Memory: {sys_info['memory_gb']:.1f} GB")
         print(f"💿 Disk free: {sys_info['disk_free_gb']:.1f} GB")
 
+    def run_port_validation(self, args) -> int:
+        """Run port validation and conflict resolution"""
+        try:
+            # Import port fixer
+            from port_fixer import PortFixer
+
+            fixer = PortFixer(self.project_root)
+
+            if args.report:
+                # Generate allocation report
+                report_file = fixer.generate_report()
+                print(f"📊 Port allocation report generated: {report_file}")
+                return 0
+
+            elif args.fix or args.auto_fix:
+                # Run validation and fix workflow
+                success = fixer.validate_and_fix(auto_fix=args.auto_fix)
+                return 0 if success else 1
+
+            else:
+                # Just analyze conflicts
+                conflicts = fixer.analyze_ports()
+                return 0 if not conflicts else 1
+
+        except ImportError:
+            print("❌ Port validation tools not available")
+            return 1
+        except Exception as e:
+            logger.error(f"❌ Port validation failed: {e}")
+            return 1
+
 def main():
     """Main CLI entry point"""
     cli = BuildCLI()
@@ -623,6 +660,8 @@ def main():
             return cli.run_llm_command(args)
         elif args.command == 'performance':
             return cli.run_performance_command(args)
+        elif args.command == 'validate-ports':
+            return cli.run_port_validation(args)
         else:
             print(f"❌ Command '{args.command}' not implemented yet")
             return 1
