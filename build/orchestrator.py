@@ -544,7 +544,7 @@ class BuildOrchestrator:
             return []
 
         validation_errors = []
-        project_root = Path(self.config.project_root)
+        project_root = self.project_root
 
         logger.info("🔍 Running build-time validation...")
 
