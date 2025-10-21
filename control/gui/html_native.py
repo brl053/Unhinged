@@ -19,7 +19,7 @@ import json
 import subprocess
 import threading
 import time
-import tempfile
+
 import http.server
 import socketserver
 from pathlib import Path
@@ -368,7 +368,88 @@ class UnhingedHTMLNative:
             }
         except Exception as e:
             return {"error": f"Failed to get performance stats: {str(e)}"}
-    
+
+    def get_bridge_javascript(self):
+        """Get JavaScript bridge code for injection"""
+        return f"""
+// Unhinged System Bridge - JavaScript ↔ Python
+window.unhinged = {{
+    bridgeUrl: 'http://localhost:{self.bridge_port}',
+
+    async readFile(path) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/readfile?path=${{encodeURIComponent(path)}}`);
+        return await response.json();
+    }},
+
+    async listDirectory(path = '.') {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/listdir?path=${{encodeURIComponent(path)}}`);
+        return await response.json();
+    }},
+
+    async runScript(command) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/runscript`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ command }})
+        }});
+        return await response.json();
+    }},
+
+    async grpcCall(service, method, data = {{}}) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/grpc`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ service, method, data }})
+        }});
+        return await response.json();
+    }},
+
+    async writeFile(path, content) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/writefile`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ path, content }})
+        }});
+        return await response.json();
+    }},
+
+    async getSystemInfo() {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/systeminfo`);
+        return await response.json();
+    }},
+
+    async getProjectInfo() {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/projectinfo`);
+        return await response.json();
+    }},
+
+    async getPerformanceStats() {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/performance`);
+        return await response.json();
+    }}
+}};
+
+// Test bridge on load
+console.log('🌉 Unhinged System Bridge loaded');
+try {{
+    // Test basic functionality
+    const pwdResult = await window.unhinged.runScript('pwd');
+    console.log('🎯 Bridge test (pwd):', pwdResult);
+
+    // Test system info
+    const sysInfo = await window.unhinged.getSystemInfo();
+    console.log('💻 System info:', sysInfo);
+
+    // Test project info
+    const projInfo = await window.unhinged.getProjectInfo();
+    console.log('📁 Project info:', projInfo);
+
+    console.log('✅ All bridge functions loaded successfully');
+}} catch (e) {{
+    console.error('❌ Bridge test failed:', e);
+}}
+"""
+
     def inject_bridge_script(self, html_content):
         """Inject JavaScript bridge into HTML"""
         
@@ -469,20 +550,9 @@ window.addEventListener('load', async () => {{
             if not html_path.exists():
                 print(f"❌ HTML file not found: {html_path}")
                 return False
-            
-            # Read and inject bridge script
-            with open(html_path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            enhanced_html = self.inject_bridge_script(html_content)
-            
-            # Create temporary enhanced HTML file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
-                f.write(enhanced_html)
-                temp_html_path = f.name
-            
-            # Launch browser
-            file_url = f"file://{temp_html_path}"
+
+            # Load HTML directly from original location to preserve relative paths
+            file_url = f"file://{html_path.absolute()}"
             
             # Try native HTML rendering with WebKit
             try:
@@ -497,6 +567,15 @@ window.addEventListener('load', async () => {{
                 window.set_default_size(self.width, self.height)
 
                 webview = WebKit2.WebView()
+
+                # Inject bridge script after page loads
+                def on_load_finished(webview, load_event):
+                    if load_event == WebKit2.LoadEvent.FINISHED:
+                        bridge_js = self.get_bridge_javascript()
+                        webview.run_javascript(bridge_js)
+                        print("✅ Bridge script injected")
+
+                webview.connect("load-changed", on_load_finished)
                 webview.load_uri(file_url)
 
                 window.add(webview)

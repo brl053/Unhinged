@@ -122,43 +122,22 @@ validate-independence: ## CRITICAL: Validate architectural independence
 	@python3 control/cultural_enforcement.py
 	@echo "$(GREEN)✅ INDEPENDENCE VALIDATED$(RESET)"
 
-gui: validate-independence ## Launch native HTML GUI (mission control) - INDEPENDENT ONLY
-	$(call log_info,🎮 Launching INDEPENDENT Native HTML GUI...)
-	@echo "$(YELLOW)💡 CULTURE: We are independent. We render natively. We depend on nothing.$(RESET)"
-	@$(HTML_NATIVE) --html control/static_html/index.html
 
-code-editor: validate-independence ## Launch native HTML code editor
-	$(call log_info,💻 Launching Native HTML Code Editor...)
-	@$(HTML_NATIVE) --html control/static_html/code-editor.html
-
-system-health: validate-independence ## Launch system health dashboard
-	$(call log_info,🏥 Launching System Health Dashboard...)
-	@$(HTML_NATIVE) --html control/static_html/system-health.html
-
-table-of-contents: validate-independence ## Launch interface directory
-	$(call log_info,📚 Launching Interface Directory...)
-	@$(HTML_NATIVE) --html control/static_html/table-of-contents.html
 
 # Cultural enforcement targets
 browser-gui: ## FORBIDDEN: External browser usage
 	@echo "$(RED)❌ FORBIDDEN: External browser usage violates independence$(RESET)"
 	@echo "$(RED)🚫 CULTURAL VIOLATION: We are independent. We render natively.$(RESET)"
-	@echo "$(YELLOW)💡 Use 'make gui' for native HTML rendering$(RESET)"
+	@echo "$(YELLOW)💡 Use 'make start' for system interfaces$(RESET)"
 	@exit 1
 
 firefox-gui: ## FORBIDDEN: Firefox usage
 	@echo "$(RED)❌ FORBIDDEN: Firefox usage violates our independence culture$(RESET)"
 	@echo "$(RED)🚫 CULTURAL EDUCATION: This machine is everything. No external browsers.$(RESET)"
-	@echo "$(YELLOW)💡 Use 'make gui' for native WebKit rendering$(RESET)"
+	@echo "$(YELLOW)💡 Use 'make start' for system interfaces$(RESET)"
 	@exit 1
 
-native-gui: ## Launch minimal native GUI (X11 only)
-	$(call log_info,🎮 Launching Minimal Native GUI...)
-	@$(NATIVE_GUI)
 
-native-gui-large: ## Launch minimal native GUI with large window
-	$(call log_info,🎮 Launching Large Minimal GUI...)
-	@$(NATIVE_GUI) --width 1200 --height 800 --title "Unhinged Minimal GUI"
 
 # ============================================================================
 # Help and Information
@@ -331,34 +310,32 @@ CACHE_OPTION := $(if $(FORCE),--no-cache,)
 generate: ## Generate all build artifacts (polyglot proto clients, registry) [use FORCE=1 to bypass cache]
 	$(call log_info,🔧 Generating all build artifacts...)
 	$(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
-	@echo "$(YELLOW)📋 Activating Python virtual environment...$(RESET)"
-	@test -d venv || (echo "$(RED)❌ Virtual environment not found. Run: python3 -m venv venv$(RESET)" && exit 1)
+	@echo "$(YELLOW)📋 Using centralized Python environment...$(RESET)"
+	@test -d build/python/venv || (echo "$(RED)❌ Centralized Python environment not found. Run: cd build/python && python3 setup.py$(RESET)" && exit 1)
 	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
 	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
 	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
-	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel $(CACHE_OPTION)" || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
+	@python3 build/build.py build proto-clients-all $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Static HTML registry generation$(RESET)"
-	@bash -c "source venv/bin/activate && python3 build/build.py build generate-registry $(CACHE_OPTION)" || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
+	@python3 build/build.py build generate-registry $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
 
 	$(call log_success,Build artifacts generation completed)
 
 generate-clients: ## Generate client libraries from protos [use FORCE=1 to bypass cache]
 	$(call log_info,🔧 Generating client libraries...)
 	$(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
-	@bash -c "source venv/bin/activate && python3 build/build.py build proto-clients-all --parallel $(CACHE_OPTION)"
+	@python3 build/build.py build proto-clients-all $(CACHE_OPTION)
 	$(call log_success,Client libraries generated)
 
-setup-python: ## Setup Python virtual environment and install dependencies
-	$(call log_info,🐍 Setting up Python virtual environment...)
-	@test -d venv || python3 -m venv venv
-	@bash -c "source venv/bin/activate && pip install --upgrade pip"
-	@bash -c "source venv/bin/activate && pip install -r requirements.txt"
-	$(call log_success,Python environment setup complete)
+setup-python: ## Setup centralized Python virtual environment and install dependencies
+	$(call log_info,🐍 Setting up centralized Python virtual environment...)
+	@cd build/python && python3 setup.py
+	$(call log_success,Centralized Python environment setup complete)
 
-python-deps: ## Install/update Python dependencies
+python-deps: ## Install/update Python dependencies in centralized environment
 	$(call log_info,📦 Installing Python dependencies...)
-	@test -d venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
-	@bash -c "source venv/bin/activate && pip install -r requirements.txt"
+	@test -d build/python/venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
+	@cd build/python && python3 setup.py
 	$(call log_success,Python dependencies installed)
 
 
@@ -594,23 +571,16 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: ## Generate service registry and open system health dashboard
+start: validate-independence ## Generate service registry and launch native GUI application
 	$(call log_info,🏥 Starting System Health Command Center...)
 	@$(MAKE) check-docker
 	@python3 build/build.py build service-discovery
 	@$(MAKE) generate
 	@echo ""
 	@echo "✅ System Health Dashboard ready!"
-	@echo "🏥 Health Command Center: file://$(PWD)/control/static_html/system-health.html"
-	@echo "🎛️ Mission Control: file://$(PWD)/control/static_html/index.html"
-	@echo "📚 All Interfaces: file://$(PWD)/control/static_html/table-of-contents.html"
-	@echo "🔍 Persistence Platform: file://$(PWD)/control/static_html/persistence-platform.html"
-	@echo ""
-	@if command -v xdg-open >/dev/null 2>&1; then \
-		xdg-open "file://$(PWD)/control/static_html/system-health.html"; \
-	elif command -v open >/dev/null 2>&1; then \
-		open "file://$(PWD)/control/static_html/system-health.html"; \
-	fi
+	@echo "🎮 Launching INDEPENDENT Native HTML GUI..."
+	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
+	@$(HTML_NATIVE) --html control/static_html/index.html
 
 watch-html: ## Watch for changes and auto-rebuild HTML files
 	$(call log_info,👀 Starting HTML build watcher...)
@@ -660,6 +630,8 @@ check-docker: ## Check Docker availability (with installation help)
 	else \
 		echo "$(GREEN)✅ Docker Compose found$(RESET)"; \
 	fi
+
+
 
 help-docker-install: ## Guided Docker installation with verification
 	@echo "$(BLUE)🐳 Docker Installation Guide$(RESET)"
