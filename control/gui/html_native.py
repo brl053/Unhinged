@@ -177,6 +177,8 @@ class UnhingedHTMLNative:
                         result = self.gui.scan_proto_files()
                     elif self.path == '/api/readproto':
                         result = self.gui.read_proto_file(data.get('path', ''))
+                    elif self.path == '/api/parseproto':
+                        result = self.gui.parse_proto_services(data.get('path', ''))
                     else:
                         result = {"error": "Unknown endpoint"}
                     
@@ -503,6 +505,74 @@ class UnhingedHTMLNative:
         except Exception as e:
             return {"error": f"Failed to read proto file: {str(e)}"}
 
+    def parse_proto_services(self, file_path):
+        """Parse proto file and extract service definitions"""
+        try:
+            # First read the file content
+            read_result = self.read_proto_file(file_path)
+            if not read_result.get("success"):
+                return read_result
+
+            content = read_result["content"]
+            services = []
+
+            # Simple regex-based parsing for service definitions
+            import re
+
+            # Find all service blocks
+            service_pattern = r'service\s+(\w+)\s*\{([^}]*)\}'
+            service_matches = re.finditer(service_pattern, content, re.MULTILINE | re.DOTALL)
+
+            for service_match in service_matches:
+                service_name = service_match.group(1)
+                service_body = service_match.group(2)
+
+                # Extract RPC methods from service body
+                rpc_pattern = r'rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)'
+                rpc_matches = re.finditer(rpc_pattern, service_body)
+
+                methods = []
+                for rpc_match in rpc_matches:
+                    method_name = rpc_match.group(1)
+                    request_type = rpc_match.group(2)
+                    response_type = rpc_match.group(3)
+
+                    methods.append({
+                        "name": method_name,
+                        "request_type": request_type,
+                        "response_type": response_type,
+                        "full_signature": rpc_match.group(0).strip()
+                    })
+
+                services.append({
+                    "name": service_name,
+                    "methods": methods,
+                    "method_count": len(methods)
+                })
+
+            # Extract package name
+            package_pattern = r'package\s+([^;]+);'
+            package_match = re.search(package_pattern, content)
+            package_name = package_match.group(1) if package_match else None
+
+            # Extract imports
+            import_pattern = r'import\s+"([^"]+)";'
+            import_matches = re.finditer(import_pattern, content)
+            imports = [match.group(1) for match in import_matches]
+
+            return {
+                "success": True,
+                "file_path": file_path,
+                "package": package_name,
+                "imports": imports,
+                "services": services,
+                "service_count": len(services),
+                "total_methods": sum(len(service["methods"]) for service in services)
+            }
+
+        except Exception as e:
+            return {"error": f"Failed to parse proto file: {str(e)}"}
+
     def get_bridge_javascript(self):
         """Get JavaScript bridge code for injection"""
         return f"""
@@ -582,6 +652,15 @@ window.unhinged = {{
 
     async readProtoFile(path) {{
         const response = await fetch(`${{this.bridgeUrl}}/api/readproto`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ path }})
+        }});
+        return await response.json();
+    }},
+
+    async parseProtoServices(path) {{
+        const response = await fetch(`${{this.bridgeUrl}}/api/parseproto`, {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
             body: JSON.stringify({{ path }})

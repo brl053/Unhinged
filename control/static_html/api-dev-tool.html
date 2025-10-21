@@ -36,6 +36,12 @@
                             Click "Scan Proto Files" to discover .proto files in the project
                         </div>
                     </div>
+
+                    <!-- Proto Services Section -->
+                    <div id="proto-services-section" class="proto-services-section" style="display: none;">
+                        <h4>🔧 Services & Methods</h4>
+                        <div id="proto-services-list" class="proto-services-list"></div>
+                    </div>
                 </div>
 
                 <!-- Request Builder -->
@@ -156,8 +162,87 @@
 
                 selectedProtoFile = path;
 
-                // TODO: In next phase, we'll read and parse the proto file content
-                console.log('Selected proto file:', path);
+                // Parse proto file and display services
+                await parseAndDisplayServices(path);
+            }
+
+            async function parseAndDisplayServices(path) {
+                const servicesSection = document.getElementById('proto-services-section');
+                const servicesList = document.getElementById('proto-services-list');
+
+                try {
+                    // Show loading
+                    servicesList.innerHTML = '<div class="proto-placeholder">🔄 Parsing proto file...</div>';
+                    servicesSection.style.display = 'block';
+
+                    const result = await window.unhinged.parseProtoServices(path);
+
+                    if (result.success) {
+                        displayServices(result);
+                    } else {
+                        servicesList.innerHTML = `<div class="proto-placeholder">❌ Error: ${result.error}</div>`;
+                    }
+                } catch (error) {
+                    servicesList.innerHTML = `<div class="proto-placeholder">❌ Error: ${error.message}</div>`;
+                }
+            }
+
+            function displayServices(parseResult) {
+                const servicesList = document.getElementById('proto-services-list');
+
+                if (parseResult.services.length === 0) {
+                    servicesList.innerHTML = '<div class="proto-placeholder">No services found in this proto file</div>';
+                    return;
+                }
+
+                const servicesHTML = parseResult.services.map(service => `
+                    <div class="service-item">
+                        <div class="service-header" onclick="toggleService('${service.name}')">
+                            <div class="service-name">${service.name}</div>
+                            <div class="service-method-count">${service.method_count} methods</div>
+                        </div>
+                        <div class="service-methods" id="methods-${service.name}">
+                            ${service.methods.map(method => `
+                                <div class="method-item" onclick="selectMethod('${service.name}', '${method.name}', '${method.request_type}', '${method.response_type}')">
+                                    <div class="method-name">${method.name}</div>
+                                    <div class="method-signature">${method.request_type} → ${method.response_type}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+                servicesList.innerHTML = servicesHTML;
+
+                // Show summary
+                const summary = document.createElement('div');
+                summary.className = 'proto-summary';
+                summary.innerHTML = `
+                    <div style="padding: var(--spacing-sm); background: var(--color-background); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-md); font-size: var(--font-size-sm);">
+                        📦 Package: <code>${parseResult.package || 'none'}</code><br>
+                        🔧 Services: ${parseResult.service_count}<br>
+                        ⚡ Total Methods: ${parseResult.total_methods}
+                    </div>
+                `;
+                servicesList.insertBefore(summary, servicesList.firstChild);
+            }
+
+            function toggleService(serviceName) {
+                const methodsDiv = document.getElementById(`methods-${serviceName}`);
+                methodsDiv.classList.toggle('expanded');
+            }
+
+            function selectMethod(serviceName, methodName, requestType, responseType) {
+                // Clear previous selections
+                document.querySelectorAll('.method-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+
+                // Select current method
+                event.target.closest('.method-item').classList.add('selected');
+
+                // TODO: In next phase, we'll populate the request builder with gRPC details
+                console.log('Selected method:', { serviceName, methodName, requestType, responseType });
             }
 
             // HTTP request sending
@@ -459,6 +544,95 @@
         }
 
         .proto-file-item.selected .proto-file-path {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .proto-services-section {
+            margin-top: var(--spacing-lg);
+            border-top: 1px solid var(--color-border);
+            padding-top: var(--spacing-lg);
+        }
+
+        .proto-services-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .service-item {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: var(--spacing-sm);
+            overflow: hidden;
+        }
+
+        .service-header {
+            padding: var(--spacing-sm);
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-header:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .service-name {
+            font-weight: bold;
+        }
+
+        .service-method-count {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .service-header:hover .service-method-count {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .service-methods {
+            display: none;
+            padding: var(--spacing-sm);
+        }
+
+        .service-methods.expanded {
+            display: block;
+        }
+
+        .method-item {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: var(--spacing-xs);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .method-item:hover {
+            background: var(--color-surface);
+        }
+
+        .method-item.selected {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .method-name {
+            font-weight: bold;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .method-signature {
+            font-size: var(--font-size-sm);
+            font-family: monospace;
+            color: var(--color-text-secondary);
+        }
+
+        .method-item.selected .method-signature {
             color: rgba(255, 255, 255, 0.8);
         }
 
