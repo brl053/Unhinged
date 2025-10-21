@@ -1,0 +1,170 @@
+# Unhinged Networking Infrastructure Configuration
+# @llm-type infrastructure-config
+# @llm-legend Network infrastructure configuration for Unhinged system deployment
+# @llm-key Network topology, security policies, and connectivity configuration
+# @llm-map Infrastructure as code for network management and service connectivity
+# @llm-axiom Network infrastructure must be secure, scalable, and maintainable
+# @llm-token networking-infrastructure: Network configuration for operational deployment
+
+version: "1.0"
+infrastructure_type: "networking"
+last_updated: "2025-10-20T20:00:00Z"
+
+# Network Topology
+networks:
+  unhinged-production:
+    driver: bridge
+    name: unhinged-production
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+    labels:
+      - "unhinged.network.type=production"
+      - "unhinged.network.environment=production"
+  
+  unhinged-observability:
+    driver: bridge
+    name: unhinged-observability
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
+    labels:
+      - "unhinged.network.type=observability"
+      - "unhinged.network.environment=production"
+  
+  unhinged-development:
+    driver: bridge
+    name: unhinged-development
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
+          gateway: 172.22.0.1
+    labels:
+      - "unhinged.network.type=development"
+      - "unhinged.network.environment=development"
+
+# Port Allocation Strategy
+port_allocation:
+  external_range: [1000, 1999]
+  categories:
+    frontend: [1000, 1099]
+    backend: [1100, 1199]
+    database: [1200, 1299]
+    vector: [1300, 1399]
+    messaging: [1400, 1499]
+    ai_ml: [1500, 1599]
+    admin: [1600, 1699]
+    storage: [1700, 1799]
+    observability: [1800, 1899]
+    platform: [1900, 1999]
+
+# Load Balancing Configuration
+load_balancing:
+  enable: true
+  strategy: "round_robin"
+  health_check_interval: 30
+  health_check_timeout: 5
+  max_retries: 3
+
+# Security Policies
+security:
+  network_policies:
+    - name: "frontend-to-backend"
+      from: "frontend"
+      to: "backend"
+      ports: [1100, 1199]
+      protocol: "tcp"
+    
+    - name: "backend-to-database"
+      from: "backend"
+      to: "database"
+      ports: [1200, 1299]
+      protocol: "tcp"
+    
+    - name: "backend-to-messaging"
+      from: "backend"
+      to: "messaging"
+      ports: [1400, 1499]
+      protocol: "tcp"
+    
+    - name: "observability-access"
+      from: "any"
+      to: "observability"
+      ports: [1800, 1899]
+      protocol: "tcp"
+
+# DNS Configuration
+dns:
+  enable_service_discovery: true
+  domain: "unhinged.local"
+  search_domains:
+    - "unhinged.local"
+    - "services.unhinged.local"
+  
+# Ingress Configuration
+ingress:
+  enable: true
+  class: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  
+  rules:
+    - host: "unhinged.local"
+      paths:
+        - path: "/"
+          service: "frontend"
+          port: 1000
+        
+        - path: "/api"
+          service: "backend"
+          port: 1100
+        
+        - path: "/health"
+          service: "backend"
+          port: 1100
+        
+        - path: "/grafana"
+          service: "grafana"
+          port: 1807
+        
+        - path: "/prometheus"
+          service: "prometheus"
+          port: 1806
+
+# Monitoring and Observability
+monitoring:
+  network_metrics:
+    enable: true
+    collection_interval: 30
+    retention_days: 30
+  
+  traffic_analysis:
+    enable: true
+    sample_rate: 0.1
+    
+  alerts:
+    - name: "high_network_latency"
+      condition: "avg_latency > 1000ms"
+      severity: "warning"
+    
+    - name: "network_partition"
+      condition: "connectivity_loss > 30s"
+      severity: "critical"
+
+# Backup and Disaster Recovery
+backup:
+  network_config_backup:
+    enable: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    retention_days: 30
+    
+  disaster_recovery:
+    enable_failover: true
+    failover_timeout: 60
+    recovery_strategy: "automatic"

@@ -1,0 +1,110 @@
+# Simplified Docker Compose for Voice Recording
+# This focuses on just the essential services needed for voice recording
+
+services:
+  # ============================================================================
+  # Python Whisper TTS Service (Essential for voice recording)
+  # ============================================================================
+  whisper-tts:
+    build:
+      context: ./services/whisper-tts
+      dockerfile: Dockerfile
+    container_name: whisper-tts-service
+    ports:
+      - "8100:8000"  # HTTP API
+      - "9091:9091"  # gRPC API
+    environment:
+      - ENABLE_FLASK=true
+      - ENABLE_GRPC=true
+      - WHISPER_MODEL=base
+      - TTS_ENGINE=gtts
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - whisper-models:/root/.cache/whisper
+      - audio-uploads:/app/uploads
+    networks:
+      - unhinged-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
+  # ============================================================================
+  # Python Vision AI Service (Essential for image processing)
+  # ============================================================================
+  vision-ai:
+    build:
+      context: ./services/vision-ai
+      dockerfile: Dockerfile
+    container_name: vision-ai-service
+    ports:
+      - "8001:8001"  # HTTP API
+      - "9192:9092"  # gRPC API (future)
+    environment:
+      - ENABLE_FLASK=true
+      - ENABLE_GRPC=false
+      - VISION_MODEL=Salesforce/blip-image-captioning-base
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - vision-models:/root/.cache/transformers
+      - image-uploads:/app/uploads
+    networks:
+      - unhinged-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s  # Vision model loading takes time
+    restart: unless-stopped
+
+  # ============================================================================
+  # PostgreSQL Database (Optional - can use in-memory for testing)
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: unhinged-postgres
+    ports:
+      - "5433:5432"  # Use different port to avoid conflict
+    environment:
+      - POSTGRES_DB=unhinged
+      - POSTGRES_USER=unhinged
+      - POSTGRES_PASSWORD=unhinged_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - unhinged-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unhinged -d unhinged"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  unhinged-network:
+    driver: bridge
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  postgres-data:
+    driver: local
+  audio-uploads:
+    driver: local
+  whisper-models:
+    driver: local
+  image-uploads:
+    driver: local
+  vision-models:
+    driver: local

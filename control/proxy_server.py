@@ -41,8 +41,18 @@ import time
 
 # Add control system to path
 sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent / "deployment"))
 
 from system import SystemController
+
+# Import new control plane modules
+try:
+    from deploy import UnhingedDeploymentOrchestrator
+    from health_checks import UnhingedHealthMonitor
+    CONTROL_PLANE_AVAILABLE = True
+except ImportError:
+    logger.warning("Control plane modules not available")
+    CONTROL_PLANE_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -261,6 +271,85 @@ async def global_exception_handler(request: Request, exc: Exception):
             "future_note": "In Unhinged OS, this would be a kernel panic with recovery"
         }
     )
+
+# =============================================================================
+# NEW CONTROL PLANE ENDPOINTS
+# Runtime deployment and health monitoring integration
+# =============================================================================
+
+@app.get("/control/deployment/status")
+async def get_deployment_status():
+    """Get current deployment status across all environments"""
+    if not CONTROL_PLANE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Control plane not available")
+
+    try:
+        project_root = Path(__file__).parent.parent
+        orchestrator = UnhingedDeploymentOrchestrator(project_root, "development")
+        status = orchestrator.get_deployment_status()
+
+        return JSONResponse({
+            "status": "success",
+            "data": status,
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        logger.error(f"Deployment status error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/control/health/status")
+async def get_health_status():
+    """Get current health status of all services"""
+    if not CONTROL_PLANE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Control plane not available")
+
+    try:
+        project_root = Path(__file__).parent.parent
+        monitor = UnhingedHealthMonitor(project_root)
+
+        # Perform health checks
+        results = await monitor.check_all_services()
+
+        # Convert results to serializable format
+        health_data = {}
+        for service_name, result in results.items():
+            health_data[service_name] = {
+                "status": result.status,
+                "response_time": result.response_time,
+                "error_message": result.error_message,
+                "timestamp": result.timestamp.isoformat()
+            }
+
+        return JSONResponse({
+            "status": "success",
+            "data": health_data,
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        logger.error(f"Health status error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/control/config/services")
+async def get_service_registry():
+    """Get service registry configuration"""
+    try:
+        project_root = Path(__file__).parent.parent
+        registry_file = project_root / "control" / "config" / "service-registry.yml"
+
+        if registry_file.exists():
+            with open(registry_file, 'r') as f:
+                registry = yaml.safe_load(f)
+
+            return JSONResponse({
+                "status": "success",
+                "data": registry,
+                "timestamp": time.time()
+            })
+        else:
+            raise HTTPException(status_code=404, detail="Service registry not found")
+    except Exception as e:
+        logger.error(f"Service registry error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 def main():
     """Main entry point for the virtualization boundary server"""

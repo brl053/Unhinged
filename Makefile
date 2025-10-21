@@ -176,16 +176,36 @@ setup: ## Initial project setup
 # Docker Services Management
 # ============================================================================
 
-up: ## Start all services
+up: ## Start all services (production)
 	$(call log_info,🚀 Starting all services...)
-	@docker compose up -d
+	@docker compose -f control/orchestration/docker-compose.production.yml up -d
 	$(call log_success,Services started)
 	@$(MAKE) status
 
 down: ## Stop all services
 	$(call log_warning,🛑 Stopping all services...)
-	@docker compose down
+	@docker compose -f control/orchestration/docker-compose.production.yml down
 	$(call log_success,Services stopped)
+
+dev-up: ## Start development services
+	$(call log_info,🔧 Starting development services...)
+	@docker compose -f control/orchestration/docker-compose.development.yml up -d
+	$(call log_success,Development services started)
+
+dev-down: ## Stop development services
+	$(call log_warning,🛑 Stopping development services...)
+	@docker compose -f control/orchestration/docker-compose.development.yml down
+	$(call log_success,Development services stopped)
+
+observability-up: ## Start observability stack
+	$(call log_info,📊 Starting observability stack...)
+	@docker compose -f control/orchestration/docker-compose.observability.yml up -d
+	$(call log_success,Observability stack started)
+
+observability-down: ## Stop observability stack
+	$(call log_warning,🛑 Stopping observability stack...)
+	@docker compose -f control/orchestration/docker-compose.observability.yml down
+	$(call log_success,Observability stack stopped)
 
 restart: ## Restart all services (atomic: down then up)
 	$(call log_info,🔄 Restarting all services...)

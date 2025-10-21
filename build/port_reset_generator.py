@@ -45,9 +45,11 @@ class UnhingedPortResetGenerator:
     
     def __init__(self, project_root: Path, mapping_file: Path = None):
         self.project_root = project_root
-        # If running from build/ directory, mapping file is in current directory
+        # Port mapping file is now in control/config/
         if mapping_file:
             self.mapping_file = mapping_file
+        elif (project_root / "control" / "config" / "port-allocation.yml").exists():
+            self.mapping_file = project_root / "control" / "config" / "port-allocation.yml"
         elif (Path.cwd() / "unhinged_port_mapping.yml").exists():
             self.mapping_file = Path.cwd() / "unhinged_port_mapping.yml"
         else:
