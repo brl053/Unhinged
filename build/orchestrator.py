@@ -50,7 +50,7 @@ except ImportError:
         VALIDATION_AVAILABLE = True
     except ImportError:
         VALIDATION_AVAILABLE = False
-        logger.warning("⚠️ Build validators not available")
+        print("⚠️ Build validators not available")
 
 # Import monitoring system
 try:
