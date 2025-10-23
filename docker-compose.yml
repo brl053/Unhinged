@@ -71,8 +71,6 @@ services:
     build: ./services/vision-ai
     container_name: vision-ai-service
     environment:
-      - ENABLE_FLASK=true
-      - ENABLE_GRPC=false
       - VISION_MODEL=Salesforce/blip-image-captioning-base
       - LOG_LEVEL=INFO
       - PYTHONUNBUFFERED=1
@@ -102,7 +100,7 @@ services:
       - whisper-models:/root/.cache/whisper
       - audio-uploads:/app/uploads
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "grpcurl", "-plaintext", "localhost:9091", "unhinged.health.v1.HealthService/Heartbeat"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 """
-Whisper TTS Service Main Entry Point
-Supports both Flask HTTP API (legacy) and gRPC API (new)
+@llm-type service-launcher
+@llm-legend Speech-to-text service launcher with gRPC health.proto implementation
+@llm-key Launches gRPC API for speech transcription with standardized health endpoints
+@llm-map Main entry point for whisper-based speech-to-text service using health.proto
+@llm-axiom Service must implement health.proto for service discovery and monitoring
+@llm-contract Provides speech transcription via gRPC streaming API with health.proto compliance
+@llm-token speech-service: Whisper-based speech-to-text with gRPC and health.proto
+
+Speech-to-Text Service Main Entry Point
+
+gRPC-only service with health.proto implementation:
+- gRPC API: Streaming audio processing and real-time transcription
+- Health checks: Implements unhinged.health.v1.HealthService
+- Service discovery integration via health.proto
+- Whisper model management and CUDA optimization
 """
 
 import os
 import sys
-import threading
 import logging
 import signal
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 # Configure logging
 logging.basicConfig(
@@ -19,23 +30,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def run_flask_server():
-    """Run the Flask HTTP server for backward compatibility"""
-    try:
-        from app import app
-        logger.info("Starting Flask HTTP server on port 8000...")
-        app.run(host='0.0.0.0', port=8000, debug=False, threaded=True)
-    except Exception as e:
-        logger.error(f"Flask server failed: {e}")
-
 def run_grpc_server():
-    """Run the gRPC server for new proto-compliant API"""
+    """Run the gRPC server with health.proto implementation"""
     try:
         from grpc_server import serve
         logger.info("Starting gRPC server on port 9091...")
         serve()
     except Exception as e:
         logger.error(f"gRPC server failed: {e}")
+        sys.exit(1)
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
@@ -43,43 +46,23 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 def main():
-    """Main entry point - runs both servers"""
+    """Main entry point - gRPC only"""
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
-    # Determine which servers to run based on environment
-    run_flask = os.getenv('ENABLE_FLASK', 'true').lower() == 'true'
-    run_grpc = os.getenv('ENABLE_GRPC', 'true').lower() == 'true'
-    
-    if not run_flask and not run_grpc:
-        logger.error("At least one server (Flask or gRPC) must be enabled")
+
+    logger.info("=== Speech-to-Text gRPC Service Starting ===")
+    logger.info("gRPC API: Enabled with health.proto implementation")
+
+    try:
+        run_grpc_server()
+    except KeyboardInterrupt:
+        logger.info("Received keyboard interrupt, shutting down...")
+    except Exception as e:
+        logger.error(f"Server error: {e}")
         sys.exit(1)
-    
-    logger.info("=== Whisper TTS Service Starting ===")
-    logger.info(f"Flask HTTP API: {'Enabled' if run_flask else 'Disabled'}")
-    logger.info(f"gRPC API: {'Enabled' if run_grpc else 'Disabled'}")
-    
-    # Use ThreadPoolExecutor to run servers concurrently
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = []
-        
-        if run_flask:
-            futures.append(executor.submit(run_flask_server))
-        
-        if run_grpc:
-            futures.append(executor.submit(run_grpc_server))
-        
-        try:
-            # Wait for any server to complete (which shouldn't happen in normal operation)
-            for future in futures:
-                future.result()
-        except KeyboardInterrupt:
-            logger.info("Received keyboard interrupt, shutting down...")
-        except Exception as e:
-            logger.error(f"Server error: {e}")
-        finally:
-            logger.info("=== Whisper TTS Service Stopped ===")
+    finally:
+        logger.info("=== Speech-to-Text Service Stopped ===")
 
 if __name__ == '__main__':
     main()

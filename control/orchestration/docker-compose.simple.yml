@@ -14,8 +14,6 @@ services:
       - "8100:8000"  # HTTP API
       - "9091:9091"  # gRPC API
     environment:
-      - ENABLE_FLASK=true
-      - ENABLE_GRPC=true
       - WHISPER_MODEL=base
       - TTS_ENGINE=gtts
       - LOG_LEVEL=INFO
@@ -26,7 +24,7 @@ services:
     networks:
       - unhinged-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "grpcurl", "-plaintext", "localhost:9091", "unhinged.health.v1.HealthService/Heartbeat"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -45,8 +43,6 @@ services:
       - "8001:8001"  # HTTP API
       - "9192:9092"  # gRPC API (future)
     environment:
-      - ENABLE_FLASK=true
-      - ENABLE_GRPC=false
       - VISION_MODEL=Salesforce/blip-image-captioning-base
       - LOG_LEVEL=INFO
       - PYTHONUNBUFFERED=1

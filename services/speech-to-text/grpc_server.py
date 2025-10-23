@@ -26,6 +26,15 @@ import common_pb2
 from google.protobuf import timestamp_pb2
 import time
 
+# Add path for generated health proto
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent / "generated/python/clients"))
+
+# Health proto imports
+from unhinged_proto_clients.health import health_pb2
+from unhinged_proto_clients.health import health_pb2_grpc
+
 def set_current_timestamp(timestamp_field):
     """Helper function to set current timestamp"""
     timestamp_field.seconds = int(time.time())
@@ -35,7 +44,7 @@ def set_current_timestamp(timestamp_field):
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer):
+class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.HealthServiceServicer):
     """
     gRPC Audio Service implementation following proto contracts
     
@@ -50,6 +59,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer):
     def __init__(self):
         self.whisper_model = None
         self.upload_folder = '/app/uploads'
+        self.start_time = time.time()  # Track service start time for uptime
         os.makedirs(self.upload_folder, exist_ok=True)
         self._load_whisper_model()
     
@@ -438,24 +448,49 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer):
         set_current_timestamp(response.response.timestamp)
         return response
     
-    def HealthCheck(self, request: common_pb2.HealthCheckRequest, context) -> common_pb2.HealthCheckResponse:
-        """Health check endpoint"""
+    def Heartbeat(self, request: health_pb2.HeartbeatRequest, context) -> health_pb2.HeartbeatResponse:
+        """Fast heartbeat endpoint (<10ms) - health.proto implementation"""
         try:
-            response = common_pb2.HealthCheckResponse()
-            response.status = "healthy" if self.whisper_model is not None else "unhealthy"
-            set_current_timestamp(response.timestamp)
-            response.details.update({
-                "whisper_model_loaded": str(self.whisper_model is not None),
-                "cuda_available": str(torch.cuda.is_available()),
-                "service": "whisper-tts",
-                "version": "1.0.0"
-            })
+            response = health_pb2.HeartbeatResponse()
+            response.alive = True
+            response.timestamp_ms = int(time.time() * 1000)
+            response.service_id = "speech-to-text-service"
+            response.version = "1.0.0"
+            response.uptime_ms = int((time.time() - self.start_time) * 1000) if hasattr(self, 'start_time') else 0
+            response.status = health_pb2.HEALTH_STATUS_HEALTHY if self.whisper_model is not None else health_pb2.HEALTH_STATUS_UNHEALTHY
             return response
         except Exception as e:
-            response = common_pb2.HealthCheckResponse()
-            response.status = "unhealthy"
-            set_current_timestamp(response.timestamp)
-            response.details.update({"error": str(e)})
+            response = health_pb2.HeartbeatResponse()
+            response.alive = False
+            response.timestamp_ms = int(time.time() * 1000)
+            response.service_id = "speech-to-text-service"
+            response.version = "1.0.0"
+            response.status = health_pb2.HEALTH_STATUS_UNHEALTHY
+            return response
+
+    def Diagnostics(self, request: health_pb2.DiagnosticsRequest, context) -> health_pb2.DiagnosticsResponse:
+        """Detailed diagnostics endpoint (<1s) - health.proto implementation"""
+        try:
+            # Get heartbeat first
+            heartbeat = self.Heartbeat(health_pb2.HeartbeatRequest(), context)
+
+            response = health_pb2.DiagnosticsResponse()
+            response.heartbeat.CopyFrom(heartbeat)
+
+            # Add metadata if requested
+            if request.include_metrics:
+                response.metadata["whisper_model_loaded"] = str(self.whisper_model is not None)
+                response.metadata["cuda_available"] = str(torch.cuda.is_available())
+                response.metadata["service_type"] = "speech-to-text"
+
+            response.last_updated.GetCurrentTime()
+            return response
+        except Exception as e:
+            # Return minimal response on error
+            response = health_pb2.DiagnosticsResponse()
+            response.heartbeat.CopyFrom(self.Heartbeat(health_pb2.HeartbeatRequest(), context))
+            response.metadata["error"] = str(e)
+            response.last_updated.GetCurrentTime()
             return response
     
     def _extract_language_from_voice(self, voice_id: str) -> str:
@@ -479,9 +514,13 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer):
 
 
 def serve():
-    """Start the gRPC server"""
+    """Start the gRPC server with health.proto implementation"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    audio_pb2_grpc.add_AudioServiceServicer_to_server(AudioServiceServicer(), server)
+    servicer = AudioServiceServicer()
+
+    # Register both audio and health services
+    audio_pb2_grpc.add_AudioServiceServicer_to_server(servicer, server)
+    health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
     
     listen_addr = '[::]:9091'
     server.add_insecure_port(listen_addr)
