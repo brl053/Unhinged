@@ -30,6 +30,9 @@ repositories {
 }
 
 dependencies {
+    // Unhinged Service Framework (local dependency)
+    implementation(files("../../libs/service-framework/kotlin/build/libs/service-framework-1.0.0.jar"))
+
     // Kotlin and Coroutines
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")

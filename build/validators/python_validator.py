@@ -51,37 +51,114 @@ class PythonValidator(BaseValidator):
         """Validate a single Python file"""
         try:
             content = file_path.read_text(encoding='utf-8')
-            
-            # Check for llm-docs compliance
-            await self._check_llm_docs(file_path, content, results)
-            
-            # Check for proper imports
-            await self._check_imports(file_path, content, results)
-            
-            # Check for centralized environment usage
-            await self._check_environment_usage(file_path, content, results)
-            
-            # Parse AST for deeper analysis
-            try:
-                tree = ast.parse(content)
-                await self._check_ast_patterns(file_path, tree, results)
-            except SyntaxError as e:
-                results.append(ValidationResult(
-                    validator_name=self.name,
-                    severity="ERROR",
-                    message=f"Python syntax error: {e}",
-                    file_path=file_path,
-                    line_number=e.lineno,
-                    fix_suggestion="Fix Python syntax error",
-                    category="python"
-                ))
-        
+
+            # Check for Flask usage (should be removed)
+            await self._check_flask_usage(file_path, content, results)
+
+            # Check for health.proto implementation in services
+            if "services/" in str(file_path) and file_path.name in ["main.py", "grpc_server.py"]:
+                await self._check_health_proto_implementation(file_path, content, results)
+
+            # Existing validations...
+            await self._validate_existing_patterns(file_path, content, results)
+
         except Exception as e:
             results.append(ValidationResult(
+                file_path=str(file_path),
+                line_number=1,
+                severity="ERROR",
+                message=f"Failed to validate Python file: {e}",
+                rule="python-file-validation"
+            ))
+
+    async def _check_flask_usage(self, file_path: Path, content: str, results: List[ValidationResult]):
+        """Check for forbidden Flask usage"""
+        flask_patterns = [
+            r"from flask import",
+            r"import flask",
+            r"Flask\(",
+            r"@app\.route",
+            r"app\.run\("
+        ]
+
+        lines = content.split('\n')
+        for line_num, line in enumerate(lines, 1):
+            for pattern in flask_patterns:
+                if re.search(pattern, line, re.IGNORECASE):
+                    results.append(ValidationResult(
+                        file_path=str(file_path),
+                        line_number=line_num,
+                        severity="ERROR",
+                        message=f"Flask usage detected: {line.strip()}. Use gRPC with health.proto instead.",
+                        rule="no-flask-usage"
+                    ))
+
+    async def _check_health_proto_implementation(self, file_path: Path, content: str, results: List[ValidationResult]):
+        """Check for proper health.proto implementation in services"""
+        if "grpc_server.py" in str(file_path):
+            # Check for health.proto imports
+            if "health_pb2" not in content:
+                results.append(ValidationResult(
+                    file_path=str(file_path),
+                    line_number=1,
+                    severity="ERROR",
+                    message="gRPC server must import health_pb2 for health.proto implementation",
+                    rule="health-proto-import"
+                ))
+
+            # Check for HealthService implementation
+            if "HealthServiceServicer" not in content:
+                results.append(ValidationResult(
+                    file_path=str(file_path),
+                    line_number=1,
+                    severity="ERROR",
+                    message="gRPC server must implement HealthServiceServicer",
+                    rule="health-service-implementation"
+                ))
+
+            # Check for Heartbeat method
+            if "def Heartbeat(" not in content:
+                results.append(ValidationResult(
+                    file_path=str(file_path),
+                    line_number=1,
+                    severity="ERROR",
+                    message="gRPC server must implement Heartbeat() method",
+                    rule="heartbeat-method"
+                ))
+
+            # Check for Diagnostics method
+            if "def Diagnostics(" not in content:
+                results.append(ValidationResult(
+                    file_path=str(file_path),
+                    line_number=1,
+                    severity="WARNING",
+                    message="gRPC server should implement Diagnostics() method",
+                    rule="diagnostics-method"
+                ))
+
+    async def _validate_existing_patterns(self, file_path: Path, content: str, results: List[ValidationResult]):
+        """Validate existing Python patterns (llm-docs, imports, etc.)"""
+        # Check for llm-docs compliance
+        await self._check_llm_docs(file_path, content, results)
+
+        # Check for proper imports
+        await self._check_imports(file_path, content, results)
+
+        # Check for centralized environment usage
+        await self._check_environment_usage(file_path, content, results)
+
+        # Parse AST for deeper analysis
+        try:
+            tree = ast.parse(content)
+            await self._check_ast_patterns(file_path, tree, results)
+        except SyntaxError as e:
+            results.append(ValidationResult(
                 validator_name=self.name,
-                severity="WARNING",
-                message=f"Could not validate Python file: {e}",
+                severity="ERROR",
+                message=f"Python syntax error: {e}",
                 file_path=file_path,
+                line_number=e.lineno,
+                fix_suggestion="Fix Python syntax error",
                 category="python"
             ))
     
