@@ -42,7 +42,8 @@ That's about it.
 
 ## 📋 **Documentation**
 
-Some docs are in `/docs/` if you need them.
+- **For Developers**: See `/docs/` for comprehensive documentation
+- **For LLM Agents**: Start with `/llm/quickstart/LLM_MASTER_PROMPT.md` before making any changes
 
 ## 🚀 **Status**
 

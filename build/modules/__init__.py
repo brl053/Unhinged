@@ -236,7 +236,7 @@ class BuildUtils:
         """Create a BuildArtifact from a file"""
         if metadata is None:
             metadata = {}
-        
+
         return BuildArtifact(
             path=file_path,
             type=artifact_type,
@@ -244,6 +244,47 @@ class BuildUtils:
             checksum=BuildUtils.calculate_file_hash(file_path),
             metadata=metadata
         )
+
+    @staticmethod
+    def validate_build_patterns(repo_root: Path) -> List[str]:
+        """
+        @llm-type validation
+        @llm-legend Validate build system patterns and cultural commandments
+        @llm-key Checks for scattered files, proper generated content location, and cultural compliance
+        @llm-map Integrated enforcement that runs as part of build validation
+        @llm-axiom Build validation must prevent chaos and maintain architectural integrity
+        @llm-contract Returns list of violations, empty list means all patterns are valid
+        @llm-token build-validation: Pattern enforcement integrated into build system
+
+        Validate that build patterns are followed:
+        - No scattered build files in root
+        - Generated content in /generated/
+        - No backup/temp files
+        - Proper use of centralized Python environment
+        """
+        violations = []
+
+        try:
+            # Check for forbidden files in root
+            forbidden_patterns = ["*.py", "*.js", "*.ts", "*.sh", "demo_*", "test_*", "*.backup*"]
+            allowed_root_files = {"requirements.txt", "Makefile", "README.md", "build-config.yml", ".gitignore"}
+
+            for pattern in forbidden_patterns:
+                for match in repo_root.glob(pattern):
+                    if match.is_file() and match.name not in allowed_root_files:
+                        violations.append(f"Forbidden file in root: {match.name}")
+
+            # Check for scattered build files
+            scattered_files = ["gradlew", "package.json", "build.gradle"]
+            for root_dir in repo_root.iterdir():
+                if root_dir.is_dir() and root_dir.name not in {"build", "generated", ".git"}:
+                    for scattered_file in scattered_files:
+                        if (root_dir / scattered_file).exists():
+                            violations.append(f"Scattered build file: {root_dir.name}/{scattered_file}")
+        except Exception as e:
+            violations.append(f"Validation error: {str(e)}")
+
+        return violations
 
 # Export main classes and functions
 __all__ = [

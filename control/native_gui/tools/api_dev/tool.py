@@ -230,6 +230,9 @@ class APIDevTool(BaseTool):
                 # Populate proto browser with network services
                 self.proto_browser.populate_network_services(network_services)
 
+                # Update request builder with network services
+                self.request_builder.update_network_services(network_services)
+
                 # Update button with count
                 count = len(network_services)
                 button.set_label(f"✅ Found {count} services")

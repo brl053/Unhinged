@@ -1,8 +1,8 @@
 """
-🎛️ Main Window - Native GTK API Development Tool
+🎛️ Control Center Main Window - Multi-Tool Interface
 
-Pure GTK4 implementation of the API dev tool interface.
-Three-pane layout: Proto Browser | Request Builder | Response Viewer
+Pure GTK4 implementation of the Unhinged Control Center.
+Tabbed interface for multiple tools: API Dev, System Monitor, Logs, etc.
 
 No WebKit. No JavaScript. No HTML/CSS. Pure native widgets.
 """
@@ -14,265 +14,272 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
 from pathlib import Path
 
-from .widgets.proto_browser import ProtoBrowser
-from .widgets.request_builder import RequestBuilder
-from .widgets.response_viewer import ResponseViewer
-from .bridge.proto_scanner import ProtoScanner
-from .bridge.grpc_client import GRPCClient
-from .bridge.http_client import HTTPClient
+from .core.tool_manager import ToolManager, BaseTool
 
 
-class MainWindow(Gtk.ApplicationWindow):
+class ControlCenterWindow(Gtk.ApplicationWindow):
     """
-    Main application window with three-pane layout.
-    
+    Main Control Center window with tabbed tool interface.
+
     Layout:
     ┌─────────────────────────────────────────────────────────┐
-    │ Header Bar (title, menu, actions)                      │
-    ├─────────────┬─────────────────┬─────────────────────────┤
-    │ Proto       │ Request         │ Response                │
-    │ Browser     │ Builder         │ Viewer                  │
-    │             │                 │                         │
-    │ - Files     │ - Method/URL    │ - Status                │
-    │ - Services  │ - Headers       │ - Headers               │
-    │ - Methods   │ - Body          │ - Body                  │
-    │             │ - Send Button   │ - Timing                │
-    └─────────────┴─────────────────┴─────────────────────────┘
+    │ 🎛️ Unhinged Control Center                    [_][□][×] │
+    ├─────────────────────────────────────────────────────────┤
+    │ [🔧 API] [🏥 Health] [📋 Logs] [🚀 Services] [📁 Files] │
+    ├─────────────────────────────────────────────────────────┤
+    │                                                         │
+    │  Current Tool Content Area                              │
+    │  ┌─────────────────────────────────────────────────┐   │
+    │  │                                                 │   │
+    │  │  Tool-specific interface loads here             │   │
+    │  │  (API Dev Tool, System Monitor, etc.)           │   │
+    │  │                                                 │   │
+    │  └─────────────────────────────────────────────────┘   │
+    │                                                         │
+    ├─────────────────────────────────────────────────────────┤
+    │ Status: Ready | Tools: 5 loaded | Independence: ✅ Max  │
+    └─────────────────────────────────────────────────────────┘
     """
     
-    def __init__(self, application, project_root):
+    def __init__(self, application, project_root, tool_manager):
         super().__init__(
             application=application,
-            title="🔧 Unhinged API Dev Tool",
-            default_width=1400,
-            default_height=900
+            title="🎛️ Unhinged Control Center",
+            default_width=1600,
+            default_height=1000
         )
-        
+
         self.project_root = project_root
-        
-        # Initialize backend services (direct Python objects - no HTTP bridge!)
-        self.proto_scanner = ProtoScanner(project_root)
-        self.grpc_client = GRPCClient()
-        self.http_client = HTTPClient()
-        
+        self.tool_manager = tool_manager
+
+        # Current tool state
+        self.current_tool = None
+        self.tool_widgets = {}  # Cache tool widgets
+
         # Build UI
         self._setup_header_bar()
         self._setup_main_layout()
-        self._connect_signals()
-        
+        self._setup_status_bar()
+        self._load_tools()
+
         # Apply CSS class for theming
-        self.add_css_class("api-dev-window")
-        
-        print("✅ Native GTK main window initialized")
+        self.add_css_class("control-center-window")
+
+        print("✅ Control Center window initialized")
     
     def _setup_header_bar(self):
         """Create and configure the header bar"""
         self.header_bar = Gtk.HeaderBar()
         self.set_titlebar(self.header_bar)
-        
+
         # Title with icon
         title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        title_label = Gtk.Label(label="🔧 API Dev Tool")
+        title_label = Gtk.Label(label="🎛️ Control Center")
         title_label.add_css_class("title")
         title_box.append(title_label)
-        
+
         self.header_bar.set_title_widget(title_box)
-        
-        # Left side buttons
-        scan_button = Gtk.Button(label="🔍 Scan Proto")
-        scan_button.connect("clicked", self._on_scan_proto_clicked)
-        scan_button.add_css_class("suggested-action")
-        self.header_bar.pack_start(scan_button)
-        
-        # Right side buttons
-        send_button = Gtk.Button(label="🚀 Send Request")
-        send_button.connect("clicked", self._on_send_request_clicked)
-        send_button.add_css_class("destructive-action")
-        self.header_bar.pack_end(send_button)
-        
-        # Store references for later use
-        self.scan_button = scan_button
-        self.send_button = send_button
+
+        # Left side: Tool actions (populated by active tool)
+        self.tool_actions_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.header_bar.pack_start(self.tool_actions_box)
+
+        # Right side: Global actions
+        settings_button = Gtk.Button()
+        settings_button.set_icon_name("preferences-system-symbolic")
+        settings_button.set_tooltip_text("Settings")
+        settings_button.connect("clicked", self._on_settings_clicked)
+        self.header_bar.pack_end(settings_button)
+
+        about_button = Gtk.Button()
+        about_button.set_icon_name("help-about-symbolic")
+        about_button.set_tooltip_text("About")
+        about_button.connect("clicked", self._on_about_clicked)
+        self.header_bar.pack_end(about_button)
     
     def _setup_main_layout(self):
-        """Create the three-pane main layout"""
-        # Main horizontal paned container
-        main_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
-        main_paned.set_shrink_start_child(False)
-        main_paned.set_shrink_end_child(False)
-        
-        # Left pane: Proto browser (300px default)
-        self.proto_browser = ProtoBrowser(self.proto_scanner)
-        main_paned.set_start_child(self.proto_browser)
-        main_paned.set_position(300)
-        
-        # Right side: Request builder + Response viewer
-        right_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
-        right_paned.set_shrink_start_child(False)
-        right_paned.set_shrink_end_child(False)
-        
-        # Center pane: Request builder
-        self.request_builder = RequestBuilder()
-        right_paned.set_start_child(self.request_builder)
-        
-        # Right pane: Response viewer
-        self.response_viewer = ResponseViewer()
-        right_paned.set_end_child(self.response_viewer)
-        
-        # Set equal split for request/response
-        right_paned.set_position(400)
-        
-        main_paned.set_end_child(right_paned)
-        
+        """Create the main tabbed layout"""
+        # Main vertical box
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+
+        # Tool tabs bar
+        self.tabs_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+        self.tabs_box.add_css_class("tool-tabs")
+        self.tabs_box.set_margin_start(16)
+        self.tabs_box.set_margin_end(16)
+        self.tabs_box.set_margin_top(8)
+        main_box.append(self.tabs_box)
+
+        # Tool content area
+        self.content_stack = Gtk.Stack()
+        self.content_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        self.content_stack.set_transition_duration(200)
+        self.content_stack.add_css_class("tool-content")
+        self.content_stack.set_vexpand(True)
+        main_box.append(self.content_stack)
+
+        # Status bar will be added in _setup_status_bar
+
         # Set as window content
-        self.set_child(main_paned)
+        self.set_child(main_box)
     
-    def _connect_signals(self):
-        """Connect widget signals for inter-component communication"""
-        # Proto browser signals
-        self.proto_browser.connect("proto-file-selected", self._on_proto_file_selected)
-        self.proto_browser.connect("service-method-selected", self._on_service_method_selected)
-        
-        # Request builder signals
-        self.request_builder.connect("request-ready", self._on_request_ready)
+    def _setup_status_bar(self):
+        """Create the status bar"""
+        self.status_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        self.status_bar.add_css_class("status-bar")
+        self.status_bar.set_margin_start(16)
+        self.status_bar.set_margin_end(16)
+        self.status_bar.set_margin_top(8)
+        self.status_bar.set_margin_bottom(8)
+
+        # Status label
+        self.status_label = Gtk.Label(label="Status: Ready")
+        self.status_bar.append(self.status_label)
+
+        # Spacer
+        spacer = Gtk.Box()
+        spacer.set_hexpand(True)
+        self.status_bar.append(spacer)
+
+        # Tool count
+        self.tool_count_label = Gtk.Label(label="Tools: 0 loaded")
+        self.status_bar.append(self.tool_count_label)
+
+        # Independence indicator
+        independence_label = Gtk.Label(label="Independence: ✅ Maximum")
+        independence_label.add_css_class("status-success")
+        self.status_bar.append(independence_label)
+
+        # Add status bar to main layout
+        main_box = self.get_child()
+        main_box.append(self.status_bar)
     
-    def _on_scan_proto_clicked(self, button):
-        """Handle scan proto files button click"""
-        print("🔍 Scanning proto files...")
-        
-        # Disable button during scan
-        button.set_sensitive(False)
-        button.set_label("🔄 Scanning...")
-        
-        # Scan in background to keep UI responsive
-        GLib.idle_add(self._do_proto_scan, button)
+    def _load_tools(self):
+        """Load and create tabs for all registered tools"""
+        tools = self.tool_manager.get_tools()
+
+        for i, tool in enumerate(tools):
+            self._create_tool_tab(tool, i)
+
+        # Update status
+        self.tool_count_label.set_text(f"Tools: {len(tools)} loaded")
+
+        # Activate first tool if available
+        if tools:
+            self.switch_to_tool(0)
+
+        print(f"✅ Loaded {len(tools)} tools")
     
-    def _do_proto_scan(self, button):
-        """Perform proto file scan (called from idle callback)"""
-        try:
-            # Direct method call - no HTTP bridge needed!
-            result = self.proto_scanner.scan_proto_files()
-            
-            if result.get("success"):
-                proto_files = result.get("proto_files", [])
-                self.proto_browser.populate_files(proto_files)
-                
-                # Update button with count
-                count = len(proto_files)
-                button.set_label(f"✅ Found {count} files")
-                print(f"✅ Found {count} proto files")
-            else:
-                error = result.get("error", "Unknown error")
-                button.set_label("❌ Scan failed")
-                print(f"❌ Proto scan failed: {error}")
-                
-        except Exception as e:
-            button.set_label("❌ Scan failed")
-            print(f"❌ Proto scan error: {e}")
-        
-        finally:
-            # Re-enable button
-            button.set_sensitive(True)
-            
-            # Reset button text after 3 seconds
-            GLib.timeout_add_seconds(3, lambda: button.set_label("🔍 Scan Proto"))
-        
-        return False  # Don't repeat
+    def _create_tool_tab(self, tool: BaseTool, index: int):
+        """Create a tab for a tool"""
+        # Create tab button
+        tab_button = Gtk.Button()
+        tab_button.set_label(f"{tool.get_icon()} {tool.get_name()}")
+        tab_button.add_css_class("tool-tab")
+        tab_button.set_tooltip_text(f"{tool.get_description()}\nShortcut: Ctrl+{index+1}")
+        tab_button.connect("clicked", self._on_tool_tab_clicked, tool)
+
+        # Add to tabs box
+        self.tabs_box.append(tab_button)
+
+        # Store reference
+        tool.tab_button = tab_button
+
+        print(f"🔧 Created tab for tool: {tool.get_name()}")
     
-    def _on_proto_file_selected(self, browser, file_path):
-        """Handle proto file selection"""
-        print(f"📁 Selected proto file: {file_path}")
-        
-        # Parse services from the selected file
-        try:
-            result = self.proto_scanner.parse_proto_services(file_path)
-            if result.get("success"):
-                services = result.get("services", [])
-                browser.populate_services(services)
-                print(f"🔧 Found {len(services)} services")
-            else:
-                print(f"❌ Failed to parse proto: {result.get('error')}")
-        except Exception as e:
-            print(f"❌ Proto parsing error: {e}")
+    def _on_tool_tab_clicked(self, button, tool: BaseTool):
+        """Handle tool tab click"""
+        self.switch_to_tool_by_instance(tool)
+
+    def switch_to_tool(self, tool_index: int):
+        """Switch to a tool by index"""
+        tool = self.tool_manager.get_tool_by_index(tool_index)
+        if tool:
+            self.switch_to_tool_by_instance(tool)
+
+    def switch_to_tool_by_instance(self, tool: BaseTool):
+        """Switch to a specific tool instance"""
+        if self.current_tool == tool:
+            return  # Already active
+
+        # Deactivate current tool
+        if self.current_tool:
+            self.current_tool.on_deactivate()
+            if hasattr(self.current_tool, 'tab_button'):
+                self.current_tool.tab_button.remove_css_class("active")
+
+        # Activate new tool
+        self.current_tool = tool
+        tool.on_activate()
+
+        # Update tab appearance
+        if hasattr(tool, 'tab_button'):
+            tool.tab_button.add_css_class("active")
+
+        # Get or create tool widget
+        if tool.get_name() not in self.tool_widgets:
+            print(f"🔧 Creating widget for tool: {tool.get_name()}")
+            widget = tool.create_widget()
+            self.tool_widgets[tool.get_name()] = widget
+            self.content_stack.add_named(widget, tool.get_name())
+
+        # Switch to tool content
+        self.content_stack.set_visible_child_name(tool.get_name())
+
+        # Update header actions
+        self._update_tool_actions(tool)
+
+        # Update status
+        self.status_label.set_text(f"Status: {tool.get_name()} active")
+
+        print(f"🎯 Switched to tool: {tool.get_name()}")
     
-    def _on_service_method_selected(self, browser, service_name, method_name, request_type, response_type):
-        """Handle service method selection"""
-        print(f"⚡ Selected method: {service_name}.{method_name}")
-        
-        # Populate request builder with method details
-        self.request_builder.populate_grpc_method(
-            service_name, method_name, request_type, response_type
+    def _update_tool_actions(self, tool: BaseTool):
+        """Update header actions for the current tool"""
+        # Clear existing actions
+        child = self.tool_actions_box.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            self.tool_actions_box.remove(child)
+            child = next_child
+
+        # Add tool-specific actions
+        # This is where tools can add their own header buttons
+        # For now, we'll add some common actions
+
+        if hasattr(tool, 'get_actions'):
+            actions = tool.get_actions()
+            for action in actions:
+                button = Gtk.Button(label=action['label'])
+                if 'css_class' in action:
+                    button.add_css_class(action['css_class'])
+                if 'callback' in action:
+                    button.connect("clicked", action['callback'])
+                self.tool_actions_box.append(button)
+
+    def _on_settings_clicked(self, button):
+        """Handle settings button click"""
+        print("⚙️ Opening settings...")
+        # TODO: Implement settings dialog
+
+    def _on_about_clicked(self, button):
+        """Handle about button click"""
+        print("ℹ️ Opening about dialog...")
+        # TODO: Implement about dialog
+
+        # For now, show a simple message
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            modal=True,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text="🎛️ Unhinged Control Center"
         )
-    
-    def _on_request_ready(self, builder, request_data):
-        """Handle request ready signal from builder"""
-        print("🎯 Request ready for sending")
-        self.send_button.set_sensitive(True)
-    
-    def _on_send_request_clicked(self, button):
-        """Handle send request button click"""
-        print("🚀 Sending request...")
-        
-        # Get request data from builder
-        request_data = self.request_builder.get_request_data()
-        
-        if not request_data:
-            print("❌ No request data available")
-            return
-        
-        # Disable button during request
-        button.set_sensitive(False)
-        button.set_label("🔄 Sending...")
-        
-        # Send in background
-        GLib.idle_add(self._do_send_request, button, request_data)
-    
-    def _do_send_request(self, button, request_data):
-        """Perform the actual request (called from idle callback)"""
-        try:
-            # Determine request type and send accordingly
-            if request_data.get("type") == "grpc":
-                response = self.grpc_client.send_request(request_data)
-            else:
-                response = self.http_client.send_request(request_data)
-            
-            # Display response
-            self.response_viewer.display_response(response)
-            
-            # Update button
-            status = response.get("status", 0)
-            if 200 <= status < 300:
-                button.set_label("✅ Success")
-            else:
-                button.set_label("❌ Error")
-                
-        except Exception as e:
-            print(f"❌ Request error: {e}")
-            button.set_label("❌ Failed")
-            
-            # Show error in response viewer
-            error_response = {
-                "status": 0,
-                "error": str(e),
-                "duration": 0
-            }
-            self.response_viewer.display_response(error_response)
-        
-        finally:
-            # Re-enable button
-            button.set_sensitive(True)
-            
-            # Reset button text after 3 seconds
-            GLib.timeout_add_seconds(3, lambda: button.set_label("🚀 Send Request"))
-        
-        return False  # Don't repeat
-    
-    def new_request(self):
-        """Create a new request (called from keyboard shortcut)"""
-        self.request_builder.clear_request()
-        print("📝 New request created")
-    
-    def send_request(self):
-        """Send current request (called from keyboard shortcut)"""
-        if self.send_button.get_sensitive():
-            self._on_send_request_clicked(self.send_button)
+        dialog.format_secondary_text(
+            "Native GTK application for managing the Unhinged ecosystem.\n\n"
+            "🔥 FUCK WEBKIT - GOING NATIVE!\n"
+            "💡 CULTURE: We are independent. We render natively. We depend on nothing.\n\n"
+            "Built with pure GTK4 and maximum independence."
+        )
+        dialog.connect("response", lambda d, r: d.destroy())
+        dialog.present()

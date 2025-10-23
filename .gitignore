@@ -44,30 +44,60 @@ yarn-error.log*
 .gradle/
 
 # ============================================================================
-# GENERATED FILES - DO NOT COMMIT (Artifactory Pattern)
+# GENERATED FILES - DO NOT COMMIT (Centralized Build Philosophy)
 # ============================================================================
 
-# Generated directory - track the directory but ignore all contents
+# Generated directory - ALL generated content goes here
 /generated/*
 !/generated/.gitkeep
+!/generated/README.md
 
-# Generated reports and analysis
-/generated/reports/
-/generated/docs/architecture/
-
-# Build system cache and metrics (generated artifacts)
+# Build system cache and metrics
 .build-cache/
 .build-metrics/
+/build/__pycache__/
+/build/*/__pycache__/
+/build/python/venv/
 
 # Legacy generated protobuf files (being migrated to /generated)
 /frontend/src/types/generated/
 /frontend/src/types/proto/
 
-# Backend Kotlin generated files
+# Backend Kotlin generated files (legacy - moving to /generated)
 /backend/src/main/kotlin/unhinged/document_store/
 /backend/src/main/kotlin/com/unhinged/proto/
 /backend/src/main/java/unhinged/document_store/
 /backend/src/main/java/com/unhinged/proto/
+
+# Service-specific generated files
+/services/*/generated/
+/platforms/*/generated/
+
+# Build artifacts and temporary files
+*.backup
+*.backup.*
+*_backup
+*_backup.*
+*.old
+*.tmp
+*.temp
+*_temp
+*_tmp
+demo_*
+test_*
+*_demo
+*_test
+working_*
+simple_*
+temp_*
+tmp_*
+
+# Auto-generated scripts and fixes
+final-fix.sh
+fix-*.sh
+*-fix.sh
+multi-file-fix.sh
+port-allocation-report.md
 
 # ============================================================================
 # Python Environment and Generated Files
@@ -183,3 +213,62 @@ temp/
 .nuxt/
 dist/
 coverage/
+
+# ============================================================================
+# BUILD SYSTEM ENFORCEMENT - Prevent LLM File Creation Chaos
+# ============================================================================
+
+# Prevent scattered build files (except in designated areas)
+/gradlew
+/gradlew.bat
+/gradle/
+/.gradle/
+/build.gradle
+/build.gradle.kts
+/settings.gradle
+/settings.gradle.kts
+/package.json
+/package-lock.json
+/yarn.lock
+/pnpm-lock.yaml
+/node_modules/
+
+# Allow build files in specific service directories but warn about them
+# These should eventually be migrated to centralized build system
+
+# Prevent root-level cruft files
+/*.py
+/*.js
+/*.ts
+/*.sh
+/*.md.backup
+/*.yml.backup
+/*.yaml.backup
+/*.json.backup
+
+# Prevent demo and test cruft in root
+/demo_*
+/test_*
+/*_demo*
+/*_test*
+/working_*
+/simple_*
+/kotlin_*
+/typescript_*
+/python_*
+/*_verification*
+/*_proof*
+
+# Prevent scattered proto build artifacts
+protoc-gen-*
+*.pb.go
+*_pb2.py
+*_pb2.pyi
+*_pb2_grpc.py
+*_grpc.pb.go
+
+# Prevent scattered documentation
+/KOTLIN_*
+/PERSISTENCE_*
+/PROOF_*
+/*.md.tmp

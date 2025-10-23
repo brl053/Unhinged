@@ -23,8 +23,9 @@ from gi.repository import Gtk, Adw, GLib, Gio, Gdk
 import sys
 from pathlib import Path
 
-from .main_window import MainWindow
+from .core.application import run_control_center
 
+# Legacy application class - replaced by core.application.UnhingedApplication
 class UnhingedNativeApp(Adw.Application):
     """
     Main native GTK application class.
@@ -185,18 +186,9 @@ def run_native_gui():
     """
     Entry point for native GTK GUI application.
 
-    Replaces the WebKit-based GUI with pure native implementation.
+    Now launches the full Control Center instead of just API tool.
     """
-    print("🚀 Starting Unhinged Native GTK GUI...")
-    print("💡 CULTURE: We are independent. We render natively. We depend on nothing.")
-
-    app = UnhingedNativeApp()
-    print("📱 Created application instance")
-
-    print("🎬 Running application...")
-    exit_code = app.run(sys.argv)
-    print(f"🏁 Application exited with code: {exit_code}")
-    return exit_code
+    return run_control_center()
 
 
 if __name__ == "__main__":
