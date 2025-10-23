@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """
-Whisper TTS gRPC Server - Proto-Compliant Implementation
-Provides both Speech-to-Text (Whisper) and Text-to-Speech (gTTS) capabilities
-following the audio.proto contract definitions.
+@llm-type service
+@llm-legend Speech-to-Text gRPC server with health.proto implementation
+@llm-key Provides STT capabilities via gRPC with standardized health endpoints
+@llm-map gRPC server for speech-to-text service using health.proto compliance
+@llm-axiom Service must implement health.proto for service discovery and monitoring
+@llm-contract Provides speech transcription via gRPC API with health.proto compliance
+@llm-token stt-service: Speech-to-text with gRPC and health.proto
+
+Speech-to-Text gRPC Server - Proto-Compliant Implementation
+
+Provides Speech-to-Text (Whisper) capabilities with health.proto implementation:
+- STT processing: Whisper-based speech transcription
+- Health checks: Implements unhinged.health.v1.HealthService
+- Service discovery integration via health.proto
+- Whisper model management and CUDA optimization
 """
 
 import os
@@ -15,7 +27,6 @@ from typing import Iterator, AsyncIterator
 import io
 
 # Audio processing imports
-from gtts import gTTS
 import whisper
 import torch
 
@@ -73,86 +84,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             logger.error(f"Failed to load Whisper model: {e}")
             self.whisper_model = None
     
-    def TextToSpeech(self, request: audio_pb2.TTSRequest, context) -> Iterator[common_pb2.StreamChunk]:
-        """
-        Convert text to speech with streaming output
-        
-        Args:
-            request: TTSRequest with text, voice_id, and options
-            context: gRPC context
-            
-        Yields:
-            StreamChunk: Audio data chunks for streaming
-        """
-        try:
-            logger.info(f"TTS request: {request.text[:50]}... (voice: {request.voice_id})")
-            
-            # Extract language from voice_id (simple mapping)
-            language = self._extract_language_from_voice(request.voice_id)
-            
-            # Generate speech using gTTS
-            tts = gTTS(text=request.text, lang=language, slow=False)
-            
-            # Save to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-                tts.save(temp_file.name)
-                
-                # Read audio data
-                with open(temp_file.name, 'rb') as audio_file:
-                    audio_data = audio_file.read()
-                
-                # Clean up temporary file
-                os.unlink(temp_file.name)
-            
-            # Create TTS chunk payload
-            tts_payload = audio_pb2.TTSChunkPayload()
-            tts_payload.tts_id = f"tts_{hash(request.text)}"
-            tts_payload.chunk_index = 1
-            tts_payload.progress_percent = 100.0
-            
-            # Create audio metadata
-            audio_metadata = audio_pb2.AudioMetadata()
-            audio_metadata.format = audio_pb2.AUDIO_FORMAT_MP3
-            audio_metadata.sample_rate = request.sample_rate if request.sample_rate > 0 else 22050
-            audio_metadata.channels = request.channels if request.channels > 0 else 1
-            audio_metadata.duration_seconds = self._estimate_duration(len(audio_data))
-            audio_metadata.total_bytes = len(audio_data)
-            
-            tts_payload.audio_metadata.CopyFrom(audio_metadata)
-            
-            # Create stream chunk
-            chunk = common_pb2.StreamChunk()
-            chunk.stream_id = tts_payload.tts_id
-            chunk.sequence_number = 1
-            chunk.type = common_pb2.CHUNK_TYPE_DATA
-            chunk.data = audio_data
-            chunk.is_final = True
-            chunk.status = common_pb2.CHUNK_STATUS_COMPLETE
-            set_current_timestamp(chunk.timestamp)
-            
-            # Set structured payload
-            chunk.structured.update({
-                "tts_payload": {
-                    "tts_id": tts_payload.tts_id,
-                    "chunk_index": tts_payload.chunk_index,
-                    "progress_percent": tts_payload.progress_percent
-                }
-            })
-            
-            yield chunk
-            
-        except Exception as e:
-            logger.error(f"TTS processing failed: {e}")
-            # Yield error chunk
-            error_chunk = common_pb2.StreamChunk()
-            error_chunk.stream_id = f"error_{hash(request.text)}"
-            error_chunk.sequence_number = 1
-            error_chunk.type = common_pb2.CHUNK_TYPE_ERROR
-            error_chunk.text = f"TTS processing failed: {str(e)}"
-            error_chunk.is_final = True
-            error_chunk.status = common_pb2.CHUNK_STATUS_ERROR
-            set_current_timestamp(error_chunk.timestamp)
-            yield error_chunk
+
     
     def SpeechToText(self, request_iterator: Iterator[common_pb2.StreamChunk], context) -> audio_pb2.STTResponse:
         """
@@ -493,24 +425,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response.last_updated.GetCurrentTime()
             return response
     
-    def _extract_language_from_voice(self, voice_id: str) -> str:
-        """Extract language code from voice ID"""
-        if "en-us" in voice_id.lower() or "en-gb" in voice_id.lower():
-            return "en"
-        elif "es" in voice_id.lower():
-            return "es"
-        elif "fr" in voice_id.lower():
-            return "fr"
-        elif "de" in voice_id.lower():
-            return "de"
-        else:
-            return "en"  # Default to English
-    
-    def _estimate_duration(self, audio_bytes_length: int) -> float:
-        """Estimate audio duration from byte length"""
-        # Rough estimate: assume 16kHz, 16-bit, mono
-        bytes_per_second = 16000 * 2 * 1
-        return audio_bytes_length / bytes_per_second
+
 
 
 def serve():
