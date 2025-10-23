@@ -19,6 +19,11 @@ from gtts import gTTS
 import whisper
 import torch
 
+# Add current directory to path for proto imports
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
 # Generated proto imports
 import audio_pb2
 import audio_pb2_grpc
@@ -26,14 +31,9 @@ import common_pb2
 from google.protobuf import timestamp_pb2
 import time
 
-# Add path for generated health proto
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent / "generated/python/clients"))
-
-# Health proto imports
-from unhinged_proto_clients.health import health_pb2
-from unhinged_proto_clients.health import health_pb2_grpc
+# Health proto imports (local copies)
+from health import health_pb2
+from health import health_pb2_grpc
 
 def set_current_timestamp(timestamp_field):
     """Helper function to set current timestamp"""
