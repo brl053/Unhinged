@@ -28,16 +28,11 @@ import time
 from typing import Optional, Callable, Iterator
 from pathlib import Path
 
-# Add centralized Python environment to path
-project_root = Path(__file__).parent.parent.parent.parent.parent
-centralized_python_path = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
-sys.path.insert(0, str(centralized_python_path))
-
-# gRPC import from centralized environment
+# gRPC import - relies on PYTHONPATH set by GUI launcher
 try:
     import grpc
     GRPC_AVAILABLE = True
-    print("🎤 gRPC module available from centralized environment")
+    print("🎤 gRPC module available")
 except ImportError:
     print("⚠️ gRPC module not available - using mock mode")
     GRPC_AVAILABLE = False
@@ -59,13 +54,14 @@ except ImportError:
 
     grpc = MockGRPC()
 
-# Add generated proto clients to path
+# Add generated proto clients to path - project root should be in PYTHONPATH
+project_root = Path(__file__).parent.parent.parent.parent.parent
 generated_path = project_root / "generated" / "python" / "clients"
 sys.path.insert(0, str(generated_path))
 
 try:
     from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
-    print("🎤 Proto clients imported successfully from centralized generation")
+    print("🎤 Proto clients imported successfully")
     if hasattr(audio_pb2_grpc, 'AudioServiceStub'):
         print("🎤 AudioServiceStub available for real gRPC connection")
     else:

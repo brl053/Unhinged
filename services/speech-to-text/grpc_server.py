@@ -137,7 +137,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                 # Set standard response
                 response.response.success = True
                 response.response.message = "Transcription completed successfully"
-                set_current_timestamp(response.response.timestamp)
                 
                 # Set transcription data
                 response.transcript = result['text']
@@ -195,7 +194,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response = audio_pb2.STTResponse()
             response.response.success = False
             response.response.message = f"STT processing failed: {str(e)}"
-            set_current_timestamp(response.response.timestamp)
             return response
     
     def ProcessAudioFile(self, request: audio_pb2.ProcessAudioRequest, context) -> audio_pb2.ProcessAudioResponse:
@@ -213,7 +211,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             logger.info(f"Audio file processing request: {request.processing_type}")
             
             response = audio_pb2.ProcessAudioResponse()
-            set_current_timestamp(response.response.timestamp)
             
             if request.processing_type == audio_pb2.PROCESSING_TYPE_TRANSCRIBE:
                 # Convert attachment to stream chunks and transcribe
@@ -243,7 +240,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response = audio_pb2.ProcessAudioResponse()
             response.response.success = False
             response.response.message = f"Processing failed: {str(e)}"
-            set_current_timestamp(response.response.timestamp)
             return response
     
     def ListVoices(self, request: audio_pb2.ListVoicesRequest, context) -> audio_pb2.ListVoicesResponse:
@@ -261,7 +257,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response = audio_pb2.ListVoicesResponse()
             response.response.success = True
             response.response.message = "Voices listed successfully"
-            set_current_timestamp(response.response.timestamp)
             
             # Create default voices (matching our Kotlin implementation)
             voices_data = [
@@ -339,7 +334,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response = audio_pb2.ListVoicesResponse()
             response.response.success = False
             response.response.message = f"Failed to list voices: {str(e)}"
-            set_current_timestamp(response.response.timestamp)
             return response
     
     def GetVoice(self, request: audio_pb2.GetVoiceRequest, context) -> audio_pb2.GetVoiceResponse:
@@ -357,8 +351,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         else:
             response.response.success = False
             response.response.message = "Voice not found"
-        
-        set_current_timestamp(response.response.timestamp)
+
         return response
     
     def CreateCustomVoice(self, request: audio_pb2.CreateCustomVoiceRequest, context) -> audio_pb2.CreateCustomVoiceResponse:
@@ -366,7 +359,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         response = audio_pb2.CreateCustomVoiceResponse()
         response.response.success = False
         response.response.message = "Custom voice creation not implemented"
-        set_current_timestamp(response.response.timestamp)
         return response
     
     def ConvertAudioFormat(self, request: audio_pb2.ConvertAudioRequest, context) -> audio_pb2.ConvertAudioResponse:
@@ -374,7 +366,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         response = audio_pb2.ConvertAudioResponse()
         response.response.success = False
         response.response.message = "Audio format conversion not implemented"
-        set_current_timestamp(response.response.timestamp)
         return response
     
     def AnalyzeAudio(self, request: audio_pb2.AnalyzeAudioRequest, context) -> audio_pb2.AnalyzeAudioResponse:
@@ -382,7 +373,6 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         response = audio_pb2.AnalyzeAudioResponse()
         response.response.success = False
         response.response.message = "Audio analysis not implemented"
-        set_current_timestamp(response.response.timestamp)
         return response
     
     def Heartbeat(self, request: health_pb2.HeartbeatRequest, context) -> health_pb2.HeartbeatResponse:
