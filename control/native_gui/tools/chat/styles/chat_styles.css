@@ -104,35 +104,54 @@ chat-specific styling for bubbles, input, and animations.
     background: alpha(@accent_color, 0.9);
 }
 
-/* Chat message bubbles (for future implementation) */
+/* Chat message bubbles */
 .chat-bubble {
     background: @theme_base_color;
     border: 1px solid @borders;
     border-radius: 16px;
     padding: 12px 16px;
-    margin: 8px 0;
+    margin: 4px 0;
     max-width: 70%;
     word-wrap: break-word;
+    transition: all 200ms ease;
 }
 
 .chat-bubble.user {
     background: @accent_color;
     color: white;
     margin-left: auto;
-    margin-right: 16px;
+    margin-right: 0;
+    border-bottom-right-radius: 4px;
 }
 
 .chat-bubble.assistant {
     background: @theme_base_color;
     color: @theme_text_color;
-    margin-left: 16px;
+    margin-left: 0;
     margin-right: auto;
+    border-bottom-left-radius: 4px;
+    border: 1px solid alpha(@borders, 0.5);
 }
 
 .chat-bubble.loading {
     background: alpha(@theme_base_color, 0.5);
     color: alpha(@theme_text_color, 0.7);
     font-style: italic;
+    animation: pulse-loading 1.5s infinite;
+}
+
+/* Chat timestamps */
+.chat-timestamp {
+    font-size: 0.8em;
+    opacity: 0.6;
+    margin-top: 4px;
+}
+
+/* Conversation title */
+.chat-conversation-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: @accent_color;
 }
 
 /* Chat container (for conversation view) */
@@ -217,5 +236,18 @@ chat-specific styling for bubbles, input, and animations.
     }
     100% {
         box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Loading pulse animation */
+@keyframes pulse-loading {
+    0% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1.0;
+    }
+    100% {
+        opacity: 0.5;
     }
 }

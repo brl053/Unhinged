@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ...core.tool_manager import BaseTool
 from .bridge.speech_client import SpeechClient
+from .widgets.chat_interface import ChatInterface
 
 
 class ChatTool(BaseTool):
@@ -41,9 +42,14 @@ class ChatTool(BaseTool):
         # UI components (will be created in create_widget)
         self.main_container = None
         self.input_container = None
-        self.chat_container = None
+        self.chat_interface = None
         self.text_input = None
         self.mic_button = None
+        self.submit_button = None
+
+        # UI state
+        self.is_conversation_mode = False
+        self.centered_container = None
 
         # Speech integration
         self.speech_client = SpeechClient()
@@ -127,12 +133,15 @@ class ChatTool(BaseTool):
         center_box.append(self.input_container)
         
         # Submit button
-        submit_button = Gtk.Button(label="Send Message")
-        submit_button.add_css_class("chat-submit-button")
-        submit_button.set_halign(Gtk.Align.CENTER)
-        submit_button.connect("clicked", self._on_submit_clicked)
-        center_box.append(submit_button)
-        
+        self.submit_button = Gtk.Button(label="Send Message")
+        self.submit_button.add_css_class("chat-submit-button")
+        self.submit_button.set_halign(Gtk.Align.CENTER)
+        self.submit_button.connect("clicked", self._on_submit_clicked)
+        center_box.append(self.submit_button)
+
+        # Store reference to centered container for animation
+        self.centered_container = center_box
+
         # Add center box to main container
         self.main_container.append(center_box)
     
@@ -146,24 +155,27 @@ class ChatTool(BaseTool):
             self._start_recording()
     
     def _on_submit_clicked(self, button):
-        """Handle submit button click"""
+        """Handle submit button click - trigger animation to conversation mode"""
         buffer = self.text_input.get_buffer()
         start_iter = buffer.get_start_iter()
         end_iter = buffer.get_end_iter()
         text = buffer.get_text(start_iter, end_iter, False).strip()
-        
+
         if not text or text == "Type your message or click the microphone to speak...":
             print("💬 No message to send")
             return
-        
+
         print(f"💬 Message submitted: {text[:50]}...")
-        
-        # TODO: Implement chat message flow and LLM integration
-        # For now, just clear the input and show a placeholder response
+
+        # Clear input immediately
         buffer.set_text("")
-        
-        # Show placeholder response
-        GLib.timeout_add(1000, self._show_placeholder_response, text)
+
+        # Trigger animation to conversation mode
+        if not self.is_conversation_mode:
+            self._animate_to_conversation_mode(text)
+        else:
+            # Already in conversation mode, just add message
+            self._add_user_message(text)
 
     def _start_recording(self):
         """Start speech recording"""
@@ -288,3 +300,121 @@ class ChatTool(BaseTool):
         """Save the current chat"""
         print("💾 Save chat clicked")
         # TODO: Implement chat persistence
+
+    def _animate_to_conversation_mode(self, first_message: str):
+        """Animate from centered input to conversation mode"""
+        print("🎬 Animating to conversation mode...")
+
+        # Mark as conversation mode
+        self.is_conversation_mode = True
+
+        # Add animation class to centered container
+        self.centered_container.add_css_class("chat-animate-out")
+
+        # Create conversation interface
+        self.chat_interface = ChatInterface()
+
+        # Create new input area at bottom
+        self._create_conversation_input_area()
+
+        # Schedule the transition
+        GLib.timeout_add(300, self._complete_conversation_transition, first_message)
+
+    def _complete_conversation_transition(self, first_message: str):
+        """Complete the transition to conversation mode"""
+        # Remove centered container
+        self.main_container.remove(self.centered_container)
+
+        # Add conversation interface
+        self.main_container.append(self.chat_interface)
+
+        # Add input area at bottom
+        self.main_container.append(self.input_container)
+
+        # Add the first message
+        self._add_user_message(first_message)
+
+        print("✅ Conversation mode activated")
+        return False  # Don't repeat timeout
+
+    def _create_conversation_input_area(self):
+        """Create the input area for conversation mode"""
+        # Input area container
+        self.input_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        self.input_container.add_css_class("chat-input-area")
+        self.input_container.set_margin_start(16)
+        self.input_container.set_margin_end(16)
+        self.input_container.set_margin_top(8)
+        self.input_container.set_margin_bottom(16)
+
+        # Input row
+        input_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+
+        # Text input (smaller for conversation mode)
+        self.text_input = Gtk.TextView()
+        self.text_input.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.text_input.set_size_request(-1, 60)  # Smaller height
+        self.text_input.add_css_class("chat-input")
+
+        # Scroll container for text input
+        scroll_container = Gtk.ScrolledWindow()
+        scroll_container.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll_container.set_child(self.text_input)
+        scroll_container.add_css_class("chat-input-scroll")
+        scroll_container.set_hexpand(True)
+
+        input_row.append(scroll_container)
+
+        # Microphone button (smaller)
+        self.mic_button = Gtk.Button()
+        self.mic_button.set_label("🎤")
+        self.mic_button.set_size_request(50, 50)  # Smaller
+        self.mic_button.add_css_class("chat-mic-button")
+        self.mic_button.set_tooltip_text("Click to record speech")
+        self.mic_button.connect("clicked", self._on_mic_clicked)
+
+        input_row.append(self.mic_button)
+
+        # Send button (smaller)
+        self.submit_button = Gtk.Button(label="Send")
+        self.submit_button.add_css_class("chat-submit-button")
+        self.submit_button.connect("clicked", self._on_submit_clicked)
+
+        input_row.append(self.submit_button)
+
+        self.input_container.append(input_row)
+
+    def _add_user_message(self, message: str):
+        """Add user message and generate LLM response"""
+        # Add user message to conversation
+        self.chat_interface.add_message(message, is_user=True)
+
+        # Add loading message for LLM response
+        loading_bubble = self.chat_interface.add_loading_message()
+
+        # Generate LLM response (placeholder for now)
+        GLib.timeout_add(1500, self._generate_llm_response, loading_bubble, message)
+
+    def _generate_llm_response(self, loading_bubble, user_message: str):
+        """Generate LLM response (placeholder implementation)"""
+        # Placeholder response logic
+        if "terry davis" in user_message.lower():
+            response = ("Terry Davis was a brilliant programmer who created TempleOS, "
+                       "a 64-bit operating system he developed single-handedly. He was known "
+                       "for his exceptional programming skills and his unique perspective on "
+                       "computing. TempleOS was designed as a modern Commodore 64, featuring "
+                       "a custom compiler, graphics system, and even games.")
+        elif "templeos" in user_message.lower():
+            response = ("TempleOS is a biblical-themed operating system created by Terry Davis. "
+                       "It features a 640x480 16-color display, HolyC programming language, "
+                       "and was designed to be God's third temple. The OS includes a unique "
+                       "flight simulator, 3D graphics capabilities, and a complete development "
+                       "environment all written from scratch.")
+        else:
+            response = f"I understand you're asking about: '{user_message}'. This is a placeholder response. Full LLM integration will be implemented in Phase 2.3."
+
+        # Update loading message with response
+        self.chat_interface.update_loading_message(loading_bubble, response)
+
+        print(f"🤖 Generated response: {response[:50]}...")
+        return False  # Don't repeat timeout
