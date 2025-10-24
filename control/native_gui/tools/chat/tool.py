@@ -12,6 +12,7 @@ from gi.repository import Gtk, GLib
 from pathlib import Path
 
 from ...core.tool_manager import BaseTool
+from .bridge.speech_client import SpeechClient
 
 
 class ChatTool(BaseTool):
@@ -36,13 +37,17 @@ class ChatTool(BaseTool):
         self.messages = []  # List of conversation messages
         self.is_waiting_for_response = False
         self.current_conversation_id = None
-        
+
         # UI components (will be created in create_widget)
         self.main_container = None
         self.input_container = None
         self.chat_container = None
         self.text_input = None
         self.mic_button = None
+
+        # Speech integration
+        self.speech_client = SpeechClient()
+        self.is_recording = False
         
         print("💬 Chat tool initialized")
     
@@ -133,12 +138,12 @@ class ChatTool(BaseTool):
     
     def _on_mic_clicked(self, button):
         """Handle microphone button click"""
-        print("🎤 Microphone clicked - speech recording not yet implemented")
-        # TODO: Implement speech-to-text integration
-        
-        # For now, show a placeholder message
-        buffer = self.text_input.get_buffer()
-        buffer.set_text("Speech recording will be implemented in the next phase...")
+        if self.is_recording:
+            # Stop recording
+            self._stop_recording()
+        else:
+            # Start recording
+            self._start_recording()
     
     def _on_submit_clicked(self, button):
         """Handle submit button click"""
@@ -159,6 +164,75 @@ class ChatTool(BaseTool):
         
         # Show placeholder response
         GLib.timeout_add(1000, self._show_placeholder_response, text)
+
+    def _start_recording(self):
+        """Start speech recording"""
+        print("🎤 Starting speech recording...")
+        self.is_recording = True
+
+        # Update microphone button appearance
+        self.mic_button.set_label("🔴")  # Red circle to indicate recording
+        self.mic_button.add_css_class("chat-mic-recording")
+        self.mic_button.set_tooltip_text("Click to stop recording")
+
+        # Update text input to show recording status
+        buffer = self.text_input.get_buffer()
+        buffer.set_text("🎤 Recording... Click microphone to stop")
+
+        # Start recording with speech client
+        self.speech_client.start_recording(self._on_transcription_complete)
+
+    def _stop_recording(self):
+        """Stop speech recording and transcribe"""
+        print("🎤 Stopping speech recording...")
+        self.is_recording = False
+
+        # Update microphone button appearance
+        self.mic_button.set_label("🎤")
+        self.mic_button.remove_css_class("chat-mic-recording")
+        self.mic_button.set_tooltip_text("Click to record speech")
+
+        # Show transcription in progress
+        buffer = self.text_input.get_buffer()
+        buffer.set_text("🔄 Transcribing audio...")
+
+        # Stop recording and get transcription
+        GLib.timeout_add(100, self._process_transcription)
+
+    def _process_transcription(self):
+        """Process the transcription result"""
+        try:
+            transcript = self.speech_client.stop_recording()
+
+            # Update text input with transcription
+            buffer = self.text_input.get_buffer()
+            if transcript and transcript.strip():
+                buffer.set_text(transcript.strip())
+                print(f"✅ Transcription: {transcript[:50]}...")
+            else:
+                buffer.set_text("No speech detected. Try again.")
+                print("⚠️ No transcription result")
+
+        except Exception as e:
+            print(f"❌ Transcription error: {e}")
+            buffer = self.text_input.get_buffer()
+            buffer.set_text("Transcription failed. Please try again.")
+
+        return False  # Don't repeat the timeout
+
+    def _on_transcription_complete(self, transcript: str):
+        """Callback for when transcription is complete"""
+        print(f"🎤 Transcription callback: {transcript[:50]}...")
+
+        # Update UI on main thread
+        GLib.idle_add(self._update_transcription_ui, transcript)
+
+    def _update_transcription_ui(self, transcript: str):
+        """Update UI with transcription result (called on main thread)"""
+        if transcript and transcript.strip():
+            buffer = self.text_input.get_buffer()
+            buffer.set_text(transcript.strip())
+        return False  # Don't repeat
     
     def _show_placeholder_response(self, user_message):
         """Show a placeholder response (temporary)"""

@@ -74,6 +74,16 @@ chat-specific styling for bubbles, input, and animations.
     transform: scale(0.95);
 }
 
+/* Recording state styling */
+.chat-mic-button.chat-mic-recording {
+    background: #dc3545; /* Red color for recording */
+    animation: pulse-recording 1.5s infinite;
+}
+
+.chat-mic-button.chat-mic-recording:hover {
+    background: alpha(#dc3545, 0.8);
+}
+
 /* Submit button styling */
 .chat-submit-button {
     background: @accent_color;
@@ -194,5 +204,18 @@ chat-specific styling for bubbles, input, and animations.
     }
     60%, 100% {
         content: "...";
+    }
+}
+
+/* Recording pulse animation */
+@keyframes pulse-recording {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
     }
 }
