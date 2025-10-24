@@ -21,13 +21,14 @@ from .theme_manager import ThemeManager
 class UnhingedApplication(Adw.Application):
     """
     Main Unhinged Control Center application.
-    
+
     Manages multiple tools in a tabbed interface:
     - 🔧 API Development Tool
-    - 🏥 System Health Monitor  
+    - 🏥 System Health Monitor
     - 📋 Log Viewer
     - 🚀 Service Manager
     - 📁 File Browser
+    - 💬 Chat Tool
     - ⚙️ Settings
     """
     
@@ -120,7 +121,14 @@ class UnhingedApplication(Adw.Application):
             print("✅ Registered File Browser Tool")
         except ImportError as e:
             print(f"⚠️ Failed to load File Browser Tool: {e}")
-        
+
+        try:
+            from ..tools.chat.tool import ChatTool
+            self.tool_manager.register_tool(ChatTool())
+            print("✅ Registered Chat Tool")
+        except ImportError as e:
+            print(f"⚠️ Failed to load Chat Tool: {e}")
+
         print(f"🔧 Total tools registered: {len(self.tool_manager.get_tools())}")
     
     def _setup_shortcuts(self):
