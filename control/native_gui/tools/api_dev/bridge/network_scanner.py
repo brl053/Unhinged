@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend network_scanner.py - system control component
+@llm-key Core functionality for network_scanner
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token network_scanner: system control component
+"""
+"""
 🌐 Network Scanner - Service Discovery
 
 Discovers gRPC services on the network using multiple methods:

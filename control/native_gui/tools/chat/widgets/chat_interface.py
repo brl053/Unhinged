@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend chat_interface.py - system control component
+@llm-key Core functionality for chat_interface
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token chat_interface: system control component
+"""
+"""
 💬 Chat Interface Widget
 
 Main chat interface widget for displaying conversation bubbles and managing

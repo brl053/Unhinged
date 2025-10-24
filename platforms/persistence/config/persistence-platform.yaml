@@ -1,3 +1,12 @@
+#
+# @llm-type platform
+# @llm-legend persistence-platform.yaml - platform infrastructure component
+# @llm-key Core functionality for persistence-platform
+# @llm-map Part of the Unhinged system architecture
+# @llm-axiom Maintains system independence and architectural compliance
+# @llm-contract Provides standardized interface for system integration
+# @llm-token persistence-platform: platform infrastructure component
+#
 # ============================================================================
 # Persistence Platform Configuration
 # ============================================================================

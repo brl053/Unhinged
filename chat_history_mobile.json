@@ -1,0 +1,32 @@
+[
+  {
+    "role": "user",
+    "content": "Who is terry davis?",
+    "timestamp": "03:23"
+  },
+  {
+    "role": "assistant",
+    "content": "Terry Davis is an American actor, comedian, and writer. He is best known for his roles in several TV shows and films, including \"The King of Queens,\" \"Bobby's Back,\" and \"Knots Landing.\"",
+    "timestamp": "03:23"
+  },
+  {
+    "role": "user",
+    "content": "Terry A. Davis",
+    "timestamp": "03:23"
+  },
+  {
+    "role": "assistant",
+    "content": "I couldn't find much information on a well-known actor or comedian with the name Terry Davis. It's possible that you may be thinking of Terry Crews, who is an American actor and former NFL player. However, I also found another Terry Davis who was an American blues singer and songwriter.\n\nCould you please provide more context or clarify which Terry Davis you are referring to?",
+    "timestamp": "03:23"
+  },
+  {
+    "role": "user",
+    "content": "TemplOs creator",
+    "timestamp": "03:24"
+  },
+  {
+    "role": "assistant",
+    "content": "I believe the Terry Davis you are looking for is actually known for his work in animation, not live-action. I am referring to Robert Temple's \"Templos\" series, a science fiction animated television series that aired from 1990 to 1991.\n\nAs the creator of Templos, which was later adapted into an animated film called \"Temple of Doom\", you are likely Terry Davis, a renowned animation director and producer.",
+    "timestamp": "03:24"
+  }
+]

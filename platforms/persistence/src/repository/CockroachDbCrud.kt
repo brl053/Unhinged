@@ -1,3 +1,12 @@
+//
+// @llm-type platform
+// @llm-legend CockroachDbCrud.kt - platform infrastructure component
+// @llm-key Core functionality for CockroachDbCrud
+// @llm-map Part of the Unhinged system architecture
+// @llm-axiom Maintains system independence and architectural compliance
+// @llm-contract Provides standardized interface for system integration
+// @llm-token CockroachDbCrud: platform infrastructure component
+//
 package platforms.persistence.repository
 
 import kotlinx.coroutines.Dispatchers

@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend application.py - system control component
+@llm-key Core functionality for application
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token application: system control component
+"""
+"""
 🎛️ Main Application Class
 
 Core application framework for the Unhinged Control Center.
@@ -32,42 +41,68 @@ class UnhingedApplication(Adw.Application):
     - ⚙️ Settings
     """
     
-    def __init__(self):
+    def __init__(self, launched_by_ai=False):
         super().__init__(
-            application_id="ai.unhinged.control-center",
-            flags=Gio.ApplicationFlags.DEFAULT_FLAGS
+            application_id="com.unhinged.controlcenter",
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE
         )
-        
+
         # Project root for file operations
         self.project_root = Path(__file__).parent.parent.parent.parent
-        
+
         # Core managers
         self.tool_manager = ToolManager(self.project_root)
         self.theme_manager = ThemeManager()
-        
+
         # Main window reference
         self.main_window = None
-        
+        self.launched_by_ai = launched_by_ai
+
         print("🎛️ Unhinged Control Center initialized")
-    
+
+    def do_command_line(self, command_line):
+        """Handle command line arguments and ensure single instance"""
+        print("🎯 Command line received - checking for existing instance...")
+
+        # If we already have a window, just present it
+        if self.main_window:
+            print("🔄 Existing instance found - presenting window...")
+            self.main_window.present()
+            return 0
+
+        # Otherwise activate normally
+        self.activate()
+        return 0
+
     def do_activate(self):
         """Application activation - create and show main window"""
         print("🎯 Application activating...")
-        
+
         if not self.main_window:
-            print("🏗️ Creating main control center window...")
-            from ..main_window import ControlCenterWindow
-            
-            self.main_window = ControlCenterWindow(
+            print("🏗️ Creating mobile-first control center window...")
+            from ..main_window import MobileControlCenterWindow
+
+            self.main_window = MobileControlCenterWindow(
                 application=self,
                 project_root=self.project_root,
                 tool_manager=self.tool_manager
             )
-        
+
+            # Show AI launch indicator if launched by AI
+            if self.launched_by_ai:
+                print("🤖 Adding AI launch indicator...")
+                GLib.timeout_add(500, self._show_ai_launch_indicator)
+
         print("🖼️ Presenting control center...")
         self.main_window.present()
-        print("✅ Unhinged Control Center should be visible now!")
-    
+        print("✅ Unhinged Control Center ready!")
+
+    def _show_ai_launch_indicator(self):
+        """Show AI launch indicator in the GUI"""
+        if self.main_window and hasattr(self.main_window, '_add_ai_launch_indicator'):
+            self.main_window._add_ai_launch_indicator()
+        return False  # Don't repeat
+
     def do_startup(self):
         """Application startup - set up global resources"""
         print("🔧 Application startup...")
@@ -93,28 +128,28 @@ class UnhingedApplication(Adw.Application):
             print("✅ Registered API Development Tool")
         except ImportError as e:
             print(f"⚠️ Failed to load API Dev Tool: {e}")
-        
+
         try:
             from ..tools.system_monitor.tool import SystemMonitorTool
             self.tool_manager.register_tool(SystemMonitorTool())
             print("✅ Registered System Monitor Tool")
         except ImportError as e:
             print(f"⚠️ Failed to load System Monitor Tool: {e}")
-        
+
         try:
             from ..tools.log_viewer.tool import LogViewerTool
             self.tool_manager.register_tool(LogViewerTool())
             print("✅ Registered Log Viewer Tool")
         except ImportError as e:
             print(f"⚠️ Failed to load Log Viewer Tool: {e}")
-        
+
         try:
             from ..tools.service_manager.tool import ServiceManagerTool
             self.tool_manager.register_tool(ServiceManagerTool())
             print("✅ Registered Service Manager Tool")
         except ImportError as e:
             print(f"⚠️ Failed to load Service Manager Tool: {e}")
-        
+
         try:
             from ..tools.file_browser.tool import FileBrowserTool
             self.tool_manager.register_tool(FileBrowserTool())
@@ -185,20 +220,28 @@ class UnhingedApplication(Adw.Application):
         return self.theme_manager
 
 
-def run_control_center():
+def run_control_center(launched_by_ai=False):
     """
     Entry point for the Unhinged Control Center.
-    
+
     Replaces the single-purpose API tool with a multi-tool application.
     """
     print("🚀 Starting Unhinged Control Center...")
     print("💡 CULTURE: We are independent. We render natively. We depend on nothing.")
     print("🎛️ Multi-tool native application - maximum independence achieved.")
-    
-    app = UnhingedApplication()
+
+    # Check if launched by AI assistant
+    if launched_by_ai:
+        print("🤖 LAUNCHED BY AI ASSISTANT - You should see the mobile-first GUI window!")
+
+    app = UnhingedApplication(launched_by_ai=launched_by_ai)
     print("📱 Created control center instance")
-    
+
     print("🎬 Running application...")
-    exit_code = app.run(sys.argv)
+
+    # Filter out our custom arguments that GTK doesn't understand
+    filtered_argv = [arg for arg in sys.argv if not arg.startswith('--launched-by-ai')]
+
+    exit_code = app.run(filtered_argv)
     print(f"🏁 Control center exited with code: {exit_code}")
     return exit_code

@@ -1,87 +1,188 @@
-/*
-💬 Chat Tool Styles
+/* ============================================================================ */
+/* 💬 CHAT TOOL STYLES - 2025 PIXEL 10XL MATERIAL DESIGN 3 THEME              */
+/* Modern UI/UX Standards with Dynamic Color System & Advanced Typography      */
+/* ============================================================================ */
 
-Custom CSS styling for the chat tool interface.
-Follows the application's dark theme and provides
-chat-specific styling for bubbles, input, and animations.
-*/
-
-/* Main chat tool container */
+/* === MAIN CHAT TOOL CONTAINER === */
 .chat-tool {
-    background: @theme_bg_color;
-    color: @theme_fg_color;
+    background: var(--md-sys-color-surface-dark);
+    color: var(--md-sys-color-on-surface-dark);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+    border-radius: var(--md-sys-shape-corner-large);
+    transition: all var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
-/* Chat title styling */
+/* === CHAT TITLE STYLING === */
 .chat-title {
-    color: @accent_color;
-    margin-bottom: 8px;
+    color: var(--md-sys-color-primary);
+    font-family: var(--md-sys-typescale-headline-small-font);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: var(--md-sys-typescale-headline-small-weight);
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+    letter-spacing: var(--md-sys-typescale-headline-small-tracking);
+    margin-bottom: var(--md-sys-spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--md-sys-spacing-md);
 }
 
-/* Chat subtitle styling */
+/* === CHAT SUBTITLE STYLING === */
 .chat-subtitle {
-    color: @theme_fg_color;
-    opacity: 0.7;
-    margin-bottom: 24px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    opacity: 0.8;
+    margin-bottom: var(--md-sys-spacing-lg);
 }
 
-/* Text input styling */
+/* === TEXT INPUT STYLING - Material Design 3 Text Fields === */
 .chat-input {
-    background: @theme_base_color;
-    color: @theme_text_color;
-    border: 1px solid @borders;
-    border-radius: 12px;
-    padding: 12px;
-    font-size: 14px;
-    line-height: 1.4;
+    background: var(--md-sys-color-surface-container-high-dark);
+    color: var(--md-sys-color-on-surface-dark);
+    border: 2px solid var(--md-sys-color-surface-container-highest-dark);
+    border-radius: var(--md-sys-shape-corner-medium);
+    padding: var(--md-sys-spacing-md) var(--md-sys-spacing-lg);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+    transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+    box-shadow: var(--md-sys-elevation-level1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    resize: none;
+    outline: none;
 }
 
 .chat-input:focus {
-    border-color: @accent_color;
-    box-shadow: 0 0 0 2px alpha(@accent_color, 0.3);
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.12), var(--md-sys-elevation-level2);
+    background: var(--md-sys-color-surface-container-highest-dark);
+    transform: translateY(-1px);
 }
 
-/* Input scroll container */
+.chat-input:hover:not(:focus) {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container-highest-dark);
+    box-shadow: var(--md-sys-elevation-level2);
+}
+
+.chat-input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* === INPUT SCROLL CONTAINER === */
 .chat-input-scroll {
-    border-radius: 12px;
-    border: 1px solid @borders;
+    border-radius: var(--md-sys-shape-corner-medium);
+    border: 2px solid var(--md-sys-color-surface-container-highest-dark);
+    background: transparent;
+    transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-primary) transparent;
 }
 
 .chat-input-scroll:focus-within {
-    border-color: @accent_color;
-    box-shadow: 0 0 0 2px alpha(@accent_color, 0.3);
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.12), var(--md-sys-elevation-level2);
 }
 
-/* Microphone button styling */
+.chat-input-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.chat-input-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: var(--md-sys-shape-corner-small);
+}
+
+.chat-input-scroll::-webkit-scrollbar-thumb {
+    background: var(--md-sys-color-primary);
+    border-radius: var(--md-sys-shape-corner-small);
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.chat-input-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--md-sys-color-primary-container);
+    background-clip: content-box;
+}
+
+/* === MICROPHONE BUTTON - Material Design 3 FAB === */
 .chat-mic-button {
-    background: @accent_color;
-    color: white;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
     border: none;
-    border-radius: 30px;
+    border-radius: var(--md-sys-shape-corner-full);
     font-size: 24px;
-    min-width: 60px;
-    min-height: 60px;
-    transition: all 200ms ease;
+    min-width: 64px;
+    min-height: 64px;
+    box-shadow: var(--md-sys-elevation-level3);
+    transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.chat-mic-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--md-sys-color-on-primary);
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+    border-radius: inherit;
 }
 
 .chat-mic-button:hover {
-    background: alpha(@accent_color, 0.8);
+    box-shadow: var(--md-sys-elevation-level4);
     transform: scale(1.05);
 }
 
-.chat-mic-button:active {
-    background: alpha(@accent_color, 0.9);
-    transform: scale(0.95);
+.chat-mic-button:hover::before {
+    opacity: 0.08;
 }
 
-/* Recording state styling */
+.chat-mic-button:active {
+    box-shadow: var(--md-sys-elevation-level2);
+    transform: scale(0.98);
+    transition: all var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
+}
+
+.chat-mic-button:active::before {
+    opacity: 0.12;
+}
+
+/* === RECORDING STATE STYLING === */
 .chat-mic-button.chat-mic-recording {
-    background: #dc3545; /* Red color for recording */
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
     animation: pulse-recording 1.5s infinite;
+    box-shadow: 0 0 20px rgba(186, 26, 26, 0.4), var(--md-sys-elevation-level4);
 }
 
 .chat-mic-button.chat-mic-recording:hover {
-    background: alpha(#dc3545, 0.8);
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    box-shadow: 0 0 25px rgba(186, 26, 26, 0.6), var(--md-sys-elevation-level5);
 }
 
 /* Submit button styling */

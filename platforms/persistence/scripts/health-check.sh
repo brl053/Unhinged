@@ -1,4 +1,13 @@
 #!/bin/bash
+#
+# @llm-type platform
+# @llm-legend health-check.sh - platform infrastructure component
+# @llm-key Core functionality for health-check
+# @llm-map Part of the Unhinged system architecture
+# @llm-axiom Maintains system independence and architectural compliance
+# @llm-contract Provides standardized interface for system integration
+# @llm-token health-check: platform infrastructure component
+#
 # ============================================================================
 # Persistence Platform - Health Check Script
 # ============================================================================

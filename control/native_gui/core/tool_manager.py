@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend tool_manager.py - system control component
+@llm-key Core functionality for tool_manager
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token tool_manager: system control component
+"""
+"""
 🔧 Tool Manager - Plugin System
 
 Manages tool registration, lifecycle, and communication.

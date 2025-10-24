@@ -1,4 +1,13 @@
 #!/bin/bash
+#
+# @llm-type platform
+# @llm-legend docker-entrypoint.sh - platform infrastructure component
+# @llm-key Core functionality for docker-entrypoint
+# @llm-map Part of the Unhinged system architecture
+# @llm-axiom Maintains system independence and architectural compliance
+# @llm-contract Provides standardized interface for system integration
+# @llm-token docker-entrypoint: platform infrastructure component
+#
 # ============================================================================
 # Persistence Platform - Docker Entrypoint Script
 # ============================================================================

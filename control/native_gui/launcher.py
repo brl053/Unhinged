@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 """
+@llm-type control-system
+@llm-legend launcher.py - system control component
+@llm-key Core functionality for launcher
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token launcher: system control component
+"""
+"""
 🚀 Native GTK GUI Launcher
 
 Launch the pure native GTK API development tool.
@@ -16,6 +25,7 @@ Requirements:
 
 import sys
 import os
+import argparse
 from pathlib import Path
 
 # Add project root to Python path
@@ -26,6 +36,12 @@ sys.path.insert(0, str(project_root))
 
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Launch Unhinged Native GTK GUI")
+    parser.add_argument("--launched-by-ai", action="store_true",
+                       help="Indicate that GUI was launched by AI assistant")
+    args = parser.parse_args()
+
     # Check GTK4 availability
     try:
         import gi
@@ -40,18 +56,17 @@ if __name__ == "__main__":
         sys.exit(1)
     
     # Launch the application
-    print("🚀 Launching native GTK application...")
+    print("🚀 Launching mobile-first control center...")
 
     # Import and run the native GUI
     try:
         from control.native_gui import run_native_gui
 
-        print("🔥 FUCK WEBKIT - GOING NATIVE!")
-        print("💡 CULTURE: We are independent. We render natively. We depend on nothing.")
-        print("🎯 Starting pure GTK4 API development tool...")
+        if args.launched_by_ai:
+            print("🤖 Launched by AI Assistant")
 
         # Run the native application
-        exit_code = run_native_gui()
+        exit_code = run_native_gui(launched_by_ai=args.launched_by_ai)
         sys.exit(exit_code)
 
     except ImportError as e:

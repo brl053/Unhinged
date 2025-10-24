@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend tool.py - system control component
+@llm-key Core functionality for tool
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token tool: system control component
+"""
+"""
 💬 Chat Tool - Main Tool Class
 
 Implements the persistent chat experience as a plugin tool for the Control Center.
@@ -75,14 +84,15 @@ class ChatTool(BaseTool):
     
     def _create_centered_input_interface(self):
         """Create the initial centered input interface"""
-        # Center container for initial state
+        # Center container for initial state - wider to accommodate larger input
         center_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
         center_box.set_valign(Gtk.Align.CENTER)
         center_box.set_halign(Gtk.Align.CENTER)
-        center_box.set_margin_start(48)
-        center_box.set_margin_end(48)
+        center_box.set_margin_start(24)  # Reduced margins to fit wider input
+        center_box.set_margin_end(24)
         center_box.set_margin_top(48)
         center_box.set_margin_bottom(48)
+        center_box.set_hexpand(True)  # Allow horizontal expansion
         
         # Title
         title_label = Gtk.Label(label="💬 Chat with OS")
@@ -96,27 +106,28 @@ class ChatTool(BaseTool):
         subtitle_label.set_opacity(0.7)
         center_box.append(subtitle_label)
         
-        # Input container with text area and microphone
+        # Input container with text area and microphone - centered and wider
         self.input_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         self.input_container.set_halign(Gtk.Align.CENTER)
-        self.input_container.set_size_request(600, -1)
-        
-        # Multi-line text input
+        self.input_container.set_size_request(3000, -1)  # 5x wider container
+
+        # Multi-line text input - 5x wider
         self.text_input = Gtk.TextView()
         self.text_input.set_wrap_mode(Gtk.WrapMode.WORD)
-        self.text_input.set_size_request(500, 120)
+        self.text_input.set_size_request(2500, 120)  # 5x wider text input (500 * 5 = 2500)
         self.text_input.add_css_class("chat-input")
-        
+
         # Text buffer for placeholder text
         buffer = self.text_input.get_buffer()
         buffer.set_text("Type your message or click the microphone to speak...")
-        
+
         # Scroll container for text input
         scroll_container = Gtk.ScrolledWindow()
         scroll_container.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scroll_container.set_child(self.text_input)
         scroll_container.add_css_class("chat-input-scroll")
-        
+        scroll_container.set_hexpand(True)  # Allow horizontal expansion
+
         self.input_container.append(scroll_container)
         
         # Microphone button
@@ -339,21 +350,24 @@ class ChatTool(BaseTool):
 
     def _create_conversation_input_area(self):
         """Create the input area for conversation mode"""
-        # Input area container
+        # Input area container - centered
         self.input_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.input_container.add_css_class("chat-input-area")
         self.input_container.set_margin_start(16)
         self.input_container.set_margin_end(16)
         self.input_container.set_margin_top(8)
         self.input_container.set_margin_bottom(16)
+        self.input_container.set_halign(Gtk.Align.CENTER)  # Center the input area
 
-        # Input row
+        # Input row - centered and wider
         input_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        input_row.set_halign(Gtk.Align.CENTER)
+        input_row.set_size_request(2600, -1)  # Wide input row
 
-        # Text input (smaller for conversation mode)
+        # Text input (maintain width in conversation mode)
         self.text_input = Gtk.TextView()
         self.text_input.set_wrap_mode(Gtk.WrapMode.WORD)
-        self.text_input.set_size_request(-1, 60)  # Smaller height
+        self.text_input.set_size_request(2500, 60)  # Keep 5x width, smaller height
         self.text_input.add_css_class("chat-input")
 
         # Scroll container for text input

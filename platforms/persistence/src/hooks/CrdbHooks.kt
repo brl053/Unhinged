@@ -1,3 +1,12 @@
+//
+// @llm-type platform
+// @llm-legend CrdbHooks.kt - platform infrastructure component
+// @llm-key Core functionality for CrdbHooks
+// @llm-map Part of the Unhinged system architecture
+// @llm-axiom Maintains system independence and architectural compliance
+// @llm-contract Provides standardized interface for system integration
+// @llm-token CrdbHooks: platform infrastructure component
+//
 package platforms.persistence.hooks
 
 import platforms.persistence.api.*

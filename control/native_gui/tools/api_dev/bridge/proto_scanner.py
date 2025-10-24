@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend proto_scanner.py - system control component
+@llm-key Core functionality for proto_scanner
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token proto_scanner: system control component
+"""
+"""
 🔍 Proto Scanner - Direct Python Implementation
 
 Scans for .proto files and parses gRPC services.

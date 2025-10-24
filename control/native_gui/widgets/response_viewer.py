@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend response_viewer.py - system control component
+@llm-key Core functionality for response_viewer
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token response_viewer: system control component
+"""
+"""
 📊 Response Viewer Widget - Native GTK Implementation
 
 Displays HTTP/gRPC responses with native GTK widgets.

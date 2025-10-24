@@ -1,0 +1,85 @@
+{
+  "llm": {
+    "name": "LLM Service (Ollama)",
+    "host": "localhost",
+    "port": 1500,
+    "protocol": "http",
+    "health_url": "/api/tags",
+    "description": "Local LLM service for chat functionality",
+    "required": true,
+    "tags": [
+      "ai",
+      "llm",
+      "ollama"
+    ]
+  },
+  "persistence-platform": {
+    "name": "Persistence Platform",
+    "host": "localhost",
+    "port": 8190,
+    "protocol": "http",
+    "health_url": "/api/v1/health",
+    "description": "Independent Kotlin persistence platform",
+    "required": false,
+    "tags": [
+      "database",
+      "persistence",
+      "kotlin"
+    ]
+  },
+  "speech-to-text": {
+    "name": "Speech-to-Text Service",
+    "host": "localhost",
+    "port": 8100,
+    "protocol": "http",
+    "health_url": "/health",
+    "description": "Whisper-based speech transcription",
+    "required": false,
+    "tags": [
+      "ai",
+      "speech",
+      "whisper"
+    ]
+  },
+  "text-to-speech": {
+    "name": "Text-to-Speech Service",
+    "host": "localhost",
+    "port": 8002,
+    "protocol": "http",
+    "health_url": "/health",
+    "description": "Neural voice synthesis",
+    "required": false,
+    "tags": [
+      "ai",
+      "tts",
+      "voice"
+    ]
+  },
+  "vision-ai": {
+    "name": "Vision AI Service",
+    "host": "localhost",
+    "port": 8001,
+    "protocol": "http",
+    "health_url": "/health",
+    "description": "BLIP-based image analysis",
+    "required": false,
+    "tags": [
+      "ai",
+      "vision",
+      "blip"
+    ]
+  },
+  "database": {
+    "name": "Database",
+    "host": "localhost",
+    "port": 1200,
+    "protocol": "postgresql",
+    "health_url": null,
+    "description": "PostgreSQL database",
+    "required": false,
+    "tags": [
+      "database",
+      "postgresql"
+    ]
+  }
+}

@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend main_window.py - system control component
+@llm-key Core functionality for main_window
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token main_window: system control component
+"""
+"""
 🎛️ Control Center Main Window - Multi-Tool Interface
 
 Pure GTK4 implementation of the Unhinged Control Center.
@@ -15,9 +24,11 @@ from gi.repository import Gtk, Adw, GLib
 from pathlib import Path
 
 from .core.tool_manager import ToolManager, BaseTool
+from .core.viewport_manager import ViewportManager, ViewportConfig
+from .core.mobile_components import MobileFirstWindow, MobileNavigationBar, ResponsiveContainer
 
 
-class ControlCenterWindow(Gtk.ApplicationWindow):
+class MobileControlCenterWindow(MobileFirstWindow):
     """
     Main Control Center window with tabbed tool interface.
 
@@ -42,31 +53,97 @@ class ControlCenterWindow(Gtk.ApplicationWindow):
     """
     
     def __init__(self, application, project_root, tool_manager):
-        super().__init__(
-            application=application,
-            title="🎛️ Unhinged Control Center",
-            default_width=1600,
-            default_height=1000
-        )
+        # Initialize viewport manager first
+        self.viewport_manager = ViewportManager(None)  # Will be set after super().__init__
+
+        super().__init__(application, self.viewport_manager)
+
+        # Set viewport manager window reference
+        self.viewport_manager.window = self
 
         self.project_root = project_root
         self.tool_manager = tool_manager
+        self.launched_by_ai = getattr(application, 'launched_by_ai', False)
 
         # Current tool state
         self.current_tool = None
         self.tool_widgets = {}  # Cache tool widgets
 
-        # Build UI
-        self._setup_header_bar()
-        self._setup_main_layout()
-        self._setup_status_bar()
-        self._load_tools()
+        # Setup mobile-first navigation
+        self._setup_mobile_navigation()
+        self._load_mobile_tools()
 
         # Apply CSS class for theming
-        self.add_css_class("control-center-window")
+        self.add_css_class("mobile-control-center")
 
-        print("✅ Control Center window initialized")
-    
+        # Add AI launch indicator if launched by AI
+        if self.launched_by_ai:
+            self._add_ai_launch_indicator()
+
+        print("📱 Mobile Control Center window initialized")
+
+    def _add_ai_launch_indicator(self):
+        """Add visual indicator that GUI was launched by AI assistant"""
+        # Update window title with AI indicator
+        original_title = self.get_title() or "Unhinged Control Center"
+        self.set_title("🤖 AI Assistant → " + original_title)
+
+        # Restore original title after 5 seconds
+        GLib.timeout_add_seconds(5, lambda: self.set_title(original_title))
+
+    def _setup_mobile_navigation(self):
+        """Setup mobile-first bottom navigation"""
+        # Add navigation items
+        self.nav_bar.add_nav_item("chat", "💬", "Chat", "AI Chat Assistant")
+        self.nav_bar.add_nav_item("api", "🔧", "API", "API Development")
+        self.nav_bar.add_nav_item("health", "🏥", "Health", "System Monitor")
+        self.nav_bar.add_nav_item("logs", "📋", "Logs", "Log Viewer")
+        self.nav_bar.add_nav_item("files", "📁", "Files", "File Browser")
+
+        # Connect navigation handler
+        self.nav_bar.on_item_selected = self._on_nav_item_selected
+
+        # Set default active item
+        self.nav_bar.set_active_item("chat")
+
+        print("📱 Mobile navigation setup complete")
+
+    def _load_mobile_tools(self):
+        """Load tools optimized for mobile interface"""
+        # Import mobile-optimized tools
+        from .tools.chat.mobile_chat_tool import MobileChatTool
+
+        # Register mobile tools
+        mobile_tools = {
+            "chat": MobileChatTool(),
+            # Add other mobile-optimized tools here
+        }
+
+        # Create tool widgets and add to content stack
+        for tool_id, tool in mobile_tools.items():
+            try:
+                widget = tool.create_widget()
+                self.content_area.add_named(widget, tool_id)
+                self.tool_widgets[tool_id] = widget
+                print(f"📱 Loaded mobile tool: {tool.name}")
+            except Exception as e:
+                print(f"❌ Failed to load mobile tool {tool_id}: {e}")
+
+        # Show default tool
+        self.content_area.set_visible_child_name("chat")
+        self.current_tool = "chat"
+
+        print(f"📱 Loaded {len(mobile_tools)} mobile tools")
+
+    def _on_nav_item_selected(self, item_id: str):
+        """Handle navigation item selection"""
+        if item_id in self.tool_widgets:
+            self.content_area.set_visible_child_name(item_id)
+            self.current_tool = item_id
+            print(f"📱 Switched to tool: {item_id}")
+        else:
+            print(f"⚠️ Tool not available: {item_id}")
+
     def _setup_header_bar(self):
         """Create and configure the header bar"""
         self.header_bar = Gtk.HeaderBar()

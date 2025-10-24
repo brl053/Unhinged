@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend schema_validator.py - system control component
+@llm-key Core functionality for schema_validator
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token schema_validator: system control component
+"""
+"""
 🔍 Schema Validator - Request Validation Engine
 
 Validates requests against discovered service schemas.

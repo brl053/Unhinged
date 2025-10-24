@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend reflection_client.py - system control component
+@llm-key Core functionality for reflection_client
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token reflection_client: system control component
+"""
+"""
 🔍 Protobuf Reflection Client
 
 Uses gRPC reflection to dynamically discover service definitions

@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend tool.py - system control component
+@llm-key Core functionality for tool
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token tool: system control component
+"""
+"""
 🏥 System Health Monitor Tool
 
 Placeholder implementation for system monitoring.

@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend speech_client.py - system control component
+@llm-key Core functionality for speech_client
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token speech_client: system control component
+"""
+"""
 🎤 Speech Client - gRPC Integration
 
 Real gRPC client for speech-to-text service integration.
@@ -11,7 +20,6 @@ Features:
 - Simple audio recording simulation
 """
 
-import grpc
 import sys
 import os
 import tempfile
@@ -19,6 +27,32 @@ import threading
 import time
 from typing import Optional, Callable, Iterator
 from pathlib import Path
+
+# Optional gRPC import
+try:
+    import grpc
+    GRPC_AVAILABLE = True
+    print("🎤 gRPC module available")
+except ImportError:
+    print("⚠️ gRPC module not available - using mock mode")
+    GRPC_AVAILABLE = False
+    # Create mock grpc module
+    class MockGRPC:
+        class FutureTimeoutError(Exception):
+            pass
+
+        @staticmethod
+        def insecure_channel(target):
+            return None
+
+        @staticmethod
+        def channel_ready_future(channel):
+            class MockFuture:
+                def result(self, timeout=None):
+                    raise MockGRPC.FutureTimeoutError("Mock timeout")
+            return MockFuture()
+
+    grpc = MockGRPC()
 
 # Add generated proto clients to path
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -60,6 +94,12 @@ class SpeechClient:
 
     def _setup_grpc_connection(self):
         """Setup gRPC connection to speech-to-text service"""
+        if not GRPC_AVAILABLE:
+            print("⚠️ gRPC not available - running in mock mode")
+            self.channel = None
+            self.stub = None
+            return
+
         try:
             self.channel = grpc.insecure_channel(f"{self.host}:{self.port}")
 

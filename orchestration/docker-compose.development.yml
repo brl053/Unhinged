@@ -1,0 +1,258 @@
+# ============================================================================
+# Unhinged Development Docker Compose - Development Environment
+# ============================================================================
+#
+# @llm-type infrastructure-config
+# @llm-legend Development docker-compose with debug tools and hot-reload
+# @llm-key Development environment with debugging and monitoring tools
+# @llm-map Development deployment with additional observability services
+# @llm-axiom Development services include debugging and monitoring capabilities
+# @llm-contract Provides complete development stack with hot-reload and debugging
+# @llm-token docker-compose-development: Development environment with debugging tools
+#
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # =============================================================================
+  # AI/ML SERVICES (1100-1199) - Development Mode
+  # =============================================================================
+  
+  llm:
+    build: ./llm
+    container_name: ollama-service-dev
+    ports:
+      - "1500:11434"  # External 1500 → Internal 11434
+    volumes:
+      - llm-models:/models
+      - ./llm:/app/src:ro  # Hot-reload source
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_DEBUG=1
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  speech-to-text:
+    build: 
+      context: ./services/speech-to-text
+      dockerfile: Dockerfile
+    container_name: speech-to-text-service-dev
+    ports:
+      - "1101:8000"  # External 1101 → Internal 8000
+      - "1191:9091"  # External 1191 → Internal 9091 (gRPC)
+    environment:
+      - WHISPER_MODEL=base
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=development
+    volumes:
+      - whisper-models:/root/.cache/whisper
+      - audio-uploads:/app/uploads
+      - ./services/speech-to-text:/app/src:ro  # Hot-reload source
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  text-to-speech:
+    build:
+      context: ./services/text-to-speech
+      dockerfile: Dockerfile
+    container_name: text-to-speech-service-dev
+    ports:
+      - "1102:8001"  # External 1102 → Internal 8001
+    environment:
+      - TTS_MODEL_NAME=tts_models/en/ljspeech/tacotron2-DDC
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=development
+    volumes:
+      - tts-models:/app/models
+      - audio-outputs:/app/outputs
+      - ./services/text-to-speech:/app/src:ro  # Hot-reload source
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  vision-ai:
+    build:
+      context: ./services/vision-ai
+      dockerfile: Dockerfile
+    container_name: vision-ai-service-dev
+    ports:
+      - "1103:8001"  # External 1103 → Internal 8001
+    environment:
+      - VISION_MODEL=Salesforce/blip-image-captioning-base
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=development
+    volumes:
+      - vision-models:/root/.cache/transformers
+      - image-uploads:/app/uploads
+      - ./services/vision-ai:/app/src:ro  # Hot-reload source
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # DATABASES (1200-1299) - Development Mode
+  # =============================================================================
+  
+  database:
+    image: postgres:15-alpine
+    container_name: unhinged-postgres-dev
+    ports:
+      - "1200:5432"  # External 1200 → Internal 5432
+    environment:
+      - POSTGRES_DB=unhinged_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=dev_password
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: unhinged-redis-dev
+    ports:
+      - "1201:6379"  # External 1201 → Internal 6379
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # PLATFORMS (1300-1399) - Development Mode
+  # =============================================================================
+  
+  persistence-platform:
+    build: 
+      context: ./platforms/persistence
+      dockerfile: Dockerfile
+    container_name: persistence-platform-dev
+    ports:
+      - "1300:8090"  # External 1300 → Internal 8090 (REST)
+      - "1301:9090"  # External 1301 → Internal 9090 (gRPC)
+    environment:
+      - JAVA_OPTS=-Xmx1g -Xms512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - CONFIG_PATH=/app/config/persistence-platform.yaml
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./platforms/persistence/config:/app/config:ro
+      - ./platforms/persistence/src:/app/src:ro  # Hot-reload source
+      - persistence-dev-logs:/app/logs
+    ports:
+      - "5005:5005"  # Debug port
+    depends_on:
+      - redis
+      - database
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # DEVELOPMENT TOOLS (1400-1499)
+  # =============================================================================
+  
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-dev
+    ports:
+      - "1400:9090"  # External 1400 → Internal 9090
+    volumes:
+      - ./monitoring/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-dev-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--log.level=debug'
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-dev
+    ports:
+      - "1401:3000"  # External 1401 → Internal 3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=dev
+      - GF_LOG_LEVEL=debug
+    volumes:
+      - grafana-dev-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger-dev
+    ports:
+      - "1402:16686"  # External 1402 → Internal 16686 (UI)
+      - "1403:14268"  # External 1403 → Internal 14268 (HTTP collector)
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=debug
+    networks:
+      - unhinged-network
+    restart: unless-stopped
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  unhinged-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  # AI/ML model storage
+  llm-models:
+    driver: local
+  whisper-models:
+    driver: local
+  tts-models:
+    driver: local
+  vision-models:
+    driver: local
+  
+  # Data storage
+  audio-uploads:
+    driver: local
+  audio-outputs:
+    driver: local
+  image-uploads:
+    driver: local
+  
+  # Database storage (development)
+  postgres-dev-data:
+    driver: local
+  redis-dev-data:
+    driver: local
+  
+  # Platform storage (development)
+  persistence-dev-logs:
+    driver: local
+  
+  # Monitoring storage (development)
+  prometheus-dev-data:
+    driver: local
+  grafana-dev-data:
+    driver: local

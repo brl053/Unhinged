@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend proto_browser.py - system control component
+@llm-key Core functionality for proto_browser
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token proto_browser: system control component
+"""
+"""
 📁 Proto Browser Widget - Native GTK Implementation
 
 Displays proto files, services, and methods in a tree structure.

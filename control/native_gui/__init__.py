@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend __init__.py - system control component
+@llm-key Core functionality for __init__
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token __init__: system control component
+"""
+"""
 🔧 Native GTK GUI - Pure Python + GTK4 Implementation
 
 No WebKit bullshit. No JavaScript. No HTML/CSS.
@@ -182,13 +191,13 @@ class UnhingedNativeApp(Adw.Application):
             self.main_window.send_request()
 
 
-def run_native_gui():
+def run_native_gui(launched_by_ai=False):
     """
     Entry point for native GTK GUI application.
 
     Now launches the full Control Center instead of just API tool.
     """
-    return run_control_center()
+    return run_control_center(launched_by_ai=launched_by_ai)
 
 
 if __name__ == "__main__":

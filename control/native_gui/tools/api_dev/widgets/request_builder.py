@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend request_builder.py - system control component
+@llm-key Core functionality for request_builder
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token request_builder: system control component
+"""
+"""
 🔧 Request Builder Widget - Native GTK Implementation
 
 Builds HTTP/gRPC requests with native GTK widgets.

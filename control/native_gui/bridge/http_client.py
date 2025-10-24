@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend http_client.py - system control component
+@llm-key Core functionality for http_client
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token http_client: system control component
+"""
+"""
 🌐 HTTP Client - Direct Python Implementation
 
 Handles HTTP requests without bridge overhead.

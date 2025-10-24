@@ -7,3 +7,13 @@
 @llm-contract Provides standardized interface for system integration
 @llm-token __init__: microservice component
 """
+"""
+🤖 Native GUI Services Module
+
+Service integration layer for the native GUI.
+Provides LLM clients and other service integrations.
+"""
+
+from .llm_client import LLMServiceClient
+
+__all__ = ['LLMServiceClient']

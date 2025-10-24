@@ -1,3 +1,12 @@
+//
+// @llm-type platform
+// @llm-legend CockroachDbCrudTest.kt - platform infrastructure component
+// @llm-key Core functionality for CockroachDbCrudTest
+// @llm-map Part of the Unhinged system architecture
+// @llm-axiom Maintains system independence and architectural compliance
+// @llm-contract Provides standardized interface for system integration
+// @llm-token CockroachDbCrudTest: platform infrastructure component
+//
 package platforms.persistence.repository
 
 import kotlinx.coroutines.runBlocking

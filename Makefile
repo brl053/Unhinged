@@ -48,7 +48,8 @@ PYTHON_RUN := build/python/run.py
 NATIVE_GUI := python3 control/gui/native_app.py
 
 # Native GTK GUI (Primary GUI System - NO WEBKIT!)
-HTML_NATIVE := python3 control/native_gui/launcher.py
+# Use system Python with centralized venv in PYTHONPATH for dependencies
+HTML_NATIVE := PYTHONPATH="$(shell pwd)/build/python/venv/lib/python3.12/site-packages:$$PYTHONPATH" python3 control/native_gui/launcher.py --launched-by-ai
 
 # Service ports
 PORT_BACKEND := 8080
@@ -571,17 +572,43 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: validate-independence ## Generate service registry and launch native GUI application
+start: validate-independence ## Generate service registry, launch essential services, and start native GUI
 	$(call log_info,🏥 Starting System Health Command Center...)
 	@$(MAKE) check-docker
 	@python3 build/build.py build service-discovery
 	@$(MAKE) generate
 	@echo ""
 	@echo "✅ System Health Dashboard ready!"
+	@echo "🚀 Launching essential services for GUI..."
+	@python3 control/service_launcher.py --timeout 60 || echo "⚠️ Services will run in offline mode"
+	@echo ""
 	@echo "🎮 Launching INDEPENDENT Native GTK GUI..."
 	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
 	@echo "🔥 FUCK WEBKIT - GOING NATIVE!"
 	@$(HTML_NATIVE)
+
+start-offline: validate-independence ## Launch native GUI without starting services (offline mode)
+	$(call log_info,🏥 Starting System Health Command Center (Offline Mode)...)
+	@python3 build/build.py build service-discovery
+	@$(MAKE) generate
+	@echo ""
+	@echo "✅ System Health Dashboard ready!"
+	@echo "🎮 Launching INDEPENDENT Native GTK GUI (Offline Mode)..."
+	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
+	@echo "🔥 FUCK WEBKIT - GOING NATIVE!"
+	@$(HTML_NATIVE)
+
+start-services: ## Launch essential services only (LLM, Backend, Database)
+	$(call log_info,🚀 Launching essential services...)
+	@python3 control/service_launcher.py --timeout 120
+
+service-status: ## Show status of essential services
+	$(call log_info,📊 Checking service status...)
+	@python3 control/service_launcher.py --status
+
+stop-services: ## Stop services launched by service launcher
+	$(call log_info,🛑 Stopping services...)
+	@python3 control/service_launcher.py --stop
 
 watch-html: ## Watch for changes and auto-rebuild HTML files
 	$(call log_info,👀 Starting HTML build watcher...)
@@ -596,7 +623,7 @@ standardize-html: ## Standardize all HTML files to use consistent design system
 	@python3 build/standardize-html.py
 	$(call log_success,HTML standardization complete)
 
-start-services: ## Start Docker services only (database, kafka, etc.)
+start-docker-services: ## Start Docker services only (database, kafka, etc.)
 	$(call log_info,🐳 Starting Docker services...)
 	@$(MAKE) check-docker
 	@docker compose up -d database zookeeper kafka kafka-ui

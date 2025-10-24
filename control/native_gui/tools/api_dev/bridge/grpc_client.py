@@ -1,4 +1,13 @@
 """
+@llm-type control-system
+@llm-legend grpc_client.py - system control component
+@llm-key Core functionality for grpc_client
+@llm-map Part of the Unhinged system architecture
+@llm-axiom Maintains system independence and architectural compliance
+@llm-contract Provides standardized interface for system integration
+@llm-token grpc_client: system control component
+"""
+"""
 ⚡ gRPC Client - Direct Python Implementation
 
 Handles gRPC requests without HTTP bridge overhead.
