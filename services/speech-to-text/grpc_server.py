@@ -30,16 +30,24 @@ import io
 import whisper
 import torch
 
-# Add locally generated proto files to path
+# Add centralized protobuf clients to path
 import sys
-import os
-sys.path.insert(0, "/app/generated_proto")
+from pathlib import Path
 
-# Generated proto imports from local generation
-import audio_pb2
-import audio_pb2_grpc
-import common_pb2
-from health import health_pb2, health_pb2_grpc
+# For Docker environment, use the copied centralized clients
+if Path("/app/generated/python/clients").exists():
+    sys.path.insert(0, "/app/generated/python/clients")
+    print("🎤 Using centralized protobuf clients from Docker environment")
+else:
+    # For development, use project root path
+    project_root = Path(__file__).parent.parent.parent
+    generated_path = project_root / "generated" / "python" / "clients"
+    sys.path.insert(0, str(generated_path))
+    print("🎤 Using centralized protobuf clients from development environment")
+
+# Generated proto imports from centralized generation
+from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
 from google.protobuf import timestamp_pb2
 import time
 

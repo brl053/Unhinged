@@ -18,14 +18,11 @@ RUN pip install --no-cache-dir \
     torch==2.1.0 \
     "numpy<2.0.0"
 
-# Copy proto files for generation
-COPY proto/ /app/proto/
+# Copy centralized protobuf clients
+COPY generated/python/clients/ /app/generated/python/clients/
 
 # Copy application code
 COPY services/speech-to-text/ .
-
-# Generate protobuf files with compatible version
-RUN python generate_proto.py
 
 # Create directories for uploads
 RUN mkdir -p /app/uploads
