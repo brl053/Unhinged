@@ -28,6 +28,16 @@ import time
 from typing import Optional, Callable, Iterator
 from pathlib import Path
 
+# Import our audio capture module
+try:
+    from .audio_capture import AudioCapture, AudioConfig
+    from .audio_utils import AudioDeviceManager
+    AUDIO_CAPTURE_AVAILABLE = True
+    print("🎤 Audio capture module available")
+except ImportError as e:
+    print(f"⚠️ Audio capture not available: {e}")
+    AUDIO_CAPTURE_AVAILABLE = False
+
 # gRPC import - relies on PYTHONPATH set by GUI launcher
 try:
     import grpc
@@ -93,6 +103,16 @@ class SpeechClient:
         self.recording_thread = None
         self.audio_data = []
 
+        # Initialize audio capture
+        self.audio_capture = None
+        if AUDIO_CAPTURE_AVAILABLE:
+            try:
+                self.audio_capture = AudioCapture()
+                print("🎤 Real audio capture initialized")
+            except Exception as e:
+                print(f"⚠️ Failed to initialize audio capture: {e}")
+                self.audio_capture = None
+
         print(f"🎤 SpeechClient initialized for {host}:{port}")
         self._setup_grpc_connection()
 
@@ -130,7 +150,7 @@ class SpeechClient:
         """Check if gRPC connection is active"""
         return self.channel is not None and self.stub is not None
 
-    def start_recording(self, callback: Optional[Callable[[str], None]] = None):
+    def start_recording(self, callback: Optional[Callable[[str], None]] = None, duration: float = 3.0):
         """Start recording audio for transcription"""
         if self.is_recording:
             print("🎤 Already recording")
@@ -140,13 +160,21 @@ class SpeechClient:
         self.is_recording = True
         self.audio_data = []
 
-        # For now, simulate recording with a simple timer
-        # In a real implementation, this would capture microphone audio
-        self.recording_thread = threading.Thread(
-            target=self._simulate_recording,
-            args=(callback,),
-            daemon=True
-        )
+        # Use real audio capture if available
+        if self.audio_capture and AUDIO_CAPTURE_AVAILABLE:
+            self.recording_thread = threading.Thread(
+                target=self._real_recording,
+                args=(callback, duration),
+                daemon=True
+            )
+        else:
+            # Fallback to simulation
+            self.recording_thread = threading.Thread(
+                target=self._simulate_recording,
+                args=(callback,),
+                daemon=True
+            )
+
         self.recording_thread.start()
 
     def stop_recording(self) -> str:
@@ -164,8 +192,33 @@ class SpeechClient:
         # Transcribe the recorded audio
         return self._transcribe_recorded_audio()
 
+    def _real_recording(self, callback: Optional[Callable[[str], None]], duration: float):
+        """Real audio recording using AudioCapture"""
+        try:
+            # Start real audio capture
+            if self.audio_capture.start_recording(duration=duration):
+                # Wait for recording to complete
+                time.sleep(duration + 0.5)  # Small buffer
+
+                # Get the recorded audio data
+                audio_bytes = self.audio_capture.stop_recording()
+
+                if audio_bytes:
+                    self.audio_data = [audio_bytes]  # Store as single chunk
+                    print(f"🎤 Real recording complete: {len(audio_bytes)} bytes captured")
+                else:
+                    print("⚠️ No audio data captured")
+                    self.audio_data = []
+            else:
+                print("❌ Failed to start real audio recording")
+                self.audio_data = []
+
+        except Exception as e:
+            print(f"❌ Error in real recording: {e}")
+            self.audio_data = []
+
     def _simulate_recording(self, callback: Optional[Callable[[str], None]]):
-        """Simulate audio recording (placeholder for real microphone capture)"""
+        """Simulate audio recording (fallback when real capture unavailable)"""
         start_time = time.time()
 
         while self.is_recording:
@@ -206,26 +259,51 @@ class SpeechClient:
             return f"Transcription error: {str(e)}"
 
     def _create_audio_stream(self) -> Iterator:
-        """Create audio stream for gRPC call"""
-        # For now, create a simple mock audio stream
-        # In a real implementation, this would stream actual audio data
-
+        """Create audio stream for gRPC call with real audio data"""
         if not hasattr(common_pb2, 'StreamChunk'):
             print("⚠️ StreamChunk not available, using mock stream")
             return iter([])
 
         chunks = []
 
-        # Create mock audio chunk
-        chunk = common_pb2.StreamChunk()
-        chunk.stream_id = "chat_audio_recording"
-        chunk.sequence_number = 1
-        chunk.type = getattr(common_pb2, 'CHUNK_TYPE_DATA', 1)
-        chunk.data = b"mock_audio_data"  # In real implementation: actual audio bytes
-        chunk.is_final = True
-        chunk.status = getattr(common_pb2, 'CHUNK_STATUS_COMPLETE', 1)
+        # Process real audio data if available
+        if self.audio_data and isinstance(self.audio_data[0], bytes):
+            # Real audio data (bytes)
+            audio_bytes = self.audio_data[0]
 
-        chunks.append(chunk)
+            # Split large audio into smaller chunks for streaming
+            chunk_size = 4096  # 4KB chunks
+            sequence = 1
+
+            for i in range(0, len(audio_bytes), chunk_size):
+                chunk_data = audio_bytes[i:i + chunk_size]
+                is_final = (i + chunk_size) >= len(audio_bytes)
+
+                chunk = common_pb2.StreamChunk()
+                chunk.stream_id = "chat_audio_recording"
+                chunk.sequence_number = sequence
+                chunk.type = getattr(common_pb2, 'CHUNK_TYPE_DATA', 1)
+                chunk.data = chunk_data
+                chunk.is_final = is_final
+                chunk.status = getattr(common_pb2, 'CHUNK_STATUS_COMPLETE', 1)
+
+                chunks.append(chunk)
+                sequence += 1
+
+            print(f"🎤 Created {len(chunks)} audio chunks for gRPC streaming")
+
+        else:
+            # Fallback to mock data for compatibility
+            print("⚠️ Using mock audio data for gRPC call")
+            chunk = common_pb2.StreamChunk()
+            chunk.stream_id = "chat_audio_recording"
+            chunk.sequence_number = 1
+            chunk.type = getattr(common_pb2, 'CHUNK_TYPE_DATA', 1)
+            chunk.data = b"mock_audio_data"
+            chunk.is_final = True
+            chunk.status = getattr(common_pb2, 'CHUNK_STATUS_COMPLETE', 1)
+            chunks.append(chunk)
+
         return iter(chunks)
 
     def transcribe_audio(self, audio_data: bytes) -> str:
@@ -235,35 +313,83 @@ class SpeechClient:
             return "Service unavailable"
 
         try:
-            # Create stream chunk with audio data
+            # Validate audio data
+            if not audio_data or len(audio_data) < 100:
+                print("⚠️ Audio data too small or empty")
+                return "No valid audio data"
+
+            # Create stream chunks with proper chunking for large audio
             if not hasattr(common_pb2, 'StreamChunk'):
                 return "Proto clients not available"
 
-            chunk = common_pb2.StreamChunk()
-            chunk.stream_id = "chat_audio_direct"
-            chunk.sequence_number = 1
-            chunk.type = getattr(common_pb2, 'CHUNK_TYPE_DATA', 1)
-            chunk.data = audio_data
-            chunk.is_final = True
-            chunk.status = getattr(common_pb2, 'CHUNK_STATUS_COMPLETE', 1)
+            chunks = []
+            chunk_size = 4096  # 4KB chunks
+            sequence = 1
+
+            for i in range(0, len(audio_data), chunk_size):
+                chunk_data = audio_data[i:i + chunk_size]
+                is_final = (i + chunk_size) >= len(audio_data)
+
+                chunk = common_pb2.StreamChunk()
+                chunk.stream_id = "chat_audio_direct"
+                chunk.sequence_number = sequence
+                chunk.type = getattr(common_pb2, 'CHUNK_TYPE_DATA', 1)
+                chunk.data = chunk_data
+                chunk.is_final = is_final
+                chunk.status = getattr(common_pb2, 'CHUNK_STATUS_COMPLETE', 1)
+
+                chunks.append(chunk)
+                sequence += 1
+
+            print(f"🎤 Sending {len(chunks)} chunks ({len(audio_data)} bytes) for transcription")
 
             # Call speech-to-text service
-            response = self.stub.SpeechToText(iter([chunk]))
+            response = self.stub.SpeechToText(iter(chunks))
 
             if response.response.success:
-                return response.transcript
+                transcript = response.transcript.strip()
+                print(f"✅ Transcription successful: '{transcript[:50]}...'")
+                return transcript
             else:
-                return f"Error: {response.response.message}"
+                error_msg = response.response.message
+                print(f"❌ Transcription failed: {error_msg}")
+                return f"Error: {error_msg}"
 
         except Exception as e:
             print(f"❌ Direct transcription error: {e}")
             return f"Transcription error: {str(e)}"
 
+    def get_audio_info(self) -> dict:
+        """Get information about current audio setup"""
+        info = {
+            'grpc_connected': self.is_connected(),
+            'audio_capture_available': AUDIO_CAPTURE_AVAILABLE,
+            'real_audio_enabled': self.audio_capture is not None,
+            'host': self.host,
+            'port': self.port
+        }
+
+        if self.audio_capture and AUDIO_CAPTURE_AVAILABLE:
+            try:
+                devices = self.audio_capture.get_available_devices()
+                info['available_devices'] = len(devices)
+                info['device_names'] = [d['name'] for d in devices[:3]]  # First 3
+            except:
+                info['available_devices'] = 0
+                info['device_names'] = []
+
+        return info
+
     def close(self):
-        """Close gRPC connection"""
+        """Close gRPC connection and cleanup audio resources"""
         if self.is_recording:
             self.stop_recording()
 
+        # Cleanup audio capture
+        if self.audio_capture:
+            self.audio_capture.cleanup()
+            self.audio_capture = None
+
         if self.channel:
             self.channel.close()
-            print("🎤 gRPC connection closed")
+            print("🎤 gRPC connection and audio resources closed")

@@ -1,6 +1,0 @@
-Requirement already satisfied: protobuf in ./build/python/venv/lib/python3.12/site-packages (6.33.0)
-Requirement already satisfied: grpcio in ./build/python/venv/lib/python3.12/site-packages (1.75.1)
-Requirement already satisfied: grpcio-tools in ./build/python/venv/lib/python3.12/site-packages (1.75.1)
-Requirement already satisfied: pyyaml in ./build/python/venv/lib/python3.12/site-packages (6.0.3)
-Requirement already satisfied: typing-extensions~=4.12 in ./build/python/venv/lib/python3.12/site-packages (from grpcio) (4.15.0)
-Requirement already satisfied: setuptools in ./build/python/venv/lib/python3.12/site-packages (from grpcio-tools) (80.9.0)

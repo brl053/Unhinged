@@ -245,9 +245,18 @@ class MobileChatTool(BaseTool):
 
         # Initialize Speech client (if available)
         if SPEECH_CLIENT_AVAILABLE:
-            self.speech_client = SpeechClient()
-            self.speech_initialized = False
-            print("🎤 Speech client available")
+            try:
+                self.speech_client = SpeechClient()
+                self.speech_initialized = False
+                print("🎤 Speech client available")
+
+                # Check audio permissions on startup
+                self._check_audio_permissions()
+
+            except Exception as e:
+                print(f"⚠️ Failed to initialize speech client: {e}")
+                self.speech_client = None
+                self.speech_initialized = False
         else:
             self.speech_client = None
             self.speech_initialized = False
@@ -587,21 +596,27 @@ class MobileChatTool(BaseTool):
             vadj.set_value(vadj.get_upper() - vadj.get_page_size())
 
     def _on_voice_input(self):
-        """Handle voice input request"""
+        """Handle voice input request with enhanced UI feedback"""
         if not SPEECH_CLIENT_AVAILABLE or not self.speech_client:
             self._show_voice_error("Speech-to-text service not available")
             return
 
-        # Change mic button to indicate recording
-        self.chat_input.mic_button.set_label("🔴")
-        self.chat_input.mic_button.set_tooltip_text("Recording... Click to stop")
-        self.chat_input.mic_button.set_sensitive(False)
-        self.chat_input.mic_button.add_css_class("recording")
+        # Check audio setup
+        audio_info = self.speech_client.get_audio_info()
+        if not audio_info['grpc_connected']:
+            self._show_voice_error("Speech service not connected")
+            return
+
+        # Enhanced recording UI feedback
+        self._start_recording_ui()
 
         # Start speech recognition in background thread
         def run_speech_recognition():
             try:
-                print("🎤 Starting speech recognition...")
+                print("🎤 Starting enhanced speech recognition...")
+
+                # Show audio info for debugging
+                print(f"🎤 Audio setup: {audio_info}")
 
                 # Use speech client to get transcription
                 transcription = self._get_speech_transcription()
@@ -619,17 +634,69 @@ class MobileChatTool(BaseTool):
         thread = threading.Thread(target=run_speech_recognition, daemon=True)
         thread.start()
 
+    def _start_recording_ui(self):
+        """Enhanced recording UI with better visual feedback"""
+        # Change mic button to recording state
+        self.chat_input.mic_button.set_label("🔴")
+        self.chat_input.mic_button.set_tooltip_text("Recording... (3 seconds)")
+        self.chat_input.mic_button.set_sensitive(False)
+        self.chat_input.mic_button.add_css_class("recording")
+
+        # Add pulsing animation class if available
+        try:
+            self.chat_input.mic_button.add_css_class("pulse-animation")
+        except:
+            pass
+
+        # Update input placeholder
+        buffer = self.chat_input.text_view.get_buffer()
+        current_text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+        if not current_text.strip():
+            buffer.set_text("🎤 Listening...")
+
+    def _stop_recording_ui(self):
+        """Reset recording UI to normal state"""
+        # Reset mic button
+        self.chat_input.mic_button.set_label("🎤")
+        self.chat_input.mic_button.set_tooltip_text("Voice input (speech-to-text)")
+        self.chat_input.mic_button.set_sensitive(True)
+        self.chat_input.mic_button.remove_css_class("recording")
+
+        # Remove animation class
+        try:
+            self.chat_input.mic_button.remove_css_class("pulse-animation")
+        except:
+            pass
+
+        # Clear listening placeholder
+        buffer = self.chat_input.text_view.get_buffer()
+        current_text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+        if current_text.strip() == "🎤 Listening...":
+            buffer.set_text("")
+
     def _get_speech_transcription(self) -> str:
-        """Get speech transcription using the local speech client"""
+        """Get speech transcription with enhanced recording controls"""
         if not self.speech_client:
             raise Exception("Speech client not available")
 
-        # Start recording
-        self.speech_client.start_recording()
+        # Get recording duration from user preference or default
+        recording_duration = getattr(self, 'recording_duration', 5.0)  # Default 5 seconds
 
-        # Record for a few seconds (in real implementation, this would be user-controlled)
+        # Start recording with specified duration
+        self.speech_client.start_recording(duration=recording_duration)
+
+        # Show real-time feedback during recording
         import time
-        time.sleep(3)  # Record for 3 seconds
+        start_time = time.time()
+
+        while time.time() - start_time < recording_duration:
+            elapsed = time.time() - start_time
+            remaining = recording_duration - elapsed
+
+            # Update UI with countdown (in main thread)
+            GLib.idle_add(self._update_recording_progress, remaining)
+
+            time.sleep(0.1)  # Update every 100ms
 
         # Stop recording and get transcription
         transcription = self.speech_client.stop_recording()
@@ -639,34 +706,92 @@ class MobileChatTool(BaseTool):
 
         return transcription.strip()
 
+    def _update_recording_progress(self, remaining_seconds: float):
+        """Update recording progress in UI"""
+        if remaining_seconds > 0:
+            # Update tooltip with countdown
+            self.chat_input.mic_button.set_tooltip_text(f"Recording... {remaining_seconds:.1f}s remaining")
+
+            # Update placeholder text
+            buffer = self.chat_input.text_view.get_buffer()
+            current_text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+            if current_text.strip() == "🎤 Listening..." or "Listening" in current_text:
+                buffer.set_text(f"🎤 Listening... {remaining_seconds:.1f}s")
+
+        return False  # Don't repeat this timeout
+
+    def set_recording_duration(self, duration: float):
+        """Set recording duration in seconds"""
+        self.recording_duration = max(1.0, min(30.0, duration))  # 1-30 seconds
+        print(f"🎤 Recording duration set to {self.recording_duration:.1f} seconds")
+
+    def get_recording_duration(self) -> float:
+        """Get current recording duration"""
+        return getattr(self, 'recording_duration', 5.0)
+
     def _on_speech_result(self, transcription: str):
-        """Handle successful speech transcription"""
-        # Reset mic button
-        self.chat_input.mic_button.set_label("🎤")
-        self.chat_input.mic_button.set_tooltip_text("Voice input (speech-to-text)")
-        self.chat_input.mic_button.set_sensitive(True)
-        self.chat_input.mic_button.remove_css_class("recording")
+        """Handle successful speech transcription with enhanced feedback"""
+        # Reset recording UI
+        self._stop_recording_ui()
 
         if transcription and transcription.strip():
+            # Clean up transcription
+            clean_transcription = transcription.strip()
+
+            # Handle special cases
+            if clean_transcription.lower().startswith("mock transcription"):
+                self._show_voice_error("Using mock audio - real microphone not captured")
+                return
+
             # Add transcribed text to input
             current_text = self.chat_input.get_text()
-            if current_text and not current_text.endswith(" "):
-                transcription = " " + transcription
 
-            self.chat_input.text_view.get_buffer().set_text(current_text + transcription)
-            print(f"🎤 Speech transcribed: {transcription}")
+            # Clear listening placeholder if present
+            if current_text.strip() == "🎤 Listening...":
+                current_text = ""
+
+            # Add space if needed
+            if current_text and not current_text.endswith(" "):
+                clean_transcription = " " + clean_transcription
+
+            # Set the text
+            final_text = current_text + clean_transcription
+            self.chat_input.text_view.get_buffer().set_text(final_text)
+
+            # Focus the input for further editing
+            self.chat_input.focus_input()
+
+            print(f"✅ Speech transcribed: '{clean_transcription}'")
+
+            # Show success feedback briefly
+            self._show_voice_success(f"Transcribed: {clean_transcription[:30]}...")
+
         else:
-            self._show_voice_error("No speech detected")
+            self._show_voice_error("No speech detected or transcription empty")
 
     def _on_speech_error(self, error_msg: str):
-        """Handle speech recognition error"""
-        # Reset mic button
-        self.chat_input.mic_button.set_label("🎤")
-        self.chat_input.mic_button.set_tooltip_text("Voice input (speech-to-text)")
-        self.chat_input.mic_button.set_sensitive(True)
-        self.chat_input.mic_button.remove_css_class("recording")
+        """Handle speech recognition error with enhanced feedback"""
+        # Reset recording UI
+        self._stop_recording_ui()
 
+        # Show detailed error
         self._show_voice_error(error_msg)
+
+    def _show_voice_success(self, message: str):
+        """Show voice input success message"""
+        print(f"✅ Voice success: {message}")
+        # Could show a green toast notification here in the future
+
+        # Temporarily change tooltip to show success
+        original_tooltip = self.chat_input.mic_button.get_tooltip_text()
+        self.chat_input.mic_button.set_tooltip_text(f"✅ {message}")
+
+        # Reset tooltip after 3 seconds
+        def reset_tooltip():
+            self.chat_input.mic_button.set_tooltip_text(original_tooltip)
+            return False  # Don't repeat
+
+        GLib.timeout_add(3000, reset_tooltip)
 
     def _show_voice_error(self, message: str):
         """Show voice input error message"""
@@ -693,17 +818,188 @@ class MobileChatTool(BaseTool):
             print(f"⚠️ Failed to save chat history: {e}")
     
     def get_tool_actions(self) -> List[Gtk.Widget]:
-        """Get tool-specific actions for header bar"""
+        """Get tool-specific actions for header bar including recording controls"""
         actions = []
-        
+
+        # Recording duration control
+        if SPEECH_CLIENT_AVAILABLE and self.speech_client:
+            duration_button = Gtk.MenuButton()
+            duration_button.set_icon_name("preferences-system-time-symbolic")
+            duration_button.set_tooltip_text("Recording duration settings")
+
+            # Create duration menu
+            duration_menu = Gtk.PopoverMenu()
+            duration_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+
+            # Duration options
+            durations = [1.0, 3.0, 5.0, 10.0, 15.0]
+            current_duration = self.get_recording_duration()
+
+            for duration in durations:
+                duration_item = Gtk.Button(label=f"{duration:.0f} seconds")
+                duration_item.set_has_frame(False)
+                if abs(duration - current_duration) < 0.1:
+                    duration_item.add_css_class("suggested-action")
+
+                duration_item.connect("clicked", lambda btn, d=duration: self._on_duration_selected(d))
+                duration_box.append(duration_item)
+
+            duration_menu.set_child(duration_box)
+            duration_button.set_popover(duration_menu)
+            actions.append(duration_button)
+
+        # Audio info button
+        if SPEECH_CLIENT_AVAILABLE and self.speech_client:
+            info_button = Gtk.Button()
+            info_button.set_icon_name("dialog-information-symbolic")
+            info_button.set_tooltip_text("Audio system information")
+            info_button.connect("clicked", self._on_audio_info)
+            actions.append(info_button)
+
         # Clear chat button
         clear_button = Gtk.Button()
         clear_button.set_icon_name("edit-clear-symbolic")
         clear_button.set_tooltip_text("Clear chat history")
         clear_button.connect("clicked", self._on_clear_chat)
         actions.append(clear_button)
-        
+
         return actions
+
+    def _on_duration_selected(self, duration: float):
+        """Handle recording duration selection"""
+        self.set_recording_duration(duration)
+
+        # Update tooltip to show current setting
+        for action in self.get_tool_actions():
+            if hasattr(action, 'set_tooltip_text') and "duration" in action.get_tooltip_text().lower():
+                action.set_tooltip_text(f"Recording duration: {duration:.0f}s")
+                break
+
+    def _on_audio_info(self, button):
+        """Show audio system information"""
+        if not self.speech_client:
+            return
+
+        audio_info = self.speech_client.get_audio_info()
+
+        # Create info message
+        info_lines = [
+            f"gRPC Connected: {'✅' if audio_info['grpc_connected'] else '❌'}",
+            f"Audio Capture: {'✅' if audio_info['audio_capture_available'] else '❌'}",
+            f"Real Audio: {'✅' if audio_info['real_audio_enabled'] else '❌'}",
+            f"Service: {audio_info['host']}:{audio_info['port']}",
+        ]
+
+        if 'available_devices' in audio_info:
+            info_lines.append(f"Audio Devices: {audio_info['available_devices']}")
+            if audio_info['device_names']:
+                info_lines.append(f"Devices: {', '.join(audio_info['device_names'])}")
+
+        info_message = "\n".join(info_lines)
+        print(f"🎤 Audio System Info:\n{info_message}")
+
+        # Could show this in a dialog in the future
+        self._show_voice_success("Audio info printed to console")
+
+    def _check_audio_permissions(self):
+        """Check audio permissions and show helpful messages"""
+        if not self.speech_client:
+            return
+
+        try:
+            from .bridge.audio_utils import AudioDeviceManager
+
+            # Check permissions
+            has_permissions = AudioDeviceManager.check_audio_permissions()
+
+            if not has_permissions:
+                print("⚠️ Audio permissions not available")
+                self._show_audio_permission_help()
+            else:
+                print("✅ Audio permissions available")
+
+                # Check for recommended device
+                recommended = AudioDeviceManager.get_recommended_device()
+                if recommended:
+                    print(f"✅ Recommended audio device: {recommended['name']}")
+                else:
+                    print("⚠️ No recommended audio device found")
+
+        except Exception as e:
+            print(f"⚠️ Audio permission check failed: {e}")
+
+    def _show_audio_permission_help(self):
+        """Show helpful audio permission instructions"""
+        try:
+            from .bridge.audio_utils import AudioDeviceManager
+            instructions = AudioDeviceManager.get_installation_instructions()
+
+            help_message = f"""
+🎤 Audio Setup Required:
+
+System Dependencies: {instructions['system_deps']}
+Python Package: {instructions['pyaudio_install']}
+Troubleshooting: {instructions['troubleshooting']}
+
+Platform: {instructions['platform']}
+"""
+            print(help_message)
+
+        except Exception as e:
+            print(f"⚠️ Could not get audio help: {e}")
+
+    def _show_voice_error(self, message: str):
+        """Enhanced voice input error message with helpful suggestions"""
+        print(f"🎤 Voice input error: {message}")
+
+        # Provide helpful suggestions based on error type
+        if "not available" in message.lower():
+            print("💡 Suggestion: Check if speech service is running on port 1191")
+        elif "no speech detected" in message.lower():
+            print("💡 Suggestion: Speak closer to microphone or increase recording duration")
+        elif "permission" in message.lower():
+            print("💡 Suggestion: Grant microphone permissions in system settings")
+        elif "mock" in message.lower():
+            print("💡 Suggestion: Real microphone capture is working, but service may need real audio")
+
+        # Update mic button tooltip with error
+        if hasattr(self, 'chat_input') and self.chat_input.mic_button:
+            self.chat_input.mic_button.set_tooltip_text(f"❌ {message}")
+
+            # Reset tooltip after 5 seconds
+            def reset_tooltip():
+                self.chat_input.mic_button.set_tooltip_text("Voice input (speech-to-text)")
+                return False
+
+            GLib.timeout_add(5000, reset_tooltip)
+
+    def _handle_microphone_hotkey(self):
+        """Handle global microphone hotkey (if implemented)"""
+        if self.is_recording:
+            # Stop recording if already recording
+            self.is_recording = False
+        else:
+            # Start recording
+            self._on_voice_input()
+
+    def get_voice_input_status(self) -> dict:
+        """Get comprehensive voice input status"""
+        status = {
+            'available': SPEECH_CLIENT_AVAILABLE and self.speech_client is not None,
+            'connected': False,
+            'recording': getattr(self, 'is_recording', False),
+            'duration': self.get_recording_duration(),
+            'last_error': None
+        }
+
+        if self.speech_client:
+            try:
+                audio_info = self.speech_client.get_audio_info()
+                status.update(audio_info)
+            except Exception as e:
+                status['last_error'] = str(e)
+
+        return status
     
     def _on_clear_chat(self, button):
         """Clear chat history"""

@@ -58,8 +58,8 @@ class MobileControlCenterWindow(MobileFirstWindow):
 
         super().__init__(application, self.viewport_manager)
 
-        # Set viewport manager window reference
-        self.viewport_manager.window = self
+        # Set viewport manager window reference and apply pending configuration
+        self.viewport_manager.set_window(self)
 
         self.project_root = project_root
         self.tool_manager = tool_manager

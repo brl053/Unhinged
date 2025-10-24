@@ -40,6 +40,25 @@ opencv-python>=4.8.0          # Computer vision
 scikit-learn>=1.3.0           # Machine learning utilities
 
 # ============================================================================
+# AUDIO CAPTURE DEPENDENCIES
+# ============================================================================
+pyaudio>=0.2.11               # Real-time audio capture
+wave>=0.0.2                   # WAV file handling
+
+# ============================================================================
+# COMPUTER VISION DEPENDENCIES
+# ============================================================================
+ultralytics>=8.0.0           # YOLOv8 for object detection
+mss>=9.0.1                   # Fast screen capture
+pyautogui>=0.9.54            # Screen interaction
+
+# ============================================================================
+# INPUT CAPTURE DEPENDENCIES
+# ============================================================================
+pynput>=1.7.6                # Keyboard and mouse capture
+keyboard>=0.13.5             # Alternative keyboard library
+
+# ============================================================================
 # WEB FRAMEWORK DEPENDENCIES
 # ============================================================================
 fastapi>=0.100.0              # Modern web framework

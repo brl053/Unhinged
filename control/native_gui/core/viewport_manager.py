@@ -120,16 +120,25 @@ class ViewportManager:
         ),
     }
     
-    def __init__(self, window: Gtk.Window):
+    def __init__(self, window: Optional[Gtk.Window]):
         self.window = window
         self.current_config: Optional[ViewportConfig] = None
         self.on_viewport_changed: Optional[Callable[[ViewportConfig], None]] = None
-        
-        # Default to mobile-first (Pixel 8)
-        self.set_viewport("pixel_8")
-        
+        self._pending_viewport = "pixel_8"  # Default viewport to apply when window is available
+
+        # Apply default viewport if window is available
+        if self.window is not None:
+            self.set_viewport("pixel_8")
+
         print("📱 Viewport Manager initialized with mobile-first design")
-    
+
+    def set_window(self, window: Gtk.Window):
+        """Set the window reference and apply any pending viewport configuration"""
+        self.window = window
+        if self._pending_viewport:
+            self.set_viewport(self._pending_viewport)
+            self._pending_viewport = None
+
     def set_viewport(self, preset_name: str) -> bool:
         """Set viewport to a predefined device preset"""
         if preset_name not in self.DEVICE_PRESETS:
@@ -152,10 +161,16 @@ class ViewportManager:
     
     def _apply_viewport_config(self, config: ViewportConfig) -> bool:
         """Apply viewport configuration to the window"""
+        if self.window is None:
+            print(f"⚠️ Window not available, deferring viewport config: {config.name}")
+            self._pending_viewport = None  # Clear pending since we're storing the config
+            self.current_config = config  # Store config for later application
+            return False
+
         try:
             # Set window size
             self.window.set_default_size(config.width, config.height)
-            
+
             # For existing windows, resize them
             if hasattr(self.window, 'get_allocated_width'):
                 self.window.set_size_request(config.width, config.height)
