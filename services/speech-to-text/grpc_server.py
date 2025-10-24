@@ -30,21 +30,18 @@ import io
 import whisper
 import torch
 
-# Add current directory to path for proto imports
+# Add locally generated proto files to path
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, "/app/generated_proto")
 
-# Generated proto imports
+# Generated proto imports from local generation
 import audio_pb2
 import audio_pb2_grpc
 import common_pb2
+from health import health_pb2, health_pb2_grpc
 from google.protobuf import timestamp_pb2
 import time
-
-# Health proto imports (local copies)
-from health import health_pb2
-from health import health_pb2_grpc
 
 def set_current_timestamp(timestamp_field):
     """Helper function to set current timestamp"""

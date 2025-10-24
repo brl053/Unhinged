@@ -33,6 +33,14 @@ try:
 except ImportError as e:
     print(f"⚠️ LLM client not available: {e}")
     LLM_CLIENT_AVAILABLE = False
+
+# Try to import Speech client (optional)
+try:
+    from .bridge.speech_client import SpeechClient
+    SPEECH_CLIENT_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Speech client not available: {e}")
+    SPEECH_CLIENT_AVAILABLE = False
     LLMServiceClient = None
 
 
@@ -92,14 +100,14 @@ class MobileChatMessage(Gtk.Box):
 class MobileChatInput(Gtk.Box):
     """
     Mobile-optimized chat input component.
-    
+
     Features:
     - Large touch-friendly input area
     - Send button with haptic feedback
-    - Voice input button (future)
+    - Voice input button with speech-to-text
     - Auto-resize text area
     """
-    
+
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         
@@ -132,11 +140,23 @@ class MobileChatInput(Gtk.Box):
         self.send_button.add_css_class("mobile-chat-send-button")
         self.send_button.set_label("➤")
         self.send_button.set_tooltip_text("Send message")
-        
-        self.append(self.send_button)
+
+        # Microphone button for speech-to-text
+        self.mic_button = Gtk.Button()
+        self.mic_button.add_css_class("mobile-chat-mic-button")
+        self.mic_button.set_label("🎤")
+        self.mic_button.set_tooltip_text("Voice input (speech-to-text)")
+
+        # Button container
+        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        button_box.append(self.mic_button)
+        button_box.append(self.send_button)
+
+        self.append(button_box)
         
         # Connect signals
         self.send_button.connect("clicked", self._on_send_clicked)
+        self.mic_button.connect("clicked", self._on_mic_clicked)
         
         # Key press handling
         key_controller = Gtk.EventControllerKey()
@@ -183,6 +203,13 @@ class MobileChatInput(Gtk.Box):
             self.on_message_send(text)
             self.clear_text()
 
+    def _on_mic_clicked(self, button):
+        """Handle microphone button click for speech-to-text"""
+        if hasattr(self, 'on_voice_input') and self.on_voice_input:
+            self.on_voice_input()
+        else:
+            print("🎤 Voice input not configured")
+
 
 class MobileChatTool(BaseTool):
     """
@@ -193,7 +220,7 @@ class MobileChatTool(BaseTool):
     - Touch-optimized input
     - Message history
     - Typing indicators
-    - Voice input support (future)
+    - Voice input with speech-to-text
     """
     
     def __init__(self):
@@ -215,6 +242,16 @@ class MobileChatTool(BaseTool):
             self.llm_client = None
             self.llm_initialized = False
             print("⚠️ Running in offline mode - LLM client not available")
+
+        # Initialize Speech client (if available)
+        if SPEECH_CLIENT_AVAILABLE:
+            self.speech_client = SpeechClient()
+            self.speech_initialized = False
+            print("🎤 Speech client available")
+        else:
+            self.speech_client = None
+            self.speech_initialized = False
+            print("⚠️ Speech-to-text not available - speech client not found")
 
         # Load chat history
         self._load_chat_history()
@@ -238,6 +275,7 @@ class MobileChatTool(BaseTool):
         # Input area
         self.chat_input = MobileChatInput()
         self.chat_input.on_message_send = self._on_message_send
+        self.chat_input.on_voice_input = self._on_voice_input
         main_box.append(self.chat_input)
         
         # Load existing messages
@@ -547,7 +585,94 @@ class MobileChatTool(BaseTool):
         if scrolled and isinstance(scrolled, Gtk.ScrolledWindow):
             vadj = scrolled.get_vadjustment()
             vadj.set_value(vadj.get_upper() - vadj.get_page_size())
-    
+
+    def _on_voice_input(self):
+        """Handle voice input request"""
+        if not SPEECH_CLIENT_AVAILABLE or not self.speech_client:
+            self._show_voice_error("Speech-to-text service not available")
+            return
+
+        # Change mic button to indicate recording
+        self.chat_input.mic_button.set_label("🔴")
+        self.chat_input.mic_button.set_tooltip_text("Recording... Click to stop")
+        self.chat_input.mic_button.set_sensitive(False)
+        self.chat_input.mic_button.add_css_class("recording")
+
+        # Start speech recognition in background thread
+        def run_speech_recognition():
+            try:
+                print("🎤 Starting speech recognition...")
+
+                # Use speech client to get transcription
+                transcription = self._get_speech_transcription()
+
+                # Update UI in main thread
+                GLib.idle_add(self._on_speech_result, transcription)
+
+            except Exception as e:
+                error_msg = f"Speech recognition error: {str(e)}"
+                print(f"❌ {error_msg}")
+                GLib.idle_add(self._on_speech_error, error_msg)
+
+        # Run in background thread
+        import threading
+        thread = threading.Thread(target=run_speech_recognition, daemon=True)
+        thread.start()
+
+    def _get_speech_transcription(self) -> str:
+        """Get speech transcription using the local speech client"""
+        if not self.speech_client:
+            raise Exception("Speech client not available")
+
+        # Start recording
+        self.speech_client.start_recording()
+
+        # Record for a few seconds (in real implementation, this would be user-controlled)
+        import time
+        time.sleep(3)  # Record for 3 seconds
+
+        # Stop recording and get transcription
+        transcription = self.speech_client.stop_recording()
+
+        if not transcription or transcription.strip() == "":
+            raise Exception("No speech detected")
+
+        return transcription.strip()
+
+    def _on_speech_result(self, transcription: str):
+        """Handle successful speech transcription"""
+        # Reset mic button
+        self.chat_input.mic_button.set_label("🎤")
+        self.chat_input.mic_button.set_tooltip_text("Voice input (speech-to-text)")
+        self.chat_input.mic_button.set_sensitive(True)
+        self.chat_input.mic_button.remove_css_class("recording")
+
+        if transcription and transcription.strip():
+            # Add transcribed text to input
+            current_text = self.chat_input.get_text()
+            if current_text and not current_text.endswith(" "):
+                transcription = " " + transcription
+
+            self.chat_input.text_view.get_buffer().set_text(current_text + transcription)
+            print(f"🎤 Speech transcribed: {transcription}")
+        else:
+            self._show_voice_error("No speech detected")
+
+    def _on_speech_error(self, error_msg: str):
+        """Handle speech recognition error"""
+        # Reset mic button
+        self.chat_input.mic_button.set_label("🎤")
+        self.chat_input.mic_button.set_tooltip_text("Voice input (speech-to-text)")
+        self.chat_input.mic_button.set_sensitive(True)
+        self.chat_input.mic_button.remove_css_class("recording")
+
+        self._show_voice_error(error_msg)
+
+    def _show_voice_error(self, message: str):
+        """Show voice input error message"""
+        print(f"🎤 Voice input error: {message}")
+        # Could show a toast notification here in the future
+
     def _load_chat_history(self):
         """Load chat history from file"""
         try:

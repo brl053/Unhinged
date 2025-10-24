@@ -35,9 +35,9 @@ services:
     restart: unless-stopped
 
   speech-to-text:
-    build: 
-      context: ./services/speech-to-text
-      dockerfile: Dockerfile
+    build:
+      context: ..
+      dockerfile: services/speech-to-text/Dockerfile
     container_name: speech-to-text-service-dev
     ports:
       - "1101:8000"  # External 1101 → Internal 8000
@@ -50,7 +50,7 @@ services:
     volumes:
       - whisper-models:/root/.cache/whisper
       - audio-uploads:/app/uploads
-      - ./services/speech-to-text:/app/src:ro  # Hot-reload source
+      - ../services/speech-to-text:/app/src:ro  # Hot-reload source
     networks:
       - unhinged-network
     restart: unless-stopped
@@ -139,6 +139,7 @@ services:
     ports:
       - "1300:8090"  # External 1300 → Internal 8090 (REST)
       - "1301:9090"  # External 1301 → Internal 9090 (gRPC)
+      - "5005:5005"  # Debug port
     environment:
       - JAVA_OPTS=-Xmx1g -Xms512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       - CONFIG_PATH=/app/config/persistence-platform.yaml
@@ -147,8 +148,6 @@ services:
       - ./platforms/persistence/config:/app/config:ro
       - ./platforms/persistence/src:/app/src:ro  # Hot-reload source
       - persistence-dev-logs:/app/logs
-    ports:
-      - "5005:5005"  # Debug port
     depends_on:
       - redis
       - database

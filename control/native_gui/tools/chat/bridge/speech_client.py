@@ -80,7 +80,7 @@ class SpeechClient:
     to provide voice input for the chat interface.
     """
 
-    def __init__(self, host: str = "localhost", port: int = 9091):
+    def __init__(self, host: str = "localhost", port: int = 1191):
         self.host = host
         self.port = port
         self.channel = None

@@ -9,14 +9,23 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Install only required dependencies for speech-to-text
+RUN pip install --no-cache-dir \
+    grpcio==1.60.0 \
+    grpcio-tools==1.60.0 \
+    protobuf==4.21.12 \
+    openai-whisper==20231117 \
+    torch==2.1.0 \
+    "numpy<2.0.0"
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy proto files for generation
+COPY proto/ /app/proto/
 
 # Copy application code
-COPY . .
+COPY services/speech-to-text/ .
+
+# Generate protobuf files with compatible version
+RUN python generate_proto.py
 
 # Create directories for uploads
 RUN mkdir -p /app/uploads

@@ -352,3 +352,53 @@
         opacity: 0.5;
     }
 }
+
+/* === MICROPHONE BUTTON STYLING === */
+.mobile-chat-mic-button {
+    background: var(--md-sys-color-secondary-container-dark);
+    color: var(--md-sys-color-on-secondary-container-dark);
+    border: none;
+    border-radius: var(--md-sys-shape-corner-full);
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 18px;
+    font-weight: 500;
+    transition: all var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+    box-shadow: var(--md-sys-elevation-level1);
+}
+
+.mobile-chat-mic-button:hover {
+    background: var(--md-sys-color-secondary-container-dark);
+    box-shadow: var(--md-sys-elevation-level2);
+    transform: scale(1.05);
+}
+
+.mobile-chat-mic-button:active {
+    background: var(--md-sys-color-secondary-dark);
+    color: var(--md-sys-color-on-secondary-dark);
+    box-shadow: var(--md-sys-elevation-level0);
+    transform: scale(0.95);
+    transition: all var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
+}
+
+/* Recording state styling */
+.mobile-chat-mic-button.recording {
+    background: var(--md-sys-color-error-container-dark);
+    color: var(--md-sys-color-on-error-container-dark);
+    animation: pulse-recording 1s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
