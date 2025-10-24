@@ -73,6 +73,9 @@ class RequestBuilder(Gtk.Box):
         self._setup_headers_section()
         self._setup_body_section()
 
+        # Connect signals after all widgets are created to avoid AttributeError
+        self.service_dropdown.connect("notify::selected", self._on_service_changed)
+
         print("🔧 Intelligent request builder widget initialized")
     
     def _setup_method_url_row(self):
@@ -88,7 +91,7 @@ class RequestBuilder(Gtk.Box):
         # Service dropdown (populated from network discovery)
         self.service_dropdown = Gtk.DropDown()
         self.service_dropdown.set_hexpand(True)
-        self.service_dropdown.connect("notify::selected", self._on_service_changed)
+        # Note: Signal connection moved to end of __init__ to avoid AttributeError
         self._populate_service_dropdown()
         service_row.append(self.service_dropdown)
 
