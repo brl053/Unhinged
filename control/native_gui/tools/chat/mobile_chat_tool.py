@@ -919,7 +919,7 @@ class MobileChatTool(BaseTool):
                     gui_logger.warn(" No recommended audio device found")
 
         except Exception as e:
-            gui_logger.warn(f" Audio permission check failed: {e}")
+            gui_logger.debug(f" Audio permission check failed: {e}")
 
     def _show_audio_permission_help(self):
         """Show helpful audio permission instructions"""

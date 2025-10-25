@@ -216,6 +216,38 @@ class ThemeManager:
 
         gui_logger.info(" CSS providers initialized", {"event_type": "theming"})
 
+    def _load_base_theme(self):
+        """
+        @llm-key Load base theme CSS into providers
+        @llm-contract Loads foundational CSS styling into GTK CSS providers
+        @llm-map Core theme loading method for application styling
+
+        Load base theme CSS and apply to display.
+        """
+        try:
+            # Generate base CSS
+            base_css = self._generate_base_css()
+
+            # Load into base provider
+            if 'base' not in self.css_providers:
+                self.css_providers['base'] = Gtk.CssProvider()
+
+            self.css_providers['base'].load_from_data(base_css.encode())
+
+            # Apply to display
+            display = Gdk.Display.get_default()
+            if display:
+                Gtk.StyleContext.add_provider_for_display(
+                    display,
+                    self.css_providers['base'],
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+            gui_logger.info(" Base theme loaded successfully", {"event_type": "theming"})
+
+        except Exception as e:
+            gui_logger.error(f" Failed to load base theme: {e}")
+
     def _apply_theme_variant(self, variant: ThemeVariant):
         """
         @llm-type method
@@ -315,12 +347,12 @@ class ThemeManager:
             color: #49454F;
             border: 1px solid #36343B;
             border-bottom: none;
-            font-family: #E6E0E9;
-            font-size: #E6E0E9;
-            font-weight: #E6E0E9;
-            line-height: #E6E0E9;
-            letter-
-            transition: all #E6E0E9 #E6E0E9;
+            font-family: "Inter", sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.4;
+            letter-spacing: 0.1px;
+            transition: all 0.2s ease;
 
             /* GTK: Use padding instead of min-width for minimum size */
             padding-left: 60px;

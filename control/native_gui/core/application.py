@@ -107,6 +107,83 @@ class UnhingedApplication(Adw.Application):
         self.main_window.present()
         gui_logger.info(" Unhinged Control Center ready!", {"status": "success"})
 
+        # Print startup summary for user
+        self._print_startup_summary()
+
+    def _print_startup_summary(self):
+        """
+        @llm-key Print user-friendly startup summary with voice capability status
+        @llm-contract Provides clear feedback about system readiness and voice functionality
+        @llm-map User feedback component for voice-first experience validation
+
+        Print a clean summary of system status for user feedback.
+        """
+        try:
+            print("\n" + "="*60)
+            print("🎯 UNHINGED CONTROL CENTER - READY!")
+            print("="*60)
+
+            # Check voice transcription status
+            voice_status = self._check_voice_status()
+
+            print(f"🎤 Voice Input: {'✅ Ready' if voice_status['ready'] else '⚠️ Limited'}")
+            if voice_status['ready']:
+                print(f"   Backend: {voice_status['backend']}")
+                print("   💡 Click the mic button and start talking!")
+            else:
+                print("   💡 Text chat available, voice needs setup")
+
+            print(f"🤖 AI Chat: ✅ Ready")
+            print(f"🔧 Tools: ✅ {len(self.tools)} tools loaded")
+            print(f"📊 Services: ✅ Running")
+
+            if not voice_status['ready']:
+                print(f"\n🔧 To enable voice input:")
+                print(f"   sudo apt install portaudio19-dev python3-dev")
+                print(f"   pip install pyaudio")
+
+            print("\n" + "="*60)
+            print()
+
+        except Exception as e:
+            gui_logger.debug(f" Error printing startup summary: {e}")
+
+    def _check_voice_status(self):
+        """Check voice transcription capability status"""
+        try:
+            # Check if chat tool has voice capability
+            chat_tool = None
+            for tool in self.tools:
+                if hasattr(tool, 'speech_client'):
+                    chat_tool = tool
+                    break
+
+            if not chat_tool or not hasattr(chat_tool, 'speech_client'):
+                return {'ready': False, 'backend': 'none'}
+
+            speech_client = chat_tool.speech_client
+
+            # Check native audio first (preferred)
+            if hasattr(speech_client, 'native_audio') and speech_client.native_audio:
+                if speech_client.native_audio.is_available():
+                    return {'ready': True, 'backend': 'Native System Audio'}
+
+            # Check simple audio fallback
+            if hasattr(speech_client, 'simple_audio') and speech_client.simple_audio:
+                if speech_client.simple_audio.is_available():
+                    return {'ready': True, 'backend': 'Python Audio Library'}
+
+            # Check native speech recognition
+            if hasattr(speech_client, 'native_speech') and speech_client.native_speech:
+                if speech_client.native_speech.is_available():
+                    return {'ready': True, 'backend': 'Speech Recognition Library'}
+
+            return {'ready': False, 'backend': 'none'}
+
+        except Exception as e:
+            gui_logger.debug(f" Error checking voice status: {e}")
+            return {'ready': False, 'backend': 'error'}
+
     def _show_ai_launch_indicator(self):
         """Show AI launch indicator in the GUI"""
         if self.main_window and hasattr(self.main_window, '_add_ai_launch_indicator'):

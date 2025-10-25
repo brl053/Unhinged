@@ -43,8 +43,8 @@ from typing import Optional, Iterator, Callable, Deque
 from dataclasses import dataclass
 
 if not PYAUDIO_AVAILABLE and not SOUNDDEVICE_AVAILABLE:
-    gui_logger.warn(" No audio backends available - audio capture disabled")
-    gui_logger.info(" Install audio dependencies with: python3 control/native_gui/tools/chat/bridge/audio_installer.py")
+    gui_logger.debug(" No audio backends available - using native audio capture instead")
+    gui_logger.debug(" Install audio dependencies with: python3 control/native_gui/tools/chat/bridge/audio_installer.py")
 
 
 @dataclass

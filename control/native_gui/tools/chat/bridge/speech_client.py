@@ -105,7 +105,7 @@ try:
     else:
         gui_logger.warn(" AudioServiceStub not found in proto clients")
 except ImportError as e:
-    gui_logger.warn(f" Proto clients not available: {e}")
+    gui_logger.debug(f" Proto clients not available: {e}")
     # Create mock classes for development
     class MockProto:
         pass
@@ -167,13 +167,13 @@ class SpeechClient:
                 self.audio_capture = AudioCapture()
                 if not self.audio_capture.is_available():
                     status = self.audio_capture.get_availability_status()
-                    gui_logger.warn(f" Audio capture not available: {status['error_message']}")
-                    gui_logger.info(f" Installation help: {status['installation_help']}")
+                    gui_logger.debug(f" Audio capture not available: {status['error_message']}")
+                    gui_logger.debug(f" Installation help: {status['installation_help']}")
                     self.audio_capture = None
                 else:
                     gui_logger.info(f" Audio capture initialized with {self.audio_capture.backend} backend")
             except Exception as e:
-                gui_logger.warn(f" Failed to initialize audio capture: {e}")
+                gui_logger.debug(f" Failed to initialize audio capture: {e}")
                 self.audio_capture = None
 
         # Try native speech recognition as final fallback
@@ -212,11 +212,11 @@ class SpeechClient:
                 self.stub = None
 
         except grpc.FutureTimeoutError:
-            gui_logger.warn(f" gRPC connection timeout to {self.host}:{self.port}")
+            gui_logger.debug(f" gRPC connection timeout to {self.host}:{self.port} (expected if service not running)")
             self.channel = None
             self.stub = None
         except Exception as e:
-            gui_logger.error(f" gRPC connection failed: {e}")
+            gui_logger.debug(f" gRPC connection failed: {e}")
             self.channel = None
             self.stub = None
 
@@ -437,7 +437,7 @@ class SpeechClient:
             return "No audio recorded"
 
         if not self.is_connected():
-            gui_logger.warn(" No gRPC connection, using mock transcription")
+            gui_logger.debug(" No gRPC connection, using mock transcription")
             return f"Mock transcription: recorded {len(self.audio_data)} audio chunks"
 
         try:

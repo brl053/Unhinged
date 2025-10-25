@@ -60,7 +60,7 @@ try:
     gui_logger.info(" gRPC and proto clients available", {"status": "success"})
 except ImportError as e:
     GRPC_AVAILABLE = False
-    gui_logger.warn(f" gRPC not available - using HTTP fallback: {e}")
+    gui_logger.debug(f" gRPC not available - using HTTP fallback: {e}")
 
 
 @dataclass
