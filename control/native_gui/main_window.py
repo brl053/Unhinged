@@ -134,6 +134,7 @@ class MobileControlCenterWindow(MobileFirstWindow):
             if tool:
                 mobile_tools[nav_id] = tool
             else:
+                pass
 
         # Create tool widgets and add to content stack
         for tool_id, tool in mobile_tools.items():

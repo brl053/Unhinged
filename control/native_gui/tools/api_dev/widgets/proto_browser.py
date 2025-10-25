@@ -455,6 +455,7 @@ class ProtoBrowser(Gtk.Box):
         
         if search_text:
             # TODO: Implement filtering
+            pass
         else:
             # Clear filter
             pass
