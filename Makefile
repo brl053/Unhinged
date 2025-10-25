@@ -584,7 +584,7 @@ start: validate-independence ## Generate service registry, launch essential serv
 	@echo ""
 	@echo "🎮 Launching INDEPENDENT Native GTK GUI..."
 	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
-	@echo "🔥 FUCK WEBKIT - GOING NATIVE!"
+	@echo "🔥 NATIVE RENDERING - NO EXTERNAL DEPENDENCIES!"
 	@$(HTML_NATIVE)
 
 start-offline: validate-independence ## Launch native GUI without starting services (offline mode)
@@ -595,7 +595,7 @@ start-offline: validate-independence ## Launch native GUI without starting servi
 	@echo "✅ System Health Dashboard ready!"
 	@echo "🎮 Launching INDEPENDENT Native GTK GUI (Offline Mode)..."
 	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
-	@echo "🔥 FUCK WEBKIT - GOING NATIVE!"
+	@echo "🔥 NATIVE RENDERING - NO EXTERNAL DEPENDENCIES!"
 	@$(HTML_NATIVE)
 
 start-services: ## Launch essential services only (LLM, Backend, Database)
@@ -842,8 +842,8 @@ install-docker: ## Install Docker interactively
 
 install-docker-compose: ## Install Docker Compose
 	@echo "$(BLUE)🔧 Installing Docker Compose...$(RESET)"
-	@echo "station1" | sudo -S wget -O /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/latest/download/docker-compose-$$(uname -s)-$$(uname -m)"
-	@echo "station1" | sudo -S chmod +x /usr/local/bin/docker-compose
+	@sudo wget -O /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/latest/download/docker-compose-$$(uname -s)-$$(uname -m)"
+	@sudo chmod +x /usr/local/bin/docker-compose
 	@echo "$(GREEN)✅ Docker Compose installed!$(RESET)"
 
 # Development aliases removed - use original dev/dev-full commands
