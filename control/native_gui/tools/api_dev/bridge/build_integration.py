@@ -335,7 +335,8 @@ class BuildSystemIntegration:
             if registry_data["success"]:
                 self.service_registry_cache = registry_data["registry"]
         except Exception as e:
-    
+            pass
+
     def get_build_status(self, target: str) -> Optional[BuildOperation]:
         """Get current build status for a target"""
         return self.current_operations.get(target)

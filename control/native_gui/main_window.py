@@ -143,6 +143,7 @@ class MobileControlCenterWindow(MobileFirstWindow):
                 self.content_area.add_named(widget, tool_id)
                 self.tool_widgets[tool_id] = widget
             except Exception as e:
+                pass
 
         # Show default tool
         self.content_area.set_visible_child_name("chat")
