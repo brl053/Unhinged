@@ -237,6 +237,7 @@ class ServiceLauncher:
             self.running_services.clear()
             
         except Exception as e:
+            pass
 
 
 def main():
