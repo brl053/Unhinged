@@ -187,10 +187,6 @@ class ServiceLauncher:
             except requests.RequestException:
                 pass
             
-            # Show progress
-            elapsed = int(time.time() - start_time)
-            if elapsed % 10 == 0 and elapsed > 0:
-            
             time.sleep(2)
         
         events.warn("Service did not become healthy", {"service": service['name'], "timeout": timeout})

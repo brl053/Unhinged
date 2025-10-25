@@ -1,4 +1,6 @@
 
+from unhinged_events import create_gui_logger
+
 # Initialize GUI event logger
 gui_logger = create_gui_logger("unhinged---init--", "1.0.0")
 
