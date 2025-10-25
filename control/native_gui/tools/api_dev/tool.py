@@ -21,14 +21,17 @@ from gi.repository import Gtk, GLib
 from pathlib import Path
 
 from ...core.tool_manager import BaseTool
+from ...core.tool_config import ToolConfigFactory
+from ...ui.widget_factory import WidgetFactory
 from .widgets.proto_browser import ProtoBrowser
 from .widgets.request_builder import RequestBuilder
 from .widgets.response_viewer import ResponseViewer
-from .bridge.proto_scanner import ProtoScanner
+from ...bridge.proto_scanner import ProtoScanner
 from .bridge.grpc_client import GRPCClient
 from .bridge.http_client import HTTPClient
 from .bridge.network_scanner import NetworkScanner
 from .bridge.reflection_client import ReflectionClient
+from .bridge.build_integration import BuildSystemIntegration
 
 
 class APIDevTool(BaseTool):
@@ -42,11 +45,14 @@ class APIDevTool(BaseTool):
     """
     
     def __init__(self):
-        super().__init__()
-        self.name = "API Dev"
-        self.icon = "🔧"
-        self.description = "API Development Tool - Proto scanning, request building, response viewing"
-        self.shortcut = "Ctrl+1"
+        # Use ToolConfig for standardized initialization
+        config = ToolConfigFactory.create_development_tool(
+            name="API Dev",
+            icon="API",
+            description="API Development Tool - Proto scanning, gRPC/HTTP testing, build integration",
+            shortcut="Ctrl+1"
+        )
+        super().__init__(config)
         
         # Backend services
         self.proto_scanner = None
@@ -54,6 +60,7 @@ class APIDevTool(BaseTool):
         self.http_client = None
         self.network_scanner = None
         self.reflection_client = None
+        self.build_integration = None
         
         # UI components
         self.proto_browser = None
@@ -74,18 +81,28 @@ class APIDevTool(BaseTool):
         self.http_client = HTTPClient()
         self.network_scanner = NetworkScanner(project_root)
         self.reflection_client = ReflectionClient()
+        self.build_integration = BuildSystemIntegration(project_root)
         
+        # Create main container with build integration toolbar
+        main_container = WidgetFactory.create_main_container(spacing=8)
+        main_container.add_css_class("api-dev-tool")
+
+        # Create build integration toolbar
+        build_toolbar = self._create_build_toolbar()
+        main_container.append(build_toolbar)
+
         # Create main three-pane layout
         main_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         main_paned.set_shrink_start_child(False)
         main_paned.set_shrink_end_child(False)
-        main_paned.add_css_class("api-dev-tool")
+        main_paned.set_vexpand(True)
         
-        # Left pane: Proto browser with network discovery (300px default)
+        # Left pane: Proto browser with network discovery and build integration (300px default)
         self.proto_browser = ProtoBrowser(
             self.proto_scanner,
             self.network_scanner,
-            self.reflection_client
+            self.reflection_client,
+            self.build_integration
         )
         main_paned.set_start_child(self.proto_browser)
         main_paned.set_position(300)
@@ -107,13 +124,42 @@ class APIDevTool(BaseTool):
         right_paned.set_position(400)
         
         main_paned.set_end_child(right_paned)
-        
+        main_container.append(main_paned)
+
         # Connect signals
         self._connect_signals()
-        
-        print("✅ API Dev Tool widget created")
-        return main_paned
-    
+
+        print("API Dev Tool widget created with build system integration")
+        return main_container
+
+    def _create_build_toolbar(self):
+        """Create build system integration toolbar"""
+        toolbar_items = [
+            {
+                "type": "button",
+                "label": "Generate Clients",
+                "callback": self._on_generate_clients,
+                "tooltip": "Generate gRPC clients from proto files"
+            },
+            {
+                "type": "button",
+                "label": "Update Registry",
+                "callback": self._on_update_registry,
+                "tooltip": "Update service discovery registry"
+            },
+            {
+                "type": "separator"
+            },
+            {
+                "type": "button",
+                "label": "Refresh Proto",
+                "callback": self._on_refresh_proto,
+                "tooltip": "Refresh proto file list from build system"
+            }
+        ]
+
+        return WidgetFactory.create_toolbar(toolbar_items)
+
     def _connect_signals(self):
         """Connect widget signals for inter-component communication"""
         # Proto browser signals
@@ -322,18 +368,18 @@ class APIDevTool(BaseTool):
     
     def _on_send_request_clicked(self, button):
         """Handle send request button click"""
-        print("🚀 Sending request...")
-        
+        print("Sending request")
+
         # Get request data from builder
         request_data = self.request_builder.get_request_data()
-        
+
         if not request_data:
-            print("❌ No request data available")
+            print("No request data available")
             return
-        
+
         # Disable button during request
         button.set_sensitive(False)
-        button.set_label("🔄 Sending...")
+        button.set_label("Sending...")
         
         # Send in background
         GLib.idle_add(self._do_send_request, button, request_data)
@@ -374,6 +420,51 @@ class APIDevTool(BaseTool):
             button.set_sensitive(True)
             
             # Reset button text after 3 seconds
-            GLib.timeout_add_seconds(3, lambda: button.set_label("🚀 Send Request"))
+            GLib.timeout_add_seconds(3, lambda: button.set_label("Send Request"))
         
         return False  # Don't repeat
+
+    def _on_generate_clients(self):
+        """Handle generate clients button click"""
+        if not self.build_integration.is_available():
+            print("Build system not available")
+            return
+
+        # Generate clients for Python and TypeScript by default
+        operation = self.build_integration.generate_proto_clients(["python", "typescript"])
+
+        # Update UI based on operation status
+        if operation.status.value == "building":
+            print("Proto client generation started")
+        elif operation.status.value == "failed":
+            print(f"Proto client generation failed: {operation.error_message}")
+
+    def _on_update_registry(self):
+        """Handle update registry button click"""
+        if not self.build_integration.is_available():
+            print("Build system not available")
+            return
+
+        operation = self.build_integration.update_service_discovery()
+
+        # Update UI based on operation status
+        if operation.status.value == "building":
+            print("Service registry update started")
+        elif operation.status.value == "failed":
+            print(f"Service registry update failed: {operation.error_message}")
+
+    def _on_refresh_proto(self):
+        """Handle refresh proto button click"""
+        if not self.build_integration.is_available():
+            print("Build system not available")
+            return
+
+        proto_data = self.build_integration.get_proto_files()
+
+        if proto_data["success"]:
+            print(f"Found {proto_data['count']} proto files")
+            # Refresh proto browser
+            if self.proto_browser:
+                self.proto_browser.refresh_proto_files(proto_data["proto_files"])
+        else:
+            print(f"Failed to refresh proto files: {proto_data['error']}")

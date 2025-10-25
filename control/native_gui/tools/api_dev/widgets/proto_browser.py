@@ -8,10 +8,10 @@
 @llm-token proto_browser: system control component
 """
 """
-📁 Proto Browser Widget - Native GTK Implementation
+Proto Browser Widget - Native GTK Implementation
 
 Displays proto files, services, and methods in a tree structure.
-Pure GTK TreeView with custom models - no web bullshit.
+Pure GTK TreeView with custom models.
 
 Features:
 - Hierarchical file/service/method display
@@ -34,15 +34,15 @@ class ProtoBrowser(Gtk.Box):
     
     Structure:
     ┌─────────────────────────┐
-    │ 🔍 Search Box           │
+    │ Search Box              │
     ├─────────────────────────┤
-    │ 📁 proto/               │
-    │   ├─ 📄 llm.proto       │
-    │   │   └─ 🔧 LLMService  │
+    │ proto/                  │
+    │   ├─ llm.proto          │
+    │   │   └─ LLMService     │
     │   │       ├─ Generate   │
     │   │       └─ Stream     │
-    │   └─ 📄 chat.proto      │
-    │       └─ 🔧 ChatService │
+    │   └─ chat.proto         │
+    │       └─ ChatService    │
     └─────────────────────────┘
     """
     
@@ -53,12 +53,13 @@ class ProtoBrowser(Gtk.Box):
         'network-service-selected': (GObject.SignalFlags.RUN_FIRST, None, (str, int, str)),  # host, port, service_name
     }
     
-    def __init__(self, proto_scanner, network_scanner=None, reflection_client=None):
+    def __init__(self, proto_scanner, network_scanner=None, reflection_client=None, build_integration=None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8)
 
         self.proto_scanner = proto_scanner
         self.network_scanner = network_scanner
         self.reflection_client = reflection_client
+        self.build_integration = build_integration
         self.current_services = {}  # Cache parsed services
         self.network_services = {}  # Cache network discovered services
 
@@ -567,7 +568,50 @@ class ProtoBrowser(Gtk.Box):
         if tree_iter:
             file_path = model.get_value(tree_iter, 3)
             # TODO: Open in external editor
-            print(f"📝 Open in editor: {file_path}")
+            print(f"Open in editor: {file_path}")
+
+    def refresh_proto_files(self, proto_files):
+        """Refresh proto files from build system integration"""
+        if not proto_files:
+            return
+
+        # Clear existing model
+        self.proto_store.clear()
+
+        # Group files by directory
+        directories = {}
+        for file_info in proto_files:
+            directory = file_info.get("directory", "proto")
+            if directory not in directories:
+                directories[directory] = []
+            directories[directory].append(file_info)
+
+        # Add directories and files to tree
+        for directory, files in directories.items():
+            # Add directory node
+            dir_iter = self.proto_store.append(None, [
+                directory,
+                "folder",
+                "",
+                "",
+                "",
+                ""
+            ])
+
+            # Add files under directory
+            for file_info in files:
+                self.proto_store.append(dir_iter, [
+                    file_info["name"],
+                    "file",
+                    file_info["path"],
+                    "",
+                    "",
+                    ""
+                ])
+
+        # Expand all directories
+        self.proto_tree.expand_all()
+        print(f"Refreshed proto browser with {len(proto_files)} files")
 
 
 # Register the widget type

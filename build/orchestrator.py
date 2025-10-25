@@ -265,7 +265,7 @@ class BuildOrchestrator:
     
     def __init__(self, config_path: Optional[Path] = None):
         self.project_root = Path(__file__).parent.parent
-        self.config_path = config_path or self.project_root / "build-config.yml"
+        self.config_path = config_path or self.project_root / "build" / "config" / "build-config.yml"
         self.config = self._load_config()
         self.dependency_graph = DependencyGraph()
         self.cache = BuildCache()

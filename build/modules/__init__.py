@@ -17,6 +17,7 @@ Modules:
 - typescript_builder: npm/webpack-based TypeScript builds with hot reloading
 - python_builder: pip/poetry-based Python builds with virtual environment management
 - protobuf_builder: Multi-language protobuf generation with smart caching
+- mobile_ui_builder: Mobile-responsive UI framework with CSS generation and validation
 - docker_builder: Container build optimization with layer caching
 
 Author: Unhinged Team

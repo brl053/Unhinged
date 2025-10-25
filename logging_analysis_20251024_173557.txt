@@ -1,0 +1,152 @@
+# Unhinged Codebase Logging Analysis
+Generated on: Fri Oct 24 05:35:57 PM PDT 2025
+Project root: /home/e-bliss-station-1/Projects/Unhinged
+
+## Summary Statistics
+
+### Logging Pattern Counts
+
+- **Native GUI print statements**: 827 instances in control/native_gui
+- **Python service logging calls**: 49 instances in services
+- **Python service direct logging calls**: 14 instances in services
+- **Kotlin logging statements**: 75 instances in platforms
+- **JavaScript/TypeScript console calls**: 1947 instances in .
+
+## Detailed Analysis by Component
+
+### 🖥️ Native GUI (control/native_gui/)
+
+#### Print Statement Distribution
+- grpc_client.py: 2 print statements
+- http_client.py: 1 print statements
+- proto_scanner.py: 2 print statements
+- test_mobile_ui_integration.py: 6 print statements
+- launcher.py: 11 print statements
+- llm_client.py: 19 print statements
+- audio_error_handler.py: 2 print statements
+- audio_capture.py: 24 print statements
+- audio_utils.py: 20 print statements
+- audio_test.py: 60 print statements
+- speech_client.py: 39 print statements
+- tool.py: 18 print statements
+- chat_interface.py: 3 print statements
+- mobile_chat_tool.py: 38 print statements
+- tool.py: 18 print statements
+- screen_capture.py: 36 print statements
+- tool.py: 18 print statements
+- tool.py: 18 print statements
+- reflection_client.py: 10 print statements
+- network_scanner.py: 10 print statements
+- grpc_client.py: 2 print statements
+- build_integration.py: 15 print statements
+- http_client.py: 1 print statements
+- tool.py: 18 print statements
+- schema_validator.py: 2 print statements
+- response_viewer.py: 4 print statements
+- request_builder.py: 8 print statements
+- proto_browser.py: 24 print statements
+- keyboard_capture.py: 34 print statements
+- privacy_manager.py: 18 print statements
+- hotkey_manager.py: 32 print statements
+- input_analyzer.py: 12 print statements
+- mouse_capture.py: 27 print statements
+- tool.py: 18 print statements
+- tool.py: 18 print statements
+- mobile_vision_tool.py: 24 print statements
+- camera_capture.py: 74 print statements
+- image_analysis.py: 20 print statements
+- vision_client.py: 18 print statements
+- main_window.py: 15 print statements
+- theme_manager.py: 14 print statements
+- tool_manager.py: 22 print statements
+- mobile_components.py: 8 print statements
+- viewport_manager.py: 5 print statements
+- application.py: 33 print statements
+- touch_interface.py: 1 print statements
+- components.py: 1 print statements
+- responsive_layout.py: 12 print statements
+- input_integration.py: 16 print statements
+- response_viewer.py: 4 print statements
+- request_builder.py: 8 print statements
+- proto_browser.py: 24 print statements
+
+#### Emoji Pattern Analysis
+- ✅ Success messages: 63
+- ❌ Error messages: 165
+- 🚀 Startup messages: 4
+- 🎯 Activity messages: 25
+- ⚠️ Warning messages: 150
+
+### 🐍 Python Services (services/)
+
+#### Service-by-Service Breakdown
+- **speech-to-text**: 24 logging calls, 10 print statements
+- **text-to-speech**: 20 logging calls, 0 print statements
+- **vision-ai**: 19 logging calls, 0 print statements
+
+### ☕ Kotlin Platforms (platforms/)
+
+#### Platform-by-Platform Breakdown
+- **persistence**: 266 logging statements
+
+### 🎛️ Control Systems (control/)
+
+#### Control Component Breakdown
+- **deployment**: 43 logging calls, 6 print statements
+- **network**: 0 logging calls, 14 print statements
+- **system**: 16 logging calls, 0 print statements
+
+## Migration Priority Recommendations
+
+### 🔴 HIGH PRIORITY
+1. **Native GUI Migration** - 827 print statements
+   - High user visibility impact
+   - Easy to migrate with provided scripts
+   - Immediate improvement in debugging capabilities
+
+### 🟡 MEDIUM PRIORITY
+2. **Python Services Migration** - 63 logging calls
+   - Core AI service observability
+   - Structured event logging for better monitoring
+
+### 🟢 LOW PRIORITY
+3. **Kotlin Platforms Migration** - 266 logging statements
+   - Already well-structured
+   - Mainly configuration changes needed
+
+## Migration Commands
+
+### Native GUI Migration
+```bash
+# Analyze native GUI logging patterns
+python libs/event-framework/migration_scripts/migrate_native_gui.py control/native_gui
+
+# Apply native GUI migration
+python libs/event-framework/migration_scripts/migrate_native_gui.py control/native_gui --apply
+```
+
+### Python Services Migration
+```bash
+# Analyze all Python services
+python libs/event-framework/migration_scripts/migrate_python_services.py services
+
+# Migrate specific service
+python libs/event-framework/migration_scripts/migrate_python_services.py services speech-to-text --apply
+```
+
+## High-Impact Files for Immediate Migration
+
+### Native GUI Files (Top 10 by print count)
+- camera_capture.py: 74 print statements
+- audio_test.py: 60 print statements
+- speech_client.py: 39 print statements
+- mobile_chat_tool.py: 38 print statements
+- screen_capture.py: 36 print statements
+- keyboard_capture.py: 34 print statements
+- tool.py: 34 print statements
+- application.py: 33 print statements
+- hotkey_manager.py: 32 print statements
+- mouse_capture.py: 27 print statements
+
+---
+Generated by: libs/event-framework/migration_scripts/analyze_all_logging.sh

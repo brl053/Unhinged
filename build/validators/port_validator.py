@@ -145,7 +145,7 @@ class PortValidator:
         """Extract port allocations from build-config.yml"""
         allocations = []
         
-        config_path = self.project_root / "build-config.yml"
+        config_path = self.project_root / "build" / "config" / "build-config.yml"
         if not config_path.exists():
             return allocations
         

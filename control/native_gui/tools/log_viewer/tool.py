@@ -21,6 +21,8 @@ from gi.repository import Gtk, GLib
 import datetime
 
 from ...core.tool_manager import BaseTool
+from ...core.tool_config import ToolConfigFactory
+from ...ui.widget_factory import WidgetFactory
 
 
 class LogViewerTool(BaseTool):

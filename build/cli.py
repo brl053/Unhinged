@@ -77,7 +77,7 @@ class BuildCLI:
         """Initialize the build orchestrator and register modules"""
         try:
             # Use consolidated build-config.yml (v1)
-            config_path = self.project_root / "build-config.yml"
+            config_path = self.project_root / "build" / "config" / "build-config.yml"
             self.orchestrator = BuildOrchestrator(config_path)
             
             # Register build modules
@@ -93,21 +93,25 @@ class BuildCLI:
                 from modules.typescript_builder import TypeScriptBuilder
                 from modules.python_builder import PythonBuilder
                 from modules.proto_client_builder import ProtoClientBuilder
+                from modules.service_discovery_builder import ServiceDiscoveryBuilder
             except ImportError:
                 from .modules.kotlin_builder import KotlinBuilder
                 from .modules.typescript_builder import TypeScriptBuilder
                 from .modules.python_builder import PythonBuilder
                 from .modules.proto_client_builder import ProtoClientBuilder
+                from .modules.service_discovery_builder import ServiceDiscoveryBuilder
 
             kotlin_builder = KotlinBuilder(context)
             typescript_builder = TypeScriptBuilder(context)
             python_builder = PythonBuilder(context)
             proto_client_builder = ProtoClientBuilder(context)
+            service_discovery_builder = ServiceDiscoveryBuilder(context)
 
             register_module(kotlin_builder)
             register_module(typescript_builder)
             register_module(python_builder)
             register_module(proto_client_builder)
+            register_module(service_discovery_builder)
             
             logger.info("✅ Build system (v1) initialized successfully")
             

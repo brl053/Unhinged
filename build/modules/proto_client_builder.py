@@ -117,7 +117,7 @@ class ProtoClientBuilder(BuildModule):
                 dependencies.append(str(proto_file))
         
         # Build configuration affects generation
-        build_config = self.context.project_root / "build-config.yml"
+        build_config = self.context.project_root / "build" / "config" / "build-config.yml"
         if build_config.exists():
             dependencies.append(str(build_config))
         

@@ -1046,9 +1046,9 @@ check-generated-files: ## Pure function: Verify generated files are up-to-date
 
 check-build-system: ## Pure function: Validate build system integrity
 	@test -f Makefile || exit 1
-	@test -f build-config.yml || exit 1
+	@test -f build/config/build-config.yml || exit 1
 	@test -d build/modules || exit 1
-	@python3 -c "import yaml; yaml.safe_load(open('build-config.yml'))" 2>/dev/null
+	@python3 -c "import yaml; yaml.safe_load(open('build/config/build-config.yml'))" 2>/dev/null
 
 # Formatter functions (pure transformations)
 format-python: ## Pure function: Format Python code (if black available)

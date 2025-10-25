@@ -82,7 +82,7 @@ class ServiceDiscoveryBuilder(BuildModule):
                 dependencies.append(str(proto_file.relative_to(self.context.project_root)))
         
         # Build config
-        build_config = self.context.project_root / "build-config.yml"
+        build_config = self.context.project_root / "build" / "config" / "build-config.yml"
         if build_config.exists():
             dependencies.append(str(build_config.relative_to(self.context.project_root)))
         

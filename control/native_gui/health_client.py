@@ -19,8 +19,6 @@ Implements health.proto client for service discovery:
 import grpc
 import logging
 from typing import Dict, List, Optional, Tuple
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import time
 
 # Health proto imports

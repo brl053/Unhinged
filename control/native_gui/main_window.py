@@ -116,8 +116,25 @@ class MobileControlCenterWindow(MobileFirstWindow):
         # Register mobile tools
         mobile_tools = {
             "chat": MobileChatTool(),
-            # Add other mobile-optimized tools here
         }
+
+        # Map registered tools to navigation IDs
+        registered_tools = self.tool_manager.get_tools()
+        tool_mapping = {
+            "api": "API Dev",
+            "health": "Health",
+            "logs": "Log Viewer",
+            "files": "File Browser"
+        }
+
+        # Add registered tools to mobile tools
+        for nav_id, tool_name in tool_mapping.items():
+            tool = self.tool_manager.get_tool(tool_name)
+            if tool:
+                mobile_tools[nav_id] = tool
+                print(f"Mapped {tool_name} to {nav_id}")
+            else:
+                print(f"Tool not found: {tool_name}")
 
         # Create tool widgets and add to content stack
         for tool_id, tool in mobile_tools.items():
@@ -125,15 +142,15 @@ class MobileControlCenterWindow(MobileFirstWindow):
                 widget = tool.create_widget()
                 self.content_area.add_named(widget, tool_id)
                 self.tool_widgets[tool_id] = widget
-                print(f"📱 Loaded mobile tool: {tool.name}")
+                print(f"Loaded mobile tool: {tool.name}")
             except Exception as e:
-                print(f"❌ Failed to load mobile tool {tool_id}: {e}")
+                print(f"Failed to load mobile tool {tool_id}: {e}")
 
         # Show default tool
         self.content_area.set_visible_child_name("chat")
         self.current_tool = "chat"
 
-        print(f"📱 Loaded {len(mobile_tools)} mobile tools")
+        print(f"Loaded {len(mobile_tools)} mobile tools")
 
     def _on_nav_item_selected(self, item_id: str):
         """Handle navigation item selection"""

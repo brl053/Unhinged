@@ -1,0 +1,218 @@
+# Unhinged Build Configuration
+# @llm-type build-configuration
+# @llm-legend Main build configuration for Unhinged platform
+# @llm-key Defines build targets, dependencies, and orchestration settings
+# @llm-map Central configuration for build system orchestration
+# @llm-axiom Build configuration must maintain system independence
+# @llm-contract Provides build target definitions and dependency management
+# @llm-token build-config: Central build configuration for Unhinged platform
+
+version: "1.0"
+name: "unhinged-platform"
+description: "Independent AI platform with native GUI and gRPC services"
+
+# Global build settings
+settings:
+  parallel: false
+  cache_enabled: true
+  validation_enabled: true
+  environment: "development"
+  
+# Build targets configuration
+targets:
+  # Service Discovery - Core system component
+  service-discovery:
+    description: "Build-time service discovery and registry generation"
+    module: "service_discovery_builder"
+    dependencies: []
+    inputs:
+      - "control/orchestration/docker-compose.yml"
+      - "control/orchestration/docker-compose.*.yml"
+      - "proto/**/*.proto"
+      - "services/*/proto/*.proto"
+    outputs:
+      - "generated/service-registry.js"
+      - "generated/service-topology.json"
+      - "generated/health-endpoints.json"
+    cache_key: "service-discovery-v1"
+    
+  # Mobile UI Framework
+  mobile-ui:
+    description: "Mobile-first responsive UI framework"
+    module: "mobile_ui_builder"
+    dependencies: []
+    inputs:
+      - "control/native_gui/ui/**/*.py"
+      - "control/native_gui/core/**/*.py"
+    outputs:
+      - "generated/mobile_ui/**/*"
+      - "generated/static_html/mobile_ui.css"
+    cache_key: "mobile-ui-v1"
+    
+  # Proto Client Generation
+  proto-clients:
+    description: "Generate gRPC clients for all services"
+    module: "proto_client_builder"
+    dependencies: []
+    inputs:
+      - "proto/**/*.proto"
+      - "services/*/proto/*.proto"
+    outputs:
+      - "generated/clients/**/*"
+    cache_key: "proto-clients-v1"
+    
+  # Python Services
+  python-services:
+    description: "Build Python service components"
+    module: "python_builder"
+    dependencies: ["proto-clients"]
+    inputs:
+      - "services/**/*.py"
+      - "control/**/*.py"
+    outputs:
+      - "generated/python/**/*"
+    cache_key: "python-services-v1"
+    
+  # TypeScript/JavaScript Components
+  typescript-components:
+    description: "Build TypeScript/JavaScript components"
+    module: "typescript_builder"
+    dependencies: ["proto-clients"]
+    inputs:
+      - "web/**/*.ts"
+      - "web/**/*.js"
+      - "control/web/**/*.ts"
+    outputs:
+      - "generated/web/**/*"
+    cache_key: "typescript-v1"
+    
+  # Kotlin Services
+  kotlin-services:
+    description: "Build Kotlin service components"
+    module: "kotlin_builder"
+    dependencies: ["proto-clients"]
+    inputs:
+      - "services/**/*.kt"
+      - "kotlin/**/*.kt"
+    outputs:
+      - "generated/kotlin/**/*"
+    cache_key: "kotlin-services-v1"
+
+# Build groups for orchestration
+groups:
+  core:
+    description: "Core system components"
+    targets: ["service-discovery", "mobile-ui"]
+    
+  services:
+    description: "All service components"
+    targets: ["python-services", "kotlin-services"]
+    
+  clients:
+    description: "Client generation"
+    targets: ["proto-clients", "typescript-components"]
+    
+  all:
+    description: "Complete build"
+    targets: ["service-discovery", "mobile-ui", "proto-clients", "python-services", "typescript-components", "kotlin-services"]
+
+# Module configuration
+modules:
+  service_discovery_builder:
+    class: "ServiceDiscoveryBuilder"
+    config:
+      docker_compose_files:
+        - "control/orchestration/docker-compose.yml"
+        - "control/orchestration/docker-compose.observability.yml"
+        - "control/orchestration/docker-compose.development.yml"
+      proto_directories:
+        - "proto"
+        - "services/*/proto"
+      output_directory: "generated"
+      
+  mobile_ui_builder:
+    class: "MobileUIBuilder"
+    config:
+      source_directory: "control/native_gui/ui"
+      output_directory: "generated/mobile_ui"
+      css_output_directory: "generated/static_html"
+      
+  proto_client_builder:
+    class: "ProtoClientBuilder"
+    config:
+      proto_directories:
+        - "proto"
+        - "services/*/proto"
+      output_directory: "generated/clients"
+      languages: ["python", "typescript", "kotlin"]
+      
+  python_builder:
+    class: "PythonBuilder"
+    config:
+      source_directories:
+        - "services"
+        - "control"
+      output_directory: "generated/python"
+      
+  typescript_builder:
+    class: "TypeScriptBuilder"
+    config:
+      source_directories:
+        - "web"
+        - "control/web"
+      output_directory: "generated/web"
+      
+  kotlin_builder:
+    class: "KotlinBuilder"
+    config:
+      source_directories:
+        - "services"
+        - "kotlin"
+      output_directory: "generated/kotlin"
+
+# Validation configuration
+validation:
+  enabled: true
+  validators:
+    - "dependency_validator"
+    - "port_validator"
+    - "resource_validator"
+    
+# Cache configuration
+cache:
+  enabled: true
+  directory: ".build-cache"
+  max_size: "1GB"
+  ttl: "24h"
+  
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+# Environment-specific overrides
+environments:
+  development:
+    settings:
+      parallel: false
+      validation_enabled: true
+    logging:
+      level: "DEBUG"
+      
+  production:
+    settings:
+      parallel: true
+      validation_enabled: true
+    cache:
+      ttl: "7d"
+    logging:
+      level: "INFO"
+      
+  ci:
+    settings:
+      parallel: true
+      validation_enabled: true
+    cache:
+      enabled: false
+    logging:
+      level: "WARNING"

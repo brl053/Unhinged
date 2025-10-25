@@ -51,7 +51,7 @@ class SystemController:
         # Initialize build system integration
         if BuildOrchestrator and BuildConfig:
             try:
-                config_file = config_path or str(Path(__file__).parent.parent.parent / 'build-config.yml')
+                config_file = config_path or str(Path(__file__).parent.parent.parent / 'build' / 'config' / 'build-config.yml')
                 self.build_config = BuildConfig.from_file(config_file)
                 self.build_orchestrator = BuildOrchestrator(self.build_config)
                 self.build_system_available = True

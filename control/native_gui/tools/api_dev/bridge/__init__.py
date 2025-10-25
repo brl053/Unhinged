@@ -24,7 +24,7 @@ Native GTK Widget → Direct Python Call → System Operation
             Instant Response (no network latency)
 """
 
-from .proto_scanner import ProtoScanner
+from ....bridge.proto_scanner import ProtoScanner
 from .grpc_client import GRPCClient
 from .http_client import HTTPClient
 

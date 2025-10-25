@@ -28,6 +28,8 @@ except ImportError:
 import time
 
 from ...core.tool_manager import BaseTool
+from ...core.tool_config import ToolConfigFactory
+from ...ui.widget_factory import WidgetFactory
 
 
 class SystemMonitorTool(BaseTool):
@@ -38,10 +40,13 @@ class SystemMonitorTool(BaseTool):
     """
     
     def __init__(self):
-        super().__init__()
-        self.name = "Health"
-        self.icon = "🏥"
-        self.description = "System Health Monitor - CPU, memory, disk, and service status"
+        # Use ToolConfig for standardized initialization
+        config = ToolConfigFactory.create_system_tool(
+            name="Health",
+            icon="🏥",
+            description="System Health Monitor - CPU, memory, disk, and service status"
+        )
+        super().__init__(config)
         self.shortcut = "Ctrl+2"
         
         # Monitoring state
@@ -49,19 +54,17 @@ class SystemMonitorTool(BaseTool):
         self.update_timeout = None
     
     def create_widget(self):
-        """Create the system monitor widget"""
-        # Main container
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        """Create the system monitor widget using WidgetFactory"""
+        # Main container using WidgetFactory
+        main_box = WidgetFactory.create_main_container(spacing=16)
         main_box.add_css_class("system-monitor")
-        main_box.set_margin_start(16)
-        main_box.set_margin_end(16)
-        main_box.set_margin_top(16)
-        main_box.set_margin_bottom(16)
-        
-        # Title
-        title_label = Gtk.Label(label="🏥 System Health Monitor")
-        title_label.add_css_class("title")
-        main_box.append(title_label)
+
+        # Header using WidgetFactory
+        header = WidgetFactory.create_header_box(
+            title="🏥 System Health Monitor",
+            subtitle="Real-time system performance metrics"
+        )
+        main_box.append(header)
         
         # Metrics grid
         metrics_grid = Gtk.Grid()

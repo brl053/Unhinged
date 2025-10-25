@@ -1,11 +1,11 @@
 """
-@llm-type control-system
-@llm-legend theme_manager.py - system control component
-@llm-key Core functionality for theme_manager
-@llm-map Part of the Unhinged system architecture
-@llm-axiom Maintains system independence and architectural compliance
-@llm-contract Provides standardized interface for system integration
-@llm-token theme_manager: system control component
+@llm-type theme-system
+@llm-legend Enhanced Theme Manager - Unified theming system with mobile-responsive CSS support
+@llm-key Manages GTK4 themes, mobile-responsive styles, and dynamic theme switching
+@llm-map Central theming component in Unhinged native GUI architecture
+@llm-axiom Themes must maintain consistency across desktop and mobile viewports
+@llm-contract Provides standardized theming interface with mobile-first responsive design
+@llm-token theme_manager: Enhanced theming system with mobile-responsive CSS integration
 """
 """
 🎨 Theme Manager - Application-wide Styling
@@ -19,31 +19,226 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version('Gdk', '4.0')
 
-from gi.repository import Gtk, Adw, Gdk
+from gi.repository import Gtk, Adw, Gdk, Gdk
 from pathlib import Path
+from typing import Dict, List, Optional, Any, Callable
+from enum import Enum
+from dataclasses import dataclass
+
+# Import shared CSS generator
+from .css_generator import CSSGenerator, CSSConfig
+
+
+class ThemeVariant(Enum):
+    """
+    @llm-type enum
+    @llm-legend Theme variant types for different use cases
+    @llm-key Defines available theme variants with specific characteristics
+    """
+    LIGHT = "light"
+    DARK = "dark"
+    AUTO = "auto"          # Follow system preference
+    HIGH_CONTRAST = "high_contrast"
+    MOBILE_OPTIMIZED = "mobile_optimized"
+
+
+@dataclass
+class ThemeConfig:
+    """
+    @llm-type configuration
+    @llm-legend Theme configuration with mobile-responsive properties
+    @llm-key Defines theme parameters for consistent styling across viewports
+    """
+    variant: ThemeVariant = ThemeVariant.DARK  # Default to dark theme
+    mobile_optimized: bool = True
+    touch_friendly: bool = True
+    high_contrast: bool = False
+    custom_css_enabled: bool = True
+    animation_enabled: bool = True
+
+    # Color scheme
+    primary_color: str = "#007AFF"
+    secondary_color: str = "#5856D6"
+    success_color: str = "#34C759"
+    warning_color: str = "#FF9500"
+    error_color: str = "#FF3B30"
+
+    # Typography
+    base_font_size: int = 14
+    mobile_font_scale: float = 1.1
+
+    # Spacing
+    base_spacing: int = 12
+    mobile_spacing_scale: float = 0.8
 
 class ThemeManager:
     """
-    Manages application-wide theming and styling.
-    
-    Provides consistent dark theme with syntax highlighting
-    and tool-specific styling capabilities.
+    @llm-type manager-class
+    @llm-legend Enhanced theme manager with mobile-responsive capabilities
+    @llm-key Manages GTK4 themes, CSS loading, and responsive design adaptation
+    @llm-map Central theming system for Unhinged native GUI with mobile support
+    @llm-axiom Themes must provide consistent experience across all viewport sizes
+    @llm-contract Provides unified theming interface with mobile-first responsive design
+    @llm-token ThemeManager: Enhanced theming system with mobile-responsive CSS support
+
+    Enhanced theme manager for the Unhinged Control Center.
+    Provides unified theming with mobile-responsive CSS support.
     """
-    
-    def __init__(self):
-        self.css_provider = None
-        print("🎨 Theme manager initialized")
+
+    def __init__(self, config: Optional[ThemeConfig] = None):
+        self.config = config or ThemeConfig()
+
+        # Theme state
+        self.current_variant = self.config.variant
+        self.is_mobile_mode = False
+        self.css_provider = None  # Keep for backward compatibility
+        self.mobile_css_provider = None
+
+        # Theme paths
+        self.project_root = Path(__file__).parent.parent.parent.parent
+        self.theme_dir = self.project_root / "control" / "native_gui" / "themes"
+        self.generated_css_dir = self.project_root / "generated" / "static_html"
+
+        # CSS providers
+        self.css_providers: Dict[str, Gtk.CssProvider] = {}
+
+        # Initialize shared CSS generator
+        css_config = CSSConfig(
+            base_font_size=self.config.base_font_size,
+            mobile_font_scale=self.config.mobile_font_scale,
+            base_spacing=self.config.base_spacing,
+            mobile_spacing_scale=self.config.mobile_spacing_scale,
+            primary_color=self.config.primary_color,
+            secondary_color=self.config.secondary_color,
+            success_color=self.config.success_color,
+            warning_color=self.config.warning_color,
+            error_color=self.config.error_color
+        )
+        self.css_generator = CSSGenerator(css_config)
+
+        # Callbacks
+        self.on_theme_changed: Optional[Callable[[ThemeVariant], None]] = None
+        self.on_mobile_mode_changed: Optional[Callable[[bool], None]] = None
+
+        print(f"🎨 Enhanced theme manager initialized (variant: {self.current_variant.value})")
     
     def setup_theming(self):
-        """Set up application-wide theming"""
-        # Force dark theme
-        Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
-        
-        # Load custom CSS
+        """
+        @llm-type method
+        @llm-legend Set up enhanced application-wide theming with mobile support
+        @llm-key Initializes theme system with responsive CSS and mobile optimization
+        """
+        # Initialize enhanced theme system
+        self._initialize_theme_system()
+
+        # Apply current theme variant
+        self._apply_theme_variant(self.current_variant)
+
+        # Load custom CSS (backward compatibility)
         self._load_application_css()
-        
-        print("✅ Application theming configured")
-    
+
+        # Load mobile-responsive CSS
+        self._load_mobile_css()
+
+        print("✅ Enhanced application theming configured")
+
+    def _load_mobile_css(self):
+        """
+        @llm-type method
+        @llm-legend Load mobile-responsive CSS using shared generator
+        @llm-key Applies mobile-optimized CSS for responsive design
+        """
+        try:
+            # Generate mobile CSS using shared generator
+            mobile_css = self.css_generator.generate_mobile_css()
+
+            # Create mobile CSS provider if not exists
+            if 'mobile' not in self.css_providers:
+                self.css_providers['mobile'] = Gtk.CssProvider()
+
+            # Load mobile CSS
+            self.css_providers['mobile'].load_from_data(mobile_css.encode())
+
+            # Apply to display
+            display = Gdk.Display.get_default()
+            if display:
+                Gtk.StyleContext.add_provider_for_display(
+                    display,
+                    self.css_providers['mobile'],
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1
+                )
+
+            print("🎨 Mobile-responsive CSS loaded")
+
+        except Exception as e:
+            print(f"❌ Failed to load mobile CSS: {e}")
+
+    def _initialize_theme_system(self):
+        """
+        @llm-type method
+        @llm-legend Initialize the enhanced theme system with CSS providers
+        @llm-key Sets up GTK4 CSS providers and loads base themes
+        """
+        try:
+            # Create theme directories if they don't exist
+            self.theme_dir.mkdir(parents=True, exist_ok=True)
+
+            # Initialize CSS providers
+            self._setup_css_providers()
+
+            # Load base theme
+            self._load_base_theme()
+
+            print("🎨 Enhanced theme system initialized")
+
+        except Exception as e:
+            print(f"❌ Failed to initialize enhanced theme system: {e}")
+
+    def _setup_css_providers(self):
+        """
+        @llm-type method
+        @llm-legend Set up GTK4 CSS providers for theme management
+        @llm-key Creates and configures CSS providers for different theme components
+        """
+        # Base theme provider
+        self.css_providers['base'] = Gtk.CssProvider()
+
+        # Mobile-responsive provider
+        self.css_providers['mobile'] = Gtk.CssProvider()
+
+        # Custom theme provider
+        self.css_providers['custom'] = Gtk.CssProvider()
+
+        # High contrast provider
+        self.css_providers['high_contrast'] = Gtk.CssProvider()
+
+        print("🎨 CSS providers initialized")
+
+    def _apply_theme_variant(self, variant: ThemeVariant):
+        """
+        @llm-type method
+        @llm-legend Apply specific theme variant to the application
+        @llm-key Configures theme variant-specific styling and behavior
+        """
+        try:
+            self.current_variant = variant
+
+            # Apply variant-specific CSS
+            if variant == ThemeVariant.HIGH_CONTRAST:
+                self._apply_high_contrast_css()
+
+            # Update theme configuration
+            self.config.variant = variant
+
+            # Trigger theme changed callback
+            if self.on_theme_changed:
+                self.on_theme_changed(variant)
+
+            print(f"🎨 Applied theme variant: {variant.value}")
+
+        except Exception as e:
+            print(f"❌ Failed to apply theme variant {variant.value}: {e}")
+
     def _load_application_css(self):
         """Load and apply custom CSS styles"""
         self.css_provider = Gtk.CssProvider()
@@ -843,3 +1038,117 @@ class ThemeManager:
             keyword_tag = text_buffer.create_tag("json-keyword")
             keyword_tag.set_property("foreground", "#ff7b72")
             keyword_tag.set_property("weight", 700)  # Bold
+
+    def _generate_base_css(self) -> str:
+        """
+        @llm-type method
+        @llm-legend Generate base CSS with Unhinged design system using shared generator
+        @llm-key Creates foundational CSS with consistent design tokens via CSSGenerator
+        """
+        # Use shared CSS generator for mobile CSS
+        mobile_css = self.css_generator.generate_mobile_css()
+        component_css = self.css_generator.generate_component_css()
+
+        # Add theme-specific CSS variables
+        theme_vars = f"""
+/* Enhanced Unhinged Control Center Base Theme */
+/* @llm-type generated-css */
+/* @llm-legend Base theme CSS with Unhinged design system and mobile support */
+/* @llm-key Foundational styling for consistent UI appearance across viewports */
+
+:root {{
+    --primary-color: {self.config.primary_color};
+    --secondary-color: {self.config.secondary_color};
+    --success-color: {self.config.success_color};
+    --warning-color: {self.config.warning_color};
+    --error-color: {self.config.error_color};
+
+    --base-font-size: {self.config.base_font_size}px;
+    --base-spacing: {self.config.base_spacing}px;
+
+    --border-radius: 8px;
+    --shadow-light: 0 2px 8px alpha(@theme_fg_color, 0.1);
+    --shadow-medium: 0 4px 16px alpha(@theme_fg_color, 0.15);
+    --shadow-heavy: 0 8px 32px alpha(@theme_fg_color, 0.2);
+}}
+"""
+
+        return f"{theme_vars}\n{mobile_css}\n{component_css}"
+
+    def _generate_mobile_css(self) -> str:
+        """
+        @llm-type method
+        @llm-legend Generate mobile-specific CSS overrides using shared generator
+        @llm-key Provides mobile-optimized styling via CSSGenerator
+        """
+        # Use shared CSS generator for responsive CSS
+        responsive_css = self.css_generator.generate_responsive_css()
+        navigation_css = self.css_generator.generate_navigation_css()
+
+        return f"{responsive_css}\n{navigation_css}"
+
+    def _apply_high_contrast_css(self):
+        """
+        @llm-type method
+        @llm-legend Apply high contrast CSS overrides using shared generator
+        @llm-key Provides accessibility-focused high contrast styling via CSSGenerator
+        """
+        # Use shared CSS generator for high contrast CSS
+        high_contrast_css = self.css_generator.generate_high_contrast_css()
+
+        try:
+            if 'high_contrast' not in self.css_providers:
+                self.css_providers['high_contrast'] = Gtk.CssProvider()
+
+            self.css_providers['high_contrast'].load_from_data(high_contrast_css.encode())
+
+            display = Gdk.Display.get_default()
+            if display:
+                Gtk.StyleContext.add_provider_for_display(
+                    display,
+                    self.css_providers['high_contrast'],
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2
+                )
+
+            print("🎨 High contrast CSS applied")
+
+        except Exception as e:
+            print(f"❌ Failed to apply high contrast CSS: {e}")
+
+    def set_mobile_mode(self, enabled: bool):
+        """
+        @llm-type method
+        @llm-legend Enable or disable mobile mode
+        @llm-key Toggles mobile-optimized styling and behavior
+        """
+        if self.is_mobile_mode != enabled:
+            self.is_mobile_mode = enabled
+
+            # Trigger callback
+            if self.on_mobile_mode_changed:
+                self.on_mobile_mode_changed(enabled)
+
+            print(f"🎨 Mobile mode {'enabled' if enabled else 'disabled'}")
+
+    def get_theme_info(self) -> Dict[str, Any]:
+        """
+        @llm-type method
+        @llm-legend Get current theme information
+        @llm-key Returns comprehensive theme state and configuration
+        """
+        return {
+            'variant': self.current_variant.value,
+            'mobile_mode': self.is_mobile_mode,
+            'config': {
+                'mobile_optimized': self.config.mobile_optimized,
+                'touch_friendly': self.config.touch_friendly,
+                'high_contrast': self.config.high_contrast,
+                'animation_enabled': self.config.animation_enabled,
+                'primary_color': self.config.primary_color,
+                'base_font_size': self.config.base_font_size,
+                'base_spacing': self.config.base_spacing
+            },
+            'css_providers': list(self.css_providers.keys()) if hasattr(self, 'css_providers') else [],
+            'theme_dir': str(self.theme_dir) if hasattr(self, 'theme_dir') else '',
+            'generated_css_dir': str(self.generated_css_dir) if hasattr(self, 'generated_css_dir') else ''
+        }
