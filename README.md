@@ -1,49 +1,53 @@
 # 🎛️ Unhinged
 
-> A simple web interface for some AI services
+> **Voice-First AI Control Center** - Native GTK desktop application with immediate voice interaction
 
-## 🚀 **Quick Start**
+## 🚀 **Quick Start - Voice-First Experience**
 
 ```bash
 make start
 ```
 
-Opens a health dashboard in your browser.
+**Launches native GUI with immediate voice capability** - hit the mic button and start talking!
 
-## 📁 **What's Here**
+## 🎤 **Voice-First User Experience**
 
-- A health dashboard (HTML/JS)
-- Three AI services (Python)
-- A persistence platform (Kotlin)
-- Some databases (Docker)
-- A build system
+- **Native Audio Capture**: Ubuntu system-level audio (no Python libraries)
+- **Whisper Integration**: Auto-starting speech-to-text service
+- **Immediate Interaction**: Zero setup - voice works right away
+- **AI Chat Integration**: Voice → transcription → AI response pipeline
 
-That's about it.
-
-## 🏗️ **What's Where**
+## 🏗️ **Architecture Overview**
 
 ```
 📦 Unhinged/
-├── services/            # AI services (Python)
-│   ├── speech-to-text/  # Converts voice to text
-│   ├── text-to-speech/  # Converts text to voice
-│   └── vision-ai/       # Looks at images
-├── platforms/           # Persistence platform (Kotlin)
-├── control/             # Health dashboard (HTML/JS)
-├── build/               # Build system
-└── docs/                # Some notes
+├── control/native_gui/           # Native GTK4 desktop application
+│   ├── tools/chat/              # Voice-first chat interface
+│   ├── tools/vision/            # Camera and image analysis
+│   ├── tools/input_capture/     # Keyboard/mouse monitoring
+│   └── core/                    # Application framework
+├── services/                    # AI services (auto-starting)
+│   ├── speech-to-text/          # Whisper-based transcription
+│   ├── text-to-speech/          # Audio generation
+│   └── vision-ai/               # Image analysis
+├── control/service_launcher.py  # Service orchestration
+├── build/                       # Polyglot build system
+└── docs/                        # LlmDocs-annotated documentation
 ```
 
-## 🔧 **Services**
+## 🎯 **Core Features**
 
-- **Speech-to-Text**: Converts audio to text
-- **Text-to-Speech**: Converts text to audio
-- **Vision-AI**: Looks at images
+- **🎤 Voice-First Interface**: Native audio → Whisper → AI chat
+- **📱 Mobile-Responsive GUI**: Touch-friendly native interface
+- **🔧 Developer Tools**: API testing, service monitoring, logs
+- **📊 System Monitoring**: Real-time system and service status
+- **🎥 Vision Integration**: Camera capture and AI analysis
+- **⌨️ Input Monitoring**: Keyboard/mouse capture for automation
 
 ## 📋 **Documentation**
 
-- **For Developers**: See `/docs/` for comprehensive documentation
-- **For LLM Agents**: Start with `/llm/quickstart/LLM_MASTER_PROMPT.md` before making any changes
+- **For Developers**: See `/docs/` for comprehensive LlmDocs-annotated documentation
+- **For LLM Agents**: Start with `/LLM_MASTER_PROMPT.md` before making any changes
 
 ## 🚀 **Status**
 

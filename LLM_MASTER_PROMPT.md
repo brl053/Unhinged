@@ -4,50 +4,72 @@
 # ============================================================================
 #
 # @llm-type quickstart
-# @llm-legend Master guidance for LLM agents working in the Unhinged monorepo
-# @llm-key Prevents file creation chaos and enforces architectural patterns
-# @llm-map Entry point for LLM agents to understand repo structure and constraints
+# @llm-legend Master guidance for LLM agents working in the Unhinged voice-first AI control center
+# @llm-key Prevents file creation chaos and enforces voice-first architectural patterns
+# @llm-map Entry point for LLM agents to understand voice-first GUI and service architecture
 # @llm-axiom All LLM agents must read and follow these patterns before making changes
-# @llm-contract Provides comprehensive guidance on file creation, build patterns, and cultural commandments
-# @llm-token llm-master-prompt: Essential guidance for AI agents working in Unhinged codebase
+# @llm-contract Provides comprehensive guidance on voice-first development, native GUI, and service integration
+# @llm-token llm-master-prompt: Essential guidance for AI agents working in voice-first Unhinged codebase
+
+## 🎤 VOICE-FIRST ARCHITECTURE - CORE MISSION
+
+### **PRIMARY OBJECTIVE: IMMEDIATE VOICE INTERACTION**
+- **`make start` → IMMEDIATE VOICE INPUT** - User can talk right away
+- **NATIVE AUDIO CAPTURE** - Ubuntu system audio (arecord/PipeWire), no Python libraries
+- **AUTO-STARTING SERVICES** - Whisper transcription service starts automatically
+- **ZERO SETUP FRICTION** - Voice works immediately after system boot
+
+### **VOICE PIPELINE ARCHITECTURE**
+```
+Native Audio (arecord) → HTTP → Whisper Service → AI Response
+```
 
 ## 🚨 CULTURAL COMMANDMENTS - VIOLATION = IMMEDIATE FAILURE
 
-### 1. INDEPENDENCE IS EVERYTHING
-- **WE ARE INDEPENDENT** - No external browsers (Firefox, Chrome, Safari)
-- **WE ARE SELF-CONTAINED** - Native rendering or nothing
-- **WE ARE HEADLESS-FIRST** - GUI is optional, system is primary
-- **WE FAIL FAST** - Better to break than compromise independence
+### 1. VOICE-FIRST INDEPENDENCE
+- **NATIVE AUDIO OVER LIBRARIES** - Use OS capabilities, not PyAudio/sounddevice
+- **IMMEDIATE FUNCTIONALITY** - Voice must work RIGHT GODDAMN AWAY
+- **SERVICE INTEGRATION** - Auto-starting services via service_launcher.py
+- **CLEAN STARTUP** - Zero GTK theme errors, minimal noise
 
-### 2. CENTRALIZED BUILD PHILOSOPHY
+### 2. NATIVE GUI SUPREMACY
+- **GTK4 NATIVE RENDERING** - No web browsers, no Electron
+- **MOBILE-RESPONSIVE DESIGN** - Touch-friendly native interface
+- **SYSTEM INTEGRATION** - Native OS capabilities over abstractions
+- **PROFESSIONAL UX** - Clean startup, clear feedback
+
+### 3. CENTRALIZED BUILD PHILOSOPHY
 - **ONE BUILD SYSTEM** - Everything goes through `/build/`
 - **ONE PYTHON ENV** - Use `build/python/venv/` for ALL Python operations
 - **NO SCATTERED TOOLS** - No gradle wrappers, no npm in random places
 - **GENERATED CONTENT** - Everything generated goes to `/generated/`
 
-### 3. FILE CREATION DISCIPLINE
-- **NO FILES IN ROOT** - Root directory is sacred, use proper subdirectories
-- **NO TEMP FILES** - Use `/generated/` for temporary artifacts
-- **NO BACKUP FILES** - Use git, not `.backup` files
-- **NO DEMO CRUFT** - Clean up after yourself
-
-### 4. DOCUMENTATION DISCIPLINE - WE KISS DRYly
+### 4. LLMDOCS DISCIPLINE
 - **USE LLM-DOCS STANDARD** - All files use @llm-type, @llm-legend, @llm-key patterns
-- **NO SCATTERED READMES** - Only root README.md exists, everything else in `/docs/`
-- **LEVERAGE /docs** - Use existing documentation structure and tooling
-- **USE /build/docs-generation** - Leverage existing doc generation system
+- **VOICE ARCHITECTURE CONTEXT** - Document voice pipeline positioning
+- **SERVICE INTEGRATION DOCS** - Clear service startup and health monitoring
+- **USER EXPERIENCE FOCUS** - Document immediate voice functionality
 
-### 5. PRIME DIRECTIVE - CONFIDENCE CHECK
-- **CROSS-CHECK IMPLEMENTATION** - When confidence < 75% or generating artifacts, validate against this prompt
-- **VERIFY PATTERNS** - Check your work against established repo patterns
-- **USE EXISTING TOOLING** - Don't reinvent, use `/build/docs-generation` and `/docs/`
+### 5. PRIME DIRECTIVE - VOICE-FIRST VALIDATION
+- **VOICE PIPELINE TESTING** - Always test end-to-end voice functionality
+- **SERVICE AUTO-START** - Verify services start with `make start`
+- **CLEAN STARTUP** - Zero theme errors, professional experience
+- **IMMEDIATE INTERACTION** - Voice must work without setup
 
 ## 📁 DIRECTORY STRUCTURE - SACRED BOUNDARIES
 
 ```
 /
-├── build/              # CENTRALIZED BUILD SYSTEM (Python-based)
-│   ├── python/         # Centralized Python environment
+├── control/native_gui/         # NATIVE GTK4 VOICE-FIRST APPLICATION
+│   ├── tools/chat/            # Voice-first chat interface
+│   ├── tools/vision/          # Camera and image analysis
+│   ├── tools/input_capture/   # System input monitoring
+│   ├── core/                  # Application framework
+│   └── bridge/                # Service communication
+├── control/service_launcher.py # SERVICE ORCHESTRATION (auto-start)
+├── services/speech-to-text/    # WHISPER TRANSCRIPTION SERVICE
+├── build/                      # CENTRALIZED BUILD SYSTEM (Python-based)
+│   ├── python/                # Centralized Python environment
 │   ├── modules/        # Language-specific builders
 │   ├── docs-generation/# Documentation automation (USE THIS!)
 │   └── tools/          # Build utilities
