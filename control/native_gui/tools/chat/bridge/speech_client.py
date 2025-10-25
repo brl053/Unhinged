@@ -109,6 +109,13 @@ class SpeechClient:
         if AUDIO_CAPTURE_AVAILABLE:
             try:
                 self.audio_capture = AudioCapture()
+                if not self.audio_capture.is_available():
+                    status = self.audio_capture.get_availability_status()
+                    gui_logger.warn(f" Audio capture not available: {status['error_message']}")
+                    gui_logger.info(f" Installation help: {status['installation_help']}")
+                    self.audio_capture = None
+                else:
+                    gui_logger.info(f" Audio capture initialized with {self.audio_capture.backend} backend")
             except Exception as e:
                 gui_logger.warn(f" Failed to initialize audio capture: {e}")
                 self.audio_capture = None

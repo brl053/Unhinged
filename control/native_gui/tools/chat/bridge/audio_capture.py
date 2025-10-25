@@ -6,7 +6,33 @@ Audio Capture Module for Real-time Microphone Recording
 Provides PyAudio-based audio capture for speech-to-text integration.
 """
 
-import pyaudio
+# Audio capture dependencies - try multiple backends
+PYAUDIO_AVAILABLE = False
+SOUNDDEVICE_AVAILABLE = False
+AUDIO_BACKEND = None
+
+try:
+    import pyaudio
+    PYAUDIO_AVAILABLE = True
+    AUDIO_BACKEND = "pyaudio"
+    gui_logger.info(" PyAudio backend available")
+except ImportError:
+    gui_logger.debug(" PyAudio not available")
+    # Create mock pyaudio for compatibility
+    class MockPyAudio:
+        paInt16 = 8
+        paFloat32 = 1
+    pyaudio = MockPyAudio()
+
+try:
+    import sounddevice as sd
+    SOUNDDEVICE_AVAILABLE = True
+    if AUDIO_BACKEND is None:
+        AUDIO_BACKEND = "sounddevice"
+    gui_logger.info(" sounddevice backend available")
+except (ImportError, OSError) as e:
+    gui_logger.debug(f" sounddevice not available: {e}")
+
 import wave
 import threading
 import time
@@ -16,13 +42,17 @@ import numpy as np
 from typing import Optional, Iterator, Callable, Deque
 from dataclasses import dataclass
 
+if not PYAUDIO_AVAILABLE and not SOUNDDEVICE_AVAILABLE:
+    gui_logger.warn(" No audio backends available - audio capture disabled")
+    gui_logger.info(" Install audio dependencies with: python3 control/native_gui/tools/chat/bridge/audio_installer.py")
+
 
 @dataclass
 class AudioConfig:
     """Audio capture configuration"""
     sample_rate: int = 16000  # Whisper-compatible sample rate
     channels: int = 1         # Mono audio
-    format: int = pyaudio.paInt16  # 16-bit PCM
+    format: int = getattr(pyaudio, 'paInt16', 8)  # 16-bit PCM (fallback to 8)
     chunk_size: int = 1024    # Buffer size
     record_seconds: float = 3.0  # Default recording duration
     buffer_size: int = 100    # Circular buffer size (chunks)
@@ -55,9 +85,24 @@ class AudioCapture:
         self.peak_level = 0.0
         self.silence_duration = 0.0
 
-        # Initialize PyAudio
-        self._initialize_pyaudio()
+        # Initialize audio backend
+        self.backend = AUDIO_BACKEND
+        self.available = PYAUDIO_AVAILABLE or SOUNDDEVICE_AVAILABLE
+
+        if self.available:
+            self._initialize_audio_backend()
+        else:
+            gui_logger.warn(" No audio backends available - audio capture will be simulated")
     
+    def _initialize_audio_backend(self):
+        """Initialize audio backend with comprehensive error handling"""
+        if self.backend == "pyaudio" and PYAUDIO_AVAILABLE:
+            self._initialize_pyaudio()
+        elif self.backend == "sounddevice" and SOUNDDEVICE_AVAILABLE:
+            self._initialize_sounddevice()
+        else:
+            raise RuntimeError("No audio backend available")
+
     def _initialize_pyaudio(self):
         """Initialize PyAudio instance with comprehensive error handling"""
         try:
@@ -85,7 +130,7 @@ class AudioCapture:
                 raise RuntimeError("No audio input devices found. Check microphone connections and permissions.")
 
             for device in input_devices[:3]:  # Show first 3 devices
-                pass  # Device enumeration logic would go here
+                gui_logger.debug(f" Audio device: {device['name']}")
 
         except ImportError as e:
             raise RuntimeError(f"PyAudio not installed: {e}. Install with: pip install pyaudio")
@@ -96,7 +141,39 @@ class AudioCapture:
                 raise RuntimeError(f"Audio system error: {e}")
         except Exception as e:
             gui_logger.error(f" Failed to initialize PyAudio: {e}")
-            raise RuntimeError(f"Audio initialization failed: {e}")
+            raise RuntimeError(f"PyAudio initialization failed: {e}")
+
+    def _initialize_sounddevice(self):
+        """Initialize sounddevice backend"""
+        try:
+            devices = sd.query_devices()
+            input_devices = [d for d in devices if d['max_input_channels'] > 0]
+
+            if not input_devices:
+                raise RuntimeError("No audio input devices found.")
+
+            gui_logger.info(f" Found {len(input_devices)} audio input devices")
+            for device in input_devices[:3]:
+                gui_logger.debug(f" Audio device: {device['name']}")
+
+        except Exception as e:
+            gui_logger.error(f" Failed to initialize sounddevice: {e}")
+            raise RuntimeError(f"sounddevice initialization failed: {e}")
+
+    def is_available(self) -> bool:
+        """Check if audio capture is available"""
+        return self.available
+
+    def get_availability_status(self) -> dict:
+        """Get detailed availability status"""
+        return {
+            'available': self.available,
+            'backend': self.backend,
+            'pyaudio_available': PYAUDIO_AVAILABLE,
+            'sounddevice_available': SOUNDDEVICE_AVAILABLE,
+            'error_message': None if self.available else "No audio backends available. Install PyAudio or sounddevice.",
+            'installation_help': "Run: python3 control/native_gui/tools/chat/bridge/audio_installer.py"
+        }
     
     def get_available_devices(self) -> list:
         """Get list of available audio input devices"""
