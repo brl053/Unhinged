@@ -224,6 +224,23 @@ class GUIEventLogger:
         
         contextual_logger.info(f"Performance metric: {metric_name} = {value}{unit}", metadata)
 
+    # Direct logging methods for compatibility
+    def debug(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """Log a debug message"""
+        self.logger.debug(message, metadata or {})
+
+    def info(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """Log an info message"""
+        self.logger.info(message, metadata or {})
+
+    def warn(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """Log a warning message"""
+        self.logger.warn(message, metadata or {})
+
+    def error(self, message: str, exception: Optional[Exception] = None, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """Log an error message"""
+        self.logger.error(message, exception=exception, metadata=metadata or {})
+
 
 def create_gui_logger(app_name: str = "unhinged-gui", version: str = "1.0.0") -> GUIEventLogger:
     """Factory function to create a GUI event logger"""

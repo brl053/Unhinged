@@ -14,14 +14,33 @@ from dataclasses import dataclass
 from pathlib import Path
 import base64
 import queue
+import sys
+import os
+
+# Add event framework to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../libs/event-framework/python/src'))
+from unhinged_events import create_gui_logger
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-vision-tool", "1.0.0")
 
 # YOLO imports
 try:
     from ultralytics import YOLO
     YOLO_AVAILABLE = True
-    print("🎯 YOLO (Ultralytics) available for object detection")
+    gui_logger.info("YOLO object detection available", {
+        "event_type": "feature_availability",
+        "component": "vision_analysis",
+        "feature": "yolo_detection",
+        "status": "available"
+    })
 except ImportError:
-    print("⚠️ YOLO not available - install with: pip install ultralytics")
+    gui_logger.warn("YOLO not available - install with: pip install ultralytics", {
+        "event_type": "dependency_missing",
+        "component": "vision_analysis",
+        "dependency": "ultralytics",
+        "install_command": "pip install ultralytics"
+    })
     YOLO_AVAILABLE = False
 
 
@@ -146,10 +165,22 @@ class CameraCapture:
             actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             actual_fps = self.cap.get(cv2.CAP_PROP_FPS)
             
-            print(f"📹 Camera initialized: {actual_width}x{actual_height} @ {actual_fps:.1f}fps")
+            gui_logger.info("Camera initialized successfully", {
+                "event_type": "camera_initialization",
+                "component": "camera_capture",
+                "width": actual_width,
+                "height": actual_height,
+                "fps": actual_fps,
+                "device_index": self.config.device_index
+            })
 
         except Exception as e:
-            print(f"❌ Failed to initialize camera: {e}")
+            gui_logger.error("Failed to initialize camera", exception=e, metadata={
+                "event_type": "camera_initialization_failure",
+                "component": "camera_capture",
+                "device_index": self.config.device_index,
+                "error_category": "hardware"
+            })
             if self.cap:
                 self.cap.release()
                 self.cap = None
@@ -158,14 +189,23 @@ class CameraCapture:
     def _initialize_yolo(self):
         """Initialize YOLO model for object detection"""
         try:
-            print(f"🎯 Loading YOLO model: {self.config.yolo_model}")
+            gui_logger.info("Loading YOLO model", {
+                "event_type": "model_loading",
+                "component": "vision_analysis",
+                "model": self.config.yolo_model
+            })
             self.yolo_model = YOLO(self.config.yolo_model)
 
             # Test model with dummy data
             dummy_frame = np.zeros((640, 480, 3), dtype=np.uint8)
             results = self.yolo_model(dummy_frame, verbose=False)
 
-            print(f"✅ YOLO model loaded successfully")
+            gui_logger.info("YOLO model loaded successfully", {
+                "event_type": "model_loaded",
+                "component": "vision_analysis",
+                "model": self.config.yolo_model,
+                "status": "ready"
+            })
 
         except Exception as e:
             print(f"❌ Failed to initialize YOLO: {e}")

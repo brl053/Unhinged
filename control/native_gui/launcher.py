@@ -32,6 +32,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# Add event framework to path
+sys.path.insert(0, str(project_root / "libs/event-framework/python/src"))
+from unhinged_events import create_gui_logger
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-launcher", "1.0.0")
+
 # This will be called from main() below
 
 
@@ -48,34 +55,57 @@ if __name__ == "__main__":
         gi.require_version('Gtk', '4.0')
         gi.require_version('Adw', '1')
         from gi.repository import Gtk, Adw
-        print("✅ GTK4 and Adwaita available")
+        gui_logger.info("GTK4 and Adwaita available", {
+            "event_type": "dependency_check",
+            "component": "launcher",
+            "status": "dependencies_ok"
+        })
     except Exception as e:
-        print(f"❌ GTK4/Adwaita not available: {e}")
+        gui_logger.error("GTK4/Adwaita not available", exception=e, metadata={
+            "event_type": "dependency_failure",
+            "component": "launcher",
+            "missing_dependencies": ["libgtk-4-dev", "libadwaita-1-dev", "python3-gi"]
+        })
         print("\n🔧 Install dependencies:")
         print("   sudo apt install libgtk-4-dev libadwaita-1-dev python3-gi")
         sys.exit(1)
     
     # Launch the application
-    print("🚀 Launching mobile-first control center...")
+    gui_logger.info("Launching mobile-first control center", {
+        "event_type": "application_startup",
+        "component": "launcher",
+        "launched_by_ai": args.launched_by_ai
+    })
 
     # Import and run the native GUI
     try:
         from control.native_gui import run_native_gui
 
         if args.launched_by_ai:
-            print("🤖 Launched by AI Assistant")
+            gui_logger.info("Launched by AI Assistant", {
+                "event_type": "ai_launch",
+                "component": "launcher"
+            })
 
         # Run the native application
         exit_code = run_native_gui(launched_by_ai=args.launched_by_ai)
         sys.exit(exit_code)
 
     except ImportError as e:
-        print(f"❌ Import error: {e}")
+        gui_logger.error("Import error", exception=e, metadata={
+            "event_type": "import_failure",
+            "component": "launcher",
+            "error_category": "dependency"
+        })
         print("\n🔧 Required dependencies:")
         print("   sudo apt install libgtk-4-dev libadwaita-1-dev python3-gi")
         print("   pip install requests")
         sys.exit(1)
 
     except Exception as e:
-        print(f"❌ Failed to start native GUI: {e}")
+        gui_logger.error("Failed to start native GUI", exception=e, metadata={
+            "event_type": "startup_failure",
+            "component": "launcher",
+            "error_category": "application"
+        })
         sys.exit(1)

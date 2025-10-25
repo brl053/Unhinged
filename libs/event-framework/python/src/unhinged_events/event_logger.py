@@ -12,8 +12,14 @@ from enum import Enum
 from typing import Any, Dict, Optional, Union
 
 import yaml
-from opentelemetry import trace
-from opentelemetry.trace import Span
+
+# Optional OpenTelemetry import
+try:
+    from opentelemetry import trace
+    from opentelemetry.trace import Span
+    OPENTELEMETRY_AVAILABLE = True
+except ImportError:
+    OPENTELEMETRY_AVAILABLE = False
 
 
 class LogLevel(Enum):
@@ -183,17 +189,18 @@ class DefaultEventLogger(EventLogger):
             return self.trace_context
         
         # Then try to get from OpenTelemetry current span
-        try:
-            current_span = trace.get_current_span()
-            if current_span and current_span.get_span_context().is_valid:
-                span_context = current_span.get_span_context()
-                return {
-                    "trace_id": format(span_context.trace_id, '032x'),
-                    "span_id": format(span_context.span_id, '016x')
-                }
-        except Exception:
-            # OpenTelemetry not available or no active span
-            pass
+        if OPENTELEMETRY_AVAILABLE:
+            try:
+                current_span = trace.get_current_span()
+                if current_span and current_span.get_span_context().is_valid:
+                    span_context = current_span.get_span_context()
+                    return {
+                        "trace_id": format(span_context.trace_id, '032x'),
+                        "span_id": format(span_context.span_id, '016x')
+                    }
+            except Exception:
+                # OpenTelemetry not available or no active span
+                pass
         
         return None
     
