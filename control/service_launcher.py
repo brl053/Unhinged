@@ -22,12 +22,16 @@ import requests
 from pathlib import Path
 from typing import List, Dict, Optional
 import json
+from unhinged_events import create_service_logger
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from network import get_service_registry, ServiceStatus
+
+# Initialize event logger
+events = create_service_logger("service-launcher", "1.0.0")
 
 
 class ServiceLauncher:
@@ -79,7 +83,7 @@ class ServiceLauncher:
         """
         # Check if Docker is available
         if not self._check_docker():
-            print("❌ Docker not available - GUI will run in offline mode")
+            events.warn("Docker not available - GUI will run in offline mode")
             return False
         
         # Check which services are already running
@@ -99,7 +103,7 @@ class ServiceLauncher:
             if service["required"] or self._should_start_service(service):
                 success = self._start_service(service, timeout)
                 if service["required"] and not success:
-                    print(f"❌ Required service {service['name']} failed to start")
+                    events.error("Required service failed to start", {"service": service['name']})
                     return False
 
         return True
@@ -146,7 +150,6 @@ class ServiceLauncher:
     def _start_service(self, service: Dict, timeout: int) -> bool:
         """Start a specific service"""
         service_name = service["compose_service"]
-        print(f"🔄 Starting {service['name']}...")
         
         try:
             # Start the service
@@ -156,7 +159,7 @@ class ServiceLauncher:
             ], capture_output=True, text=True, timeout=30)
             
             if result.returncode != 0:
-                print(f"❌ Failed to start {service['name']}: {result.stderr}")
+                events.error("Failed to start service", {"service": service['name'], "error": result.stderr})
                 return False
             
             # Wait for service to be healthy
@@ -164,17 +167,15 @@ class ServiceLauncher:
                 return self._wait_for_health(service, timeout)
             else:
                 # For services without health checks, wait a bit
-                print(f"⏳ Waiting for {service['name']} to initialize...")
                 time.sleep(5)
                 return True
                 
         except Exception as e:
-            print(f"❌ Error starting {service['name']}: {e}")
+            events.error("Error starting service", exception=e, metadata={"service": service['name']})
             return False
     
     def _wait_for_health(self, service: Dict, timeout: int) -> bool:
         """Wait for service to become healthy"""
-        print(f"⏳ Waiting for {service['name']} to become healthy...")
         
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -189,11 +190,10 @@ class ServiceLauncher:
             # Show progress
             elapsed = int(time.time() - start_time)
             if elapsed % 10 == 0 and elapsed > 0:
-                print(f"   Still waiting... ({elapsed}s/{timeout}s)")
             
             time.sleep(2)
         
-        print(f"⚠️ {service['name']} did not become healthy within {timeout}s")
+        events.warn("Service did not become healthy", {"service": service['name'], "timeout": timeout})
         return False
     
     def get_service_status(self) -> Dict:
@@ -231,7 +231,6 @@ class ServiceLauncher:
         if not self.running_services:
             return
         
-        print(f"🛑 Stopping {len(self.running_services)} services...")
         
         try:
             subprocess.run([

@@ -481,7 +481,6 @@ def test_keyboard_capture():
         capture.on_hotkey_triggered = on_hotkey
         
         # Register test hotkey
-        capture.register_hotkey('ctrl+shift+t', lambda: print("Test hotkey!"))
         
         # Start capture
         if capture.start_capture():

@@ -6,6 +6,10 @@ import subprocess
 import sys
 import os
 from pathlib import Path
+from unhinged_events import create_service_logger
+
+# Initialize event logger
+events = create_service_logger("proto-generator", "1.0.0")
 
 def generate_proto_files():
     """Generate protobuf files from proto definitions"""
@@ -47,15 +51,14 @@ def generate_proto_files():
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             success_count += 1
         except subprocess.CalledProcessError as e:
-            print(f"❌ Failed to generate {proto_file.name}: {e}")
-            print(f"stderr: {e.stderr}")
+            events.error("Failed to generate proto file", exception=e, metadata={"file": proto_file.name, "stderr": e.stderr})
             # Continue with other files instead of failing completely
             continue
 
     if success_count > 0:
         return True
     else:
-        print("❌ No protobuf files were generated successfully")
+        events.error("No protobuf files were generated successfully")
         return False
 
 if __name__ == "__main__":

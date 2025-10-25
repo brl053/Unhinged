@@ -339,7 +339,6 @@ class HotkeyManager:
             self.register_hotkey(
                 "show_help",
                 "ctrl+shift+h",
-                lambda: print("⌨️ Hotkey Help: Ctrl+Shift+H"),
                 "Show hotkey help",
                 context="global"
             )
@@ -431,14 +430,12 @@ def test_hotkey_manager():
         manager.register_hotkey(
             "test_simple",
             "ctrl+t",
-            lambda: print("Simple hotkey triggered!"),
             "Test simple hotkey"
         )
         
         manager.register_hotkey(
             "test_sequence",
             "ctrl+k, ctrl+c",
-            lambda: print("Sequence hotkey triggered!"),
             "Test sequence hotkey",
             hotkey_type=HotkeyType.SEQUENCE
         )
