@@ -246,6 +246,7 @@ class NetworkScanner:
                         if any(keyword in container.get('Image', '').lower() 
                                for keyword in ['grpc', 'service', 'api']):
                             
+                                   pass
                             # Extract port mappings
                             ports = container.get('Ports', '')
                             if ports:

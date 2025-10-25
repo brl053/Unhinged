@@ -180,6 +180,7 @@ class TouchGestureRecognizer:
                 self.last_tap_position and
                 self._calculate_distance(TouchPoint(self.last_tap_position[0], self.last_tap_position[1], 0), start) < self.tap_threshold):
                 
+                    pass
                 self.last_tap_time = 0  # Reset to prevent triple tap
                 return GestureType.DOUBLE_TAP
             else:
@@ -304,7 +305,6 @@ class SwipeableContainer(Gtk.Box):
     def _on_pan(self, gesture, direction, offset):
         """Handle pan gesture"""
         # Could add visual feedback during pan
-        pass
     
     def _on_pan_end(self, gesture):
         """Handle pan gesture end"""
@@ -538,7 +538,6 @@ class TouchKeyboard(Gtk.Widget):
     def _update_key_labels(self):
         """Update key labels based on shift state"""
         # Would need to iterate through buttons and update labels
-        pass
 
 
 # Test function

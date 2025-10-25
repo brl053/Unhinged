@@ -218,8 +218,8 @@ class ServiceManagerTool(BaseTool):
         if error:
             pass
         else:
-            pass
 
+            pass
     def _on_refresh_clicked(self, button):
         """Handle refresh button click"""
         # Force immediate refresh
@@ -232,6 +232,7 @@ class ServiceManagerTool(BaseTool):
             GLib.idle_add(self._update_service_status, results)
         except Exception as e:
 
+            pass
     def _on_start_all_clicked(self, button):
         """Handle start all button click"""
         gui_logger.info(" Starting all services...", {"event_type": "startup"})

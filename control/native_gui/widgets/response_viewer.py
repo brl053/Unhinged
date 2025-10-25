@@ -242,7 +242,6 @@ class ResponseViewer(Gtk.Box):
                 if '"' in line:
                     # This is a simplified approach
                     # A proper implementation would use regex or JSON parsing
-                    pass
         
         except Exception as e:
             gui_logger.error(f" Syntax highlighting error: {e}")

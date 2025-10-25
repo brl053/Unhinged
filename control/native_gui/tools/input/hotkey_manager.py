@@ -200,6 +200,7 @@ class HotkeyManager:
                         self._context_matches(hotkey_def.context) and
                         key_set.issubset(pressed_keys)):
                         
+                            pass
                         # Trigger hotkey
                         return self._trigger_hotkey(hotkey_def)
                 
@@ -234,6 +235,7 @@ class HotkeyManager:
                     self._context_matches(hotkey_def.context) and
                     seq_keys.startswith(sequence_str)):
                     
+                        pass
                     if seq_keys == sequence_str:
                         # Complete match
                         self.current_sequence.clear()

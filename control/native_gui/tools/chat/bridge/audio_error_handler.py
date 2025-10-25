@@ -220,8 +220,8 @@ class AudioErrorHandler:
                 if result.returncode == 0:
                     details.append(f"PulseAudio: {result.stdout.strip()}")
             except:
-                pass
         
+                pass
         return "\n".join(details)
     
     @staticmethod

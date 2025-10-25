@@ -244,7 +244,6 @@ class ProtoBrowser(Gtk.Box):
             # TODO: Implement filtering
         else:
             # Clear filter
-            pass
     
     def _on_selection_changed(self, selection):
         """Handle tree selection changes"""

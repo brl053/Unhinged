@@ -483,8 +483,10 @@ def test_mouse_capture():
         # Set up callbacks
         def on_click(event):
         
+            pass
         def on_pattern(pattern_type, data):
         
+            pass
         capture.on_mouse_click = on_click
         capture.on_pattern_detected = on_pattern
         

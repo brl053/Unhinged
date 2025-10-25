@@ -355,7 +355,6 @@ class ProtoBrowser(Gtk.Box):
                 self.test_reflection_button.set_sensitive(self.reflection_client is not None)
             else:
                 # Focus on file-based discovery
-                pass
 
     def _on_scan_network_clicked(self, button):
         """Handle network scan button click"""
@@ -457,10 +456,8 @@ class ProtoBrowser(Gtk.Box):
         
         if search_text:
             # TODO: Implement filtering
-            pass
         else:
             # Clear filter
-            pass
     
     def _on_selection_changed(self, selection):
         """Handle tree selection changes"""

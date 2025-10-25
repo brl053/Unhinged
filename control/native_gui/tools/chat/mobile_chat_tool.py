@@ -212,9 +212,9 @@ class MobileChatInput(Gtk.Box):
         if hasattr(self, 'on_voice_input') and self.on_voice_input:
             self.on_voice_input()
         else:
+
+
             pass
-
-
 class MobileChatTool(BaseTool):
     """
     Mobile-first chat tool implementation.
@@ -645,8 +645,8 @@ class MobileChatTool(BaseTool):
         try:
             self.chat_input.mic_button.add_css_class("pulse-animation")
         except:
-            pass
 
+            pass
         # Update input placeholder
         buffer = self.chat_input.text_view.get_buffer()
         current_text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
@@ -665,8 +665,8 @@ class MobileChatTool(BaseTool):
         try:
             self.chat_input.mic_button.remove_css_class("pulse-animation")
         except:
-            pass
 
+            pass
         # Clear listening placeholder
         buffer = self.chat_input.text_view.get_buffer()
         current_text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
@@ -930,6 +930,7 @@ class MobileChatTool(BaseTool):
             help_message = f"""
 🎤 Audio Setup Required:
 
+    pass
 System Dependencies: {instructions['system_deps']}
 Python Package: {instructions['pyaudio_install']}
 Troubleshooting: {instructions['troubleshooting']}
@@ -951,8 +952,8 @@ Platform: {instructions['platform']}
         elif "permission" in message.lower():
             pass
         elif "mock" in message.lower():
-            pass
 
+            pass
         # Update mic button tooltip with error
         if hasattr(self, 'chat_input') and self.chat_input.mic_button:
             self.chat_input.mic_button.set_tooltip_text(f"❌ {message}")

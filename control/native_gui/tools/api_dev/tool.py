@@ -436,8 +436,8 @@ class APIDevTool(BaseTool):
 
         # Update UI based on operation status
         if operation.status.value == "building":
-            pass
 
+            pass
     def _on_update_registry(self):
         """Handle update registry button click"""
         if not self.build_integration.is_available():
@@ -448,8 +448,8 @@ class APIDevTool(BaseTool):
 
         # Update UI based on operation status
         if operation.status.value == "building":
-            pass
 
+            pass
     def _on_refresh_proto(self):
         """Handle refresh proto button click"""
         if not self.build_integration.is_available():

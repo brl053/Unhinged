@@ -158,8 +158,8 @@ class AudioDeviceManager:
                 stream.close()
                 results['mono_16khz'] = True
             except:
-                pass
             
+                pass
             # Test stereo 44.1kHz (CD quality)
             try:
                 stream = p.open(
@@ -173,8 +173,8 @@ class AudioDeviceManager:
                 stream.close()
                 results['stereo_44khz'] = True
             except:
-                pass
             
+                pass
             # Test low latency (small buffer)
             try:
                 stream = p.open(
@@ -188,8 +188,8 @@ class AudioDeviceManager:
                 stream.close()
                 results['low_latency'] = True
             except:
-                pass
             
+                pass
             p.terminate()
             
         except Exception as e:
@@ -241,6 +241,7 @@ def print_audio_system_info():
     for key, value in system_info.items():
     
     
+        pass
     # Permission check
     has_permissions = AudioDeviceManager.check_audio_permissions()
     
@@ -255,6 +256,7 @@ def print_audio_system_info():
     else:
     
     
+        pass
     # Installation instructions
     if not has_permissions:
         instructions = AudioDeviceManager.get_installation_instructions()

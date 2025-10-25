@@ -172,7 +172,6 @@ class InputMonitorWidget(Card):
         # Analyzer callbacks
         if self.input_analyzer:
             # Would set up pattern detection callbacks
-            pass
     
     def _on_key_press(self, event):
         """Handle keyboard event"""

@@ -299,8 +299,8 @@ class CameraCapture:
                     with open(device_path, 'r') as f:
                         return f.read().strip()
             except:
-                pass
 
+                pass
         # Default naming
         if index == 0:
             return "Default Camera"
@@ -661,8 +661,8 @@ class CameraCapture:
                         self.frame_queue.put_nowait(frame.copy())
                         self.frames_dropped += 1
                     except queue.Empty:
-                        pass
 
+                        pass
                 # Update statistics
                 self.frames_captured += 1
                 current_time = time.time()
@@ -741,8 +741,8 @@ class CameraCapture:
                             self.processing_queue.get_nowait()
                             self.processing_queue.put_nowait(frame)
                         except queue.Empty:
-                            pass
 
+                            pass
                 except queue.Empty:
                     continue  # Timeout, check if still processing
                 except Exception as e:

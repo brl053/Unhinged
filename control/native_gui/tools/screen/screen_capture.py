@@ -412,6 +412,7 @@ def test_screen_capture():
             text = capture.extract_text_from_screen()
             if text:
         
+                pass
         # Get stats
         stats = capture.get_capture_stats()
         

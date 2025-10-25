@@ -473,8 +473,10 @@ def test_keyboard_capture():
         # Set up callbacks
         def on_key_press(event):
         
+            pass
         def on_hotkey(combo):
         
+            pass
         capture.on_key_press = on_key_press
         capture.on_hotkey_triggered = on_hotkey
         

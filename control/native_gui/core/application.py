@@ -238,8 +238,8 @@ def run_control_center(launched_by_ai=False):
 
     # Check if launched by AI assistant
     if launched_by_ai:
-        pass
 
+        pass
     app = UnhingedApplication(launched_by_ai=launched_by_ai)
 
 

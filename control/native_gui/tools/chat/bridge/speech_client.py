@@ -51,8 +51,8 @@ except ImportError:
     # Create mock grpc module
     class MockGRPC:
         class FutureTimeoutError(Exception):
-            pass
 
+            pass
         @staticmethod
         def insecure_channel(target):
             return None

@@ -428,6 +428,7 @@ def test_audio_capture():
         
         for device in devices:
         
+            pass
         # Test recording
         if capture.start_recording(duration=2.0):
             time.sleep(2.5)  # Wait for recording to complete

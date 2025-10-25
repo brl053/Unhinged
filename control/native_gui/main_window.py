@@ -135,8 +135,8 @@ class MobileControlCenterWindow(MobileFirstWindow):
             if tool:
                 mobile_tools[nav_id] = tool
             else:
-                pass
 
+                pass
         # Create tool widgets and add to content stack
         for tool_id, tool in mobile_tools.items():
             try:
@@ -144,8 +144,8 @@ class MobileControlCenterWindow(MobileFirstWindow):
                 self.content_area.add_named(widget, tool_id)
                 self.tool_widgets[tool_id] = widget
             except Exception as e:
-                pass
 
+                pass
         # Show default tool
         self.content_area.set_visible_child_name("chat")
         self.current_tool = "chat"
