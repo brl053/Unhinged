@@ -50,6 +50,15 @@ except ImportError as e:
     gui_logger.debug(f" Native speech recognition not available: {e}")
     NATIVE_SPEECH_AVAILABLE = False
 
+# Import simple audio capture for Whisper service
+try:
+    from .simple_audio_capture import SimpleAudioCapture
+    SIMPLE_AUDIO_AVAILABLE = True
+    gui_logger.info(" Simple audio capture available for Whisper service")
+except ImportError as e:
+    gui_logger.debug(f" Simple audio capture not available: {e}")
+    SIMPLE_AUDIO_AVAILABLE = False
+
 # gRPC import - relies on PYTHONPATH set by GUI launcher
 try:
     import grpc
@@ -116,9 +125,22 @@ class SpeechClient:
         # Initialize audio capture
         self.audio_capture = None
         self.native_speech = None
+        self.simple_audio = None
 
-        # Try audio capture first
-        if AUDIO_CAPTURE_AVAILABLE:
+        # Try simple audio capture for Whisper service first (correct architecture)
+        if SIMPLE_AUDIO_AVAILABLE:
+            try:
+                self.simple_audio = SimpleAudioCapture()
+                if self.simple_audio.is_available():
+                    gui_logger.info(" Simple audio capture initialized for Whisper service")
+                else:
+                    self.simple_audio = None
+            except Exception as e:
+                gui_logger.warn(f" Failed to initialize simple audio capture: {e}")
+                self.simple_audio = None
+
+        # Try complex audio capture as fallback
+        if not self.simple_audio and AUDIO_CAPTURE_AVAILABLE:
             try:
                 self.audio_capture = AudioCapture()
                 if not self.audio_capture.is_available():
@@ -132,8 +154,8 @@ class SpeechClient:
                 gui_logger.warn(f" Failed to initialize audio capture: {e}")
                 self.audio_capture = None
 
-        # Try native speech recognition as fallback
-        if not self.audio_capture and NATIVE_SPEECH_AVAILABLE:
+        # Try native speech recognition as final fallback
+        if not self.simple_audio and not self.audio_capture and NATIVE_SPEECH_AVAILABLE:
             try:
                 self.native_speech = NativeSpeechRecognizer()
                 if self.native_speech.is_available():
@@ -188,8 +210,15 @@ class SpeechClient:
         self.is_recording = True
         self.audio_data = []
 
-        # Use real audio capture if available
-        if self.audio_capture and AUDIO_CAPTURE_AVAILABLE:
+        # Use simple audio capture for Whisper service (correct architecture)
+        if self.simple_audio and SIMPLE_AUDIO_AVAILABLE:
+            self.recording_thread = threading.Thread(
+                target=self._simple_audio_recording,
+                args=(callback, duration),
+                daemon=True
+            )
+        elif self.audio_capture and AUDIO_CAPTURE_AVAILABLE:
+            # Fallback to complex audio capture
             self.recording_thread = threading.Thread(
                 target=self._real_recording,
                 args=(callback, duration),
@@ -203,7 +232,7 @@ class SpeechClient:
                 daemon=True
             )
         else:
-            # Fallback to simulation
+            # Final fallback to simulation
             self.recording_thread = threading.Thread(
                 target=self._simulate_recording,
                 args=(callback,),
@@ -248,6 +277,32 @@ class SpeechClient:
         except Exception as e:
             gui_logger.error(f" Error in real recording: {e}")
             self.audio_data = []
+
+    def _simple_audio_recording(self, callback: Optional[Callable[[str], None]], duration: float = 3.0):
+        """Use simple audio capture to send to Whisper service (correct architecture)"""
+        try:
+            gui_logger.info(f" Starting simple audio recording for Whisper service...")
+
+            # Use simple audio capture to record and send to Whisper
+            result = self.simple_audio.record_and_transcribe(
+                duration=duration,
+                callback=None
+            )
+
+            # Store result for compatibility
+            self.audio_data = [result] if result else []
+
+            # Call callback with result
+            if callback and result:
+                callback(result)
+
+            gui_logger.info(f" Whisper service transcription completed: {result}")
+
+        except Exception as e:
+            gui_logger.error(f" Error in simple audio recording: {e}")
+            self.audio_data = []
+            if callback:
+                callback(f"Whisper service error: {e}")
 
     def _native_speech_recording(self, callback: Optional[Callable[[str], None]], duration: float = 3.0):
         """Use native speech recognition for recording and transcription"""
