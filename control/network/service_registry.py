@@ -167,6 +167,7 @@ class ServiceRegistry:
                 json.dump(config_data, f, indent=2)
         except Exception as e:
             # Failed to save service config
+            pass
     
     def register_service(self, service_id: str, endpoint: ServiceEndpoint):
         """Register a new service endpoint."""
