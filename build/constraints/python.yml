@@ -1,0 +1,131 @@
+# Python Language Constraints for Deterministic Parsing
+# Minimal constraint set focused on print statement migration
+
+language: python
+version: "3.8+"
+description: "Constrained Python feature set for reliable print statement parsing and migration"
+
+# Parsing scope - what we need to extract for migration
+parsing_targets:
+  print_statements:
+    - simple_print_calls          # print("message")
+    - formatted_print_calls       # print(f"message {var}")
+    - multi_argument_prints       # print("msg", var, "more")
+    - print_with_file_param       # print("msg", file=sys.stderr)
+  
+  context_detection:
+    - function_definitions        # def function_name():
+    - class_definitions          # class ClassName:
+    - exception_handling         # try/except blocks
+    - import_statements          # import/from imports
+    - variable_assignments       # var = value
+
+# Language features we support (minimal set)
+allowed_features:
+  print_patterns:
+    - basic_string_literals      # "string" and 'string'
+    - f_string_literals         # f"string {var}"
+    - multi_line_strings        # """string"""
+    - escaped_characters        # "string\n"
+    - unicode_characters        # "string 🚀"
+  
+  variable_usage:
+    - simple_variables          # var
+    - attribute_access          # obj.attr
+    - method_calls             # obj.method()
+    - basic_indexing           # obj[key]
+  
+  control_structures:
+    - if_statements            # if condition:
+    - try_except_blocks        # try/except
+    - function_definitions     # def name():
+    - class_definitions        # class Name:
+
+# Features we explicitly exclude (to keep parsing simple)
+excluded_features:
+  - complex_comprehensions     # [x for x in y if z]
+  - lambda_expressions        # lambda x: x
+  - decorators_with_args      # @decorator(args)
+  - metaclasses              # class Meta(type):
+  - exec_eval_statements     # exec(), eval()
+  - complex_string_formatting # % formatting, .format() with complex args
+
+# Parsing limits for deterministic results
+parsing_limits:
+  max_line_length: 200         # Reasonable line length limit
+  max_nesting_depth: 6         # Maximum indentation levels
+  max_print_args: 10           # Maximum arguments to print()
+  max_string_length: 1000      # Maximum string literal length
+
+# Log level classification rules
+log_level_classification:
+  error_indicators:
+    - "❌"                     # Error emoji
+    - "error"                  # Error keyword
+    - "failed"                 # Failure keyword
+    - "exception"              # Exception keyword
+    - "traceback"              # Traceback keyword
+  
+  warning_indicators:
+    - "⚠️"                     # Warning emoji
+    - "warning"                # Warning keyword
+    - "warn"                   # Warn keyword
+    - "deprecated"             # Deprecation warning
+    - "fallback"               # Fallback scenario
+  
+  info_indicators:
+    - "✅"                     # Success emoji
+    - "🚀"                     # Startup emoji
+    - "🎯"                     # Activity emoji
+    - "📊"                     # Status emoji
+    - "info"                   # Info keyword
+    - "starting"               # Startup keyword
+    - "completed"              # Completion keyword
+  
+  debug_indicators:
+    - "🔧"                     # Debug emoji
+    - "🔍"                     # Scanning emoji
+    - "debug"                  # Debug keyword
+    - "testing"                # Test keyword
+    - "analyzing"              # Analysis keyword
+
+# Context classification for better log level detection
+context_classification:
+  error_contexts:
+    - except_blocks            # Inside except: blocks
+    - error_handling_functions # Functions with "error" in name
+    - failure_conditions       # if not success: blocks
+  
+  startup_contexts:
+    - main_functions           # if __name__ == "__main__":
+    - init_methods            # def __init__():
+    - setup_functions         # Functions with "setup", "init", "start"
+  
+  debug_contexts:
+    - test_functions          # Functions with "test_" prefix
+    - debug_functions         # Functions with "debug" in name
+    - development_blocks      # if DEBUG: blocks
+
+# Migration patterns - how to transform print statements
+migration_patterns:
+  simple_info: 'gui_logger.info("{message}", {{"event_type": "info"}})'
+  simple_error: 'gui_logger.error("{message}", {{"event_type": "error"}})'
+  simple_warning: 'gui_logger.warn("{message}", {{"event_type": "warning"}})'
+  simple_debug: 'gui_logger.debug("{message}", {{"event_type": "debug"}})'
+  
+  formatted_info: 'gui_logger.info(f"{message}", {{"event_type": "info"}})'
+  formatted_error: 'gui_logger.error(f"{message}", {{"event_type": "error"}})'
+  formatted_warning: 'gui_logger.warn(f"{message}", {{"event_type": "warning"}})'
+  formatted_debug: 'gui_logger.debug(f"{message}", {{"event_type": "debug"}})'
+
+# Required imports for migration
+required_imports:
+  event_framework: "from unhinged_events import create_gui_logger"
+  logger_init: 'gui_logger = create_gui_logger("unhinged-{service_name}", "1.0.0")'
+
+# Validation rules
+validation_rules:
+  - all_print_statements_must_be_migrated
+  - logger_must_be_initialized_before_use
+  - imports_must_be_added_at_top
+  - original_functionality_must_be_preserved

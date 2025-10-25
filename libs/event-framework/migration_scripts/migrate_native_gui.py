@@ -15,6 +15,10 @@ from typing import List, Tuple, Dict
 # Add the event framework to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "python" / "src"))
 
+# Add the deterministic parser
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "build" / "regex"))
+from python_parser import PythonPrintParser, analyze_print_migration_needs
+
 class GUIMigrationAnalyzer:
     """Analyzes and migrates GUI logging patterns"""
     
@@ -86,18 +90,32 @@ class GUIMigrationAnalyzer:
         }
     
     def analyze_directory(self) -> List[Dict[str, any]]:
-        """Analyze all Python files in the GUI directory"""
+        """Analyze all Python files in the GUI directory using deterministic parser"""
         results = []
-        
+
         for py_file in self.gui_root.rglob("*.py"):
             # Skip __pycache__ and test files for now
             if "__pycache__" in str(py_file) or "test_" in py_file.name:
                 continue
-                
-            analysis = self.analyze_file(py_file)
-            if analysis.get("print_count", 0) > 0:
-                results.append(analysis)
-        
+
+            try:
+                # Use deterministic parser for complete analysis
+                analysis = analyze_print_migration_needs(str(py_file))
+                if analysis["total_print_statements"] > 0:
+                    # Convert to expected format
+                    converted_analysis = {
+                        "file": str(py_file),
+                        "print_count": analysis["total_print_statements"],
+                        "has_event_import": not analysis["needs_event_import"],
+                        "has_gui_logger": not analysis["needs_logger_init"],
+                        "needs_migration": analysis["total_print_statements"] > 0,
+                        "log_level_breakdown": analysis["log_level_breakdown"],
+                        "suggested_service_name": analysis["suggested_service_name"]
+                    }
+                    results.append(converted_analysis)
+            except Exception as e:
+                print(f"⚠️ Error analyzing {py_file}: {e}")
+
         return results
     
     def generate_migration_plan(self, analysis_results: List[Dict[str, any]]) -> str:
