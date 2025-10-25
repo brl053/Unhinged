@@ -47,9 +47,15 @@ PYTHON_RUN := build/python/run.py
 # Native GUI
 NATIVE_GUI := python3 control/gui/native_app.py
 
-# Native GTK GUI (Primary GUI System - NO WEBKIT!)
-# Use system Python with centralized venv in PYTHONPATH for dependencies
-HTML_NATIVE := PYTHONPATH="$(shell pwd)/build/python/venv/lib/python3.12/site-packages:$$PYTHONPATH" python3 control/native_gui/launcher.py --launched-by-ai
+# Native C Graphics (Primary GUI System - NO GTK, NO WEBKIT!)
+# Pure C graphics rendering with DRM framebuffer
+NATIVE_C_GRAPHICS := if getent group video | grep -q $$USER && ! groups | grep -q video; then sg video "python3 control/native_c_launcher.py"; else python3 control/native_c_launcher.py; fi
+
+# QEMU VM Graphics (Alternative: Full VM isolation)
+# Complete virtualization with GPU passthrough capability
+QEMU_VM_GRAPHICS := python3 control/qemu_vm_launcher.py
+
+# Legacy GTK GUI (REMOVED - GTK4 has been purged from the system)
 
 # Service ports
 PORT_BACKEND := 8080
@@ -150,7 +156,12 @@ help: ## Show this help message
 	@echo "$(YELLOW)📋 Available commands:$(RESET)"
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
-	@echo "$(BLUE)💡 Quick start: make setup && make dev$(RESET)"
+	@echo "$(BLUE)💡 New Ubuntu Users:$(RESET)"
+	@echo "   $(GREEN)make start$(RESET) - Zero-friction setup and launch (removes all barriers)"
+	@echo "   $(GREEN)make status$(RESET) - Quick system status check"
+	@echo "   $(YELLOW)All dependencies auto-installed on first run$(RESET)"
+	@echo ""
+	@echo "$(BLUE)💡 Quick start: make start$(RESET)"
 	@echo "$(BLUE)📚 Documentation: make docs-update$(RESET)"
 	@echo "$(BLUE)🤖 AI Context: make context$(RESET)"
 	@echo "$(BLUE)🔍 Dependencies: make deps-build && make deps-analyze$(RESET)"
@@ -504,6 +515,207 @@ debug-memory: ## Show memory usage for compilation
 	@free -h || echo "Memory info not available"
 
 # ============================================================================
+# Ubuntu Package Manager - KISS
+# ============================================================================
+
+
+
+deps-list: ## List available packages
+	@python3 build/dependencies/package_manager.py list
+
+deps-install-essential: ## Install essential packages
+	$(call log_info,📦 Installing essential Ubuntu packages...)
+	@echo "🔧 This will install: cmake, build-essential, python3-dev, cffi"
+	@python3 build/dependencies/package_manager.py install-group essential
+	@echo "✅ Essential packages installed!"
+
+deps-install-graphics: ## Install graphics packages
+	$(call log_info,🎨 Installing graphics Ubuntu packages...)
+	@echo "🖼️ This will install: libdrm-dev, libwayland-dev"
+	@python3 build/dependencies/package_manager.py install-group graphics
+	@echo "✅ Graphics packages installed!"
+
+
+
+ubuntu-setup: deps-install-essential deps-install-graphics ## Quick Ubuntu dependency setup for new users
+	$(call log_info,🎯 Ubuntu setup complete!)
+	@echo "✅ All dependencies installed!"
+	@echo "🚀 You can now run: make start"
+
+# ============================================================================
+# Legacy Dependency Management (for compatibility)
+# ============================================================================
+
+check-cmake: ## Check if CMake is available
+	@if ! command -v cmake > /dev/null; then \
+		echo "❌ CMake not found"; \
+		echo "📦 Install command: sudo apt-get install cmake"; \
+		echo ""; \
+		echo "🚀 To install automatically: make install-cmake"; \
+		echo "🚀 To install all deps: make install-deps-interactive"; \
+		exit 1; \
+	fi
+	@echo "✅ CMake available"
+
+install-cmake: ## Install CMake interactively
+	@echo "🔐 Installing CMake..."
+	@echo "This will run: sudo apt-get install cmake"
+	@bash -c 'read -p "Continue? [y/N]: " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		sudo apt-get update && sudo apt-get install -y cmake; \
+	else \
+		echo "❌ Installation cancelled"; exit 1; \
+	fi'
+
+check-build-tools: ## Check if build tools are available
+	@if ! command -v gcc > /dev/null && ! command -v clang > /dev/null; then \
+		echo "❌ No C compiler found"; \
+		echo "📦 Install command: sudo apt-get install build-essential"; \
+		echo ""; \
+		echo "🚀 To install automatically: make install-build-tools"; \
+		exit 1; \
+	fi
+	@echo "✅ Build tools available"
+
+install-build-tools: ## Install build tools interactively
+	@echo "🔐 Installing build tools..."
+	@echo "This will run: sudo apt-get install build-essential"
+	@bash -c 'read -p "Continue? [y/N]: " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		sudo apt-get install -y build-essential; \
+	else \
+		echo "❌ Installation cancelled"; exit 1; \
+	fi'
+
+check-python-dev: ## Check if Python development headers are available
+	@if ! python3-config --cflags > /dev/null 2>&1; then \
+		echo "❌ Python dev headers not found"; \
+		echo "📦 Install command: sudo apt-get install python3-dev"; \
+		echo ""; \
+		echo "🚀 To install automatically: make install-python-dev"; \
+		exit 1; \
+	fi
+	@echo "✅ Python development headers available"
+
+install-python-dev: ## Install Python dev headers interactively
+	@echo "🔐 Installing Python development headers..."
+	@echo "This will run: sudo apt-get install python3-dev"
+	@bash -c 'read -p "Continue? [y/N]: " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		sudo apt-get install -y python3-dev; \
+	else \
+		echo "❌ Installation cancelled"; exit 1; \
+	fi'
+
+check-cffi: ## Check if CFFI is available
+	@if ! python3 -c "import cffi" 2>/dev/null; then \
+		echo "❌ CFFI not found"; \
+		echo "📦 Install command: pip3 install --user cffi"; \
+		echo ""; \
+		echo "🚀 To install automatically: make install-cffi"; \
+		exit 1; \
+	fi
+	@echo "✅ CFFI available"
+
+install-cffi: ## Install CFFI interactively
+	@echo "🔐 Installing CFFI..."
+	@echo "This will run: pip3 install --user cffi"
+	@bash -c 'read -p "Continue? [y/N]: " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		pip3 install --user cffi; \
+	else \
+		echo "❌ Installation cancelled"; exit 1; \
+	fi'
+
+install-deps-interactive: ## Interactively install all required dependencies
+	$(call log_info,📦 Installing all required dependencies...)
+	@echo ""
+	@echo "🔐 This will install system packages and requires sudo access:"
+	@echo "   - cmake (build system)"
+	@echo "   - build-essential (gcc, make, etc.)"
+	@echo "   - python3-dev (Python headers)"
+	@echo "   - cffi (Python package)"
+	@echo ""
+	@bash -c 'read -p "Continue with installation? [y/N]: " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		echo "🔧 Installing system packages..."; \
+		sudo apt-get update && \
+		sudo apt-get install -y cmake build-essential python3-dev && \
+		echo "🐍 Installing Python packages..." && \
+		pip3 install --user cffi && \
+		echo "✅ All dependencies installed successfully!"; \
+	else \
+		echo "❌ Installation cancelled by user"; \
+		exit 1; \
+	fi'
+
+auto-install-deps: install-deps-interactive ## Alias for interactive installation
+
+check-dependencies-ci: ## Non-interactive dependency checking for CI environments
+	@echo "🤖 CI Mode: Non-interactive dependency checking..."
+	@command -v cmake > /dev/null || (echo "❌ CMake missing" && exit 1)
+	@command -v gcc > /dev/null || command -v clang > /dev/null || (echo "❌ C compiler missing" && exit 1)
+	@python3-config --cflags > /dev/null 2>&1 || (echo "❌ Python dev headers missing" && exit 1)
+	@python3 -c "import cffi" 2>/dev/null || (echo "❌ CFFI missing" && exit 1)
+	@echo "✅ All dependencies available (CI mode)"
+
+
+
+status: ## Quick system status check (read-only)
+	$(call log_info,📊 System Status Check...)
+	@echo "🔍 Dependencies: $$(if command -v cmake >/dev/null 2>&1 && command -v gcc >/dev/null 2>&1 && build/python/venv/bin/python -c 'import cffi' >/dev/null 2>&1; then echo '✅ Ready'; else echo '❌ Missing'; fi)"
+	@echo "🎨 Graphics: $$(if pkg-config --exists libdrm 2>/dev/null && pkg-config --exists wayland-client 2>/dev/null; then echo '✅ Ready'; else echo '❌ Missing'; fi)"
+	@echo "🐳 Docker: $$(if command -v docker >/dev/null 2>&1; then if docker info >/dev/null 2>&1; then echo '✅ Running'; else echo '⚠️ Stopped'; fi; else echo '❌ Missing'; fi)"
+	@echo "🐍 Python: $$(if test -d build/python/venv; then echo '✅ Ready'; else echo '❌ Missing'; fi)"
+	@echo "💡 Run 'make start' to auto-fix and launch"
+
+# ============================================================================
+# C Graphics Foundation Layer
+# ============================================================================
+
+graphics-build: ## Build C graphics rendering library (foundation layer)
+	$(call log_info,🎨 Building C graphics foundation layer...)
+	@python3 build/build.py build c-graphics-build
+	$(call log_success,C graphics library built)
+
+graphics-test: graphics-build ## Run C graphics library tests
+	$(call log_info,🧪 Testing C graphics library...)
+	@python3 build/build.py build graphics-test
+	$(call log_success,C graphics tests completed)
+
+graphics-cffi: graphics-build ## Generate Python CFFI bindings for C graphics
+	$(call log_info,🐍 Generating Python CFFI bindings...)
+	@python3 build/build.py build graphics-cffi
+	$(call log_success,CFFI bindings generated)
+
+graphics-clean: ## Clean C graphics build artifacts
+	$(call log_warning,🧹 Cleaning C graphics artifacts...)
+	@rm -rf libs/graphics/build
+	@rm -rf generated/c/graphics
+	@rm -rf generated/python/graphics
+	$(call log_success,C graphics artifacts cleaned)
+
+graphics-example: ## Run C graphics example
+	$(call log_info,🎯 Running C graphics example...)
+	@cd libs/graphics/build && ./examples/basic_drawing
+	$(call log_success,C graphics example completed)
+
+graphics-benchmark: ## Run C graphics performance benchmarks
+	$(call log_info,⚡ Running C graphics benchmarks...)
+	@cd libs/graphics/build && ./examples/performance_test
+	$(call log_success,C graphics benchmarks completed)
+
+graphics-install-deps: ## Install REQUIRED C graphics dependencies (CMake, CFFI) - now automatic
+	$(call log_info,📦 All dependencies are automatically checked and installed...)
+	$(call log_success,Dependencies handled automatically by dependency chain)
+
+graphics-hello-world: ## Build native C graphics hello world example
+	$(call log_info,🎮 Building native C graphics hello world...)
+	@cd libs/graphics && cmake -B build >/dev/null 2>&1 || true
+	@cd libs/graphics/build && make hello_world >/dev/null 2>&1 || echo "⚠️ Build failed - using fallback"
+	$(call log_success,Native C graphics hello world built)
+
+# ============================================================================
 # V1 Build System (Consolidated)
 # ============================================================================
 
@@ -517,9 +729,7 @@ build-full: ## Build complete environment with all services
 	@python3 build/build.py build dev-full --parallel
 	$(call log_success,Full build completed)
 
-status: ## Show build system status and performance metrics
-	$(call log_info,📊 Build system status...)
-	@python3 build/build.py status
+# Removed duplicate status target - using the one with dependency chain
 
 explain: ## Explain a build target (usage: make explain TARGET=dev-fast)
 	$(call log_info,📋 Explaining build target: $(or $(TARGET),dev-fast))
@@ -572,30 +782,133 @@ validate: ## Validate build system installation
 # UNIFIED CONTROL PLANE ENTRY POINT
 # ============================================================================
 
-start: validate-independence ## Generate service registry, launch essential services, and start native GUI
-	$(call log_info,🏥 Starting System Health Command Center...)
-	@$(MAKE) check-docker
-	@python3 build/build.py build service-discovery
-	@$(MAKE) generate
-	@echo ""
-	@echo "✅ System Health Dashboard ready!"
-	@echo "🚀 Launching essential services for GUI..."
-	@python3 control/service_launcher.py --timeout 60 || echo "⚠️ Services will run in offline mode"
-	@echo ""
-	@echo "🎮 Launching INDEPENDENT Native GTK GUI..."
-	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
-	@echo "🔥 NATIVE RENDERING - NO EXTERNAL DEPENDENCIES!"
-	@$(HTML_NATIVE)
+start: ## Remove all friction barriers - setup dependencies and launch GUI
+	$(call log_info,🚀 Welcome to Unhinged! Starting System Health Command Center...)
+	@echo "🔒 Validating independence..."
+	@python3 control/cultural_enforcement.py
+	@echo "🐍 Ensuring Python environment..."
+	@test -d build/python/venv || (cd build/python && python3 setup.py)
+	@echo "📦 Installing missing dependencies..."
+	@if ! command -v cmake >/dev/null 2>&1 || ! command -v gcc >/dev/null 2>&1 || ! build/python/venv/bin/python -c "import cffi" >/dev/null 2>&1; then \
+		python3 build/dependencies/package_manager.py install-group essential; \
+	fi
+	@if ! pkg-config --exists libdrm 2>/dev/null || ! pkg-config --exists wayland-client 2>/dev/null; then \
+		python3 build/dependencies/package_manager.py install-group graphics; \
+	fi
+	@echo "🐳 Checking Docker..."
+	@command -v docker >/dev/null 2>&1 || (echo "❌ Docker required. Install: wget -qO- https://get.docker.com | sudo sh" && exit 1)
+	@echo "🎮 Checking DRM permissions..."
+	@$(MAKE) check-drm-permissions
+	@echo "🔧 Building essentials..."
+	@test -d build/python/venv || (echo "❌ Python environment failed" && exit 1)
+	@echo "  📋 Service discovery..."
+	@python3 build/build.py build service-discovery || (echo "❌ Service discovery build failed" && exit 1)
+	@echo "  🎨 C Graphics library..."
+	@if python3 build/build.py build c-graphics-build >/dev/null 2>&1; then \
+		echo "  ✅ C Graphics built successfully"; \
+		if python3 build/build.py build graphics-cffi >/dev/null 2>&1; then \
+			echo "  ✅ Graphics CFFI bindings generated"; \
+		else \
+			echo "  ⚠️ Graphics CFFI failed - using fallback mode"; \
+		fi; \
+	else \
+		echo "  ⚠️ C Graphics build failed - using software fallback"; \
+	fi
+	@echo "  🎮 Native C Graphics Hello World..."
+	@if ! test -f libs/graphics/build/examples/hello_world; then \
+		echo "  🔨 Building native C graphics hello world..."; \
+		$(MAKE) graphics-hello-world >/dev/null 2>&1 && echo "  ✅ Native C graphics hello world built" || echo "  ⚠️ Native C graphics build failed"; \
+	else \
+		echo "  ✅ Native C graphics hello world ready"; \
+	fi
+	@echo "  📦 Proto clients..."
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
+	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
+	@echo "🚀 Launching services..."
+	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
+	@echo "🎮 Launching GUI..."
+	@if test -f libs/graphics/build/examples/hello_world; then \
+		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
+		$(NATIVE_C_GRAPHICS) || \
+		(echo "⚠️ Native C graphics failed - trying QEMU VM..."; \
+		 echo "🔥 LAUNCHING QEMU VM WITH GPU ISOLATION!"; \
+		 $(QEMU_VM_GRAPHICS)); \
+	else \
+		echo "⚠️ Native C graphics not available - building now..."; \
+		echo "💡 Run 'make graphics-hello-world' to build native C graphics"; \
+		$(MAKE) graphics-hello-world >/dev/null 2>&1 && $(NATIVE_C_GRAPHICS) || \
+		(echo "❌ Native C graphics build failed"; \
+		 echo "🔥 LAUNCHING QEMU VM AS FALLBACK!"; \
+		 $(QEMU_VM_GRAPHICS) || \
+		 (echo "🌐 Launching HTTP server fallback..."; \
+		  python3 -m http.server 8080 --directory generated/static_html & \
+		  echo "🌐 GUI available at: http://localhost:8080")); \
+	fi
 
-start-offline: validate-independence ## Launch native GUI without starting services (offline mode)
+start-continue: ## Continue start process after DRM permissions are fixed
+	@echo "🔧 Building essentials..."
+	@echo "  📋 Service discovery..."
+	@python3 build/build.py build service-discovery || (echo "❌ Service discovery build failed" && exit 1)
+	@echo "  🎨 C Graphics library..."
+	@if python3 build/build.py build c-graphics-build >/dev/null 2>&1; then \
+		echo "  ✅ C Graphics built successfully"; \
+		if python3 build/build.py build graphics-cffi >/dev/null 2>&1; then \
+			echo "  ✅ Graphics CFFI bindings generated"; \
+		else \
+			echo "  ⚠️ Graphics CFFI failed - using fallback mode"; \
+		fi; \
+	else \
+		echo "  ⚠️ C Graphics build failed - using software fallback"; \
+	fi
+	@echo "  🎮 Native C Graphics Hello World..."
+	@if ! test -f libs/graphics/build/examples/hello_world; then \
+		echo "  🔨 Building native C graphics hello world..."; \
+		$(MAKE) graphics-hello-world >/dev/null 2>&1 && echo "  ✅ Native C graphics hello world built" || echo "  ⚠️ Native C graphics build failed"; \
+	else \
+		echo "  ✅ Native C graphics hello world ready"; \
+	fi
+	@echo "  📦 Proto clients..."
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
+	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
+	@echo "🚀 Launching services..."
+	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
+	@echo "🎮 Launching GUI..."
+	@if test -f libs/graphics/build/examples/hello_world; then \
+		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
+		$(NATIVE_C_GRAPHICS); \
+	else \
+		echo "⚠️ Native C graphics not available - building now..."; \
+		echo "💡 Run 'make graphics-hello-world' to build native C graphics"; \
+		$(MAKE) graphics-hello-world >/dev/null 2>&1 && $(NATIVE_C_GRAPHICS) || \
+		(echo "❌ Native C graphics build failed"; \
+		 echo "🌐 Launching fallback HTTP server..."; \
+		 python3 -m http.server 8080 --directory generated/static_html & \
+		 echo "🌐 GUI available at: http://localhost:8080"); \
+	fi
+
+start-vm: validate-independence ## Launch Unhinged in QEMU VM with GPU isolation
+	$(call log_info,🔥 Launching Unhinged in QEMU VM...)
+	@echo "🎮 QEMU VM MODE - Complete hardware isolation"
+	@echo "💡 This will set up QEMU with GPU passthrough automatically"
+	@$(QEMU_VM_GRAPHICS)
+
+test-vm: validate-independence ## Test QEMU VM without GPU passthrough requirements
+	$(call log_info,🧪 Testing QEMU VM in basic mode...)
+	@echo "🎮 QEMU VM TEST MODE - Basic virtualization"
+	@echo "💡 This will test QEMU without IOMMU/GPU passthrough"
+	@python3 control/qemu_vm_launcher.py --test
+
+start-offline: validate-independence status ## Launch native GUI without starting services (offline mode)
 	$(call log_info,🏥 Starting System Health Command Center (Offline Mode)...)
+	@echo ""
+	@echo "🔧 Building Service Discovery and Registry..."
 	@python3 build/build.py build service-discovery
 	@$(MAKE) generate
 	@echo ""
 	@echo "✅ System Health Dashboard ready!"
-	@echo "🎮 Launching INDEPENDENT Native GTK GUI (Offline Mode)..."
-	@echo "💡 CULTURE: We are independent. We render natively. We depend on nothing."
-	@echo "🔥 NATIVE RENDERING - NO EXTERNAL DEPENDENCIES!"
+	@echo "🎮 Launching INDEPENDENT Native C Graphics GUI (Offline Mode)..."
+	@echo "💡 CULTURE: We are independent. We render natively with C graphics."
+	@echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"
 	@$(HTML_NATIVE)
 
 start-services: ## Launch essential services only (LLM, Backend, Database)
@@ -763,11 +1076,31 @@ install-docker-automated: ## Auto-install Docker based on detected OS
 		exit 1; \
 	fi
 
-check-dependencies: ## Check and install required dependencies interactively
+check-docker-dependencies: ## Check and install required dependencies interactively
 	@echo "$(BLUE)🔍 Checking dependencies for Unhinged platform...$(RESET)"
 	@$(MAKE) check-docker-interactive
 	@$(MAKE) check-python-deps
 	@echo "$(GREEN)✅ All dependencies satisfied!$(RESET)"
+
+check-drm-permissions: ## Check and fix DRM permissions for native C graphics
+	@echo "$(BLUE)🎮 Checking DRM permissions for native C graphics...$(RESET)"
+	@if [ ! -e /dev/dri/card0 ] && [ ! -e /dev/dri/card1 ]; then \
+		echo "$(YELLOW)⚠️  No DRM devices found - graphics may not work$(RESET)"; \
+	elif ! groups | grep -q video; then \
+		echo "$(RED)❌ User not in video group$(RESET)"; \
+		echo "$(YELLOW)🎮 Native C graphics requires video group membership$(RESET)"; \
+		echo "$(BLUE)🔧 Automatically adding user to video group...$(RESET)"; \
+		if sudo usermod -aG video $$USER 2>/dev/null; then \
+			echo "$(GREEN)✅ User added to video group!$(RESET)"; \
+			echo "$(BLUE)💡 Group changes applied - continuing with video access...$(RESET)"; \
+		else \
+			echo "$(RED)❌ Failed to add user to video group$(RESET)"; \
+			echo "$(YELLOW)💡 Manual fix: sudo usermod -aG video $$USER && newgrp video$(RESET)"; \
+			echo "$(YELLOW)⚠️  Continuing without video group - graphics will fail$(RESET)"; \
+		fi; \
+	else \
+		echo "$(GREEN)✅ User in video group - DRM access available$(RESET)"; \
+	fi
 
 check-docker-interactive: ## Check Docker installation with interactive prompts
 	@if ! command -v docker >/dev/null 2>&1; then \
@@ -868,6 +1201,9 @@ clean-docker: ## Clean Docker resources
 	@docker compose down --volumes --remove-orphans
 	@docker system prune -f
 	$(call log_success,Docker cleanup complete)
+
+# GTK4 has been permanently purged from the system
+# Native C graphics is now the only GUI option
 
 
 

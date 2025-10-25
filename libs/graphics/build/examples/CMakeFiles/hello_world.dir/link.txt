@@ -1,0 +1,1 @@
+/usr/bin/cc  -g -O0 -Wall -Wextra -Wpedantic -fPIC -mavx2 -mfma -g CMakeFiles/hello_world.dir/hello_world.c.o -o hello_world  -Wl,-rpath,/home/e-bliss-station-1/Projects/Unhinged/libs/graphics/build ../libunhinged_graphics.so.1.0.0 -lm -lpthread -ldrm 

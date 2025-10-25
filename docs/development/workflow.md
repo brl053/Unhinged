@@ -102,5 +102,5 @@ make start-offline  # GUI only (no services)
 ### Production Considerations
 - Voice pipeline requires audio hardware
 - Service dependencies must be available
-- GTK4 required for native GUI
+- Native C graphics library for GUI rendering
 - Docker required for backend services

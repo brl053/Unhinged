@@ -98,23 +98,70 @@ targets:
       - "generated/kotlin/**/*"
     cache_key: "kotlin-services-v1"
 
+  # C Graphics Library - Foundation Layer (REQUIRED)
+  c-graphics-build:
+    description: "Build C graphics rendering library (REQUIRED foundation layer)"
+    module: "c_builder"
+    dependencies: []
+    required: true
+    inputs:
+      - "libs/graphics/**/*.c"
+      - "libs/graphics/**/*.h"
+      - "libs/graphics/CMakeLists.txt"
+      - "libs/graphics/cffi_build.py.in"
+    outputs:
+      - "generated/c/graphics/**/*"
+      - "libs/graphics/build/**/*"
+    cache_key: "c-graphics-v1"
+
+  # C Graphics CFFI Bindings (REQUIRED)
+  graphics-cffi:
+    description: "Generate Python CFFI bindings for C graphics library (REQUIRED)"
+    module: "c_builder"
+    dependencies: ["c-graphics-build"]
+    required: true
+    inputs:
+      - "libs/graphics/cffi_build.py.in"
+      - "libs/graphics/include/*.h"
+    outputs:
+      - "generated/python/graphics/**/*"
+    cache_key: "c-graphics-cffi-v1"
+
+  # C Graphics Tests
+  graphics-test:
+    description: "Run C graphics library test suite"
+    module: "c_builder"
+    dependencies: ["c-graphics-build"]
+    inputs:
+      - "libs/graphics/tests/**/*.c"
+      - "libs/graphics/examples/**/*.c"
+    outputs:
+      - "libs/graphics/build/test_results.xml"
+    cache_key: "c-graphics-test-v1"
+
+
+
 # Build groups for orchestration
 groups:
   core:
     description: "Core system components"
-    targets: ["service-discovery", "mobile-ui"]
-    
+    targets: ["service-discovery", "mobile-ui", "c-graphics-build"]
+
+  graphics:
+    description: "Graphics rendering foundation"
+    targets: ["c-graphics-build", "graphics-cffi", "graphics-test"]
+
   services:
     description: "All service components"
     targets: ["python-services", "kotlin-services"]
-    
+
   clients:
     description: "Client generation"
     targets: ["proto-clients", "typescript-components"]
-    
+
   all:
     description: "Complete build"
-    targets: ["service-discovery", "mobile-ui", "proto-clients", "python-services", "typescript-components", "kotlin-services"]
+    targets: ["service-discovery", "mobile-ui", "c-graphics-build", "graphics-cffi", "proto-clients", "python-services", "typescript-components", "kotlin-services"]
 
 # Module configuration
 modules:
@@ -169,6 +216,18 @@ modules:
         - "services"
         - "kotlin"
       output_directory: "generated/kotlin"
+
+  c_builder:
+    class: "CBuilder"
+    config:
+      graphics_directory: "libs/graphics"
+      build_directory: "libs/graphics/build"
+      install_directory: "generated/c/graphics"
+      cffi_directory: "generated/python/graphics"
+      cmake_options:
+        - "-DCMAKE_BUILD_TYPE=Release"
+        - "-DENABLE_SIMD=ON"
+        - "-DENABLE_TESTING=ON"
 
 # Validation configuration
 validation:

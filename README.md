@@ -1,6 +1,6 @@
 # 🎛️ Unhinged
 
-> **Voice-First AI Control Center** - Native GTK desktop application with immediate voice interaction
+> **Voice-First AI Control Center** - Native C graphics desktop application with immediate voice interaction
 
 ## 🚀 **Quick Start - Voice-First Experience**
 
@@ -8,7 +8,7 @@
 make start
 ```
 
-**Launches native GUI with immediate voice capability** - hit the mic button and start talking!
+**Launches native C graphics GUI with immediate voice capability** - hit the mic button and start talking!
 
 ## 🎤 **Voice-First User Experience**
 
@@ -21,11 +21,11 @@ make start
 
 ```
 📦 Unhinged/
-├── control/native_gui/           # Native GTK4 desktop application
-│   ├── tools/chat/              # Voice-first chat interface
-│   ├── tools/vision/            # Camera and image analysis
-│   ├── tools/input_capture/     # Keyboard/mouse monitoring
-│   └── core/                    # Application framework
+├── libs/graphics/               # Native C graphics rendering library
+│   ├── src/                     # C graphics source code
+│   ├── examples/                # Hello world and demos
+│   └── include/                 # Graphics API headers
+├── control/native_c_launcher.py # Native C graphics launcher
 ├── services/                    # AI services (auto-starting)
 │   ├── speech-to-text/          # Whisper-based transcription
 │   ├── text-to-speech/          # Audio generation

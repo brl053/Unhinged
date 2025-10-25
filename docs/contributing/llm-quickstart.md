@@ -29,7 +29,7 @@ All code uses structured annotations for AI comprehension:
 
 ## Architecture Overview
 
-- **Native GUI**: GTK4-based desktop application
+- **Native GUI**: C graphics-based desktop application
 - **Voice Pipeline**: Native audio → Whisper → AI response
 - **Service Architecture**: Docker + direct service integration
 - **Build System**: Polyglot build with caching

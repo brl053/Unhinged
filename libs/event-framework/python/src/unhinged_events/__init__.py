@@ -24,13 +24,7 @@ from .protobuf_integration import (
     emit_universal_event
 )
 
-from .gui_integration import (
-    GUIEventLogger,
-    GUIEvent,
-    create_gui_logger,
-    create_gtk_click_handler,
-    create_gtk_text_changed_handler
-)
+# GTK4 GUI integration removed - using native C graphics
 
 __version__ = "1.0.0"
 __all__ = [
@@ -46,10 +40,5 @@ __all__ = [
     "ServiceHealthStatus",
     "StateChangeType",
     "create_universal_emitter",
-    "emit_universal_event",
-    "GUIEventLogger",
-    "GUIEvent",
-    "create_gui_logger",
-    "create_gtk_click_handler",
-    "create_gtk_text_changed_handler"
+    "emit_universal_event"
 ]

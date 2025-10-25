@@ -30,10 +30,10 @@ Native Audio (arecord) → HTTP → Whisper Service → AI Response
 - **NATIVE AUDIO OVER LIBRARIES** - Use OS capabilities, not PyAudio/sounddevice
 - **IMMEDIATE FUNCTIONALITY** - Voice must work RIGHT GODDAMN AWAY
 - **SERVICE INTEGRATION** - Auto-starting services via service_launcher.py
-- **CLEAN STARTUP** - Zero GTK theme errors, minimal noise
+- **CLEAN STARTUP** - Zero theme errors, minimal noise
 
 ### 2. NATIVE GUI SUPREMACY
-- **GTK4 NATIVE RENDERING** - No web browsers, no Electron
+- **NATIVE C GRAPHICS RENDERING** - No web browsers, no Electron, no GTK
 - **MOBILE-RESPONSIVE DESIGN** - Touch-friendly native interface
 - **SYSTEM INTEGRATION** - Native OS capabilities over abstractions
 - **PROFESSIONAL UX** - Clean startup, clear feedback
@@ -60,7 +60,7 @@ Native Audio (arecord) → HTTP → Whisper Service → AI Response
 
 ```
 /
-├── control/native_gui/         # NATIVE GTK4 VOICE-FIRST APPLICATION
+├── libs/graphics/              # NATIVE C GRAPHICS RENDERING LIBRARY
 │   ├── tools/chat/            # Voice-first chat interface
 │   ├── tools/vision/          # Camera and image analysis
 │   ├── tools/input_capture/   # System input monitoring
@@ -74,7 +74,7 @@ Native Audio (arecord) → HTTP → Whisper Service → AI Response
 │   ├── docs-generation/# Documentation automation (USE THIS!)
 │   └── tools/          # Build utilities
 ├── control/            # SYSTEM CONTROL & GUI
-│   ├── native_gui/     # GTK4 native GUI (NO WEBKIT!)
+│   ├── native_c_launcher.py  # Native C graphics launcher
 │   ├── static_html/    # HTML interfaces (for native rendering)
 │   └── system/         # System control abstractions
 ├── generated/          # ALL GENERATED CONTENT (EVERYTHING GOES HERE)

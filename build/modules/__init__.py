@@ -287,10 +287,45 @@ class BuildUtils:
 
         return violations
 
+# Auto-register available build modules
+def _auto_register_modules():
+    """Automatically register available build modules"""
+    # Create dummy context for registration
+    dummy_context = BuildContext(
+        project_root=Path.cwd(),
+        target_name="dummy",
+        config={}
+    )
+
+    # Try to register each module individually
+    modules_to_register = [
+        ('python_builder', 'PythonBuilder'),
+        ('kotlin_builder', 'KotlinBuilder'),
+        ('c_builder', 'CBuilder'),
+    ]
+
+    for module_name, class_name in modules_to_register:
+        try:
+            if module_name == 'python_builder':
+                from .python_builder import PythonBuilder
+                register_module(PythonBuilder(dummy_context))
+            elif module_name == 'kotlin_builder':
+                from .kotlin_builder import KotlinBuilder
+                register_module(KotlinBuilder(dummy_context))
+            elif module_name == 'c_builder':
+                from .c_builder import CBuilder
+                register_module(CBuilder(dummy_context))
+        except (ImportError, AttributeError) as e:
+            # Module not available, skip silently
+            logger.debug(f"Could not register {class_name}: {e}")
+
+# Auto-register modules on import
+_auto_register_modules()
+
 # Export main classes and functions
 __all__ = [
     'BuildContext',
-    'BuildArtifact', 
+    'BuildArtifact',
     'BuildModuleResult',
     'BuildModule',
     'BuildModuleRegistry',

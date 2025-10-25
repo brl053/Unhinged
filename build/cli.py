@@ -94,24 +94,28 @@ class BuildCLI:
                 from modules.python_builder import PythonBuilder
                 from modules.proto_client_builder import ProtoClientBuilder
                 from modules.service_discovery_builder import ServiceDiscoveryBuilder
+                from modules.c_builder import CBuilder
             except ImportError:
                 from .modules.kotlin_builder import KotlinBuilder
                 from .modules.typescript_builder import TypeScriptBuilder
                 from .modules.python_builder import PythonBuilder
                 from .modules.proto_client_builder import ProtoClientBuilder
                 from .modules.service_discovery_builder import ServiceDiscoveryBuilder
+                from .modules.c_builder import CBuilder
 
             kotlin_builder = KotlinBuilder(context)
             typescript_builder = TypeScriptBuilder(context)
             python_builder = PythonBuilder(context)
             proto_client_builder = ProtoClientBuilder(context)
             service_discovery_builder = ServiceDiscoveryBuilder(context)
+            c_builder = CBuilder(context)
 
             register_module(kotlin_builder)
             register_module(typescript_builder)
             register_module(python_builder)
             register_module(proto_client_builder)
             register_module(service_discovery_builder)
+            register_module(c_builder)
             
             logger.info("✅ Build system (v1) initialized successfully")
             

@@ -1,0 +1,40 @@
+file(REMOVE_RECURSE
+  ".1"
+  "CMakeFiles/unhinged_graphics.dir/src/color/blending.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/color/blending.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/color/color_space.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/color/color_space.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/color/conversion.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/color/conversion.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/core/error.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/core/error.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/core/memory.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/core/memory.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/core/platform.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/core/platform.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/platform/linux_drm.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/platform/linux_drm.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/platform/window.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/platform/window.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/circle.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/circle.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/line.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/line.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/polygon.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/polygon.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/primitives.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/raster/primitives.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/simd/avx2_ops.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/simd/avx2_ops.c.o.d"
+  "CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o"
+  "CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o.d"
+  "libunhinged_graphics.pdb"
+  "libunhinged_graphics.so"
+  "libunhinged_graphics.so.1"
+  "libunhinged_graphics.so.1.0.0"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C)
+  include(CMakeFiles/unhinged_graphics.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
