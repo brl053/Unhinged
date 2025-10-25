@@ -22,16 +22,22 @@ import requests
 from pathlib import Path
 from typing import List, Dict, Optional
 import json
-from unhinged_events import create_service_logger
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
+
+try:
+    from unhinged_events import create_service_logger
+    # Initialize event logger
+    events = create_service_logger("service-launcher", "1.0.0")
+except ImportError:
+    # Fallback to basic logging if event framework not available
+    import logging
+    events = logging.getLogger("service-launcher")
 
 from network import get_service_registry, ServiceStatus
-
-# Initialize event logger
-events = create_service_logger("service-launcher", "1.0.0")
 
 
 class ServiceLauncher:
