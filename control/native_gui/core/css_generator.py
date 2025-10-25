@@ -91,8 +91,8 @@ class CSSGenerator:
 }}
 
 .viewport-mobile {{
-    --base-font-size: {mobile_font_size}px;
-    --base-spacing: {mobile_spacing}px;
+    font-size: {mobile_font_size}px;
+    padding: {mobile_spacing}px;
 }}
 
 .touch-button {{
@@ -157,8 +157,8 @@ class CSSGenerator:
 /* @llm-key Breakpoint-based styling for different viewport sizes */
 
 @media (max-width: {self.config.mobile_breakpoint}px) {{
-    .desktop-only {{ display: none; }}
-    .mobile-hidden {{ display: none; }}
+    .desktop-only {{ opacity: 0; }}
+    .mobile-hidden {{ opacity: 0; }}
     
     .mobile-only {{
         opacity: 1;
@@ -177,8 +177,8 @@ class CSSGenerator:
 }}
 
 @media (min-width: {self.config.mobile_breakpoint}px) and (max-width: {self.config.tablet_breakpoint}px) {{
-    .mobile-only {{ display: none; }}
-    .desktop-only {{ display: none; }}
+    .mobile-only {{ opacity: 0; }}
+    .desktop-only {{ opacity: 0; }}
     
     .tablet-only {{
         opacity: 1;
@@ -197,8 +197,8 @@ class CSSGenerator:
 }}
 
 @media (min-width: {self.config.tablet_breakpoint}px) {{
-    .mobile-only {{ display: none; }}
-    .tablet-only {{ display: none; }}
+    .mobile-only {{ opacity: 0; }}
+    .tablet-only {{ opacity: 0; }}
     
     .desktop-only {{
         opacity: 1;
@@ -230,12 +230,9 @@ class CSSGenerator:
 /* @llm-key Standardized component appearance and behavior */
 
 .status-indicator {{
-    display: flex;
-    align-items: center;
-    gap: {self.config.base_spacing // 2}px;
     padding: {self.config.base_spacing // 2}px {self.config.base_spacing}px;
     border-radius: {self.config.border_radius // 2}px;
-    font-size: var(--base-font-size, {self.config.base_font_size}px);
+    font-size: {self.config.base_font_size}px;
 }}
 
 .status-indicator.status-success {{
@@ -268,20 +265,11 @@ class CSSGenerator:
 }}
 
 .loading-spinner {{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: {self.config.base_spacing}px;
     padding: {self.config.base_spacing * 2}px;
 }}
 
 .empty-state {{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: {self.config.base_spacing}px;
     padding: {self.config.base_spacing * 2}px;
-    text-align: center;
 }}
 
 .empty-state-icon {{
@@ -295,7 +283,6 @@ class CSSGenerator:
 
 .empty-state-subtitle {{
     opacity: 0.7;
-    max-width: 300px;
 }}
 """
 

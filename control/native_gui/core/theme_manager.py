@@ -352,7 +352,7 @@ class ThemeManager:
             font-weight: 500;
             line-height: 1.4;
             letter-spacing: 0.1px;
-            transition: all 0.2s ease;
+            transition: all 200ms;
 
             /* GTK: Use padding instead of min-width for minimum size */
             padding-left: 60px;
@@ -360,18 +360,7 @@ class ThemeManager:
             
         }
 
-        .tool-tab::before {
-            content: '';
-            
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #6750A4;
-            opacity: 0;
-            transition: opacity #E6E0E9 #E6E0E9;
-            
-        }
+        /* GTK doesn't support ::before pseudo-elements */
 
         .tool-tab:hover {
             background: #36343B;
@@ -380,9 +369,7 @@ class ThemeManager:
             box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
         }
 
-        .tool-tab:hover::before {
-            opacity: 0.08;
-        }
+        /* GTK doesn't support :hover::before */
 
         .tool-tab.active {
             background: #E6E0E9;
@@ -392,13 +379,11 @@ class ThemeManager:
             
         }
 
-        .tool-tab.active::before {
-            opacity: 0.12;
-        }
+        /* GTK doesn't support .active::before */
 
         .tool-tab:active {
-            
-            transition: transform #E6E0E9 #E6E0E9;
+            background: #1F1D24;
+            transition: all 200ms;
         }
         
         /* Tool content area */
@@ -718,7 +703,7 @@ class ThemeManager:
             padding: 8px 4px;
             border-radius: 12px;
             margin: 0 4px;
-            transition: all 200ms ease;
+            transition: all 200ms;
         }
 
         .nav-item:hover {
@@ -805,7 +790,7 @@ class ThemeManager:
             border-radius: 16px;
             margin: 8px 0;
             border: 1px solid #36343B;
-            transition: all 200ms ease;
+            transition: all 200ms;
         }
 
         .mobile-tool-card:hover {
