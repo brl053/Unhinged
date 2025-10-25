@@ -41,6 +41,15 @@ except ImportError as e:
     gui_logger.warn(f" Audio capture not available: {e}")
     AUDIO_CAPTURE_AVAILABLE = False
 
+# Import native speech recognition as fallback
+try:
+    from .native_speech_recognition import NativeSpeechRecognizer
+    NATIVE_SPEECH_AVAILABLE = True
+    gui_logger.info(" Native speech recognition available as fallback")
+except ImportError as e:
+    gui_logger.debug(f" Native speech recognition not available: {e}")
+    NATIVE_SPEECH_AVAILABLE = False
+
 # gRPC import - relies on PYTHONPATH set by GUI launcher
 try:
     import grpc
@@ -106,6 +115,9 @@ class SpeechClient:
 
         # Initialize audio capture
         self.audio_capture = None
+        self.native_speech = None
+
+        # Try audio capture first
         if AUDIO_CAPTURE_AVAILABLE:
             try:
                 self.audio_capture = AudioCapture()
@@ -119,6 +131,18 @@ class SpeechClient:
             except Exception as e:
                 gui_logger.warn(f" Failed to initialize audio capture: {e}")
                 self.audio_capture = None
+
+        # Try native speech recognition as fallback
+        if not self.audio_capture and NATIVE_SPEECH_AVAILABLE:
+            try:
+                self.native_speech = NativeSpeechRecognizer()
+                if self.native_speech.is_available():
+                    gui_logger.info(" Native speech recognition initialized as fallback")
+                else:
+                    self.native_speech = None
+            except Exception as e:
+                gui_logger.warn(f" Failed to initialize native speech recognition: {e}")
+                self.native_speech = None
 
         self._setup_grpc_connection()
 
@@ -171,6 +195,13 @@ class SpeechClient:
                 args=(callback, duration),
                 daemon=True
             )
+        elif self.native_speech and NATIVE_SPEECH_AVAILABLE:
+            # Use native speech recognition
+            self.recording_thread = threading.Thread(
+                target=self._native_speech_recording,
+                args=(callback, duration),
+                daemon=True
+            )
         else:
             # Fallback to simulation
             self.recording_thread = threading.Thread(
@@ -217,6 +248,33 @@ class SpeechClient:
         except Exception as e:
             gui_logger.error(f" Error in real recording: {e}")
             self.audio_data = []
+
+    def _native_speech_recording(self, callback: Optional[Callable[[str], None]], duration: float = 3.0):
+        """Use native speech recognition for recording and transcription"""
+        try:
+            gui_logger.info(f" Starting native speech recognition for {duration} seconds...")
+
+            # Use native speech recognition directly
+            result = self.native_speech.recognize_from_microphone(
+                duration=duration,
+                engine='google',  # Use Google Web Speech API
+                callback=None
+            )
+
+            # Store result for compatibility
+            self.audio_data = [result] if result else []
+
+            # Call callback with result
+            if callback and result:
+                callback(result)
+
+            gui_logger.info(f" Native speech recognition completed: {result}")
+
+        except Exception as e:
+            gui_logger.error(f" Error in native speech recording: {e}")
+            self.audio_data = []
+            if callback:
+                callback(f"Speech recognition error: {e}")
 
     def _simulate_recording(self, callback: Optional[Callable[[str], None]]):
         """Simulate audio recording (fallback when real capture unavailable)"""

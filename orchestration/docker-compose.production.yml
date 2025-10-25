@@ -20,7 +20,7 @@ services:
   # =============================================================================
   
   llm:
-    build: ./llm
+    build: ../llm
     container_name: ollama-service
     ports:
       - "1500:11434"  # External 1500 → Internal 11434
@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
 
   speech-to-text:
-    build: ./services/speech-to-text
+    build: ../services/speech-to-text
     container_name: speech-to-text-service
     ports:
       - "1101:8000"  # External 1101 → Internal 8000
@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
 
   text-to-speech:
-    build: ./services/text-to-speech
+    build: ../services/text-to-speech
     container_name: text-to-speech-service
     ports:
       - "1102:8001"  # External 1102 → Internal 8001
@@ -83,7 +83,7 @@ services:
     restart: unless-stopped
 
   vision-ai:
-    build: ./services/vision-ai
+    build: ../services/vision-ai
     container_name: vision-ai-service
     ports:
       - "1103:8001"  # External 1103 → Internal 8001
@@ -150,7 +150,7 @@ services:
   # =============================================================================
   
   persistence-platform:
-    build: ./platforms/persistence
+    build: ../platforms/persistence
     container_name: persistence-platform-service
     ports:
       - "1300:8090"  # External 1300 → Internal 8090 (REST)
