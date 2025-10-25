@@ -1,8 +1,35 @@
 #!/usr/bin/env python3
 """
-Web Speech API Bridge
-Provides a bridge to use Web Speech API through embedded browser components.
-This is much simpler than PyAudio and works natively in browsers.
+@llm-type web-speech-bridge
+@llm-legend WebKit-based bridge for browser Web Speech API integration
+@llm-key Embedded browser speech recognition using native Web Speech API capabilities
+@llm-map Future enhancement component for browser-native voice transcription
+@llm-axiom Browser-native APIs provide superior user experience to system-level audio capture
+@llm-contract WebKit bridge interface for Web Speech API integration in native applications
+@llm-token web-speech-bridge: Browser API integration for voice transcription
+"""
+"""
+🌐 Web Speech API Bridge - Browser-Native Voice Processing
+
+WebKit-based bridge component that enables integration of browser Web Speech API
+capabilities within the native GUI application framework.
+
+This component represents a future enhancement path that leverages browser-native
+speech recognition APIs, potentially providing superior user experience compared
+to system-level audio capture approaches.
+
+Key Design Principles:
+- Browser-native Web Speech API integration
+- WebKit embedded browser component
+- JavaScript ↔ Python communication bridge
+- No external audio library dependencies
+- Native browser permission handling
+
+Architecture Vision:
+GUI → WebKit WebView → Web Speech API → JavaScript Bridge → Python → Transcript
+
+Currently implemented as future enhancement foundation, with primary voice pipeline
+using native audio capture → Whisper service approach.
 """
 
 import logging; gui_logger = logging.getLogger(__name__)

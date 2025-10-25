@@ -195,7 +195,30 @@ class ServiceLauncher:
             return False
 
     def _start_direct_service(self, service: Dict, timeout: int) -> bool:
-        """Start a service using direct command execution"""
+        """
+        @llm-key Direct service execution for non-Docker components
+        @llm-contract Starts services via direct command execution with environment setup
+        @llm-map Service launcher extension enabling voice transcription service integration
+
+        Start a service using direct command execution rather than Docker Compose.
+
+        This method extends the service launcher to support services that run directly
+        as Python processes rather than Docker containers, enabling integration of
+        components like the Whisper transcription service into the standard startup flow.
+
+        Key Features:
+        - Environment variable setup (PYTHONPATH, etc.)
+        - Background process execution
+        - Health check integration
+        - Consistent service management interface
+
+        Args:
+            service: Service configuration dictionary with start_command
+            timeout: Maximum time to wait for service health check
+
+        Returns:
+            bool: True if service started successfully and passed health check
+        """
         try:
             import os
 
@@ -228,7 +251,23 @@ class ServiceLauncher:
             return False
 
     def _is_service_healthy(self, service: Dict) -> bool:
-        """Check if a service is currently healthy"""
+        """
+        @llm-key Service health verification for direct and Docker services
+        @llm-contract HTTP health check validation for service availability
+        @llm-map Health monitoring component supporting voice transcription service integration
+
+        Check if a service is currently healthy via HTTP health endpoint.
+
+        This method provides unified health checking for both Docker Compose services
+        and direct command services, enabling consistent service monitoring across
+        the voice transcription pipeline.
+
+        Args:
+            service: Service configuration with health_url
+
+        Returns:
+            bool: True if service responds successfully to health check
+        """
         if not service.get("health_url"):
             return False
 

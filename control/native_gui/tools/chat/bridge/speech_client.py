@@ -307,7 +307,23 @@ class SpeechClient:
             self.audio_data = []
 
     def _native_audio_recording(self, callback: Optional[Callable[[str], None]], duration: float = 3.0):
-        """Use native system audio capture (correct approach - no Python libraries)"""
+        """
+        @llm-key Primary voice input method using native system audio capture
+        @llm-contract Records system audio via native tools and transcribes via Whisper service
+        @llm-axiom Native OS audio capabilities superior to Python library abstractions
+
+        Use native system audio capture for voice transcription (correct architectural approach).
+
+        This method implements the preferred voice input approach: leveraging Ubuntu's
+        native audio system (arecord/PipeWire) rather than complex Python audio libraries.
+
+        Architecture:
+            Native System Audio → arecord → WAV File → HTTP → Whisper Service → Transcript
+
+        Args:
+            callback: Function to call with transcription result
+            duration: Recording duration in seconds
+        """
         try:
             gui_logger.info(f" Starting native system audio recording...")
 
@@ -333,7 +349,24 @@ class SpeechClient:
                 callback(f"Native audio error: {e}")
 
     def _simple_audio_recording(self, callback: Optional[Callable[[str], None]], duration: float = 3.0):
-        """Use simple audio capture to send to Whisper service (correct architecture)"""
+        """
+        @llm-key Intermediate voice input using Python speech_recognition library
+        @llm-contract Python library audio capture with Whisper service transcription
+        @llm-map Fallback component when native audio capture unavailable
+
+        Use Python speech_recognition library for audio capture with Whisper service.
+
+        This method provides intermediate voice input functionality when native system
+        audio capture is unavailable, maintaining service-oriented architecture while
+        using Python audio library compatibility.
+
+        Architecture:
+            Python speech_recognition → Audio Data → HTTP → Whisper Service → Transcript
+
+        Args:
+            callback: Function to call with transcription result
+            duration: Recording duration in seconds
+        """
         try:
             gui_logger.info(f" Starting simple audio recording for Whisper service...")
 

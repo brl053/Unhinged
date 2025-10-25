@@ -1,7 +1,34 @@
 #!/usr/bin/env python3
 """
-Native Python Speech Recognition
-Simple speech-to-text using the speech_recognition library with multiple backends.
+@llm-type speech-recognition-fallback
+@llm-legend Python speech_recognition library integration as fallback for voice transcription
+@llm-key Multi-backend speech recognition with Google Web Speech API and offline options
+@llm-map Fallback component in voice transcription pipeline when native audio unavailable
+@llm-axiom Multiple fallback options ensure voice functionality across diverse system configurations
+@llm-contract Provides speech recognition interface compatible with primary voice pipeline
+@llm-token native-speech-recognition: Python library fallback for voice transcription
+"""
+"""
+🎤 Native Python Speech Recognition - Fallback Voice Processing
+
+Fallback speech recognition component using the Python speech_recognition library
+with multiple backend options including Google Web Speech API and offline engines.
+
+This component serves as a compatibility layer when the primary native audio capture
+approach is unavailable, ensuring voice functionality across diverse system configurations.
+
+Key Design Principles:
+- Multiple backend support (Google, Sphinx, Whisper API)
+- Graceful degradation from primary native audio approach
+- Internet-dependent and offline options
+- Compatible interface with main voice pipeline
+- Clear status reporting and error handling
+
+Architecture Position:
+Primary: Native Audio → Whisper Service
+Fallback: This Component → Google/Sphinx/Whisper API → Transcript
+
+Integration ensures voice functionality regardless of system audio configuration.
 """
 
 import logging; gui_logger = logging.getLogger(__name__)
@@ -74,20 +101,33 @@ class NativeSpeechRecognizer:
             ] if self.is_available() else []
         }
     
-    def recognize_from_microphone(self, 
+    def recognize_from_microphone(self,
                                  duration: float = 3.0,
                                  engine: str = 'google',
                                  callback: Optional[Callable[[str], None]] = None) -> str:
         """
-        Record audio from microphone and transcribe it.
-        
+        @llm-key Fallback microphone recording with multiple recognition backends
+        @llm-contract Records microphone input and returns transcribed text via selected engine
+        @llm-map Fallback voice input method when native audio capture unavailable
+
+        Record audio from microphone and transcribe using selected recognition engine.
+
+        This method provides fallback voice input functionality when the primary
+        native audio capture approach is unavailable, ensuring voice transcription
+        works across diverse system configurations.
+
         Args:
-            duration: Recording duration in seconds
+            duration: Recording duration in seconds (default: 3.0)
             engine: Recognition engine ('google', 'sphinx', 'whisper_api')
-            callback: Optional callback for result
-            
+            callback: Optional callback for async result handling
+
         Returns:
-            Transcribed text or error message
+            str: Transcribed text or descriptive error message
+
+        Backend Options:
+            - 'google': Google Web Speech API (requires internet)
+            - 'sphinx': CMU Sphinx (offline, requires pocketsphinx)
+            - 'whisper_api': OpenAI Whisper API (requires API key)
         """
         if not self.is_available():
             return "Speech recognition not available"

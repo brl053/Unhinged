@@ -1,7 +1,36 @@
 #!/usr/bin/env python3
 """
-Audio Dependencies Installer and Setup Helper
-Provides automated installation and setup guidance for audio capture dependencies.
+@llm-type dependency-installer
+@llm-legend Automated audio dependency installation and setup guidance system
+@llm-key Cross-platform audio dependency detection, installation, and user guidance
+@llm-map Support component providing installation guidance for voice transcription pipeline
+@llm-axiom Clear installation guidance reduces user friction in voice feature adoption
+@llm-contract Platform-specific dependency detection and automated installation assistance
+@llm-token audio-installer: Dependency management for voice transcription components
+"""
+"""
+🔧 Audio Dependencies Installer - Voice Pipeline Setup Assistant
+
+Comprehensive audio dependency management system providing automated detection,
+installation guidance, and setup assistance for the voice transcription pipeline.
+
+This component ensures users can easily enable voice functionality by providing
+clear, platform-specific installation instructions and automated setup where possible.
+
+Key Design Principles:
+- Cross-platform dependency detection
+- Automated installation where possible
+- Clear user guidance for manual steps
+- Graceful degradation when dependencies unavailable
+- Platform-specific instruction customization
+
+Supported Platforms:
+- Linux: PortAudio, ALSA, PulseAudio development libraries
+- macOS: Homebrew-based PortAudio installation
+- Windows: Pre-compiled wheel installation guidance
+
+Integration:
+Voice Pipeline → Dependency Check → This Component → Installation Guidance → User
 """
 
 import subprocess

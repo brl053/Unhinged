@@ -1,8 +1,28 @@
 #!/usr/bin/env python3
 """
-Native Audio Capture for Ubuntu
-Uses the system's native audio capture (ALSA/PipeWire) instead of Python libraries.
-This is the correct approach - let the OS handle audio, not Python.
+@llm-type audio-capture
+@llm-legend Native Ubuntu audio capture using system-level ALSA/PipeWire integration
+@llm-key System audio capture without Python library dependencies for voice transcription pipeline
+@llm-map Core audio input component bridging GUI voice interface to Whisper transcription service
+@llm-axiom Native OS capabilities superior to Python library abstractions for audio processing
+@llm-contract Provides clean audio capture → HTTP → Whisper service communication interface
+@llm-token native-audio-capture: System-level audio input for voice-first user experience
+"""
+"""
+🎤 Native Audio Capture - System-Level Voice Input
+
+Core component of the voice-first user experience pipeline that leverages Ubuntu's
+native audio capabilities (ALSA/PipeWire) instead of complex Python audio libraries.
+
+This represents the correct architectural approach: let the operating system handle
+what it's designed for, rather than introducing unnecessary Python dependencies.
+
+Key Design Principles:
+- Native OS audio capture (arecord/PipeWire)
+- Direct HTTP communication with Whisper service
+- Zero Python audio library dependencies
+- Immediate functionality after system boot
+- Clean separation: GUI → Audio → Service → AI
 """
 
 import logging; gui_logger = logging.getLogger(__name__)
@@ -57,12 +77,27 @@ class NativeAudioCapture:
             gui_logger.debug(f" Whisper service check failed: {e}")
             return False
     
-    def record_and_transcribe(self, 
+    def record_and_transcribe(self,
                             duration: float = 3.0,
                             callback: Optional[Callable[[str], None]] = None) -> str:
         """
-        Record audio using native system tools and send to Whisper service.
-        This is the correct approach - no Python audio libraries needed.
+        @llm-key Core voice input method implementing native audio → Whisper pipeline
+        @llm-contract Records system audio and returns transcribed text via Whisper service
+        @llm-axiom Native system tools (arecord) provide superior audio capture to Python libraries
+
+        Record audio using Ubuntu's native audio system and send to Whisper service.
+        This represents the correct architectural approach: leverage OS capabilities
+        rather than introducing complex Python audio library dependencies.
+
+        Args:
+            duration: Recording duration in seconds (default: 3.0)
+            callback: Optional callback function for async result handling
+
+        Returns:
+            str: Transcribed text from Whisper service or error message
+
+        Architecture:
+            Native Audio (arecord) → Temporary WAV → HTTP POST → Whisper → Transcript
         """
         if not self.is_available():
             return "Native audio capture not available"
