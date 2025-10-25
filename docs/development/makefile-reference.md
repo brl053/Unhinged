@@ -2,7 +2,7 @@
 
 > **Purpose**: Comprehensive documentation of all Make targets and development workflows
 > **Audience**: Developers and AI assistants working on the Unhinged platform
-> **Last Updated**: Auto-generated on 2025-10-20 19:14:38
+> **Last Updated**: Auto-generated on 2025-10-24 22:33:42
 
 ## 🎯 Quick Reference
 
@@ -16,6 +16,21 @@ make clean           # Clean build artifacts (smart cleanup)
 ```
 
 ## 🔧 Setup and Installation
+
+#### `make validate-independence`
+**Purpose**: CRITICAL: Validate architectural independence
+**Usage**: `make validate-independence`
+**Actions**:
+
+#### `make browser-gui`
+**Purpose**: FORBIDDEN: External browser usage
+**Usage**: `make browser-gui`
+**Actions**:
+
+#### `make firefox-gui`
+**Purpose**: FORBIDDEN: Firefox usage
+**Usage**: `make firefox-gui`
+**Actions**:
 
 #### `make setup`
 **Purpose**: Initial project setup
@@ -39,13 +54,14 @@ make clean           # Clean build artifacts (smart cleanup)
 - $(if $(FORCE),@echo "$(YELLOW)🔥 Force rebuild enabled - bypassing cache$(RESET)",@echo "$(YELLOW)💾 Using cache for faster builds$(RESET)")
 
 #### `make setup-python`
-**Purpose**: Setup Python virtual environment and install dependencies
+**Purpose**: Setup centralized Python virtual environment and install dependencies
 **Usage**: `make setup-python`
 **Actions**:
-- $(call log_info,🐍 Setting up Python virtual environment...)
+- $(call log_info,🐍 Setting up centralized Python virtual environment...)
+- $(call log_success,Centralized Python environment setup complete)
 
 #### `make python-deps`
-**Purpose**: Install/update Python dependencies
+**Purpose**: Install/update Python dependencies in centralized environment
 **Usage**: `make python-deps`
 **Actions**:
 - $(call log_info,📦 Installing Python dependencies...)
@@ -137,10 +153,30 @@ make clean           # Clean build artifacts (smart cleanup)
 - $(call log_info,✅ Validating build system...)
 
 #### `make start`
-**Purpose**: Generate service registry and open system health dashboard
+**Purpose**: Generate service registry, launch essential services, and start native GUI
 **Usage**: `make start`
+**Dependencies**: validate-independence
 **Actions**:
 - $(call log_info,🏥 Starting System Health Command Center...)
+
+#### `make start-offline`
+**Purpose**: Launch native GUI without starting services (offline mode)
+**Usage**: `make start-offline`
+**Dependencies**: validate-independence
+**Actions**:
+- $(call log_info,🏥 Starting System Health Command Center (Offline Mode)...)
+
+#### `make start-services`
+**Purpose**: Launch essential services only (LLM, Backend, Database)
+**Usage**: `make start-services`
+**Actions**:
+- $(call log_info,🚀 Launching essential services...)
+
+#### `make stop-services`
+**Purpose**: Stop services launched by service launcher
+**Usage**: `make stop-services`
+**Actions**:
+- $(call log_info,🛑 Stopping services...)
 
 #### `make watch-html`
 **Purpose**: Watch for changes and auto-rebuild HTML files
@@ -161,9 +197,9 @@ make clean           # Clean build artifacts (smart cleanup)
 - $(call log_info,🔧 Standardizing HTML files...)
 - $(call log_success,HTML standardization complete)
 
-#### `make start-services`
+#### `make start-docker-services`
 **Purpose**: Start Docker services only (database, kafka, etc.)
-**Usage**: `make start-services`
+**Usage**: `make start-docker-services`
 **Actions**:
 - $(call log_info,🐳 Starting Docker services...)
 
@@ -505,7 +541,7 @@ make clean           # Clean build artifacts (smart cleanup)
 ## 🐳 Docker Services Management
 
 #### `make up`
-**Purpose**: Start all services
+**Purpose**: Start all services (production)
 **Usage**: `make up`
 **Actions**:
 - $(call log_info,🚀 Starting all services...)
@@ -517,6 +553,34 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_warning,🛑 Stopping all services...)
 - $(call log_success,Services stopped)
+
+#### `make dev-up`
+**Purpose**: Start development services
+**Usage**: `make dev-up`
+**Actions**:
+- $(call log_info,🔧 Starting development services...)
+- $(call log_success,Development services started)
+
+#### `make dev-down`
+**Purpose**: Stop development services
+**Usage**: `make dev-down`
+**Actions**:
+- $(call log_warning,🛑 Stopping development services...)
+- $(call log_success,Development services stopped)
+
+#### `make observability-up`
+**Purpose**: Start observability stack
+**Usage**: `make observability-up`
+**Actions**:
+- $(call log_info,📊 Starting observability stack...)
+- $(call log_success,Observability stack started)
+
+#### `make observability-down`
+**Purpose**: Stop observability stack
+**Usage**: `make observability-down`
+**Actions**:
+- $(call log_warning,🛑 Stopping observability stack...)
+- $(call log_success,Observability stack stopped)
 
 #### `make restart`
 **Purpose**: Restart all services (atomic: down then up)
@@ -843,6 +907,12 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_info,📊 Build system status...)
 
+#### `make service-status`
+**Purpose**: Show status of essential services
+**Usage**: `make service-status`
+**Actions**:
+- $(call log_info,📊 Checking service status...)
+
 #### `make ports`
 **Purpose**: Show which ports are in use
 **Usage**: `make ports`
@@ -882,6 +952,9 @@ make clean           # Clean build artifacts (smart cleanup)
 - **DOCKER_DB**: postgres-db
 - **DB_NAME**: unhinged_db
 - **DB_USER**: postgres
+- **PYTHON_RUN**: build/python/run.py - Universal Python Runner
+- **NATIVE_GUI**: python3 control/gui/native_app.py - Native GUI
+- **HTML_NATIVE**: PYTHONPATH="$(shell pwd)/build/python/venv/lib/python3.12/site-packages:$$PYTHONPATH" python3 control/native_gui/launcher.py --launched-by-ai - Use system Python with centralized venv in PYTHONPATH for dependencies
 - **PORT_BACKEND**: 8080 - Service ports
 - **PORT_TTS**: 8000
 - **PORT_VISION**: 8001
