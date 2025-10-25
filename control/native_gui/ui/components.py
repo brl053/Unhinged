@@ -58,7 +58,6 @@ class Card(Adw.Bin):
     
     def __init__(self, title: str = "", subtitle: str = "", 
                  variant: ComponentVariant = ComponentVariant.PRIMARY):
-                     pass
         super().__init__()
         
         # Card properties
