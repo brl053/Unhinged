@@ -147,11 +147,8 @@ class ServiceLauncher:
             return True
         
         
-        try:
-            response = input("   Start this service? (y/N): ").strip().lower()
-            return response in ['y', 'yes']
-        except KeyboardInterrupt:
-            return False
+        # Skip interactive prompts - run in offline mode
+        return False
     
     def _start_service(self, service: Dict, timeout: int) -> bool:
         """Start a specific service"""
