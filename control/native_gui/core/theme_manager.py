@@ -940,7 +940,7 @@ class ThemeManager:
             background: #1D1B20;
         }
 
-        .chat-input-frame:focus-within {
+        .chat-input-frame:focus {
             border-color: #6750A4;
             background: #211F26;
         }
@@ -1072,21 +1072,7 @@ class ThemeManager:
 /* @llm-legend Base theme CSS with Unhinged design system and mobile support */
 /* @llm-key Foundational styling for consistent UI appearance across viewports */
 
-:root {{
-    --primary-color: {self.config.primary_color};
-    --secondary-color: {self.config.secondary_color};
-    --success-color: {self.config.success_color};
-    --warning-color: {self.config.warning_color};
-    --error-color: {self.config.error_color};
-
-    --base-font-size: {self.config.base_font_size}px;
-    --base-spacing: {self.config.base_spacing}px;
-
-    --border-radius: 8px;
-    --shadow-light: 0 2px 8px alpha(@theme_fg_color, 0.1);
-    --shadow-medium: 0 4px 16px alpha(@theme_fg_color, 0.15);
-    --shadow-heavy: 0 8px 32px alpha(@theme_fg_color, 0.2);
-}}
+/* GTK CSS doesn't support :root or CSS custom properties */
 """
 
         return f"{theme_vars}\n{mobile_css}\n{component_css}"
