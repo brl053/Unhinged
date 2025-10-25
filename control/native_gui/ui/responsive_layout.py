@@ -181,7 +181,6 @@ class ResponsiveGrid(Gtk.Box):
     def add_item(self, widget: Gtk.Widget, 
                  mobile_span: int = 1, tablet_span: int = 1, desktop_span: int = 1,
                  priority: int = 0):
-                     pass
         """Add item to responsive grid"""
         item = {
             'widget': widget,

@@ -104,9 +104,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     except Exception as e:
-        gui_logger.error("Failed to start native GUI", exception=e, metadata={
-            "event_type": "startup_failure",
-            "component": "launcher",
-            "error_category": "application"
-        })
+        gui_logger.error(f"Failed to start native GUI: {e}")
         sys.exit(1)
