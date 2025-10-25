@@ -260,6 +260,7 @@ def main():
         status = launcher.get_service_status()
         for name, info in status.items():
             status_icon = "🟢" if info["running"] else "🔴"
+            print(f"{status_icon} {name}: {info}")
         return
     
     if args.stop:

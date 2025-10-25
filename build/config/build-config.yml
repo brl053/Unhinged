@@ -26,8 +26,8 @@ targets:
     module: "service_discovery_builder"
     dependencies: []
     inputs:
-      - "control/orchestration/docker-compose.yml"
-      - "control/orchestration/docker-compose.*.yml"
+      - "orchestration/docker-compose.yml"
+      - "orchestration/docker-compose.*.yml"
       - "proto/**/*.proto"
       - "services/*/proto/*.proto"
     outputs:

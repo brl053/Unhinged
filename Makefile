@@ -225,33 +225,33 @@ setup: ## Initial project setup
 
 up: ## Start all services (production)
 	$(call log_info,🚀 Starting all services...)
-	@docker compose -f control/orchestration/docker-compose.production.yml up -d
+	@docker compose -f orchestration/docker-compose.production.yml up -d
 	$(call log_success,Services started)
 	@$(MAKE) status
 
 down: ## Stop all services
 	$(call log_warning,🛑 Stopping all services...)
-	@docker compose -f control/orchestration/docker-compose.production.yml down
+	@docker compose -f orchestration/docker-compose.production.yml down
 	$(call log_success,Services stopped)
 
 dev-up: ## Start development services
 	$(call log_info,🔧 Starting development services...)
-	@docker compose -f control/orchestration/docker-compose.development.yml up -d
+	@docker compose -f orchestration/docker-compose.development.yml up -d
 	$(call log_success,Development services started)
 
 dev-down: ## Stop development services
 	$(call log_warning,🛑 Stopping development services...)
-	@docker compose -f control/orchestration/docker-compose.development.yml down
+	@docker compose -f orchestration/docker-compose.development.yml down
 	$(call log_success,Development services stopped)
 
 observability-up: ## Start observability stack
 	$(call log_info,📊 Starting observability stack...)
-	@docker compose -f control/orchestration/docker-compose.observability.yml up -d
+	@docker compose -f orchestration/docker-compose.observability.yml up -d
 	$(call log_success,Observability stack started)
 
 observability-down: ## Stop observability stack
 	$(call log_warning,🛑 Stopping observability stack...)
-	@docker compose -f control/orchestration/docker-compose.observability.yml down
+	@docker compose -f orchestration/docker-compose.observability.yml down
 	$(call log_success,Observability stack stopped)
 
 restart: ## Restart all services (atomic: down then up)
@@ -316,9 +316,9 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry) [us
 	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
 	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
 	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
-	@python3 build/build.py build proto-clients-all $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
-	@echo "$(YELLOW)📋 Static HTML registry generation$(RESET)"
-	@python3 build/build.py build generate-registry $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Registry generation failed$(RESET)"
+	@python3 build/build.py build proto-clients $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
+	@echo "$(YELLOW)📋 Service discovery and registry generation$(RESET)"
+	@python3 build/build.py build service-discovery $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Service discovery generation failed$(RESET)"
 
 	$(call log_success,Build artifacts generation completed)
 
