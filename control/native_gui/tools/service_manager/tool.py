@@ -216,7 +216,9 @@ class ServiceManagerTool(BaseTool):
         # you'd need to access the specific labels and buttons in the row
         # For now, just print the update
         if error:
+            pass
         else:
+            pass
 
     def _on_refresh_clicked(self, button):
         """Handle refresh button click"""

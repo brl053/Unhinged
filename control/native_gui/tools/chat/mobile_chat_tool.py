@@ -210,6 +210,7 @@ class MobileChatInput(Gtk.Box):
         if hasattr(self, 'on_voice_input') and self.on_voice_input:
             self.on_voice_input()
         else:
+            pass
 
 
 class MobileChatTool(BaseTool):
