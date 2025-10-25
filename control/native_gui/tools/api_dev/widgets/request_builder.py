@@ -17,6 +17,7 @@ Builds HTTP/gRPC requests with native GTK widgets.
 No web forms - pure native input controls.
 
 Features:
+    pass
 - Method selection (GET, POST, gRPC, etc.)
 - URL/endpoint input
 - Headers editor
@@ -37,6 +38,7 @@ class RequestBuilder(Gtk.Box):
     Request builder widget using native GTK controls.
     
     Layout:
+        pass
     ┌─────────────────────────────────┐
     │ [GET ▼] [URL Entry            ] │
     ├─────────────────────────────────┤

@@ -17,6 +17,7 @@ Handles HTTP requests without bridge overhead.
 Direct Python requests for maximum performance.
 
 Features:
+    pass
 - HTTP method support (GET, POST, PUT, DELETE, etc.)
 - Header management
 - Request/response handling

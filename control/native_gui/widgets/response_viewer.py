@@ -17,6 +17,7 @@ Displays HTTP/gRPC responses with native GTK widgets.
 No web rendering - pure native text display with formatting.
 
 Features:
+    pass
 - Status display with color coding
 - Headers viewer
 - Body viewer with JSON formatting
@@ -37,6 +38,7 @@ class ResponseViewer(Gtk.Box):
     Response viewer widget using native GTK controls.
     
     Layout:
+        pass
     ┌─────────────────────────────────┐
     │ Status: 200 OK (150ms)          │
     ├─────────────────────────────────┤

@@ -68,6 +68,7 @@ class ScreenCapture:
     
     def capture_screenshot(self, monitor: Optional[int] = None, 
                           region: Optional[Tuple[int, int, int, int]] = None) -> Optional[np.ndarray]:
+                              pass
         """Capture screenshot from specified monitor or region"""
         start_time = time.time()
         
@@ -147,6 +148,7 @@ class ScreenCapture:
     
     def save_screenshot(self, filename: str, monitor: Optional[int] = None, 
                        region: Optional[Tuple[int, int, int, int]] = None) -> bool:
+                           pass
         """Capture and save screenshot"""
         try:
             img = self.capture_screenshot(monitor, region)
@@ -170,6 +172,7 @@ class ScreenCapture:
     
     def screenshot_to_base64(self, monitor: Optional[int] = None, 
                            region: Optional[Tuple[int, int, int, int]] = None) -> Optional[str]:
+                               pass
         """Capture screenshot and return as base64 string"""
         try:
             img = self.capture_screenshot(monitor, region)
@@ -204,6 +207,7 @@ class ScreenCapture:
     
     def extract_text_from_screen(self, monitor: Optional[int] = None, 
                                 region: Optional[Tuple[int, int, int, int]] = None) -> Optional[str]:
+                                    pass
         """Extract text from screen using OCR"""
         if not self.ocr_enabled or not self.vision_client:
             gui_logger.error(" OCR not enabled")
@@ -236,6 +240,7 @@ class ScreenCapture:
     def analyze_screen_content(self, prompt: str = "Describe what you see on this screen", 
                              monitor: Optional[int] = None, 
                              region: Optional[Tuple[int, int, int, int]] = None) -> Optional[Dict]:
+                                 pass
         """Analyze screen content using vision AI"""
         if not self.vision_client:
             gui_logger.error(" Vision client not available")
@@ -262,6 +267,7 @@ class ScreenCapture:
     
     def detect_ui_elements(self, monitor: Optional[int] = None, 
                           region: Optional[Tuple[int, int, int, int]] = None) -> Optional[List[Dict]]:
+                              pass
         """Detect UI elements on screen"""
         if not self.vision_client:
             gui_logger.error(" Vision client not available")

@@ -14,6 +14,7 @@ Base classes and utilities for the native GTK application.
 Provides the foundation for tool plugins and shared functionality.
 
 Components:
+    pass
 - Application: Main application class
 - ToolManager: Tool registration and lifecycle
 - ThemeManager: Application-wide theming

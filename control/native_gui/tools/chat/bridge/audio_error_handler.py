@@ -261,20 +261,14 @@ def print_audio_error_help(error: Exception):
     """Print comprehensive error help"""
     analysis = handle_audio_error(error)
     
-🎤 Audio Error Analysis
-{'=' * 50}
+    # Audio Error Analysis
+    print('=' * 50)
+    print(f"Error Type: {analysis['type'].replace('_', ' ').title()}")
+    print(f"User Message: {analysis['user_message']}")
 
-Error Type: {analysis['type'].replace('_', ' ').title()}
-User Message: {analysis['user_message']}
-
-Solution:
-{analysis['solution']}
-
-Technical Details:
-{analysis['technical_details']}
-
-Platform: {analysis['platform']}
-""")
+    print(f"Solution: {analysis['solution']}")
+    print(f"Technical Details: {analysis['technical_details']}")
+    print(f"Platform: {analysis['platform']}")
 
 
 if __name__ == "__main__":

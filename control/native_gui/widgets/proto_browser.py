@@ -17,6 +17,7 @@ Displays proto files, services, and methods in a tree structure.
 Pure GTK TreeView with custom models - no web bullshit.
 
 Features:
+    pass
 - Hierarchical file/service/method display
 - Search and filtering
 - Selection handling
@@ -35,6 +36,7 @@ class ProtoBrowser(Gtk.Box):
     Proto file browser widget using native GTK TreeView.
     
     Structure:
+        pass
     ┌─────────────────────────┐
     │ 🔍 Search Box           │
     ├─────────────────────────┤

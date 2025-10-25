@@ -219,6 +219,7 @@ class ToolConfigFactory:
     @staticmethod
     def create_mobile_optimized_tool(name: str, icon: str, description: str, 
                                    priority: ToolPriority = ToolPriority.HIGH, **kwargs) -> ToolConfig:
+                                       pass
         """
         @llm-type factory-method
         @llm-legend Create configuration for mobile-optimized tools

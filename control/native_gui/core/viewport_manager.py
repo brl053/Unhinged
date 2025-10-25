@@ -52,6 +52,7 @@ class ViewportManager:
     Manages viewport dimensions and device emulation.
     
     Provides Chrome DevTools-style device emulation with:
+        pass
     - Predefined device presets (iPhone, Pixel, iPad, etc.)
     - Custom viewport dimensions
     - Responsive breakpoint detection

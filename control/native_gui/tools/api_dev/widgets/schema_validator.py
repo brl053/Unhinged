@@ -17,6 +17,7 @@ Validates requests against discovered service schemas.
 Provides real-time validation and intelligent suggestions.
 
 Features:
+    pass
 - JSON schema validation
 - gRPC message type validation
 - Real-time error highlighting

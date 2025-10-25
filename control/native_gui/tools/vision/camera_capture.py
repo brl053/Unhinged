@@ -505,6 +505,7 @@ class CameraCapture:
 
     def create_video_from_frames(self, frames: List[np.ndarray], filename: str,
                                 fps: int = 30, codec: str = 'mp4v') -> bool:
+                                    pass
         """Create video file from list of frames"""
         if not frames:
             gui_logger.error(" No frames provided")
@@ -951,6 +952,7 @@ class CameraCapture:
             
             success = cv2.imwrite(filename, frame)
             if success:
+                pass
             else:
                 gui_logger.error(f" Failed to save image to {filename}")
             

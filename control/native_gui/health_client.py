@@ -10,6 +10,7 @@
 gRPC Health Client for Native GUI
 
 Implements health.proto client for service discovery:
+    pass
 - Heartbeat calls: Fast service status checks
 - Diagnostics calls: Detailed service information
 - Service discovery: Automatic service detection

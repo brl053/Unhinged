@@ -58,6 +58,7 @@ class Card(Adw.Bin):
     
     def __init__(self, title: str = "", subtitle: str = "", 
                  variant: ComponentVariant = ComponentVariant.PRIMARY):
+                     pass
         super().__init__()
         
         # Card properties
@@ -140,6 +141,7 @@ class StatusIndicator(Gtk.Box):
     def __init__(self, status: str = "idle",
                  variant: ComponentVariant = ComponentVariant.INFO,
                  animated: bool = False):
+                     pass
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
 
         self.status = status
@@ -258,6 +260,7 @@ class MetricCard(Card):
     def __init__(self, title: str, value: str = "0", 
                  trend: Optional[str] = None, 
                  trend_positive: bool = True):
+                     pass
         super().__init__(title=title)
         
         self.value = value
@@ -303,6 +306,7 @@ class MetricCard(Card):
     
     def update_metric(self, value: str, trend: Optional[str] = None, 
                      trend_positive: bool = True):
+                         pass
         """Update metric values"""
         self.value = value
         self.trend = trend
@@ -349,6 +353,7 @@ class ActionSheet(Adw.Window):
     def add_action(self, label: str, callback: Callable, 
                    icon_name: Optional[str] = None,
                    destructive: bool = False):
+                       pass
         """Add action to sheet"""
         action_row = Adw.ActionRow()
         action_row.set_title(label)
@@ -382,6 +387,7 @@ def create_toast(message: str,
                 duration: int = 3000,
                 action_label: Optional[str] = None,
                 action_callback: Optional[Callable] = None) -> Adw.Toast:
+                    pass
     """
     Create enhanced toast notification
 
@@ -419,6 +425,7 @@ class LoadingSpinner(Gtk.Box):
 
     def __init__(self, message: str = "Loading...",
                  size: ComponentSize = ComponentSize.MEDIUM):
+                     pass
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
 
         self.message = message
@@ -473,6 +480,7 @@ class EmptyState(Gtk.Box):
                  icon_name: str = "folder-symbolic",
                  action_label: Optional[str] = None,
                  action_callback: Optional[Callable] = None):
+                     pass
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=16)
 
         # Set alignment
@@ -535,6 +543,7 @@ def create_destructive_button(label: str, callback: Callable) -> Gtk.Button:
 
 def show_toast(parent: Adw.ToastOverlay, message: str,
                variant: ComponentVariant = ComponentVariant.INFO) -> Adw.Toast:
+                   pass
     """Show toast notification"""
     toast = create_toast(message, variant)
     parent.add_toast(toast)

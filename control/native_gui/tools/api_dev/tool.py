@@ -42,6 +42,7 @@ class APIDevTool(BaseTool):
     API Development Tool plugin.
     
     Provides a three-pane interface for API development:
+        pass
     - Proto Browser: File and service discovery
     - Request Builder: HTTP/gRPC request construction
     - Response Viewer: Response display and formatting

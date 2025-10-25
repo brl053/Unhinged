@@ -44,6 +44,7 @@ class UnhingedApplication(Adw.Application):
     Main Unhinged Control Center application.
 
     Manages multiple tools in a tabbed interface:
+        pass
     - 🔧 API Development Tool
     - 🏥 System Health Monitor
     - 📋 Log Viewer

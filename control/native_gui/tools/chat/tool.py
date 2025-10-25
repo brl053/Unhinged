@@ -33,6 +33,7 @@ class ChatTool(BaseTool):
     Chat tool plugin for persistent LLM conversation.
     
     Provides a native chat interface with:
+        pass
     - Speech-to-text input via microphone
     - Animated chat bubbles for conversation flow
     - Real-time LLM responses

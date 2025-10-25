@@ -79,6 +79,7 @@ class LLMServiceClient:
     Production-ready LLM service client with multiple backends.
     
     Supports:
+        pass
     - Ollama (local LLM service)
     - Persistence Platform (Independent Kotlin - NO SPRING BOOT)
     - gRPC LLM service

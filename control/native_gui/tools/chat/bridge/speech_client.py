@@ -17,6 +17,7 @@ Real gRPC client for speech-to-text service integration.
 Connects to the existing speech-to-text service on port 9091.
 
 Features:
+    pass
 - gRPC calls to speech-to-text service
 - Audio data streaming
 - Error handling and loading states
@@ -73,6 +74,7 @@ sys.path.insert(0, str(generated_path))
 try:
     from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
     if hasattr(audio_pb2_grpc, 'AudioServiceStub'):
+        pass
     else:
         gui_logger.warn(" AudioServiceStub not found in proto clients")
 except ImportError as e:

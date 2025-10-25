@@ -17,6 +17,7 @@ Handles gRPC requests without HTTP bridge overhead.
 Direct Python gRPC calls for maximum performance.
 
 Features:
+    pass
 - Dynamic gRPC client generation
 - Request/response handling
 - Error management

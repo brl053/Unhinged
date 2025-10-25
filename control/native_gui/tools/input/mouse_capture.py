@@ -440,6 +440,7 @@ class MouseCapture:
             for key in heatmap_data.keys():
                 if (abs(key[0] - click['x']) < tolerance and 
                     abs(key[1] - click['y']) < tolerance):
+                        pass
                     found_key = key
                     break
             

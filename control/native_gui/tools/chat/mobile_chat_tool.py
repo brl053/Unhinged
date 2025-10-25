@@ -52,6 +52,7 @@ class MobileChatMessage(Gtk.Box):
     Mobile-optimized chat message component.
     
     Features:
+        pass
     - Touch-friendly sizing
     - Responsive text wrapping
     - Material Design 3 styling
@@ -105,6 +106,7 @@ class MobileChatInput(Gtk.Box):
     Mobile-optimized chat input component.
 
     Features:
+        pass
     - Large touch-friendly input area
     - Send button with haptic feedback
     - Voice input button with speech-to-text
@@ -218,6 +220,7 @@ class MobileChatTool(BaseTool):
     Mobile-first chat tool implementation.
     
     Features:
+        pass
     - Responsive chat interface
     - Touch-optimized input
     - Message history
@@ -911,6 +914,7 @@ class MobileChatTool(BaseTool):
                 # Check for recommended device
                 recommended = AudioDeviceManager.get_recommended_device()
                 if recommended:
+                    pass
                 else:
                     gui_logger.warn(" No recommended audio device found")
 
@@ -941,9 +945,13 @@ Platform: {instructions['platform']}
 
         # Provide helpful suggestions based on error type
         if "not available" in message.lower():
+            pass
         elif "no speech detected" in message.lower():
+            pass
         elif "permission" in message.lower():
+            pass
         elif "mock" in message.lower():
+            pass
 
         # Update mic button tooltip with error
         if hasattr(self, 'chat_input') and self.chat_input.mic_button:
