@@ -14,14 +14,12 @@ import logging; gui_logger = logging.getLogger(__name__)
 🌐 Network Scanner - Service Discovery
 
 Discovers gRPC services on the network using multiple methods:
-    pass
 1. Port scanning for common gRPC ports
 2. Service discovery integration (Consul, etc.)
 3. Network broadcast discovery
 4. Manual service registration
 
 Features:
-    pass
 - Network port scanning
 - Service health checking
 - Automatic service registration
@@ -246,7 +244,6 @@ class NetworkScanner:
                         if any(keyword in container.get('Image', '').lower() 
                                for keyword in ['grpc', 'service', 'api']):
                             
-                                   pass
                             # Extract port mappings
                             ports = container.get('Ports', '')
                             if ports:

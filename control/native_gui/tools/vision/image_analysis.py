@@ -250,7 +250,6 @@ class ImageAnalysisPipeline:
         if (self.config.enable_vision_ai and self.vision_client and 
             current_time - self.last_vision_analysis >= self.config.vision_analysis_interval):
             
-                pass
             try:
                 vision_result = self.vision_client.analyze_frame(frame, self.config.vision_prompt)
                 result['vision_analysis'] = vision_result
@@ -263,7 +262,6 @@ class ImageAnalysisPipeline:
         if (self.config.enable_ocr and self.vision_client and 
             current_time - self.last_ocr_analysis >= self.config.ocr_interval):
             
-                pass
             try:
                 ocr_result = self.vision_client.extract_text_ocr(cv2.imencode('.jpg', frame)[1].tobytes())
                 if ocr_result.get('success') and ocr_result.get('extracted_text'):

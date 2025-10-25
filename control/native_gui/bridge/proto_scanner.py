@@ -17,7 +17,6 @@ Scans for .proto files and parses gRPC services.
 No HTTP bridge - direct Python method calls for instant response.
 
 Features:
-    pass
 - Recursive proto file discovery
 - Service and method parsing
 - Message type extraction

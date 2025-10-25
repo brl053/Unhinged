@@ -14,13 +14,11 @@ No HTTP server. No network calls. No serialization overhead.
 Direct Python method calls for maximum performance and reliability.
 
 Components:
-    pass
 - ProtoScanner: Proto file discovery and parsing
 - GRPCClient: gRPC request handling
 - HTTPClient: HTTP request handling
 
 Architecture:
-    pass
 Native GTK Widget → Direct Python Call → System Operation
                  ↓
             Instant Response (no network latency)

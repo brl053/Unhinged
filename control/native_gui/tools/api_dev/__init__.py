@@ -14,7 +14,6 @@ Proto file scanning, gRPC/HTTP request building, and response viewing.
 Moved from the main application to be a plugin tool.
 
 Features:
-    pass
 - Proto file discovery and parsing
 - Service and method browsing
 - Request building (HTTP/gRPC)

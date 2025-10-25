@@ -75,7 +75,6 @@ class WidgetFactory:
     def create_main_container(spacing: int = SPACING_MEDIUM, 
                             margin: int = MARGIN_LARGE,
                             orientation: Gtk.Orientation = Gtk.Orientation.VERTICAL) -> Gtk.Box:
-                                pass
         """
         @llm-type factory-method
         @llm-legend Create standardized main container with consistent spacing and margins
@@ -92,7 +91,6 @@ class WidgetFactory:
     def create_header_box(title: str, 
                          subtitle: Optional[str] = None,
                          spacing: int = SPACING_MEDIUM) -> Gtk.Box:
-                             pass
         """
         @llm-type factory-method
         @llm-legend Create standardized header box with title and optional subtitle
@@ -122,7 +120,6 @@ class WidgetFactory:
                              vexpand: bool = True,
                              hpolicy: Gtk.PolicyType = Gtk.PolicyType.AUTOMATIC,
                              vpolicy: Gtk.PolicyType = Gtk.PolicyType.AUTOMATIC) -> Gtk.ScrolledWindow:
-                                 pass
         """
         @llm-type factory-method
         @llm-legend Create standardized scrolled window with consistent policies
@@ -140,7 +137,6 @@ class WidgetFactory:
                      style: ButtonStyle = ButtonStyle.DEFAULT,
                      callback: Optional[Callable] = None,
                      tooltip: Optional[str] = None) -> Gtk.Button:
-                         pass
         """
         @llm-type factory-method
         @llm-legend Create standardized button with consistent styling and behavior
@@ -187,7 +183,6 @@ class WidgetFactory:
     def create_card_container(title: Optional[str] = None,
                             subtitle: Optional[str] = None,
                             spacing: int = SPACING_MEDIUM) -> Gtk.Box:
-                                pass
         """
         @llm-type factory-method
         @llm-legend Create standardized card container with optional header
@@ -206,7 +201,6 @@ class WidgetFactory:
     @staticmethod
     def create_list_box(selection_mode: Gtk.SelectionMode = Gtk.SelectionMode.SINGLE,
                        show_separators: bool = True) -> Gtk.ListBox:
-                           pass
         """
         @llm-type factory-method
         @llm-legend Create standardized list box with consistent behavior
@@ -221,7 +215,6 @@ class WidgetFactory:
     @staticmethod
     def create_entry(placeholder: Optional[str] = None,
                     callback: Optional[Callable[[str], None]] = None) -> Gtk.Entry:
-                        pass
         """
         @llm-type factory-method
         @llm-legend Create standardized entry widget with consistent behavior
@@ -240,7 +233,6 @@ class WidgetFactory:
     @staticmethod
     def create_search_entry(placeholder: str = "Search...",
                           callback: Optional[Callable[[str], None]] = None) -> Gtk.SearchEntry:
-                              pass
         """
         @llm-type factory-method
         @llm-legend Create standardized search entry with consistent behavior
@@ -258,7 +250,6 @@ class WidgetFactory:
     def create_switch(label: str,
                      active: bool = False,
                      callback: Optional[Callable[[bool], None]] = None) -> Gtk.Box:
-                         pass
         """
         @llm-type factory-method
         @llm-legend Create standardized switch with label
@@ -286,7 +277,6 @@ class WidgetFactory:
     def create_progress_bar(fraction: float = 0.0,
                           show_text: bool = False,
                           text: Optional[str] = None) -> Gtk.ProgressBar:
-                              pass
         """
         @llm-type factory-method
         @llm-legend Create standardized progress bar with consistent appearance
@@ -341,7 +331,6 @@ class WidgetFactory:
     def create_status_row(label: str, 
                          value: str,
                          status_class: Optional[str] = None) -> Gtk.Box:
-                             pass
         """
         @llm-type factory-method
         @llm-legend Create standardized status row with label and value

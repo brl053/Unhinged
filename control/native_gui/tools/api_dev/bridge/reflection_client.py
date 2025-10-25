@@ -17,7 +17,6 @@ Uses gRPC reflection to dynamically discover service definitions
 from running gRPC services without needing .proto files.
 
 Features:
-    pass
 - Server reflection protocol
 - Dynamic service discovery
 - Method signature extraction

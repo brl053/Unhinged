@@ -17,7 +17,6 @@ Main chat interface widget for displaying conversation bubbles and managing
 the chat flow with animations and smooth transitions.
 
 Features:
-    pass
 - Conversation bubble display with user/assistant styling
 - Smooth scrolling and auto-scroll to bottom
 - Message history management

@@ -136,7 +136,6 @@ class TouchGestureRecognizer:
             
             if gesture_type in [GestureType.SWIPE_LEFT, GestureType.SWIPE_RIGHT, 
                                GestureType.SWIPE_UP, GestureType.SWIPE_DOWN]:
-                                   pass
                 gesture.angle = self._calculate_angle(start_point, end_point)
             
             if self.on_gesture:
@@ -163,7 +162,6 @@ class TouchGestureRecognizer:
     
     def _classify_gesture(self, start: TouchPoint, end: TouchPoint, 
                          duration: float, distance: float, velocity: float) -> Optional[GestureType]:
-                             pass
         """Classify gesture based on parameters"""
         
         # Long press
@@ -180,7 +178,6 @@ class TouchGestureRecognizer:
                 self.last_tap_position and
                 self._calculate_distance(TouchPoint(self.last_tap_position[0], self.last_tap_position[1], 0), start) < self.tap_threshold):
                 
-                    pass
                 self.last_tap_time = 0  # Reset to prevent triple tap
                 return GestureType.DOUBLE_TAP
             else:

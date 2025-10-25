@@ -108,7 +108,6 @@ class VisionClient:
     
     def analyze_image(self, image_data: bytes, prompt: str = "Describe this image", 
                      model: str = "qwen2-vl", analysis_type: str = "natural_image") -> Dict[str, Any]:
-                         pass
         """Analyze image using vision AI"""
         if not self.is_connected():
             return {
@@ -172,7 +171,6 @@ class VisionClient:
     
     def analyze_frame(self, frame: np.ndarray, prompt: str = "Describe this image", 
                      model: str = "qwen2-vl") -> Dict[str, Any]:
-                         pass
         """Analyze OpenCV frame using vision AI"""
         try:
             # Convert frame to JPEG bytes

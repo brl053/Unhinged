@@ -14,7 +14,6 @@ Individual tools that can be loaded into the Control Center.
 Each tool provides specific functionality as a plugin.
 
 Available Tools:
-    pass
 - api_dev: API Development Tool (proto scanning, request building)
 - system_monitor: System Health Monitor
 - log_viewer: Log Viewer and Analysis

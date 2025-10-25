@@ -14,7 +14,6 @@ Provides a native chat interface for conversing with the LLM operating system.
 Features speech-to-text input, animated chat bubbles, and real-time conversation.
 
 Components:
-    pass
 - ChatTool: Main tool class for integration with Control Center
 - ChatInterface: Primary chat UI widget
 - SpeechInput: Microphone and text input widget
@@ -22,7 +21,6 @@ Components:
 - AnimationManager: Smooth transitions and animations
 
 Architecture:
-    pass
 - Pure GTK4 native widgets (no web technologies)
 - gRPC integration with speech-to-text and LLM services
 - Real-time conversation with loading states

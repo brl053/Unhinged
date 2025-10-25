@@ -14,7 +14,6 @@ Pure GTK4 widget implementations for the API dev tool.
 No web technologies - native desktop widgets only.
 
 Components:
-    pass
 - ProtoBrowser: Proto file and service browser
 - RequestBuilder: HTTP/gRPC request construction
 - ResponseViewer: Response display and formatting

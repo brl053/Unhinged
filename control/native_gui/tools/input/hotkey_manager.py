@@ -73,7 +73,6 @@ class HotkeyManager:
     def register_hotkey(self, name: str, keys: str, callback: Callable, 
                        description: str = "", hotkey_type: HotkeyType = HotkeyType.SIMPLE,
                        context: str = "global", priority: int = 0) -> bool:
-                           pass
         """Register a new hotkey"""
         try:
             with self.lock:
@@ -183,7 +182,6 @@ class HotkeyManager:
                 (hotkey_def.context == context or 
                  hotkey_def.context == "global" or 
                  context == "global")):
-                     pass
                 return True
         
         return False
@@ -200,7 +198,6 @@ class HotkeyManager:
                         self._context_matches(hotkey_def.context) and
                         key_set.issubset(pressed_keys)):
                         
-                            pass
                         # Trigger hotkey
                         return self._trigger_hotkey(hotkey_def)
                 
@@ -218,7 +215,6 @@ class HotkeyManager:
             # Check sequence timeout
             if (self.current_sequence and 
                 current_time - self.sequence_start_time > self.sequence_timeout):
-                    pass
                 self.current_sequence.clear()
             
             # Add key to sequence
@@ -235,7 +231,6 @@ class HotkeyManager:
                     self._context_matches(hotkey_def.context) and
                     seq_keys.startswith(sequence_str)):
                     
-                        pass
                     if seq_keys == sequence_str:
                         # Complete match
                         self.current_sequence.clear()

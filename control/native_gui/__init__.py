@@ -26,7 +26,6 @@ No WebKit bullshit. No JavaScript. No HTML/CSS.
 Pure native desktop application using GTK4 widgets.
 
 Architecture:
-    pass
 - GTK4 for native widgets and rendering
 - Cairo for custom graphics when needed
 - Pango for rich text formatting
