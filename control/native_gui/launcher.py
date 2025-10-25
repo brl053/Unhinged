@@ -66,8 +66,10 @@ if __name__ == "__main__":
             "component": "launcher",
             "missing_dependencies": ["libgtk-4-dev", "libadwaita-1-dev", "python3-gi"]
         })
-        print("\n🔧 Install dependencies:")
-        print("   sudo apt install libgtk-4-dev libadwaita-1-dev python3-gi")
+        gui_logger.debug("Install dependencies", {
+            "event_type": "dependency_instructions",
+            "component": "launcher"
+        })
         sys.exit(1)
     
     # Launch the application
@@ -97,9 +99,10 @@ if __name__ == "__main__":
             "component": "launcher",
             "error_category": "dependency"
         })
-        print("\n🔧 Required dependencies:")
-        print("   sudo apt install libgtk-4-dev libadwaita-1-dev python3-gi")
-        print("   pip install requests")
+        gui_logger.debug("Required dependencies", {
+            "event_type": "dependency_instructions",
+            "component": "launcher"
+        })
         sys.exit(1)
 
     except Exception as e:

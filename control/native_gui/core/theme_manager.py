@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-theme-manager", "1.0.0")
+
 """
 @llm-type theme-system
 @llm-legend Enhanced Theme Manager - Unified theming system with mobile-responsive CSS support
@@ -15,6 +19,7 @@ Provides consistent theming across all tools and components.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version('Gdk', '4.0')
@@ -120,7 +125,6 @@ class ThemeManager:
         self.on_theme_changed: Optional[Callable[[ThemeVariant], None]] = None
         self.on_mobile_mode_changed: Optional[Callable[[bool], None]] = None
 
-        print(f"🎨 Enhanced theme manager initialized (variant: {self.current_variant.value})")
     
     def setup_theming(self):
         """
@@ -140,7 +144,7 @@ class ThemeManager:
         # Load mobile-responsive CSS
         self._load_mobile_css()
 
-        print("✅ Enhanced application theming configured")
+        gui_logger.info(" Enhanced application theming configured", {"status": "success"})
 
     def _load_mobile_css(self):
         """
@@ -168,10 +172,10 @@ class ThemeManager:
                     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1
                 )
 
-            print("🎨 Mobile-responsive CSS loaded")
+            gui_logger.info(" Mobile-responsive CSS loaded", {"event_type": "theming"})
 
         except Exception as e:
-            print(f"❌ Failed to load mobile CSS: {e}")
+            gui_logger.error(f" Failed to load mobile CSS: {e}")
 
     def _initialize_theme_system(self):
         """
@@ -189,10 +193,10 @@ class ThemeManager:
             # Load base theme
             self._load_base_theme()
 
-            print("🎨 Enhanced theme system initialized")
+            gui_logger.info(" Enhanced theme system initialized", {"event_type": "theming"})
 
         except Exception as e:
-            print(f"❌ Failed to initialize enhanced theme system: {e}")
+            gui_logger.error(f" Failed to initialize enhanced theme system: {e}")
 
     def _setup_css_providers(self):
         """
@@ -212,7 +216,7 @@ class ThemeManager:
         # High contrast provider
         self.css_providers['high_contrast'] = Gtk.CssProvider()
 
-        print("🎨 CSS providers initialized")
+        gui_logger.info(" CSS providers initialized", {"event_type": "theming"})
 
     def _apply_theme_variant(self, variant: ThemeVariant):
         """
@@ -234,10 +238,9 @@ class ThemeManager:
             if self.on_theme_changed:
                 self.on_theme_changed(variant)
 
-            print(f"🎨 Applied theme variant: {variant.value}")
 
         except Exception as e:
-            print(f"❌ Failed to apply theme variant {variant.value}: {e}")
+            gui_logger.error(f" Failed to apply theme variant {variant.value}: {e}")
 
     def _load_application_css(self):
         """Load and apply custom CSS styles"""
@@ -995,7 +998,6 @@ class ThemeManager:
         
         # Note: In a full implementation, you'd want to manage
         # multiple CSS providers or append to existing CSS
-        print(f"🎨 Added CSS for tool: {tool_name}")
     
     def get_color(self, color_name: str) -> str:
         """Get a color value by name"""
@@ -1017,7 +1019,6 @@ class ThemeManager:
         """Apply syntax highlighting to a text buffer"""
         # This is a placeholder for syntax highlighting
         # In a full implementation, you'd use a proper syntax highlighter
-        print(f"🎨 Applied {language} syntax highlighting")
         
         # Basic JSON highlighting example
         if language == 'json':
@@ -1110,10 +1111,10 @@ class ThemeManager:
                     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2
                 )
 
-            print("🎨 High contrast CSS applied")
+            gui_logger.info(" High contrast CSS applied", {"event_type": "theming"})
 
         except Exception as e:
-            print(f"❌ Failed to apply high contrast CSS: {e}")
+            gui_logger.error(f" Failed to apply high contrast CSS: {e}")
 
     def set_mobile_mode(self, enabled: bool):
         """
@@ -1128,7 +1129,6 @@ class ThemeManager:
             if self.on_mobile_mode_changed:
                 self.on_mobile_mode_changed(enabled)
 
-            print(f"🎨 Mobile mode {'enabled' if enabled else 'disabled'}")
 
     def get_theme_info(self) -> Dict[str, Any]:
         """

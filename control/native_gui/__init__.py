@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged---init--", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend __init__.py - system control component
@@ -24,6 +28,7 @@ Independence Culture: Maximum independence with zero web dependencies.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version('Gdk', '4.0')
@@ -57,33 +62,32 @@ class UnhingedNativeApp(Adw.Application):
     
     def do_activate(self):
         """Application activation - create and show main window"""
-        print("🎯 Application activating...")
+        gui_logger.info(" Application activating...", {"event_type": "activation"})
 
         if not self.main_window:
-            print("🏗️ Creating main window...")
+            gui_logger.info(" Creating main window...", {"event_type": "initialization"})
             self.main_window = MainWindow(
                 application=self,
                 project_root=self.project_root
             )
 
-        print("🖼️ Presenting main window...")
+        gui_logger.info(" Presenting main window...", {"event_type": "ui_display"})
         self.main_window.present()
-        print("✅ Main window should be visible now!")
+        gui_logger.info(" Main window should be visible now!", {"status": "success"})
     
     def do_startup(self):
         """Application startup - set up global resources"""
-        print("🔧 Application startup...")
+        gui_logger.debug(" Application startup...", {"event_type": "configuration"})
         Adw.Application.do_startup(self)
 
-        print("🎨 Setting up theming...")
+        gui_logger.info(" Setting up theming...", {"event_type": "theming"})
         # Set up application-wide CSS theming
         self._setup_theming()
 
-        print("⌨️ Setting up shortcuts...")
         # Set up keyboard shortcuts
         self._setup_shortcuts()
 
-        print("✅ Application startup complete")
+        gui_logger.info(" Application startup complete", {"status": "success"})
     
     def _setup_theming(self):
         """Apply dark theme and custom styling"""

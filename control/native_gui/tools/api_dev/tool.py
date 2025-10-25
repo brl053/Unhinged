@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool.py - system control component
@@ -15,6 +19,7 @@ Provides proto scanning, request building, and response viewing.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GLib
@@ -129,7 +134,7 @@ class APIDevTool(BaseTool):
         # Connect signals
         self._connect_signals()
 
-        print("API Dev Tool widget created with build system integration")
+
         return main_container
 
     def _create_build_toolbar(self):
@@ -193,16 +198,16 @@ class APIDevTool(BaseTool):
     def on_activate(self):
         """Called when tool becomes active"""
         super().on_activate()
-        print("🔧 API Dev Tool activated")
+        gui_logger.debug(" API Dev Tool activated", {"event_type": "configuration"})
     
     def on_deactivate(self):
         """Called when tool becomes inactive"""
         super().on_deactivate()
-        print("🔧 API Dev Tool deactivated")
+        gui_logger.debug(" API Dev Tool deactivated", {"event_type": "configuration"})
     
     def _on_scan_proto_clicked(self, button):
         """Handle scan proto files button click"""
-        print("🔍 Scanning proto files...")
+        gui_logger.debug(" Scanning proto files...", {"event_type": "scanning"})
         
         # Disable button during scan
         button.set_sensitive(False)
@@ -224,15 +229,15 @@ class APIDevTool(BaseTool):
                 # Update button with count
                 count = len(proto_files)
                 button.set_label(f"✅ Found {count} files")
-                print(f"✅ Found {count} proto files")
+
             else:
                 error = result.get("error", "Unknown error")
                 button.set_label("❌ Scan failed")
-                print(f"❌ Proto scan failed: {error}")
+                gui_logger.error(f" Proto scan failed: {error}")
                 
         except Exception as e:
             button.set_label("❌ Scan failed")
-            print(f"❌ Proto scan error: {e}")
+            gui_logger.error(f" Proto scan error: {e}")
         
         finally:
             # Re-enable button
@@ -245,7 +250,7 @@ class APIDevTool(BaseTool):
 
     def _on_discover_services_clicked(self, button):
         """Handle discover services button click"""
-        print("🌐 Discovering network services...")
+        gui_logger.info(" Discovering network services...", {"event_type": "network_ready"})
 
         # Disable button during discovery
         button.set_sensitive(False)
@@ -277,10 +282,10 @@ class APIDevTool(BaseTool):
                                         'reflection_available': True,
                                         'services': reflection_result.get('services', [])
                                     }
-                                    print(f"✅ Enhanced {service_info['name']} with reflection")
+
 
                             except Exception as e:
-                                print(f"⚠️ Reflection failed for {service_info['name']}: {e}")
+                                gui_logger.warn(f" Reflection failed for {service_info['name']}: {e}")
 
                 # Populate proto browser with network services
                 self.proto_browser.populate_network_services(network_services)
@@ -291,15 +296,15 @@ class APIDevTool(BaseTool):
                 # Update button with count
                 count = len(network_services)
                 button.set_label(f"✅ Found {count} services")
-                print(f"✅ Service discovery found {count} services")
+
             else:
                 error = result.get("error", "Unknown error")
                 button.set_label("❌ Discovery failed")
-                print(f"❌ Service discovery failed: {error}")
+                gui_logger.error(f" Service discovery failed: {error}")
 
         except Exception as e:
             button.set_label("❌ Discovery failed")
-            print(f"❌ Service discovery error: {e}")
+            gui_logger.error(f" Service discovery error: {e}")
 
         finally:
             # Re-enable button
@@ -312,7 +317,7 @@ class APIDevTool(BaseTool):
 
     def _on_network_service_selected(self, browser, host, port, service_name):
         """Handle network service selection"""
-        print(f"🌐 Selected network service: {service_name} at {host}:{port}")
+
 
         # Update request builder with network endpoint
         self.request_builder.populate_network_service(host, port, service_name)
@@ -327,16 +332,16 @@ class APIDevTool(BaseTool):
                         # Find the selected service and populate its methods
                         for service in services:
                             if service['name'] == service_name:
-                                print(f"🔍 Found service definition for {service_name}")
+
                                 # You could populate methods here
                                 break
 
             except Exception as e:
-                print(f"⚠️ Failed to get service definition: {e}")
+                gui_logger.warn(f" Failed to get service definition: {e}")
     
     def _on_proto_file_selected(self, browser, file_path):
         """Handle proto file selection"""
-        print(f"📁 Selected proto file: {file_path}")
+
         
         # Parse services from the selected file
         try:
@@ -344,15 +349,15 @@ class APIDevTool(BaseTool):
             if result.get("success"):
                 services = result.get("services", [])
                 browser.populate_services(services)
-                print(f"🔧 Found {len(services)} services")
+
             else:
-                print(f"❌ Failed to parse proto: {result.get('error')}")
+                gui_logger.error(f" Failed to parse proto: {result.get('error')}")
         except Exception as e:
-            print(f"❌ Proto parsing error: {e}")
+            gui_logger.error(f" Proto parsing error: {e}")
     
     def _on_service_method_selected(self, browser, service_name, method_name, request_type, response_type):
         """Handle service method selection"""
-        print(f"⚡ Selected method: {service_name}.{method_name}")
+
         
         # Populate request builder with method details
         self.request_builder.populate_grpc_method(
@@ -361,20 +366,17 @@ class APIDevTool(BaseTool):
     
     def _on_request_ready(self, builder, request_data):
         """Handle request ready signal from builder"""
-        print("🎯 Request ready for sending")
+        gui_logger.info(" Request ready for sending", {"event_type": "activation"})
         # Enable send button if we have one
         if self.send_button:
             self.send_button.set_sensitive(True)
     
     def _on_send_request_clicked(self, button):
         """Handle send request button click"""
-        print("Sending request")
-
         # Get request data from builder
         request_data = self.request_builder.get_request_data()
 
         if not request_data:
-            print("No request data available")
             return
 
         # Disable button during request
@@ -404,7 +406,7 @@ class APIDevTool(BaseTool):
                 button.set_label("❌ Error")
                 
         except Exception as e:
-            print(f"❌ Request error: {e}")
+            gui_logger.error(f" Request error: {e}")
             button.set_label("❌ Failed")
             
             # Show error in response viewer
@@ -427,7 +429,7 @@ class APIDevTool(BaseTool):
     def _on_generate_clients(self):
         """Handle generate clients button click"""
         if not self.build_integration.is_available():
-            print("Build system not available")
+
             return
 
         # Generate clients for Python and TypeScript by default
@@ -435,36 +437,29 @@ class APIDevTool(BaseTool):
 
         # Update UI based on operation status
         if operation.status.value == "building":
-            print("Proto client generation started")
-        elif operation.status.value == "failed":
-            print(f"Proto client generation failed: {operation.error_message}")
+            pass
 
     def _on_update_registry(self):
         """Handle update registry button click"""
         if not self.build_integration.is_available():
-            print("Build system not available")
+
             return
 
         operation = self.build_integration.update_service_discovery()
 
         # Update UI based on operation status
         if operation.status.value == "building":
-            print("Service registry update started")
-        elif operation.status.value == "failed":
-            print(f"Service registry update failed: {operation.error_message}")
+            pass
 
     def _on_refresh_proto(self):
         """Handle refresh proto button click"""
         if not self.build_integration.is_available():
-            print("Build system not available")
+
             return
 
         proto_data = self.build_integration.get_proto_files()
 
         if proto_data["success"]:
-            print(f"Found {proto_data['count']} proto files")
             # Refresh proto browser
             if self.proto_browser:
                 self.proto_browser.refresh_proto_files(proto_data["proto_files"])
-        else:
-            print(f"Failed to refresh proto files: {proto_data['error']}")

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-main-window", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend main_window.py - system control component
@@ -17,6 +21,7 @@ No WebKit. No JavaScript. No HTML/CSS. Pure native widgets.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
@@ -80,7 +85,6 @@ class MobileControlCenterWindow(MobileFirstWindow):
         if self.launched_by_ai:
             self._add_ai_launch_indicator()
 
-        print("📱 Mobile Control Center window initialized")
 
     def _add_ai_launch_indicator(self):
         """Add visual indicator that GUI was launched by AI assistant"""
@@ -106,7 +110,6 @@ class MobileControlCenterWindow(MobileFirstWindow):
         # Set default active item
         self.nav_bar.set_active_item("chat")
 
-        print("📱 Mobile navigation setup complete")
 
     def _load_mobile_tools(self):
         """Load tools optimized for mobile interface"""
@@ -132,9 +135,7 @@ class MobileControlCenterWindow(MobileFirstWindow):
             tool = self.tool_manager.get_tool(tool_name)
             if tool:
                 mobile_tools[nav_id] = tool
-                print(f"Mapped {tool_name} to {nav_id}")
             else:
-                print(f"Tool not found: {tool_name}")
 
         # Create tool widgets and add to content stack
         for tool_id, tool in mobile_tools.items():
@@ -142,24 +143,20 @@ class MobileControlCenterWindow(MobileFirstWindow):
                 widget = tool.create_widget()
                 self.content_area.add_named(widget, tool_id)
                 self.tool_widgets[tool_id] = widget
-                print(f"Loaded mobile tool: {tool.name}")
             except Exception as e:
-                print(f"Failed to load mobile tool {tool_id}: {e}")
 
         # Show default tool
         self.content_area.set_visible_child_name("chat")
         self.current_tool = "chat"
 
-        print(f"Loaded {len(mobile_tools)} mobile tools")
 
     def _on_nav_item_selected(self, item_id: str):
         """Handle navigation item selection"""
         if item_id in self.tool_widgets:
             self.content_area.set_visible_child_name(item_id)
             self.current_tool = item_id
-            print(f"📱 Switched to tool: {item_id}")
         else:
-            print(f"⚠️ Tool not available: {item_id}")
+            gui_logger.warn(f" Tool not available: {item_id}")
 
     def _setup_header_bar(self):
         """Create and configure the header bar"""
@@ -262,7 +259,6 @@ class MobileControlCenterWindow(MobileFirstWindow):
         if tools:
             self.switch_to_tool(0)
 
-        print(f"✅ Loaded {len(tools)} tools")
     
     def _create_tool_tab(self, tool: BaseTool, index: int):
         """Create a tab for a tool"""
@@ -279,7 +275,6 @@ class MobileControlCenterWindow(MobileFirstWindow):
         # Store reference
         tool.tab_button = tab_button
 
-        print(f"🔧 Created tab for tool: {tool.get_name()}")
     
     def _on_tool_tab_clicked(self, button, tool: BaseTool):
         """Handle tool tab click"""
@@ -312,7 +307,6 @@ class MobileControlCenterWindow(MobileFirstWindow):
 
         # Get or create tool widget
         if tool.get_name() not in self.tool_widgets:
-            print(f"🔧 Creating widget for tool: {tool.get_name()}")
             widget = tool.create_widget()
             self.tool_widgets[tool.get_name()] = widget
             self.content_stack.add_named(widget, tool.get_name())
@@ -326,7 +320,6 @@ class MobileControlCenterWindow(MobileFirstWindow):
         # Update status
         self.status_label.set_text(f"Status: {tool.get_name()} active")
 
-        print(f"🎯 Switched to tool: {tool.get_name()}")
     
     def _update_tool_actions(self, tool: BaseTool):
         """Update header actions for the current tool"""
@@ -353,12 +346,10 @@ class MobileControlCenterWindow(MobileFirstWindow):
 
     def _on_settings_clicked(self, button):
         """Handle settings button click"""
-        print("⚙️ Opening settings...")
         # TODO: Implement settings dialog
 
     def _on_about_clicked(self, button):
         """Handle about button click"""
-        print("ℹ️ Opening about dialog...")
         # TODO: Implement about dialog
 
         # For now, show a simple message

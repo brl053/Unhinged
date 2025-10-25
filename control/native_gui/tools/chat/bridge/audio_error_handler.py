@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-audio-error-handler", "1.0.0")
+
 """
 Audio Error Handler - Comprehensive error handling for audio operations
 Provides detailed error analysis and user-friendly error messages.
@@ -7,6 +11,7 @@ import platform
 import subprocess
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
+from unhinged_events import create_gui_logger
 
 
 class AudioErrorType(Enum):
@@ -258,7 +263,6 @@ def print_audio_error_help(error: Exception):
     """Print comprehensive error help"""
     analysis = handle_audio_error(error)
     
-    print(f"""
 🎤 Audio Error Analysis
 {'=' * 50}
 
@@ -285,4 +289,3 @@ if __name__ == "__main__":
     
     for error in test_errors:
         print_audio_error_help(error)
-        print("-" * 50)

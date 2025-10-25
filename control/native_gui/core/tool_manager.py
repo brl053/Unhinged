@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool-manager", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool_manager.py - Enhanced tool management with mobile-responsive capabilities
@@ -19,6 +23,7 @@ from pathlib import Path
 import importlib
 import inspect
 from enum import Enum
+from unhinged_events import create_gui_logger
 
 # Import mobile UI framework
 try:
@@ -26,7 +31,7 @@ try:
     from ..ui.components import ComponentVariant
     MOBILE_UI_AVAILABLE = True
 except ImportError:
-    print("⚠️ Mobile UI framework not available")
+    gui_logger.warn(" Mobile UI framework not available")
     MOBILE_UI_AVAILABLE = False
 
 # Import tool configuration system
@@ -34,7 +39,7 @@ try:
     from .tool_config import ToolConfig, ToolMetadata, ToolConfigValidator
     TOOL_CONFIG_AVAILABLE = True
 except ImportError:
-    print("⚠️ Tool configuration system not available")
+    gui_logger.warn(" Tool configuration system not available")
     TOOL_CONFIG_AVAILABLE = False
 
 
@@ -177,7 +182,6 @@ class BaseTool:
         Override this method to perform any setup when the tool is shown.
         """
         self.active = True
-        print(f"🔧 Activated tool: {self.name}")
     
     def on_deactivate(self):
         """
@@ -186,7 +190,6 @@ class BaseTool:
         Override this method to perform any cleanup when the tool is hidden.
         """
         self.active = False
-        print(f"🔧 Deactivated tool: {self.name}")
     
     def on_destroy(self):
         """
@@ -197,7 +200,6 @@ class BaseTool:
         """
         # Clear cached widgets
         self.viewport_widgets.clear()
-        print(f"🔧 Destroying tool: {self.name}")
     
     def is_active(self) -> bool:
         """Check if the tool is currently active"""
@@ -229,7 +231,6 @@ class BaseTool:
             if self.on_viewport_changed:
                 self.on_viewport_changed(viewport)
 
-            print(f"🔧 Tool {self.name} viewport changed: {old_viewport.value} → {viewport.value}")
 
     def supports_viewport(self, viewport: ToolViewport) -> bool:
         """Check if tool supports the specified viewport"""
@@ -266,7 +267,7 @@ class ToolManager:
         self.tools: List[BaseTool] = []
         self.active_tool: Optional[BaseTool] = None
         
-        print("🔧 Tool manager initialized")
+        gui_logger.debug(" Tool manager initialized", {"event_type": "configuration"})
     
     def register_tool(self, tool: BaseTool):
         """Register a new tool"""
@@ -276,11 +277,10 @@ class ToolManager:
         # Check for duplicate names
         for existing_tool in self.tools:
             if existing_tool.get_name() == tool.get_name():
-                print(f"⚠️ Tool with name '{tool.get_name()}' already registered")
+                gui_logger.warn(f" Tool with name '{tool.get_name()}' already registered")
                 return False
         
         self.tools.append(tool)
-        print(f"✅ Registered tool: {tool.get_name()} {tool.get_icon()}")
         return True
     
     def unregister_tool(self, tool_name: str) -> bool:
@@ -296,10 +296,9 @@ class ToolManager:
                 
                 # Remove from list
                 self.tools.pop(i)
-                print(f"🗑️ Unregistered tool: {tool_name}")
                 return True
         
-        print(f"❌ Tool not found: {tool_name}")
+        gui_logger.error(f" Tool not found: {tool_name}")
         return False
     
     def get_tools(self) -> List[BaseTool]:
@@ -322,7 +321,7 @@ class ToolManager:
     def activate_tool(self, tool: BaseTool) -> bool:
         """Activate a specific tool"""
         if tool not in self.tools:
-            print(f"❌ Tool not registered: {tool.get_name()}")
+            gui_logger.error(f" Tool not registered: {tool.get_name()}")
             return False
         
         # Deactivate current tool
@@ -333,7 +332,6 @@ class ToolManager:
         self.active_tool = tool
         tool.on_activate()
         
-        print(f"🎯 Activated tool: {tool.get_name()}")
         return True
     
     def activate_tool_by_name(self, tool_name: str) -> bool:
@@ -342,7 +340,7 @@ class ToolManager:
         if tool:
             return self.activate_tool(tool)
         
-        print(f"❌ Tool not found: {tool_name}")
+        gui_logger.error(f" Tool not found: {tool_name}")
         return False
     
     def activate_tool_by_index(self, index: int) -> bool:
@@ -351,7 +349,7 @@ class ToolManager:
         if tool:
             return self.activate_tool(tool)
         
-        print(f"❌ Tool index out of range: {index}")
+        gui_logger.error(f" Tool index out of range: {index}")
         return False
     
     def deactivate_tool(self):
@@ -359,7 +357,7 @@ class ToolManager:
         if self.active_tool:
             self.active_tool.on_deactivate()
             self.active_tool = None
-            print("🔧 Deactivated current tool")
+            gui_logger.debug(" Deactivated current tool", {"event_type": "configuration"})
     
     def get_active_tool(self) -> Optional[BaseTool]:
         """Get the currently active tool"""
@@ -376,17 +374,16 @@ class ToolManager:
         Looks for tool.py files in subdirectories and attempts to load them.
         """
         if not tools_directory.exists():
-            print(f"⚠️ Tools directory not found: {tools_directory}")
+            gui_logger.warn(f" Tools directory not found: {tools_directory}")
             return
         
-        print(f"🔍 Auto-discovering tools in: {tools_directory}")
         
         for tool_dir in tools_directory.iterdir():
             if tool_dir.is_dir() and (tool_dir / "tool.py").exists():
                 try:
                     self._load_tool_from_directory(tool_dir)
                 except Exception as e:
-                    print(f"❌ Failed to load tool from {tool_dir}: {e}")
+                    gui_logger.error(f" Failed to load tool from {tool_dir}: {e}")
     
     def _load_tool_from_directory(self, tool_dir: Path):
         """Load a tool from a directory containing tool.py"""
@@ -402,10 +399,10 @@ class ToolManager:
                     self.register_tool(tool_instance)
                     break
             else:
-                print(f"⚠️ No BaseTool subclass found in {tool_module_path}")
+                gui_logger.warn(f" No BaseTool subclass found in {tool_module_path}")
                 
         except ImportError as e:
-            print(f"❌ Failed to import {tool_module_path}: {e}")
+            gui_logger.error(f" Failed to import {tool_module_path}: {e}")
     
     def destroy_all_tools(self):
         """Destroy all registered tools"""
@@ -414,4 +411,3 @@ class ToolManager:
         
         self.tools.clear()
         self.active_tool = None
-        print("🗑️ Destroyed all tools")

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool.py - system control component
@@ -15,6 +19,7 @@ Navigate project files and basic editing.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk
@@ -117,7 +122,7 @@ class FileBrowserTool(BaseTool):
         # Set initial position
         main_paned.set_position(300)
         
-        print("✅ File Browser widget created")
+        gui_logger.info(" File Browser widget created", {"status": "success"})
         return main_paned
     
     def get_actions(self):
@@ -137,10 +142,8 @@ class FileBrowserTool(BaseTool):
     
     def _on_open_clicked(self, button):
         """Handle open file button"""
-        print("📁 Opening file dialog...")
         # TODO: Implement file dialog
     
     def _on_save_clicked(self, button):
         """Handle save file button"""
-        print("💾 Saving file...")
         # TODO: Implement file saving

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-network-scanner", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend network_scanner.py - system control component
@@ -31,6 +35,7 @@ import requests
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 import subprocess
+from unhinged_events import create_gui_logger
 
 
 class NetworkScanner:
@@ -76,7 +81,7 @@ class NetworkScanner:
         self.last_scan_time = 0
         self.scan_cache_duration = 300  # 5 minutes
         
-        print("🌐 Network scanner initialized")
+        gui_logger.info(" Network scanner initialized", {"event_type": "network_ready"})
     
     def discover_services(self, force_rescan: bool = False) -> Dict[str, Any]:
         """
@@ -100,7 +105,7 @@ class NetworkScanner:
                     "cached": True
                 }
         
-        print("🔍 Starting network service discovery...")
+        gui_logger.debug(" Starting network service discovery...", {"event_type": "scanning"})
         discovered = {}
         
         try:
@@ -181,14 +186,13 @@ class NetworkScanner:
                                         "endpoint": f"{instance['ServiceAddress'] or instance['Address']}:{instance['ServicePort']}"
                                     }
                         
-                        print(f"✅ Discovered {len(services)} services from Consul")
                         break
                         
                 except requests.exceptions.RequestException:
                     continue
                     
         except Exception as e:
-            print(f"⚠️ Consul discovery failed: {e}")
+            gui_logger.warn(f" Consul discovery failed: {e}")
         
         return services
     
@@ -214,10 +218,9 @@ class NetworkScanner:
                                 "proto_info": service_info.get("proto_info", {})
                             }
             
-            print(f"✅ Port scan discovered {len(services)} services")
             
         except Exception as e:
-            print(f"⚠️ Port scanning failed: {e}")
+            gui_logger.warn(f" Port scanning failed: {e}")
         
         return services
     
@@ -268,10 +271,9 @@ class NetworkScanner:
                                             except ValueError:
                                                 continue
                 
-                print(f"✅ Docker discovery found {len(services)} services")
                 
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError) as e:
-            print(f"⚠️ Docker discovery failed: {e}")
+            gui_logger.warn(f" Docker discovery failed: {e}")
         
         return services
     
@@ -298,7 +300,6 @@ class NetworkScanner:
                     "endpoint": f"{endpoint['host']}:{endpoint['port']}"
                 }
         
-        print(f"✅ Known endpoints check found {len(services)} services")
         return services
     
     def _is_port_open(self, host: str, port: int, timeout: float = 1.0) -> bool:
@@ -327,7 +328,7 @@ class NetworkScanner:
             }
             
         except Exception as e:
-            print(f"⚠️ gRPC probe failed for {host}:{port}: {e}")
+            gui_logger.warn(f" gRPC probe failed for {host}:{port}: {e}")
             return None
     
     def get_service_health(self, host: str, port: int) -> str:

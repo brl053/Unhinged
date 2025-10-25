@@ -10,12 +10,12 @@
 """
 
 import asyncio
-import logging
 import time
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import sys
 import os
+from unhinged_events import create_service_logger
 
 # Add build system to path
 sys.path.append(str(Path(__file__).parent.parent.parent / 'build'))
@@ -27,7 +27,7 @@ try:
     from orchestrator import BuildOrchestrator
     from config.build_config import BuildConfig
 except ImportError as e:
-    logging.warning(f"Build system import failed: {e}. Using mock implementation.")
+    # Build system import failed, using mock implementation
     BuildOrchestrator = None
     BuildConfig = None
 
@@ -44,7 +44,7 @@ class SystemController:
     """
     
     def __init__(self, config_path: Optional[str] = None):
-        self.logger = logging.getLogger(__name__)
+        self.events = create_service_logger("system-controller", "1.0.0")
         self.operation_log: List[OperationResult] = []
         self.start_time = time.time()
         
@@ -55,13 +55,13 @@ class SystemController:
                 self.build_config = BuildConfig.from_file(config_file)
                 self.build_orchestrator = BuildOrchestrator(self.build_config)
                 self.build_system_available = True
-                self.logger.info("✅ Build system integration initialized")
+                pass
             except Exception as e:
-                self.logger.error(f"❌ Build system initialization failed: {e}")
+                self.events.error("Build system initialization failed", exception=e)
                 self.build_system_available = False
         else:
             self.build_system_available = False
-            self.logger.warning("⚠️ Build system not available, using fallback implementation")
+            self.events.warn("Build system not available, using fallback")
         
         # Service tier mappings (operations language → build targets)
         self.tier_mappings = {
@@ -90,11 +90,9 @@ class SystemController:
         @llm-kernel-design Service tiers are fundamental OS abstractions in Unhinged
         """
         operation_name = f"start_tier_{tier}"
-        self.logger.info(f"🚀 Starting service tier: {tier}")
-        
         if tier not in self.tier_mappings:
             error_msg = f"Unknown service tier: {tier}. Available: {list(self.tier_mappings.keys())}"
-            self.logger.error(error_msg)
+            self.events.error(error_msg)
             result = OperationResult(
                 operation=operation_name,
                 success=False,
@@ -113,25 +111,21 @@ class SystemController:
             if self.build_system_available:
                 # Use build system
                 build_target = tier_config['build_target']
-                self.logger.info(f"📋 Executing build target: {build_target}")
                 build_results = await self.build_orchestrator.build_targets([build_target])
                 result = OperationResult.from_build_results(operation_name, build_results)
             else:
                 # Fallback to direct Docker commands
-                self.logger.info(f"🐳 Executing Docker command: {tier_config['docker_command']}")
                 result = await self._execute_docker_command(operation_name, tier_config)
             
             result.execution_time = time.time() - start_time
             
-            # Log for future OS development
-            self.logger.info(f"FUTURE_SYSCALL: sys_start_tier({tier}) -> {result.success}")
             self.operation_log.append(result)
-            
+
             return result
-            
+
         except Exception as e:
             error_msg = f"System operation failed: {str(e)}"
-            self.logger.error(error_msg)
+            self.events.error(error_msg, exception=e)
             result = OperationResult(
                 operation=operation_name,
                 success=False,
@@ -150,7 +144,7 @@ class SystemController:
         @llm-future This will become: int sys_stop_tier(tier_id_t tier)
         """
         operation_name = f"stop_tier_{tier}"
-        self.logger.info(f"🛑 Stopping service tier: {tier}")
+
         
         if tier not in self.tier_mappings:
             error_msg = f"Unknown service tier: {tier}"
@@ -169,7 +163,7 @@ class SystemController:
         try:
             # For now, use Docker compose down
             docker_cmd = tier_config['docker_command'].replace('up -d', 'down')
-            self.logger.info(f"🐳 Executing: {docker_cmd}")
+
             
             # Execute command (simplified for now)
             import subprocess
@@ -215,7 +209,7 @@ class SystemController:
         import subprocess
 
         docker_cmd = tier_config['docker_command']
-        self.logger.info(f"🐳 Fallback Docker execution: {docker_cmd}")
+
 
         try:
             process = await asyncio.create_subprocess_shell(
@@ -280,7 +274,7 @@ class SystemController:
                             else:
                                 failed_services.append(service)
                 except json.JSONDecodeError:
-                    self.logger.warning("Failed to parse docker compose ps output")
+                    self.events.warn("Failed to parse docker compose ps output")
 
             return SystemStatus(
                 running_services=running_services,
@@ -291,7 +285,7 @@ class SystemController:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to get system status: {e}")
+            self.events.error("Failed to get system status", exception=e)
             return SystemStatus(
                 running_services=[],
                 failed_services=[],

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-keyboard-capture", "1.0.0")
+
 """
 Keyboard Capture Module for Global Key Monitoring and Hotkeys
 Provides pynput-based keyboard capture for input analysis and automation.
@@ -11,15 +15,15 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from collections import defaultdict, deque
 import queue
+from unhinged_events import create_gui_logger
 
 # Import pynput for keyboard monitoring
 try:
     from pynput import keyboard
     from pynput.keyboard import Key, KeyCode
     PYNPUT_AVAILABLE = True
-    print("⌨️ pynput available for keyboard capture")
 except ImportError:
-    print("⚠️ pynput not available - install with: pip install pynput")
+    gui_logger.warn(" pynput not available - install with: pip install pynput")
     PYNPUT_AVAILABLE = False
 
 
@@ -96,16 +100,15 @@ class KeyboardCapture:
         self.on_typing_session_start: Optional[Callable[[], None]] = None
         self.on_typing_session_end: Optional[Callable[[Dict], None]] = None
         
-        print("⌨️ Keyboard capture initialized")
     
     def start_capture(self) -> bool:
         """Start keyboard capture"""
         if not PYNPUT_AVAILABLE:
-            print("❌ pynput not available")
+            gui_logger.error(" pynput not available")
             return False
         
         if self.is_capturing:
-            print("⚠️ Keyboard capture already running")
+            gui_logger.warn(" Keyboard capture already running")
             return True
         
         try:
@@ -127,7 +130,6 @@ class KeyboardCapture:
             )
             self.capture_thread.start()
             
-            print("⌨️ Keyboard capture started")
             
             # Trigger session start callback
             if self.on_typing_session_start:
@@ -136,13 +138,13 @@ class KeyboardCapture:
             return True
             
         except Exception as e:
-            print(f"❌ Failed to start keyboard capture: {e}")
+            gui_logger.error(f" Failed to start keyboard capture: {e}")
             return False
     
     def stop_capture(self):
         """Stop keyboard capture"""
         if not self.is_capturing:
-            print("⚠️ Keyboard capture not running")
+            gui_logger.warn(" Keyboard capture not running")
             return
         
         try:
@@ -161,10 +163,9 @@ class KeyboardCapture:
             if self.config.save_to_file:
                 self._save_log()
             
-            print("⌨️ Keyboard capture stopped")
             
         except Exception as e:
-            print(f"❌ Error stopping keyboard capture: {e}")
+            gui_logger.error(f" Error stopping keyboard capture: {e}")
     
     def _on_key_press(self, key):
         """Handle key press event"""
@@ -200,7 +201,7 @@ class KeyboardCapture:
             self.last_key_time = current_time
             
         except Exception as e:
-            print(f"⚠️ Key press handling error: {e}")
+            gui_logger.warn(f" Key press handling error: {e}")
     
     def _on_key_release(self, key):
         """Handle key release event"""
@@ -229,7 +230,7 @@ class KeyboardCapture:
             self.event_queue.put(event)
             
         except Exception as e:
-            print(f"⚠️ Key release handling error: {e}")
+            gui_logger.warn(f" Key release handling error: {e}")
     
     def _process_events(self):
         """Process keyboard events in separate thread"""
@@ -256,7 +257,7 @@ class KeyboardCapture:
             except queue.Empty:
                 continue
             except Exception as e:
-                print(f"⚠️ Event processing error: {e}")
+                gui_logger.warn(f" Event processing error: {e}")
     
     def _key_to_string(self, key) -> str:
         """Convert key to string representation"""
@@ -302,10 +303,10 @@ class KeyboardCapture:
                         if self.on_hotkey_triggered:
                             self.on_hotkey_triggered('+'.join(sorted(combo)))
                     except Exception as e:
-                        print(f"⚠️ Hotkey callback error: {e}")
+                        gui_logger.warn(f" Hotkey callback error: {e}")
                         
         except Exception as e:
-            print(f"⚠️ Hotkey check error: {e}")
+            gui_logger.warn(f" Hotkey check error: {e}")
     
     def _analyze_typing(self, event: KeyEvent):
         """Analyze typing patterns"""
@@ -333,7 +334,7 @@ class KeyboardCapture:
                     self._complete_word()
                     
         except Exception as e:
-            print(f"⚠️ Typing analysis error: {e}")
+            gui_logger.warn(f" Typing analysis error: {e}")
     
     def _start_typing_session(self):
         """Start new typing session"""
@@ -389,9 +390,8 @@ class KeyboardCapture:
         try:
             keys = set(key_combination.lower().split('+'))
             self.hotkey_combinations[frozenset(keys)] = callback
-            print(f"⌨️ Registered hotkey: {key_combination}")
         except Exception as e:
-            print(f"❌ Failed to register hotkey: {e}")
+            gui_logger.error(f" Failed to register hotkey: {e}")
     
     def unregister_hotkey(self, key_combination: str):
         """Unregister hotkey combination"""
@@ -399,9 +399,8 @@ class KeyboardCapture:
             keys = frozenset(key_combination.lower().split('+'))
             if keys in self.hotkey_combinations:
                 del self.hotkey_combinations[keys]
-                print(f"⌨️ Unregistered hotkey: {key_combination}")
         except Exception as e:
-            print(f"❌ Failed to unregister hotkey: {e}")
+            gui_logger.error(f" Failed to unregister hotkey: {e}")
     
     def get_statistics(self) -> Dict:
         """Get keyboard capture statistics"""
@@ -446,10 +445,9 @@ class KeyboardCapture:
             with open(self.config.log_file, 'w') as f:
                 json.dump(log_data, f, indent=2)
             
-            print(f"⌨️ Keyboard log saved to {self.config.log_file}")
             
         except Exception as e:
-            print(f"❌ Failed to save keyboard log: {e}")
+            gui_logger.error(f" Failed to save keyboard log: {e}")
     
     def cleanup(self):
         """Clean up resources"""
@@ -460,16 +458,14 @@ class KeyboardCapture:
         self.words_typed.clear()
         self.typing_sessions.clear()
         
-        print("⌨️ Keyboard capture cleaned up")
 
 
 # Test function
 def test_keyboard_capture():
     """Test keyboard capture functionality"""
-    print("⌨️ Testing keyboard capture...")
     
     if not PYNPUT_AVAILABLE:
-        print("❌ pynput not available for testing")
+        gui_logger.error(" pynput not available for testing")
         return
     
     try:
@@ -478,10 +474,8 @@ def test_keyboard_capture():
         
         # Set up callbacks
         def on_key_press(event):
-            print(f"Key pressed: {event.key}")
         
         def on_hotkey(combo):
-            print(f"Hotkey triggered: {combo}")
         
         capture.on_key_press = on_key_press
         capture.on_hotkey_triggered = on_hotkey
@@ -491,22 +485,19 @@ def test_keyboard_capture():
         
         # Start capture
         if capture.start_capture():
-            print("⌨️ Keyboard capture test running for 10 seconds...")
-            print("⌨️ Try typing and pressing Ctrl+Shift+T")
             
             time.sleep(10)
             
             # Get statistics
             stats = capture.get_statistics()
-            print(f"Statistics: {stats}")
             
             capture.cleanup()
-            print("✅ Keyboard capture test completed")
+            gui_logger.info(" Keyboard capture test completed", {"status": "success"})
         else:
-            print("❌ Failed to start keyboard capture")
+            gui_logger.error(" Failed to start keyboard capture")
             
     except Exception as e:
-        print(f"❌ Keyboard capture test failed: {e}")
+        gui_logger.error(f" Keyboard capture test failed: {e}")
 
 
 if __name__ == "__main__":

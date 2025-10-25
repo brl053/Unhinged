@@ -148,7 +148,7 @@ class ServiceRegistry:
                 for service_id, service_data in config_data.items():
                     self.services[service_id] = ServiceEndpoint(**service_data)
             except Exception as e:
-                print(f"Failed to load service config: {e}, using defaults")
+                # Failed to load service config, using defaults
                 self.services = default_services
         else:
             self.services = default_services
@@ -166,7 +166,7 @@ class ServiceRegistry:
             with open(self.config_path, 'w') as f:
                 json.dump(config_data, f, indent=2)
         except Exception as e:
-            print(f"Failed to save service config: {e}")
+            # Failed to save service config
     
     def register_service(self, service_id: str, endpoint: ServiceEndpoint):
         """Register a new service endpoint."""
@@ -284,31 +284,14 @@ def main():
     
     if args.status:
         report = registry.get_service_status_report()
-        print("\n📊 Service Status Report:")
-        for service_id, info in report.items():
-            status_icon = "🟢" if info['status'] == 'healthy' else "🔴"
-            required_icon = "⚠️" if info['required'] else "ℹ️"
-            print(f"  {status_icon} {required_icon} {info['name']}")
-            print(f"     Endpoint: {info['endpoint']}")
-            print(f"     Status: {info['status']}")
-            print(f"     Tags: {', '.join(info['tags'])}")
-            print()
             
     elif args.health_check:
         status = registry.check_service_health(args.health_check, force_refresh=True)
         service = registry.get_service(args.health_check)
         if service:
-            print(f"Service: {service.name}")
-            print(f"Status: {status.value}")
-            print(f"Endpoint: {service.base_url}")
-        else:
-            print(f"Service '{args.health_check}' not found")
             
     elif args.list_services:
         services = registry.get_all_services()
-        print("\n📋 Registered Services:")
-        for service_id, service in services.items():
-            print(f"  {service_id}: {service.name} ({service.base_url})")
             
     else:
         parser.print_help()

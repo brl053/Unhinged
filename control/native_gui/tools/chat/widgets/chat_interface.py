@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-chat-interface", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend chat_interface.py - system control component
@@ -22,6 +26,7 @@ Features:
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GLib, Pango
@@ -120,7 +125,6 @@ class ChatInterface(Gtk.Box):
         self.message_widgets = []  # List of MessageBubble widgets
 
         self._create_interface()
-        print("💬 ChatInterface widget created with animation support")
 
     def _create_interface(self):
         """Create the chat interface UI"""
@@ -184,7 +188,6 @@ class ChatInterface(Gtk.Box):
         # Auto-scroll to bottom
         GLib.timeout_add(100, self._scroll_to_bottom)
 
-        print(f"💬 Added {'user' if is_user else 'assistant'} message: {message[:30]}...")
 
     def add_loading_message(self):
         """Add a loading message bubble"""
@@ -223,7 +226,6 @@ class ChatInterface(Gtk.Box):
         self.messages.clear()
         self.message_widgets.clear()
 
-        print("💬 Conversation cleared")
 
     def get_message_count(self) -> int:
         """Get the number of messages in the conversation"""

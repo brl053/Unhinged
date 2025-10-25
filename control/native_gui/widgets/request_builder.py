@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-request-builder", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend request_builder.py - system control component
@@ -22,6 +26,7 @@ Features:
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GObject
@@ -73,7 +78,7 @@ class RequestBuilder(Gtk.Box):
         self._setup_headers_section()
         self._setup_body_section()
         
-        print("🔧 Request builder widget initialized")
+        gui_logger.debug(" Request builder widget initialized", {"event_type": "configuration"})
     
     def _setup_method_url_row(self):
         """Create method dropdown and URL entry row"""
@@ -217,7 +222,6 @@ class RequestBuilder(Gtk.Box):
         sample_body = f'{{\n  "// Sample request for {request_type}": "value"\n}}'
         self.body_textview.get_buffer().set_text(sample_body)
         
-        print(f"🔧 Populated gRPC method: {service_name}.{method_name}")
         self._emit_request_ready()
     
     def get_request_data(self):

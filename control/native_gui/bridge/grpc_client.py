@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-grpc-client", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend grpc_client.py - system control component
@@ -25,11 +29,12 @@ try:
     GRPC_AVAILABLE = True
 except ImportError:
     GRPC_AVAILABLE = False
-    print("⚠️ gRPC not available - install with: pip install grpcio grpcio-tools")
+    gui_logger.warn(" gRPC not available - install with: pip install grpcio grpcio-tools")
 
 import json
 from typing import Dict, Any, Optional
 from pathlib import Path
+from unhinged_events import create_gui_logger
 
 
 class GRPCClient:
@@ -41,7 +46,7 @@ class GRPCClient:
     
     def __init__(self):
         self.channels = {}  # Cache gRPC channels
-        print("⚡ gRPC client initialized")
+        gui_logger.info(" gRPC client initialized", {"event_type": "service_ready"})
     
     def send_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """

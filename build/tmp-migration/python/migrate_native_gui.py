@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import List, Tuple, Dict
 
 # Add the event framework to the path
-sys.path.insert(0, str(Path(__file__).parent.parent / "python" / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "libs" / "event-framework" / "python" / "src"))
 
 # Add the deterministic parser
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "build" / "regex"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "regex"))
 from python_parser import PythonPrintParser, analyze_print_migration_needs
 
 class GUIMigrationAnalyzer:

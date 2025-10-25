@@ -18,29 +18,25 @@ gRPC-only service with health.proto implementation:
 
 import os
 import sys
-import logging
 import signal
+from unhinged_events import create_service_logger
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Initialize event logger
+events = create_service_logger("text-to-speech", "1.0.0")
 
 def run_grpc_server():
     """Run the gRPC server with health.proto implementation"""
     try:
         from grpc_server import serve
-        logger.info("Starting gRPC server on port 9092...")
+        events.info("gRPC server started", {"port": 9092})
         serve()
     except Exception as e:
-        logger.error(f"gRPC server failed: {e}")
+        events.error("gRPC server failed", exception=e)
         sys.exit(1)
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
-    logger.info(f"Received signal {signum}, shutting down...")
+    events.info("Shutdown signal received", {"signal": signum})
     sys.exit(0)
 
 def main():
@@ -49,20 +45,15 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    logger.info("=== Text-to-Speech gRPC Service Starting ===")
-    logger.info("gRPC API: Enabled with health.proto implementation")
-    logger.info(f"Model: {os.getenv('TTS_MODEL_NAME', 'tts_models/en/ljspeech/tacotron2-DDC')}")
-    logger.info(f"Cache Dir: {os.getenv('TTS_CACHE_DIR', '/app/models')}")
+
 
     try:
         run_grpc_server()
     except KeyboardInterrupt:
-        logger.info("Received keyboard interrupt, shutting down...")
+        pass
     except Exception as e:
-        logger.error(f"Server error: {e}")
+        events.error("Server error", exception=e)
         sys.exit(1)
-    finally:
-        logger.info("=== Text-to-Speech Service Stopped ===")
 
 if __name__ == '__main__':
     main()

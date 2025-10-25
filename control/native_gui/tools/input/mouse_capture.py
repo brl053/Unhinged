@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-mouse-capture", "1.0.0")
+
 """
 Mouse Capture Module for Click Tracking and Movement Analysis
 Provides pynput-based mouse capture for interaction analysis and automation.
@@ -10,15 +14,15 @@ from typing import Optional, Dict, List, Callable, Tuple
 from dataclasses import dataclass
 from collections import deque
 import queue
+from unhinged_events import create_gui_logger
 
 # Import pynput for mouse monitoring
 try:
     from pynput import mouse
     from pynput.mouse import Button, Listener
     PYNPUT_AVAILABLE = True
-    print("🖱️ pynput available for mouse capture")
 except ImportError:
-    print("⚠️ pynput not available - install with: pip install pynput")
+    gui_logger.warn(" pynput not available - install with: pip install pynput")
     PYNPUT_AVAILABLE = False
 
 
@@ -98,16 +102,15 @@ class MouseCapture:
         self.on_drag_end: Optional[Callable[[Tuple[int, int], Tuple[int, int]], None]] = None
         self.on_pattern_detected: Optional[Callable[[str, Dict], None]] = None
         
-        print("🖱️ Mouse capture initialized")
     
     def start_capture(self) -> bool:
         """Start mouse capture"""
         if not PYNPUT_AVAILABLE:
-            print("❌ pynput not available")
+            gui_logger.error(" pynput not available")
             return False
         
         if self.is_capturing:
-            print("⚠️ Mouse capture already running")
+            gui_logger.warn(" Mouse capture already running")
             return True
         
         try:
@@ -130,17 +133,16 @@ class MouseCapture:
             )
             self.capture_thread.start()
             
-            print("🖱️ Mouse capture started")
             return True
             
         except Exception as e:
-            print(f"❌ Failed to start mouse capture: {e}")
+            gui_logger.error(f" Failed to start mouse capture: {e}")
             return False
     
     def stop_capture(self):
         """Stop mouse capture"""
         if not self.is_capturing:
-            print("⚠️ Mouse capture not running")
+            gui_logger.warn(" Mouse capture not running")
             return
         
         try:
@@ -155,10 +157,9 @@ class MouseCapture:
             if self.current_scroll_session:
                 self._end_scroll_session()
             
-            print("🖱️ Mouse capture stopped")
             
         except Exception as e:
-            print(f"❌ Error stopping mouse capture: {e}")
+            gui_logger.error(f" Error stopping mouse capture: {e}")
     
     def _on_mouse_move(self, x, y):
         """Handle mouse movement"""
@@ -206,7 +207,7 @@ class MouseCapture:
             self.total_movements += 1
             
         except Exception as e:
-            print(f"⚠️ Mouse move handling error: {e}")
+            gui_logger.warn(f" Mouse move handling error: {e}")
     
     def _on_mouse_click(self, x, y, button, pressed):
         """Handle mouse click"""
@@ -264,7 +265,7 @@ class MouseCapture:
                 self.total_clicks += 1
             
         except Exception as e:
-            print(f"⚠️ Mouse click handling error: {e}")
+            gui_logger.warn(f" Mouse click handling error: {e}")
     
     def _on_mouse_scroll(self, x, y, dx, dy):
         """Handle mouse scroll"""
@@ -298,7 +299,7 @@ class MouseCapture:
             self.total_scrolls += 1
             
         except Exception as e:
-            print(f"⚠️ Mouse scroll handling error: {e}")
+            gui_logger.warn(f" Mouse scroll handling error: {e}")
     
     def _process_events(self):
         """Process mouse events in separate thread"""
@@ -326,7 +327,7 @@ class MouseCapture:
                         self._end_scroll_session()
                 continue
             except Exception as e:
-                print(f"⚠️ Event processing error: {e}")
+                gui_logger.warn(f" Event processing error: {e}")
     
     def _start_scroll_session(self, x: int, y: int):
         """Start new scroll session"""
@@ -394,7 +395,7 @@ class MouseCapture:
                         self.on_pattern_detected('rapid_clicking', pattern)
                         
         except Exception as e:
-            print(f"⚠️ Pattern detection error: {e}")
+            gui_logger.warn(f" Pattern detection error: {e}")
     
     def get_statistics(self) -> Dict:
         """Get mouse capture statistics"""
@@ -466,16 +467,14 @@ class MouseCapture:
         self.click_positions.clear()
         self.scroll_sessions.clear()
         
-        print("🖱️ Mouse capture cleaned up")
 
 
 # Test function
 def test_mouse_capture():
     """Test mouse capture functionality"""
-    print("🖱️ Testing mouse capture...")
     
     if not PYNPUT_AVAILABLE:
-        print("❌ pynput not available for testing")
+        gui_logger.error(" pynput not available for testing")
         return
     
     try:
@@ -484,36 +483,30 @@ def test_mouse_capture():
         
         # Set up callbacks
         def on_click(event):
-            print(f"Click: {event.button} at ({event.x}, {event.y})")
         
         def on_pattern(pattern_type, data):
-            print(f"Pattern detected: {pattern_type} - {data}")
         
         capture.on_mouse_click = on_click
         capture.on_pattern_detected = on_pattern
         
         # Start capture
         if capture.start_capture():
-            print("🖱️ Mouse capture test running for 10 seconds...")
-            print("🖱️ Try clicking and scrolling")
             
             time.sleep(10)
             
             # Get statistics
             stats = capture.get_statistics()
-            print(f"Statistics: {stats}")
             
             # Get heatmap data
             heatmap = capture.get_click_heatmap_data()
-            print(f"Heatmap points: {len(heatmap)}")
             
             capture.cleanup()
-            print("✅ Mouse capture test completed")
+            gui_logger.info(" Mouse capture test completed", {"status": "success"})
         else:
-            print("❌ Failed to start mouse capture")
+            gui_logger.error(" Failed to start mouse capture")
             
     except Exception as e:
-        print(f"❌ Mouse capture test failed: {e}")
+        gui_logger.error(f" Mouse capture test failed: {e}")
 
 
 if __name__ == "__main__":

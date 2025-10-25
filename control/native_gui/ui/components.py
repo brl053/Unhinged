@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-components", "1.0.0")
+
 """
 Reusable UI Component Library
 Provides consistent, reusable components following the design system patterns.
@@ -11,6 +15,7 @@ from typing import Dict, List, Optional, Callable, Any, Union
 from enum import Enum
 from dataclasses import dataclass
 import time
+from unhinged_events import create_gui_logger
 
 
 class ComponentSize(Enum):
@@ -541,7 +546,7 @@ def show_toast(parent: Adw.ToastOverlay, message: str,
 # Test function
 def test_components():
     """Test UI components"""
-    print("🎨 Testing UI components...")
+    gui_logger.info(" Testing UI components...", {"event_type": "theming"})
     
     app = Adw.Application()
     

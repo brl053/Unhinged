@@ -19,9 +19,9 @@ Provides Speech-to-Text (Whisper) capabilities with health.proto implementation:
 
 import os
 import tempfile
-import logging
 import asyncio
 import grpc
+from unhinged_events import create_service_logger
 from concurrent import futures
 from typing import Iterator, AsyncIterator
 import io
@@ -37,13 +37,11 @@ from pathlib import Path
 # For Docker environment, use the copied centralized clients
 if Path("/app/generated/python/clients").exists():
     sys.path.insert(0, "/app/generated/python/clients")
-    print("🎤 Using centralized protobuf clients from Docker environment")
 else:
     # For development, use project root path
     project_root = Path(__file__).parent.parent.parent
     generated_path = project_root / "generated" / "python" / "clients"
     sys.path.insert(0, str(generated_path))
-    print("🎤 Using centralized protobuf clients from development environment")
 
 # Generated proto imports from centralized generation
 from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
@@ -56,9 +54,8 @@ def set_current_timestamp(timestamp_field):
     timestamp_field.seconds = int(time.time())
     timestamp_field.nanos = int((time.time() % 1) * 1e9)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Initialize event logger
+events = create_service_logger("speech-to-text", "1.0.0")
 
 class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.HealthServiceServicer):
     """
@@ -82,11 +79,10 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
     def _load_whisper_model(self):
         """Load Whisper model on startup"""
         try:
-            logger.info("Loading Whisper model...")
             self.whisper_model = whisper.load_model("base")
-            logger.info("Whisper model loaded successfully")
+            events.info("Whisper model loaded", {"model": "base"})
         except Exception as e:
-            logger.error(f"Failed to load Whisper model: {e}")
+            events.error("Failed to load Whisper model", exception=e, metadata={"model": "base"})
             self.whisper_model = None
     
 
@@ -103,7 +99,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             STTResponse: Transcription result with metadata
         """
         try:
-            logger.info("STT request received")
+
             
             # Collect audio chunks
             audio_data = io.BytesIO()
@@ -113,7 +109,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                 if chunk.type == common_pb2.CHUNK_TYPE_DATA:
                     audio_data.write(chunk.data)
                     chunk_count += 1
-                    logger.debug(f"Received audio chunk {chunk.sequence_number}, size: {len(chunk.data)}")
+
             
             if chunk_count == 0:
                 raise ValueError("No audio data received")
@@ -189,7 +185,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                 os.unlink(temp_file_path)
                 
         except Exception as e:
-            logger.error(f"STT processing failed: {e}")
+            events.error("STT processing failed", exception=e)
             # Return error response
             response = audio_pb2.STTResponse()
             response.response.success = False
@@ -208,7 +204,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             ProcessAudioResponse: Processing result
         """
         try:
-            logger.info(f"Audio file processing request: {request.processing_type}")
+
             
             response = audio_pb2.ProcessAudioResponse()
             
@@ -236,7 +232,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             return response
             
         except Exception as e:
-            logger.error(f"Audio file processing failed: {e}")
+            events.error("Audio file processing failed", exception=e)
             response = audio_pb2.ProcessAudioResponse()
             response.response.success = False
             response.response.message = f"Processing failed: {str(e)}"
@@ -330,7 +326,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             return response
             
         except Exception as e:
-            logger.error(f"List voices failed: {e}")
+            events.error("List voices failed", exception=e)
             response = audio_pb2.ListVoicesResponse()
             response.response.success = False
             response.response.message = f"Failed to list voices: {str(e)}"
@@ -435,13 +431,12 @@ def serve():
     listen_addr = '[::]:9091'
     server.add_insecure_port(listen_addr)
     
-    logger.info(f"Starting gRPC server on {listen_addr}")
     server.start()
-    
+
     try:
         server.wait_for_termination()
     except KeyboardInterrupt:
-        logger.info("Shutting down gRPC server...")
+        pass
         server.stop(0)
 
 

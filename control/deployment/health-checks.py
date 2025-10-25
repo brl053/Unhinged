@@ -16,7 +16,7 @@ Service Health Monitoring:
 """
 
 import asyncio
-import logging
+from unhinged_events import create_service_logger
 import time
 import yaml
 from pathlib import Path
@@ -26,7 +26,8 @@ from datetime import datetime, timedelta
 import requests
 import socket
 
-logger = logging.getLogger(__name__)
+# Initialize event logger
+events = create_service_logger("health-checks", "1.0.0")
 
 @dataclass
 class HealthCheckResult:
@@ -87,7 +88,7 @@ class UnhingedHealthMonitor:
             with open(registry_file, 'r') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            logger.warning(f"Service registry not found: {registry_file}")
+            events.warn("Service registry not found", {"registry_file": str(registry_file), "service": "health-checks"})
             return {}
     
     async def check_http_health(self, service_name: str, url: str, timeout: int = 5) -> HealthCheckResult:
@@ -194,7 +195,7 @@ class UnhingedHealthMonitor:
                 results[service_name] = result
                 self._update_health_history(result)
             except Exception as e:
-                logger.error(f"Health check failed for {service_name}: {e}")
+                events.error("Health check failed", exception=e, metadata={"service_name": service_name, "service": "health-checks"})
                 results[service_name] = HealthCheckResult(
                     service_name=service_name,
                     status="unknown",
@@ -329,16 +330,12 @@ async def main():
     
     args = parser.parse_args()
     
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    # Event logging already configured
     
     monitor = UnhingedHealthMonitor(args.project_root)
     
     if args.continuous:
-        logger.info(f"🏥 Starting continuous health monitoring (interval: {args.interval}s)")
+
         while True:
             try:
                 results = await monitor.check_all_services()
@@ -346,26 +343,25 @@ async def main():
                 healthy_count = sum(1 for r in results.values() if r.status == "healthy")
                 total_count = len(results)
                 
-                logger.info(f"📊 Health check complete: {healthy_count}/{total_count} services healthy")
+
                 
                 # Check for critical services
                 critical_services = monitor.get_critical_services()
                 if critical_services:
-                    logger.warning(f"🚨 Critical services detected: {critical_services}")
+                    events.warn("Critical services detected", {"critical_services": critical_services, "service": "health-checks"})
                 
                 await asyncio.sleep(args.interval)
                 
             except KeyboardInterrupt:
-                logger.info("🛑 Monitoring stopped by user")
+
                 break
             except Exception as e:
-                logger.error(f"❌ Monitoring error: {e}")
+                events.error("Monitoring error", exception=e, metadata={"service": "health-checks"})
                 await asyncio.sleep(args.interval)
     
     elif args.report:
         results = await monitor.check_all_services()
         report = monitor.generate_health_report()
-        print(report)
     
     else:
         # Single health check
@@ -373,7 +369,6 @@ async def main():
         
         for service_name, result in results.items():
             status_icon = "✅" if result.status == "healthy" else "❌"
-            print(f"{status_icon} {service_name}: {result.status} ({result.response_time:.3f}s)")
 
 
 if __name__ == "__main__":

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-viewport-manager", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend viewport_manager.py - system control component
@@ -15,6 +19,7 @@ Configurable viewport dimensions with mobile-first responsive design.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
@@ -130,7 +135,6 @@ class ViewportManager:
         if self.window is not None:
             self.set_viewport("pixel_8")
 
-        print("📱 Viewport Manager initialized with mobile-first design")
 
     def set_window(self, window: Gtk.Window):
         """Set the window reference and apply any pending viewport configuration"""
@@ -142,7 +146,7 @@ class ViewportManager:
     def set_viewport(self, preset_name: str) -> bool:
         """Set viewport to a predefined device preset"""
         if preset_name not in self.DEVICE_PRESETS:
-            print(f"❌ Unknown device preset: {preset_name}")
+            gui_logger.error(f" Unknown device preset: {preset_name}")
             return False
         
         config = self.DEVICE_PRESETS[preset_name]
@@ -162,7 +166,7 @@ class ViewportManager:
     def _apply_viewport_config(self, config: ViewportConfig) -> bool:
         """Apply viewport configuration to the window"""
         if self.window is None:
-            print(f"⚠️ Window not available, deferring viewport config: {config.name}")
+            gui_logger.warn(f" Window not available, deferring viewport config: {config.name}")
             self._pending_viewport = None  # Clear pending since we're storing the config
             self.current_config = config  # Store config for later application
             return False
@@ -185,11 +189,10 @@ class ViewportManager:
             if self.on_viewport_changed:
                 self.on_viewport_changed(config)
             
-            print(f"📱 Viewport set to {config.name} ({config.width}×{config.height})")
             return True
             
         except Exception as e:
-            print(f"❌ Failed to apply viewport config: {e}")
+            gui_logger.error(f" Failed to apply viewport config: {e}")
             return False
     
     def _update_device_css_classes(self, config: ViewportConfig):

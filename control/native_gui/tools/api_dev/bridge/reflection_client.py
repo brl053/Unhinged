@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-reflection-client", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend reflection_client.py - system control component
@@ -12,6 +16,7 @@
 
 Uses gRPC reflection to dynamically discover service definitions
 from running gRPC services without needing .proto files.
+from unhinged_events import create_gui_logger
 
 Features:
 - Server reflection protocol
@@ -28,7 +33,7 @@ try:
     GRPC_REFLECTION_AVAILABLE = True
 except ImportError:
     GRPC_REFLECTION_AVAILABLE = False
-    print("⚠️ gRPC reflection not available - install with: pip install grpcio-reflection")
+    gui_logger.warn(" gRPC reflection not available - install with: pip install grpcio-reflection")
 
 import json
 from typing import Dict, List, Any, Optional, Tuple
@@ -47,7 +52,7 @@ class ReflectionClient:
         self.reflection_cache = {}
         self.cache_duration = 300  # 5 minutes
         
-        print("🔍 Reflection client initialized")
+        gui_logger.debug(" Reflection client initialized", {"event_type": "scanning"})
     
     def discover_service_definitions(self, host: str, port: int) -> Dict[str, Any]:
         """
@@ -78,7 +83,6 @@ class ReflectionClient:
             return result
         
         try:
-            print(f"🔍 Discovering services via reflection: {endpoint}")
             
             # Create gRPC channel
             channel = grpc.insecure_channel(endpoint)
@@ -114,12 +118,11 @@ class ReflectionClient:
             # Cache result
             self.reflection_cache[cache_key] = result.copy()
             
-            print(f"✅ Discovered {len(service_definitions)} services via reflection")
             return result
             
         except grpc.RpcError as e:
             error_msg = f"gRPC reflection failed: {e.code()} - {e.details()}"
-            print(f"❌ {error_msg}")
+            gui_logger.error(f" {error_msg}")
             
             return {
                 "success": False,
@@ -131,7 +134,7 @@ class ReflectionClient:
             
         except Exception as e:
             error_msg = f"Reflection discovery failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            gui_logger.error(f" {error_msg}")
             
             return {
                 "success": False,
@@ -161,7 +164,7 @@ class ReflectionClient:
             return services
             
         except Exception as e:
-            print(f"❌ Failed to list services: {e}")
+            gui_logger.error(f" Failed to list services: {e}")
             return []
     
     def _get_service_definition(self, reflection_stub, service_name: str) -> Optional[Dict[str, Any]]:
@@ -186,7 +189,7 @@ class ReflectionClient:
             return None
             
         except Exception as e:
-            print(f"❌ Failed to get service definition for {service_name}: {e}")
+            gui_logger.error(f" Failed to get service definition for {service_name}: {e}")
             return None
     
     def _parse_service_descriptor(self, service_name: str, descriptor_proto: bytes) -> Dict[str, Any]:
@@ -211,7 +214,7 @@ class ReflectionClient:
             }
             
         except Exception as e:
-            print(f"❌ Failed to parse descriptor for {service_name}: {e}")
+            gui_logger.error(f" Failed to parse descriptor for {service_name}: {e}")
             return {
                 "name": service_name,
                 "full_name": service_name,
@@ -367,4 +370,3 @@ class ReflectionClient:
     def clear_cache(self):
         """Clear the reflection cache"""
         self.reflection_cache.clear()
-        print("🗑️ Reflection cache cleared")

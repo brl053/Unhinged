@@ -208,7 +208,7 @@ class CameraCapture:
             })
 
         except Exception as e:
-            print(f"❌ Failed to initialize YOLO: {e}")
+            gui_logger.error(f" Failed to initialize YOLO: {e}")
             self.yolo_model = None
 
     def enable_vision_analysis(self, vision_client=None, interval: float = 2.0):
@@ -218,14 +218,14 @@ class CameraCapture:
                 from .vision_client import VisionClient
                 self.vision_client = VisionClient()
             except Exception as e:
-                print(f"❌ Failed to initialize vision client: {e}")
+                gui_logger.error(f" Failed to initialize vision client: {e}")
                 return False
         else:
             self.vision_client = vision_client
 
         self.vision_analysis_enabled = True
         self.vision_analysis_interval = interval
-        print(f"🎯 Vision analysis enabled (interval: {interval}s)")
+
         return True
 
     def disable_vision_analysis(self):
@@ -234,7 +234,7 @@ class CameraCapture:
         if self.vision_client:
             self.vision_client.close()
             self.vision_client = None
-        print("🎯 Vision analysis disabled")
+        gui_logger.info(" Vision analysis disabled", {"event_type": "activation"})
     
     def get_available_cameras(self) -> List[Dict[str, any]]:
         """Get comprehensive list of available camera devices"""
@@ -283,7 +283,7 @@ class CameraCapture:
                 test_cap.release()
 
             except Exception as e:
-                print(f"⚠️ Error testing camera {i}: {e}")
+                gui_logger.warn(f" Error testing camera {i}: {e}")
                 continue
 
         return cameras
@@ -359,7 +359,7 @@ class CameraCapture:
     def switch_camera(self, device_index: int) -> bool:
         """Switch to a different camera device"""
         if device_index == self.config.device_index:
-            print(f"⚠️ Already using camera {device_index}")
+            gui_logger.warn(f" Already using camera {device_index}")
             return True
 
         was_capturing = self.is_capturing
@@ -382,11 +382,10 @@ class CameraCapture:
             if was_capturing:
                 self.start_capture()
 
-            print(f"📹 Switched to camera {device_index}")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to switch camera: {e}")
+            gui_logger.error(f" Failed to switch camera: {e}")
             return False
 
     def get_camera_capabilities(self, device_index: Optional[int] = None) -> Dict:
@@ -435,18 +434,18 @@ class CameraCapture:
             test_cap.release()
 
         except Exception as e:
-            print(f"⚠️ Error getting camera capabilities: {e}")
+            gui_logger.warn(f" Error getting camera capabilities: {e}")
 
         return capabilities
 
     def start_video_recording(self, filename: str, codec: str = 'mp4v', fps: Optional[int] = None) -> bool:
         """Start recording video to file"""
         if self.is_recording_video:
-            print("⚠️ Already recording video")
+            gui_logger.warn(" Already recording video")
             return False
 
         if not self.is_capturing:
-            print("❌ Camera not capturing - start capture first")
+            gui_logger.error(" Camera not capturing - start capture first")
             return False
 
         try:
@@ -455,7 +454,7 @@ class CameraCapture:
 
             # Get current frame size
             if self.current_frame is None:
-                print("❌ No current frame available")
+                gui_logger.error(" No current frame available")
                 return False
 
             height, width = self.current_frame.shape[:2]
@@ -467,24 +466,23 @@ class CameraCapture:
             self.video_writer = cv2.VideoWriter(filename, fourcc, recording_fps, (width, height))
 
             if not self.video_writer.isOpened():
-                print(f"❌ Failed to open video writer for {filename}")
+                gui_logger.error(f" Failed to open video writer for {filename}")
                 return False
 
             self.is_recording_video = True
             self.recording_start_time = time.time()
             self.recording_filename = filename
 
-            print(f"🎬 Started video recording: {filename} ({width}x{height} @ {recording_fps}fps)")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to start video recording: {e}")
+            gui_logger.error(f" Failed to start video recording: {e}")
             return False
 
     def stop_video_recording(self) -> Optional[str]:
         """Stop video recording and return filename"""
         if not self.is_recording_video:
-            print("⚠️ Not recording video")
+            gui_logger.warn(" Not recording video")
             return None
 
         try:
@@ -497,7 +495,6 @@ class CameraCapture:
             recording_duration = time.time() - self.recording_start_time if self.recording_start_time else 0
             filename = self.recording_filename
 
-            print(f"🎬 Video recording stopped: {filename} ({recording_duration:.1f}s)")
 
             self.recording_start_time = None
             self.recording_filename = None
@@ -505,14 +502,14 @@ class CameraCapture:
             return filename
 
         except Exception as e:
-            print(f"❌ Error stopping video recording: {e}")
+            gui_logger.error(f" Error stopping video recording: {e}")
             return None
 
     def create_video_from_frames(self, frames: List[np.ndarray], filename: str,
                                 fps: int = 30, codec: str = 'mp4v') -> bool:
         """Create video file from list of frames"""
         if not frames:
-            print("❌ No frames provided")
+            gui_logger.error(" No frames provided")
             return False
 
         try:
@@ -526,7 +523,7 @@ class CameraCapture:
             video_writer = cv2.VideoWriter(filename, fourcc, fps, (width, height))
 
             if not video_writer.isOpened():
-                print(f"❌ Failed to create video writer for {filename}")
+                gui_logger.error(f" Failed to create video writer for {filename}")
                 return False
 
             # Write frames
@@ -538,26 +535,24 @@ class CameraCapture:
                 video_writer.write(frame)
 
                 if (i + 1) % 30 == 0:  # Progress every 30 frames
-                    print(f"🎬 Writing frame {i+1}/{len(frames)}")
 
             video_writer.release()
 
             duration = len(frames) / fps
-            print(f"🎬 Video created: {filename} ({len(frames)} frames, {duration:.1f}s)")
             return True
 
         except Exception as e:
-            print(f"❌ Error creating video from frames: {e}")
+            gui_logger.error(f" Error creating video from frames: {e}")
             return False
     
     def start_capture(self) -> bool:
         """Start camera capture"""
         if self.is_capturing:
-            print("⚠️ Camera already capturing")
+            gui_logger.warn(" Camera already capturing")
             return False
         
         if not self.cap or not self.cap.isOpened():
-            print("❌ Camera not initialized")
+            gui_logger.error(" Camera not initialized")
             return False
         
         try:
@@ -594,11 +589,10 @@ class CameraCapture:
             )
             self.processing_thread.start()
 
-            print("📹 Camera capture and processing started")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to start capture: {e}")
+            gui_logger.error(f" Failed to start capture: {e}")
             self.is_capturing = False
             self.is_processing = False
             return False
@@ -606,7 +600,7 @@ class CameraCapture:
     def stop_capture(self):
         """Stop camera capture and processing"""
         if not self.is_capturing:
-            print("⚠️ Camera not capturing")
+            gui_logger.warn(" Camera not capturing")
             return
 
         self.is_capturing = False
@@ -619,7 +613,6 @@ class CameraCapture:
         if self.processing_thread and self.processing_thread.is_alive():
             self.processing_thread.join(timeout=2.0)
 
-        print("📹 Camera capture and processing stopped")
     
     def _capture_loop(self):
         """Enhanced capture loop with advanced buffering"""
@@ -633,7 +626,7 @@ class CameraCapture:
                 ret, frame = self.cap.read()
 
                 if not ret:
-                    print("⚠️ Failed to capture frame")
+                    gui_logger.warn(" Failed to capture frame")
                     self.frames_dropped += 1
                     continue
 
@@ -699,7 +692,7 @@ class CameraCapture:
                     time.sleep(sleep_time)
 
         except Exception as e:
-            print(f"❌ Error in capture loop: {e}")
+            gui_logger.error(f" Error in capture loop: {e}")
         finally:
             self.is_capturing = False
 
@@ -754,10 +747,10 @@ class CameraCapture:
                 except queue.Empty:
                     continue  # Timeout, check if still processing
                 except Exception as e:
-                    print(f"⚠️ Error in processing loop: {e}")
+                    gui_logger.warn(f" Error in processing loop: {e}")
 
         except Exception as e:
-            print(f"❌ Error in processing loop: {e}")
+            gui_logger.error(f" Error in processing loop: {e}")
         finally:
             self.is_processing = False
 
@@ -787,7 +780,7 @@ class CameraCapture:
             return motion_level
 
         except Exception as e:
-            print(f"⚠️ Motion detection error: {e}")
+            gui_logger.warn(f" Motion detection error: {e}")
             return 0.0
 
     def _detect_objects_yolo(self, frame: np.ndarray) -> List[Dict]:
@@ -828,7 +821,7 @@ class CameraCapture:
             return detections
 
         except Exception as e:
-            print(f"⚠️ YOLO object detection error: {e}")
+            gui_logger.warn(f" YOLO object detection error: {e}")
             return []
 
     def _detect_faces_yolo(self, frame: np.ndarray) -> List[Dict]:
@@ -857,7 +850,7 @@ class CameraCapture:
             return faces
 
         except Exception as e:
-            print(f"⚠️ YOLO face detection error: {e}")
+            gui_logger.warn(f" YOLO face detection error: {e}")
             return []
 
     def _detect_faces_opencv(self, frame: np.ndarray) -> List[Dict]:
@@ -887,7 +880,7 @@ class CameraCapture:
             return faces
 
         except Exception as e:
-            print(f"⚠️ OpenCV face detection error: {e}")
+            gui_logger.warn(f" OpenCV face detection error: {e}")
             return []
 
     def _analyze_frame_with_vision(self, frame: np.ndarray):
@@ -910,7 +903,7 @@ class CameraCapture:
                         self.on_ocr_text(result['extracted_text'])
 
             except Exception as e:
-                print(f"⚠️ Vision analysis error: {e}")
+                gui_logger.warn(f" Vision analysis error: {e}")
 
         # Run analysis in background thread
         import threading
@@ -924,7 +917,7 @@ class CameraCapture:
     def capture_image(self) -> Optional[np.ndarray]:
         """Capture a single image"""
         if not self.cap or not self.cap.isOpened():
-            print("❌ Camera not available")
+            gui_logger.error(" Camera not available")
             return None
         
         try:
@@ -936,14 +929,13 @@ class CameraCapture:
                 elif self.config.format == "GRAY":
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 
-                print("📸 Image captured")
                 return frame
             else:
-                print("❌ Failed to capture image")
+                gui_logger.error(" Failed to capture image")
                 return None
                 
         except Exception as e:
-            print(f"❌ Error capturing image: {e}")
+            gui_logger.error(f" Error capturing image: {e}")
             return None
     
     def save_image(self, filename: str, frame: Optional[np.ndarray] = None) -> bool:
@@ -961,14 +953,13 @@ class CameraCapture:
             
             success = cv2.imwrite(filename, frame)
             if success:
-                print(f"📸 Image saved to {filename}")
             else:
-                print(f"❌ Failed to save image to {filename}")
+                gui_logger.error(f" Failed to save image to {filename}")
             
             return success
             
         except Exception as e:
-            print(f"❌ Error saving image: {e}")
+            gui_logger.error(f" Error saving image: {e}")
             return False
     
     def frame_to_base64(self, frame: Optional[np.ndarray] = None) -> Optional[str]:
@@ -993,7 +984,7 @@ class CameraCapture:
             return base64_str
 
         except Exception as e:
-            print(f"❌ Error converting frame to base64: {e}")
+            gui_logger.error(f" Error converting frame to base64: {e}")
             return None
 
     def get_frame_buffer(self) -> List[np.ndarray]:
@@ -1021,7 +1012,7 @@ class CameraCapture:
         frames = []
 
         if not self.cap or not self.cap.isOpened():
-            print("❌ Camera not available for burst capture")
+            gui_logger.error(" Camera not available for burst capture")
             return frames
 
         try:
@@ -1029,18 +1020,16 @@ class CameraCapture:
                 frame = self.capture_image()
                 if frame is not None:
                     frames.append(frame)
-                    print(f"📸 Burst capture {i+1}/{count}")
                 else:
-                    print(f"❌ Failed to capture burst frame {i+1}")
+                    gui_logger.error(f" Failed to capture burst frame {i+1}")
 
                 if i < count - 1:  # Don't sleep after last frame
                     time.sleep(interval)
 
-            print(f"📸 Burst capture completed: {len(frames)}/{count} frames")
             return frames
 
         except Exception as e:
-            print(f"❌ Error in burst capture: {e}")
+            gui_logger.error(f" Error in burst capture: {e}")
             return frames
 
     def save_frame_buffer(self, directory: str, prefix: str = "frame") -> int:
@@ -1056,11 +1045,10 @@ class CameraCapture:
                 if self.save_image(filename, frame):
                     saved_count += 1
 
-            print(f"📸 Saved {saved_count}/{len(frames)} frames to {directory}")
             return saved_count
 
         except Exception as e:
-            print(f"❌ Error saving frame buffer: {e}")
+            gui_logger.error(f" Error saving frame buffer: {e}")
             return 0
 
     def create_timelapse_frames(self, duration_seconds: int, interval_seconds: float = 1.0) -> List[np.ndarray]:
@@ -1069,7 +1057,6 @@ class CameraCapture:
         start_time = time.time()
         next_capture = start_time
 
-        print(f"📹 Starting timelapse capture for {duration_seconds} seconds...")
 
         try:
             while time.time() - start_time < duration_seconds:
@@ -1080,17 +1067,15 @@ class CameraCapture:
                     if frame is not None:
                         frames.append(frame)
                         elapsed = current_time - start_time
-                        print(f"📸 Timelapse frame {len(frames)} at {elapsed:.1f}s")
 
                     next_capture = current_time + interval_seconds
 
                 time.sleep(0.1)  # Small sleep to prevent busy waiting
 
-            print(f"📹 Timelapse capture completed: {len(frames)} frames")
             return frames
 
         except Exception as e:
-            print(f"❌ Error in timelapse capture: {e}")
+            gui_logger.error(f" Error in timelapse capture: {e}")
             return frames
 
     def get_motion_frames(self, threshold: float = None) -> List[Tuple[np.ndarray, float]]:
@@ -1110,11 +1095,10 @@ class CameraCapture:
                 if motion_level > threshold:
                     motion_frames.append((frames[i], motion_level))
 
-            print(f"🎯 Found {len(motion_frames)} frames with motion > {threshold}")
             return motion_frames
 
         except Exception as e:
-            print(f"❌ Error getting motion frames: {e}")
+            gui_logger.error(f" Error getting motion frames: {e}")
             return motion_frames
 
     def annotate_frame_with_faces(self, frame: np.ndarray) -> np.ndarray:
@@ -1134,7 +1118,7 @@ class CameraCapture:
             return annotated_frame
 
         except Exception as e:
-            print(f"❌ Error annotating frame: {e}")
+            gui_logger.error(f" Error annotating frame: {e}")
             return frame
     
     def get_camera_info(self) -> Dict[str, any]:
@@ -1183,45 +1167,10 @@ class CameraCapture:
         self.recording_buffer.clear()
         self.current_frame = None
 
-        print("📹 Camera resources cleaned up")
     
     def __del__(self):
         """Destructor to ensure cleanup"""
         self.cleanup()
 
 
-# Test function for standalone testing
-def test_camera_capture():
-    """Test camera capture functionality"""
-    print("📹 Testing camera capture...")
-    
-    try:
-        capture = CameraCapture()
-        
-        # Get available cameras
-        cameras = capture.get_available_cameras()
-        print(f"Available cameras: {len(cameras)}")
-        for camera in cameras:
-            print(f"  - Camera {camera['index']}: {camera['width']}x{camera['height']}")
-        
-        # Test single image capture
-        frame = capture.capture_image()
-        if frame is not None:
-            print(f"Captured image: {frame.shape}")
-            
-            # Save test image
-            capture.save_image("test_capture.jpg", frame)
-        
-        # Test camera info
-        info = capture.get_camera_info()
-        print(f"Camera info: {info}")
-        
-        capture.cleanup()
-        print("✅ Camera capture test completed")
-        
-    except Exception as e:
-        print(f"❌ Camera capture test failed: {e}")
 
-
-if __name__ == "__main__":
-    test_camera_capture()

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-proto-browser", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend proto_browser.py - system control component
@@ -21,6 +25,7 @@ Features:
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GObject, Gio, GLib
@@ -72,7 +77,6 @@ class ProtoBrowser(Gtk.Box):
         self._setup_tree_view()
         self._setup_context_menu()
 
-        print("📁 Proto browser widget initialized")
 
     def _setup_mode_selector(self):
         """Create mode selector for file vs network discovery"""
@@ -205,7 +209,6 @@ class ProtoBrowser(Gtk.Box):
     
     def populate_files(self, proto_files):
         """Populate tree view with proto files"""
-        print(f"📁 Populating {len(proto_files)} proto files")
         
         # Clear existing data
         self.tree_store.clear()
@@ -275,11 +278,9 @@ class ProtoBrowser(Gtk.Box):
         # Cache services for this file
         self.current_services[file_path] = services
         
-        print(f"🔧 Added {len(services)} services to tree")
 
     def populate_network_services(self, network_services):
         """Add network-discovered services to the tree"""
-        print(f"🌐 Populating {len(network_services)} network services")
 
         # Clear existing data
         self.tree_store.clear()
@@ -339,7 +340,6 @@ class ProtoBrowser(Gtk.Box):
 
         # Expand all nodes
         self.tree_view.expand_all()
-        print(f"🌐 Added {len(network_services)} network services to tree")
 
     def _on_mode_changed(self, dropdown, param):
         """Handle mode selection change"""
@@ -348,7 +348,6 @@ class ProtoBrowser(Gtk.Box):
 
         if selected < len(modes):
             mode = modes[selected]
-            print(f"🔄 Switched to mode: {mode}")
 
             if "Network" in mode:
                 # Enable network-related buttons
@@ -361,10 +360,10 @@ class ProtoBrowser(Gtk.Box):
     def _on_scan_network_clicked(self, button):
         """Handle network scan button click"""
         if not self.network_scanner:
-            print("❌ Network scanner not available")
+            gui_logger.error(" Network scanner not available")
             return
 
-        print("🌐 Starting network service discovery...")
+        gui_logger.info(" Starting network service discovery...", {"event_type": "network_ready"})
 
         # Disable button during scan
         button.set_sensitive(False)
@@ -392,15 +391,14 @@ class ProtoBrowser(Gtk.Box):
                 # Update button with count
                 count = len(network_services)
                 button.set_label(f"✅ Found {count} services")
-                print(f"✅ Network scan found {count} services")
             else:
                 error = result.get("error", "Unknown error")
                 button.set_label("❌ Scan failed")
-                print(f"❌ Network scan failed: {error}")
+                gui_logger.error(f" Network scan failed: {error}")
 
         except Exception as e:
             button.set_label("❌ Scan failed")
-            print(f"❌ Network scan error: {e}")
+            gui_logger.error(f" Network scan error: {e}")
 
         finally:
             # Re-enable button
@@ -432,18 +430,17 @@ class ProtoBrowser(Gtk.Box):
                                 'reflection_available': True,
                                 'services': definitions.get('services', [])
                             }
-                            print(f"✅ Enhanced {service_info['name']} with reflection data")
 
                 except Exception as e:
-                    print(f"⚠️ Reflection enhancement failed for {service_info['name']}: {e}")
+                    gui_logger.warn(f" Reflection enhancement failed for {service_info['name']}: {e}")
 
     def _on_test_reflection_clicked(self, button):
         """Handle reflection test button click"""
         if not self.reflection_client:
-            print("❌ Reflection client not available")
+            gui_logger.error(" Reflection client not available")
             return
 
-        print("🔍 Testing reflection on discovered services...")
+        gui_logger.debug(" Testing reflection on discovered services...", {"event_type": "scanning"})
 
         # Test reflection on all discovered network services
         for service_key, service_info in self.network_services.items():
@@ -453,7 +450,6 @@ class ProtoBrowser(Gtk.Box):
                 )
 
                 status = "✅" if result.get('supported') else "❌"
-                print(f"{status} {service_info['name']} ({service_info['endpoint']}) - Reflection: {result.get('supported', False)}")
 
     def _on_search_changed(self, search_entry):
         """Handle search text changes"""
@@ -461,7 +457,6 @@ class ProtoBrowser(Gtk.Box):
         
         if search_text:
             # TODO: Implement filtering
-            print(f"🔍 Searching for: {search_text}")
         else:
             # Clear filter
             pass
@@ -479,7 +474,6 @@ class ProtoBrowser(Gtk.Box):
         
         if item_type == "file":
             # Proto file selected - emit signal to parse services
-            print(f"📄 Selected proto file: {file_path}")
             self.emit("proto-file-selected", file_path)
         
         elif item_type == "method":
@@ -489,7 +483,6 @@ class ProtoBrowser(Gtk.Box):
             request_type = model.get_value(tree_iter, 6)
             response_type = model.get_value(tree_iter, 7)
 
-            print(f"⚡ Selected method: {service_name}.{method_name}")
             self.emit("service-method-selected", service_name, method_name, request_type, response_type)
 
         elif item_type == "network_service":
@@ -499,7 +492,6 @@ class ProtoBrowser(Gtk.Box):
             port = int(model.get_value(tree_iter, 5))
             host = model.get_value(tree_iter, 6)
 
-            print(f"🌐 Selected network service: {service_name} at {endpoint}")
             self.emit("network-service-selected", host, port, service_name)
 
         elif item_type == "network_method":
@@ -510,7 +502,6 @@ class ProtoBrowser(Gtk.Box):
             response_type = model.get_value(tree_iter, 7)
             endpoint = model.get_value(tree_iter, 3)
 
-            print(f"⚡ Selected network method: {service_name}.{method_name} at {endpoint}")
             self.emit("service-method-selected", service_name, method_name, request_type, response_type)
     
     def _on_row_activated(self, tree_view, path, column):
@@ -558,7 +549,6 @@ class ProtoBrowser(Gtk.Box):
             # Copy to clipboard
             clipboard = self.get_clipboard()
             clipboard.set_text(file_path, -1)
-            print(f"📋 Copied path: {file_path}")
     
     def _on_open_editor(self, action, param):
         """Handle open in editor context menu action"""
@@ -568,7 +558,6 @@ class ProtoBrowser(Gtk.Box):
         if tree_iter:
             file_path = model.get_value(tree_iter, 3)
             # TODO: Open in external editor
-            print(f"Open in editor: {file_path}")
 
     def refresh_proto_files(self, proto_files):
         """Refresh proto files from build system integration"""
@@ -611,7 +600,6 @@ class ProtoBrowser(Gtk.Box):
 
         # Expand all directories
         self.proto_tree.expand_all()
-        print(f"Refreshed proto browser with {len(proto_files)} files")
 
 
 # Register the widget type

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool.py - system control component
@@ -15,6 +19,7 @@ Shows CPU, memory, disk usage, and service status.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GLib
@@ -23,7 +28,7 @@ try:
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
-    print("⚠️ psutil not available - install with: pip install psutil")
+    gui_logger.warn(" psutil not available - install with: pip install psutil")
 
 import time
 
@@ -106,7 +111,7 @@ class SystemMonitorTool(BaseTool):
         self._add_service_status("Database", "running", "Port 5432")
         self._add_service_status("Cache", "stopped", "Port 6379")
         
-        print("✅ System Monitor widget created")
+        gui_logger.info(" System Monitor widget created", {"status": "success"})
         return main_box
     
     def _create_metric_card(self, title, value, description):
@@ -190,13 +195,11 @@ class SystemMonitorTool(BaseTool):
         """Start monitoring when tool becomes active"""
         super().on_activate()
         self.start_monitoring()
-        print("🏥 System Monitor activated - monitoring started")
     
     def on_deactivate(self):
         """Stop monitoring when tool becomes inactive"""
         super().on_deactivate()
         self.stop_monitoring()
-        print("🏥 System Monitor deactivated - monitoring stopped")
     
     def start_monitoring(self):
         """Start real-time monitoring"""
@@ -243,7 +246,7 @@ class SystemMonitorTool(BaseTool):
                 self.network_card.value_label.set_text("N/A")
 
         except Exception as e:
-            print(f"❌ Error updating metrics: {e}")
+            gui_logger.error(f" Error updating metrics: {e}")
         
         # Schedule next update
         self.update_timeout = GLib.timeout_add_seconds(2, self._update_metrics)
@@ -261,5 +264,4 @@ class SystemMonitorTool(BaseTool):
     
     def _on_refresh_clicked(self, button):
         """Handle refresh button click"""
-        print("🔄 Refreshing system metrics...")
         self._update_metrics()

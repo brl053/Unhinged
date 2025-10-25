@@ -17,15 +17,16 @@ Implements health.proto client for service discovery:
 """
 
 import grpc
-import logging
 from typing import Dict, List, Optional, Tuple
 import time
+from unhinged_events import create_service_logger
 
 # Health proto imports
 from health import health_pb2
 from health import health_pb2_grpc
 
-logger = logging.getLogger(__name__)
+# Initialize event logger
+events = create_service_logger("health-client", "1.0.0")
 
 
 class HealthClient:
@@ -71,13 +72,13 @@ class HealthClient:
                 }
                 
         except grpc.RpcError as e:
-            logger.warning(f"gRPC error for {service_name}: {e.code()}")
+            events.warn("gRPC health check error", {"service": service_name, "code": str(e.code())})
             return False, {
                 "error": f"gRPC error: {e.code()}",
                 "details": str(e.details()) if e.details() else "Connection failed"
             }
         except Exception as e:
-            logger.error(f"Unexpected error for {service_name}: {e}")
+            events.error("Health check connection error", exception=e, metadata={"service": service_name})
             return False, {"error": f"Connection error: {str(e)}"}
     
     def get_service_diagnostics(self, service_name: str, include_metrics: bool = True) -> Tuple[bool, Dict]:
@@ -123,13 +124,13 @@ class HealthClient:
                 }
                 
         except grpc.RpcError as e:
-            logger.warning(f"gRPC diagnostics error for {service_name}: {e.code()}")
+            events.warn("gRPC diagnostics error", {"service": service_name, "code": str(e.code())})
             return False, {
                 "error": f"gRPC error: {e.code()}",
                 "details": str(e.details()) if e.details() else "Connection failed"
             }
         except Exception as e:
-            logger.error(f"Unexpected diagnostics error for {service_name}: {e}")
+            events.error("Diagnostics connection error", exception=e, metadata={"service": service_name})
             return False, {"error": f"Connection error: {str(e)}"}
     
     def check_all_services(self) -> Dict[str, Dict]:

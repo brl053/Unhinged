@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-request-builder", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend request_builder.py - system control component
@@ -22,6 +26,7 @@ Features:
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GObject, GLib
@@ -85,7 +90,7 @@ class RequestBuilder(Gtk.Box):
         # Connect signals after all widgets are created to avoid AttributeError
         self.service_dropdown.connect("notify::selected", self._on_service_changed)
 
-        print("🔧 Intelligent request builder widget initialized")
+        gui_logger.debug(" Intelligent request builder widget initialized", {"event_type": "configuration"})
     
     def _setup_method_url_row(self):
         """Create intelligent service selection and method configuration"""
@@ -319,7 +324,6 @@ class RequestBuilder(Gtk.Box):
         sample_body = f'{{\n  "// Sample request for {request_type}": "value"\n}}'
         self.body_textview.get_buffer().set_text(sample_body)
         
-        print(f"🔧 Populated gRPC method: {service_name}.{method_name}")
         self._emit_request_ready()
 
     def populate_network_service(self, host, port, service_name):
@@ -348,7 +352,6 @@ class RequestBuilder(Gtk.Box):
         sample_body = f'{{\n  "// Request for {service_name} at {host}:{port}": "value"\n}}'
         self.body_textview.get_buffer().set_text(sample_body)
 
-        print(f"🌐 Populated network service: {service_name} at {host}:{port}")
         self._emit_request_ready()
 
     def update_network_services(self, network_services):
@@ -356,7 +359,6 @@ class RequestBuilder(Gtk.Box):
         self.network_services = network_services
         self.schema_validator.update_service_schemas(network_services)
         self._populate_service_dropdown()
-        print(f"🔄 Updated request builder with {len(network_services)} network services")
 
     def _populate_service_dropdown(self):
         """Populate service dropdown with discovered services"""
@@ -421,7 +423,6 @@ class RequestBuilder(Gtk.Box):
             else:
                 self._hide_service_methods()
 
-            print(f"🎯 Selected service: {service_info['name']} at {service_info['endpoint']}")
 
     def _populate_service_methods(self, services):
         """Populate service methods dropdown"""
@@ -450,7 +451,6 @@ class RequestBuilder(Gtk.Box):
             self.service_method_dropdown.set_selected(0)
             self.service_method_dropdown.set_visible(True)
 
-            print(f"🔧 Populated {len(methods)} service methods")
         else:
             self._hide_service_methods()
 
@@ -469,7 +469,6 @@ class RequestBuilder(Gtk.Box):
             # Generate intelligent request template
             self._generate_request_template(method_info)
 
-            print(f"⚡ Selected method: {method_info['service_name']}.{method_info['method_name']}")
 
     def _generate_request_template(self, method_info):
         """Generate intelligent request template based on method info"""
@@ -554,7 +553,6 @@ Content-Type: application/grpc"""
 
     def _on_refresh_services_clicked(self, button):
         """Handle refresh services button click"""
-        print("🔄 Refreshing network services...")
         # This would trigger a refresh in the parent tool
         # For now, just indicate the action
         button.set_sensitive(False)

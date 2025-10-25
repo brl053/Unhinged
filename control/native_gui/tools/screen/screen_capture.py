@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-screen-capture", "1.0.0")
+
 """
 Screen Capture Module for Screenshots and Screen Recording
 Provides fast screen capture using mss with OCR and vision AI integration.
@@ -13,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import base64
 import json
+from unhinged_events import create_gui_logger
 
 
 @dataclass
@@ -42,9 +47,7 @@ class ScreenCapture:
         self.screenshots_taken = 0
         self.total_capture_time = 0.0
         
-        print(f"📺 Screen capture initialized: {len(self.monitors)-1} monitors detected")
         for i, monitor in enumerate(self.monitors[1:], 1):  # Skip "All monitors"
-            print(f"   Monitor {i}: {monitor['width']}x{monitor['height']} at ({monitor['left']}, {monitor['top']})")
     
     def get_monitors(self) -> List[Dict]:
         """Get available monitors"""
@@ -80,7 +83,7 @@ class ScreenCapture:
                 # Use monitor
                 monitor_index = monitor if monitor is not None else self.config.monitor
                 if monitor_index >= len(self.monitors):
-                    print(f"❌ Monitor {monitor_index} not available")
+                    gui_logger.error(f" Monitor {monitor_index} not available")
                     return None
                 
                 capture_area = self.monitors[monitor_index]
@@ -112,7 +115,7 @@ class ScreenCapture:
             return img
             
         except Exception as e:
-            print(f"❌ Screenshot capture failed: {e}")
+            gui_logger.error(f" Screenshot capture failed: {e}")
             return None
     
     def _auto_crop_content(self, img: np.ndarray) -> np.ndarray:
@@ -141,7 +144,7 @@ class ScreenCapture:
             return img
             
         except Exception as e:
-            print(f"⚠️ Auto-crop failed: {e}")
+            gui_logger.warn(f" Auto-crop failed: {e}")
             return img
     
     def save_screenshot(self, filename: str, monitor: Optional[int] = None, 
@@ -161,11 +164,10 @@ class ScreenCapture:
             else:
                 cv2.imwrite(filename, img)
             
-            print(f"📸 Screenshot saved: {filename}")
             return True
             
         except Exception as e:
-            print(f"❌ Failed to save screenshot: {e}")
+            gui_logger.error(f" Failed to save screenshot: {e}")
             return False
     
     def screenshot_to_base64(self, monitor: Optional[int] = None, 
@@ -184,7 +186,7 @@ class ScreenCapture:
             return base64_str
             
         except Exception as e:
-            print(f"❌ Base64 encoding failed: {e}")
+            gui_logger.error(f" Base64 encoding failed: {e}")
             return None
     
     def enable_ocr(self, vision_client=None):
@@ -194,20 +196,19 @@ class ScreenCapture:
                 from ..vision.vision_client import VisionClient
                 self.vision_client = VisionClient()
             except Exception as e:
-                print(f"❌ Failed to initialize vision client: {e}")
+                gui_logger.error(f" Failed to initialize vision client: {e}")
                 return False
         else:
             self.vision_client = vision_client
         
         self.ocr_enabled = True
-        print("📺 OCR enabled for screen capture")
         return True
     
     def extract_text_from_screen(self, monitor: Optional[int] = None, 
                                 region: Optional[Tuple[int, int, int, int]] = None) -> Optional[str]:
         """Extract text from screen using OCR"""
         if not self.ocr_enabled or not self.vision_client:
-            print("❌ OCR not enabled")
+            gui_logger.error(" OCR not enabled")
             return None
         
         try:
@@ -225,14 +226,13 @@ class ScreenCapture:
             
             if result.get('success') and result.get('extracted_text'):
                 text = result['extracted_text'].strip()
-                print(f"📺 Extracted {len(text)} characters from screen")
                 return text
             else:
-                print("⚠️ No text extracted from screen")
+                gui_logger.warn(" No text extracted from screen")
                 return None
                 
         except Exception as e:
-            print(f"❌ Screen OCR failed: {e}")
+            gui_logger.error(f" Screen OCR failed: {e}")
             return None
     
     def analyze_screen_content(self, prompt: str = "Describe what you see on this screen", 
@@ -240,7 +240,7 @@ class ScreenCapture:
                              region: Optional[Tuple[int, int, int, int]] = None) -> Optional[Dict]:
         """Analyze screen content using vision AI"""
         if not self.vision_client:
-            print("❌ Vision client not available")
+            gui_logger.error(" Vision client not available")
             return None
         
         try:
@@ -253,21 +253,20 @@ class ScreenCapture:
             result = self.vision_client.analyze_frame(img, prompt)
             
             if result.get('success'):
-                print(f"📺 Screen analysis: {result['description'][:100]}...")
                 return result
             else:
-                print(f"❌ Screen analysis failed: {result.get('error', 'Unknown error')}")
+                gui_logger.error(f" Screen analysis failed: {result.get('error', 'Unknown error')}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Screen analysis failed: {e}")
+            gui_logger.error(f" Screen analysis failed: {e}")
             return None
     
     def detect_ui_elements(self, monitor: Optional[int] = None, 
                           region: Optional[Tuple[int, int, int, int]] = None) -> Optional[List[Dict]]:
         """Detect UI elements on screen"""
         if not self.vision_client:
-            print("❌ Vision client not available")
+            gui_logger.error(" Vision client not available")
             return None
         
         try:
@@ -285,14 +284,13 @@ class ScreenCapture:
             
             if result.get('success') and result.get('ui_elements'):
                 ui_elements = result['ui_elements']
-                print(f"📺 Detected {len(ui_elements)} UI elements")
                 return ui_elements
             else:
-                print("⚠️ No UI elements detected")
+                gui_logger.warn(" No UI elements detected")
                 return []
                 
         except Exception as e:
-            print(f"❌ UI element detection failed: {e}")
+            gui_logger.error(f" UI element detection failed: {e}")
             return None
     
     def capture_window_by_title(self, window_title: str) -> Optional[np.ndarray]:
@@ -308,11 +306,11 @@ class ScreenCapture:
             elif system == "Darwin":  # macOS
                 return self._capture_window_macos(window_title)
             else:
-                print(f"⚠️ Window capture not supported on {system}")
+                gui_logger.warn(f" Window capture not supported on {system}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Window capture failed: {e}")
+            gui_logger.error(f" Window capture failed: {e}")
             return None
     
     def _capture_window_linux(self, window_title: str) -> Optional[np.ndarray]:
@@ -325,7 +323,7 @@ class ScreenCapture:
                                   capture_output=True, text=True)
             
             if result.returncode != 0:
-                print(f"⚠️ Window '{window_title}' not found")
+                gui_logger.warn(f" Window '{window_title}' not found")
                 return None
             
             # Extract window geometry
@@ -348,19 +346,19 @@ class ScreenCapture:
             return None
             
         except Exception as e:
-            print(f"❌ Linux window capture failed: {e}")
+            gui_logger.error(f" Linux window capture failed: {e}")
             return None
     
     def _capture_window_windows(self, window_title: str) -> Optional[np.ndarray]:
         """Capture window on Windows"""
         # Would need pywin32 for full implementation
-        print("⚠️ Windows window capture not implemented")
+        gui_logger.warn(" Windows window capture not implemented")
         return None
     
     def _capture_window_macos(self, window_title: str) -> Optional[np.ndarray]:
         """Capture window on macOS"""
         # Would need PyObjC for full implementation
-        print("⚠️ macOS window capture not implemented")
+        gui_logger.warn(" macOS window capture not implemented")
         return None
     
     def get_capture_stats(self) -> Dict:
@@ -386,25 +384,21 @@ class ScreenCapture:
         if self.sct:
             self.sct.close()
         
-        print("📺 Screen capture cleaned up")
 
 
 # Test function
 def test_screen_capture():
     """Test screen capture functionality"""
-    print("📺 Testing screen capture...")
     
     try:
         capture = ScreenCapture()
         
         # Get monitors
         monitors = capture.get_monitors()
-        print(f"Available monitors: {len(monitors)}")
         
         # Take screenshot
         img = capture.capture_screenshot()
         if img is not None:
-            print(f"Screenshot captured: {img.shape}")
             
             # Save test screenshot
             capture.save_screenshot("test_screenshot.jpg")
@@ -413,17 +407,15 @@ def test_screen_capture():
         if capture.enable_ocr():
             text = capture.extract_text_from_screen()
             if text:
-                print(f"Extracted text: {text[:100]}...")
         
         # Get stats
         stats = capture.get_capture_stats()
-        print(f"Capture stats: {stats}")
         
         capture.cleanup()
-        print("✅ Screen capture test completed")
+        gui_logger.info(" Screen capture test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Screen capture test failed: {e}")
+        gui_logger.error(f" Screen capture test failed: {e}")
 
 
 if __name__ == "__main__":

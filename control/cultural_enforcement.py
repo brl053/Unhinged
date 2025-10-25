@@ -122,7 +122,6 @@ class ArchitecturalGuard:
         @llm-axiom Independence validation is mandatory before any operation
         @llm-contract Returns True if independent, raises IndependenceError if violated
         """
-        print("🔒 VALIDATING ARCHITECTURAL INDEPENDENCE...")
         
         self.violations = []
         
@@ -142,7 +141,6 @@ class ArchitecturalGuard:
                 "We are independent. We render natively. External browsers are forbidden."
             )
         
-        print("✅ INDEPENDENCE VALIDATED: All systems maintain cultural compliance")
         return True
     
     def _validate_imports(self):
@@ -184,7 +182,6 @@ class ArchitecturalGuard:
     def _validate_processes(self):
         """Check for forbidden browser processes"""
         if not PSUTIL_AVAILABLE:
-            print("⚠️ Process monitoring unavailable (psutil not installed)")
             return
 
         try:
@@ -222,18 +219,14 @@ class CulturalEnforcer:
         try:
             return self.guard.validate_independence()
         except IndependenceError as e:
-            print(f"\n{e}")
-            print("\n🔄 CULTURAL REINFORCEMENT: Independence is our way.")
             raise
     
     def cultural_health_check(self) -> bool:
         """Validate cultural compliance"""
         try:
             self.enforce_culture()
-            print("✅ CULTURAL HEALTH: INDEPENDENCE MAINTAINED")
             return True
         except IndependenceError:
-            print("❌ CULTURAL HEALTH: VIOLATIONS DETECTED")
             return False
 
 
@@ -264,12 +257,8 @@ def launch_external_browser():
 
 
 if __name__ == "__main__":
-    print("🔒 UNHINGED CULTURAL ENFORCEMENT")
-    print("🎯 Validating independence principles...")
     
     try:
         validate_cultural_compliance()
-        print("\n🎉 CULTURAL COMPLIANCE: All systems maintain independence!")
     except IndependenceError as e:
-        print(f"\n{e}")
         sys.exit(1)

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-vision-client", "1.0.0")
+
 """
 Vision Service Client for AI-powered image analysis
 Integrates with vision service via gRPC for object detection, OCR, and image understanding.
@@ -12,6 +16,7 @@ from typing import Optional, Dict, List, Any
 from pathlib import Path
 import numpy as np
 import cv2
+from unhinged_events import create_gui_logger
 
 # Add the generated clients to the path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent / "generated" / "python" / "clients"))
@@ -20,9 +25,9 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent / "generat
 try:
     from unhinged_proto_clients import vision_service_pb2, vision_service_pb2_grpc, common_pb2
     VISION_PROTO_AVAILABLE = True
-    print("🎯 Vision protobuf clients available")
+    gui_logger.info(" Vision protobuf clients available", {"event_type": "activation"})
 except ImportError as e:
-    print(f"⚠️ Vision protobuf clients not available: {e}")
+    gui_logger.warn(f" Vision protobuf clients not available: {e}")
     VISION_PROTO_AVAILABLE = False
 
 
@@ -36,13 +41,12 @@ class VisionClient:
         self.stub = None
         self.available_models = []
         
-        print(f"🎯 VisionClient initialized for {host}:{port}")
         self._setup_grpc_connection()
     
     def _setup_grpc_connection(self):
         """Setup gRPC connection to vision service"""
         if not VISION_PROTO_AVAILABLE:
-            print("❌ Vision protobuf clients not available")
+            gui_logger.error(" Vision protobuf clients not available")
             return
         
         try:
@@ -59,19 +63,18 @@ class VisionClient:
             health_response = self.stub.GetHealth(vision_service_pb2.Empty())
             
             if health_response.healthy:
-                print(f"✅ Connected to vision service: {health_response.status}")
                 
                 # Load available models
                 self._load_available_models()
             else:
-                print(f"⚠️ Vision service unhealthy: {health_response.status}")
+                gui_logger.warn(f" Vision service unhealthy: {health_response.status}")
                 
         except grpc.RpcError as e:
-            print(f"❌ gRPC connection failed: {e}")
+            gui_logger.error(f" gRPC connection failed: {e}")
             self.channel = None
             self.stub = None
         except Exception as e:
-            print(f"❌ Vision service connection error: {e}")
+            gui_logger.error(f" Vision service connection error: {e}")
             self.channel = None
             self.stub = None
     
@@ -95,13 +98,11 @@ class VisionClient:
                 }
                 self.available_models.append(model)
             
-            print(f"🎯 Loaded {len(self.available_models)} vision models")
             for model in self.available_models[:3]:  # Show first 3
                 status = "✅" if model['available'] else "❌"
-                print(f"   {status} {model['display_name']}: {model['description']}")
                 
         except Exception as e:
-            print(f"⚠️ Failed to load models: {e}")
+            gui_logger.warn(f" Failed to load models: {e}")
     
     def is_connected(self) -> bool:
         """Check if connected to vision service"""
@@ -227,7 +228,7 @@ class VisionClient:
             }
             
         except Exception as e:
-            print(f"⚠️ Failed to get model metrics: {e}")
+            gui_logger.warn(f" Failed to get model metrics: {e}")
             return {}
     
     def get_service_info(self) -> Dict[str, Any]:
@@ -261,20 +262,19 @@ class VisionClient:
             self.channel.close()
             self.channel = None
             self.stub = None
-            print("🎯 Vision service connection closed")
+            gui_logger.info(" Vision service connection closed", {"event_type": "activation"})
 
 
 # Test function
 def test_vision_client():
     """Test vision client functionality"""
-    print("🎯 Testing vision client...")
+    gui_logger.info(" Testing vision client...", {"event_type": "activation"})
     
     try:
         client = VisionClient()
         
         # Test connection
         info = client.get_service_info()
-        print(f"Service info: {info}")
         
         # Test with dummy image if connected
         if client.is_connected():
@@ -283,13 +283,12 @@ def test_vision_client():
             cv2.putText(test_image, 'TEST', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
             
             result = client.analyze_frame(test_image, "What do you see?")
-            print(f"Analysis result: {result}")
         
         client.close()
-        print("✅ Vision client test completed")
+        gui_logger.info(" Vision client test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Vision client test failed: {e}")
+        gui_logger.error(f" Vision client test failed: {e}")
 
 
 if __name__ == "__main__":

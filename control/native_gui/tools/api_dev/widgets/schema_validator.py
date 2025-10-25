@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-schema-validator", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend schema_validator.py - system control component
@@ -24,6 +28,7 @@ Features:
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
+from unhinged_events import create_gui_logger
 
 
 class SchemaValidator:
@@ -38,7 +43,7 @@ class SchemaValidator:
         self.service_schemas = {}
         self.validation_cache = {}
         
-        print("🔍 Schema validator initialized")
+        gui_logger.debug(" Schema validator initialized", {"event_type": "scanning"})
     
     def update_service_schemas(self, network_services: Dict[str, Any]):
         """Update service schemas from network discovery"""
@@ -56,7 +61,6 @@ class SchemaValidator:
                             'source': 'reflection'
                         }
         
-        print(f"🔍 Updated schemas for {len(self.service_schemas)} services")
     
     def validate_request(self, service_name: str, method_name: str, request_body: str) -> Dict[str, Any]:
         """

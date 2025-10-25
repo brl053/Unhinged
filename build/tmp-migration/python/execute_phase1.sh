@@ -50,7 +50,7 @@ migrate_file() {
     if [ "$DRY_RUN" = "true" ]; then
         echo "   🔍 [DRY RUN] Would migrate $before_count print statements"
     else
-        python3 "$PROJECT_ROOT/libs/event-framework/migration_scripts/migrate_native_gui.py" \
+        python3 "$PROJECT_ROOT/build/tmp-migration/python/migrate_native_gui.py" \
                 "$PROJECT_ROOT/$file_path" --apply
         
         # Count print statements after migration

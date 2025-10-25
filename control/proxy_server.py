@@ -51,15 +51,11 @@ try:
     from health_checks import UnhingedHealthMonitor
     CONTROL_PLANE_AVAILABLE = True
 except ImportError:
-    logger.warning("Control plane modules not available")
     CONTROL_PLANE_AVAILABLE = False
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Initialize event logger
+from unhinged_events import create_service_logger
+events = create_service_logger("proxy-server", "1.0.0")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -85,9 +81,7 @@ system_controller = SystemController()
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 Unhinged Virtualization Boundary starting up...")
-    logger.info("🎯 This server represents the future Unhinged OS kernel interface")
-    logger.info("📋 Every endpoint here is a candidate for a future OS system call")
+    pass
 
 # Health check endpoint
 @app.get("/control/health")
@@ -116,13 +110,8 @@ async def start_service_tier(tier: str, request: Request):
     @llm-kernel-design Service tiers are fundamental OS abstractions in Unhinged
     """
     client_ip = request.client.host
-    logger.info(f"🚀 FUTURE_SYSCALL: sys_start_tier({tier}) requested from {client_ip}")
-    
     try:
         result = await system_controller.start_service_tier(tier)
-        
-        # Log for future OS development
-        logger.info(f"FUTURE_SYSCALL: sys_start_tier({tier}) -> {result.success}")
         
         response_data = {
             "operation": f"start_tier_{tier}",
@@ -148,7 +137,7 @@ async def start_service_tier(tier: str, request: Request):
         
     except Exception as e:
         # Future: This becomes kernel panic or error code
-        logger.error(f"KERNEL_ERROR: sys_start_tier({tier}) failed: {str(e)}")
+        events.error("Start tier failed", exception=e, metadata={"tier": tier})
         raise HTTPException(
             status_code=500, 
             detail={
@@ -167,12 +156,8 @@ async def stop_service_tier(tier: str, request: Request):
     @llm-future This becomes the foundation for Unhinged process lifecycle management
     """
     client_ip = request.client.host
-    logger.info(f"🛑 FUTURE_SYSCALL: sys_stop_tier({tier}) requested from {client_ip}")
-    
     try:
         result = await system_controller.stop_service_tier(tier)
-        
-        logger.info(f"FUTURE_SYSCALL: sys_stop_tier({tier}) -> {result.success}")
         
         return {
             "operation": f"stop_tier_{tier}",
@@ -189,7 +174,7 @@ async def stop_service_tier(tier: str, request: Request):
         }
         
     except Exception as e:
-        logger.error(f"KERNEL_ERROR: sys_stop_tier({tier}) failed: {str(e)}")
+        events.error("Stop tier failed", exception=e, metadata={"tier": tier})
         raise HTTPException(status_code=500, detail=f"Stop operation failed: {str(e)}")
 
 @app.get("/control/system/status")
@@ -199,7 +184,7 @@ async def get_system_status():
     
     @llm-future This endpoint design informs future OS status reporting
     """
-    logger.info("📊 FUTURE_SYSCALL: sys_get_system_info() requested")
+
     
     try:
         status = await system_controller.get_system_status()
@@ -218,7 +203,7 @@ async def get_system_status():
         }
         
     except Exception as e:
-        logger.error(f"KERNEL_ERROR: sys_get_system_info() failed: {str(e)}")
+        events.error("System info query failed", exception=e)
         raise HTTPException(status_code=500, detail=f"Status query failed: {str(e)}")
 
 # Virtualization Learning Endpoints
@@ -229,7 +214,7 @@ async def get_virtualization_insights():
     
     @llm-purpose Collect operational patterns that inform Unhinged OS kernel design
     """
-    logger.info("🔍 Virtualization insights requested")
+
     
     try:
         return {
@@ -243,7 +228,7 @@ async def get_virtualization_insights():
             }
         }
     except Exception as e:
-        logger.error(f"Failed to get virtualization insights: {str(e)}")
+        events.error("Virtualization insights query failed", exception=e)
         raise HTTPException(status_code=500, detail=f"Insights query failed: {str(e)}")
 
 @app.get("/control/virtualization/operation-history")
@@ -262,7 +247,7 @@ async def get_operation_history():
 # Error handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception: {str(exc)}")
+    events.error("Unhandled exception", exception=exc)
     return JSONResponse(
         status_code=500,
         content={
@@ -294,7 +279,7 @@ async def get_deployment_status():
             "timestamp": time.time()
         })
     except Exception as e:
-        logger.error(f"Deployment status error: {e}")
+        events.error("Deployment status error", exception=e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/control/health/status")
@@ -326,7 +311,7 @@ async def get_health_status():
             "timestamp": time.time()
         })
     except Exception as e:
-        logger.error(f"Health status error: {e}")
+        events.error("Health status error", exception=e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/control/config/services")
@@ -348,7 +333,7 @@ async def get_service_registry():
         else:
             raise HTTPException(status_code=404, detail="Service registry not found")
     except Exception as e:
-        logger.error(f"Service registry error: {e}")
+        events.error("Service registry error", exception=e)
         raise HTTPException(status_code=500, detail=str(e))
 
 def main():

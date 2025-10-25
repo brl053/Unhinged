@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-proto-scanner", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend proto_scanner.py - system control component
@@ -24,6 +28,7 @@ import os
 import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+from unhinged_events import create_gui_logger
 
 
 class ProtoScanner:
@@ -45,7 +50,6 @@ class ProtoScanner:
             self.project_root,
         ]
         
-        print(f"🔍 Proto scanner initialized for: {self.project_root}")
     
     def scan_proto_files(self) -> Dict[str, Any]:
         """
@@ -118,7 +122,7 @@ class ProtoScanner:
                         proto_files.append(file_info)
                         
         except Exception as e:
-            print(f"❌ Error scanning directory {directory}: {e}")
+            gui_logger.error(f" Error scanning directory {directory}: {e}")
         
         return proto_files
     

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type tool-plugin
 @llm-legend Input Capture Tool - Advanced input monitoring and analysis
@@ -12,6 +16,7 @@ import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
+from unhinged_events import create_gui_logger
 
 from ...core.tool_manager import BaseTool, ToolViewport
 from ...ui.components import Card, MetricCard, StatusIndicator, ComponentVariant
@@ -27,7 +32,7 @@ try:
     from ...tools.input.input_analyzer import InputAnalyzer, AnalysisConfig
     INPUT_CAPTURE_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Input capture modules not available: {e}")
+    gui_logger.warn(f" Input capture modules not available: {e}")
     INPUT_CAPTURE_AVAILABLE = False
 
 
@@ -74,9 +79,8 @@ class InputCaptureTool(BaseTool):
             self.input_monitor = InputMonitorWidget()
             self.hotkey_config = HotkeyConfigWidget()
             self.privacy_control = PrivacyControlWidget()
-            print("⌨️ Input capture components initialized")
         except Exception as e:
-            print(f"❌ Failed to initialize input capture components: {e}")
+            gui_logger.error(f" Failed to initialize input capture components: {e}")
     
     def _create_viewport_widget(self, viewport: ToolViewport):
         """
@@ -230,7 +234,6 @@ class InputCaptureTool(BaseTool):
         
         if self.input_monitor and INPUT_CAPTURE_AVAILABLE:
             # Could auto-start monitoring here if desired
-            print("⌨️ Input capture tool activated")
     
     def on_deactivate(self):
         """
@@ -244,7 +247,6 @@ class InputCaptureTool(BaseTool):
             # Stop monitoring if active
             if hasattr(self.input_monitor, 'is_monitoring') and self.input_monitor.is_monitoring:
                 self.input_monitor._on_stop_clicked(None)
-            print("⌨️ Input capture tool deactivated")
     
     def on_destroy(self):
         """
@@ -267,7 +269,6 @@ class InputCaptureTool(BaseTool):
             if hasattr(self.privacy_control, 'cleanup'):
                 self.privacy_control.cleanup()
         
-        print("⌨️ Input capture tool destroyed")
     
     def get_status_info(self) -> dict:
         """

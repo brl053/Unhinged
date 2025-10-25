@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-mobile-vision-tool", "1.0.0")
+
 """
 Mobile Vision Tool - Camera and screen capture interface
 Provides camera controls, screenshot capture, and vision AI integration for mobile interface.
@@ -13,6 +17,7 @@ import threading
 import time
 from typing import Optional, Dict, List
 from pathlib import Path
+from unhinged_events import create_gui_logger
 
 # Import vision modules
 try:
@@ -22,7 +27,7 @@ try:
     from .image_analysis import ImageAnalysisPipeline, AnalysisConfig
     VISION_MODULES_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Vision modules not available: {e}")
+    gui_logger.warn(f" Vision modules not available: {e}")
     VISION_MODULES_AVAILABLE = False
 
 
@@ -508,7 +513,7 @@ class MobileVisionTool(Adw.Bin):
             self._load_available_cameras()
             
         except Exception as e:
-            print(f"❌ Failed to initialize vision components: {e}")
+            gui_logger.error(f" Failed to initialize vision components: {e}")
             self._update_status(f"Initialization failed: {e}")
     
     def _load_available_cameras(self):
@@ -534,7 +539,7 @@ class MobileVisionTool(Adw.Bin):
                     self._update_status("No cameras found")
                     
             except Exception as e:
-                print(f"⚠️ Camera detection failed: {e}")
+                gui_logger.warn(f" Camera detection failed: {e}")
                 self._update_status("Camera detection failed")
     
     def _on_camera_toggle(self, switch, pspec):
@@ -577,7 +582,7 @@ class MobileVisionTool(Adw.Bin):
                 self.camera_switch.set_active(False)
                 
         except Exception as e:
-            print(f"❌ Camera start failed: {e}")
+            gui_logger.error(f" Camera start failed: {e}")
             self._update_status(f"Camera error: {e}")
             self.camera_switch.set_active(False)
     
@@ -594,7 +599,7 @@ class MobileVisionTool(Adw.Bin):
             self._update_status("Camera stopped")
             
         except Exception as e:
-            print(f"❌ Camera stop failed: {e}")
+            gui_logger.error(f" Camera stop failed: {e}")
     
     def _on_camera_frame(self, frame: np.ndarray):
         """Handle new camera frame"""
@@ -634,7 +639,7 @@ class MobileVisionTool(Adw.Bin):
             GLib.idle_add(self._update_camera_preview, pixbuf)
 
         except Exception as e:
-            print(f"⚠️ Frame processing error: {e}")
+            gui_logger.warn(f" Frame processing error: {e}")
 
     def _process_frame_detections(self, frame: np.ndarray):
         """Process frame for object detections"""
@@ -653,7 +658,7 @@ class MobileVisionTool(Adw.Bin):
                 GLib.idle_add(self.detection_overlay.queue_draw)
 
         except Exception as e:
-            print(f"⚠️ Detection processing error: {e}")
+            gui_logger.warn(f" Detection processing error: {e}")
 
     def _update_detection_info(self, count: int):
         """Update detection count display"""
@@ -715,7 +720,7 @@ class MobileVisionTool(Adw.Bin):
             return filtered_frame
 
         except Exception as e:
-            print(f"⚠️ Filter application error: {e}")
+            gui_logger.warn(f" Filter application error: {e}")
             return frame
 
     def _on_resolution_changed(self, combo_row, pspec):
@@ -738,7 +743,7 @@ class MobileVisionTool(Adw.Bin):
                     self._update_status(f"Resolution: {width}x{height}")
 
         except Exception as e:
-            print(f"⚠️ Resolution change error: {e}")
+            gui_logger.warn(f" Resolution change error: {e}")
 
     def _on_fps_changed(self, combo_row, pspec):
         """Handle FPS change"""
@@ -759,7 +764,7 @@ class MobileVisionTool(Adw.Bin):
                     self._update_status(f"FPS: {fps}")
 
         except Exception as e:
-            print(f"⚠️ FPS change error: {e}")
+            gui_logger.warn(f" FPS change error: {e}")
 
     def _on_brightness_changed(self, scale):
         """Handle brightness adjustment"""
@@ -771,7 +776,7 @@ class MobileVisionTool(Adw.Bin):
                 self._update_status(f"Brightness: {brightness:.1f}")
 
         except Exception as e:
-            print(f"⚠️ Brightness adjustment error: {e}")
+            gui_logger.warn(f" Brightness adjustment error: {e}")
 
     def _on_contrast_changed(self, scale):
         """Handle contrast adjustment"""
@@ -783,7 +788,7 @@ class MobileVisionTool(Adw.Bin):
                 self._update_status(f"Contrast: {contrast:.1f}")
 
         except Exception as e:
-            print(f"⚠️ Contrast adjustment error: {e}")
+            gui_logger.warn(f" Contrast adjustment error: {e}")
 
     def _on_filter_changed(self, toggle_button):
         """Handle filter toggle"""
@@ -813,7 +818,7 @@ class MobileVisionTool(Adw.Bin):
                 toggle_button.set_active(True)
 
         except Exception as e:
-            print(f"⚠️ Filter toggle error: {e}")
+            gui_logger.warn(f" Filter toggle error: {e}")
 
     def _restart_camera(self):
         """Restart camera with new settings"""
@@ -824,7 +829,7 @@ class MobileVisionTool(Adw.Bin):
                 self._start_camera()
 
         except Exception as e:
-            print(f"⚠️ Camera restart error: {e}")
+            gui_logger.warn(f" Camera restart error: {e}")
     
     def _on_capture_photo(self, button):
         """Capture photo from camera"""
@@ -848,7 +853,7 @@ class MobileVisionTool(Adw.Bin):
                 self._analyze_image(self.current_frame, "camera photo")
 
         except Exception as e:
-            print(f"❌ Photo capture failed: {e}")
+            gui_logger.error(f" Photo capture failed: {e}")
             self._update_status(f"Photo capture failed: {e}")
 
     def _add_to_gallery(self, filename: str, image: np.ndarray):
@@ -871,7 +876,7 @@ class MobileVisionTool(Adw.Bin):
                 self.gallery_controls_row.set_visible(True)
 
         except Exception as e:
-            print(f"⚠️ Gallery add error: {e}")
+            gui_logger.warn(f" Gallery add error: {e}")
 
     def _create_gallery_thumbnail(self, image_info: Dict):
         """Create thumbnail widget for gallery"""
@@ -923,7 +928,7 @@ class MobileVisionTool(Adw.Bin):
             gallery_item.image_info = image_info
 
         except Exception as e:
-            print(f"⚠️ Thumbnail creation error: {e}")
+            gui_logger.warn(f" Thumbnail creation error: {e}")
 
     def _on_gallery_toggle(self, switch, pspec):
         """Toggle gallery visibility"""
@@ -951,7 +956,7 @@ class MobileVisionTool(Adw.Bin):
                     self._analyze_image(image_info['image'], f"gallery image {filename}")
 
         except Exception as e:
-            print(f"⚠️ Gallery selection error: {e}")
+            gui_logger.warn(f" Gallery selection error: {e}")
 
     def _on_clear_gallery(self, button):
         """Clear all images from gallery"""
@@ -972,7 +977,7 @@ class MobileVisionTool(Adw.Bin):
             self._update_status("Gallery cleared")
 
         except Exception as e:
-            print(f"⚠️ Gallery clear error: {e}")
+            gui_logger.warn(f" Gallery clear error: {e}")
 
     def _on_export_gallery(self, button):
         """Export gallery images"""
@@ -997,7 +1002,7 @@ class MobileVisionTool(Adw.Bin):
             self._update_status(f"Gallery exported to {export_dir}")
 
         except Exception as e:
-            print(f"⚠️ Gallery export error: {e}")
+            gui_logger.warn(f" Gallery export error: {e}")
             self._update_status(f"Export failed: {e}")
     
     def _on_toggle_recording(self, button):
@@ -1030,7 +1035,7 @@ class MobileVisionTool(Adw.Bin):
                     self._update_status("Recording failed")
                     
         except Exception as e:
-            print(f"❌ Recording toggle failed: {e}")
+            gui_logger.error(f" Recording toggle failed: {e}")
             self._update_status(f"Recording error: {e}")
     
     def _on_screenshot_fullscreen(self, button):
@@ -1066,7 +1071,7 @@ class MobileVisionTool(Adw.Bin):
                 self._update_status("Failed to save screenshot")
                 
         except Exception as e:
-            print(f"❌ Screenshot failed: {e}")
+            gui_logger.error(f" Screenshot failed: {e}")
             self._update_status(f"Screenshot error: {e}")
     
     def _on_screenshot_region(self, button):
@@ -1124,7 +1129,6 @@ class MobileVisionTool(Adw.Bin):
     def _update_status(self, message: str):
         """Update status message"""
         self.status_label.set_text(message)
-        print(f"📹 {message}")
     
     def cleanup(self):
         """Clean up resources"""
@@ -1144,7 +1148,6 @@ class MobileVisionTool(Adw.Bin):
 # Test function
 def test_mobile_vision_tool():
     """Test mobile vision tool"""
-    print("📹 Testing mobile vision tool...")
     
     app = Adw.Application()
     

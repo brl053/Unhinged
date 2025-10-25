@@ -16,15 +16,16 @@ Unified Deployment Orchestrator:
 """
 
 import argparse
-import logging
 import subprocess
 import time
 import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
 import requests
+from unhinged_events import create_service_logger
 
-logger = logging.getLogger(__name__)
+# Initialize event logger
+events = create_service_logger("deployment", "1.0.0")
 
 class UnhingedDeploymentOrchestrator:
     """
@@ -57,7 +58,7 @@ class UnhingedDeploymentOrchestrator:
             with open(config_file, 'r') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            logger.warning(f"Environment config not found: {config_file}")
+            events.warn("Environment config not found", {"config_file": str(config_file)})
             return {}
     
     def _load_service_registry(self) -> Dict:
@@ -67,7 +68,7 @@ class UnhingedDeploymentOrchestrator:
             with open(registry_file, 'r') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            logger.warning(f"Service registry not found: {registry_file}")
+            events.warn("Service registry not found", {"registry_file": str(registry_file)})
             return {}
     
     def _load_port_allocation(self) -> Dict:
@@ -77,31 +78,31 @@ class UnhingedDeploymentOrchestrator:
             with open(port_file, 'r') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            logger.warning(f"Port allocation not found: {port_file}")
+            events.warn("Port allocation not found", {"port_file": str(port_file), "service": "deployment"})
             return {}
     
     def validate_environment(self) -> bool:
         """Validate environment configuration and prerequisites"""
-        logger.info(f"🔍 Validating {self.environment} environment...")
+
         
         # Check Docker availability
         try:
             result = subprocess.run(['docker', '--version'], capture_output=True, text=True)
             if result.returncode != 0:
-                logger.error("❌ Docker not available")
+                events.error("Docker not available", metadata={"service": "deployment", "check": "docker"})
                 return False
         except FileNotFoundError:
-            logger.error("❌ Docker not installed")
+            events.error("Docker not installed", metadata={"service": "deployment", "check": "docker"})
             return False
         
         # Check Docker Compose availability
         try:
             result = subprocess.run(['docker', 'compose', 'version'], capture_output=True, text=True)
             if result.returncode != 0:
-                logger.error("❌ Docker Compose not available")
+                events.error("Docker Compose not available", metadata={"service": "deployment", "check": "docker-compose"})
                 return False
         except FileNotFoundError:
-            logger.error("❌ Docker Compose not installed")
+            events.error("Docker Compose not installed", metadata={"service": "deployment", "check": "docker-compose"})
             return False
         
         # Check compose files exist
@@ -110,15 +111,15 @@ class UnhingedDeploymentOrchestrator:
         if compose_file:
             compose_path = self.project_root / compose_file
             if not compose_path.exists():
-                logger.error(f"❌ Compose file not found: {compose_path}")
+                events.error("Compose file not found", {"compose_path": str(compose_path), "service": "deployment"})
                 return False
         
-        logger.info("✅ Environment validation passed")
+
         return True
     
     def deploy_services(self, services: Optional[List[str]] = None) -> bool:
         """Deploy services with health validation"""
-        logger.info(f"🚀 Starting {self.environment} deployment...")
+
         
         if not self.validate_environment():
             return False
@@ -127,14 +128,14 @@ class UnhingedDeploymentOrchestrator:
         compose_file = deployment_config.get('compose_file')
         
         if not compose_file:
-            logger.error("❌ No compose file specified in environment config")
+            events.error("No compose file specified in environment config", metadata={"service": "deployment"})
             return False
         
         compose_path = self.project_root / compose_file
         
         try:
             # Deploy services
-            logger.info(f"📦 Deploying services from {compose_file}...")
+
             cmd = ['docker', 'compose', '-f', str(compose_path), 'up', '-d']
             
             if services:
@@ -144,10 +145,10 @@ class UnhingedDeploymentOrchestrator:
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
             
             if result.returncode != 0:
-                logger.error(f"❌ Deployment failed: {result.stderr}")
+                events.error("Deployment failed", {"stderr": result.stderr, "service": "deployment"})
                 return False
             
-            logger.info("✅ Services deployed successfully")
+
             
             # Wait for services to start
             logger.info("⏳ Waiting for services to start...")
@@ -162,7 +163,7 @@ class UnhingedDeploymentOrchestrator:
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Deployment error: {e}")
+            events.error("Deployment error", exception=e, metadata={"service": "deployment"})
             return False
     
     def validate_service_health(self) -> bool:
@@ -285,10 +286,6 @@ def main():
         exit(0 if success else 1)
     elif args.command == 'status':
         status = orchestrator.get_deployment_status()
-        print(f"Environment: {status['environment']}")
-        print(f"Deployed services: {status['deployed_services']}")
-        print(f"Failed services: {status['failed_services']}")
-        print(f"Health: {status['health_percentage']:.1f}%")
     elif args.command == 'validate':
         success = orchestrator.validate_environment()
         exit(0 if success else 1)

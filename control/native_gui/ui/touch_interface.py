@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-touch-interface", "1.0.0")
+
 """
 Touch Interface and Gesture Handling
 Provides touch-optimized controls and gesture recognition for mobile interfaces.
@@ -12,6 +16,7 @@ import time
 from typing import Dict, List, Optional, Callable, Tuple
 from enum import Enum
 from dataclasses import dataclass
+from unhinged_events import create_gui_logger
 
 
 class GestureType(Enum):
@@ -539,7 +544,6 @@ class TouchKeyboard(Gtk.Widget):
 # Test function
 def test_touch_interface():
     """Test touch interface components"""
-    print("📱 Testing touch interface...")
     
     app = Adw.Application()
     

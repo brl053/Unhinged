@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-responsive-layout", "1.0.0")
+
 """
 Responsive Layout System for Mobile-First UI
 Provides adaptive layouts that respond to screen size changes and device orientation.
@@ -10,6 +14,7 @@ from gi.repository import Gtk, Adw, Gdk, GLib
 from typing import Dict, List, Optional, Callable, Tuple
 from enum import Enum
 from dataclasses import dataclass
+from unhinged_events import create_gui_logger
 
 
 class ScreenSize(Enum):
@@ -63,7 +68,6 @@ class ResponsiveLayout(Gtk.Box):
         self.children: List[Gtk.Widget] = []
         self.layout_manager = None
 
-        print("📱 Responsive layout initialized")
     
     def update_size(self, width: int, height: int):
         """Update layout size manually (for testing or manual control)"""
@@ -97,10 +101,9 @@ class ResponsiveLayout(Gtk.Box):
                 if orientation_changed and self.on_orientation_changed:
                     self.on_orientation_changed(new_orientation)
 
-                print(f"📱 Layout changed: {new_size.value} {new_orientation.value} ({width}x{height})")
 
         except Exception as e:
-            print(f"⚠️ Size update error: {e}")
+            gui_logger.warn(f" Size update error: {e}")
     
     def _determine_screen_size(self, width: int) -> ScreenSize:
         """Determine screen size category from width"""
@@ -254,7 +257,7 @@ class ResponsiveGrid(Gtk.Box):
                     col = 0
             
         except Exception as e:
-            print(f"⚠️ Grid rebuild error: {e}")
+            gui_logger.warn(f" Grid rebuild error: {e}")
 
 
 class ResponsiveStack(Gtk.Box):
@@ -396,7 +399,6 @@ class ResponsiveWindow(Adw.ApplicationWindow):
     
     def _on_layout_size_changed(self, size: ScreenSize):
         """Handle layout size changes"""
-        print(f"📱 Window layout size changed to: {size.value}")
         
         # Adjust window properties based on size
         if size == ScreenSize.MOBILE:
@@ -409,7 +411,6 @@ class ResponsiveWindow(Adw.ApplicationWindow):
     
     def _on_layout_orientation_changed(self, orientation: Orientation):
         """Handle orientation changes"""
-        print(f"📱 Window orientation changed to: {orientation.value}")
     
     def _on_window_state_changed(self, window, pspec):
         """Handle window state changes"""
@@ -467,7 +468,6 @@ def create_responsive_spacing(mobile: int = 8, tablet: int = 12, desktop: int = 
 # Test function
 def test_responsive_layout():
     """Test responsive layout system"""
-    print("📱 Testing responsive layout...")
     
     app = Adw.Application()
     
@@ -506,18 +506,15 @@ class AdaptiveLayoutManager:
         self.transition_duration = 300
         self.transition_type = Gtk.StackTransitionType.CROSSFADE
 
-        print("📐 Adaptive layout manager initialized")
 
     def register_layout(self, name: str, layouts: Dict[ScreenSize, Gtk.Widget]):
         """Register adaptive layout variants"""
         self.layouts[name] = layouts
-        print(f"📐 Registered layout: {name}")
 
     def set_context(self, context: str, properties: Dict):
         """Set layout context with properties"""
         self.contexts[context] = properties
         self.current_context = context
-        print(f"📐 Layout context set to: {context}")
 
     def get_optimal_layout(self, name: str, screen_size: ScreenSize) -> Optional[Gtk.Widget]:
         """Get optimal layout for screen size with fallback"""
@@ -535,7 +532,6 @@ class AdaptiveLayoutManager:
 
         for fallback_size in fallback_order:
             if fallback_size in layout_variants:
-                print(f"📐 Using fallback layout: {fallback_size.value} for {screen_size.value}")
                 return layout_variants[fallback_size]
 
         return None
@@ -592,7 +588,6 @@ class AdaptiveContainer(ResponsiveLayout):
 
             self.current_layout_widget = optimal_layout
 
-            print(f"📐 Switched to {self.current_size.value} layout for {self.layout_name}")
 
 
 class NavigationManager:

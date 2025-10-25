@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-audio-capture", "1.0.0")
+
 """
 Audio Capture Module for Real-time Microphone Recording
 Provides PyAudio-based audio capture for speech-to-text integration.
@@ -12,6 +16,7 @@ import collections
 import numpy as np
 from typing import Optional, Iterator, Callable, Deque
 from dataclasses import dataclass
+from unhinged_events import create_gui_logger
 
 
 @dataclass
@@ -75,15 +80,13 @@ class AudioCapture:
                             'sample_rate': device_info['defaultSampleRate']
                         })
                 except Exception as device_error:
-                    print(f"⚠️ Error checking device {i}: {device_error}")
+                    gui_logger.warn(f" Error checking device {i}: {device_error}")
                     continue
 
             if not input_devices:
                 raise RuntimeError("No audio input devices found. Check microphone connections and permissions.")
 
-            print(f"🎤 Found {len(input_devices)} audio input device(s)")
             for device in input_devices[:3]:  # Show first 3 devices
-                print(f"   - {device['name']} ({device['channels']} channels)")
 
         except ImportError as e:
             raise RuntimeError(f"PyAudio not installed: {e}. Install with: pip install pyaudio")
@@ -93,7 +96,7 @@ class AudioCapture:
             else:
                 raise RuntimeError(f"Audio system error: {e}")
         except Exception as e:
-            print(f"❌ Failed to initialize PyAudio: {e}")
+            gui_logger.error(f" Failed to initialize PyAudio: {e}")
             raise RuntimeError(f"Audio initialization failed: {e}")
     
     def get_available_devices(self) -> list:
@@ -115,18 +118,18 @@ class AudioCapture:
                         'sample_rate': int(device_info['defaultSampleRate'])
                     })
             except Exception as e:
-                print(f"⚠️ Error getting device {i}: {e}")
+                gui_logger.warn(f" Error getting device {i}: {e}")
                 
         return devices
     
     def start_recording(self, duration: Optional[float] = None) -> bool:
         """Start audio recording with comprehensive error handling"""
         if self.is_recording:
-            print("⚠️ Already recording")
+            gui_logger.warn(" Already recording")
             return False
 
         if not self.pyaudio_instance:
-            print("❌ PyAudio not initialized")
+            gui_logger.error(" PyAudio not initialized")
             return False
 
         try:
@@ -169,7 +172,6 @@ class AudioCapture:
             )
             self.recording_thread.start()
 
-            print(f"🎤 Started recording for {record_duration:.1f} seconds...")
             return True
 
         except OSError as e:
@@ -178,19 +180,19 @@ class AudioCapture:
                 error_msg += " (Microphone may be in use by another application)"
             elif "Permission denied" in str(e):
                 error_msg += " (Microphone permission denied)"
-            print(f"❌ {error_msg}")
+            gui_logger.error(f" {error_msg}")
             self.is_recording = False
             return False
 
         except Exception as e:
-            print(f"❌ Failed to start recording: {e}")
+            gui_logger.error(f" Failed to start recording: {e}")
             self.is_recording = False
             return False
     
     def stop_recording(self) -> bytes:
         """Stop recording and return audio data as WAV bytes"""
         if not self.is_recording:
-            print("⚠️ Not currently recording")
+            gui_logger.warn(" Not currently recording")
             return b""
             
         self.is_recording = False
@@ -207,7 +209,6 @@ class AudioCapture:
         
         # Convert buffer to WAV bytes
         audio_data = self._buffer_to_wav()
-        print(f"🎤 Recording stopped. Captured {len(audio_data)} bytes")
         
         return audio_data
     
@@ -265,7 +266,7 @@ class AudioCapture:
                 time.sleep(0.001)  # Small delay to prevent CPU spinning
 
         except Exception as e:
-            print(f"❌ Error in recording loop: {e}")
+            gui_logger.error(f" Error in recording loop: {e}")
         finally:
             self.is_recording = False
 
@@ -284,7 +285,7 @@ class AudioCapture:
             return normalized_level
 
         except Exception as e:
-            print(f"⚠️ Error calculating audio level: {e}")
+            gui_logger.warn(f" Error calculating audio level: {e}")
             return 0.0
 
     def get_current_level(self) -> float:
@@ -389,17 +390,16 @@ class AudioCapture:
             audio_data = self._buffer_to_wav()
 
             if not audio_data:
-                print("⚠️ No audio data to export")
+                gui_logger.warn(" No audio data to export")
                 return False
 
             with open(filename, 'wb') as f:
                 f.write(audio_data)
 
-            print(f"✅ Audio exported to {filename} ({len(audio_data)} bytes)")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to export audio: {e}")
+            gui_logger.error(f" Failed to export audio: {e}")
             return False
     
     def cleanup(self):
@@ -414,7 +414,6 @@ class AudioCapture:
             self.pyaudio_instance.terminate()
             self.pyaudio_instance = None
             
-        print("🎤 Audio capture cleaned up")
     
     def __del__(self):
         """Destructor to ensure cleanup"""
@@ -424,27 +423,23 @@ class AudioCapture:
 # Test function for standalone testing
 def test_audio_capture():
     """Test audio capture functionality"""
-    print("🎤 Testing audio capture...")
     
     try:
         capture = AudioCapture()
         devices = capture.get_available_devices()
         
-        print(f"Available devices: {len(devices)}")
         for device in devices:
-            print(f"  - {device['name']}")
         
         # Test recording
         if capture.start_recording(duration=2.0):
             time.sleep(2.5)  # Wait for recording to complete
             audio_data = capture.stop_recording()
-            print(f"Captured {len(audio_data)} bytes of audio")
         
         capture.cleanup()
-        print("✅ Audio capture test completed")
+        gui_logger.info(" Audio capture test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Audio capture test failed: {e}")
+        gui_logger.error(f" Audio capture test failed: {e}")
 
 
 if __name__ == "__main__":

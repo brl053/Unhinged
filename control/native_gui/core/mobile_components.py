@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-mobile-components", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend mobile_components.py - system control component
@@ -15,6 +19,7 @@ Replaces traditional desktop tabbed interface with mobile-optimized navigation.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
@@ -50,7 +55,6 @@ class MobileNavigationBar(Gtk.Box):
         self.active_item: Optional[str] = None
         self.on_item_selected: Optional[Callable[[str], None]] = None
         
-        print("📱 Mobile navigation bar created")
     
     def add_nav_item(self, item_id: str, icon: str, label: str, tooltip: str = ""):
         """Add a navigation item to the bottom bar"""
@@ -84,7 +88,6 @@ class MobileNavigationBar(Gtk.Box):
         self.nav_items[item_id] = button
         self.append(button)
         
-        print(f"📱 Added nav item: {label} ({icon})")
     
     def set_active_item(self, item_id: str):
         """Set the active navigation item"""
@@ -96,7 +99,6 @@ class MobileNavigationBar(Gtk.Box):
         if item_id in self.nav_items:
             self.nav_items[item_id].add_css_class("active")
             self.active_item = item_id
-            print(f"📱 Active nav item: {item_id}")
     
     def _on_nav_item_clicked(self, button: Gtk.Button, item_id: str):
         """Handle navigation item click"""
@@ -129,7 +131,6 @@ class ResponsiveContainer(Gtk.Box):
         # Layout state
         self.current_layout = "mobile"
         
-        print("📱 Responsive container created")
     
     def set_header(self, widget: Gtk.Widget):
         """Set header content"""
@@ -169,7 +170,6 @@ class ResponsiveContainer(Gtk.Box):
         if new_layout != self.current_layout:
             self.current_layout = new_layout
             self._rebuild_layout()
-            print(f"📱 Layout adapted to: {new_layout}")
     
     def _rebuild_layout(self):
         """Rebuild layout based on current viewport"""
@@ -327,14 +327,12 @@ class MobileToolCard(Gtk.Box):
         
         self.on_tool_selected: Optional[Callable[[str], None]] = None
         
-        print(f"📱 Created mobile tool card: {title}")
     
     def _on_card_clicked(self, gesture, n_press, x, y):
         """Handle card click"""
         if self.on_tool_selected:
             self.on_tool_selected(self.tool_id)
         
-        print(f"📱 Tool card clicked: {self.tool_id}")
 
 
 class MobileFirstWindow(Adw.ApplicationWindow):
@@ -360,7 +358,6 @@ class MobileFirstWindow(Adw.ApplicationWindow):
         # Apply mobile-first CSS
         self.add_css_class("mobile-first-window")
         
-        print("📱 Mobile-first window created")
     
     def _setup_mobile_layout(self):
         """Setup mobile-first layout structure"""

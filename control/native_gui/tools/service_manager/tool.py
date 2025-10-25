@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool.py - system control component
@@ -15,6 +19,7 @@ Control service lifecycle and monitor status via gRPC health endpoints.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GLib
@@ -79,7 +84,7 @@ class ServiceManagerTool(BaseTool):
         services_frame.set_child(services_box)
         main_box.append(services_frame)
         
-        print("✅ Service Manager widget created")
+        gui_logger.info(" Service Manager widget created", {"status": "success"})
         return main_box
     
     def _create_service_row(self, name, status, port):
@@ -128,21 +133,18 @@ class ServiceManagerTool(BaseTool):
     
     def _on_start_service(self, button, service_name):
         """Handle start service button"""
-        print(f"🚀 Starting service: {service_name}")
         button.set_label("Starting...")
         button.set_sensitive(False)
         # TODO: Implement actual service start
     
     def _on_stop_service(self, button, service_name):
         """Handle stop service button"""
-        print(f"🛑 Stopping service: {service_name}")
         button.set_label("Stopping...")
         button.set_sensitive(False)
         # TODO: Implement actual service stop
     
     def _on_restart_service(self, button, service_name):
         """Handle restart service button"""
-        print(f"🔄 Restarting service: {service_name}")
         button.set_label("Restarting...")
         button.set_sensitive(False)
         # TODO: Implement actual service restart
@@ -188,7 +190,6 @@ class ServiceManagerTool(BaseTool):
                 # Wait before next refresh
                 time.sleep(5)  # Refresh every 5 seconds
             except Exception as e:
-                print(f"Error in refresh loop: {e}")
                 time.sleep(10)  # Wait longer on error
 
     def _update_service_status(self, results):
@@ -217,13 +218,10 @@ class ServiceManagerTool(BaseTool):
         # you'd need to access the specific labels and buttons in the row
         # For now, just print the update
         if error:
-            print(f"🔴 {name}: {status} - {error}")
         else:
-            print(f"{'🟢' if status == 'healthy' else '🟡'} {name}: {status} (port {port}, {response_time:.1f}ms)")
 
     def _on_refresh_clicked(self, button):
         """Handle refresh button click"""
-        print("🔄 Refreshing service status...")
         # Force immediate refresh
         threading.Thread(target=self._force_refresh, daemon=True).start()
 
@@ -233,10 +231,9 @@ class ServiceManagerTool(BaseTool):
             results = self.health_client.check_all_services()
             GLib.idle_add(self._update_service_status, results)
         except Exception as e:
-            print(f"Error in force refresh: {e}")
 
     def _on_start_all_clicked(self, button):
         """Handle start all button click"""
-        print("🚀 Starting all services...")
+        gui_logger.info(" Starting all services...", {"event_type": "startup"})
         # In a real implementation, this would start Docker containers
         # or systemd services for each service

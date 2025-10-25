@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool.py - system control component
@@ -15,6 +19,7 @@ Shows system logs with filtering and search capabilities.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GLib
@@ -91,7 +96,7 @@ class LogViewerTool(BaseTool):
         scrolled.set_child(self.log_textview)
         main_box.append(scrolled)
         
-        print("✅ Log Viewer widget created")
+        gui_logger.info(" Log Viewer widget created", {"status": "success"})
         return main_box
     
     def _generate_sample_logs(self):
@@ -134,13 +139,11 @@ class LogViewerTool(BaseTool):
     
     def _on_refresh_clicked(self, button):
         """Handle refresh button click"""
-        print("🔄 Refreshing logs...")
         buffer = self.log_textview.get_buffer()
         sample_logs = self._generate_sample_logs()
         buffer.set_text(sample_logs)
     
     def _on_clear_clicked(self, button):
         """Handle clear button click"""
-        print("🗑️ Clearing logs...")
         buffer = self.log_textview.get_buffer()
         buffer.set_text("Logs cleared.\n")

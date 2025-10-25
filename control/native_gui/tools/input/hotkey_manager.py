@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-hotkey-manager", "1.0.0")
+
 """
 Advanced Hotkey Manager for Global Shortcuts and Key Sequences
 Provides sophisticated hotkey registration, conflict detection, and sequence support.
@@ -10,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 import json
 from pathlib import Path
+from unhinged_events import create_gui_logger
 
 
 class HotkeyType(Enum):
@@ -66,7 +71,6 @@ class HotkeyManager:
         # Built-in hotkeys
         self._register_builtin_hotkeys()
         
-        print("⌨️ Hotkey manager initialized")
     
     def register_hotkey(self, name: str, keys: str, callback: Callable, 
                        description: str = "", hotkey_type: HotkeyType = HotkeyType.SIMPLE,
@@ -76,7 +80,7 @@ class HotkeyManager:
             with self.lock:
                 # Check for conflicts
                 if self._has_conflict(keys, context):
-                    print(f"⚠️ Hotkey conflict detected for '{keys}' in context '{context}'")
+                    gui_logger.warn(f" Hotkey conflict detected for '{keys}' in context '{context}'")
                     return False
                 
                 # Create hotkey definition
@@ -104,11 +108,10 @@ class HotkeyManager:
                 # Initialize usage tracking
                 self.hotkey_usage[name] = 0
                 
-                print(f"⌨️ Registered hotkey '{name}': {keys}")
                 return True
                 
         except Exception as e:
-            print(f"❌ Failed to register hotkey '{name}': {e}")
+            gui_logger.error(f" Failed to register hotkey '{name}': {e}")
             return False
     
     def unregister_hotkey(self, name: str) -> bool:
@@ -116,7 +119,7 @@ class HotkeyManager:
         try:
             with self.lock:
                 if name not in self.hotkeys:
-                    print(f"⚠️ Hotkey '{name}' not found")
+                    gui_logger.warn(f" Hotkey '{name}' not found")
                     return False
                 
                 hotkey_def = self.hotkeys[name]
@@ -137,11 +140,10 @@ class HotkeyManager:
                 self.hotkey_usage.pop(name, None)
                 self.last_triggered.pop(name, None)
                 
-                print(f"⌨️ Unregistered hotkey '{name}'")
                 return True
                 
         except Exception as e:
-            print(f"❌ Failed to unregister hotkey '{name}': {e}")
+            gui_logger.error(f" Failed to unregister hotkey '{name}': {e}")
             return False
     
     def _parse_key_combination(self, keys: str) -> Optional[frozenset]:
@@ -167,7 +169,7 @@ class HotkeyManager:
             return frozenset(normalized_keys)
             
         except Exception as e:
-            print(f"⚠️ Failed to parse key combination '{keys}': {e}")
+            gui_logger.warn(f" Failed to parse key combination '{keys}': {e}")
             return None
     
     def _has_conflict(self, keys: str, context: str) -> bool:
@@ -204,7 +206,7 @@ class HotkeyManager:
                 return None
                 
         except Exception as e:
-            print(f"⚠️ Error checking hotkey trigger: {e}")
+            gui_logger.warn(f" Error checking hotkey trigger: {e}")
             return None
     
     def process_key_sequence(self, key: str) -> Optional[str]:
@@ -244,7 +246,7 @@ class HotkeyManager:
             return None
             
         except Exception as e:
-            print(f"⚠️ Error processing key sequence: {e}")
+            gui_logger.warn(f" Error processing key sequence: {e}")
             return None
     
     def _context_matches(self, hotkey_context: str) -> bool:
@@ -263,30 +265,26 @@ class HotkeyManager:
             # Call callback
             hotkey_def.callback()
             
-            print(f"⌨️ Triggered hotkey: {hotkey_def.name}")
             return hotkey_def.name
             
         except Exception as e:
-            print(f"❌ Error triggering hotkey '{hotkey_def.name}': {e}")
+            gui_logger.error(f" Error triggering hotkey '{hotkey_def.name}': {e}")
             return hotkey_def.name
     
     def set_context(self, context: str):
         """Set current hotkey context"""
         self.current_context = context
-        print(f"⌨️ Hotkey context set to: {context}")
     
     def push_context(self, context: str):
         """Push context onto stack"""
         self.context_stack.append(context)
         self.current_context = context
-        print(f"⌨️ Pushed hotkey context: {context}")
     
     def pop_context(self) -> Optional[str]:
         """Pop context from stack"""
         if len(self.context_stack) > 1:
             popped = self.context_stack.pop()
             self.current_context = self.context_stack[-1]
-            print(f"⌨️ Popped hotkey context: {popped}")
             return popped
         return None
     
@@ -294,13 +292,11 @@ class HotkeyManager:
         """Enable a hotkey"""
         if name in self.hotkeys:
             self.hotkeys[name].enabled = True
-            print(f"⌨️ Enabled hotkey: {name}")
     
     def disable_hotkey(self, name: str):
         """Disable a hotkey"""
         if name in self.hotkeys:
             self.hotkeys[name].enabled = False
-            print(f"⌨️ Disabled hotkey: {name}")
     
     def get_hotkey_list(self, context: str = None) -> List[Dict]:
         """Get list of registered hotkeys"""
@@ -358,7 +354,7 @@ class HotkeyManager:
             )
             
         except Exception as e:
-            print(f"⚠️ Failed to register built-in hotkeys: {e}")
+            gui_logger.warn(f" Failed to register built-in hotkeys: {e}")
     
     def _toggle_context(self):
         """Toggle between global and application context"""
@@ -391,10 +387,9 @@ class HotkeyManager:
             with open(filename, 'w') as f:
                 json.dump(export_data, f, indent=2)
             
-            print(f"⌨️ Hotkeys exported to {filename}")
             
         except Exception as e:
-            print(f"❌ Failed to export hotkeys: {e}")
+            gui_logger.error(f" Failed to export hotkeys: {e}")
     
     def import_hotkeys(self, filename: str, callback_map: Dict[str, Callable]):
         """Import hotkey configuration from file"""
@@ -407,7 +402,7 @@ class HotkeyManager:
                 
                 # Skip if no callback provided
                 if name not in callback_map:
-                    print(f"⚠️ No callback for hotkey '{name}', skipping")
+                    gui_logger.warn(f" No callback for hotkey '{name}', skipping")
                     continue
                 
                 self.register_hotkey(
@@ -420,16 +415,14 @@ class HotkeyManager:
                     priority=hotkey_data.get('priority', 0)
                 )
             
-            print(f"⌨️ Hotkeys imported from {filename}")
             
         except Exception as e:
-            print(f"❌ Failed to import hotkeys: {e}")
+            gui_logger.error(f" Failed to import hotkeys: {e}")
 
 
 # Test function
 def test_hotkey_manager():
     """Test hotkey manager functionality"""
-    print("⌨️ Testing hotkey manager...")
     
     try:
         manager = HotkeyManager()
@@ -453,7 +446,6 @@ def test_hotkey_manager():
         # Test hotkey triggering
         pressed_keys = {"ctrl", "t"}
         triggered = manager.check_hotkey_trigger(pressed_keys)
-        print(f"Triggered hotkey: {triggered}")
         
         # Test sequence
         manager.process_key_sequence("ctrl+k")
@@ -461,16 +453,14 @@ def test_hotkey_manager():
         
         # Get statistics
         stats = manager.get_statistics()
-        print(f"Statistics: {stats}")
         
         # Get hotkey list
         hotkeys = manager.get_hotkey_list()
-        print(f"Registered hotkeys: {len(hotkeys)}")
         
-        print("✅ Hotkey manager test completed")
+        gui_logger.info(" Hotkey manager test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Hotkey manager test failed: {e}")
+        gui_logger.error(f" Hotkey manager test failed: {e}")
 
 
 if __name__ == "__main__":

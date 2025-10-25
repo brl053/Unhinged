@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-build-integration", "1.0.0")
+
 """
 Build System Integration
 
@@ -13,6 +17,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from unhinged_events import create_gui_logger
 
 # Add build system to path
 project_root = Path(__file__).parent.parent.parent.parent.parent.parent
@@ -24,7 +29,6 @@ try:
     BUILD_SYSTEM_AVAILABLE = True
 except ImportError:
     BUILD_SYSTEM_AVAILABLE = False
-    print("Build system not available for API dev tool integration")
 
 
 class BuildStatus(Enum):
@@ -77,7 +81,6 @@ class BuildSystemIntegration:
         if BUILD_SYSTEM_AVAILABLE:
             self._initialize_build_system()
         
-        print("Build system integration initialized")
     
     def _initialize_build_system(self):
         """Initialize build system orchestrator"""
@@ -91,10 +94,8 @@ class BuildSystemIntegration:
                 config=self.orchestrator.config
             )
             
-            print("Build system orchestrator initialized")
             
         except Exception as e:
-            print(f"Failed to initialize build system: {e}")
             self.orchestrator = None
     
     def is_available(self) -> bool:
@@ -175,7 +176,6 @@ class BuildSystemIntegration:
         self.current_operations[target] = operation
         
         try:
-            print(f"Generating proto clients for languages: {', '.join(languages)}")
 
             # Trigger build through orchestrator
             result = asyncio.run(self.orchestrator.build_target(target))
@@ -187,11 +187,9 @@ class BuildSystemIntegration:
             if result.success:
                 operation.status = BuildStatus.CACHED if result.cache_hit else BuildStatus.SUCCESS
                 operation.artifacts = self._get_generated_client_artifacts(languages)
-                print(f"Proto clients generated in {operation.duration:.2f}s")
             else:
                 operation.status = BuildStatus.FAILED
                 operation.error_message = result.error_message
-                print(f"Proto client generation failed: {result.error_message}")
             
             return operation
             
@@ -199,7 +197,6 @@ class BuildSystemIntegration:
             operation.duration = time.time() - operation.start_time
             operation.status = BuildStatus.FAILED
             operation.error_message = f"Build system error: {e}"
-            print(f"Proto client generation error: {e}")
             return operation
     
     def update_service_discovery(self) -> BuildOperation:
@@ -228,7 +225,6 @@ class BuildSystemIntegration:
         self.current_operations[target] = operation
         
         try:
-            print("Updating service discovery registry")
 
             # Trigger build through orchestrator
             result = asyncio.run(self.orchestrator.build_target(target))
@@ -244,11 +240,9 @@ class BuildSystemIntegration:
                 # Update service registry cache
                 self._update_service_registry_cache()
 
-                print(f"Service discovery updated in {operation.duration:.2f}s")
             else:
                 operation.status = BuildStatus.FAILED
                 operation.error_message = result.error_message
-                print(f"Service discovery update failed: {result.error_message}")
             
             return operation
             
@@ -256,7 +250,6 @@ class BuildSystemIntegration:
             operation.duration = time.time() - operation.start_time
             operation.status = BuildStatus.FAILED
             operation.error_message = f"Build system error: {e}"
-            print(f"Service discovery update error: {e}")
             return operation
     
     def get_service_registry(self) -> Dict[str, Any]:
@@ -343,9 +336,7 @@ class BuildSystemIntegration:
             registry_data = self.get_service_registry()
             if registry_data["success"]:
                 self.service_registry_cache = registry_data["registry"]
-                print("Service registry cache updated")
         except Exception as e:
-            print(f"Failed to update service registry cache: {e}")
     
     def get_build_status(self, target: str) -> Optional[BuildOperation]:
         """Get current build status for a target"""
@@ -365,4 +356,3 @@ class BuildSystemIntegration:
         for target in completed:
             del self.current_operations[target]
         
-        print(f"Cleared {len(completed)} completed build operations")

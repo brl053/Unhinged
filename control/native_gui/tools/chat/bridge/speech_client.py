@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-speech-client", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend speech_client.py - system control component
@@ -27,24 +31,23 @@ import threading
 import time
 from typing import Optional, Callable, Iterator
 from pathlib import Path
+from unhinged_events import create_gui_logger
 
 # Import our audio capture module
 try:
     from .audio_capture import AudioCapture, AudioConfig
     from .audio_utils import AudioDeviceManager
     AUDIO_CAPTURE_AVAILABLE = True
-    print("🎤 Audio capture module available")
 except ImportError as e:
-    print(f"⚠️ Audio capture not available: {e}")
+    gui_logger.warn(f" Audio capture not available: {e}")
     AUDIO_CAPTURE_AVAILABLE = False
 
 # gRPC import - relies on PYTHONPATH set by GUI launcher
 try:
     import grpc
     GRPC_AVAILABLE = True
-    print("🎤 gRPC module available")
 except ImportError:
-    print("⚠️ gRPC module not available - using mock mode")
+    gui_logger.warn(" gRPC module not available - using mock mode")
     GRPC_AVAILABLE = False
     # Create mock grpc module
     class MockGRPC:
@@ -71,13 +74,11 @@ sys.path.insert(0, str(generated_path))
 
 try:
     from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
-    print("🎤 Proto clients imported successfully")
     if hasattr(audio_pb2_grpc, 'AudioServiceStub'):
-        print("🎤 AudioServiceStub available for real gRPC connection")
     else:
-        print("⚠️ AudioServiceStub not found in proto clients")
+        gui_logger.warn(" AudioServiceStub not found in proto clients")
 except ImportError as e:
-    print(f"⚠️ Proto clients not available: {e}")
+    gui_logger.warn(f" Proto clients not available: {e}")
     # Create mock classes for development
     class MockProto:
         pass
@@ -108,18 +109,16 @@ class SpeechClient:
         if AUDIO_CAPTURE_AVAILABLE:
             try:
                 self.audio_capture = AudioCapture()
-                print("🎤 Real audio capture initialized")
             except Exception as e:
-                print(f"⚠️ Failed to initialize audio capture: {e}")
+                gui_logger.warn(f" Failed to initialize audio capture: {e}")
                 self.audio_capture = None
 
-        print(f"🎤 SpeechClient initialized for {host}:{port}")
         self._setup_grpc_connection()
 
     def _setup_grpc_connection(self):
         """Setup gRPC connection to speech-to-text service"""
         if not GRPC_AVAILABLE:
-            print("⚠️ gRPC not available - running in mock mode")
+            gui_logger.warn(" gRPC not available - running in mock mode")
             self.channel = None
             self.stub = None
             return
@@ -132,17 +131,17 @@ class SpeechClient:
 
             if hasattr(audio_pb2_grpc, 'AudioServiceStub'):
                 self.stub = audio_pb2_grpc.AudioServiceStub(self.channel)
-                print("✅ gRPC connection established")
+                gui_logger.info(" gRPC connection established", {"status": "success"})
             else:
-                print("⚠️ AudioServiceStub not available (proto mock)")
+                gui_logger.warn(" AudioServiceStub not available (proto mock)")
                 self.stub = None
 
         except grpc.FutureTimeoutError:
-            print(f"⚠️ gRPC connection timeout to {self.host}:{self.port}")
+            gui_logger.warn(f" gRPC connection timeout to {self.host}:{self.port}")
             self.channel = None
             self.stub = None
         except Exception as e:
-            print(f"❌ gRPC connection failed: {e}")
+            gui_logger.error(f" gRPC connection failed: {e}")
             self.channel = None
             self.stub = None
 
@@ -153,10 +152,8 @@ class SpeechClient:
     def start_recording(self, callback: Optional[Callable[[str], None]] = None, duration: float = 3.0):
         """Start recording audio for transcription"""
         if self.is_recording:
-            print("🎤 Already recording")
             return
 
-        print("🎤 Starting audio recording...")
         self.is_recording = True
         self.audio_data = []
 
@@ -180,10 +177,8 @@ class SpeechClient:
     def stop_recording(self) -> str:
         """Stop recording and return transcribed text"""
         if not self.is_recording:
-            print("🎤 Not currently recording")
             return ""
 
-        print("🎤 Stopping audio recording...")
         self.is_recording = False
 
         if self.recording_thread:
@@ -205,16 +200,15 @@ class SpeechClient:
 
                 if audio_bytes:
                     self.audio_data = [audio_bytes]  # Store as single chunk
-                    print(f"🎤 Real recording complete: {len(audio_bytes)} bytes captured")
                 else:
-                    print("⚠️ No audio data captured")
+                    gui_logger.warn(" No audio data captured")
                     self.audio_data = []
             else:
-                print("❌ Failed to start real audio recording")
+                gui_logger.error(" Failed to start real audio recording")
                 self.audio_data = []
 
         except Exception as e:
-            print(f"❌ Error in real recording: {e}")
+            gui_logger.error(f" Error in real recording: {e}")
             self.audio_data = []
 
     def _simulate_recording(self, callback: Optional[Callable[[str], None]]):
@@ -229,7 +223,6 @@ class SpeechClient:
             if duration > 0.5:  # Minimum recording duration
                 self.audio_data.append(f"audio_chunk_{len(self.audio_data)}")
 
-        print(f"🎤 Recording simulation complete: {len(self.audio_data)} chunks")
 
     def _transcribe_recorded_audio(self) -> str:
         """Transcribe the recorded audio data"""
@@ -237,7 +230,7 @@ class SpeechClient:
             return "No audio recorded"
 
         if not self.is_connected():
-            print("⚠️ No gRPC connection, using mock transcription")
+            gui_logger.warn(" No gRPC connection, using mock transcription")
             return f"Mock transcription: recorded {len(self.audio_data)} audio chunks"
 
         try:
@@ -248,20 +241,19 @@ class SpeechClient:
             response = self.stub.SpeechToText(audio_stream)
 
             if response.response.success:
-                print(f"✅ Transcription successful: {response.transcript[:50]}...")
                 return response.transcript
             else:
-                print(f"❌ Transcription failed: {response.response.message}")
+                gui_logger.error(f" Transcription failed: {response.response.message}")
                 return f"Transcription error: {response.response.message}"
 
         except Exception as e:
-            print(f"❌ gRPC transcription error: {e}")
+            gui_logger.error(f" gRPC transcription error: {e}")
             return f"Transcription error: {str(e)}"
 
     def _create_audio_stream(self) -> Iterator:
         """Create audio stream for gRPC call with real audio data"""
         if not hasattr(common_pb2, 'StreamChunk'):
-            print("⚠️ StreamChunk not available, using mock stream")
+            gui_logger.warn(" StreamChunk not available, using mock stream")
             return iter([])
 
         chunks = []
@@ -290,11 +282,10 @@ class SpeechClient:
                 chunks.append(chunk)
                 sequence += 1
 
-            print(f"🎤 Created {len(chunks)} audio chunks for gRPC streaming")
 
         else:
             # Fallback to mock data for compatibility
-            print("⚠️ Using mock audio data for gRPC call")
+            gui_logger.warn(" Using mock audio data for gRPC call")
             chunk = common_pb2.StreamChunk()
             chunk.stream_id = "chat_audio_recording"
             chunk.sequence_number = 1
@@ -309,13 +300,13 @@ class SpeechClient:
     def transcribe_audio(self, audio_data: bytes) -> str:
         """Transcribe provided audio data to text"""
         if not self.is_connected():
-            print("⚠️ No gRPC connection for transcription")
+            gui_logger.warn(" No gRPC connection for transcription")
             return "Service unavailable"
 
         try:
             # Validate audio data
             if not audio_data or len(audio_data) < 100:
-                print("⚠️ Audio data too small or empty")
+                gui_logger.warn(" Audio data too small or empty")
                 return "No valid audio data"
 
             # Create stream chunks with proper chunking for large audio
@@ -341,22 +332,20 @@ class SpeechClient:
                 chunks.append(chunk)
                 sequence += 1
 
-            print(f"🎤 Sending {len(chunks)} chunks ({len(audio_data)} bytes) for transcription")
 
             # Call speech-to-text service
             response = self.stub.SpeechToText(iter(chunks))
 
             if response.response.success:
                 transcript = response.transcript.strip()
-                print(f"✅ Transcription successful: '{transcript[:50]}...'")
                 return transcript
             else:
                 error_msg = response.response.message
-                print(f"❌ Transcription failed: {error_msg}")
+                gui_logger.error(f" Transcription failed: {error_msg}")
                 return f"Error: {error_msg}"
 
         except Exception as e:
-            print(f"❌ Direct transcription error: {e}")
+            gui_logger.error(f" Direct transcription error: {e}")
             return f"Transcription error: {str(e)}"
 
     def get_audio_info(self) -> dict:
@@ -392,4 +381,3 @@ class SpeechClient:
 
         if self.channel:
             self.channel.close()
-            print("🎤 gRPC connection and audio resources closed")

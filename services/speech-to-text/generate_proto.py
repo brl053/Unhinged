@@ -13,7 +13,7 @@ def generate_proto_files():
     # Find proto files
     proto_dir = Path("/app/proto")
     if not proto_dir.exists():
-        print(f"Proto directory not found: {proto_dir}")
+        # Proto directory not found
         return False
 
     # Output directory
@@ -33,10 +33,7 @@ def generate_proto_files():
     for proto_name in required_protos:
         proto_file = proto_dir / proto_name
         if not proto_file.exists():
-            print(f"⚠️ Proto file not found: {proto_file}")
             continue
-
-        print(f"Generating Python code for {proto_file}")
 
         cmd = [
             "python", "-m", "grpc_tools.protoc",
@@ -48,7 +45,6 @@ def generate_proto_files():
 
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            print(f"✅ Generated: {proto_file.name}")
             success_count += 1
         except subprocess.CalledProcessError as e:
             print(f"❌ Failed to generate {proto_file.name}: {e}")
@@ -57,7 +53,6 @@ def generate_proto_files():
             continue
 
     if success_count > 0:
-        print(f"✅ Generated {success_count} protobuf files successfully")
         return True
     else:
         print("❌ No protobuf files were generated successfully")

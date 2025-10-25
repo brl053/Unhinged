@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend tool.py - system control component
@@ -15,6 +19,7 @@ Provides a native interface for conversing with the LLM operating system.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GLib
@@ -64,7 +69,6 @@ class ChatTool(BaseTool):
         self.speech_client = SpeechClient()
         self.is_recording = False
         
-        print("💬 Chat tool initialized")
     
     def create_widget(self):
         """Create the chat tool widget"""
@@ -79,7 +83,6 @@ class ChatTool(BaseTool):
         # Apply CSS classes for theming
         self.main_container.add_css_class("chat-tool")
         
-        print("💬 Chat widget created")
         return self.main_container
     
     def _create_centered_input_interface(self):
@@ -173,10 +176,8 @@ class ChatTool(BaseTool):
         text = buffer.get_text(start_iter, end_iter, False).strip()
 
         if not text or text == "Type your message or click the microphone to speak...":
-            print("💬 No message to send")
             return
 
-        print(f"💬 Message submitted: {text[:50]}...")
 
         # Clear input immediately
         buffer.set_text("")
@@ -190,7 +191,6 @@ class ChatTool(BaseTool):
 
     def _start_recording(self):
         """Start speech recording"""
-        print("🎤 Starting speech recording...")
         self.is_recording = True
 
         # Update microphone button appearance
@@ -207,7 +207,6 @@ class ChatTool(BaseTool):
 
     def _stop_recording(self):
         """Stop speech recording and transcribe"""
-        print("🎤 Stopping speech recording...")
         self.is_recording = False
 
         # Update microphone button appearance
@@ -231,13 +230,12 @@ class ChatTool(BaseTool):
             buffer = self.text_input.get_buffer()
             if transcript and transcript.strip():
                 buffer.set_text(transcript.strip())
-                print(f"✅ Transcription: {transcript[:50]}...")
             else:
                 buffer.set_text("No speech detected. Try again.")
-                print("⚠️ No transcription result")
+                gui_logger.warn(" No transcription result")
 
         except Exception as e:
-            print(f"❌ Transcription error: {e}")
+            gui_logger.error(f" Transcription error: {e}")
             buffer = self.text_input.get_buffer()
             buffer.set_text("Transcription failed. Please try again.")
 
@@ -245,7 +243,6 @@ class ChatTool(BaseTool):
 
     def _on_transcription_complete(self, transcript: str):
         """Callback for when transcription is complete"""
-        print(f"🎤 Transcription callback: {transcript[:50]}...")
 
         # Update UI on main thread
         GLib.idle_add(self._update_transcription_ui, transcript)
@@ -259,7 +256,6 @@ class ChatTool(BaseTool):
     
     def _show_placeholder_response(self, user_message):
         """Show a placeholder response (temporary)"""
-        print(f"🤖 Placeholder response to: {user_message[:30]}...")
         
         # TODO: Replace with actual chat interface and LLM integration
         buffer = self.text_input.get_buffer()
@@ -274,7 +270,6 @@ class ChatTool(BaseTool):
     def on_activate(self):
         """Called when the tool becomes active"""
         super().on_activate()
-        print("💬 Chat tool activated")
         
         # Focus the text input when activated
         if self.text_input:
@@ -283,7 +278,6 @@ class ChatTool(BaseTool):
     def on_deactivate(self):
         """Called when the tool becomes inactive"""
         super().on_deactivate()
-        print("💬 Chat tool deactivated")
     
     def get_actions(self):
         """Get tool-specific header actions"""
@@ -302,19 +296,16 @@ class ChatTool(BaseTool):
     
     def _on_clear_chat(self, button):
         """Clear the current chat"""
-        print("🗑️ Clear chat clicked")
         if self.text_input:
             buffer = self.text_input.get_buffer()
             buffer.set_text("Type your message or click the microphone to speak...")
     
     def _on_save_chat(self, button):
         """Save the current chat"""
-        print("💾 Save chat clicked")
         # TODO: Implement chat persistence
 
     def _animate_to_conversation_mode(self, first_message: str):
         """Animate from centered input to conversation mode"""
-        print("🎬 Animating to conversation mode...")
 
         # Mark as conversation mode
         self.is_conversation_mode = True
@@ -345,7 +336,7 @@ class ChatTool(BaseTool):
         # Add the first message
         self._add_user_message(first_message)
 
-        print("✅ Conversation mode activated")
+        gui_logger.info(" Conversation mode activated", {"status": "success"})
         return False  # Don't repeat timeout
 
     def _create_conversation_input_area(self):
@@ -430,5 +421,4 @@ class ChatTool(BaseTool):
         # Update loading message with response
         self.chat_interface.update_loading_message(loading_bubble, response)
 
-        print(f"🤖 Generated response: {response[:50]}...")
         return False  # Don't repeat timeout

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-response-viewer", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend response_viewer.py - system control component
@@ -22,6 +26,7 @@ Features:
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, Pango
@@ -66,7 +71,6 @@ class ResponseViewer(Gtk.Box):
         # Show placeholder
         self._show_placeholder()
         
-        print("📊 Response viewer widget initialized")
     
     def _setup_status_section(self):
         """Create status display section"""
@@ -132,10 +136,9 @@ class ResponseViewer(Gtk.Box):
             # Display body
             self._display_body(response_data.get("body", ""))
             
-            print(f"📊 Displayed response: {response_data.get('status', 'unknown')}")
             
         except Exception as e:
-            print(f"❌ Error displaying response: {e}")
+            gui_logger.error(f" Error displaying response: {e}")
             self._show_error(f"Failed to display response: {str(e)}")
     
     def _display_status(self, response_data: Dict[str, Any]):
@@ -242,7 +245,7 @@ class ResponseViewer(Gtk.Box):
                     pass
         
         except Exception as e:
-            print(f"❌ Syntax highlighting error: {e}")
+            gui_logger.error(f" Syntax highlighting error: {e}")
     
     def _show_placeholder(self):
         """Show placeholder content"""

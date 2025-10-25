@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-image-analysis", "1.0.0")
+
 """
 Real-time Image Analysis Pipeline
 Combines YOLO object detection with vision AI for comprehensive image understanding.
@@ -12,6 +16,7 @@ from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
 from pathlib import Path
 import json
+from unhinged_events import create_gui_logger
 
 
 @dataclass
@@ -85,9 +90,9 @@ class ImageAnalysisPipeline:
             try:
                 from ultralytics import YOLO
                 self.yolo_model = YOLO("yolov8n.pt")
-                print("🎯 YOLO model initialized")
+                gui_logger.info(" YOLO model initialized", {"event_type": "activation"})
             except Exception as e:
-                print(f"⚠️ YOLO initialization failed: {e}")
+                gui_logger.warn(f" YOLO initialization failed: {e}")
                 self.config.enable_yolo = False
         
         # Initialize Vision AI client
@@ -96,18 +101,18 @@ class ImageAnalysisPipeline:
                 from .vision_client import VisionClient
                 self.vision_client = VisionClient()
                 if self.vision_client.is_connected():
-                    print("🎯 Vision AI client initialized")
+                    gui_logger.info(" Vision AI client initialized", {"event_type": "activation"})
                 else:
-                    print("⚠️ Vision AI client not connected")
+                    gui_logger.warn(" Vision AI client not connected")
                     self.config.enable_vision_ai = False
             except Exception as e:
-                print(f"⚠️ Vision AI initialization failed: {e}")
+                gui_logger.warn(f" Vision AI initialization failed: {e}")
                 self.config.enable_vision_ai = False
     
     def start(self):
         """Start analysis pipeline"""
         if self.is_running:
-            print("⚠️ Analysis pipeline already running")
+            gui_logger.warn(" Analysis pipeline already running")
             return
         
         self.is_running = True
@@ -118,7 +123,6 @@ class ImageAnalysisPipeline:
             thread.start()
             self.analysis_threads.append(thread)
         
-        print(f"🎯 Analysis pipeline started with {self.config.analysis_threads} threads")
     
     def stop(self):
         """Stop analysis pipeline"""
@@ -133,12 +137,12 @@ class ImageAnalysisPipeline:
                 thread.join(timeout=2.0)
         
         self.analysis_threads.clear()
-        print("🎯 Analysis pipeline stopped")
+        gui_logger.info(" Analysis pipeline stopped", {"event_type": "activation"})
     
     def analyze_frame(self, frame: np.ndarray, frame_id: Optional[str] = None) -> bool:
         """Add frame to analysis queue"""
         if not self.is_running:
-            print("⚠️ Analysis pipeline not running")
+            gui_logger.warn(" Analysis pipeline not running")
             return False
         
         try:
@@ -152,12 +156,11 @@ class ImageAnalysisPipeline:
             return True
             
         except queue.Full:
-            print("⚠️ Analysis queue full, dropping frame")
+            gui_logger.warn(" Analysis queue full, dropping frame")
             return False
     
     def _analysis_worker(self, worker_id: int):
         """Worker thread for frame analysis"""
-        print(f"🎯 Analysis worker {worker_id} started")
         
         while self.is_running:
             try:
@@ -192,7 +195,7 @@ class ImageAnalysisPipeline:
             except queue.Empty:
                 continue
             except Exception as e:
-                print(f"⚠️ Analysis worker {worker_id} error: {e}")
+                gui_logger.warn(f" Analysis worker {worker_id} error: {e}")
                 self.error_count += 1
     
     def _analyze_frame_comprehensive(self, frame_data: Dict) -> Dict:
@@ -293,7 +296,7 @@ class ImageAnalysisPipeline:
                 self.on_combined_analysis(result)
                 
         except Exception as e:
-            print(f"⚠️ Callback error: {e}")
+            gui_logger.warn(f" Callback error: {e}")
     
     def get_latest_result(self, frame_id: Optional[str] = None) -> Optional[Dict]:
         """Get latest analysis result"""
@@ -366,7 +369,7 @@ class ImageAnalysisPipeline:
             return annotated
             
         except Exception as e:
-            print(f"⚠️ Annotation error: {e}")
+            gui_logger.warn(f" Annotation error: {e}")
             return frame
     
     def cleanup(self):
@@ -390,13 +393,13 @@ class ImageAnalysisPipeline:
             except queue.Empty:
                 break
         
-        print("🎯 Analysis pipeline cleaned up")
+        gui_logger.info(" Analysis pipeline cleaned up", {"event_type": "activation"})
 
 
 # Test function
 def test_analysis_pipeline():
     """Test image analysis pipeline"""
-    print("🎯 Testing analysis pipeline...")
+    gui_logger.info(" Testing analysis pipeline...", {"event_type": "activation"})
     
     try:
         config = AnalysisConfig(
@@ -423,14 +426,12 @@ def test_analysis_pipeline():
         result = pipeline.get_latest_result()
         summary = pipeline.get_analysis_summary()
         
-        print(f"Analysis result: {result}")
-        print(f"Pipeline summary: {summary}")
         
         pipeline.cleanup()
-        print("✅ Analysis pipeline test completed")
+        gui_logger.info(" Analysis pipeline test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Analysis pipeline test failed: {e}")
+        gui_logger.error(f" Analysis pipeline test failed: {e}")
 
 
 if __name__ == "__main__":

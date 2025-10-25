@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-proto-browser", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend proto_browser.py - system control component
@@ -21,6 +25,7 @@ Features:
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, GObject, Gio
@@ -65,7 +70,6 @@ class ProtoBrowser(Gtk.Box):
         self._setup_tree_view()
         self._setup_context_menu()
         
-        print("📁 Proto browser widget initialized")
     
     def _setup_search(self):
         """Create search entry for filtering"""
@@ -162,7 +166,6 @@ class ProtoBrowser(Gtk.Box):
     
     def populate_files(self, proto_files):
         """Populate tree view with proto files"""
-        print(f"📁 Populating {len(proto_files)} proto files")
         
         # Clear existing data
         self.tree_store.clear()
@@ -232,7 +235,6 @@ class ProtoBrowser(Gtk.Box):
         # Cache services for this file
         self.current_services[file_path] = services
         
-        print(f"🔧 Added {len(services)} services to tree")
     
     def _on_search_changed(self, search_entry):
         """Handle search text changes"""
@@ -240,7 +242,6 @@ class ProtoBrowser(Gtk.Box):
         
         if search_text:
             # TODO: Implement filtering
-            print(f"🔍 Searching for: {search_text}")
         else:
             # Clear filter
             pass
@@ -258,7 +259,6 @@ class ProtoBrowser(Gtk.Box):
         
         if item_type == "file":
             # Proto file selected - emit signal to parse services
-            print(f"📄 Selected proto file: {file_path}")
             self.emit("proto-file-selected", file_path)
         
         elif item_type == "method":
@@ -268,7 +268,6 @@ class ProtoBrowser(Gtk.Box):
             request_type = model.get_value(tree_iter, 6)
             response_type = model.get_value(tree_iter, 7)
             
-            print(f"⚡ Selected method: {service_name}.{method_name}")
             self.emit("service-method-selected", service_name, method_name, request_type, response_type)
     
     def _on_row_activated(self, tree_view, path, column):
@@ -316,7 +315,6 @@ class ProtoBrowser(Gtk.Box):
             # Copy to clipboard
             clipboard = self.get_clipboard()
             clipboard.set_text(file_path, -1)
-            print(f"📋 Copied path: {file_path}")
     
     def _on_open_editor(self, action, param):
         """Handle open in editor context menu action"""
@@ -326,7 +324,6 @@ class ProtoBrowser(Gtk.Box):
         if tree_iter:
             file_path = model.get_value(tree_iter, 3)
             # TODO: Open in external editor
-            print(f"📝 Open in editor: {file_path}")
 
 
 # Register the widget type

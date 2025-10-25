@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-application", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend application.py - system control component
@@ -15,6 +19,7 @@ Manages tools, theming, and global application state.
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version('Gdk', '4.0')
@@ -58,15 +63,13 @@ class UnhingedApplication(Adw.Application):
         self.main_window = None
         self.launched_by_ai = launched_by_ai
 
-        print("🎛️ Unhinged Control Center initialized")
 
     def do_command_line(self, command_line):
         """Handle command line arguments and ensure single instance"""
-        print("🎯 Command line received - checking for existing instance...")
+        gui_logger.info(" Command line received - checking for existing instance...", {"event_type": "activation"})
 
         # If we already have a window, just present it
         if self.main_window:
-            print("🔄 Existing instance found - presenting window...")
             self.main_window.present()
             return 0
 
@@ -76,10 +79,10 @@ class UnhingedApplication(Adw.Application):
 
     def do_activate(self):
         """Application activation - create and show main window"""
-        print("🎯 Application activating...")
+        gui_logger.info(" Application activating...", {"event_type": "activation"})
 
         if not self.main_window:
-            print("🏗️ Creating mobile-first control center window...")
+            gui_logger.info(" Creating mobile-first control center window...", {"event_type": "initialization"})
             from ..main_window import MobileControlCenterWindow
 
             self.main_window = MobileControlCenterWindow(
@@ -90,12 +93,11 @@ class UnhingedApplication(Adw.Application):
 
             # Show AI launch indicator if launched by AI
             if self.launched_by_ai:
-                print("🤖 Adding AI launch indicator...")
                 GLib.timeout_add(500, self._show_ai_launch_indicator)
 
-        print("🖼️ Presenting control center...")
+        gui_logger.info(" Presenting control center...", {"event_type": "ui_display"})
         self.main_window.present()
-        print("✅ Unhinged Control Center ready!")
+        gui_logger.info(" Unhinged Control Center ready!", {"status": "success"})
 
     def _show_ai_launch_indicator(self):
         """Show AI launch indicator in the GUI"""
@@ -105,19 +107,18 @@ class UnhingedApplication(Adw.Application):
 
     def do_startup(self):
         """Application startup - set up global resources"""
-        print("🔧 Application startup...")
+        gui_logger.debug(" Application startup...", {"event_type": "configuration"})
         Adw.Application.do_startup(self)
         
-        print("🎨 Setting up theming...")
+        gui_logger.info(" Setting up theming...", {"event_type": "theming"})
         self.theme_manager.setup_theming()
         
-        print("🔧 Registering tools...")
+        gui_logger.debug(" Registering tools...", {"event_type": "configuration"})
         self._register_tools()
         
-        print("⌨️ Setting up shortcuts...")
         self._setup_shortcuts()
         
-        print("✅ Application startup complete")
+        gui_logger.info(" Application startup complete", {"status": "success"})
     
     def _register_tools(self):
         """Register all available tools"""
@@ -125,46 +126,45 @@ class UnhingedApplication(Adw.Application):
         try:
             from ..tools.api_dev.tool import APIDevTool
             self.tool_manager.register_tool(APIDevTool())
-            print("✅ Registered API Development Tool")
+            gui_logger.info(" Registered API Development Tool", {"status": "success"})
         except ImportError as e:
-            print(f"⚠️ Failed to load API Dev Tool: {e}")
+            gui_logger.warn(f" Failed to load API Dev Tool: {e}")
 
         try:
             from ..tools.system_monitor.tool import SystemMonitorTool
             self.tool_manager.register_tool(SystemMonitorTool())
-            print("✅ Registered System Monitor Tool")
+            gui_logger.info(" Registered System Monitor Tool", {"status": "success"})
         except ImportError as e:
-            print(f"⚠️ Failed to load System Monitor Tool: {e}")
+            gui_logger.warn(f" Failed to load System Monitor Tool: {e}")
 
         try:
             from ..tools.log_viewer.tool import LogViewerTool
             self.tool_manager.register_tool(LogViewerTool())
-            print("✅ Registered Log Viewer Tool")
+            gui_logger.info(" Registered Log Viewer Tool", {"status": "success"})
         except ImportError as e:
-            print(f"⚠️ Failed to load Log Viewer Tool: {e}")
+            gui_logger.warn(f" Failed to load Log Viewer Tool: {e}")
 
         try:
             from ..tools.service_manager.tool import ServiceManagerTool
             self.tool_manager.register_tool(ServiceManagerTool())
-            print("✅ Registered Service Manager Tool")
+            gui_logger.info(" Registered Service Manager Tool", {"status": "success"})
         except ImportError as e:
-            print(f"⚠️ Failed to load Service Manager Tool: {e}")
+            gui_logger.warn(f" Failed to load Service Manager Tool: {e}")
 
         try:
             from ..tools.file_browser.tool import FileBrowserTool
             self.tool_manager.register_tool(FileBrowserTool())
-            print("✅ Registered File Browser Tool")
+            gui_logger.info(" Registered File Browser Tool", {"status": "success"})
         except ImportError as e:
-            print(f"⚠️ Failed to load File Browser Tool: {e}")
+            gui_logger.warn(f" Failed to load File Browser Tool: {e}")
 
         try:
             from ..tools.chat.tool import ChatTool
             self.tool_manager.register_tool(ChatTool())
-            print("✅ Registered Chat Tool")
+            gui_logger.info(" Registered Chat Tool", {"status": "success"})
         except ImportError as e:
-            print(f"⚠️ Failed to load Chat Tool: {e}")
+            gui_logger.warn(f" Failed to load Chat Tool: {e}")
 
-        print(f"🔧 Total tools registered: {len(self.tool_manager.get_tools())}")
     
     def _setup_shortcuts(self):
         """Set up application keyboard shortcuts"""
@@ -226,22 +226,16 @@ def run_control_center(launched_by_ai=False):
 
     Replaces the single-purpose API tool with a multi-tool application.
     """
-    print("🚀 Starting Unhinged Control Center...")
-    print("💡 CULTURE: We are independent. We render natively. We depend on nothing.")
-    print("🎛️ Multi-tool native application - maximum independence achieved.")
+    gui_logger.info(" Starting Unhinged Control Center...", {"event_type": "startup"})
 
     # Check if launched by AI assistant
     if launched_by_ai:
-        print("🤖 LAUNCHED BY AI ASSISTANT - You should see the mobile-first GUI window!")
 
     app = UnhingedApplication(launched_by_ai=launched_by_ai)
-    print("📱 Created control center instance")
 
-    print("🎬 Running application...")
 
     # Filter out our custom arguments that GTK doesn't understand
     filtered_argv = [arg for arg in sys.argv if not arg.startswith('--launched-by-ai')]
 
     exit_code = app.run(filtered_argv)
-    print(f"🏁 Control center exited with code: {exit_code}")
     return exit_code

@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-mobile-chat-tool", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend mobile_chat_tool.py - system control component
@@ -15,6 +19,7 @@ Features touch-friendly input, adaptive layout, and modern Material Design 3 sty
 """
 
 import gi
+from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
@@ -31,7 +36,7 @@ try:
     from ...services.llm_client import LLMServiceClient
     LLM_CLIENT_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ LLM client not available: {e}")
+    gui_logger.warn(f" LLM client not available: {e}")
     LLM_CLIENT_AVAILABLE = False
 
 # Try to import Speech client (optional)
@@ -39,7 +44,7 @@ try:
     from .bridge.speech_client import SpeechClient
     SPEECH_CLIENT_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Speech client not available: {e}")
+    gui_logger.warn(f" Speech client not available: {e}")
     SPEECH_CLIENT_AVAILABLE = False
     LLMServiceClient = None
 
@@ -166,7 +171,6 @@ class MobileChatInput(Gtk.Box):
         # Callback for message sending
         self.on_message_send: Optional[callable] = None
         
-        print("📱 Mobile chat input created")
     
     def get_text(self) -> str:
         """Get current input text"""
@@ -208,7 +212,6 @@ class MobileChatInput(Gtk.Box):
         if hasattr(self, 'on_voice_input') and self.on_voice_input:
             self.on_voice_input()
         else:
-            print("🎤 Voice input not configured")
 
 
 class MobileChatTool(BaseTool):
@@ -241,31 +244,29 @@ class MobileChatTool(BaseTool):
         else:
             self.llm_client = None
             self.llm_initialized = False
-            print("⚠️ Running in offline mode - LLM client not available")
+            gui_logger.warn(" Running in offline mode - LLM client not available")
 
         # Initialize Speech client (if available)
         if SPEECH_CLIENT_AVAILABLE:
             try:
                 self.speech_client = SpeechClient()
                 self.speech_initialized = False
-                print("🎤 Speech client available")
 
                 # Check audio permissions on startup
                 self._check_audio_permissions()
 
             except Exception as e:
-                print(f"⚠️ Failed to initialize speech client: {e}")
+                gui_logger.warn(f" Failed to initialize speech client: {e}")
                 self.speech_client = None
                 self.speech_initialized = False
         else:
             self.speech_client = None
             self.speech_initialized = False
-            print("⚠️ Speech-to-text not available - speech client not found")
+            gui_logger.warn(" Speech-to-text not available - speech client not found")
 
         # Load chat history
         self._load_chat_history()
 
-        print("📱 Mobile chat tool initialized")
     
     def create_widget(self) -> Gtk.Widget:
         """Create the mobile chat interface"""
@@ -310,16 +311,15 @@ class MobileChatTool(BaseTool):
                 response = requests.get("http://localhost:1500/api/tags", timeout=5)
                 if response.status_code == 200:
                     self.llm_initialized = True
-                    print("🤖 LLM client initialized successfully (Ollama available)")
                 else:
                     self.llm_initialized = False
-                    print(f"❌ Ollama unhealthy (status: {response.status_code})")
+                    gui_logger.error(f" Ollama unhealthy (status: {response.status_code})")
 
             except ImportError:
-                print("⚠️ requests not available - marking LLM as unavailable")
+                gui_logger.warn(" requests not available - marking LLM as unavailable")
                 self.llm_initialized = False
             except Exception as e:
-                print(f"❌ LLM client initialization failed: {e}")
+                gui_logger.error(f" LLM client initialization failed: {e}")
                 self.llm_initialized = False
 
             # Update status in UI
@@ -435,7 +435,6 @@ class MobileChatTool(BaseTool):
         # Save history
         self._save_chat_history()
         
-        print(f"📱 Message sent: {text}")
     
     def _create_typing_indicator(self) -> Gtk.Widget:
         """Create typing indicator"""
@@ -613,10 +612,8 @@ class MobileChatTool(BaseTool):
         # Start speech recognition in background thread
         def run_speech_recognition():
             try:
-                print("🎤 Starting enhanced speech recognition...")
 
                 # Show audio info for debugging
-                print(f"🎤 Audio setup: {audio_info}")
 
                 # Use speech client to get transcription
                 transcription = self._get_speech_transcription()
@@ -626,7 +623,7 @@ class MobileChatTool(BaseTool):
 
             except Exception as e:
                 error_msg = f"Speech recognition error: {str(e)}"
-                print(f"❌ {error_msg}")
+                gui_logger.error(f" {error_msg}")
                 GLib.idle_add(self._on_speech_error, error_msg)
 
         # Run in background thread
@@ -723,7 +720,6 @@ class MobileChatTool(BaseTool):
     def set_recording_duration(self, duration: float):
         """Set recording duration in seconds"""
         self.recording_duration = max(1.0, min(30.0, duration))  # 1-30 seconds
-        print(f"🎤 Recording duration set to {self.recording_duration:.1f} seconds")
 
     def get_recording_duration(self) -> float:
         """Get current recording duration"""
@@ -761,7 +757,6 @@ class MobileChatTool(BaseTool):
             # Focus the input for further editing
             self.chat_input.focus_input()
 
-            print(f"✅ Speech transcribed: '{clean_transcription}'")
 
             # Show success feedback briefly
             self._show_voice_success(f"Transcribed: {clean_transcription[:30]}...")
@@ -779,7 +774,6 @@ class MobileChatTool(BaseTool):
 
     def _show_voice_success(self, message: str):
         """Show voice input success message"""
-        print(f"✅ Voice success: {message}")
         # Could show a green toast notification here in the future
 
         # Temporarily change tooltip to show success
@@ -795,7 +789,6 @@ class MobileChatTool(BaseTool):
 
     def _show_voice_error(self, message: str):
         """Show voice input error message"""
-        print(f"🎤 Voice input error: {message}")
         # Could show a toast notification here in the future
 
     def _load_chat_history(self):
@@ -804,9 +797,8 @@ class MobileChatTool(BaseTool):
             if self.chat_history_file.exists():
                 with open(self.chat_history_file, 'r') as f:
                     self.messages = json.load(f)
-                print(f"📱 Loaded {len(self.messages)} messages from history")
         except Exception as e:
-            print(f"⚠️ Failed to load chat history: {e}")
+            gui_logger.warn(f" Failed to load chat history: {e}")
             self.messages = []
     
     def _save_chat_history(self):
@@ -815,7 +807,7 @@ class MobileChatTool(BaseTool):
             with open(self.chat_history_file, 'w') as f:
                 json.dump(self.messages, f, indent=2)
         except Exception as e:
-            print(f"⚠️ Failed to save chat history: {e}")
+            gui_logger.warn(f" Failed to save chat history: {e}")
     
     def get_tool_actions(self) -> List[Gtk.Widget]:
         """Get tool-specific actions for header bar including recording controls"""
@@ -896,7 +888,6 @@ class MobileChatTool(BaseTool):
                 info_lines.append(f"Devices: {', '.join(audio_info['device_names'])}")
 
         info_message = "\n".join(info_lines)
-        print(f"🎤 Audio System Info:\n{info_message}")
 
         # Could show this in a dialog in the future
         self._show_voice_success("Audio info printed to console")
@@ -913,20 +904,19 @@ class MobileChatTool(BaseTool):
             has_permissions = AudioDeviceManager.check_audio_permissions()
 
             if not has_permissions:
-                print("⚠️ Audio permissions not available")
+                gui_logger.warn(" Audio permissions not available")
                 self._show_audio_permission_help()
             else:
-                print("✅ Audio permissions available")
+                gui_logger.info(" Audio permissions available", {"status": "success"})
 
                 # Check for recommended device
                 recommended = AudioDeviceManager.get_recommended_device()
                 if recommended:
-                    print(f"✅ Recommended audio device: {recommended['name']}")
                 else:
-                    print("⚠️ No recommended audio device found")
+                    gui_logger.warn(" No recommended audio device found")
 
         except Exception as e:
-            print(f"⚠️ Audio permission check failed: {e}")
+            gui_logger.warn(f" Audio permission check failed: {e}")
 
     def _show_audio_permission_help(self):
         """Show helpful audio permission instructions"""
@@ -943,24 +933,18 @@ Troubleshooting: {instructions['troubleshooting']}
 
 Platform: {instructions['platform']}
 """
-            print(help_message)
 
         except Exception as e:
-            print(f"⚠️ Could not get audio help: {e}")
+            gui_logger.warn(f" Could not get audio help: {e}")
 
     def _show_voice_error(self, message: str):
         """Enhanced voice input error message with helpful suggestions"""
-        print(f"🎤 Voice input error: {message}")
 
         # Provide helpful suggestions based on error type
         if "not available" in message.lower():
-            print("💡 Suggestion: Check if speech service is running on port 1191")
         elif "no speech detected" in message.lower():
-            print("💡 Suggestion: Speak closer to microphone or increase recording duration")
         elif "permission" in message.lower():
-            print("💡 Suggestion: Grant microphone permissions in system settings")
         elif "mock" in message.lower():
-            print("💡 Suggestion: Real microphone capture is working, but service may need real audio")
 
         # Update mic button tooltip with error
         if hasattr(self, 'chat_input') and self.chat_input.mic_button:
@@ -1015,4 +999,3 @@ Platform: {instructions['platform']}
         # Save empty history
         self._save_chat_history()
         
-        print("📱 Chat history cleared")

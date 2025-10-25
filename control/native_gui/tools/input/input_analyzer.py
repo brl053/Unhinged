@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-input-analyzer", "1.0.0")
+
 """
 Input Analysis and Pattern Detection
 Analyzes keyboard and mouse input patterns for productivity insights and automation.
@@ -11,6 +15,7 @@ from dataclasses import dataclass
 from collections import defaultdict, deque
 from enum import Enum
 import json
+from unhinged_events import create_gui_logger
 
 
 class PatternType(Enum):
@@ -90,7 +95,6 @@ class InputAnalyzer:
         self.gesture_templates = self._initialize_gesture_templates()
         self.workflow_templates = self._initialize_workflow_templates()
         
-        print("📊 Input analyzer initialized")
     
     def add_keyboard_event(self, event_data: Dict):
         """Add keyboard event for analysis"""
@@ -105,7 +109,7 @@ class InputAnalyzer:
                 self._analyze_typing_patterns()
             
         except Exception as e:
-            print(f"⚠️ Error adding keyboard event: {e}")
+            gui_logger.warn(f" Error adding keyboard event: {e}")
     
     def add_mouse_event(self, event_data: Dict):
         """Add mouse event for analysis"""
@@ -120,7 +124,7 @@ class InputAnalyzer:
                 self._analyze_mouse_patterns()
             
         except Exception as e:
-            print(f"⚠️ Error adding mouse event: {e}")
+            gui_logger.warn(f" Error adding mouse event: {e}")
     
     def _analyze_typing_patterns(self):
         """Analyze typing patterns and rhythm"""
@@ -179,7 +183,7 @@ class InputAnalyzer:
                     self._add_pattern(pattern)
                     
         except Exception as e:
-            print(f"⚠️ Typing analysis error: {e}")
+            gui_logger.warn(f" Typing analysis error: {e}")
     
     def _analyze_mouse_patterns(self):
         """Analyze mouse movement patterns and gestures"""
@@ -248,7 +252,7 @@ class InputAnalyzer:
                     self._add_pattern(pattern)
                     
         except Exception as e:
-            print(f"⚠️ Mouse analysis error: {e}")
+            gui_logger.warn(f" Mouse analysis error: {e}")
     
     def _is_circular_gesture(self, path: List[Tuple[int, int]]) -> bool:
         """Check if path represents a circular gesture"""
@@ -348,7 +352,6 @@ class InputAnalyzer:
         if len(self.pattern_history[pattern.pattern_type]) > 100:
             self.pattern_history[pattern.pattern_type] = self.pattern_history[pattern.pattern_type][-100:]
         
-        print(f"📊 Pattern detected: {pattern.description}")
     
     def detect_idle_periods(self):
         """Detect periods of user inactivity"""
@@ -519,16 +522,14 @@ class InputAnalyzer:
             with open(filename, 'w') as f:
                 json.dump(export_data, f, indent=2)
             
-            print(f"📊 Analysis exported to {filename}")
             
         except Exception as e:
-            print(f"❌ Failed to export analysis: {e}")
+            gui_logger.error(f" Failed to export analysis: {e}")
 
 
 # Test function
 def test_input_analyzer():
     """Test input analyzer functionality"""
-    print("📊 Testing input analyzer...")
     
     try:
         analyzer = InputAnalyzer()
@@ -556,12 +557,11 @@ def test_input_analyzer():
         
         # Get insights
         insights = analyzer.get_productivity_insights()
-        print(f"Insights: {insights}")
         
-        print("✅ Input analyzer test completed")
+        gui_logger.info(" Input analyzer test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Input analyzer test failed: {e}")
+        gui_logger.error(f" Input analyzer test failed: {e}")
 
 
 if __name__ == "__main__":

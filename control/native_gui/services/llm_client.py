@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-llm-client", "1.0.0")
+
 """
 @llm-type service
 @llm-legend llm_client.py - microservice component
@@ -20,6 +24,7 @@ import time
 from typing import Optional, Dict, Any, Callable, AsyncIterator
 from pathlib import Path
 from dataclasses import dataclass
+from unhinged_events import create_gui_logger
 
 # Try to import HTTP libraries (optional)
 try:
@@ -27,14 +32,14 @@ try:
     AIOHTTP_AVAILABLE = True
 except ImportError:
     AIOHTTP_AVAILABLE = False
-    print("⚠️ aiohttp not available - using fallback mode")
+    gui_logger.warn(" aiohttp not available - using fallback mode")
 
 try:
     import requests
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
-    print("⚠️ requests not available - using fallback mode")
+    gui_logger.warn(" requests not available - using fallback mode")
 
 # Try to import gRPC (optional)
 try:
@@ -54,10 +59,10 @@ try:
 
     from unhinged_proto_clients import llm_pb2, llm_pb2_grpc, common_pb2
     GRPC_AVAILABLE = True
-    print("✅ gRPC and proto clients available")
+    gui_logger.info(" gRPC and proto clients available", {"status": "success"})
 except ImportError as e:
     GRPC_AVAILABLE = False
-    print(f"⚠️ gRPC not available - using HTTP fallback: {e}")
+    gui_logger.warn(f" gRPC not available - using HTTP fallback: {e}")
 
 
 @dataclass
@@ -112,7 +117,6 @@ class LLMServiceClient:
         # Service discovery
         self.available_services: Dict[str, bool] = {}
         
-        print(f"🤖 LLM Service Client initialized (preferred: {preferred_service})")
     
     async def initialize(self):
         """Initialize the client and discover available services"""
@@ -120,7 +124,7 @@ class LLMServiceClient:
             self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
         else:
             self.session = None
-            print("⚠️ aiohttp not available - using fallback HTTP client")
+            gui_logger.warn(" aiohttp not available - using fallback HTTP client")
 
         # Discover available services
         await self._discover_services()
@@ -128,14 +132,13 @@ class LLMServiceClient:
         # Select best available service
         self._select_service()
 
-        print(f"🤖 LLM Client ready (using: {self.current_service.name if self.current_service else 'None'})")
     
     async def _discover_services(self):
         """Discover which LLM services are available"""
-        print("🔍 Discovering LLM services...")
+        gui_logger.debug(" Discovering LLM services...", {"event_type": "scanning"})
 
         if not AIOHTTP_AVAILABLE and not REQUESTS_AVAILABLE:
-            print("⚠️ No HTTP libraries available - all services marked as unavailable")
+            gui_logger.warn(" No HTTP libraries available - all services marked as unavailable")
             for service_id in self.SERVICE_CONFIGS:
                 self.available_services[service_id] = False
             return
@@ -154,26 +157,20 @@ class LLMServiceClient:
                     async with self.session.get(health_url, timeout=aiohttp.ClientTimeout(total=5)) as response:
                         if response.status == 200:
                             self.available_services[service_id] = True
-                            print(f"  ✅ {config.name} available at {config.base_url}")
                         else:
                             self.available_services[service_id] = False
-                            print(f"  ❌ {config.name} unhealthy (status: {response.status})")
                 elif REQUESTS_AVAILABLE:
                     # Fallback to requests
                     response = requests.get(health_url, timeout=5)
                     if response.status_code == 200:
                         self.available_services[service_id] = True
-                        print(f"  ✅ {config.name} available at {config.base_url}")
                     else:
                         self.available_services[service_id] = False
-                        print(f"  ❌ {config.name} unhealthy (status: {response.status_code})")
                 else:
                     self.available_services[service_id] = False
-                    print(f"  ❌ {config.name} unavailable: No HTTP client")
 
             except Exception as e:
                 self.available_services[service_id] = False
-                print(f"  ❌ {config.name} unavailable: {str(e)[:50]}...")
     
     def _select_service(self):
         """Select the best available service"""
@@ -186,10 +183,9 @@ class LLMServiceClient:
         for service_id, available in self.available_services.items():
             if available:
                 self.current_service = self.SERVICE_CONFIGS[service_id]
-                print(f"🔄 Fallback to {self.current_service.name}")
                 return
         
-        print("❌ No LLM services available")
+        gui_logger.error(" No LLM services available")
         self.current_service = None
     
     async def send_message(self, message: str, conversation_history: list = None) -> str:
@@ -210,7 +206,7 @@ class LLMServiceClient:
                 return "❌ Unknown service type"
 
         except Exception as e:
-            print(f"❌ LLM service error: {e}")
+            gui_logger.error(f" LLM service error: {e}")
             return f"❌ Service error: {str(e)}"
     
     async def _send_ollama_message(self, message: str, history: list = None) -> str:
@@ -382,4 +378,3 @@ class LLMServiceClient:
         if self.grpc_channel:
             await self.grpc_channel.close()
         
-        print("🤖 LLM Service Client closed")

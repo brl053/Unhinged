@@ -17,8 +17,8 @@ Implements health.proto for service discovery:
 """
 
 import os
-import logging
 import grpc
+from unhinged_events import create_service_logger
 from concurrent import futures
 import time
 
@@ -31,9 +31,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent / "generated/python/clie
 from unhinged_proto_clients.health import health_pb2
 from unhinged_proto_clients.health import health_pb2_grpc
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Initialize event logger
+events = create_service_logger("vision-ai", "1.0.0")
 
 
 class VisionAIServicer(health_pb2_grpc.HealthServiceServicer):
@@ -52,13 +51,12 @@ class VisionAIServicer(health_pb2_grpc.HealthServiceServicer):
         try:
             # Import vision model loading logic
             # This would normally load BLIP or other vision models
-            logger.info("Loading vision model...")
             # Simulate model loading
             self.vision_model_loaded = True
             self.service_ready = True
-            logger.info("Vision model loaded successfully")
+            events.info("Vision model loaded", {"model": "BLIP"})
         except Exception as e:
-            logger.error(f"Failed to load vision model: {e}")
+            events.error("Failed to load vision model", exception=e, metadata={"model": "BLIP"})
             self.vision_model_loaded = False
             self.service_ready = False
 
@@ -74,7 +72,7 @@ class VisionAIServicer(health_pb2_grpc.HealthServiceServicer):
             response.status = health_pb2.HEALTH_STATUS_HEALTHY if self.service_ready else health_pb2.HEALTH_STATUS_UNHEALTHY
             return response
         except Exception as e:
-            logger.error(f"Heartbeat failed: {e}")
+            events.error("Heartbeat failed", exception=e)
             response = health_pb2.HeartbeatResponse()
             response.alive = False
             response.timestamp_ms = int(time.time() * 1000)
@@ -102,7 +100,7 @@ class VisionAIServicer(health_pb2_grpc.HealthServiceServicer):
             response.last_updated.GetCurrentTime()
             return response
         except Exception as e:
-            logger.error(f"Diagnostics failed: {e}")
+            events.error("Diagnostics failed", exception=e)
             # Return minimal response on error
             response = health_pb2.DiagnosticsResponse()
             response.heartbeat.CopyFrom(self.Heartbeat(health_pb2.HeartbeatRequest(), context))
@@ -122,13 +120,12 @@ def serve():
     listen_addr = '[::]:9093'
     server.add_insecure_port(listen_addr)
     
-    logger.info(f"Starting Vision AI gRPC server on {listen_addr}")
     server.start()
-    
+
     try:
         server.wait_for_termination()
     except KeyboardInterrupt:
-        logger.info("Shutting down Vision AI gRPC server...")
+        pass
         server.stop(0)
 
 

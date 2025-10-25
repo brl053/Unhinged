@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-privacy-manager", "1.0.0")
+
 """
 Privacy Manager for Input Capture
 Provides privacy controls, data filtering, and secure storage for input monitoring.
@@ -12,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from enum import Enum
 import threading
+from unhinged_events import create_gui_logger
 
 
 class PrivacyLevel(Enum):
@@ -81,7 +86,6 @@ class PrivacyManager:
         self.content_filters: List[Callable[[str], str]] = []
         self._setup_content_filters()
         
-        print(f"🔒 Privacy manager initialized (level: {self.config.level.value})")
     
     def _compile_patterns(self) -> Dict[str, re.Pattern]:
         """Compile regex patterns for content filtering"""
@@ -115,7 +119,7 @@ class PrivacyManager:
             try:
                 patterns[f'custom_{len(patterns)}'] = re.compile(pattern)
             except re.error as e:
-                print(f"⚠️ Invalid regex pattern '{pattern}': {e}")
+                gui_logger.warn(f" Invalid regex pattern '{pattern}': {e}")
         
         return patterns
     
@@ -270,12 +274,10 @@ class PrivacyManager:
     def add_blocked_application(self, app_name: str):
         """Add application to blocked list"""
         self.config.blocked_applications.add(app_name.lower())
-        print(f"🔒 Added '{app_name}' to blocked applications")
     
     def remove_blocked_application(self, app_name: str):
         """Remove application from blocked list"""
         self.config.blocked_applications.discard(app_name.lower())
-        print(f"🔒 Removed '{app_name}' from blocked applications")
     
     def add_custom_filter_pattern(self, pattern: str):
         """Add custom regex filter pattern"""
@@ -288,9 +290,8 @@ class PrivacyManager:
             self.patterns = self._compile_patterns()
             self._setup_content_filters()
             
-            print(f"🔒 Added custom filter pattern: {pattern}")
         except re.error as e:
-            print(f"❌ Invalid regex pattern: {e}")
+            gui_logger.error(f" Invalid regex pattern: {e}")
     
     def get_privacy_summary(self) -> Dict:
         """Get privacy configuration summary"""
@@ -323,10 +324,9 @@ class PrivacyManager:
             with open(filename, 'w') as f:
                 json.dump(config_data, f, indent=2)
             
-            print(f"🔒 Privacy config exported to {filename}")
             
         except Exception as e:
-            print(f"❌ Failed to export privacy config: {e}")
+            gui_logger.error(f" Failed to export privacy config: {e}")
     
     def import_privacy_config(self, filename: str):
         """Import privacy configuration from file"""
@@ -349,16 +349,14 @@ class PrivacyManager:
             self.patterns = self._compile_patterns()
             self._setup_content_filters()
             
-            print(f"🔒 Privacy config imported from {filename}")
             
         except Exception as e:
-            print(f"❌ Failed to import privacy config: {e}")
+            gui_logger.error(f" Failed to import privacy config: {e}")
 
 
 # Test function
 def test_privacy_manager():
     """Test privacy manager functionality"""
-    print("🔒 Testing privacy manager...")
     
     try:
         # Test different privacy levels
@@ -368,13 +366,10 @@ def test_privacy_manager():
         # Test content filtering
         test_content = "My password is secret123 and email is user@example.com"
         filtered = manager._filter_content(test_content)
-        print(f"Original: {test_content}")
-        print(f"Filtered: {filtered}")
         
         # Test application filtering
         manager.set_current_application("keepass")
         should_capture = manager.should_capture_application("keepass")
-        print(f"Should capture KeePass: {should_capture}")
         
         # Test event filtering
         keyboard_event = {
@@ -385,16 +380,14 @@ def test_privacy_manager():
         }
         
         filtered_event = manager.filter_keyboard_event(keyboard_event)
-        print(f"Filtered event: {filtered_event}")
         
         # Get privacy summary
         summary = manager.get_privacy_summary()
-        print(f"Privacy summary: {summary}")
         
-        print("✅ Privacy manager test completed")
+        gui_logger.info(" Privacy manager test completed", {"status": "success"})
         
     except Exception as e:
-        print(f"❌ Privacy manager test failed: {e}")
+        gui_logger.error(f" Privacy manager test failed: {e}")
 
 
 if __name__ == "__main__":

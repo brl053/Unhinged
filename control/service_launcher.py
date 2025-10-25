@@ -71,16 +71,12 @@ class ServiceLauncher:
         self.running_services: List[str] = []
         self.service_registry = get_service_registry()
 
-        print("🚀 Service Launcher initialized (using unified orchestration)")
-    
     def launch_essential_services(self, timeout: int = 120) -> bool:
         """
         Launch essential services needed for GUI functionality.
-        
+
         Returns True if all required services are running.
         """
-        print("🔍 Checking service requirements...")
-        
         # Check if Docker is available
         if not self._check_docker():
             print("❌ Docker not available - GUI will run in offline mode")
@@ -96,20 +92,16 @@ class ServiceLauncher:
                 to_start.append(service)
         
         if not to_start:
-            print("✅ All essential services already running")
             return True
-        
+
         # Start missing services
-        print(f"🚀 Starting {len(to_start)} essential services...")
-        
         for service in to_start:
             if service["required"] or self._should_start_service(service):
                 success = self._start_service(service, timeout)
                 if service["required"] and not success:
                     print(f"❌ Required service {service['name']} failed to start")
                     return False
-        
-        print("✅ Essential services launched successfully")
+
         return True
     
     def _check_docker(self) -> bool:
@@ -137,7 +129,6 @@ class ServiceLauncher:
             else:
                 return []
         except Exception as e:
-            print(f"⚠️ Could not check running services: {e}")
             return []
     
     def _should_start_service(self, service: Dict) -> bool:
@@ -145,15 +136,11 @@ class ServiceLauncher:
         if service["required"]:
             return True
         
-        print(f"\n🤔 Start {service['name']}?")
-        print(f"   Description: {service['description']}")
-        print(f"   Port: {service['port']}")
         
         try:
             response = input("   Start this service? (y/N): ").strip().lower()
             return response in ['y', 'yes']
         except KeyboardInterrupt:
-            print("\n⏹️ Service startup cancelled")
             return False
     
     def _start_service(self, service: Dict, timeout: int) -> bool:
@@ -194,7 +181,6 @@ class ServiceLauncher:
             try:
                 response = requests.get(service["health_url"], timeout=5)
                 if response.status_code == 200:
-                    print(f"✅ {service['name']} is healthy")
                     self.running_services.append(service["compose_service"])
                     return True
             except requests.RequestException:
@@ -243,7 +229,6 @@ class ServiceLauncher:
     def stop_services(self):
         """Stop services that were started by this launcher"""
         if not self.running_services:
-            print("🛑 No services to stop")
             return
         
         print(f"🛑 Stopping {len(self.running_services)} services...")
@@ -254,11 +239,9 @@ class ServiceLauncher:
                 "stop"
             ] + self.running_services, timeout=30)
             
-            print("✅ Services stopped")
             self.running_services.clear()
             
         except Exception as e:
-            print(f"⚠️ Error stopping services: {e}")
 
 
 def main():
@@ -276,10 +259,8 @@ def main():
     
     if args.status:
         status = launcher.get_service_status()
-        print("\n📊 Service Status:")
         for name, info in status.items():
             status_icon = "🟢" if info["running"] else "🔴"
-            print(f"  {status_icon} {name} (port {info['port']})")
         return
     
     if args.stop:
@@ -290,12 +271,8 @@ def main():
     success = launcher.launch_essential_services(args.timeout)
     
     if success:
-        print("\n🎉 All essential services are running!")
-        print("🚀 Ready to launch native GUI")
         sys.exit(0)
     else:
-        print("\n⚠️ Some services failed to start")
-        print("🔧 GUI will run in offline mode")
         sys.exit(1)
 
 

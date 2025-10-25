@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-input-integration", "1.0.0")
+
 """
 Input Integration Layer
 Connects UI components with the input capture system for seamless interaction.
@@ -11,6 +15,7 @@ import threading
 import time
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
+from unhinged_events import create_gui_logger
 
 # Import input capture modules
 try:
@@ -21,7 +26,7 @@ try:
     from ..tools.input.input_analyzer import InputAnalyzer, AnalysisConfig, PatternType
     INPUT_MODULES_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Input modules not available: {e}")
+    gui_logger.warn(f" Input modules not available: {e}")
     INPUT_MODULES_AVAILABLE = False
 
 # Import UI components
@@ -147,10 +152,9 @@ class InputMonitorWidget(Card):
             # Connect callbacks
             self._setup_callbacks()
             
-            print("🔗 Input capture components initialized")
             
         except Exception as e:
-            print(f"❌ Failed to initialize input capture: {e}")
+            gui_logger.error(f" Failed to initialize input capture: {e}")
     
     def _setup_callbacks(self):
         """Setup input capture callbacks"""
@@ -188,16 +192,14 @@ class InputMonitorWidget(Card):
     
     def _on_hotkey_triggered(self, hotkey_name):
         """Handle hotkey trigger"""
-        print(f"🔥 Hotkey triggered: {hotkey_name}")
     
     def _on_mouse_pattern(self, pattern_type, data):
         """Handle mouse pattern detection"""
-        print(f"🎯 Mouse pattern: {pattern_type}")
     
     def _on_start_clicked(self, button):
         """Start input monitoring"""
         if not INPUT_MODULES_AVAILABLE:
-            print("❌ Input capture not available")
+            gui_logger.error(" Input capture not available")
             return
         
         try:
@@ -217,10 +219,9 @@ class InputMonitorWidget(Card):
             # Start update timer
             self.update_timer = GLib.timeout_add(1000, self._update_stats)
             
-            print("🔗 Input monitoring started")
             
         except Exception as e:
-            print(f"❌ Failed to start monitoring: {e}")
+            gui_logger.error(f" Failed to start monitoring: {e}")
     
     def _on_stop_clicked(self, button):
         """Stop input monitoring"""
@@ -243,15 +244,13 @@ class InputMonitorWidget(Card):
                 GLib.source_remove(self.update_timer)
                 self.update_timer = None
             
-            print("🔗 Input monitoring stopped")
             
         except Exception as e:
-            print(f"❌ Failed to stop monitoring: {e}")
+            gui_logger.error(f" Failed to stop monitoring: {e}")
     
     def _on_settings_clicked(self, button):
         """Show settings dialog"""
         # Would open settings dialog
-        print("⚙️ Settings clicked")
     
     def _update_stats(self) -> bool:
         """Update statistics display"""
@@ -288,7 +287,7 @@ class InputMonitorWidget(Card):
             return True  # Continue timer
             
         except Exception as e:
-            print(f"⚠️ Stats update error: {e}")
+            gui_logger.warn(f" Stats update error: {e}")
             return True
 
 
@@ -364,7 +363,6 @@ class HotkeyConfigWidget(Card):
     def _on_add_hotkey(self, button):
         """Add new hotkey"""
         # Would open hotkey creation dialog
-        print("➕ Add hotkey clicked")
     
     def _toggle_hotkey(self, name: str, enabled: bool):
         """Toggle hotkey enabled state"""
@@ -466,7 +464,6 @@ class PrivacyControlWidget(Card):
         
         if selected < len(levels) and self.privacy_manager:
             self.privacy_manager.config.level = levels[selected]
-            print(f"🔒 Privacy level changed to: {levels[selected].value}")
 
 
 class InputIntegrationManager:
@@ -480,7 +477,6 @@ class InputIntegrationManager:
         # Integration state
         self.is_integrated = False
         
-        print("🔗 Input integration manager initialized")
     
     def create_input_dashboard(self) -> Gtk.Widget:
         """Create integrated input dashboard"""
@@ -518,7 +514,6 @@ class InputIntegrationManager:
 # Test function
 def test_input_integration():
     """Test input integration"""
-    print("🔗 Testing input integration...")
     
     app = Adw.Application()
     

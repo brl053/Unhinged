@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-http-client", "1.0.0")
+
 """
 @llm-type control-system
 @llm-legend http_client.py - system control component
@@ -24,6 +28,7 @@ import requests
 import time
 import json
 from typing import Dict, Any, Optional
+from unhinged_events import create_gui_logger
 
 
 class HTTPClient:
@@ -35,7 +40,7 @@ class HTTPClient:
     
     def __init__(self):
         self.session = requests.Session()
-        print("🌐 HTTP client initialized")
+        gui_logger.info(" HTTP client initialized", {"event_type": "network_ready"})
     
     def send_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """

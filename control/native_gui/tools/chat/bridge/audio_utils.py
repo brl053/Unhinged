@@ -1,3 +1,7 @@
+
+# Initialize GUI event logger
+gui_logger = create_gui_logger("unhinged-audio-utils", "1.0.0")
+
 """
 Audio Utilities and Device Management
 Provides helper functions for audio device detection and configuration.
@@ -7,6 +11,7 @@ import pyaudio
 import platform
 import subprocess
 from typing import List, Dict, Optional
+from unhinged_events import create_gui_logger
 
 
 class AudioDeviceManager:
@@ -77,7 +82,7 @@ class AudioDeviceManager:
             return True
             
         except Exception as e:
-            print(f"⚠️ Audio permission check failed: {e}")
+            gui_logger.warn(f" Audio permission check failed: {e}")
             return False
     
     @staticmethod
@@ -118,7 +123,7 @@ class AudioDeviceManager:
                 return None
                 
         except Exception as e:
-            print(f"❌ Failed to get recommended device: {e}")
+            gui_logger.error(f" Failed to get recommended device: {e}")
             return None
     
     @staticmethod
@@ -190,7 +195,7 @@ class AudioDeviceManager:
             p.terminate()
             
         except Exception as e:
-            print(f"❌ Device compatibility test failed: {e}")
+            gui_logger.error(f" Device compatibility test failed: {e}")
         
         return results
     
@@ -232,46 +237,30 @@ class AudioDeviceManager:
 
 def print_audio_system_info():
     """Print comprehensive audio system information"""
-    print("🎤 Audio System Information")
-    print("=" * 50)
     
     # System info
     system_info = AudioDeviceManager.get_system_info()
     for key, value in system_info.items():
-        print(f"{key.replace('_', ' ').title()}: {value}")
     
-    print()
     
     # Permission check
     has_permissions = AudioDeviceManager.check_audio_permissions()
-    print(f"Audio Permissions: {'✅ Available' if has_permissions else '❌ Not Available'}")
     
     # Recommended device
     recommended = AudioDeviceManager.get_recommended_device()
     if recommended:
-        print(f"Recommended Device: {recommended['name']}")
-        print(f"  - Channels: {recommended['channels']}")
-        print(f"  - Sample Rate: {recommended['sample_rate']} Hz")
-        print(f"  - Default: {'Yes' if recommended['is_default'] else 'No'}")
         
         # Test compatibility
         compat = AudioDeviceManager.test_device_compatibility(recommended['index'])
-        print("  - Compatibility:")
         for test, result in compat.items():
             status = "✅" if result else "❌"
-            print(f"    {test.replace('_', ' ').title()}: {status}")
     else:
-        print("Recommended Device: ❌ None found")
     
-    print()
     
     # Installation instructions
     if not has_permissions:
         instructions = AudioDeviceManager.get_installation_instructions()
-        print("🔧 Installation Instructions:")
-        print(f"System Dependencies: {instructions['system_deps']}")
-        print(f"PyAudio Install: {instructions['pyaudio_install']}")
-        print(f"Troubleshooting: {instructions['troubleshooting']}")
+        gui_logger.debug(" Installation Instructions:", {"event_type": "configuration"})
 
 
 if __name__ == "__main__":
