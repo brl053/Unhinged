@@ -19,10 +19,8 @@ import os
 
 # Add event framework to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../libs/event-framework/python/src'))
-from unhinged_events import create_gui_logger
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-vision-tool", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 # YOLO imports
 try:

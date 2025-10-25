@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-mobile-chat-tool", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -19,7 +18,6 @@ Features touch-friendly input, adaptive layout, and modern Material Design 3 sty
 """
 
 import gi
-from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 

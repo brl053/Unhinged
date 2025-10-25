@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-audio-capture", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Audio Capture Module for Real-time Microphone Recording
@@ -16,7 +15,6 @@ import collections
 import numpy as np
 from typing import Optional, Iterator, Callable, Deque
 from dataclasses import dataclass
-from unhinged_events import create_gui_logger
 
 
 @dataclass

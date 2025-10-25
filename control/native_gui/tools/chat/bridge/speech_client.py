@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-speech-client", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -31,7 +30,6 @@ import threading
 import time
 from typing import Optional, Callable, Iterator
 from pathlib import Path
-from unhinged_events import create_gui_logger
 
 # Import our audio capture module
 try:

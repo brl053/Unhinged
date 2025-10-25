@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-tool", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type tool-plugin
@@ -16,7 +15,6 @@ import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
-from unhinged_events import create_gui_logger
 
 from ...core.tool_manager import BaseTool, ToolViewport
 from ...ui.components import Card, MetricCard, StatusIndicator, ComponentVariant

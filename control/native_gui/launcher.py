@@ -34,10 +34,8 @@ sys.path.insert(0, str(project_root))
 
 # Add event framework to path
 sys.path.insert(0, str(project_root / "libs/event-framework/python/src"))
-from unhinged_events import create_gui_logger
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-launcher", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 # This will be called from main() below
 

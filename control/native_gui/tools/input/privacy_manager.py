@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-privacy-manager", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Privacy Manager for Input Capture
@@ -16,7 +15,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from enum import Enum
 import threading
-from unhinged_events import create_gui_logger
 
 
 class PrivacyLevel(Enum):

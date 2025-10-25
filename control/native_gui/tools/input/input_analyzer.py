@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-input-analyzer", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Input Analysis and Pattern Detection
@@ -15,7 +14,6 @@ from dataclasses import dataclass
 from collections import defaultdict, deque
 from enum import Enum
 import json
-from unhinged_events import create_gui_logger
 
 
 class PatternType(Enum):

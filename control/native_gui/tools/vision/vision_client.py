@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-vision-client", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Vision Service Client for AI-powered image analysis
@@ -16,7 +15,6 @@ from typing import Optional, Dict, List, Any
 from pathlib import Path
 import numpy as np
 import cv2
-from unhinged_events import create_gui_logger
 
 # Add the generated clients to the path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent / "generated" / "python" / "clients"))

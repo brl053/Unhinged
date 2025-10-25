@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-keyboard-capture", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Keyboard Capture Module for Global Key Monitoring and Hotkeys
@@ -15,7 +14,6 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from collections import defaultdict, deque
 import queue
-from unhinged_events import create_gui_logger
 
 # Import pynput for keyboard monitoring
 try:

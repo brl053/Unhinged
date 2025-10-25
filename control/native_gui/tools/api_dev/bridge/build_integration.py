@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-build-integration", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Build System Integration
@@ -17,7 +16,6 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from unhinged_events import create_gui_logger
 
 # Add build system to path
 project_root = Path(__file__).parent.parent.parent.parent.parent.parent

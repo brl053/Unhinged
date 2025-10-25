@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-audio-utils", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Audio Utilities and Device Management
@@ -11,7 +10,6 @@ import pyaudio
 import platform
 import subprocess
 from typing import List, Dict, Optional
-from unhinged_events import create_gui_logger
 
 
 class AudioDeviceManager:

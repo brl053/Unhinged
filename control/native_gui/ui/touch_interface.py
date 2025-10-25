@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-touch-interface", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Touch Interface and Gesture Handling
@@ -16,7 +15,6 @@ import time
 from typing import Dict, List, Optional, Callable, Tuple
 from enum import Enum
 from dataclasses import dataclass
-from unhinged_events import create_gui_logger
 
 
 class GestureType(Enum):

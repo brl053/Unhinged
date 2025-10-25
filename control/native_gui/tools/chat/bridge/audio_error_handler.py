@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-audio-error-handler", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Audio Error Handler - Comprehensive error handling for audio operations
@@ -11,7 +10,6 @@ import platform
 import subprocess
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
-from unhinged_events import create_gui_logger
 
 
 class AudioErrorType(Enum):

@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-components", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Reusable UI Component Library
@@ -15,7 +14,6 @@ from typing import Dict, List, Optional, Callable, Any, Union
 from enum import Enum
 from dataclasses import dataclass
 import time
-from unhinged_events import create_gui_logger
 
 
 class ComponentSize(Enum):

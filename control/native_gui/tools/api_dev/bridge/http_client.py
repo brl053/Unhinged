@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-http-client", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -28,7 +27,6 @@ import requests
 import time
 import json
 from typing import Dict, Any, Optional
-from unhinged_events import create_gui_logger
 
 
 class HTTPClient:

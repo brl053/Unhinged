@@ -4,9 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "libs" / "event-framework" / "python" / "src"))
 
 try:
-    from unhinged_events import create_gui_logger
-    # Initialize GUI event logger
-    gui_logger = create_gui_logger("unhinged-tool-manager", "1.0.0")
+    import logging; gui_logger = logging.getLogger(__name__)
 except ImportError:
     # Fallback to basic logging if event framework not available
     import logging
@@ -33,7 +31,6 @@ from pathlib import Path
 import importlib
 import inspect
 from enum import Enum
-from unhinged_events import create_gui_logger
 
 # Import mobile UI framework
 try:

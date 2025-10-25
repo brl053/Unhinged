@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-responsive-layout", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Responsive Layout System for Mobile-First UI
@@ -14,7 +13,6 @@ from gi.repository import Gtk, Adw, Gdk, GLib
 from typing import Dict, List, Optional, Callable, Tuple
 from enum import Enum
 from dataclasses import dataclass
-from unhinged_events import create_gui_logger
 
 
 class ScreenSize(Enum):

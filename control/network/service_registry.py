@@ -290,10 +290,11 @@ def main():
         status = registry.check_service_health(args.health_check, force_refresh=True)
         service = registry.get_service(args.health_check)
         if service:
-            
+            pass
+
     elif args.list_services:
         services = registry.get_all_services()
-            
+
     else:
         parser.print_help()
 

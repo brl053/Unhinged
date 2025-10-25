@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-llm-client", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type service
@@ -24,7 +23,6 @@ import time
 from typing import Optional, Dict, Any, Callable, AsyncIterator
 from pathlib import Path
 from dataclasses import dataclass
-from unhinged_events import create_gui_logger
 
 # Try to import HTTP libraries (optional)
 try:

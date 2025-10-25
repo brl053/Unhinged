@@ -4,9 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "libs" / "event-framework" / "python" / "src"))
 
 try:
-    from unhinged_events import create_gui_logger
-    # Initialize GUI event logger
-    gui_logger = create_gui_logger("unhinged-application", "1.0.0")
+    import logging; gui_logger = logging.getLogger(__name__)
 except ImportError:
     # Fallback to basic logging if event framework not available
     import logging
@@ -29,7 +27,6 @@ Manages tools, theming, and global application state.
 """
 
 import gi
-from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version('Gdk', '4.0')

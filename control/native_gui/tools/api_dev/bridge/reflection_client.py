@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-reflection-client", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -16,7 +15,6 @@ gui_logger = create_gui_logger("unhinged-reflection-client", "1.0.0")
 
 Uses gRPC reflection to dynamically discover service definitions
 from running gRPC services without needing .proto files.
-from unhinged_events import create_gui_logger
 
 Features:
 - Server reflection protocol

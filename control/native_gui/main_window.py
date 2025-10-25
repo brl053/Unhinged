@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-main-window", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -21,7 +20,6 @@ No WebKit. No JavaScript. No HTML/CSS. Pure native widgets.
 """
 
 import gi
-from unhinged_events import create_gui_logger
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 

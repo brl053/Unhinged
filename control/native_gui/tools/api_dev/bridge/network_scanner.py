@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-network-scanner", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -35,7 +34,6 @@ import requests
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 import subprocess
-from unhinged_events import create_gui_logger
 
 
 class NetworkScanner:

@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-hotkey-manager", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Advanced Hotkey Manager for Global Shortcuts and Key Sequences
@@ -14,7 +13,6 @@ from dataclasses import dataclass
 from enum import Enum
 import json
 from pathlib import Path
-from unhinged_events import create_gui_logger
 
 
 class HotkeyType(Enum):

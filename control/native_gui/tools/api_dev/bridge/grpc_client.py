@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-grpc-client", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 @llm-type control-system
@@ -34,7 +33,6 @@ except ImportError:
 import json
 from typing import Dict, Any, Optional
 from pathlib import Path
-from unhinged_events import create_gui_logger
 
 
 class GRPCClient:

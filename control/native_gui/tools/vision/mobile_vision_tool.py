@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-mobile-vision-tool", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Mobile Vision Tool - Camera and screen capture interface
@@ -17,7 +16,6 @@ import threading
 import time
 from typing import Optional, Dict, List
 from pathlib import Path
-from unhinged_events import create_gui_logger
 
 # Import vision modules
 try:

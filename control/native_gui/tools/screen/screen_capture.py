@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-screen-capture", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Screen Capture Module for Screenshots and Screen Recording
@@ -17,7 +16,6 @@ from dataclasses import dataclass
 from pathlib import Path
 import base64
 import json
-from unhinged_events import create_gui_logger
 
 
 @dataclass

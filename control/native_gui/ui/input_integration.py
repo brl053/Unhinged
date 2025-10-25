@@ -1,6 +1,5 @@
 
-# Initialize GUI event logger
-gui_logger = create_gui_logger("unhinged-input-integration", "1.0.0")
+import logging; gui_logger = logging.getLogger(__name__)
 
 """
 Input Integration Layer
@@ -15,7 +14,6 @@ import threading
 import time
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
-from unhinged_events import create_gui_logger
 
 # Import input capture modules
 try:
