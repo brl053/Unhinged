@@ -72,6 +72,15 @@ class ServiceLauncher:
             "port": 1200,
             "required": False,
             "description": "PostgreSQL database"
+        },
+        {
+            "name": "Speech-to-Text Service",
+            "compose_service": None,  # Started directly, not via Docker
+            "health_url": "http://localhost:1101/health",
+            "port": 1101,
+            "required": True,
+            "description": "Whisper-based speech transcription service for voice input",
+            "start_command": "python3 control/native_gui/tools/chat/bridge/simple_whisper_server.py"
         }
     ]
     
@@ -98,7 +107,11 @@ class ServiceLauncher:
         # Determine which services to start
         to_start = []
         for service in self.ESSENTIAL_SERVICES:
-            if service["compose_service"] not in running:
+            if service["compose_service"] is None:
+                # Direct service - check if it's running via health check
+                if not self._is_service_healthy(service):
+                    to_start.append(service)
+            elif service["compose_service"] not in running:
                 to_start.append(service)
         
         if not to_start:
@@ -153,18 +166,22 @@ class ServiceLauncher:
     def _start_service(self, service: Dict, timeout: int) -> bool:
         """Start a specific service"""
         service_name = service["compose_service"]
-        
+
         try:
-            # Start the service
+            # Check if this is a direct command service
+            if service_name is None and "start_command" in service:
+                return self._start_direct_service(service, timeout)
+
+            # Start the service via Docker Compose
             result = subprocess.run([
-                "docker", "compose", "-f", str(self.compose_file), 
+                "docker", "compose", "-f", str(self.compose_file),
                 "up", "-d", service_name
             ], capture_output=True, text=True, timeout=30)
-            
+
             if result.returncode != 0:
                 events.error("Failed to start service", {"service": service['name'], "error": result.stderr})
                 return False
-            
+
             # Wait for service to be healthy
             if service["health_url"]:
                 return self._wait_for_health(service, timeout)
@@ -176,7 +193,51 @@ class ServiceLauncher:
         except Exception as e:
             events.error("Error starting service", exception=e, metadata={"service": service['name']})
             return False
-    
+
+    def _start_direct_service(self, service: Dict, timeout: int) -> bool:
+        """Start a service using direct command execution"""
+        try:
+            import os
+
+            # Set up environment
+            env = os.environ.copy()
+            env["PYTHONPATH"] = f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
+
+            # Start the service in background
+            command = service["start_command"].split()
+            process = subprocess.Popen(
+                command,
+                cwd=str(self.project_root),
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+
+            events.info("Started direct service", {"service": service['name'], "pid": process.pid})
+
+            # Wait for service to be healthy
+            if service["health_url"]:
+                return self._wait_for_health(service, timeout)
+            else:
+                time.sleep(3)
+                return True
+
+        except Exception as e:
+            events.error("Failed to start direct service", {"service": service['name'], "error": str(e)})
+            return False
+
+    def _is_service_healthy(self, service: Dict) -> bool:
+        """Check if a service is currently healthy"""
+        if not service.get("health_url"):
+            return False
+
+        try:
+            response = requests.get(service["health_url"], timeout=3)
+            return response.status_code == 200
+        except Exception:
+            return False
+
     def _wait_for_health(self, service: Dict, timeout: int) -> bool:
         """Wait for service to become healthy"""
         
