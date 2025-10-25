@@ -85,6 +85,7 @@ class AudioCapture:
                 raise RuntimeError("No audio input devices found. Check microphone connections and permissions.")
 
             for device in input_devices[:3]:  # Show first 3 devices
+                pass  # Device enumeration logic would go here
 
         except ImportError as e:
             raise RuntimeError(f"PyAudio not installed: {e}. Install with: pip install pyaudio")
