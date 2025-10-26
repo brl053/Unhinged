@@ -78,25 +78,8 @@ class UnhingedDesktopApp(Adw.Application):
         window.set_title("Unhinged - Native Graphics Platform")
         window.set_default_size(800, 600)
         window.set_icon_name("applications-graphics")
-        
-        # Create header bar
-        header_bar = Adw.HeaderBar()
-        window.set_titlebar(header_bar)
-        
-        # Add menu button with menu
-        menu_button = Gtk.MenuButton()
-        menu_button.set_icon_name("open-menu-symbolic")
 
-        # Create menu
-        menu = Gio.Menu()
-        menu.append("About Unhinged", "app.about")
-        menu.append("Preferences", "app.preferences")
-        menu.append("Quit", "app.quit")
-        menu_button.set_menu_model(menu)
-
-        header_bar.pack_end(menu_button)
-
-        # Add actions
+        # Add actions (AdwApplicationWindow has built-in header bar)
         self.setup_actions()
         
         # Create toast overlay for notifications
@@ -154,6 +137,13 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Keyboard shortcuts
         self.set_accels_for_action("app.quit", ["<Ctrl>Q"])
+
+        # Create application menu
+        menu = Gio.Menu()
+        menu.append("About Unhinged", "app.about")
+        menu.append("Preferences", "app.preferences")
+        menu.append("Quit", "app.quit")
+        self.set_menubar(menu)
 
     def on_about_action(self, action, param):
         """Show about dialog"""
