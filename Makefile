@@ -55,6 +55,18 @@ NATIVE_C_GRAPHICS := if getent group video | grep -q $$USER && ! groups | grep -
 # Complete virtualization with GPU passthrough capability
 QEMU_VM_GRAPHICS := python3 control/qemu_vm_launcher.py --custom-iso
 
+# Simple VM Communication (Core: Unidirectional VM → Host)
+# Direct console output streaming for immediate visibility
+SIMPLE_VM_COMMUNICATION := python3 control/simple_vm_launcher.py
+
+# Enhanced VM Communication (Phase 2: Bidirectional Host ↔ VM)
+# QEMU monitor + serial console for full bidirectional communication
+ENHANCED_VM_COMMUNICATION := python3 control/enhanced_vm_launcher.py
+
+# Unhinged QoL Launcher (Phase 2: Enhanced UX with Makefile Integration)
+# Quality-of-life launcher that calls Makefile targets behind the scenes
+UNHINGED_LAUNCHER := python3 control/unhinged_launcher.py
+
 # Legacy GTK GUI (REMOVED - GTK4 has been purged from the system)
 
 # Service ports
@@ -827,19 +839,23 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "🚀 Launching services..."
 	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
-	@if test -f vm/alpine-unhinged-custom.iso; then \
-		echo "🎨 CUSTOM ALPINE ISO AVAILABLE - LAUNCHING UNHINGED GUI!"; \
-		$(QEMU_VM_GRAPHICS); \
+	@echo "🚀 PHASE 2: Enhanced VM Communication with QoL Interface"
+	@echo "📋 Calling Makefile targets behind the scenes"
+	@echo "🔄 Bidirectional communication: Host ↔ VM"
+	@echo ""
+	@if test -f vm/alpine-unhinged-custom.iso || test -f vm/alpine/alpine-virt-3.22.2-x86_64.iso; then \
+		echo "🔥 LAUNCHING ENHANCED UNHINGED EXPERIENCE!"; \
+		$(UNHINGED_LAUNCHER); \
 	elif test -f libs/graphics/build/examples/hello_world; then \
 		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
 		$(NATIVE_C_GRAPHICS) || \
-		(echo "⚠️ Native C graphics failed - building custom Alpine ISO..."; \
-		 echo "🏔️ BUILDING CUSTOM ALPINE ISO FOR UNHINGED..."; \
-		 $(MAKE) build-custom-alpine && $(QEMU_VM_GRAPHICS)); \
+		(echo "⚠️ Native C graphics failed - using enhanced VM launcher..."; \
+		 echo "🔄 LAUNCHING ENHANCED VM COMMUNICATION!"; \
+		 $(UNHINGED_LAUNCHER)); \
 	else \
-		echo "⚠️ Building custom Alpine ISO for optimal experience..."; \
-		echo "🏔️ BUILDING CUSTOM ALPINE ISO WITH UNHINGED GUI!"; \
-		$(MAKE) build-custom-alpine && $(QEMU_VM_GRAPHICS); \
+		echo "⚠️ No native graphics - using enhanced VM communication..."; \
+		echo "🔄 LAUNCHING ENHANCED VM COMMUNICATION!"; \
+		$(UNHINGED_LAUNCHER); \
 	fi
 
 start-continue: ## Continue start process after DRM permissions are fixed
@@ -914,6 +930,29 @@ start-custom-iso: ## Launch custom Alpine ISO (recommended)
 	$(call log_info,🎨 Launching custom Alpine ISO...)
 	@echo "🔥 CUSTOM ALPINE ISO - UNHINGED GUI READY!"
 	@python3 control/qemu_vm_launcher.py --custom-iso
+
+start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
+	$(call log_info,📺 Launching VM with direct console output...)
+	@echo "🎯 SIMPLE COMMUNICATION: VM console output → Host terminal"
+	@echo "💡 This provides immediate visibility of VM status"
+	@echo "🔥 VM OUTPUT WILL APPEAR BELOW:"
+	@$(SIMPLE_VM_COMMUNICATION)
+
+start-enhanced: ## Launch VM with bidirectional communication (Host ↔ VM)
+	$(call log_info,🔄 Launching VM with bidirectional communication...)
+	@echo "🎯 ENHANCED COMMUNICATION: Host ↔ VM via QEMU monitor + serial"
+	@echo "📺 VM → Host: Serial console output"
+	@echo "📤 Host → VM: QEMU monitor commands"
+	@echo "🔥 ENHANCED VM LAUNCHING:"
+	@$(ENHANCED_VM_COMMUNICATION)
+
+start-qol: ## Launch with quality-of-life interface (calls Makefile behind scenes)
+	$(call log_info,🚀 Launching Unhinged with enhanced experience...)
+	@echo "🎯 QOL LAUNCHER: Enhanced UX + Makefile integration"
+	@echo "📋 Calls Makefile targets behind the scenes"
+	@echo "🔧 Preserves build system while enhancing experience"
+	@echo "🔥 UNHINGED QOL LAUNCHER:"
+	@$(UNHINGED_LAUNCHER)
 
 # Legacy Alpine methods (kept for compatibility)
 alpine-install: ## Install Alpine Linux in QEMU VM for Unhinged (legacy)
