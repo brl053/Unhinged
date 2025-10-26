@@ -288,45 +288,7 @@ These are the non-negotiable principles that guide all development:
 **Axiom**: Service must implement health.proto for service discovery and monitoring
 **Context**: Vision AI gRPC server with health.proto implementation
 
-### unknown (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: INDEPENDENCE IS NON-NEGOTIABLE - no external browsers, no network deps for core GUI
-**Context**: Code-level enforcement of independence and headless principles
 
-### IndependenceError (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: Every error is a teaching opportunity
-**Context**: Exception that educates LLMs about independence culture
-
-### ArchitecturalGuard (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: Any external browser dependency is a CRITICAL FAILURE
-**Context**: Validates that code maintains independence principles
-
-### validate_independence (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: Independence validation is mandatory before any operation
-**Context**: Comprehensive validation of architectural independence
-
-### CulturalEnforcer (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: Culture must be enforced at runtime, not just build time
-**Context**: Runtime enforcement of independence culture and principles
-
-### enforce_culture (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: Culture enforcement is mandatory for all operations
-**Context**: Main entry point for cultural enforcement
-
-### validate_cultural_compliance (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: Culture must be validated before code enters the system
-**Context**: Build-time validation ensuring cultural compliance
-
-### launch_external_browser (python)
-**File**: `control/cultural_enforcement.py`
-**Axiom**: External browser usage is always forbidden
-**Context**: Function that exists to educate about cultural violations
 
 ### unknown (python)
 **File**: `control/proxy_server.py`
@@ -1093,9 +1055,7 @@ Project-specific terminology and concepts:
 **Definition**: vision-service: Vision AI with gRPC and health.proto
 **Source**: `services/vision-ai/grpc_server.py` (python)
 
-### unknown
-**Definition**: architecture-guard: Automated independence enforcement
-**Source**: `control/cultural_enforcement.py` (python)
+
 
 ### unknown
 **Definition**: virtualization-proxy: The foundational HTTP layer that will become the Unhinged OS system call interface

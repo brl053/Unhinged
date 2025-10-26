@@ -135,26 +135,11 @@ endef
 # 4. WE FAIL FAST - Better to break than compromise independence
 # ============================================================================
 
-validate-independence: ## CRITICAL: Validate architectural independence
-	@echo "$(RED)🔒 VALIDATING ARCHITECTURAL INDEPENDENCE$(RESET)"
-	@echo "$(YELLOW)Checking for forbidden external dependencies...$(RESET)"
-	@$(PYTHON_RUN) control/cultural_enforcement.py
-	@echo "$(GREEN)✅ INDEPENDENCE VALIDATED$(RESET)"
+browser-gui: ## Launch browser interface (if available)
+	@echo "$(YELLOW)💡 Browser interface not implemented - use 'make start' for system interfaces$(RESET)"
 
-
-
-# Cultural enforcement targets
-browser-gui: ## FORBIDDEN: External browser usage
-	@echo "$(RED)❌ FORBIDDEN: External browser usage violates independence$(RESET)"
-	@echo "$(RED)🚫 CULTURAL VIOLATION: We are independent. We render natively.$(RESET)"
-	@echo "$(YELLOW)💡 Use 'make start' for system interfaces$(RESET)"
-	@exit 1
-
-firefox-gui: ## FORBIDDEN: Firefox usage
-	@echo "$(RED)❌ FORBIDDEN: Firefox usage violates our independence culture$(RESET)"
-	@echo "$(RED)🚫 CULTURAL EDUCATION: This machine is everything. No external browsers.$(RESET)"
-	@echo "$(YELLOW)💡 Use 'make start' for system interfaces$(RESET)"
-	@exit 1
+firefox-gui: ## Launch Firefox interface (if available)
+	@echo "$(YELLOW)💡 Firefox interface not implemented - use 'make start' for system interfaces$(RESET)"
 
 
 
@@ -796,8 +781,6 @@ validate: ## Validate build system installation
 
 start: ## Remove all friction barriers - setup dependencies and launch GUI
 	$(call log_info,🚀 Welcome to Unhinged! Starting System Health Command Center...)
-	@echo "🔒 Validating independence..."
-	@python3 control/cultural_enforcement.py
 	@echo "🐍 Ensuring Python environment..."
 	@test -d build/python/venv || (cd build/python && python3 setup.py)
 	@echo "📦 Installing missing dependencies..."
@@ -895,19 +878,19 @@ start-continue: ## Continue start process after DRM permissions are fixed
 		$(QEMU_VM_GRAPHICS); \
 	fi
 
-start-vm: validate-independence ## Launch Unhinged in QEMU VM with GPU isolation
+start-vm: ## Launch Unhinged in QEMU VM with GPU isolation
 	$(call log_info,🔥 Launching Unhinged in QEMU VM...)
 	@echo "🎮 QEMU VM MODE - Complete hardware isolation"
 	@echo "💡 This will set up QEMU with GPU passthrough automatically"
 	@$(QEMU_VM_GRAPHICS)
 
-test-vm: validate-independence ## Test QEMU VM without GPU passthrough requirements
+test-vm: ## Test QEMU VM without GPU passthrough requirements
 	$(call log_info,🧪 Testing QEMU VM in basic mode...)
 	@echo "🎮 QEMU VM TEST MODE - Basic virtualization"
 	@echo "💡 This will test QEMU without IOMMU/GPU passthrough"
 	@python3 control/qemu_vm_launcher.py --test
 
-start-offline: validate-independence status ## Launch native GUI without starting services (offline mode)
+start-offline: status ## Launch native GUI without starting services (offline mode)
 	$(call log_info,🏥 Starting System Health Command Center (Offline Mode)...)
 	@echo ""
 	@echo "🔧 Building Service Discovery and Registry..."

@@ -216,52 +216,6 @@ class FilePatternValidator(BaseValidator):
         
         return fixed
 
-class CulturalValidator(BaseValidator):
-    """
-    @llm-type validator
-    @llm-legend Validates cultural commandments like independence and self-containment
-    @llm-key Checks for external browser dependencies, WebKit usage, and independence violations
-    """
-    
-    async def validate(self) -> List[ValidationResult]:
-        results = []
-        
-        # Check for browser dependencies
-        browser_indicators = ["firefox", "chrome", "safari", "webkit", "chromium", "selenium", "playwright"]
-        
-        for root, dirs, files in os.walk(self.repo_root):
-            if any(skip in root for skip in [".git", "venv", "__pycache__"]):
-                continue
-            
-            for file in files:
-                if file.endswith((".py", ".js", ".ts", ".yml", ".yaml")):
-                    file_path = Path(root) / file
-                    
-                    # Skip enforcement files that legitimately mention browsers
-                    if any(skip in file.lower() for skip in ["enforcement", "cultural", "validator"]):
-                        continue
-                    
-                    try:
-                        content = file_path.read_text(encoding='utf-8', errors='ignore').lower()
-                        for indicator in browser_indicators:
-                            if indicator in content:
-                                results.append(ValidationResult(
-                                    validator_name=self.name,
-                                    severity="ERROR",
-                                    message=f"Browser dependency detected: {indicator}",
-                                    file_path=file_path,
-                                    fix_suggestion="Remove external browser dependency, use native rendering",
-                                    auto_fixable=False,
-                                    category="cultural"
-                                ))
-                                break
-                    except Exception:
-                        continue
-        
-        return results
-    
-    def can_auto_fix(self) -> bool:
-        return False
 
 class GeneratedContentValidator(BaseValidator):
     """

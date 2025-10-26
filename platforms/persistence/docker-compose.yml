@@ -37,7 +37,7 @@ services:
     container_name: unhinged-persistence-platform
     ports:
       - "8190:8090"  # REST API
-      - "9190:9090"  # gRPC API
+      - "9191:9090"  # gRPC API
     environment:
       - JAVA_OPTS=-Xmx2g -Xms1g
       - CONFIG_PATH=/app/config/persistence-platform.yaml

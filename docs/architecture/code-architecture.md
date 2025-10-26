@@ -518,12 +518,7 @@
 
 ## Architectural Components
 
-### unknown
-**File**: `control/cultural_enforcement.py`
-**Language**: python
-**Purpose**: Code-level enforcement of independence and headless principles
-**Architecture**: Build-time and runtime checks ensuring architectural compliance
-**Implementation**: Automated validation preventing external dependencies and browser coupling
+
 
 ## Virtualization Components
 

@@ -26,11 +26,16 @@ packages:
     description: "Wayland headers"
     install: "apt-get install -y libwayland-dev"
 
+  python3-psutil:
+    description: "Python psutil system monitoring"
+    install: "apt-get install -y python3-psutil"
+
 groups:
   essential:
     - cmake
     - build-essential
     - python3-dev
+    - python3-psutil
     - cffi
 
   graphics:
