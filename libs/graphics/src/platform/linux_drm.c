@@ -16,6 +16,13 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
+
+/* DRM headers */
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#include <drm/drm.h>
+#include <drm/drm_mode.h>
 
 /* DRM device structure */
 typedef struct {
@@ -27,7 +34,14 @@ typedef struct {
     char driver_name[64];
 } ug_drm_device_t;
 
-static ug_drm_device_t g_drm_device = {-1};
+static ug_drm_device_t g_drm_device = {
+    .fd = -1,
+    .device_path = {0},
+    .is_master = false,
+    .driver_version_major = 0,
+    .driver_version_minor = 0,
+    .driver_name = {0}
+};
 
 /* Initialize DRM device */
 ug_error_t ug_drm_init(void) {
