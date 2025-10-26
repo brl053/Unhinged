@@ -53,7 +53,7 @@ NATIVE_C_GRAPHICS := if getent group video | grep -q $$USER && ! groups | grep -
 
 # QEMU VM Graphics (Alternative: Full VM isolation)
 # Complete virtualization with GPU passthrough capability
-QEMU_VM_GRAPHICS := python3 control/qemu_vm_launcher.py
+QEMU_VM_GRAPHICS := python3 control/qemu_vm_launcher.py --custom-iso
 
 # Legacy GTK GUI (REMOVED - GTK4 has been purged from the system)
 
@@ -802,7 +802,7 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "🔧 Building essentials..."
 	@test -d build/python/venv || (echo "❌ Python environment failed" && exit 1)
 	@echo "  📋 Service discovery..."
-	@python3 build/build.py build service-discovery || (echo "❌ Service discovery build failed" && exit 1)
+	@python3 build/build.py build service-discovery >/dev/null 2>&1 || (echo "❌ Service discovery build failed" && exit 1)
 	@echo "  🎨 C Graphics library..."
 	@if python3 build/build.py build c-graphics-build >/dev/null 2>&1; then \
 		echo "  ✅ C Graphics built successfully"; \
@@ -827,16 +827,19 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "🚀 Launching services..."
 	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
-	@if test -f libs/graphics/build/examples/hello_world; then \
+	@if test -f vm/alpine-unhinged-custom.iso; then \
+		echo "🎨 CUSTOM ALPINE ISO AVAILABLE - LAUNCHING UNHINGED GUI!"; \
+		$(QEMU_VM_GRAPHICS); \
+	elif test -f libs/graphics/build/examples/hello_world; then \
 		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
 		$(NATIVE_C_GRAPHICS) || \
-		(echo "⚠️ Native C graphics failed - trying QEMU VM..."; \
-		 echo "🔥 LAUNCHING QEMU VM WITH GPU ISOLATION!"; \
-		 $(QEMU_VM_GRAPHICS)); \
+		(echo "⚠️ Native C graphics failed - building custom Alpine ISO..."; \
+		 echo "🏔️ BUILDING CUSTOM ALPINE ISO FOR UNHINGED..."; \
+		 $(MAKE) build-custom-alpine && $(QEMU_VM_GRAPHICS)); \
 	else \
-		echo "⚠️ Native C graphics not available - defaulting to QEMU VM..."; \
-		echo "🔥 LAUNCHING QEMU VM WITH WHITE HELLO WORLD!"; \
-		$(QEMU_VM_GRAPHICS); \
+		echo "⚠️ Building custom Alpine ISO for optimal experience..."; \
+		echo "🏔️ BUILDING CUSTOM ALPINE ISO WITH UNHINGED GUI!"; \
+		$(MAKE) build-custom-alpine && $(QEMU_VM_GRAPHICS); \
 	fi
 
 start-continue: ## Continue start process after DRM permissions are fixed
@@ -900,6 +903,30 @@ start-offline: validate-independence status ## Launch native GUI without startin
 	@echo "💡 CULTURE: We are independent. We render in isolated VM."
 	@echo "🔥 QEMU VM WITH WHITE HELLO WORLD!"
 	@$(QEMU_VM_GRAPHICS)
+
+build-custom-alpine: ## Build custom Alpine ISO with Unhinged pre-installed
+	$(call log_info,🏔️ Building custom Alpine ISO for Unhinged...)
+	@echo "🎯 This creates a bootable ISO with Unhinged GUI ready"
+	@echo "⏳ Building... (this may take a few minutes)"
+	@./vm/build-custom-alpine.sh 2>&1 | grep -E "(✅|❌|🎉|Error|error)" || true
+
+start-custom-iso: ## Launch custom Alpine ISO (recommended)
+	$(call log_info,🎨 Launching custom Alpine ISO...)
+	@echo "🔥 CUSTOM ALPINE ISO - UNHINGED GUI READY!"
+	@python3 control/qemu_vm_launcher.py --custom-iso
+
+# Legacy Alpine methods (kept for compatibility)
+alpine-install: ## Install Alpine Linux in QEMU VM for Unhinged (legacy)
+	$(call log_info,🏔️ Installing Alpine Linux for Unhinged...)
+	@echo "⚠️ LEGACY MODE - Consider using 'make build-custom-alpine' instead"
+	@echo "🎯 This will launch Alpine installation in QEMU VM"
+	@python3 control/qemu_vm_launcher.py --install
+
+alpine-run: ## Run installed Alpine Linux VM (legacy)
+	$(call log_info,🏔️ Launching Alpine Linux VM...)
+	@echo "⚠️ LEGACY MODE - Consider using 'make start-custom-iso' instead"
+	@echo "🎯 Starting Alpine VM with Unhinged graphics"
+	@python3 control/qemu_vm_launcher.py
 
 start-services: ## Launch essential services only (LLM, Backend, Database)
 	$(call log_info,🚀 Launching essential services...)

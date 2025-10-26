@@ -130,159 +130,295 @@ class QEMULauncher:
             print(f"❌ Error creating VM disk: {e}")
             return None
     
-    def create_hello_world_boot(self):
-        """Create a simple boot image that displays 'Hello World!'"""
+    def create_alpine_vm_disk(self):
+        """Create Alpine Linux VM disk image"""
         vm_dir = self.project_root / "vm"
         vm_dir.mkdir(exist_ok=True)
 
-        boot_path = vm_dir / "hello_world_boot.img"
+        disk_path = vm_dir / "alpine-unhinged.qcow2"
 
-        if boot_path.exists():
-            print(f"✅ Hello World boot image already exists: {boot_path}")
-            return str(boot_path)
+        if disk_path.exists():
+            print(f"✅ Alpine VM disk already exists: {disk_path}")
+            return str(disk_path)
 
-        print("🔧 Creating Hello World boot image...")
-
-        # Create a simple x86 boot sector that displays "Hello World!" in white text
-        boot_code = bytes([
-            # Boot sector header
-            0xEB, 0x3E, 0x90,  # Jump to start + NOP
-
-            # Boot sector code starts here (offset 0x3)
-            # Set up segments
-            0x31, 0xC0,        # xor ax, ax
-            0x8E, 0xD8,        # mov ds, ax
-            0x8E, 0xC0,        # mov es, ax
-            0x8E, 0xD0,        # mov ss, ax
-            0xBC, 0x00, 0x7C,  # mov sp, 0x7C00
-
-            # Clear screen (set video mode 3 - 80x25 color text)
-            0xB0, 0x03,        # mov al, 3
-            0xB4, 0x00,        # mov ah, 0
-            0xCD, 0x10,        # int 0x10
-
-            # Print "Hello World!" message
-            0xBE, 0x2A, 0x7C,  # mov si, message (offset 0x2A + 0x7C00)
-
-            # Print loop
-            0xAC,              # lodsb (load byte from [si] to al)
-            0x08, 0xC0,        # or al, al (test if zero)
-            0x74, 0x06,        # jz done (jump if zero)
-            0xB4, 0x0E,        # mov ah, 0x0E (teletype output)
-            0xCD, 0x10,        # int 0x10 (BIOS video interrupt)
-            0xEB, 0xF7,        # jmp print_loop
-
-            # Infinite loop
-            0xEB, 0xFE,        # jmp $ (infinite loop)
-
-            # Message string (starts at offset 0x2A)
-        ] + list(b"Hello World! - Unhinged QEMU VM\r\n\0") + [0x00] * (510 - 42 - 33) + [0x55, 0xAA])
+        print("🔧 Creating Alpine Linux VM disk (8GB)...")
 
         try:
-            with open(boot_path, 'wb') as f:
-                # Write boot sector
-                f.write(boot_code)
-                # Pad to 1.44MB floppy size
-                remaining = 1474560 - len(boot_code)
-                f.write(b'\x00' * remaining)
+            # Create 8GB qcow2 disk for Alpine Linux
+            subprocess.run([
+                'qemu-img', 'create', '-f', 'qcow2',
+                str(disk_path), '8G'
+            ], check=True, capture_output=True)
 
-            print(f"✅ Hello World boot image created: {boot_path}")
-            return str(boot_path)
-        except Exception as e:
-            print(f"❌ Error creating boot image: {e}")
+            print(f"✅ Alpine VM disk created: {disk_path}")
+            return str(disk_path)
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Error creating VM disk: {e}")
+            return None
+        except FileNotFoundError:
+            print("❌ qemu-img not found - installing QEMU tools...")
+            if self.install_qemu_packages():
+                return self.create_alpine_vm_disk()  # Retry
             return None
 
-    def launch_vm(self, disk_path=None):
-        """Launch the QEMU VM with Hello World display"""
-        print("🚀 Launching QEMU VM with Hello World...")
+    def get_alpine_iso_path(self):
+        """Get path to Alpine Linux ISO"""
+        iso_path = self.project_root / "vm" / "alpine" / "alpine-virt-3.22.2-x86_64.iso"
 
-        # Check if qemu is available
-        try:
-            subprocess.run(['which', 'qemu-system-x86_64'], check=True, capture_output=True)
-        except subprocess.CalledProcessError:
-            print("⚠️  QEMU not installed - installing now...")
-            if not self.install_qemu_packages():
-                print("❌ Failed to install QEMU")
-                return None
-
-        # Create hello world boot image
-        boot_image = self.create_hello_world_boot()
-        if not boot_image:
-            print("❌ Failed to create Hello World boot image")
+        if iso_path.exists():
+            return str(iso_path)
+        else:
+            print(f"❌ Alpine ISO not found at: {iso_path}")
+            print("💡 Run the download task first")
             return None
+
+    def launch_alpine_installation(self, disk_path, iso_path):
+        """Launch Alpine Linux installation"""
+        print("🏔️ Launching Alpine Linux installation...")
 
         cmd = [
             'qemu-system-x86_64',
             '-enable-kvm',
-            '-m', '512M',  # Reduced memory for hello world
-            '-smp', '2',   # Reduced CPUs for hello world
-            '-drive', f'file={boot_image},format=raw,if=floppy',
-            '-vga', 'std',
+            '-m', '1G',  # 1GB RAM for installation
+            '-smp', '2', # 2 CPUs
+            '-drive', f'file={disk_path},format=qcow2',
+            '-cdrom', iso_path,
+            '-boot', 'd',  # Boot from CD-ROM first
+            '-vga', 'virtio',
             '-display', 'gtk',
-            '-name', 'Unhinged-Hello-World',
-            '-no-reboot',
-            '-monitor', 'none'
+            '-name', 'Alpine-Unhinged-Installation',
+            '-netdev', 'user,id=net0',
+            '-device', 'virtio-net-pci,netdev=net0'
         ]
 
         print(f"🎮 Executing: {' '.join(cmd)}")
-        print("🔥 LAUNCHING WHITE HELLO WORLD DISPLAY!")
+        print("🔥 LAUNCHING ALPINE LINUX INSTALLATION!")
+        print("")
+        print("📋 INSTALLATION INSTRUCTIONS:")
+        print("1. Wait for Alpine to boot to login prompt")
+        print("2. Login as 'root' (no password)")
+        print("3. Run: setup-alpine")
+        print("4. Follow prompts - choose defaults for most options")
+        print("5. When asked for disk, choose 'sda' and 'sys' mode")
+        print("6. After installation, shutdown VM")
+        print("7. Restart without CD-ROM to boot installed system")
+        print("")
+
+        try:
+            # Launch VM in foreground for installation
+            process = subprocess.Popen(cmd)
+            print(f"✅ Alpine installation VM launched with PID: {process.pid}")
+            print("💡 Alpine installation window should appear shortly")
+            return process
+        except Exception as e:
+            print(f"❌ Error launching Alpine installation: {e}")
+            return None
+
+    def launch_custom_alpine_iso(self):
+        """Launch custom Alpine ISO with Unhinged pre-installed"""
+        custom_iso_path = self.project_root / "vm" / "alpine-unhinged-custom.iso"
+
+        if not custom_iso_path.exists():
+            print(f"❌ Custom Alpine ISO not found: {custom_iso_path}")
+            print("💡 Build it first with: ./vm/build-custom-alpine.sh")
+            return None
+
+        # Create shared directory for VM-host communication
+        shared_dir = self.project_root / "vm" / "shared"
+        shared_dir.mkdir(exist_ok=True)
+
+        # Create communication files
+        (shared_dir / "host-to-vm.txt").touch()
+        (shared_dir / "vm-to-host.txt").touch()
+
+        # Create serial log file
+        serial_log = self.project_root / "vm" / "alpine-serial.log"
+
+        print("🎨 Launching Custom Alpine ISO with Unhinged...")
+        print(f"📁 Shared directory: {shared_dir}")
+        print(f"📋 Serial log: {serial_log}")
+
+        cmd = [
+            'qemu-system-x86_64',
+            '-enable-kvm',
+            '-m', '2G',  # 2GB RAM for better performance
+            '-smp', '2', # 2 CPUs
+            '-cdrom', str(custom_iso_path),
+            '-vga', 'virtio',
+            '-display', 'gtk',
+            '-name', 'Unhinged-Custom-Alpine',
+
+            # Communication channels
+            '-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',  # SSH forwarding
+            '-device', 'virtio-net-pci,netdev=net0',
+
+            # Shared directory (9p filesystem)
+            '-fsdev', f'local,security_model=passthrough,id=fsdev0,path={shared_dir}',
+            '-device', 'virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=shared',
+
+            # Serial console for logging
+            '-serial', f'file:{serial_log}',
+
+            # Monitor console for control
+            '-monitor', 'stdio',
+
+            '-boot', 'd'  # Boot from CD-ROM
+        ]
+
+        print(f"🎮 Executing: {' '.join(cmd)}")
+        print("🔥 LAUNCHING CUSTOM ALPINE ISO WITH UNHINGED!")
 
         try:
             # Launch VM in background
             process = subprocess.Popen(cmd)
-            print(f"✅ VM launched with PID: {process.pid}")
-            print("💡 Hello World VM window should appear shortly")
-            print("🎯 You should see a white screen with 'Hello World!' message")
+            print(f"✅ Custom Alpine ISO launched with PID: {process.pid}")
+            print("💡 Unhinged GUI should appear automatically")
+            print("🌐 Communication channels:")
+            print(f"   • SSH: localhost:2222")
+            print(f"   • Shared dir: {shared_dir}")
+            print(f"   • Serial log: {serial_log}")
+            print("📋 Monitor console available in terminal")
             return process
         except Exception as e:
-            print(f"❌ Error launching VM: {e}")
+            print(f"❌ Error launching custom Alpine ISO: {e}")
+            return None
+
+    def launch_alpine_vm(self, disk_path):
+        """Launch installed Alpine Linux VM"""
+        print("🏔️ Launching Alpine Linux VM...")
+
+        cmd = [
+            'qemu-system-x86_64',
+            '-enable-kvm',
+            '-m', '1G',  # 1GB RAM
+            '-smp', '2', # 2 CPUs
+            '-drive', f'file={disk_path},format=qcow2',
+            '-vga', 'virtio',
+            '-display', 'gtk',
+            '-name', 'Alpine-Unhinged-Runtime',
+            '-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',  # SSH forwarding
+            '-device', 'virtio-net-pci,netdev=net0'
+        ]
+
+        print(f"🎮 Executing: {' '.join(cmd)}")
+        print("🔥 LAUNCHING ALPINE LINUX FOR UNHINGED!")
+
+        try:
+            # Launch VM in background
+            process = subprocess.Popen(cmd)
+            print(f"✅ Alpine VM launched with PID: {process.pid}")
+            print("💡 Alpine VM window should appear shortly")
+            print("🌐 SSH available on localhost:2222")
+            return process
+        except Exception as e:
+            print(f"❌ Error launching Alpine VM: {e}")
             return None
     
-    def run(self, test_mode=False):
-        """Main execution flow for Hello World display"""
-        print("🔥 QEMU VM LAUNCHER - UNHINGED HELLO WORLD")
-        print("=" * 50)
+    def run(self, install_mode=False, custom_iso=False):
+        """Main execution flow for Alpine Linux VM"""
+        print("🔥 QEMU VM LAUNCHER - ALPINE LINUX FOR UNHINGED")
+        print("=" * 60)
 
         # Check prerequisites
         if not self.check_virtualization_support():
             print("⚠️  No virtualization support - trying without KVM...")
 
-        # For Hello World, we don't need IOMMU or complex setup
-        print("🎯 HELLO WORLD MODE: Simplified VM launch")
-
-        # Install packages if needed
+        # Install QEMU packages if needed
         try:
             subprocess.run(['which', 'qemu-system-x86_64'], check=True, capture_output=True)
         except subprocess.CalledProcessError:
-            print("📦 Installing QEMU for Hello World display...")
+            print("📦 Installing QEMU for Alpine Linux...")
             if not self.install_qemu_packages():
                 print("❌ Failed to install QEMU")
                 return False
 
-        # Launch Hello World VM directly
-        vm_process = self.launch_vm()
-        if not vm_process:
+        # Custom ISO mode - boot directly from custom ISO
+        if custom_iso:
+            print("🎨 CUSTOM ALPINE ISO MODE")
+            vm_process = self.launch_custom_alpine_iso()
+
+            if vm_process:
+                print("🎉 Custom Alpine ISO launched!")
+                print("💡 Unhinged GUI should appear automatically")
+                print("🔥 Press Ctrl+C to exit")
+
+                try:
+                    vm_process.wait()
+                except KeyboardInterrupt:
+                    print("\n🛑 Shutting down Alpine VM...")
+                    vm_process.terminate()
+                    vm_process.wait()
+
+            return vm_process is not None
+
+        # Legacy modes (kept for compatibility)
+        # Create VM disk
+        disk_path = self.create_alpine_vm_disk()
+        if not disk_path:
             return False
 
-        print("🎉 QEMU Hello World VM launched!")
-        print("💡 You should see a white screen with 'Hello World!' message")
-        print("🔥 Press Ctrl+C to exit")
+        # Check if we need to install Alpine or run existing installation
+        if install_mode:
+            # Installation mode - boot from ISO
+            iso_path = self.get_alpine_iso_path()
+            if not iso_path:
+                return False
 
-        # Wait for user to exit
-        try:
-            vm_process.wait()
-        except KeyboardInterrupt:
-            print("\n🛑 Shutting down Hello World VM...")
-            vm_process.terminate()
-            vm_process.wait()
+            print("🏔️ ALPINE INSTALLATION MODE")
+            vm_process = self.launch_alpine_installation(disk_path, iso_path)
 
-        return True
+            if vm_process:
+                print("⏳ Waiting for Alpine installation to complete...")
+                print("💡 Close the VM window when installation is finished")
+                try:
+                    vm_process.wait()
+                    print("✅ Alpine installation completed!")
+                    print("🔄 Run again without --install to boot Alpine")
+                except KeyboardInterrupt:
+                    print("\n🛑 Installation interrupted...")
+                    vm_process.terminate()
+                    vm_process.wait()
+        else:
+            # Runtime mode - boot from disk
+            print("🏔️ ALPINE RUNTIME MODE")
+            vm_process = self.launch_alpine_vm(disk_path)
+
+            if vm_process:
+                print("🎉 Alpine Linux VM launched!")
+                print("💡 Alpine VM window should appear shortly")
+                print("🔥 Press Ctrl+C to exit")
+
+                try:
+                    vm_process.wait()
+                except KeyboardInterrupt:
+                    print("\n🛑 Shutting down Alpine VM...")
+                    vm_process.terminate()
+                    vm_process.wait()
+
+        return vm_process is not None
 
 def main():
     import sys
-    test_mode = '--test' in sys.argv
+    import argparse
+
+    parser = argparse.ArgumentParser(description="QEMU VM Launcher for Unhinged Alpine Linux")
+    parser.add_argument("--install", action="store_true",
+                       help="Launch Alpine installation mode")
+    parser.add_argument("--custom-iso", action="store_true",
+                       help="Launch custom Alpine ISO with Unhinged pre-installed")
+    parser.add_argument("--test", action="store_true",
+                       help="Test mode (deprecated)")
+
+    args = parser.parse_args()
+
     launcher = QEMULauncher()
-    success = launcher.run(test_mode=test_mode)
+    success = launcher.run(install_mode=args.install, custom_iso=args.custom_iso)
+
+    if success:
+        print("🎉 QEMU VM operation completed successfully!")
+    else:
+        print("❌ QEMU VM operation failed")
+
     return 0 if success else 1
 
 if __name__ == "__main__":
