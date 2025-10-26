@@ -269,24 +269,43 @@ CMakeFiles/unhinged_graphics.dir/src/core/platform.c.o: /home/e-bliss-station-1/
 
 CMakeFiles/unhinged_graphics.dir/src/platform/linux_drm.c.o: /home/e-bliss-station-1/Projects/Unhinged/libs/graphics/src/platform/linux_drm.c \
   /home/e-bliss-station-1/Projects/Unhinged/libs/graphics/include/unhinged_graphics.h \
+  /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
+  /usr/include/asm-generic/int-ll64.h \
   /usr/include/asm-generic/ioctl.h \
   /usr/include/asm-generic/ioctls.h \
+  /usr/include/asm-generic/posix_types.h \
+  /usr/include/asm-generic/types.h \
+  /usr/include/drm/drm.h \
+  /usr/include/drm/drm_mode.h \
+  /usr/include/endian.h \
   /usr/include/errno.h \
   /usr/include/fcntl.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
+  /usr/include/libdrm/drm.h \
+  /usr/include/libdrm/drm_mode.h \
   /usr/include/linux/errno.h \
   /usr/include/linux/ioctl.h \
+  /usr/include/linux/posix_types.h \
+  /usr/include/linux/stddef.h \
+  /usr/include/linux/types.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdint.h \
+  /usr/include/stdio.h \
   /usr/include/string.h \
   /usr/include/strings.h \
   /usr/include/unistd.h \
+  /usr/include/x86_64-linux-gnu/asm/bitsperlong.h \
   /usr/include/x86_64-linux-gnu/asm/errno.h \
   /usr/include/x86_64-linux-gnu/asm/ioctl.h \
   /usr/include/x86_64-linux-gnu/asm/ioctls.h \
+  /usr/include/x86_64-linux-gnu/asm/posix_types.h \
+  /usr/include/x86_64-linux-gnu/asm/posix_types_64.h \
+  /usr/include/x86_64-linux-gnu/asm/types.h \
+  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
+  /usr/include/x86_64-linux-gnu/bits/byteswap.h \
   /usr/include/x86_64-linux-gnu/bits/confname.h \
   /usr/include/x86_64-linux-gnu/bits/endian.h \
   /usr/include/x86_64-linux-gnu/bits/endianness.h \
@@ -294,6 +313,8 @@ CMakeFiles/unhinged_graphics.dir/src/platform/linux_drm.c.o: /home/e-bliss-stati
   /usr/include/x86_64-linux-gnu/bits/errno.h \
   /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
   /usr/include/x86_64-linux-gnu/bits/fcntl.h \
+  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
+  /usr/include/x86_64-linux-gnu/bits/floatn.h \
   /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
   /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
   /usr/include/x86_64-linux-gnu/bits/ioctl-types.h \
@@ -306,19 +327,40 @@ CMakeFiles/unhinged_graphics.dir/src/platform/linux_drm.c.o: /home/e-bliss-stati
   /usr/include/x86_64-linux-gnu/bits/mman.h \
   /usr/include/x86_64-linux-gnu/bits/mman_ext.h \
   /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
+  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
+  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
+  /usr/include/x86_64-linux-gnu/bits/select.h \
   /usr/include/x86_64-linux-gnu/bits/stat.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
+  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
   /usr/include/x86_64-linux-gnu/bits/struct_stat.h \
+  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
   /usr/include/x86_64-linux-gnu/bits/time64.h \
   /usr/include/x86_64-linux-gnu/bits/timesize.h \
   /usr/include/x86_64-linux-gnu/bits/types.h \
+  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
   /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
   /usr/include/x86_64-linux-gnu/bits/typesizes.h \
+  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
   /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
   /usr/include/x86_64-linux-gnu/bits/wchar.h \
   /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -327,7 +369,12 @@ CMakeFiles/unhinged_graphics.dir/src/platform/linux_drm.c.o: /home/e-bliss-stati
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/ioctl.h \
   /usr/include/x86_64-linux-gnu/sys/mman.h \
+  /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/ttydefaults.h \
+  /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/include/xf86drm.h \
+  /usr/include/xf86drmMode.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
@@ -948,13 +995,23 @@ CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o: /home/e-bliss-station
 
 /home/e-bliss-station-1/Projects/Unhinged/libs/graphics/src/raster/line.c:
 
+/usr/include/linux/i2c.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/13/include/mwaitxintrin.h:
+
+/home/e-bliss-station-1/Projects/Unhinged/libs/graphics/src/platform/window.c:
+
 /usr/lib/gcc/x86_64-linux-gnu/13/include/avx512vpopcntdqvlintrin.h:
 
 /usr/include/xf86drmMode.h:
 
-/usr/include/x86_64-linux-gnu/asm/types.h:
+/usr/include/x86_64-linux-gnu/sys/ttydefaults.h:
 
-/usr/include/x86_64-linux-gnu/asm/posix_types.h:
+/usr/include/x86_64-linux-gnu/sys/mman.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/13/include/avx512ifmaintrin.h:
+
+/usr/include/x86_64-linux-gnu/sys/ioctl.h:
 
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
 
@@ -1042,8 +1099,6 @@ CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o: /home/e-bliss-station
 
 /usr/include/x86_64-linux-gnu/bits/fp-logb.h:
 
-/usr/include/x86_64-linux-gnu/bits/getopt_core.h:
-
 /usr/include/stdint.h:
 
 /usr/include/x86_64-linux-gnu/bits/fp-fast.h:
@@ -1122,17 +1177,25 @@ CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o: /home/e-bliss-station
 
 /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h:
 
+/usr/lib/gcc/x86_64-linux-gnu/13/include/avx512fp16intrin.h:
+
+/usr/include/linux/fb.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/wchar.h:
+
 /usr/lib/gcc/x86_64-linux-gnu/13/include/amxtileintrin.h:
 
 /usr/include/x86_64-linux-gnu/bits/timesize.h:
 
 /home/e-bliss-station-1/Projects/Unhinged/libs/graphics/src/core/platform.c:
 
+/usr/include/asm-generic/int-ll64.h:
+
 /usr/include/linux/types.h:
 
 /usr/include/linux/ioctl.h:
-
-/usr/include/asm-generic/int-ll64.h:
 
 /home/e-bliss-station-1/Projects/Unhinged/libs/graphics/src/color/conversion.c:
 
@@ -1163,12 +1226,6 @@ CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o: /home/e-bliss-station
 /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
 
 /usr/include/strings.h:
-
-/usr/include/x86_64-linux-gnu/asm/bitsperlong.h:
-
-/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
-
-/usr/include/x86_64-linux-gnu/bits/mman.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/13/include/pconfigintrin.h:
 
@@ -1252,48 +1309,42 @@ CMakeFiles/unhinged_graphics.dir/src/text/bitmap_font.c.o: /home/e-bliss-station
 
 /usr/include/asm-generic/ioctls.h:
 
+/usr/include/x86_64-linux-gnu/asm/types.h:
+
+/usr/include/x86_64-linux-gnu/bits/getopt_core.h:
+
+/usr/include/drm/drm_mode.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/13/include/avx512vp2intersectvlintrin.h:
+
+/usr/include/libdrm/drm.h:
+
+/usr/include/linux/stddef.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
+
+/usr/include/x86_64-linux-gnu/bits/mman.h:
+
+/usr/include/x86_64-linux-gnu/asm/bitsperlong.h:
+
 /usr/lib/gcc/x86_64-linux-gnu/13/include/prfchwintrin.h:
 
 /usr/include/features.h:
 
 /usr/include/x86_64-linux-gnu/asm/ioctls.h:
 
-/usr/include/x86_64-linux-gnu/bits/ioctls.h:
+/usr/include/drm/drm.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/13/include/mwaitxintrin.h:
-
-/home/e-bliss-station-1/Projects/Unhinged/libs/graphics/src/platform/window.c:
-
-/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
-
-/usr/include/x86_64-linux-gnu/bits/mman-shared.h:
-
-/usr/lib/gcc/x86_64-linux-gnu/13/include/avx512ifmaintrin.h:
-
-/usr/include/x86_64-linux-gnu/sys/ioctl.h:
-
-/usr/include/x86_64-linux-gnu/sys/mman.h:
-
-/usr/include/x86_64-linux-gnu/sys/ttydefaults.h:
-
-/usr/include/x86_64-linux-gnu/asm/posix_types_64.h:
+/usr/include/x86_64-linux-gnu/asm/posix_types.h:
 
 /usr/include/asm-generic/errno-base.h:
 
 /usr/include/asm-generic/types.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/13/include/avx512vp2intersectvlintrin.h:
+/usr/include/x86_64-linux-gnu/asm/posix_types_64.h:
 
-/usr/include/libdrm/drm.h:
+/usr/include/x86_64-linux-gnu/bits/ioctls.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/13/include/avx512fp16intrin.h:
+/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/wchar.h:
-
-/usr/include/linux/fb.h:
-
-/usr/include/linux/i2c.h:
-
-/usr/include/linux/stddef.h:
+/usr/include/x86_64-linux-gnu/bits/mman-shared.h:
