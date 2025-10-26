@@ -11,60 +11,60 @@
 # @llm-contract Provides comprehensive guidance on voice-first development, native GUI, and service integration
 # @llm-token llm-master-prompt: Essential guidance for AI agents working in voice-first Unhinged codebase
 
-## 🎤 VOICE-FIRST ARCHITECTURE - CORE MISSION
+## Voice-First Architecture - Core Mission
 
-### **PRIMARY OBJECTIVE: IMMEDIATE VOICE INTERACTION**
-- **`make start` → IMMEDIATE VOICE INPUT** - User can talk right away
-- **NATIVE AUDIO CAPTURE** - Ubuntu system audio (arecord/PipeWire), no Python libraries
-- **AUTO-STARTING SERVICES** - Whisper transcription service starts automatically
-- **ZERO SETUP FRICTION** - Voice works immediately after system boot
+### Primary Objective: Immediate Voice Interaction
+- **`make start` → IMMEDIATE VOICE INPUT** - User can interact via voice immediately
+- **NATIVE AUDIO CAPTURE** - Ubuntu system audio (arecord/PipeWire), avoiding Python audio libraries
+- **AUTO-STARTING SERVICES** - Whisper transcription service initializes automatically
+- **ZERO SETUP FRICTION** - Voice functionality available immediately after system initialization
 
-### **VOICE PIPELINE ARCHITECTURE**
+### Voice Pipeline Architecture
 ```
 Native Audio (arecord) → HTTP → Whisper Service → AI Response
 ```
 
-### **DUAL-SYSTEM EVOLUTION ARCHITECTURE**
+### Dual-System Evolution Architecture
 ```
 Ubuntu Host (GTK4 Control Plane) → manages → Alpine VM (Native C Graphics)
 ```
 - **Host System**: GTK4 desktop application for control and monitoring
 - **Guest System**: Headless Alpine VM with native C graphics and CLI
-- **Evolution Path**: Current dual-system → Future standalone Unhinged OS
+- **Evolution Path**: Current dual-system architecture transitioning to standalone Unhinged OS
 
-## 🚨 CULTURAL COMMANDMENTS - VIOLATION = IMMEDIATE FAILURE
+## Critical Architecture Principles - Compliance Required
 
-### 1. VOICE-FIRST INDEPENDENCE
-- **NATIVE AUDIO OVER LIBRARIES** - Use OS capabilities, not PyAudio/sounddevice
-- **IMMEDIATE FUNCTIONALITY** - Voice must work RIGHT GODDAMN AWAY
+### 1. Voice-First Independence
+- **NATIVE AUDIO OVER LIBRARIES** - Utilize OS capabilities rather than PyAudio/sounddevice
+- **IMMEDIATE FUNCTIONALITY** - Voice functionality must be available immediately upon system startup
 - **SERVICE INTEGRATION** - Auto-starting services via service_launcher.py
-- **CLEAN STARTUP** - Zero theme errors, minimal noise
+- **CLEAN STARTUP** - Zero theme errors, minimal console output
 
-### 2. NATIVE GUI SUPREMACY
-- **NATIVE C GRAPHICS RENDERING** - No web browsers, no Electron, no GTK
-- **MOBILE-RESPONSIVE DESIGN** - Touch-friendly native interface
-- **SYSTEM INTEGRATION** - Native OS capabilities over abstractions
-- **PROFESSIONAL UX** - Clean startup, clear feedback
+### 2. Native GUI Architecture
+- **NATIVE C GRAPHICS RENDERING** - Avoid web browsers, Electron, and GTK dependencies
+- **MOBILE-RESPONSIVE DESIGN** - Touch-friendly native interface design
+- **SYSTEM INTEGRATION** - Leverage native OS capabilities over abstractions
+- **PROFESSIONAL UX** - Maintain clean startup and clear user feedback
 
-### 3. CENTRALIZED BUILD PHILOSOPHY
-- **ONE BUILD SYSTEM** - Everything goes through `/build/`
-- **ONE PYTHON ENV** - Use `build/python/venv/` for ALL Python operations
-- **NO SCATTERED TOOLS** - No gradle wrappers, no npm in random places
-- **GENERATED CONTENT** - Everything generated goes to `/generated/`
+### 3. Centralized Build Philosophy
+- **UNIFIED BUILD SYSTEM** - All build operations utilize `/build/` directory
+- **CENTRALIZED PYTHON ENVIRONMENT** - Use `build/python/venv/` for all Python operations
+- **CONSOLIDATED TOOLING** - Avoid scattered build tools (gradle wrappers, npm in arbitrary locations)
+- **ORGANIZED GENERATED CONTENT** - All generated artifacts stored in `/generated/`
 
-### 4. LLMDOCS DISCIPLINE
-- **USE LLM-DOCS STANDARD** - All files use @llm-type, @llm-legend, @llm-key patterns
-- **VOICE ARCHITECTURE CONTEXT** - Document voice pipeline positioning
-- **SERVICE INTEGRATION DOCS** - Clear service startup and health monitoring
-- **USER EXPERIENCE FOCUS** - Document immediate voice functionality
+### 4. Documentation Standards
+- **LLM-DOCS COMPLIANCE** - All files utilize @llm-type, @llm-legend, @llm-key patterns
+- **VOICE ARCHITECTURE CONTEXT** - Document voice pipeline positioning and integration
+- **SERVICE INTEGRATION DOCUMENTATION** - Provide clear service startup and health monitoring procedures
+- **USER EXPERIENCE FOCUS** - Document immediate voice functionality requirements
 
-### 5. PRIME DIRECTIVE - VOICE-FIRST VALIDATION
-- **VOICE PIPELINE TESTING** - Always test end-to-end voice functionality
-- **SERVICE AUTO-START** - Verify services start with `make start`
-- **CLEAN STARTUP** - Zero theme errors, professional experience
-- **IMMEDIATE INTERACTION** - Voice must work without setup
+### 5. Voice-First Validation Requirements
+- **VOICE PIPELINE TESTING** - Conduct comprehensive end-to-end voice functionality testing
+- **SERVICE AUTO-START** - Verify services initialize properly with `make start`
+- **CLEAN STARTUP** - Ensure zero theme errors and professional user experience
+- **IMMEDIATE INTERACTION** - Voice functionality must operate without additional setup
 
-## 📁 DIRECTORY STRUCTURE - SACRED BOUNDARIES
+## Directory Structure - Architectural Boundaries
 
 ```
 /
@@ -119,7 +119,7 @@ Ubuntu Host (GTK4 Control Plane) → manages → Alpine VM (Native C Graphics)
 └── README.md           # ONLY README - entry point to /docs/
 ```
 
-## 🛠️ BUILD SYSTEM PATTERNS
+## Build System Patterns
 
 ### Python Operations
 ```bash
@@ -152,7 +152,7 @@ cd backend && ./gradlew build
 cd frontend && npm run build
 ```
 
-## 🚫 FORBIDDEN PATTERNS
+## Prohibited Patterns
 
 ### File Creation Anti-Patterns
 - ❌ Creating files in repository root
@@ -174,7 +174,7 @@ cd frontend && npm run build
 - ❌ Creating services without proper proto definitions
 - ❌ Bypassing the centralized Python environment
 
-## ✅ REQUIRED PATTERNS
+## Required Patterns
 
 ### Before Making Changes
 1. **Check build system** - Use `make status` to understand current state
@@ -227,7 +227,7 @@ vim build-config.yml
 python3 build/build.py build new-target
 ```
 
-## 🎯 SUCCESS CRITERIA
+## Success Criteria
 
 ### For LLM Agents
 - [ ] No files created in repository root
@@ -244,13 +244,13 @@ python3 build/build.py build new-target
 - [ ] Independence from external tools
 - [ ] Reproducible across environments
 
-## 🚨 EMERGENCY PROCEDURES
+## Emergency Procedures
 
-### If You Violate These Rules
-1. **STOP IMMEDIATELY** - Don't compound the error
-2. **Clean up** - Remove any files created in wrong locations
-3. **Use proper patterns** - Follow the established structure
-4. **Test thoroughly** - Ensure build system still works
+### Architecture Violation Response
+1. **HALT OPERATIONS** - Avoid compounding architectural violations
+2. **REMEDIATION** - Remove any files created in incorrect locations
+3. **COMPLIANCE RESTORATION** - Follow established architectural patterns
+4. **VALIDATION** - Ensure build system functionality remains intact
 
 ### If Build System Breaks
 1. **Check status** - `make status` and `python3 build/build.py status`
@@ -258,14 +258,14 @@ python3 build/build.py build new-target
 3. **Check dependencies** - Ensure centralized Python env is intact
 4. **Consult documentation** - Check `/build/README.md`
 
-## 📚 REFERENCE DOCUMENTATION
+## Reference Documentation
 
 - `/build/README.md` - Build system overview
 - `/build/TODO.md` - Build system roadmap
 - `Makefile` - Available commands and patterns
 - `build-config.yml` - Build targets and configuration
-- `.gitignore` - What should and shouldn't be committed
+- `.gitignore` - Repository inclusion and exclusion patterns
 
 ---
 
-**REMEMBER: This machine is everything. We depend on nothing external. We build everything ourselves. We are independent.**
+**ARCHITECTURAL PRINCIPLE: This system maintains complete independence. External dependencies are minimized. All components are built internally. System autonomy is preserved.**

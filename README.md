@@ -1,23 +1,23 @@
-# 🎛️ Unhinged
+# Unhinged
 
 > **Voice-First AI Control Center** - Native C graphics desktop application with immediate voice interaction
 
-## 🚀 **Quick Start - Voice-First Experience**
+## Quick Start - Voice-First Experience
 
 ```bash
 make start
 ```
 
-**Launches native C graphics GUI with immediate voice capability** - hit the mic button and start talking!
+**Launches native C graphics GUI with immediate voice capability** - activate the microphone and begin voice interaction.
 
-## 🎤 **Voice-First User Experience**
+## Voice-First User Experience
 
 - **Native Audio Capture**: Ubuntu system-level audio (no Python libraries)
 - **Whisper Integration**: Auto-starting speech-to-text service
-- **Immediate Interaction**: Zero setup - voice works right away
+- **Immediate Interaction**: Zero setup required - voice functionality available immediately
 - **AI Chat Integration**: Voice → transcription → AI response pipeline
 
-## 🏗️ **Architecture Overview**
+## Architecture Overview
 
 ```
 📦 Unhinged/
@@ -35,36 +35,35 @@ make start
 └── docs/                        # LlmDocs-annotated documentation
 ```
 
-## 🎯 **Core Features**
+## Core Features
 
-- **🎤 Voice-First Interface**: Native audio → Whisper → AI chat
-- **📱 Mobile-Responsive GUI**: Touch-friendly native interface
-- **🔧 Developer Tools**: API testing, service monitoring, logs
-- **📊 System Monitoring**: Real-time system and service status
-- **🎥 Vision Integration**: Camera capture and AI analysis
-- **⌨️ Input Monitoring**: Keyboard/mouse capture for automation
+- **Voice-First Interface**: Native audio → Whisper → AI chat
+- **Mobile-Responsive GUI**: Touch-friendly native interface
+- **Developer Tools**: API testing, service monitoring, logs
+- **System Monitoring**: Real-time system and service status
+- **Vision Integration**: Camera capture and AI analysis
+- **Input Monitoring**: Keyboard/mouse capture for automation
 
-## 📋 **Documentation**
+## Documentation
 
 - **For Developers**: See `/docs/` for comprehensive LlmDocs-annotated documentation
 - **For LLM Agents**: Start with `/LLM_MASTER_PROMPT.md` before making any changes
 
-## 🚀 **Status**
+## System Status
 
-Some things work, some don't. The health dashboard will tell you which is which.
+System components are in various stages of implementation. The health dashboard provides current operational status.
 
-## 🎯 **For Developers**
+## For Developers
 
-Check `/docs/` for more details if needed.
+Comprehensive documentation available in `/docs/` directory.
 
-## 🔧 **Commands**
+## Available Commands
 
 ```bash
-make start               # Start everything
-make clean               # Clean up
+make start               # Initialize all system components
+make clean               # Clean build artifacts and temporary files
 ```
 
 ---
 
-That's it. More details in `/docs/` if you really need them.
-# Test change
+Additional technical documentation and implementation details are available in the `/docs/` directory.
