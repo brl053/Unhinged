@@ -46,12 +46,12 @@ try:
     from unhinged_events import create_gui_session_logger, GUIOutputCapture
     SESSION_LOGGING_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Session logging not available: {e}")
+    print(f"Warning: Session logging not available: {e}")
     SESSION_LOGGING_AVAILABLE = False
 
 # Simple approach: Use control modules as scripts (academic exercise)
 CONTROL_MODULES_AVAILABLE = True
-print("✅ Control modules available as scripts")
+print("Control modules available as scripts")
 
 # Import session logging from event framework
 sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
@@ -59,7 +59,7 @@ try:
     from unhinged_events import create_gui_session_logger, GUIOutputCapture
     SESSION_LOGGING_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Session logging not available: {e}")
+    print(f"Warning: Session logging not available: {e}")
     SESSION_LOGGING_AVAILABLE = False
 
 class UnhingedDesktopApp(Adw.Application):
@@ -94,7 +94,7 @@ class UnhingedDesktopApp(Adw.Application):
                 )
                 self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with direct control integration")
             except Exception as e:
-                print(f"⚠️ Session logging initialization failed: {e}")
+                print(f"Warning: Session logging initialization failed: {e}")
                 self.session_logger = None
                 self.output_capture = None
 
@@ -500,9 +500,9 @@ class UnhingedDesktopApp(Adw.Application):
         if self.control_available:
             try:
                 # Simple approach: just terminate any running processes
-                self.append_log("✅ Platform stopped (simple termination)")
+                self.append_log("SUCCESS: Platform stopped (simple termination)")
             except Exception as e:
-                self.append_log(f"❌ Error stopping platform: {e}")
+                self.append_log(f"ERROR: Error stopping platform: {e}")
 
         self.update_status("Stopped", 0)
     
@@ -546,7 +546,7 @@ class UnhingedDesktopApp(Adw.Application):
             )
 
             self.update_status("Platform running...", 0.8)
-            self.append_log("✅ Platform started successfully")
+            self.append_log("SUCCESS: Platform started successfully")
 
             # Stream output
             while self.running and self.process:
@@ -556,13 +556,13 @@ class UnhingedDesktopApp(Adw.Application):
                     if clean_line:
                         # Enhanced output formatting
                         if "ERROR" in clean_line.upper():
-                            self.append_log(f"❌ {clean_line}")
+                            self.append_log(f"ERROR: {clean_line}")
                         elif "SUCCESS" in clean_line.upper():
-                            self.append_log(f"✅ {clean_line}")
+                            self.append_log(f"SUCCESS: {clean_line}")
                         elif "WARNING" in clean_line.upper():
-                            self.append_log(f"⚠️ {clean_line}")
+                            self.append_log(f"WARNING: {clean_line}")
                         elif "UNHINGED" in clean_line.upper():
-                            self.append_log(f"🔥 {clean_line}")
+                            self.append_log(f"SYSTEM: {clean_line}")
                         else:
                             self.append_log(f"OUT: {clean_line}")
 
@@ -570,26 +570,26 @@ class UnhingedDesktopApp(Adw.Application):
                     break
 
             self.update_status("Platform completed", 1.0)
-            self.append_log("🎉 Platform session completed")
-            self.show_toast("Platform session completed successfully!", 5)
+            self.append_log("SUCCESS: Platform session completed")
+            self.show_toast("Platform session completed successfully", 5)
 
         except FileNotFoundError:
             self.update_status("Error: Makefile not found", 0)
-            self.append_log("❌ Error: Makefile not found in project directory")
-            self.append_log("💡 Make sure you're running from the Unhinged project root")
+            self.append_log("ERROR: Makefile not found in project directory")
+            self.append_log("INFO: Make sure you're running from the Unhinged project root")
             self.show_error_dialog("Makefile Not Found",
                                  "Could not find Makefile in the project directory.\n\n"
                                  "Please ensure you're running from the Unhinged project root.")
         except subprocess.CalledProcessError as e:
             self.update_status(f"Error: Command failed (exit {e.returncode})", 0)
-            self.append_log(f"❌ Error: make {command} failed with exit code {e.returncode}")
+            self.append_log(f"ERROR: make {command} failed with exit code {e.returncode}")
             self.show_error_dialog("Command Failed",
                                  f"The command 'make {command}' failed.\n\n"
                                  f"Exit code: {e.returncode}\n"
                                  f"Check the output log for details.")
         except Exception as e:
             self.update_status(f"Error: {e}", 0)
-            self.append_log(f"❌ Unexpected error: {e}")
+            self.append_log(f"ERROR: Unexpected error: {e}")
             self.show_error_dialog("Unexpected Error",
                                  f"An unexpected error occurred:\n\n{e}\n\n"
                                  f"Please check the output log for more details.")

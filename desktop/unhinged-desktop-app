@@ -43,7 +43,7 @@ try:
     from auto_updater import AutoUpdater, UpdateStatus
     AUTO_UPDATE_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Auto-updater not available: {e}")
+    print(f"Warning: Auto-updater not available: {e}")
     AUTO_UPDATE_AVAILABLE = False
 import time
 import json
@@ -54,12 +54,12 @@ try:
     from unhinged_events import create_gui_session_logger, GUIOutputCapture
     SESSION_LOGGING_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Session logging not available: {e}")
+    print(f"Warning: Session logging not available: {e}")
     SESSION_LOGGING_AVAILABLE = False
 
 # Simple approach: Use control modules as scripts (academic exercise)
 CONTROL_MODULES_AVAILABLE = True
-print("✅ Control modules available as scripts")
+print("Control modules available as scripts")
 
 class UnhingedDesktopApp(Adw.Application):
     """
@@ -93,7 +93,7 @@ class UnhingedDesktopApp(Adw.Application):
                 )
                 self.session_logger.log_session_event("APP_INIT", "Desktop application initialized")
             except Exception as e:
-                print(f"⚠️ Session logging initialization failed: {e}")
+                print(f"Warning: Session logging initialization failed: {e}")
                 self.session_logger = None
                 self.output_capture = None
 
@@ -106,7 +106,7 @@ class UnhingedDesktopApp(Adw.Application):
                 if self.session_logger:
                     self.session_logger.log_gui_event("AUTO_UPDATE_INIT", "Auto-updater initialized")
             except Exception as e:
-                print(f"⚠️ Auto-updater initialization failed: {e}")
+                print(f"Warning: Auto-updater initialization failed: {e}")
                 if self.session_logger:
                     self.session_logger.log_gui_event("AUTO_UPDATE_INIT_ERROR", f"Auto-updater failed: {e}")
         
@@ -348,7 +348,7 @@ class UnhingedDesktopApp(Adw.Application):
     def create_conversation_section(self):
         """Create conversation interface section"""
         group = Adw.PreferencesGroup()
-        group.set_title("🎙️ Conversation Interface")
+        group.set_title("Conversation Interface")
         group.set_description("Voice-first conversation interface for dual-system architecture")
 
         # GTK4 Control Plane Conversation
@@ -356,7 +356,7 @@ class UnhingedDesktopApp(Adw.Application):
         gtk4_row.set_title("GTK4 Control Plane Conversation")
         gtk4_row.set_subtitle("Start conversation interface in GTK4 control plane context")
 
-        gtk4_button = Gtk.Button(label="🎙️ Start GTK4 Conversation")
+        gtk4_button = Gtk.Button(label="Start GTK4 Conversation")
         gtk4_button.add_css_class("suggested-action")
         gtk4_button.connect("clicked", self.on_gtk4_conversation_clicked)
         gtk4_row.add_suffix(gtk4_button)
@@ -367,7 +367,7 @@ class UnhingedDesktopApp(Adw.Application):
         alpine_row.set_title("Alpine VM Conversation")
         alpine_row.set_subtitle("Start conversation interface in Alpine native context")
 
-        alpine_button = Gtk.Button(label="🏔️ Start Alpine Conversation")
+        alpine_button = Gtk.Button(label="Start Alpine Conversation")
         alpine_button.add_css_class("accent")
         alpine_button.connect("clicked", self.on_alpine_conversation_clicked)
         alpine_row.add_suffix(alpine_button)
@@ -378,7 +378,7 @@ class UnhingedDesktopApp(Adw.Application):
         text_row.set_title("Text-Only Conversation")
         text_row.set_subtitle("Start conversation interface in text-only mode")
 
-        text_button = Gtk.Button(label="⌨️ Start Text Conversation")
+        text_button = Gtk.Button(label="Start Text Conversation")
         text_button.connect("clicked", self.on_text_conversation_clicked)
         text_row.add_suffix(text_button)
         group.add(text_row)
@@ -388,7 +388,7 @@ class UnhingedDesktopApp(Adw.Application):
     def create_update_section(self):
         """Create auto-update section"""
         group = Adw.PreferencesGroup()
-        group.set_title("🔄 Application Updates")
+        group.set_title("Application Updates")
         group.set_description("Automatic update checking and installation")
 
         # Update status row
@@ -602,18 +602,18 @@ class UnhingedDesktopApp(Adw.Application):
                 "--mode", "voice_first",
                 "--context", "gtk4_control_plane"
             ])
-            self.append_log("✅ GTK4 conversation interface launched")
+            self.append_log("SUCCESS: GTK4 conversation interface launched")
 
             # Log GUI event
             if self.session_logger:
                 self.session_logger.log_gui_event("GTK4_CONVERSATION_STARTED", "GTK4 conversation interface launched")
 
         except Exception as e:
-            self.append_log(f"❌ Failed to start GTK4 conversation: {e}")
+            self.append_log(f"ERROR: Failed to start GTK4 conversation: {e}")
 
     def on_alpine_conversation_clicked(self, button):
         """Handle Alpine conversation button click"""
-        self.append_log("🏔️ Starting Alpine VM conversation...")
+        self.append_log("Starting Alpine VM conversation...")
         try:
             import subprocess
             conversation_script = self.project_root / "control" / "conversation_cli.py"
@@ -622,18 +622,18 @@ class UnhingedDesktopApp(Adw.Application):
                 "--mode", "voice_first",
                 "--context", "alpine_native"
             ])
-            self.append_log("✅ Alpine conversation interface launched")
+            self.append_log("SUCCESS: Alpine conversation interface launched")
 
             # Log GUI event
             if self.session_logger:
                 self.session_logger.log_gui_event("ALPINE_CONVERSATION_STARTED", "Alpine conversation interface launched")
 
         except Exception as e:
-            self.append_log(f"❌ Failed to start Alpine conversation: {e}")
+            self.append_log(f"ERROR: Failed to start Alpine conversation: {e}")
 
     def on_text_conversation_clicked(self, button):
         """Handle text conversation button click"""
-        self.append_log("⌨️ Starting text-only conversation...")
+        self.append_log("Starting text-only conversation...")
         try:
             import subprocess
             conversation_script = self.project_root / "control" / "conversation_cli.py"
@@ -641,21 +641,21 @@ class UnhingedDesktopApp(Adw.Application):
                 "python3", str(conversation_script),
                 "--mode", "text_only"
             ])
-            self.append_log("✅ Text conversation interface launched")
+            self.append_log("SUCCESS: Text conversation interface launched")
 
             # Log GUI event
             if self.session_logger:
                 self.session_logger.log_gui_event("TEXT_CONVERSATION_STARTED", "Text conversation interface launched")
 
         except Exception as e:
-            self.append_log(f"❌ Failed to start text conversation: {e}")
+            self.append_log(f"ERROR: Failed to start text conversation: {e}")
 
     def on_check_updates_clicked(self, button):
         """Handle check for updates button click"""
         if not self.auto_updater:
             return
 
-        self.append_log("🔄 Checking for updates...")
+        self.append_log("Checking for updates...")
         self.update_button.set_sensitive(False)
         self.update_button.set_label("Checking...")
 
@@ -699,14 +699,14 @@ class UnhingedDesktopApp(Adw.Application):
         # Update status based on update availability
         if self.update_info.status == UpdateStatus.UP_TO_DATE:
             if hasattr(self, 'update_status_row'):
-                self.update_status_row.set_subtitle("✅ Application is up to date")
+                self.update_status_row.set_subtitle("Application is up to date")
             if hasattr(self, 'update_button'):
                 self.update_button.set_label("Check for Updates")
                 self.update_button.set_sensitive(True)
 
         elif self.update_info.status == UpdateStatus.UPDATE_AVAILABLE:
             if hasattr(self, 'update_status_row'):
-                self.update_status_row.set_subtitle(f"🆕 Update available: v{self.update_info.latest_version.version}")
+                self.update_status_row.set_subtitle(f"Update available: v{self.update_info.latest_version.version}")
             if hasattr(self, 'update_button'):
                 self.update_button.set_label("Install Update")
                 self.update_button.set_sensitive(True)
@@ -714,11 +714,11 @@ class UnhingedDesktopApp(Adw.Application):
                 self.update_button.disconnect_by_func(self.on_check_updates_clicked)
                 self.update_button.connect("clicked", self.on_install_update_clicked)
 
-            self.append_log(f"🆕 Update available: v{self.update_info.latest_version.version}")
+            self.append_log(f"Update available: v{self.update_info.latest_version.version}")
 
         elif self.update_info.status == UpdateStatus.UPDATE_REQUIRED:
             if hasattr(self, 'update_status_row'):
-                self.update_status_row.set_subtitle(f"⚠️ Critical update required: v{self.update_info.latest_version.version}")
+                self.update_status_row.set_subtitle(f"Critical update required: v{self.update_info.latest_version.version}")
             if hasattr(self, 'update_button'):
                 self.update_button.set_label("Install Critical Update")
                 self.update_button.set_sensitive(True)
@@ -735,19 +735,19 @@ class UnhingedDesktopApp(Adw.Application):
     def _update_ui_with_error(self, error_message):
         """Update UI with error information"""
         if hasattr(self, 'update_status_row'):
-            self.update_status_row.set_subtitle(f"❌ Update check failed")
+            self.update_status_row.set_subtitle("Update check failed")
         if hasattr(self, 'update_button'):
             self.update_button.set_label("Retry")
             self.update_button.set_sensitive(True)
 
-        self.append_log(f"❌ Update check failed: {error_message}")
+        self.append_log(f"ERROR: Update check failed: {error_message}")
 
     def on_install_update_clicked(self, button):
         """Handle install update button click"""
         if not self.auto_updater or not self.update_info:
             return
 
-        self.append_log(f"📥 Installing update: v{self.update_info.latest_version.version}")
+        self.append_log(f"Installing update: v{self.update_info.latest_version.version}")
         self.update_button.set_sensitive(False)
         self.update_button.set_label("Installing...")
 
@@ -773,10 +773,10 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _update_installation_success(self):
         """Handle successful update installation"""
-        self.append_log("✅ Update installed successfully!")
+        self.append_log("SUCCESS: Update installed successfully")
 
         if hasattr(self, 'update_status_row'):
-            self.update_status_row.set_subtitle("✅ Update installed - restart recommended")
+            self.update_status_row.set_subtitle("Update installed - restart recommended")
         if hasattr(self, 'update_button'):
             self.update_button.set_label("Restart Application")
             self.update_button.set_sensitive(True)
@@ -793,10 +793,10 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _update_installation_failed(self, error_message):
         """Handle failed update installation"""
-        self.append_log(f"❌ Update installation failed: {error_message}")
+        self.append_log(f"ERROR: Update installation failed: {error_message}")
 
         if hasattr(self, 'update_status_row'):
-            self.update_status_row.set_subtitle("❌ Update installation failed")
+            self.update_status_row.set_subtitle("Update installation failed")
         if hasattr(self, 'update_button'):
             self.update_button.set_label("Retry Update")
             self.update_button.set_sensitive(True)
@@ -840,8 +840,8 @@ class UnhingedDesktopApp(Adw.Application):
         if response == "restart":
             self.on_restart_application_clicked(None)
         elif response == "manual":
-            self.append_log("💡 Please restart the application manually to use the new version")
-            self.append_log("💡 Run: python3 desktop/unhinged-desktop-app")
+            self.append_log("INFO: Please restart the application manually to use the new version")
+            self.append_log("INFO: Run: python3 desktop/unhinged-desktop-app")
             # Just close the application
             GLib.timeout_add(2000, lambda: self.quit())
         dialog.destroy()
@@ -854,10 +854,10 @@ class UnhingedDesktopApp(Adw.Application):
             self.session_logger.log_gui_event("APP_RESTART", "Application restart requested after update")
 
         # Show instructions and close gracefully
-        self.append_log("💡 Update complete! Please restart the application manually:")
-        self.append_log("💡 Method 1: Run 'python3 desktop/unhinged-desktop-app'")
-        self.append_log("💡 Method 2: Launch 'Unhinged' from your application menu")
-        self.append_log("💡 Method 3: Run 'gtk-launch unhinged'")
+        self.append_log("INFO: Update complete! Please restart the application manually:")
+        self.append_log("INFO: Method 1: Run 'python3 desktop/unhinged-desktop-app'")
+        self.append_log("INFO: Method 2: Launch 'Unhinged' from your application menu")
+        self.append_log("INFO: Method 3: Run 'gtk-launch unhinged'")
 
         # Update the restart button to show it's ready to close
         if hasattr(self, 'update_button'):
@@ -931,7 +931,7 @@ class UnhingedDesktopApp(Adw.Application):
             )
 
             self.update_status("Platform running...", 0.8)
-            self.append_log("✅ Platform started successfully")
+            self.append_log("SUCCESS: Platform started successfully")
 
             # Stream output
             while self.running and self.process:
@@ -941,13 +941,13 @@ class UnhingedDesktopApp(Adw.Application):
                     if clean_line:
                         # Enhanced output formatting
                         if "ERROR" in clean_line.upper():
-                            self.append_log(f"❌ {clean_line}")
+                            self.append_log(f"ERROR: {clean_line}")
                         elif "SUCCESS" in clean_line.upper():
-                            self.append_log(f"✅ {clean_line}")
+                            self.append_log(f"SUCCESS: {clean_line}")
                         elif "WARNING" in clean_line.upper():
-                            self.append_log(f"⚠️ {clean_line}")
+                            self.append_log(f"WARNING: {clean_line}")
                         elif "UNHINGED" in clean_line.upper():
-                            self.append_log(f"🔥 {clean_line}")
+                            self.append_log(f"SYSTEM: {clean_line}")
                         else:
                             self.append_log(f"OUT: {clean_line}")
 
@@ -955,26 +955,26 @@ class UnhingedDesktopApp(Adw.Application):
                     break
 
             self.update_status("Platform completed", 1.0)
-            self.append_log("🎉 Platform session completed")
-            self.show_toast("Platform session completed successfully!", 5)
+            self.append_log("SUCCESS: Platform session completed")
+            self.show_toast("Platform session completed successfully", 5)
 
         except FileNotFoundError:
             self.update_status("Error: Makefile not found", 0)
-            self.append_log("❌ Error: Makefile not found in project directory")
-            self.append_log("💡 Make sure you're running from the Unhinged project root")
+            self.append_log("ERROR: Makefile not found in project directory")
+            self.append_log("INFO: Make sure you're running from the Unhinged project root")
             self.show_error_dialog("Makefile Not Found",
                                  "Could not find Makefile in the project directory.\n\n"
                                  "Please ensure you're running from the Unhinged project root.")
         except subprocess.CalledProcessError as e:
             self.update_status(f"Error: Command failed (exit {e.returncode})", 0)
-            self.append_log(f"❌ Error: make {command} failed with exit code {e.returncode}")
+            self.append_log(f"ERROR: make {command} failed with exit code {e.returncode}")
             self.show_error_dialog("Command Failed",
                                  f"The command 'make {command}' failed.\n\n"
                                  f"Exit code: {e.returncode}\n"
                                  f"Check the output log for details.")
         except Exception as e:
             self.update_status(f"Error: {e}", 0)
-            self.append_log(f"❌ Unexpected error: {e}")
+            self.append_log(f"ERROR: Unexpected error: {e}")
             self.show_error_dialog("Unexpected Error",
                                  f"An unexpected error occurred:\n\n{e}\n\n"
                                  f"Please check the output log for more details.")
