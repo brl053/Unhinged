@@ -35,7 +35,7 @@ RUN gradle clean shadowJar --no-daemon --parallel
 # ==========================================================================
 # Runtime Stage
 # ==========================================================================
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
 # Metadata
 LABEL maintainer="Unhinged Team"

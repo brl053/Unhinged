@@ -30,6 +30,13 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# Import error guidance
+try:
+    from diagnostics.error_guidance import ErrorGuidance, format_error_guidance
+    ERROR_GUIDANCE_AVAILABLE = True
+except ImportError:
+    ERROR_GUIDANCE_AVAILABLE = False
 try:
     from . import BuildModule, BuildContext, BuildModuleResult, BuildUtils, BuildArtifact
 except ImportError:
@@ -213,9 +220,9 @@ int main() {
             with open(test_file, 'w') as f:
                 f.write(test_code)
 
-            # Attempt compilation
+            # Attempt compilation with proper include paths
             result = subprocess.run([
-                "gcc", "-o", str(test_dir / "drm_test"), str(test_file), "-ldrm"
+                "gcc", "-I/usr/include/libdrm", "-o", str(test_dir / "drm_test"), str(test_file), "-ldrm"
             ], capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -253,10 +260,25 @@ int main() {
     def build(self, target_name: str) -> BuildModuleResult:
         """Execute C graphics build"""
         start_time = time.time()
-        
+
+        self.logger.info(f"🔍 Starting C graphics build for target: {target_name}")
+
         # HARD FAIL REQUIREMENT: Validate environment first - ALL DEPENDENCIES ARE REQUIRED
+        self.logger.info("🔍 Validating environment...")
         env_errors = self.validate_environment()
+        self.logger.info(f"🔍 Environment validation complete. Errors: {len(env_errors)}")
         if env_errors:
+            for error in env_errors:
+                self.logger.error(f"❌ Environment error: {error}")
+
+            # Provide enhanced error guidance for each error
+            if ERROR_GUIDANCE_AVAILABLE:
+                guidance = ErrorGuidance(self.context.project_root)
+                for error in env_errors:
+                    error_analysis = guidance.analyze_error(error, f"C graphics environment validation")
+                    formatted_guidance = format_error_guidance(error_analysis)
+                    print(formatted_guidance)
+
             error_msg = f"🚨 HARD FAIL: C Graphics dependencies are REQUIRED but missing:\n" + '\n'.join(f"  - {error}" for error in env_errors)
             error_msg += f"\n\n🔧 Run 'make graphics-install-deps' to install required dependencies."
             error_msg += f"\n\n⚠️  CRITICAL: Native C graphics compilation is a HARD REQUIREMENT for Unhinged dual-system architecture."
@@ -289,14 +311,18 @@ int main() {
         all_warnings = []
         all_metrics = {}
         
-        for step_name, command, working_dir in build_steps:
-            self.logger.info(f"🔨 {step_name}: {command}")
-            
+        for i, (step_name, command, working_dir) in enumerate(build_steps, 1):
+            self.logger.info(f"🔨 Step {i}/{len(build_steps)}: {step_name}")
+            self.logger.info(f"   Command: {command}")
+            self.logger.info(f"   Working dir: {working_dir}")
+
             success, stdout, stderr = BuildUtils.run_command(
                 command,
                 working_dir,
                 timeout=300  # 5 minutes for C builds
             )
+
+            self.logger.info(f"✅ Step {i}/{len(build_steps)} completed: {step_name}")
             
             if not success:
                 duration = time.time() - start_time

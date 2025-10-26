@@ -58,24 +58,31 @@ import time
 import json
 
 # Voice integration imports
+print("Loading voice integration imports...")
 try:
     # Add protobuf clients to path
     sys.path.append(str(Path(__file__).parent.parent / "generated" / "python" / "clients"))
+    print("Importing protobuf clients...")
     from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
     from unhinged_proto_clients.health import health_pb2_grpc
     VOICE_PROTO_AVAILABLE = True
+    print("Voice protobuf clients loaded successfully")
 except ImportError as e:
     print(f"Warning: Voice protobuf clients not available: {e}")
     VOICE_PROTO_AVAILABLE = False
 
 # Service discovery imports
+print("Loading service discovery imports...")
 try:
     sys.path.append(str(Path(__file__).parent.parent / "control" / "network"))
     from service_registry import ServiceRegistry
     SERVICE_DISCOVERY_AVAILABLE = True
+    print("Service discovery loaded successfully")
 except ImportError as e:
     print(f"Warning: Service discovery not available: {e}")
     SERVICE_DISCOVERY_AVAILABLE = False
+
+print("All imports completed, starting application classes...")
 
 # Headless service classes
 class HeadlessConversationService:
@@ -481,13 +488,16 @@ class UnhingedDesktopApp(Adw.Application):
     """
 
     def __init__(self):
+        print("Initializing UnhingedDesktopApp...")
         super().__init__(application_id='com.unhinged.platform')
+        print("GTK Application initialized")
         self.project_root = Path(__file__).parent.parent
         self.window = None
         self.process = None
         self.running = False
 
         # Initialize session logging
+        print("Initializing session logging...")
         self.session_logger = None
         self.output_capture = None
         if SESSION_LOGGING_AVAILABLE:
@@ -1196,7 +1206,9 @@ class UnhingedDesktopApp(Adw.Application):
         GLib.idle_add(show_toast_ui)
 def main():
     """Main function"""
+    print("Starting main function...")
     app = UnhingedDesktopApp()
+    print("App created, starting run...")
     return app.run(sys.argv)
 
 if __name__ == "__main__":

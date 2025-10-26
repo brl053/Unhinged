@@ -52,6 +52,18 @@ except ImportError:
         VALIDATION_AVAILABLE = False
         print("⚠️ Build validators not available")
 
+# Import error guidance system
+try:
+    from diagnostics.error_guidance import ErrorGuidance, format_error_guidance
+    ERROR_GUIDANCE_AVAILABLE = True
+except ImportError:
+    try:
+        from .diagnostics.error_guidance import ErrorGuidance, format_error_guidance
+        ERROR_GUIDANCE_AVAILABLE = True
+    except ImportError:
+        ERROR_GUIDANCE_AVAILABLE = False
+        print("⚠️ Error guidance system not available")
+
 # Import monitoring system
 try:
     from monitoring import BuildPerformanceMonitor
@@ -441,6 +453,13 @@ class BuildOrchestrator:
                     else:
                         logger.error(f"❌ Module build for '{target_name}' failed: {module_result.error_message}")
 
+                        # Provide enhanced error guidance
+                        if ERROR_GUIDANCE_AVAILABLE and module_result.error_message:
+                            guidance = ErrorGuidance(self.project_root)
+                            error_analysis = guidance.analyze_error(module_result.error_message, f"building {target_name}")
+                            formatted_guidance = format_error_guidance(error_analysis)
+                            print(formatted_guidance)
+
                     return build_result
 
             # Fallback to command execution
@@ -458,6 +477,14 @@ class BuildOrchestrator:
                 if result.returncode != 0:
                     error_msg = f"Command failed: {command}\nError: {result.stderr}"
                     logger.error(error_msg)
+
+                    # Provide enhanced error guidance
+                    if ERROR_GUIDANCE_AVAILABLE:
+                        guidance = ErrorGuidance(self.project_root)
+                        error_analysis = guidance.analyze_error(result.stderr or error_msg, f"executing {command}")
+                        formatted_guidance = format_error_guidance(error_analysis)
+                        print(formatted_guidance)
+
                     return BuildResult(
                         target=target_name,
                         success=False,

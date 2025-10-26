@@ -150,7 +150,9 @@ services:
   # =============================================================================
   
   persistence-platform:
-    build: ../platforms/persistence
+    build:
+      context: ../platforms/persistence
+      dockerfile: Dockerfile.mock
     container_name: persistence-platform-service
     ports:
       - "1300:8090"  # External 1300 → Internal 8090 (REST)
