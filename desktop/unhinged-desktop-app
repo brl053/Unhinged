@@ -48,6 +48,132 @@ except ImportError as e:
 import time
 import json
 
+# Headless service classes
+class HeadlessConversationService:
+    """Headless conversation interface service"""
+    def __init__(self, project_root, session_logger=None):
+        self.project_root = project_root
+        self.session_logger = session_logger
+
+    def start_gtk4_conversation(self):
+        """Start GTK4 conversation interface"""
+        try:
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "voice_first",
+                "--context", "gtk4_control_plane"
+            ])
+            if self.session_logger:
+                self.session_logger.log_gui_event("GTK4_CONVERSATION_STARTED", "GTK4 conversation interface launched")
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("GTK4_CONVERSATION_ERROR", f"Failed to start GTK4 conversation: {e}")
+            return False
+
+    def start_alpine_conversation(self):
+        """Start Alpine conversation interface"""
+        try:
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "voice_first",
+                "--context", "alpine_native"
+            ])
+            if self.session_logger:
+                self.session_logger.log_gui_event("ALPINE_CONVERSATION_STARTED", "Alpine conversation interface launched")
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("ALPINE_CONVERSATION_ERROR", f"Failed to start Alpine conversation: {e}")
+            return False
+
+    def start_text_conversation(self):
+        """Start text-only conversation interface"""
+        try:
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "text_only"
+            ])
+            if self.session_logger:
+                self.session_logger.log_gui_event("TEXT_CONVERSATION_STARTED", "Text conversation interface launched")
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("TEXT_CONVERSATION_ERROR", f"Failed to start text conversation: {e}")
+            return False
+
+class HeadlessUpdateService:
+    """Headless auto-update service"""
+    def __init__(self, project_root, auto_updater=None, session_logger=None):
+        self.project_root = project_root
+        self.auto_updater = auto_updater
+        self.session_logger = session_logger
+        self.update_info = None
+
+    def check_for_updates(self):
+        """Check for updates in background"""
+        if not self.auto_updater:
+            return False
+        try:
+            self.update_info = self.auto_updater.check_for_updates()
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_CHECK_ERROR", f"Update check failed: {e}")
+            return False
+
+    def install_update(self):
+        """Install update in background"""
+        if not self.auto_updater or not self.update_info:
+            return False
+        try:
+            result = self.auto_updater.install_update(self.update_info.latest_version)
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_INSTALLED", "Update installed successfully")
+            return result
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_INSTALL_ERROR", f"Update installation failed: {e}")
+            return False
+
+class HeadlessStatusService:
+    """Headless status monitoring service"""
+    def __init__(self, session_logger=None):
+        self.session_logger = session_logger
+        self.current_status = "Ready"
+        self.progress = 0.0
+
+    def update_status(self, status, progress=None):
+        """Update status without UI"""
+        self.current_status = status
+        if progress is not None:
+            self.progress = progress
+        if self.session_logger:
+            self.session_logger.log_gui_event("STATUS_UPDATE", f"Status: {status}, Progress: {progress}")
+
+    def get_status(self):
+        """Get current status"""
+        return {"status": self.current_status, "progress": self.progress}
+
+class HeadlessLoggingService:
+    """Headless logging service"""
+    def __init__(self, session_logger=None):
+        self.session_logger = session_logger
+        self.log_buffer = []
+
+    def append_log(self, message):
+        """Append log message without UI"""
+        self.log_buffer.append(message)
+        if self.session_logger:
+            self.session_logger.log_gui_event("LOG_MESSAGE", message)
+
+    def get_logs(self, limit=100):
+        """Get recent log messages"""
+        return self.log_buffer[-limit:] if limit else self.log_buffer
+
 # Import session logging from event framework
 sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
 try:
@@ -109,6 +235,12 @@ class UnhingedDesktopApp(Adw.Application):
                 print(f"Warning: Auto-updater initialization failed: {e}")
                 if self.session_logger:
                     self.session_logger.log_gui_event("AUTO_UPDATE_INIT_ERROR", f"Auto-updater failed: {e}")
+
+        # Initialize headless services
+        self.conversation_service = HeadlessConversationService(self.project_root, self.session_logger)
+        self.update_service = HeadlessUpdateService(self.project_root, self.auto_updater, self.session_logger)
+        self.status_service = HeadlessStatusService(self.session_logger)
+        self.logging_service = HeadlessLoggingService(self.session_logger)
         
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -144,47 +276,93 @@ class UnhingedDesktopApp(Adw.Application):
         # Create toast overlay for notifications
         self.toast_overlay = Adw.ToastOverlay()
 
-        # Create main content
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        main_box.set_margin_top(24)
-        main_box.set_margin_bottom(24)
-        main_box.set_margin_start(24)
-        main_box.set_margin_end(24)
-        
-        # Welcome section
-        welcome_group = self.create_welcome_section()
-        main_box.append(welcome_group)
-        
-        # Control section
-        control_group = self.create_control_section()
-        main_box.append(control_group)
+        # Create minimal side navigation
+        self.create_minimal_navigation(window)
+        return window
 
-        # Conversation section
-        conversation_group = self.create_conversation_section()
-        main_box.append(conversation_group)
+    def create_minimal_navigation(self, window):
+        """Create minimal side navigation with four tabs"""
+        # Create main horizontal box
+        main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 
-        # Update section (if auto-updater available)
-        if AUTO_UPDATE_AVAILABLE:
-            update_group = self.create_update_section()
-            main_box.append(update_group)
+        # Create stack for tab content
+        self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
 
-        # Status section
-        status_group = self.create_status_section()
-        main_box.append(status_group)
-        
-        # Log section
-        log_group = self.create_log_section()
-        main_box.append(log_group)
-        
-        # Create scrolled window for content
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_child(main_box)
+        # Create stack sidebar for navigation
+        sidebar = Gtk.StackSidebar()
+        sidebar.set_stack(self.stack)
+        sidebar.set_size_request(150, -1)
+
+        # Add tabs to stack
+        self.add_status_tab()
+        self.add_actions_tab()
+        self.add_logs_tab()
+        self.add_cli_tab()
+
+        # Add sidebar and stack to main box
+        main_box.append(sidebar)
+        main_box.append(self.stack)
 
         # Set up toast overlay
-        self.toast_overlay.set_child(scrolled)
+        self.toast_overlay.set_child(main_box)
         window.set_content(self.toast_overlay)
-        return window
+
+    def add_status_tab(self):
+        """Add Status tab with minimal content"""
+        status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        status_box.set_margin_top(24)
+        status_box.set_margin_bottom(24)
+        status_box.set_margin_start(24)
+        status_box.set_margin_end(24)
+
+        # Minimal status content placeholder
+        status_label = Gtk.Label(label="Status monitoring content")
+        status_box.append(status_label)
+
+        self.stack.add_titled(status_box, "status", "Status")
+
+    def add_actions_tab(self):
+        """Add Actions tab with minimal content"""
+        actions_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        actions_box.set_margin_top(24)
+        actions_box.set_margin_bottom(24)
+        actions_box.set_margin_start(24)
+        actions_box.set_margin_end(24)
+
+        # Minimal actions content placeholder
+        actions_label = Gtk.Label(label="Platform actions content")
+        actions_box.append(actions_label)
+
+        self.stack.add_titled(actions_box, "actions", "Actions")
+
+    def add_logs_tab(self):
+        """Add Logs tab with minimal content"""
+        logs_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        logs_box.set_margin_top(24)
+        logs_box.set_margin_bottom(24)
+        logs_box.set_margin_start(24)
+        logs_box.set_margin_end(24)
+
+        # Minimal logs content placeholder
+        logs_label = Gtk.Label(label="System logs content")
+        logs_box.append(logs_label)
+
+        self.stack.add_titled(logs_box, "logs", "Logs")
+
+    def add_cli_tab(self):
+        """Add CLI tab with minimal content"""
+        cli_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        cli_box.set_margin_top(24)
+        cli_box.set_margin_bottom(24)
+        cli_box.set_margin_start(24)
+        cli_box.set_margin_end(24)
+
+        # Minimal CLI content placeholder
+        cli_label = Gtk.Label(label="Command line interface content")
+        cli_box.append(cli_label)
+
+        self.stack.add_titled(cli_box, "cli", "CLI")
 
     def setup_actions(self):
         """Setup application actions for menu"""
@@ -193,10 +371,7 @@ class UnhingedDesktopApp(Adw.Application):
         about_action.connect("activate", self.on_about_action)
         self.add_action(about_action)
 
-        # Preferences action
-        preferences_action = Gio.SimpleAction.new("preferences", None)
-        preferences_action.connect("activate", self.on_preferences_action)
-        self.add_action(preferences_action)
+
 
         # Quit action
         quit_action = Gio.SimpleAction.new("quit", None)
@@ -227,31 +402,7 @@ class UnhingedDesktopApp(Adw.Application):
         about.set_comments("Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline.")
         about.present()
 
-    def on_preferences_action(self, action, param):
-        """Show preferences dialog"""
-        # Create preferences window
-        prefs = Adw.PreferencesWindow(transient_for=self.window)
-        prefs.set_title("Preferences")
 
-        # General page
-        general_page = Adw.PreferencesPage()
-        general_page.set_title("General")
-        general_page.set_icon_name("preferences-system-symbolic")
-
-        # Launch settings group
-        launch_group = Adw.PreferencesGroup()
-        launch_group.set_title("Launch Settings")
-        launch_group.set_description("Configure how Unhinged starts")
-
-        # Auto-start row
-        autostart_row = Adw.SwitchRow()
-        autostart_row.set_title("Auto-start on login")
-        autostart_row.set_subtitle("Automatically start Unhinged when you log in")
-        launch_group.add(autostart_row)
-
-        general_page.add(launch_group)
-        prefs.add(general_page)
-        prefs.present()
 
     def on_quit_action(self, action, param):
         """Quit application"""
@@ -265,269 +416,25 @@ class UnhingedDesktopApp(Adw.Application):
 
         self.quit()
     
-    def create_welcome_section(self):
-        """Create welcome section with app info"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Unhinged Native Graphics Platform")
-        group.set_description("Independent graphics rendering with VM communication")
 
-        # Status row
-        status_row = Adw.ActionRow()
-        status_row.set_title("Platform Status")
-        status_row.set_subtitle("Ready to launch")
-
-        # Status icon
-        status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
-        status_icon.set_icon_size(Gtk.IconSize.LARGE)
-        status_row.add_prefix(status_icon)
-
-        group.add(status_row)
-
-        # Features row
-        features_row = Adw.ActionRow()
-        features_row.set_title("Features")
-        features_row.set_subtitle("VM Communication • Native Graphics • Independence")
-
-        features_icon = Gtk.Image.new_from_icon_name("applications-graphics-symbolic")
-        features_icon.set_icon_size(Gtk.IconSize.LARGE)
-        features_row.add_prefix(features_icon)
-
-        group.add(features_row)
-
-        return group
     
-    def create_control_section(self):
-        """Create control section with start/stop buttons"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Platform Control")
-        group.set_description("Launch and manage the Unhinged graphics platform")
 
-        # Control row
-        control_row = Adw.ActionRow()
-        control_row.set_title("Platform Launcher")
-        control_row.set_subtitle("Execute 'make start' functionality")
 
-        # Button box
-        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
-        # Start button
-        self.start_button = Gtk.Button.new_with_label("Start Platform")
-        self.start_button.add_css_class("suggested-action")
-        self.start_button.connect("clicked", self.on_start_clicked)
-        button_box.append(self.start_button)
 
-        # Stop button
-        self.stop_button = Gtk.Button.new_with_label("Stop")
-        self.stop_button.add_css_class("destructive-action")
-        self.stop_button.set_sensitive(False)
-        self.stop_button.connect("clicked", self.on_stop_clicked)
-        button_box.append(self.stop_button)
 
-        control_row.add_suffix(button_box)
-        group.add(control_row)
 
-        # Launch mode row
-        mode_row = Adw.ActionRow()
-        mode_row.set_title("Launch Mode")
-        mode_row.set_subtitle("Choose how to start the platform")
 
-        # Mode dropdown
-        self.mode_dropdown = Gtk.DropDown.new_from_strings([
-            "Enhanced (Recommended)",
-            "Simple Communication",
-            "Quality of Life",
-            "Custom ISO"
-        ])
-        self.mode_dropdown.set_selected(0)  # Default to Enhanced
-        mode_row.add_suffix(self.mode_dropdown)
-
-        group.add(mode_row)
-
-        return group
-
-    def create_conversation_section(self):
-        """Create conversation interface section"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Conversation Interface")
-        group.set_description("Voice-first conversation interface for dual-system architecture")
-
-        # GTK4 Control Plane Conversation
-        gtk4_row = Adw.ActionRow()
-        gtk4_row.set_title("GTK4 Control Plane Conversation")
-        gtk4_row.set_subtitle("Start conversation interface in GTK4 control plane context")
-
-        gtk4_button = Gtk.Button(label="Start GTK4 Conversation")
-        gtk4_button.add_css_class("suggested-action")
-        gtk4_button.connect("clicked", self.on_gtk4_conversation_clicked)
-        gtk4_row.add_suffix(gtk4_button)
-        group.add(gtk4_row)
-
-        # Alpine VM Conversation
-        alpine_row = Adw.ActionRow()
-        alpine_row.set_title("Alpine VM Conversation")
-        alpine_row.set_subtitle("Start conversation interface in Alpine native context")
-
-        alpine_button = Gtk.Button(label="Start Alpine Conversation")
-        alpine_button.add_css_class("accent")
-        alpine_button.connect("clicked", self.on_alpine_conversation_clicked)
-        alpine_row.add_suffix(alpine_button)
-        group.add(alpine_row)
-
-        # Text-Only Mode
-        text_row = Adw.ActionRow()
-        text_row.set_title("Text-Only Conversation")
-        text_row.set_subtitle("Start conversation interface in text-only mode")
-
-        text_button = Gtk.Button(label="Start Text Conversation")
-        text_button.connect("clicked", self.on_text_conversation_clicked)
-        text_row.add_suffix(text_button)
-        group.add(text_row)
-
-        return group
-
-    def create_update_section(self):
-        """Create auto-update section"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Application Updates")
-        group.set_description("Automatic update checking and installation")
-
-        # Update status row
-        self.update_status_row = Adw.ActionRow()
-        self.update_status_row.set_title("Update Status")
-        self.update_status_row.set_subtitle("Checking for updates...")
-
-        # Update button
-        self.update_button = Gtk.Button(label="Check for Updates")
-        self.update_button.connect("clicked", self.on_check_updates_clicked)
-        self.update_status_row.add_suffix(self.update_button)
-        group.add(self.update_status_row)
-
-        # Version info row
-        self.version_info_row = Adw.ActionRow()
-        self.version_info_row.set_title("Current Version")
-        self.version_info_row.set_subtitle("Loading version information...")
-        group.add(self.version_info_row)
-
-        return group
-
-    def create_status_section(self):
-        """Create status section with progress indication"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Status")
-
-        # Status row with icon
-        status_row = Adw.ActionRow()
-        status_row.set_title("Platform Status")
-
-        # Status icon
-        self.status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
-        self.status_icon.set_icon_size(Gtk.IconSize.LARGE)
-        status_row.add_prefix(self.status_icon)
-
-        # Status label
-        self.status_label = Gtk.Label()
-        self.status_label.set_text("Ready to start")
-        self.status_label.set_halign(Gtk.Align.START)
-        self.status_label.add_css_class("title-4")
-        status_row.add_suffix(self.status_label)
-
-        group.add(status_row)
-
-        # Progress bar
-        self.progress_bar = Gtk.ProgressBar()
-        self.progress_bar.set_show_text(True)
-        self.progress_bar.set_text("Idle")
-        self.progress_bar.set_margin_top(6)
-        self.progress_bar.set_margin_bottom(6)
-        self.progress_bar.set_margin_start(12)
-        self.progress_bar.set_margin_end(12)
-
-        group.add(self.progress_bar)
-        return group
     
-    def create_log_section(self):
-        """Create log section for output display"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Output Log")
-        group.set_description("Real-time output from platform operations")
-        
-        # Create text view for logs
-        self.log_textview = Gtk.TextView()
-        self.log_textview.set_editable(False)
-        self.log_textview.set_cursor_visible(False)
-        self.log_textview.set_monospace(True)
-        self.log_textview.set_wrap_mode(Gtk.WrapMode.WORD)
-        
-        # Set up text buffer
-        buffer = self.log_textview.get_buffer()
-        buffer.set_text("Unhinged Desktop Application Ready\n")
-        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) + 
-                       f"Project root: {self.project_root}\n")
-        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) + 
-                       "Click 'Start Platform' to begin...\n\n")
-        
-        # Create scrolled window for text view
-        scrolled_log = Gtk.ScrolledWindow()
-        scrolled_log.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_log.set_min_content_height(200)
-        scrolled_log.set_child(self.log_textview)
-        
-        group.add(scrolled_log)
-        return group
+
     
     def update_status(self, message, progress=None):
-        """Update status label and progress bar"""
-        GLib.idle_add(self._update_status_ui, message, progress)
-    
-    def _update_status_ui(self, message, progress):
-        """Update UI elements from main thread"""
-        # Get previous status for logging
-        old_status = self.status_label.get_text() if hasattr(self, 'status_label') and self.status_label else "Unknown"
-
-        self.status_label.set_text(message)
-
-        # Log status change
-        if self.session_logger and old_status != message:
-            self.session_logger.log_status_change(old_status, message)
-
-        # Update status icon based on message
-        if "Error" in message or "Failed" in message:
-            self.status_icon.set_from_icon_name("dialog-error-symbolic")
-        elif "Complete" in message or "Success" in message:
-            self.status_icon.set_from_icon_name("emblem-ok-symbolic")
-        elif "Starting" in message or "Running" in message:
-            self.status_icon.set_from_icon_name("media-playback-start-symbolic")
-        elif "Stopped" in message:
-            self.status_icon.set_from_icon_name("media-playback-stop-symbolic")
-        else:
-            self.status_icon.set_from_icon_name("emblem-default-symbolic")
-
-        if progress is not None:
-            self.progress_bar.set_fraction(progress)
-            if progress == 0:
-                self.progress_bar.set_text("Starting...")
-            elif progress == 1:
-                self.progress_bar.set_text("Complete")
-            else:
-                self.progress_bar.set_text(f"{int(progress * 100)}%")
-        return False
+        """Update status using headless service"""
+        self.status_service.update_status(message, progress)
     
     def append_log(self, message):
-        """Append message to log text view"""
-        GLib.idle_add(self._append_log_ui, message)
-
-    def _append_log_ui(self, message):
-        """Append to log from main thread with enhanced session logging"""
-        buffer = self.log_textview.get_buffer()
-        end_iter = buffer.get_end_iter()
-        buffer.insert(end_iter, f"{message}\n")
-
-        # Auto-scroll to bottom
-        mark = buffer.get_insert()
-        self.log_textview.scroll_mark_onscreen(mark)
-
-        # Log to session file with noise reduction
-        if self.session_logger:
+        """Append message using headless logging service"""
+        self.logging_service.append_log(message)
             self.session_logger.log_platform_output(message)
 
             # Check for platform status claims and verify accuracy
@@ -551,15 +458,9 @@ class UnhingedDesktopApp(Adw.Application):
         self.start_button.set_sensitive(False)
         self.stop_button.set_sensitive(True)
 
-        # Get selected mode
-        mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
-        selected_mode = self.mode_dropdown.get_selected()
-        mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
-
         # Log GUI events
         if self.session_logger:
             self.session_logger.log_gui_event("START_BUTTON_CLICKED", f"User clicked start button")
-            self.session_logger.log_mode_selection(mode_name)
 
         # Show toast notification
         self.show_toast(f"Starting Unhinged in {mode_name} mode...")
@@ -591,141 +492,89 @@ class UnhingedDesktopApp(Adw.Application):
 
         self.update_status("Stopped", 0)
 
-    def on_gtk4_conversation_clicked(self, button):
-        """Handle GTK4 conversation button click"""
-        self.append_log("🎙️ Starting GTK4 control plane conversation...")
+
+
+
+
+
+
+    def start_platform(self):
+        """
+        @llm-doc Start Platform Backend
+
+        Executes the same functionality as 'make start' but with
+        GUI feedback and progress indication.
+        """
         try:
-            import subprocess
-            conversation_script = self.project_root / "control" / "conversation_cli.py"
-            subprocess.Popen([
-                "python3", str(conversation_script),
-                "--mode", "voice_first",
-                "--context", "gtk4_control_plane"
-            ])
-            self.append_log("SUCCESS: GTK4 conversation interface launched")
+            # Use standard make start command
+            command = "start"
 
-            # Log GUI event
-            if self.session_logger:
-                self.session_logger.log_gui_event("GTK4_CONVERSATION_STARTED", "GTK4 conversation interface launched")
+            self.update_status("Starting Unhinged Platform...", 0.1)
+            self.append_log("Starting Unhinged Platform")
+            self.append_log(f"Working directory: {self.project_root}")
 
+            # Execute make command
+            self.update_status(f"Executing make {command}...", 0.3)
+            self.append_log(f"Executing: make {command}")
+            self.process = subprocess.Popen(
+                ['make', command],
+                cwd=self.project_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1
+            )
+
+            self.update_status("Platform running...", 0.8)
+            self.append_log("SUCCESS: Platform started successfully")
+
+            # Stream output
+            while self.running and self.process:
+                line = self.process.stdout.readline()
+                if line:
+                    clean_line = line.rstrip()
+                    if clean_line:
+                        # Enhanced output formatting
+                        if "ERROR" in clean_line.upper():
+                            self.append_log(f"ERROR: {clean_line}")
+                        elif "SUCCESS" in clean_line.upper():
+                            self.append_log(f"SUCCESS: {clean_line}")
+                        elif "WARNING" in clean_line.upper():
+                            self.append_log(f"WARNING: {clean_line}")
+                        elif "UNHINGED" in clean_line.upper():
+                            self.append_log(f"SYSTEM: {clean_line}")
+                        else:
+                            self.append_log(clean_line)
+
+                if self.process.poll() is not None:
+                    break
+
+            self.update_status("Platform completed", 1.0)
+            self.append_log("SUCCESS: Platform session completed")
+            self.show_toast("Platform session completed successfully", 5)
+
+        except FileNotFoundError:
+            self.update_status("Error: Makefile not found", 0)
+            self.append_log("ERROR: Makefile not found in project directory")
+            self.append_log("INFO: Make sure you're running from the Unhinged project root")
+            self.show_error_dialog("Makefile Not Found",
+                                 "Could not find Makefile in the project directory.\n\n"
+                                 "Please ensure you're running from the Unhinged project root.")
+        except subprocess.CalledProcessError as e:
+            self.update_status(f"Error: Command failed (exit {e.returncode})", 0)
+            self.append_log(f"ERROR: make {command} failed with exit code {e.returncode}")
+            self.show_error_dialog("Command Failed",
+                                 f"The command 'make {command}' failed.\n\n"
+                                 f"Exit code: {e.returncode}\n"
+                                 f"Check the output log for details.")
         except Exception as e:
-            self.append_log(f"ERROR: Failed to start GTK4 conversation: {e}")
-
-    def on_alpine_conversation_clicked(self, button):
-        """Handle Alpine conversation button click"""
-        self.append_log("Starting Alpine VM conversation...")
-        try:
-            import subprocess
-            conversation_script = self.project_root / "control" / "conversation_cli.py"
-            subprocess.Popen([
-                "python3", str(conversation_script),
-                "--mode", "voice_first",
-                "--context", "alpine_native"
-            ])
-            self.append_log("SUCCESS: Alpine conversation interface launched")
-
-            # Log GUI event
-            if self.session_logger:
-                self.session_logger.log_gui_event("ALPINE_CONVERSATION_STARTED", "Alpine conversation interface launched")
-
-        except Exception as e:
-            self.append_log(f"ERROR: Failed to start Alpine conversation: {e}")
-
-    def on_text_conversation_clicked(self, button):
-        """Handle text conversation button click"""
-        self.append_log("Starting text-only conversation...")
-        try:
-            import subprocess
-            conversation_script = self.project_root / "control" / "conversation_cli.py"
-            subprocess.Popen([
-                "python3", str(conversation_script),
-                "--mode", "text_only"
-            ])
-            self.append_log("SUCCESS: Text conversation interface launched")
-
-            # Log GUI event
-            if self.session_logger:
-                self.session_logger.log_gui_event("TEXT_CONVERSATION_STARTED", "Text conversation interface launched")
-
-        except Exception as e:
-            self.append_log(f"ERROR: Failed to start text conversation: {e}")
-
-    def on_check_updates_clicked(self, button):
-        """Handle check for updates button click"""
-        if not self.auto_updater:
-            return
-
-        self.append_log("Checking for updates...")
-        self.update_button.set_sensitive(False)
-        self.update_button.set_label("Checking...")
-
-        # Check for updates in background thread
-        thread = threading.Thread(target=self._check_for_updates_thread, daemon=True)
-        thread.start()
-
-    def _check_for_updates_async(self):
-        """Check for updates asynchronously (called on startup)"""
-        if not self.auto_updater:
-            return False
-
-        # Check for updates in background thread
-        thread = threading.Thread(target=self._check_for_updates_thread, daemon=True)
-        thread.start()
-        return False  # Don't repeat the timeout
-
-    def _check_for_updates_thread(self):
-        """Check for updates in background thread"""
-        try:
-            self.update_info = self.auto_updater.check_for_updates()
-
-            # Update UI on main thread
-            GLib.idle_add(self._update_ui_with_update_info)
-
-        except Exception as e:
-            if self.session_logger:
-                self.session_logger.log_gui_event("UPDATE_CHECK_ERROR", f"Update check failed: {e}")
-            GLib.idle_add(self._update_ui_with_error, str(e))
-
-    def _update_ui_with_update_info(self):
-        """Update UI with update information (called on main thread)"""
-        if not self.update_info:
-            return
-
-        # Update version info
-        current_version = self.update_info.current_version
-        if hasattr(self, 'version_info_row'):
-            self.version_info_row.set_subtitle(f"v{current_version.version} ({current_version.build_date})")
-
-        # Update status based on update availability
-        if self.update_info.status == UpdateStatus.UP_TO_DATE:
-            if hasattr(self, 'update_status_row'):
-                self.update_status_row.set_subtitle("Application is up to date")
-            if hasattr(self, 'update_button'):
-                self.update_button.set_label("Check for Updates")
-                self.update_button.set_sensitive(True)
-
-        elif self.update_info.status == UpdateStatus.UPDATE_AVAILABLE:
-            if hasattr(self, 'update_status_row'):
-                self.update_status_row.set_subtitle(f"Update available: v{self.update_info.latest_version.version}")
-            if hasattr(self, 'update_button'):
-                self.update_button.set_label("Install Update")
-                self.update_button.set_sensitive(True)
-                # Reconnect to install handler
-                self.update_button.disconnect_by_func(self.on_check_updates_clicked)
-                self.update_button.connect("clicked", self.on_install_update_clicked)
-
-            self.append_log(f"Update available: v{self.update_info.latest_version.version}")
-
-        elif self.update_info.status == UpdateStatus.UPDATE_REQUIRED:
-            if hasattr(self, 'update_status_row'):
-                self.update_status_row.set_subtitle(f"Critical update required: v{self.update_info.latest_version.version}")
-            if hasattr(self, 'update_button'):
-                self.update_button.set_label("Install Critical Update")
-                self.update_button.set_sensitive(True)
-                self.update_button.add_css_class("destructive-action")
-                # Reconnect to install handler
-                self.update_button.disconnect_by_func(self.on_check_updates_clicked)
-                self.update_button.connect("clicked", self.on_install_update_clicked)
+            self.update_status(f"Error: {e}", 0)
+            self.append_log(f"ERROR: Unexpected error: {e}")
+            self.show_error_dialog("Unexpected Error",
+                                 f"An unexpected error occurred:\n\n{e}\n\n"
+                                 f"Please check the output log for more details.")
+        finally:
+            self.running = False
 
             self.append_log(f"⚠️ Critical update required: v{self.update_info.latest_version.version}")
 
@@ -899,27 +748,16 @@ class UnhingedDesktopApp(Adw.Application):
         GUI feedback and progress indication.
         """
         try:
-            # Get selected mode
-            selected_mode = self.mode_dropdown.get_selected()
-            mode_commands = {
-                0: "start",           # Enhanced (Recommended)
-                1: "start-simple",    # Simple Communication
-                2: "start-qol",       # Quality of Life
-                3: "start-custom-iso" # Custom ISO
-            }
-
-            command = mode_commands.get(selected_mode, "start")
-            mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
-            mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
+            # Use standard make start command
+            command = "start"
 
             self.update_status("Starting Unhinged Platform...", 0.1)
-            self.append_log("🚀 Starting Unhinged Platform")
-            self.append_log(f"📁 Working directory: {self.project_root}")
-            self.append_log(f"🎯 Launch mode: {mode_name}")
+            self.append_log("Starting Unhinged Platform")
+            self.append_log(f"Working directory: {self.project_root}")
 
             # Execute make command
             self.update_status(f"Executing make {command}...", 0.3)
-            self.append_log(f"⚙️ Executing: make {command}")
+            self.append_log(f"Executing: make {command}")
 
             self.process = subprocess.Popen(
                 ['make', command],
