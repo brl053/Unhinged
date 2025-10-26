@@ -24,6 +24,14 @@
 Native Audio (arecord) → HTTP → Whisper Service → AI Response
 ```
 
+### **DUAL-SYSTEM EVOLUTION ARCHITECTURE**
+```
+Ubuntu Host (GTK4 Control Plane) → manages → Alpine VM (Native C Graphics)
+```
+- **Host System**: GTK4 desktop application for control and monitoring
+- **Guest System**: Headless Alpine VM with native C graphics and CLI
+- **Evolution Path**: Current dual-system → Future standalone Unhinged OS
+
 ## 🚨 CULTURAL COMMANDMENTS - VIOLATION = IMMEDIATE FAILURE
 
 ### 1. VOICE-FIRST INDEPENDENCE
@@ -60,21 +68,32 @@ Native Audio (arecord) → HTTP → Whisper Service → AI Response
 
 ```
 /
-├── libs/graphics/              # NATIVE C GRAPHICS RENDERING LIBRARY
-│   ├── tools/chat/            # Voice-first chat interface
-│   ├── tools/vision/          # Camera and image analysis
-│   ├── tools/input_capture/   # System input monitoring
-│   ├── core/                  # Application framework
-│   └── bridge/                # Service communication
+├── libs/                       # CORE LIBRARIES
+│   ├── graphics/              # Native C graphics rendering library
+│   │   ├── src/               # C graphics source code
+│   │   ├── examples/          # Graphics examples and tests
+│   │   └── build/             # Compiled graphics library
+│   ├── event-framework/       # Structured logging and events
+│   │   └── python/src/unhinged_events/ # Event logging with GUI session support
+│   └── service-framework/     # Service communication patterns
 ├── control/service_launcher.py # SERVICE ORCHESTRATION (auto-start)
 ├── services/speech-to-text/    # WHISPER TRANSCRIPTION SERVICE
 ├── build/                      # CENTRALIZED BUILD SYSTEM (Python-based)
 │   ├── python/                # Centralized Python environment
+│   │   ├── run.py            # Universal Python runner (USE THIS!)
+│   │   ├── requirements.txt  # Consolidated dependencies
+│   │   └── venv/            # Centralized virtual environment
 │   ├── modules/        # Language-specific builders
+│   │   ├── dual_system_builder.py # Dual-system packaging
+│   │   └── c_builder.py      # C graphics build module
 │   ├── docs-generation/# Documentation automation (USE THIS!)
 │   └── tools/          # Build utilities
 ├── control/            # SYSTEM CONTROL & GUI
 │   ├── native_c_launcher.py  # Native C graphics launcher
+│   ├── conversation_cli.py   # Voice-first CLI interface
+│   ├── gtk4_gui/            # GTK4 desktop application components
+│   ├── qemu_vm_launcher.py   # VM management and communication
+│   ├── service_launcher.py   # Service orchestration
 │   ├── static_html/    # HTML interfaces (for native rendering)
 │   └── system/         # System control abstractions
 ├── generated/          # ALL GENERATED CONTENT (EVERYTHING GOES HERE)
@@ -85,6 +104,15 @@ Native Audio (arecord) → HTTP → Whisper Service → AI Response
 ├── proto/              # Protocol buffer definitions
 ├── services/           # Microservices (Python AI services)
 ├── platforms/          # Platform services (Kotlin persistence)
+├── desktop/            # DESKTOP INTEGRATION
+│   ├── unhinged-desktop-app  # Ubuntu GNOME desktop app (GTK4)
+│   ├── auto_updater.py      # Automatic update system
+│   ├── version.json         # Version management
+│   └── unhinged.desktop     # Desktop entry
+├── vm/                 # VIRTUAL MACHINE COMPONENTS
+│   ├── alpine/              # Alpine Linux VM configuration
+│   ├── test-*.py           # VM communication tests
+│   └── shared/             # VM-host shared resources
 ├── docs/               # DOCUMENTATION (USE THIS, NOT READMES!)
 ├── llm/                # LLM-specific content
 │   └── quickstart/     # LLM agent guidance (THIS FILE!)
