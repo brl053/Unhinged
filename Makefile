@@ -931,6 +931,21 @@ start-custom-iso: ## Launch custom Alpine ISO (recommended)
 	@echo "🔥 CUSTOM ALPINE ISO - UNHINGED GUI READY!"
 	@python3 control/qemu_vm_launcher.py --custom-iso
 
+build-dual-system: ## Build complete dual-system architecture (CI/CD target)
+	$(call log_info,🔧 Building Dual-System Architecture...)
+	@echo "🎯 Building: Native C Graphics + GTK4 Control Plane + Conversation CLI"
+	@python3 build/build.py build c-graphics-build
+	@python3 build/build.py build dual-system-desktop
+	@python3 build/build.py build conversation-cli
+	@echo "✅ Dual-system architecture build complete"
+
+start-gui: ## Launch enhanced GTK4 desktop application with dual-system architecture
+	$(call log_info,🖥️ Starting Enhanced Unhinged Desktop Application...)
+	@echo "🎯 Dual-System Architecture: GTK4 Control Plane + Alpine Native"
+	@echo "🎙️ Voice-First Conversation Interface Integrated"
+	@echo "🏔️ Native C Graphics + Session Logging Active"
+	@python3 desktop/unhinged-desktop-app
+
 start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
 	$(call log_info,📺 Launching VM with direct console output...)
 	@echo "🎯 SIMPLE COMMUNICATION: VM console output → Host terminal"

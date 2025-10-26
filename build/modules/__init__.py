@@ -302,6 +302,7 @@ def _auto_register_modules():
         ('python_builder', 'PythonBuilder'),
         ('kotlin_builder', 'KotlinBuilder'),
         ('c_builder', 'CBuilder'),
+        ('dual_system_builder', 'DualSystemBuilder'),
     ]
 
     for module_name, class_name in modules_to_register:
@@ -315,6 +316,9 @@ def _auto_register_modules():
             elif module_name == 'c_builder':
                 from .c_builder import CBuilder
                 register_module(CBuilder(dummy_context))
+            elif module_name == 'dual_system_builder':
+                from .dual_system_builder import DualSystemBuilder
+                register_module(DualSystemBuilder(dummy_context))
         except (ImportError, AttributeError) as e:
             # Module not available, skip silently
             logger.debug(f"Could not register {class_name}: {e}")

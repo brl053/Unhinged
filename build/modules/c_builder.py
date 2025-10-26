@@ -112,7 +112,7 @@ class CBuilder(BuildModule):
         return hasher.hexdigest()
     
     def validate_environment(self) -> List[str]:
-        """Validate C build environment (all dependencies are REQUIRED)"""
+        """Validate C build environment (all dependencies are REQUIRED - HARD FAIL)"""
         errors = []
 
         # Check CMake (REQUIRED)
@@ -141,8 +141,96 @@ class CBuilder(BuildModule):
         else:
             errors.append("Centralized Python environment not found - run: cd build/python && python3 setup.py")
 
+        # HARD REQUIREMENT: DRM headers for native C graphics (CRITICAL)
+        drm_errors = self._validate_drm_environment()
+        if drm_errors:
+            errors.extend(drm_errors)
+
         return errors
-    
+
+    def _validate_drm_environment(self) -> List[str]:
+        """Validate DRM environment for native C graphics (HARD REQUIREMENT)"""
+        errors = []
+
+        # Check for DRM headers (CRITICAL for native C graphics)
+        drm_headers = [
+            "/usr/include/xf86drm.h",
+            "/usr/include/xf86drmMode.h",
+            "/usr/include/drm/drm.h",
+            "/usr/include/drm/drm_mode.h"
+        ]
+
+        missing_headers = []
+        for header in drm_headers:
+            if not Path(header).exists():
+                missing_headers.append(header)
+
+        if missing_headers:
+            errors.append(f"CRITICAL: DRM headers REQUIRED for native C graphics but missing: {missing_headers}")
+            errors.append("Install with: sudo apt-get install libdrm-dev")
+
+        # Check for libdrm library
+        try:
+            result = subprocess.run(["pkg-config", "--exists", "libdrm"],
+                                  capture_output=True, text=True)
+            if result.returncode != 0:
+                errors.append("CRITICAL: libdrm development library REQUIRED but not found")
+                errors.append("Install with: sudo apt-get install libdrm-dev")
+        except FileNotFoundError:
+            errors.append("pkg-config not found - install with: sudo apt-get install pkg-config")
+
+        # Test DRM compilation capability
+        test_drm_errors = self._test_drm_compilation()
+        if test_drm_errors:
+            errors.extend(test_drm_errors)
+
+        return errors
+
+    def _test_drm_compilation(self) -> List[str]:
+        """Test DRM compilation capability with detailed diagnostics"""
+        errors = []
+
+        # Create a minimal DRM test program
+        test_code = '''
+#include <stdio.h>
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#include <drm/drm.h>
+#include <drm/drm_mode.h>
+
+int main() {
+    printf("DRM compilation test successful\\n");
+    return 0;
+}
+'''
+
+        # Write test file
+        test_dir = self.context.project_root / "build" / "tmp"
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_file = test_dir / "drm_test.c"
+
+        try:
+            with open(test_file, 'w') as f:
+                f.write(test_code)
+
+            # Attempt compilation
+            result = subprocess.run([
+                "gcc", "-o", str(test_dir / "drm_test"), str(test_file), "-ldrm"
+            ], capture_output=True, text=True)
+
+            if result.returncode != 0:
+                errors.append(f"CRITICAL: DRM compilation test FAILED - {result.stderr}")
+                errors.append("This is a HARD REQUIREMENT for native C graphics")
+
+            # Clean up test files
+            test_file.unlink(missing_ok=True)
+            (test_dir / "drm_test").unlink(missing_ok=True)
+
+        except Exception as e:
+            errors.append(f"CRITICAL: DRM compilation test failed with exception: {e}")
+
+        return errors
+
     def get_estimated_duration(self, target_name: str) -> float:
         """Estimate build duration based on target type"""
         duration_map = {
@@ -166,11 +254,17 @@ class CBuilder(BuildModule):
         """Execute C graphics build"""
         start_time = time.time()
         
-        # Validate environment first - ALL DEPENDENCIES ARE REQUIRED
+        # HARD FAIL REQUIREMENT: Validate environment first - ALL DEPENDENCIES ARE REQUIRED
         env_errors = self.validate_environment()
         if env_errors:
-            error_msg = f"C Graphics dependencies are REQUIRED but missing:\n" + '\n'.join(f"  - {error}" for error in env_errors)
-            error_msg += f"\n\nRun 'make graphics-install-deps' to install required dependencies."
+            error_msg = f"🚨 HARD FAIL: C Graphics dependencies are REQUIRED but missing:\n" + '\n'.join(f"  - {error}" for error in env_errors)
+            error_msg += f"\n\n🔧 Run 'make graphics-install-deps' to install required dependencies."
+            error_msg += f"\n\n⚠️  CRITICAL: Native C graphics compilation is a HARD REQUIREMENT for Unhinged dual-system architecture."
+            error_msg += f"\n   The system CANNOT proceed without functional DRM graphics support."
+
+            # Log to centralized event framework
+            self._log_graphics_failure(target_name, env_errors)
+
             return BuildModuleResult(
                 success=False,
                 duration=0.0,
@@ -414,3 +508,24 @@ class CBuilder(BuildModule):
                 ))
 
         return artifacts
+
+    def _log_graphics_failure(self, target_name: str, errors: List[str]):
+        """Log graphics build failure to centralized event framework"""
+        try:
+            # Import session logging if available
+            import sys
+            sys.path.append(str(self.context.project_root / "libs" / "event-framework" / "python" / "src"))
+            from unhinged_events import create_gui_session_logger
+
+            logger = create_gui_session_logger(self.context.project_root)
+            logger.log_gui_event(
+                "GRAPHICS_BUILD_HARD_FAIL",
+                f"Native C graphics build HARD FAIL for target '{target_name}': {'; '.join(errors)}"
+            )
+            logger.log_platform_output(f"🚨 CRITICAL: Graphics compilation failed - dual-system architecture compromised")
+            logger.close_session()
+
+        except Exception as e:
+            # Fallback to standard logging if event framework unavailable
+            self.logger.error(f"Failed to log graphics failure to event framework: {e}")
+            self.logger.error(f"Graphics build HARD FAIL: {errors}")
