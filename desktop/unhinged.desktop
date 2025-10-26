@@ -2,14 +2,14 @@
 Version=1.0
 Type=Application
 Name=Unhinged
-Comment=Native Graphics Platform with VM Communication
-GenericName=Graphics Platform
+Comment=Voice-First AI Control Center with Dual-System Architecture
+GenericName=AI Control Center
 Exec=/home/e-bliss-station-1/Projects/Unhinged/desktop/unhinged-desktop-app
 Icon=applications-graphics
 Terminal=false
 StartupNotify=true
 Categories=Graphics;Development;System;
-Keywords=graphics;vm;communication;native;platform;
+Keywords=voice;ai;conversation;graphics;vm;communication;native;platform;dual-system;
 MimeType=application/x-unhinged;
 
 # Desktop file for Unhinged Native Graphics Platform

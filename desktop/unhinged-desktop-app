@@ -37,17 +37,38 @@ import threading
 import sys
 import os
 from pathlib import Path
+
+# Import auto-updater
+try:
+    from auto_updater import AutoUpdater, UpdateStatus
+    AUTO_UPDATE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Auto-updater not available: {e}")
+    AUTO_UPDATE_AVAILABLE = False
 import time
 import json
+
+# Import session logging from event framework
+sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
+try:
+    from unhinged_events import create_gui_session_logger, GUIOutputCapture
+    SESSION_LOGGING_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Session logging not available: {e}")
+    SESSION_LOGGING_AVAILABLE = False
+
+# Simple approach: Use control modules as scripts (academic exercise)
+CONTROL_MODULES_AVAILABLE = True
+print("✅ Control modules available as scripts")
 
 class UnhingedDesktopApp(Adw.Application):
     """
     @llm-doc Main Desktop Application Class
-    
+
     GTK4/Libadwaita application that provides graphical interface
     for Unhinged platform functionality.
     """
-    
+
     def __init__(self):
         super().__init__(application_id='com.unhinged.platform')
         self.project_root = Path(__file__).parent.parent
@@ -59,12 +80,50 @@ class UnhingedDesktopApp(Adw.Application):
         self.stop_button = None
         self.process = None
         self.running = False
+
+        # Initialize session logging
+        self.session_logger = None
+        self.output_capture = None
+        if SESSION_LOGGING_AVAILABLE:
+            try:
+                self.session_logger = create_gui_session_logger(self.project_root)
+                self.output_capture = GUIOutputCapture(
+                    self.session_logger,
+                    self._gui_log_callback
+                )
+                self.session_logger.log_session_event("APP_INIT", "Desktop application initialized")
+            except Exception as e:
+                print(f"⚠️ Session logging initialization failed: {e}")
+                self.session_logger = None
+                self.output_capture = None
+
+        # Initialize auto-updater
+        self.auto_updater = None
+        self.update_info = None
+        if AUTO_UPDATE_AVAILABLE:
+            try:
+                self.auto_updater = AutoUpdater(self.project_root)
+                if self.session_logger:
+                    self.session_logger.log_gui_event("AUTO_UPDATE_INIT", "Auto-updater initialized")
+            except Exception as e:
+                print(f"⚠️ Auto-updater initialization failed: {e}")
+                if self.session_logger:
+                    self.session_logger.log_gui_event("AUTO_UPDATE_INIT_ERROR", f"Auto-updater failed: {e}")
         
     def do_activate(self):
         """Application activation - create and show main window"""
         if not self.window:
             self.window = self.create_main_window()
+
+        # Log application activation
+        if self.session_logger:
+            self.session_logger.log_gui_event("APP_ACTIVATE", "Main window created and presented")
+
         self.window.present()
+
+        # Check for updates after window is shown
+        if self.auto_updater:
+            GLib.timeout_add_seconds(3, self._check_for_updates_async)
     
     def create_main_window(self):
         """
@@ -99,7 +158,16 @@ class UnhingedDesktopApp(Adw.Application):
         # Control section
         control_group = self.create_control_section()
         main_box.append(control_group)
-        
+
+        # Conversation section
+        conversation_group = self.create_conversation_section()
+        main_box.append(conversation_group)
+
+        # Update section (if auto-updater available)
+        if AUTO_UPDATE_AVAILABLE:
+            update_group = self.create_update_section()
+            main_box.append(update_group)
+
         # Status section
         status_group = self.create_status_section()
         main_box.append(status_group)
@@ -189,6 +257,12 @@ class UnhingedDesktopApp(Adw.Application):
         """Quit application"""
         if self.running:
             self.on_stop_clicked(None)
+
+        # Close session logging
+        if self.session_logger:
+            self.session_logger.log_session_event("APP_QUIT", "Application quit requested")
+            self.session_logger.close_session()
+
         self.quit()
     
     def create_welcome_section(self):
@@ -270,7 +344,72 @@ class UnhingedDesktopApp(Adw.Application):
         group.add(mode_row)
 
         return group
-    
+
+    def create_conversation_section(self):
+        """Create conversation interface section"""
+        group = Adw.PreferencesGroup()
+        group.set_title("🎙️ Conversation Interface")
+        group.set_description("Voice-first conversation interface for dual-system architecture")
+
+        # GTK4 Control Plane Conversation
+        gtk4_row = Adw.ActionRow()
+        gtk4_row.set_title("GTK4 Control Plane Conversation")
+        gtk4_row.set_subtitle("Start conversation interface in GTK4 control plane context")
+
+        gtk4_button = Gtk.Button(label="🎙️ Start GTK4 Conversation")
+        gtk4_button.add_css_class("suggested-action")
+        gtk4_button.connect("clicked", self.on_gtk4_conversation_clicked)
+        gtk4_row.add_suffix(gtk4_button)
+        group.add(gtk4_row)
+
+        # Alpine VM Conversation
+        alpine_row = Adw.ActionRow()
+        alpine_row.set_title("Alpine VM Conversation")
+        alpine_row.set_subtitle("Start conversation interface in Alpine native context")
+
+        alpine_button = Gtk.Button(label="🏔️ Start Alpine Conversation")
+        alpine_button.add_css_class("accent")
+        alpine_button.connect("clicked", self.on_alpine_conversation_clicked)
+        alpine_row.add_suffix(alpine_button)
+        group.add(alpine_row)
+
+        # Text-Only Mode
+        text_row = Adw.ActionRow()
+        text_row.set_title("Text-Only Conversation")
+        text_row.set_subtitle("Start conversation interface in text-only mode")
+
+        text_button = Gtk.Button(label="⌨️ Start Text Conversation")
+        text_button.connect("clicked", self.on_text_conversation_clicked)
+        text_row.add_suffix(text_button)
+        group.add(text_row)
+
+        return group
+
+    def create_update_section(self):
+        """Create auto-update section"""
+        group = Adw.PreferencesGroup()
+        group.set_title("🔄 Application Updates")
+        group.set_description("Automatic update checking and installation")
+
+        # Update status row
+        self.update_status_row = Adw.ActionRow()
+        self.update_status_row.set_title("Update Status")
+        self.update_status_row.set_subtitle("Checking for updates...")
+
+        # Update button
+        self.update_button = Gtk.Button(label="Check for Updates")
+        self.update_button.connect("clicked", self.on_check_updates_clicked)
+        self.update_status_row.add_suffix(self.update_button)
+        group.add(self.update_status_row)
+
+        # Version info row
+        self.version_info_row = Adw.ActionRow()
+        self.version_info_row.set_title("Current Version")
+        self.version_info_row.set_subtitle("Loading version information...")
+        group.add(self.version_info_row)
+
+        return group
+
     def create_status_section(self):
         """Create status section with progress indication"""
         group = Adw.PreferencesGroup()
@@ -342,7 +481,14 @@ class UnhingedDesktopApp(Adw.Application):
     
     def _update_status_ui(self, message, progress):
         """Update UI elements from main thread"""
+        # Get previous status for logging
+        old_status = self.status_label.get_text() if hasattr(self, 'status_label') and self.status_label else "Unknown"
+
         self.status_label.set_text(message)
+
+        # Log status change
+        if self.session_logger and old_status != message:
+            self.session_logger.log_status_change(old_status, message)
 
         # Update status icon based on message
         if "Error" in message or "Failed" in message:
@@ -369,31 +515,53 @@ class UnhingedDesktopApp(Adw.Application):
     def append_log(self, message):
         """Append message to log text view"""
         GLib.idle_add(self._append_log_ui, message)
-    
+
     def _append_log_ui(self, message):
-        """Append to log from main thread"""
+        """Append to log from main thread with enhanced session logging"""
         buffer = self.log_textview.get_buffer()
         end_iter = buffer.get_end_iter()
         buffer.insert(end_iter, f"{message}\n")
-        
+
         # Auto-scroll to bottom
         mark = buffer.get_insert()
         self.log_textview.scroll_mark_onscreen(mark)
+
+        # Log to session file with noise reduction
+        if self.session_logger:
+            self.session_logger.log_platform_output(message)
+
+            # Check for platform status claims and verify accuracy
+            if "Platform started successfully" in message:
+                self.session_logger.log_platform_status_update(message)
+
         return False
+
+    def _gui_log_callback(self, message):
+        """Callback for GUI output capture - this is called by the session logger"""
+        # This method is called by the output capture system
+        # The message is already being logged to file, just display in GUI
+        pass
     
     def on_start_clicked(self, button):
         """Handle start button click"""
         if self.running:
             return
-        
+
         self.running = True
         self.start_button.set_sensitive(False)
         self.stop_button.set_sensitive(True)
 
-        # Show toast notification
+        # Get selected mode
         mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
         selected_mode = self.mode_dropdown.get_selected()
         mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
+
+        # Log GUI events
+        if self.session_logger:
+            self.session_logger.log_gui_event("START_BUTTON_CLICKED", f"User clicked start button")
+            self.session_logger.log_mode_selection(mode_name)
+
+        # Show toast notification
         self.show_toast(f"Starting Unhinged in {mode_name} mode...")
 
         # Start platform in background thread
@@ -404,11 +572,15 @@ class UnhingedDesktopApp(Adw.Application):
         """Handle stop button click"""
         if not self.running:
             return
-        
+
         self.running = False
         self.start_button.set_sensitive(True)
         self.stop_button.set_sensitive(False)
-        
+
+        # Log GUI event
+        if self.session_logger:
+            self.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button")
+
         # Stop platform
         if self.process:
             try:
@@ -416,9 +588,309 @@ class UnhingedDesktopApp(Adw.Application):
                 self.append_log("🛑 Platform stop requested")
             except:
                 pass
-        
+
         self.update_status("Stopped", 0)
-    
+
+    def on_gtk4_conversation_clicked(self, button):
+        """Handle GTK4 conversation button click"""
+        self.append_log("🎙️ Starting GTK4 control plane conversation...")
+        try:
+            import subprocess
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "voice_first",
+                "--context", "gtk4_control_plane"
+            ])
+            self.append_log("✅ GTK4 conversation interface launched")
+
+            # Log GUI event
+            if self.session_logger:
+                self.session_logger.log_gui_event("GTK4_CONVERSATION_STARTED", "GTK4 conversation interface launched")
+
+        except Exception as e:
+            self.append_log(f"❌ Failed to start GTK4 conversation: {e}")
+
+    def on_alpine_conversation_clicked(self, button):
+        """Handle Alpine conversation button click"""
+        self.append_log("🏔️ Starting Alpine VM conversation...")
+        try:
+            import subprocess
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "voice_first",
+                "--context", "alpine_native"
+            ])
+            self.append_log("✅ Alpine conversation interface launched")
+
+            # Log GUI event
+            if self.session_logger:
+                self.session_logger.log_gui_event("ALPINE_CONVERSATION_STARTED", "Alpine conversation interface launched")
+
+        except Exception as e:
+            self.append_log(f"❌ Failed to start Alpine conversation: {e}")
+
+    def on_text_conversation_clicked(self, button):
+        """Handle text conversation button click"""
+        self.append_log("⌨️ Starting text-only conversation...")
+        try:
+            import subprocess
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "text_only"
+            ])
+            self.append_log("✅ Text conversation interface launched")
+
+            # Log GUI event
+            if self.session_logger:
+                self.session_logger.log_gui_event("TEXT_CONVERSATION_STARTED", "Text conversation interface launched")
+
+        except Exception as e:
+            self.append_log(f"❌ Failed to start text conversation: {e}")
+
+    def on_check_updates_clicked(self, button):
+        """Handle check for updates button click"""
+        if not self.auto_updater:
+            return
+
+        self.append_log("🔄 Checking for updates...")
+        self.update_button.set_sensitive(False)
+        self.update_button.set_label("Checking...")
+
+        # Check for updates in background thread
+        thread = threading.Thread(target=self._check_for_updates_thread, daemon=True)
+        thread.start()
+
+    def _check_for_updates_async(self):
+        """Check for updates asynchronously (called on startup)"""
+        if not self.auto_updater:
+            return False
+
+        # Check for updates in background thread
+        thread = threading.Thread(target=self._check_for_updates_thread, daemon=True)
+        thread.start()
+        return False  # Don't repeat the timeout
+
+    def _check_for_updates_thread(self):
+        """Check for updates in background thread"""
+        try:
+            self.update_info = self.auto_updater.check_for_updates()
+
+            # Update UI on main thread
+            GLib.idle_add(self._update_ui_with_update_info)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_CHECK_ERROR", f"Update check failed: {e}")
+            GLib.idle_add(self._update_ui_with_error, str(e))
+
+    def _update_ui_with_update_info(self):
+        """Update UI with update information (called on main thread)"""
+        if not self.update_info:
+            return
+
+        # Update version info
+        current_version = self.update_info.current_version
+        if hasattr(self, 'version_info_row'):
+            self.version_info_row.set_subtitle(f"v{current_version.version} ({current_version.build_date})")
+
+        # Update status based on update availability
+        if self.update_info.status == UpdateStatus.UP_TO_DATE:
+            if hasattr(self, 'update_status_row'):
+                self.update_status_row.set_subtitle("✅ Application is up to date")
+            if hasattr(self, 'update_button'):
+                self.update_button.set_label("Check for Updates")
+                self.update_button.set_sensitive(True)
+
+        elif self.update_info.status == UpdateStatus.UPDATE_AVAILABLE:
+            if hasattr(self, 'update_status_row'):
+                self.update_status_row.set_subtitle(f"🆕 Update available: v{self.update_info.latest_version.version}")
+            if hasattr(self, 'update_button'):
+                self.update_button.set_label("Install Update")
+                self.update_button.set_sensitive(True)
+                # Reconnect to install handler
+                self.update_button.disconnect_by_func(self.on_check_updates_clicked)
+                self.update_button.connect("clicked", self.on_install_update_clicked)
+
+            self.append_log(f"🆕 Update available: v{self.update_info.latest_version.version}")
+
+        elif self.update_info.status == UpdateStatus.UPDATE_REQUIRED:
+            if hasattr(self, 'update_status_row'):
+                self.update_status_row.set_subtitle(f"⚠️ Critical update required: v{self.update_info.latest_version.version}")
+            if hasattr(self, 'update_button'):
+                self.update_button.set_label("Install Critical Update")
+                self.update_button.set_sensitive(True)
+                self.update_button.add_css_class("destructive-action")
+                # Reconnect to install handler
+                self.update_button.disconnect_by_func(self.on_check_updates_clicked)
+                self.update_button.connect("clicked", self.on_install_update_clicked)
+
+            self.append_log(f"⚠️ Critical update required: v{self.update_info.latest_version.version}")
+
+            # Show critical update dialog
+            self._show_critical_update_dialog()
+
+    def _update_ui_with_error(self, error_message):
+        """Update UI with error information"""
+        if hasattr(self, 'update_status_row'):
+            self.update_status_row.set_subtitle(f"❌ Update check failed")
+        if hasattr(self, 'update_button'):
+            self.update_button.set_label("Retry")
+            self.update_button.set_sensitive(True)
+
+        self.append_log(f"❌ Update check failed: {error_message}")
+
+    def on_install_update_clicked(self, button):
+        """Handle install update button click"""
+        if not self.auto_updater or not self.update_info:
+            return
+
+        self.append_log(f"📥 Installing update: v{self.update_info.latest_version.version}")
+        self.update_button.set_sensitive(False)
+        self.update_button.set_label("Installing...")
+
+        # Install update in background thread
+        thread = threading.Thread(target=self._install_update_thread, daemon=True)
+        thread.start()
+
+    def _install_update_thread(self):
+        """Install update in background thread"""
+        try:
+            # Download update
+            if self.auto_updater.download_update(self.update_info):
+                # Install update
+                if self.auto_updater.install_update(self.update_info):
+                    GLib.idle_add(self._update_installation_success)
+                else:
+                    GLib.idle_add(self._update_installation_failed, "Installation failed")
+            else:
+                GLib.idle_add(self._update_installation_failed, "Download failed")
+
+        except Exception as e:
+            GLib.idle_add(self._update_installation_failed, str(e))
+
+    def _update_installation_success(self):
+        """Handle successful update installation"""
+        self.append_log("✅ Update installed successfully!")
+
+        if hasattr(self, 'update_status_row'):
+            self.update_status_row.set_subtitle("✅ Update installed - restart recommended")
+        if hasattr(self, 'update_button'):
+            self.update_button.set_label("Restart Application")
+            self.update_button.set_sensitive(True)
+            self.update_button.add_css_class("suggested-action")
+            # Reconnect to restart handler
+            try:
+                self.update_button.disconnect_by_func(self.on_install_update_clicked)
+            except:
+                pass
+            self.update_button.connect("clicked", self.on_restart_application_clicked)
+
+        # Show restart dialog
+        self._show_restart_dialog()
+
+    def _update_installation_failed(self, error_message):
+        """Handle failed update installation"""
+        self.append_log(f"❌ Update installation failed: {error_message}")
+
+        if hasattr(self, 'update_status_row'):
+            self.update_status_row.set_subtitle("❌ Update installation failed")
+        if hasattr(self, 'update_button'):
+            self.update_button.set_label("Retry Update")
+            self.update_button.set_sensitive(True)
+
+    def _show_critical_update_dialog(self):
+        """Show critical update dialog"""
+        dialog = Adw.MessageDialog.new(self.window)
+        dialog.set_heading("Critical Update Available")
+        dialog.set_body(f"A critical update (v{self.update_info.latest_version.version}) is available. "
+                       "This update includes important security fixes and improvements.")
+
+        dialog.add_response("cancel", "Later")
+        dialog.add_response("install", "Install Now")
+        dialog.set_response_appearance("install", Adw.ResponseAppearance.SUGGESTED)
+
+        dialog.connect("response", self._on_critical_update_dialog_response)
+        dialog.present()
+
+    def _on_critical_update_dialog_response(self, dialog, response):
+        """Handle critical update dialog response"""
+        if response == "install":
+            self.on_install_update_clicked(None)
+        dialog.destroy()
+
+    def _show_restart_dialog(self):
+        """Show restart application dialog"""
+        dialog = Adw.MessageDialog.new(self.window)
+        dialog.set_heading("Update Installed Successfully")
+        dialog.set_body("The application has been updated. You can restart now to use the new version, or restart manually later.")
+
+        dialog.add_response("later", "Restart Later")
+        dialog.add_response("restart", "Restart Now")
+        dialog.add_response("manual", "Close & Restart Manually")
+        dialog.set_response_appearance("restart", Adw.ResponseAppearance.SUGGESTED)
+
+        dialog.connect("response", self._on_restart_dialog_response)
+        dialog.present()
+
+    def _on_restart_dialog_response(self, dialog, response):
+        """Handle restart dialog response"""
+        if response == "restart":
+            self.on_restart_application_clicked(None)
+        elif response == "manual":
+            self.append_log("💡 Please restart the application manually to use the new version")
+            self.append_log("💡 Run: python3 desktop/unhinged-desktop-app")
+            # Just close the application
+            GLib.timeout_add(2000, lambda: self.quit())
+        dialog.destroy()
+
+    def on_restart_application_clicked(self, button):
+        """Handle restart application button click"""
+        self.append_log("🔄 Preparing to restart application...")
+
+        if self.session_logger:
+            self.session_logger.log_gui_event("APP_RESTART", "Application restart requested after update")
+
+        # Show instructions and close gracefully
+        self.append_log("💡 Update complete! Please restart the application manually:")
+        self.append_log("💡 Method 1: Run 'python3 desktop/unhinged-desktop-app'")
+        self.append_log("💡 Method 2: Launch 'Unhinged' from your application menu")
+        self.append_log("💡 Method 3: Run 'gtk-launch unhinged'")
+
+        # Update the restart button to show it's ready to close
+        if hasattr(self, 'update_button'):
+            self.update_button.set_label("Close Application")
+            self.update_button.remove_css_class("suggested-action")
+            self.update_button.add_css_class("destructive-action")
+            # Reconnect to close handler
+            try:
+                self.update_button.disconnect_by_func(self.on_restart_application_clicked)
+            except:
+                pass
+            self.update_button.connect("clicked", self._close_application)
+
+        # Auto-close after 10 seconds
+        self.append_log("🕐 Application will close automatically in 10 seconds...")
+        GLib.timeout_add_seconds(10, self._close_application)
+
+    def _close_application(self, button=None):
+        """Close the application gracefully"""
+        self.append_log("👋 Closing application...")
+
+        if self.session_logger:
+            self.session_logger.close_session()
+
+        # Close window and quit
+        if self.window:
+            self.window.close()
+
+        GLib.timeout_add(500, lambda: self.quit())
+        return False
+
+
+
     def start_platform(self):
         """
         @llm-doc Start Platform Backend
