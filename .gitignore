@@ -293,6 +293,17 @@ coverage/
 /*_verification*
 /*_proof*
 
+# Desktop test files
+desktop/test-*.py
+
+# Build system work-in-progress and backups
+build/backup/
+build/ci/
+build/dual-system/
+
+# BFG cleanup reports
+..bfg-report/
+
 # Prevent scattered proto build artifacts
 protoc-gen-*
 *.pb.go

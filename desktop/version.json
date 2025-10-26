@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0-git-dirty",
+  "build_date": "2025-10-26",
+  "commit_hash": "8a82a5d",
+  "features": [
+    "basic",
+    "dual-system-architecture",
+    "conversation-interface",
+    "native-c-graphics",
+    "session-logging"
+  ],
+  "checksum": "dirty"
+}
