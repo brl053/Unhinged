@@ -59,6 +59,22 @@ yarn-error.log*
 /build/*/__pycache__/
 /build/python/venv/
 
+# C/C++ build artifacts (but preserve our main /build system)
+/libs/**/build/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/*.o
+**/*.so
+**/*.so.*
+**/*.a
+**/*.dylib
+**/*.dll
+**/*.exe
+**/compile_commands.json
+**/CTestTestfile.cmake
+**/Testing/
+
 # Legacy generated protobuf files (being migrated to /generated)
 /frontend/src/types/generated/
 /frontend/src/types/proto/
