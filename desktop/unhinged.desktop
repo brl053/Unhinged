@@ -5,12 +5,13 @@ Name=Unhinged
 Comment=Voice-First AI Control Center with Dual-System Architecture
 GenericName=AI Control Center
 Exec=/home/e-bliss-station-1/Projects/Unhinged/desktop/unhinged-desktop-app
-Icon=applications-graphics
+Icon=unhinged
 Terminal=false
 StartupNotify=true
-Categories=Graphics;Development;System;
+Categories=Graphics;Development;System;AudioVideo;
 Keywords=voice;ai;conversation;graphics;vm;communication;native;platform;dual-system;
 MimeType=application/x-unhinged;
+StartupWMClass=unhinged-desktop-app
 
 # Desktop file for Unhinged Native Graphics Platform
 # @llm-doc Ubuntu GNOME Desktop Integration
