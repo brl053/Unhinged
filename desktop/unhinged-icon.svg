@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+@llm-doc Unhinged Application Icon
+@llm-version 1.0.0
+@llm-date 2025-01-26
+@llm-author Unhinged Team
+
+Simple SVG icon for the Unhinged desktop application.
+Represents native graphics and VM communication with geometric design.
+
+Design Elements:
+- Square base representing stability and native platform
+- Geometric patterns representing graphics rendering
+- Bold colors for visibility in Ubuntu GNOME
+- Scalable vector format for different icon sizes
+
+Usage:
+- Convert to PNG for desktop file: inkscape unhinged-icon.svg -o unhinged-icon.png -w 256 -h 256
+- Multiple sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256
+-->
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="256" height="256" rx="32" ry="32" fill="#2D3748" stroke="#4A5568" stroke-width="4"/>
+  
+  <!-- Main geometric pattern representing graphics -->
+  <g transform="translate(32, 32)">
+    <!-- Central square representing VM -->
+    <rect x="64" y="64" width="64" height="64" fill="#E53E3E" rx="8"/>
+    
+    <!-- Communication lines -->
+    <line x1="32" y1="96" x2="64" y2="96" stroke="#38B2AC" stroke-width="6" stroke-linecap="round"/>
+    <line x1="128" y1="96" x2="160" y2="96" stroke="#38B2AC" stroke-width="6" stroke-linecap="round"/>
+    <line x1="96" y1="32" x2="96" y2="64" stroke="#38B2AC" stroke-width="6" stroke-linecap="round"/>
+    <line x1="96" y1="128" x2="96" y2="160" stroke="#38B2AC" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Corner elements representing native graphics -->
+    <circle cx="32" cy="32" r="16" fill="#F6E05E"/>
+    <circle cx="160" cy="32" r="16" fill="#F6E05E"/>
+    <circle cx="32" cy="160" r="16" fill="#F6E05E"/>
+    <circle cx="160" cy="160" r="16" fill="#F6E05E"/>
+    
+    <!-- Text indicator -->
+    <text x="96" y="105" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="16" font-weight="bold" fill="white">U</text>
+  </g>
+  
+  <!-- Border highlight -->
+  <rect width="256" height="256" rx="32" ry="32" fill="none" stroke="#68D391" stroke-width="2" opacity="0.6"/>
+</svg>
