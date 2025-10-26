@@ -80,7 +80,7 @@ class ServiceLauncher:
             "port": 1101,
             "required": True,
             "description": "Whisper-based speech transcription service for voice input",
-            "start_command": "python3 control/native_gui/tools/chat/bridge/simple_whisper_server.py"
+            "start_command": "python3 services/speech-to-text/simple_whisper_server.py"
         }
     ]
     

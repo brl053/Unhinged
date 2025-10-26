@@ -325,7 +325,7 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry) [us
 	@echo "$(YELLOW)📋 Using centralized Python environment...$(RESET)"
 	@test -d build/python/venv || (echo "$(RED)❌ Centralized Python environment not found. Run: cd build/python && python3 setup.py$(RESET)" && exit 1)
 	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
-	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
 	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
 	@python3 build/build.py build proto-clients $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Service discovery and registry generation$(RESET)"
@@ -822,7 +822,7 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 		echo "  ✅ Native C graphics hello world ready"; \
 	fi
 	@echo "  📦 Proto clients..."
-	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
 	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
 	@echo "🚀 Launching services..."
 	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
@@ -834,15 +834,9 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 		 echo "🔥 LAUNCHING QEMU VM WITH GPU ISOLATION!"; \
 		 $(QEMU_VM_GRAPHICS)); \
 	else \
-		echo "⚠️ Native C graphics not available - building now..."; \
-		echo "💡 Run 'make graphics-hello-world' to build native C graphics"; \
-		$(MAKE) graphics-hello-world >/dev/null 2>&1 && $(NATIVE_C_GRAPHICS) || \
-		(echo "❌ Native C graphics build failed"; \
-		 echo "🔥 LAUNCHING QEMU VM AS FALLBACK!"; \
-		 $(QEMU_VM_GRAPHICS) || \
-		 (echo "🌐 Launching HTTP server fallback..."; \
-		  python3 -m http.server 8080 --directory generated/static_html & \
-		  echo "🌐 GUI available at: http://localhost:8080")); \
+		echo "⚠️ Native C graphics not available - defaulting to QEMU VM..."; \
+		echo "🔥 LAUNCHING QEMU VM WITH WHITE HELLO WORLD!"; \
+		$(QEMU_VM_GRAPHICS); \
 	fi
 
 start-continue: ## Continue start process after DRM permissions are fixed
@@ -868,7 +862,7 @@ start-continue: ## Continue start process after DRM permissions are fixed
 		echo "  ✅ Native C graphics hello world ready"; \
 	fi
 	@echo "  📦 Proto clients..."
-	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients generated/static_html
+	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
 	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
 	@echo "🚀 Launching services..."
 	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
@@ -877,13 +871,9 @@ start-continue: ## Continue start process after DRM permissions are fixed
 		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
 		$(NATIVE_C_GRAPHICS); \
 	else \
-		echo "⚠️ Native C graphics not available - building now..."; \
-		echo "💡 Run 'make graphics-hello-world' to build native C graphics"; \
-		$(MAKE) graphics-hello-world >/dev/null 2>&1 && $(NATIVE_C_GRAPHICS) || \
-		(echo "❌ Native C graphics build failed"; \
-		 echo "🌐 Launching fallback HTTP server..."; \
-		 python3 -m http.server 8080 --directory generated/static_html & \
-		 echo "🌐 GUI available at: http://localhost:8080"); \
+		echo "⚠️ Native C graphics not available - defaulting to QEMU VM..."; \
+		echo "🔥 LAUNCHING QEMU VM WITH WHITE HELLO WORLD!"; \
+		$(QEMU_VM_GRAPHICS); \
 	fi
 
 start-vm: validate-independence ## Launch Unhinged in QEMU VM with GPU isolation
@@ -906,10 +896,10 @@ start-offline: validate-independence status ## Launch native GUI without startin
 	@$(MAKE) generate
 	@echo ""
 	@echo "✅ System Health Dashboard ready!"
-	@echo "🎮 Launching INDEPENDENT Native C Graphics GUI (Offline Mode)..."
-	@echo "💡 CULTURE: We are independent. We render natively with C graphics."
-	@echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"
-	@$(HTML_NATIVE)
+	@echo "🎮 Launching QEMU VM (Offline Mode)..."
+	@echo "💡 CULTURE: We are independent. We render in isolated VM."
+	@echo "🔥 QEMU VM WITH WHITE HELLO WORLD!"
+	@$(QEMU_VM_GRAPHICS)
 
 start-services: ## Launch essential services only (LLM, Backend, Database)
 	$(call log_info,🚀 Launching essential services...)
@@ -1377,8 +1367,8 @@ check-deps-available: ## Pure function: Verify dependency consistency
 	@node --version >/dev/null 2>&1 # Node available
 
 check-generated-files: ## Pure function: Verify generated files are up-to-date
-	@test -f generated/static_html/registry.js || (echo "Registry not generated" && exit 1)
 	@test -d generated/typescript/clients || (echo "TypeScript clients not generated" && exit 1)
+	@test -d generated/python/clients || (echo "Python clients not generated" && exit 1)
 
 check-build-system: ## Pure function: Validate build system integrity
 	@test -f Makefile || exit 1
@@ -1464,61 +1454,9 @@ html-setup: ## Setup HTML interface symlinks and launcher
 	@./scripts/setup-html-links.sh
 	$(call log_success,HTML interfaces ready for testing)
 
-html-test: ## Launch HTML testing interface hub
-	$(call log_info,🧪 Opening HTML testing interfaces...)
-	@./static_html/html-links/open.sh index || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
-	$(call log_success,HTML testing hub opened)
+# HTML testing targets removed - QEMU VM is the only rendering system
 
-html-dashboard: ## Open health monitoring dashboard
-	$(call log_info,📊 Opening health dashboard...)
-	@./static_html/html-links/open.sh dashboard || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
-
-html-vision: ## Open Vision AI testing interface
-	$(call log_info,👁️ Opening Vision AI testing...)
-	@./static_html/html-links/open.sh vision || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
-
-html-audio: ## Open Whisper TTS testing interface
-	$(call log_info,🎤 Opening Audio processing testing...)
-	@./static_html/html-links/open.sh audio || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
-
-html-context: ## Open Context LLM testing interface
-	$(call log_info,🧠 Opening Context LLM testing...)
-	@./static_html/html-links/open.sh context || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
-
-html-list: ## List all available HTML interfaces
-	$(call log_info,📋 Available HTML interfaces:)
-	@./static_html/html-links/open.sh || (echo "$(RED)❌ Run 'make html-setup' first$(RESET)" && exit 1)
-
-html-server: ## Start local HTTP server for HTML interfaces
-	$(call log_info,🌐 Starting HTTP server for HTML interfaces...)
-	@echo "$(YELLOW)📍 Server URLs:$(RESET)"
-	@echo "  Main Hub: http://localhost:8080/static_html/"
-	@echo "  Dashboard: http://localhost:8080/unhinged-health-dashboard.html"
-	@echo "  Vision: http://localhost:8080/static_html/image-test.html"
-	@echo "  Audio: http://localhost:8080/static_html/voice-test.html"
-	@echo "  Context: http://localhost:8080/static_html/text-test.html"
-	@echo ""
-	@echo "$(BLUE)💡 Press Ctrl+C to stop server$(RESET)"
-	@python3 -m http.server 8080
-
-html-sanity: ## Run complete HTML interface sanity check
-	$(call log_info,🔍 Running HTML interface sanity check...)
-	@echo "$(YELLOW)📋 Checking HTML interface files...$(RESET)"
-	@test -f static_html/index.html && echo "$(GREEN)✅ Main hub found$(RESET)" || echo "$(RED)❌ Main hub missing$(RESET)"
-	@test -f static_html/image-test.html && echo "$(GREEN)✅ Vision AI interface found$(RESET)" || echo "$(RED)❌ Vision AI interface missing$(RESET)"
-	@test -f static_html/voice-test.html && echo "$(GREEN)✅ Audio interface found$(RESET)" || echo "$(RED)❌ Audio interface missing$(RESET)"
-	@test -f static_html/text-test.html && echo "$(GREEN)✅ Context LLM interface found$(RESET)" || echo "$(RED)❌ Context LLM interface missing$(RESET)"
-	@test -f unhinged-health-dashboard.html && echo "$(GREEN)✅ Health dashboard found$(RESET)" || echo "$(RED)❌ Health dashboard missing$(RESET)"
-	@echo "$(YELLOW)📋 Checking symlink system...$(RESET)"
-	@test -d static_html/html-links && echo "$(GREEN)✅ Symlink directory exists$(RESET)" || echo "$(YELLOW)⚠️ Run 'make html-setup' to create symlinks$(RESET)"
-	@test -x static_html/html-links/open.sh && echo "$(GREEN)✅ Launcher script ready$(RESET)" || echo "$(YELLOW)⚠️ Run 'make html-setup' to create launcher$(RESET)"
-	$(call log_success,HTML interface sanity check complete)
-
-html-clean: ## Clean HTML interface symlinks and generated files
-	$(call log_warning,🧹 Cleaning HTML interface symlinks...)
-	@rm -rf static_html/html-links/
-	@rm -f ~/Desktop/Unhinged-HTML.desktop
-	$(call log_success,HTML interface symlinks cleaned)
+# HTML sanity and clean targets removed - QEMU VM is the only rendering system
 
 # Aliases removed for etymological modularity
 

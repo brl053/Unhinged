@@ -130,9 +130,71 @@ class QEMULauncher:
             print(f"❌ Error creating VM disk: {e}")
             return None
     
-    def launch_vm(self, disk_path):
-        """Launch the QEMU VM"""
-        print("🚀 Launching QEMU VM...")
+    def create_hello_world_boot(self):
+        """Create a simple boot image that displays 'Hello World!'"""
+        vm_dir = self.project_root / "vm"
+        vm_dir.mkdir(exist_ok=True)
+
+        boot_path = vm_dir / "hello_world_boot.img"
+
+        if boot_path.exists():
+            print(f"✅ Hello World boot image already exists: {boot_path}")
+            return str(boot_path)
+
+        print("🔧 Creating Hello World boot image...")
+
+        # Create a simple x86 boot sector that displays "Hello World!" in white text
+        boot_code = bytes([
+            # Boot sector header
+            0xEB, 0x3E, 0x90,  # Jump to start + NOP
+
+            # Boot sector code starts here (offset 0x3)
+            # Set up segments
+            0x31, 0xC0,        # xor ax, ax
+            0x8E, 0xD8,        # mov ds, ax
+            0x8E, 0xC0,        # mov es, ax
+            0x8E, 0xD0,        # mov ss, ax
+            0xBC, 0x00, 0x7C,  # mov sp, 0x7C00
+
+            # Clear screen (set video mode 3 - 80x25 color text)
+            0xB0, 0x03,        # mov al, 3
+            0xB4, 0x00,        # mov ah, 0
+            0xCD, 0x10,        # int 0x10
+
+            # Print "Hello World!" message
+            0xBE, 0x2A, 0x7C,  # mov si, message (offset 0x2A + 0x7C00)
+
+            # Print loop
+            0xAC,              # lodsb (load byte from [si] to al)
+            0x08, 0xC0,        # or al, al (test if zero)
+            0x74, 0x06,        # jz done (jump if zero)
+            0xB4, 0x0E,        # mov ah, 0x0E (teletype output)
+            0xCD, 0x10,        # int 0x10 (BIOS video interrupt)
+            0xEB, 0xF7,        # jmp print_loop
+
+            # Infinite loop
+            0xEB, 0xFE,        # jmp $ (infinite loop)
+
+            # Message string (starts at offset 0x2A)
+        ] + list(b"Hello World! - Unhinged QEMU VM\r\n\0") + [0x00] * (510 - 42 - 33) + [0x55, 0xAA])
+
+        try:
+            with open(boot_path, 'wb') as f:
+                # Write boot sector
+                f.write(boot_code)
+                # Pad to 1.44MB floppy size
+                remaining = 1474560 - len(boot_code)
+                f.write(b'\x00' * remaining)
+
+            print(f"✅ Hello World boot image created: {boot_path}")
+            return str(boot_path)
+        except Exception as e:
+            print(f"❌ Error creating boot image: {e}")
+            return None
+
+    def launch_vm(self, disk_path=None):
+        """Launch the QEMU VM with Hello World display"""
+        print("🚀 Launching QEMU VM with Hello World...")
 
         # Check if qemu is available
         try:
@@ -143,68 +205,77 @@ class QEMULauncher:
                 print("❌ Failed to install QEMU")
                 return None
 
+        # Create hello world boot image
+        boot_image = self.create_hello_world_boot()
+        if not boot_image:
+            print("❌ Failed to create Hello World boot image")
+            return None
+
         cmd = [
             'qemu-system-x86_64',
             '-enable-kvm',
-            '-m', self.vm_config['memory'],
-            '-smp', str(self.vm_config['cpus']),
-            '-drive', f'file={disk_path},format=qcow2',
-            '-netdev', 'user,id=net0',
-            '-device', 'virtio-net-pci,netdev=net0',
-            '-vga', 'virtio',
+            '-m', '512M',  # Reduced memory for hello world
+            '-smp', '2',   # Reduced CPUs for hello world
+            '-drive', f'file={boot_image},format=raw,if=floppy',
+            '-vga', 'std',
             '-display', 'gtk',
-            '-name', self.vm_config['name'],
-            '-boot', 'menu=on'
+            '-name', 'Unhinged-Hello-World',
+            '-no-reboot',
+            '-monitor', 'none'
         ]
-        
+
         print(f"🎮 Executing: {' '.join(cmd)}")
-        
+        print("🔥 LAUNCHING WHITE HELLO WORLD DISPLAY!")
+
         try:
             # Launch VM in background
             process = subprocess.Popen(cmd)
             print(f"✅ VM launched with PID: {process.pid}")
-            print("💡 VM window should appear shortly")
+            print("💡 Hello World VM window should appear shortly")
+            print("🎯 You should see a white screen with 'Hello World!' message")
             return process
         except Exception as e:
             print(f"❌ Error launching VM: {e}")
             return None
     
     def run(self, test_mode=False):
-        """Main execution flow"""
-        print("🔥 QEMU VM LAUNCHER - UNHINGED VIRTUALIZATION")
+        """Main execution flow for Hello World display"""
+        print("🔥 QEMU VM LAUNCHER - UNHINGED HELLO WORLD")
         print("=" * 50)
 
         # Check prerequisites
         if not self.check_virtualization_support():
-            return False
+            print("⚠️  No virtualization support - trying without KVM...")
 
-        # In test mode, skip IOMMU requirement
-        if not test_mode:
-            # Check IOMMU
-            if not self.check_iommu_enabled():
-                if not self.enable_iommu():
-                    return False
-                print("⚠️  Please reboot and run again to complete IOMMU setup")
-                return True
-        else:
-            print("🧪 TEST MODE: Skipping IOMMU requirement")
+        # For Hello World, we don't need IOMMU or complex setup
+        print("🎯 HELLO WORLD MODE: Simplified VM launch")
 
-        # Install packages
-        if not self.install_qemu_packages():
-            return False
+        # Install packages if needed
+        try:
+            subprocess.run(['which', 'qemu-system-x86_64'], check=True, capture_output=True)
+        except subprocess.CalledProcessError:
+            print("📦 Installing QEMU for Hello World display...")
+            if not self.install_qemu_packages():
+                print("❌ Failed to install QEMU")
+                return False
 
-        # Create VM disk
-        disk_path = self.create_vm_disk()
-        if not disk_path:
-            return False
-
-        # Launch VM
-        vm_process = self.launch_vm(disk_path)
+        # Launch Hello World VM directly
+        vm_process = self.launch_vm()
         if not vm_process:
             return False
 
-        print("🎉 QEMU VM setup complete!")
-        print("💡 Install your OS in the VM window")
+        print("🎉 QEMU Hello World VM launched!")
+        print("💡 You should see a white screen with 'Hello World!' message")
+        print("🔥 Press Ctrl+C to exit")
+
+        # Wait for user to exit
+        try:
+            vm_process.wait()
+        except KeyboardInterrupt:
+            print("\n🛑 Shutting down Hello World VM...")
+            vm_process.terminate()
+            vm_process.wait()
+
         return True
 
 def main():
