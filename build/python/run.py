@@ -55,8 +55,12 @@ class UnhingedPythonRunner:
         """Setup environment variables for ML/AI and big data processing"""
         env = os.environ.copy()
         
-        # Python path setup
-        env["PYTHONPATH"] = str(self.project_root)
+        # Python path setup - include event framework
+        python_paths = [
+            str(self.project_root),
+            str(self.project_root / "libs" / "event-framework" / "python" / "src")
+        ]
+        env["PYTHONPATH"] = os.pathsep.join(python_paths)
         
         # Apache Spark configuration (for our on-premise Spark cluster)
         env["SPARK_HOME"] = "/opt/spark"  # Will be set in containers

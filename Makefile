@@ -42,7 +42,7 @@ DB_NAME := unhinged_db
 DB_USER := postgres
 
 # Universal Python Runner
-PYTHON_RUN := build/python/run.py
+PYTHON_RUN := python3 build/python/run.py
 
 # Native GUI
 NATIVE_GUI := python3 control/gui/native_app.py
@@ -138,7 +138,7 @@ endef
 validate-independence: ## CRITICAL: Validate architectural independence
 	@echo "$(RED)🔒 VALIDATING ARCHITECTURAL INDEPENDENCE$(RESET)"
 	@echo "$(YELLOW)Checking for forbidden external dependencies...$(RESET)"
-	@python3 control/cultural_enforcement.py
+	@$(PYTHON_RUN) control/cultural_enforcement.py
 	@echo "$(GREEN)✅ INDEPENDENCE VALIDATED$(RESET)"
 
 
@@ -339,9 +339,9 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry) [us
 	@echo "$(YELLOW)📋 Creating generated directory structure...$(RESET)"
 	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
 	@echo "$(YELLOW)📋 Polyglot proto client generation (TypeScript, C, Python, Kotlin)$(RESET)"
-	@python3 build/build.py build proto-clients $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
+	@$(PYTHON_RUN) build/build.py build proto-clients $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Service discovery and registry generation$(RESET)"
-	@python3 build/build.py build service-discovery $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Service discovery generation failed$(RESET)"
+	@$(PYTHON_RUN) build/build.py build service-discovery $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Service discovery generation failed$(RESET)"
 
 	$(call log_success,Build artifacts generation completed)
 
@@ -814,11 +814,11 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "🔧 Building essentials..."
 	@test -d build/python/venv || (echo "❌ Python environment failed" && exit 1)
 	@echo "  📋 Service discovery..."
-	@python3 build/build.py build service-discovery >/dev/null 2>&1 || (echo "❌ Service discovery build failed" && exit 1)
+	@$(PYTHON_RUN) build/build.py build service-discovery >/dev/null 2>&1 || (echo "❌ Service discovery build failed" && exit 1)
 	@echo "  🎨 C Graphics library..."
-	@if python3 build/build.py build c-graphics-build >/dev/null 2>&1; then \
+	@if $(PYTHON_RUN) build/build.py build c-graphics-build >/dev/null 2>&1; then \
 		echo "  ✅ C Graphics built successfully"; \
-		if python3 build/build.py build graphics-cffi >/dev/null 2>&1; then \
+		if $(PYTHON_RUN) build/build.py build graphics-cffi >/dev/null 2>&1; then \
 			echo "  ✅ Graphics CFFI bindings generated"; \
 		else \
 			echo "  ⚠️ Graphics CFFI failed - using fallback mode"; \
