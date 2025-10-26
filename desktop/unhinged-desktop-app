@@ -36,7 +36,16 @@ import subprocess
 import threading
 import sys
 import os
+import tempfile
 from pathlib import Path
+
+# Add build environment to Python path for gRPC and protobuf clients
+project_root = Path(__file__).parent.parent
+build_venv_path = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
+if build_venv_path.exists():
+    sys.path.insert(0, str(build_venv_path))
+
+import grpc
 
 # Import auto-updater
 try:
@@ -47,6 +56,26 @@ except ImportError as e:
     AUTO_UPDATE_AVAILABLE = False
 import time
 import json
+
+# Voice integration imports
+try:
+    # Add protobuf clients to path
+    sys.path.append(str(Path(__file__).parent.parent / "generated" / "python" / "clients"))
+    from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+    from unhinged_proto_clients.health import health_pb2_grpc
+    VOICE_PROTO_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Voice protobuf clients not available: {e}")
+    VOICE_PROTO_AVAILABLE = False
+
+# Service discovery imports
+try:
+    sys.path.append(str(Path(__file__).parent.parent / "control" / "network"))
+    from service_registry import ServiceRegistry
+    SERVICE_DISCOVERY_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Service discovery not available: {e}")
+    SERVICE_DISCOVERY_AVAILABLE = False
 
 # Headless service classes
 class HeadlessConversationService:
@@ -174,6 +203,262 @@ class HeadlessLoggingService:
         """Get recent log messages"""
         return self.log_buffer[-limit:] if limit else self.log_buffer
 
+class VoiceRecordingService:
+    """
+    @llm-type service
+    @llm-legend Voice recording and transcription service for GTK4 CLI tab integration
+    @llm-key Provides native audio capture and gRPC-based speech-to-text transcription
+    @llm-map Voice service bridging GTK4 desktop application to Unhinged speech infrastructure
+    @llm-axiom Native OS audio capabilities superior to Python library abstractions
+    @llm-contract Records system audio via arecord and transcribes via Whisper gRPC service
+    @llm-token voice-recording-service: Native audio capture with gRPC transcription integration
+
+    Voice Recording Service for CLI Tab Integration
+
+    Implements voice-first capabilities for the GTK4 desktop application CLI tab:
+    - Native audio capture using system arecord tool
+    - gRPC integration with Unhinged speech-to-text service (port 9091)
+    - Service discovery and health checking
+    - WAV file generation and management
+    - Graceful degradation when voice services unavailable
+    """
+
+    def __init__(self, project_root, session_logger=None):
+        self.project_root = project_root
+        self.session_logger = session_logger
+        self.service_registry = None
+        self.audio_client = None
+        self.voice_available = False
+
+        # Initialize service discovery
+        self._initialize_service_discovery()
+
+    def _initialize_service_discovery(self):
+        """
+        @llm-key Initialize service discovery for speech-to-text service detection
+        @llm-contract Establishes connection to service registry and checks voice service availability
+        """
+        try:
+            if SERVICE_DISCOVERY_AVAILABLE:
+                self.service_registry = ServiceRegistry()
+                self._check_voice_service_availability()
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_SERVICE_INIT", "Service discovery not available")
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_SERVICE_INIT_ERROR", f"Service discovery initialization failed: {e}")
+
+    def _check_voice_service_availability(self):
+        """
+        @llm-key Check if speech-to-text service is available and healthy
+        @llm-contract Verifies gRPC service health before attempting voice operations
+        """
+        try:
+            if not self.service_registry:
+                return False
+
+            # Get speech-to-text service configuration
+            stt_service = self.service_registry.get_service("speech-to-text")
+            if not stt_service:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_SERVICE_CHECK", "Speech-to-text service not configured")
+                return False
+
+            # Check service health via gRPC
+            if VOICE_PROTO_AVAILABLE:
+                try:
+                    # Use gRPC port 9091 as confirmed in investigation
+                    channel = grpc.insecure_channel('localhost:9091')
+                    health_client = health_pb2_grpc.HealthServiceStub(channel)
+
+                    # Import health protobuf messages
+                    from unhinged_proto_clients.health import health_pb2
+
+                    # Perform health check with timeout
+                    request = health_pb2.HeartbeatRequest()
+                    response = health_client.Heartbeat(request, timeout=2.0)
+
+                    self.audio_client = audio_pb2_grpc.AudioServiceStub(channel)
+                    self.voice_available = True
+
+                    if self.session_logger:
+                        self.session_logger.log_gui_event("VOICE_SERVICE_AVAILABLE", "Speech-to-text service healthy and available")
+
+                    return True
+
+                except grpc.RpcError as e:
+                    if self.session_logger:
+                        self.session_logger.log_gui_event("VOICE_SERVICE_UNAVAILABLE", f"gRPC health check failed: {e}")
+                    return False
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_SERVICE_CHECK", "Voice protobuf clients not available")
+                return False
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_SERVICE_CHECK_ERROR", f"Voice service availability check failed: {e}")
+            return False
+
+    def is_voice_available(self):
+        """
+        @llm-key Check if voice recording and transcription capabilities are available
+        @llm-contract Returns boolean indicating voice service readiness
+        """
+        return self.voice_available and VOICE_PROTO_AVAILABLE
+
+    def record_audio_to_file(self, duration=3.0, output_file=None):
+        """
+        @llm-key Primary voice recording method using native system audio capture
+        @llm-contract Records system audio via arecord and saves as WAV file
+        @llm-axiom Native OS audio capabilities superior to Python library abstractions
+
+        Record audio using native arecord tool and save as WAV file.
+
+        This method implements the preferred voice input approach: leveraging Ubuntu's
+        native audio system (arecord/PipeWire) rather than complex Python audio libraries.
+
+        Architecture:
+        Native System Audio → arecord → WAV File → File Storage
+
+        Args:
+            duration: Recording duration in seconds (default: 3.0)
+            output_file: Output file path (auto-generated if None)
+
+        Returns:
+            Path to recorded WAV file or None if recording failed
+        """
+        try:
+            # Generate output file if not provided
+            if output_file is None:
+                timestamp = int(time.time())
+                output_file = self.project_root / "build" / "tmp" / f"voice_recording_{timestamp}.wav"
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Use arecord for native audio capture
+            cmd = [
+                'arecord',
+                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-t', 'wav',          # WAV format
+                '-d', str(duration),  # Duration in seconds
+                str(output_file)
+            ]
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_START", f"Starting audio recording for {duration}s")
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=duration + 5)
+
+            if result.returncode == 0 and output_file.exists():
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_RECORDING_SUCCESS", f"Audio recorded to {output_file}")
+                return output_file
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_RECORDING_ERROR", f"arecord failed: {result.stderr}")
+                return None
+
+        except subprocess.TimeoutExpired:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_TIMEOUT", f"Recording timeout after {duration}s")
+            return None
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_ERROR", f"Recording failed: {e}")
+            return None
+
+    def transcribe_audio_file(self, audio_file_path):
+        """
+        @llm-key Transcribe audio file using Unhinged gRPC speech-to-text service
+        @llm-contract Sends WAV file to Whisper service via gRPC and returns transcription
+
+        Transcribe audio file using the established voice pipeline:
+        WAV File → gRPC ProcessAudioFile → Whisper Service → Transcript
+
+        Args:
+            audio_file_path: Path to WAV audio file
+
+        Returns:
+            Transcription text or None if transcription failed
+        """
+        try:
+            if not self.is_voice_available():
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_ERROR", "Voice service not available")
+                return None
+
+            # Read audio file
+            with open(audio_file_path, 'rb') as f:
+                audio_data = f.read()
+
+            # Create gRPC request using ProcessAudioFile method
+            request = audio_pb2.ProcessAudioRequest()
+            request.audio_file.data = audio_data
+            request.audio_file.filename = str(audio_file_path)
+            request.processing_type = audio_pb2.PROCESSING_TYPE_TRANSCRIBE
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("TRANSCRIPTION_START", f"Sending audio file to Whisper service")
+
+            # Send to speech-to-text service
+            response = self.audio_client.ProcessAudioFile(request, timeout=30.0)
+
+            if response.response.success:
+                transcript = response.transcript.strip()
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcription completed: {transcript}")
+                return transcript
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_ERROR", f"Transcription failed: {response.response.message}")
+                return None
+
+        except grpc.RpcError as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("TRANSCRIPTION_GRPC_ERROR", f"gRPC transcription failed: {e}")
+            return None
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("TRANSCRIPTION_ERROR", f"Transcription failed: {e}")
+            return None
+
+    def record_and_transcribe(self, duration=3.0):
+        """
+        @llm-key Complete voice-to-text pipeline combining recording and transcription
+        @llm-contract Records audio and transcribes in single operation with cleanup
+
+        Complete voice recording and transcription pipeline:
+        Native Audio → arecord → WAV File → gRPC → Whisper Service → Transcript
+
+        Args:
+            duration: Recording duration in seconds
+
+        Returns:
+            Transcription text or None if operation failed
+        """
+        try:
+            # Record audio
+            audio_file = self.record_audio_to_file(duration)
+            if not audio_file:
+                return None
+
+            # Transcribe audio
+            transcript = self.transcribe_audio_file(audio_file)
+
+            # Clean up temporary file
+            try:
+                audio_file.unlink()
+            except:
+                pass  # Ignore cleanup errors
+
+            return transcript
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_PIPELINE_ERROR", f"Voice pipeline failed: {e}")
+            return None
+
 # Import session logging from event framework
 sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
 try:
@@ -236,6 +521,7 @@ class UnhingedDesktopApp(Adw.Application):
         self.update_service = HeadlessUpdateService(self.project_root, self.auto_updater, self.session_logger)
         self.status_service = HeadlessStatusService(self.session_logger)
         self.logging_service = HeadlessLoggingService(self.session_logger)
+        self.voice_service = VoiceRecordingService(self.project_root, self.session_logger)
         
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -271,6 +557,10 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Create minimal side navigation
         self.create_minimal_navigation(window)
+
+        # Start periodic voice service status checking
+        GLib.timeout_add_seconds(10, self._periodic_voice_status_check)
+
         return window
 
     def create_minimal_navigation(self, window):
@@ -344,18 +634,258 @@ class UnhingedDesktopApp(Adw.Application):
         self.stack.add_titled(logs_box, "logs", "Logs")
 
     def add_cli_tab(self):
-        """Add CLI tab with minimal content"""
+        """
+        @llm-key Add CLI tab with voice recording and transcription capabilities
+        @llm-contract Creates voice-first interface for GTK4 desktop application CLI integration
+
+        Add CLI tab with voice recording capabilities.
+
+        Implements voice-first interface for the CLI tab, providing:
+        - Voice recording controls with native audio capture
+        - Real-time transcription via Unhinged gRPC services
+        - Service status monitoring and health checking
+        - Graceful degradation when voice services unavailable
+        """
         cli_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         cli_box.set_margin_top(24)
         cli_box.set_margin_bottom(24)
         cli_box.set_margin_start(24)
         cli_box.set_margin_end(24)
 
-        # Minimal CLI content placeholder
-        cli_label = Gtk.Label(label="Command line interface content")
-        cli_box.append(cli_label)
+        # Voice Recording Section
+        voice_group = Adw.PreferencesGroup()
+        voice_group.set_title("Voice Recording")
+        voice_group.set_description("Native audio capture with speech-to-text transcription")
+
+        # Voice service status row
+        self.voice_status_row = Adw.ActionRow()
+        self.voice_status_row.set_title("Voice Service Status")
+        self.voice_status_row.set_subtitle("Checking voice service availability...")
+
+        # Status icon
+        self.voice_status_icon = Gtk.Image.new_from_icon_name("audio-input-microphone-symbolic")
+        self.voice_status_icon.set_icon_size(Gtk.IconSize.LARGE)
+        self.voice_status_row.add_prefix(self.voice_status_icon)
+
+        voice_group.add(self.voice_status_row)
+
+        # Voice recording controls row
+        recording_row = Adw.ActionRow()
+        recording_row.set_title("Voice Recording")
+        recording_row.set_subtitle("Record audio and transcribe using Whisper service")
+
+        # Recording controls box
+        controls_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        # Record button
+        self.record_button = Gtk.Button.new_with_label("Record Voice")
+        self.record_button.add_css_class("suggested-action")
+        self.record_button.connect("clicked", self.on_record_voice_clicked)
+        controls_box.append(self.record_button)
+
+        # Duration spin button
+        duration_label = Gtk.Label(label="Duration:")
+        controls_box.append(duration_label)
+
+        self.duration_adjustment = Gtk.Adjustment(value=3.0, lower=1.0, upper=30.0, step_increment=1.0)
+        self.duration_spin = Gtk.SpinButton(adjustment=self.duration_adjustment, digits=1)
+        self.duration_spin.set_size_request(80, -1)
+        controls_box.append(self.duration_spin)
+
+        duration_unit_label = Gtk.Label(label="seconds")
+        controls_box.append(duration_unit_label)
+
+        recording_row.add_suffix(controls_box)
+        voice_group.add(recording_row)
+
+        # Transcription display
+        transcription_group = Adw.PreferencesGroup()
+        transcription_group.set_title("Transcription Results")
+        transcription_group.set_description("Speech-to-text output from Whisper service")
+
+        # Create text view for transcription display
+        self.transcription_textview = Gtk.TextView()
+        self.transcription_textview.set_editable(False)
+        self.transcription_textview.set_cursor_visible(False)
+        self.transcription_textview.set_monospace(True)
+        self.transcription_textview.set_wrap_mode(Gtk.WrapMode.WORD)
+
+        # Set up text buffer
+        buffer = self.transcription_textview.get_buffer()
+        buffer.set_text("Voice transcriptions will appear here...\n")
+
+        # Create scrolled window for text view
+        scrolled_transcription = Gtk.ScrolledWindow()
+        scrolled_transcription.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled_transcription.set_min_content_height(150)
+        scrolled_transcription.set_child(self.transcription_textview)
+
+        transcription_group.add(scrolled_transcription)
+
+        # Add groups to CLI box
+        cli_box.append(voice_group)
+        cli_box.append(transcription_group)
 
         self.stack.add_titled(cli_box, "cli", "CLI")
+
+        # Initialize voice service status
+        self._update_voice_service_status()
+
+    def _update_voice_service_status(self):
+        """
+        @llm-key Update voice service status display in CLI tab
+        @llm-contract Updates UI elements to reflect current voice service availability
+        """
+        try:
+            if hasattr(self, 'voice_service') and self.voice_service.is_voice_available():
+                self.voice_status_row.set_subtitle("Voice service available and ready")
+                self.voice_status_icon.set_from_icon_name("emblem-ok-symbolic")
+                self.record_button.set_sensitive(True)
+            else:
+                self.voice_status_row.set_subtitle("Voice service unavailable - check if services are running")
+                self.voice_status_icon.set_from_icon_name("dialog-warning-symbolic")
+                self.record_button.set_sensitive(False)
+        except Exception as e:
+            self.voice_status_row.set_subtitle(f"Voice service status check failed: {e}")
+            self.voice_status_icon.set_from_icon_name("dialog-error-symbolic")
+            self.record_button.set_sensitive(False)
+
+    def on_record_voice_clicked(self, button):
+        """
+        @llm-key Handle voice recording button click event
+        @llm-contract Initiates voice recording and transcription pipeline
+
+        Handle voice recording button click.
+
+        Implements the complete voice-to-text pipeline:
+        1. Disable UI controls during recording
+        2. Capture audio using native arecord
+        3. Send to Whisper service via gRPC
+        4. Display transcription results
+        5. Re-enable UI controls
+        """
+        try:
+            # Get recording duration from spin button
+            duration = self.duration_spin.get_value()
+
+            # Update UI for recording state
+            self.record_button.set_sensitive(False)
+            self.record_button.set_label("Recording...")
+
+            # Update transcription display
+            self._append_transcription(f"[{time.strftime('%H:%M:%S')}] Recording for {duration} seconds...")
+
+            # Log recording start
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_INITIATED", f"User started voice recording for {duration}s")
+
+            # Start recording in background thread
+            thread = threading.Thread(
+                target=self._record_voice_background,
+                args=(duration,),
+                daemon=True
+            )
+            thread.start()
+
+        except Exception as e:
+            self._append_transcription(f"ERROR: Failed to start recording: {e}")
+            self._reset_recording_ui()
+
+    def _record_voice_background(self, duration):
+        """
+        @llm-key Background voice recording and transcription processing
+        @llm-contract Executes voice pipeline in separate thread to avoid UI blocking
+        """
+        try:
+            # Perform voice recording and transcription
+            transcript = self.voice_service.record_and_transcribe(duration)
+
+            # Update UI on main thread
+            GLib.idle_add(self._handle_transcription_result, transcript)
+
+        except Exception as e:
+            GLib.idle_add(self._handle_transcription_error, str(e))
+
+    def _handle_transcription_result(self, transcript):
+        """
+        @llm-key Handle successful transcription result on main thread
+        @llm-contract Updates UI with transcription text and resets controls
+        """
+        try:
+            if transcript:
+                self._append_transcription(f"TRANSCRIPT: {transcript}")
+
+                # Log successful transcription
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_TRANSCRIPTION_SUCCESS", f"Transcription: {transcript}")
+            else:
+                self._append_transcription("WARNING: No transcription received - check audio input")
+
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_TRANSCRIPTION_EMPTY", "Empty transcription received")
+
+        except Exception as e:
+            self._append_transcription(f"ERROR: Failed to process transcription: {e}")
+        finally:
+            self._reset_recording_ui()
+
+    def _handle_transcription_error(self, error_message):
+        """
+        @llm-key Handle transcription error on main thread
+        @llm-contract Updates UI with error message and resets controls
+        """
+        self._append_transcription(f"ERROR: Transcription failed: {error_message}")
+
+        if self.session_logger:
+            self.session_logger.log_gui_event("VOICE_TRANSCRIPTION_ERROR", f"Transcription error: {error_message}")
+
+        self._reset_recording_ui()
+
+    def _reset_recording_ui(self):
+        """
+        @llm-key Reset voice recording UI controls to ready state
+        @llm-contract Restores UI controls after recording completion or error
+        """
+        self.record_button.set_sensitive(True)
+        self.record_button.set_label("Record Voice")
+
+    def _append_transcription(self, message):
+        """
+        @llm-key Append message to transcription display
+        @llm-contract Adds timestamped message to transcription text view
+        """
+        try:
+            buffer = self.transcription_textview.get_buffer()
+            end_iter = buffer.get_end_iter()
+            buffer.insert(end_iter, f"{message}\n")
+
+            # Auto-scroll to bottom
+            mark = buffer.get_insert()
+            self.transcription_textview.scroll_mark_onscreen(mark)
+
+        except Exception as e:
+            print(f"Failed to append transcription: {e}")
+
+    def _periodic_voice_status_check(self):
+        """
+        @llm-key Periodic voice service status checking
+        @llm-contract Checks voice service health every 10 seconds and updates UI
+        """
+        try:
+            if hasattr(self, 'voice_service'):
+                # Re-check voice service availability
+                self.voice_service._check_voice_service_availability()
+
+                # Update UI status
+                if hasattr(self, 'voice_status_row'):
+                    self._update_voice_service_status()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_STATUS_CHECK_ERROR", f"Periodic status check failed: {e}")
+
+        # Continue periodic checking
+        return True
 
     def setup_actions(self):
         """Setup application actions for menu"""
