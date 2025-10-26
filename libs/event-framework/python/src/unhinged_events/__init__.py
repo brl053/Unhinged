@@ -24,7 +24,13 @@ from .protobuf_integration import (
     emit_universal_event
 )
 
-# GTK4 GUI integration removed - using native C graphics
+# GTK4 GUI session logging integration
+from .gui_session_logger import (
+    GUISessionLogger,
+    GUIOutputCapture,
+    create_gui_session_logger,
+    gui_session_context
+)
 
 __version__ = "1.0.0"
 __all__ = [
@@ -40,5 +46,9 @@ __all__ = [
     "ServiceHealthStatus",
     "StateChangeType",
     "create_universal_emitter",
-    "emit_universal_event"
+    "emit_universal_event",
+    "GUISessionLogger",
+    "GUIOutputCapture",
+    "create_gui_session_logger",
+    "gui_session_context"
 ]
