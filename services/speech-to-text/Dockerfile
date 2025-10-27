@@ -18,8 +18,9 @@ RUN pip install --no-cache-dir \
     torch==2.1.0 \
     "numpy<2.0.0"
 
-# Copy centralized protobuf clients
+# Copy centralized protobuf clients and add to Python path
 COPY generated/python/clients/ /app/generated/python/clients/
+ENV PYTHONPATH="/app/generated/python/clients:${PYTHONPATH}"
 
 # Copy application code
 COPY services/speech-to-text/ .

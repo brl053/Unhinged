@@ -22,11 +22,6 @@ from events import create_service_logger
 from concurrent import futures
 import time
 
-# Add path for generated health proto
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent / "generated/python/clients"))
-
 # Health proto imports
 from unhinged_proto_clients.health import health_pb2
 from unhinged_proto_clients.health import health_pb2_grpc

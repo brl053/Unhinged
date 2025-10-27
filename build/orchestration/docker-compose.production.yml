@@ -70,7 +70,8 @@ services:
       dockerfile: services/text-to-speech/Dockerfile
     container_name: text-to-speech-service
     ports:
-      - "1102:8001"  # External 1102 → Internal 8001
+      - "1102:8001"  # External 1102 → Internal 8001 (HTTP)
+      - "9092:9092"  # External 9092 → Internal 9092 (gRPC)
     environment:
       - TTS_MODEL_NAME=tts_models/en/ljspeech/tacotron2-DDC
       - LOG_LEVEL=INFO
@@ -94,7 +95,8 @@ services:
       dockerfile: services/vision-ai/Dockerfile
     container_name: vision-ai-service
     ports:
-      - "1103:8001"  # External 1103 → Internal 8001
+      - "1103:8001"  # External 1103 → Internal 8001 (HTTP)
+      - "9093:9093"  # External 9093 → Internal 9093 (gRPC)
     environment:
       - VISION_MODEL=Salesforce/blip-image-captioning-base
       - LOG_LEVEL=INFO

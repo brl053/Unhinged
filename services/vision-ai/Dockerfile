@@ -27,6 +27,10 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy centralized protobuf clients and add to Python path
+COPY generated/python/clients/ /app/generated/python/clients/
+ENV PYTHONPATH="/app/generated/python/clients:${PYTHONPATH}"
+
 # Copy application code
 COPY services/vision-ai/ .
 

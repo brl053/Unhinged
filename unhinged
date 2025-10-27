@@ -157,7 +157,11 @@ cmd_status() {
 
     # Service status via service launcher
     log_info "📊 Service Status:"
-    python3 control/service_launcher.py --status
+    if [ -f "build/python/venv/bin/python" ]; then
+        build/python/venv/bin/python control/service_launcher.py --status
+    else
+        python3 control/service_launcher.py --status
+    fi
 
     # Overall system status via Makefile
     echo ""

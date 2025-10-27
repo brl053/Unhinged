@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
+sys.path.append(str(Path(__file__).parent.parent / "generated/python/clients"))
 
 try:
     from unhinged_events import create_service_logger
@@ -38,6 +39,23 @@ except ImportError:
     events = logging.getLogger("service-launcher")
 
 from network import get_service_registry, ServiceStatus
+
+# gRPC health check imports
+try:
+    import grpc
+    from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
+    GRPC_AVAILABLE = True
+except ImportError:
+    GRPC_AVAILABLE = False
+
+# gRPC health check imports
+try:
+    import grpc
+    from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
+    GRPC_AVAILABLE = True
+except ImportError:
+    GRPC_AVAILABLE = False
+    events.warn("gRPC not available - falling back to HTTP health checks")
 
 
 class ServiceLauncher:
@@ -78,6 +96,8 @@ class ServiceLauncher:
             "compose_service": None,  # Started directly, not via Docker
             "health_url": "http://localhost:1101/health",
             "port": 1101,
+            "grpc_port": 1191,
+            "implements_health_proto": True,
             "required": True,
             "description": "Whisper-based speech transcription service for voice input",
             "start_command": "python3 services/speech-to-text/simple_whisper_server.py"
@@ -87,6 +107,8 @@ class ServiceLauncher:
             "compose_service": "text-to-speech",
             "health_url": "http://localhost:1102/health",
             "port": 1102,
+            "grpc_port": 9092,
+            "implements_health_proto": True,
             "required": False,
             "description": "Neural voice synthesis service"
         },
@@ -95,6 +117,8 @@ class ServiceLauncher:
             "compose_service": "vision-ai",
             "health_url": "http://localhost:1103/health",
             "port": 1103,
+            "grpc_port": 9093,
+            "implements_health_proto": True,
             "required": False,
             "description": "BLIP-based image analysis service"
         }
@@ -310,35 +334,82 @@ class ServiceLauncher:
         
         events.warn("Service did not become healthy", {"service": service['name'], "timeout": timeout})
         return False
-    
+
+    def _check_grpc_health(self, port: int) -> bool:
+        """Check service health via gRPC health.proto"""
+        if not GRPC_AVAILABLE:
+            return False
+
+        try:
+            channel = grpc.insecure_channel(f'localhost:{port}')
+            stub = health_pb2_grpc.HealthServiceStub(channel)
+            request = health_pb2.HeartbeatRequest()
+            response = stub.Heartbeat(request, timeout=5)
+            return response.alive and response.status == 1
+        except Exception:
+            return False
+
+    def _check_service_health(self, service: Dict) -> bool:
+        """Check if service is healthy via gRPC or HTTP"""
+        # Try gRPC health check first if service implements health proto
+        if service.get("implements_health_proto") and GRPC_AVAILABLE:
+            grpc_port = service.get("grpc_port")
+            if grpc_port:
+                try:
+                    return self._check_grpc_health(grpc_port)
+                except Exception as e:
+                    events.warn(f"gRPC health check failed for {service['name']}", {"error": str(e)})
+
+        # Fallback to HTTP health check
+        if not service.get("health_url"):
+            return False
+
+        try:
+            response = requests.get(service["health_url"], timeout=3)
+            return response.status_code == 200
+        except Exception:
+            return False
+
     def get_service_status(self) -> Dict:
-        """Get status of all services"""
+        """Get status of all services using gRPC health checks when available"""
         status = {}
-        
+
         for service in self.ESSENTIAL_SERVICES:
-            if service["health_url"]:
+            service_healthy = False
+            health_method = "unknown"
+
+            # Try gRPC health check first if available
+            if service.get("implements_health_proto") and GRPC_AVAILABLE:
+                grpc_port = service.get("grpc_port")
+                if grpc_port:
+                    try:
+                        service_healthy = self._check_grpc_health(grpc_port)
+                        health_method = f"gRPC:{grpc_port}"
+                    except Exception:
+                        pass
+
+            # Fallback to HTTP health check
+            if not service_healthy and service.get("health_url"):
                 try:
                     response = requests.get(service["health_url"], timeout=3)
-                    status[service["name"]] = {
-                        "running": response.status_code == 200,
-                        "port": service["port"],
-                        "url": service["health_url"]
-                    }
+                    service_healthy = response.status_code == 200
+                    health_method = f"HTTP:{service['port']}"
                 except requests.RequestException:
-                    status[service["name"]] = {
-                        "running": False,
-                        "port": service["port"],
-                        "url": service["health_url"]
-                    }
-            else:
-                # Check if container is running
+                    pass
+
+            # Fallback to container status check
+            if not service_healthy and not service.get("health_url"):
                 running_services = self._check_running_services()
-                status[service["name"]] = {
-                    "running": service["compose_service"] in running_services,
-                    "port": service["port"],
-                    "url": None
-                }
-        
+                service_healthy = service.get("compose_service") in running_services
+                health_method = "container"
+
+            status[service["name"]] = {
+                "running": service_healthy,
+                "port": service["port"],
+                "url": service.get("health_url"),
+                "health_method": health_method
+            }
+
         return status
     
     def stop_services(self):
