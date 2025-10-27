@@ -18,7 +18,7 @@ Implements health.proto for service discovery:
 
 import os
 import grpc
-from unhinged_events import create_service_logger
+from events import create_service_logger
 from concurrent import futures
 import time
 

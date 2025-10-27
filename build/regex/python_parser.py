@@ -76,7 +76,7 @@ class PythonPrintParser:
         self.except_pattern = re.compile(r'^(\s*)except\b', re.MULTILINE)
         
         # Import detection
-        self.event_import_pattern = re.compile(r'from unhinged_events import')
+        self.event_import_pattern = re.compile(r'from events import')
         self.logger_init_pattern = re.compile(r'gui_logger\s*=\s*create_gui_logger')
     
     def parse_file(self, file_path: str) -> ParseResult:

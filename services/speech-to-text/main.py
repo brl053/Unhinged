@@ -21,7 +21,7 @@ import os
 import sys
 import signal
 import time
-from unhinged_events import create_service_logger
+from events import create_service_logger
 
 # Initialize event logger
 events = create_service_logger("speech-to-text", "1.0.0")

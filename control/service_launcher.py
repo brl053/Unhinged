@@ -102,7 +102,7 @@ class ServiceLauncher:
     
     def __init__(self, project_root: Path = None):
         self.project_root = project_root or Path.cwd()
-        self.compose_file = self.project_root / "orchestration/docker-compose.production.yml"
+        self.compose_file = self.project_root / "build/orchestration/docker-compose.production.yml"
         self.running_services: List[str] = []
         self.service_registry = get_service_registry()
 

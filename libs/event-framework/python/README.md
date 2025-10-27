@@ -1,6 +1,6 @@
-# Unhinged Event Framework - Python
+# Event Framework - Python
 
-A polyglot event logging framework for Unhinged services with OpenTelemetry integration and structured YAML output.
+A polyglot event logging framework with OpenTelemetry integration and structured YAML output.
 
 ## Features
 
@@ -13,13 +13,13 @@ A polyglot event logging framework for Unhinged services with OpenTelemetry inte
 ## Installation
 
 ```bash
-pip install unhinged-events
+pip install events
 ```
 
 ## Quick Start
 
 ```python
-from unhinged_events import create_service_logger, LogLevel
+from events import create_service_logger, LogLevel
 
 # Create a logger for your service
 logger = create_service_logger("my-ai-service", version="1.0.0")

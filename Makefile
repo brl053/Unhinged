@@ -233,23 +233,23 @@ setup: ## Initial project setup
 
 up: ## Start all services (production)
 	$(call log_info,🚀 Starting all services...)
-	@docker compose -f orchestration/docker-compose.production.yml up -d
+	@docker compose -f build/orchestration/docker-compose.production.yml up -d
 	$(call log_success,Services started)
 	@$(MAKE) status
 
 down: ## Stop all services
 	$(call log_warning,🛑 Stopping all services...)
-	@docker compose -f orchestration/docker-compose.production.yml down
+	@docker compose -f build/orchestration/docker-compose.production.yml down
 	$(call log_success,Services stopped)
 
 dev-up: ## Start development services
 	$(call log_info,🔧 Starting development services...)
-	@docker compose -f orchestration/docker-compose.development.yml up -d
+	@docker compose -f build/orchestration/docker-compose.development.yml up -d
 	$(call log_success,Development services started)
 
 dev-down: ## Stop development services
 	$(call log_warning,🛑 Stopping development services...)
-	@docker compose -f orchestration/docker-compose.development.yml down
+	@docker compose -f build/orchestration/docker-compose.development.yml down
 	$(call log_success,Development services stopped)
 
 observability-up: ## Start observability stack

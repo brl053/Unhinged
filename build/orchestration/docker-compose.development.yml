@@ -20,7 +20,7 @@ services:
   # =============================================================================
   
   llm:
-    build: ./llm
+    build: llm
     container_name: ollama-service-dev
     ports:
       - "1500:11434"  # External 1500 → Internal 11434
@@ -36,7 +36,7 @@ services:
 
   speech-to-text:
     build:
-      context: ..
+      context: .
       dockerfile: services/speech-to-text/Dockerfile
     container_name: speech-to-text-service-dev
     ports:
@@ -57,8 +57,8 @@ services:
 
   text-to-speech:
     build:
-      context: ./services/text-to-speech
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/text-to-speech/Dockerfile
     container_name: text-to-speech-service-dev
     ports:
       - "1102:8001"  # External 1102 → Internal 8001
@@ -77,8 +77,8 @@ services:
 
   vision-ai:
     build:
-      context: ./services/vision-ai
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/vision-ai/Dockerfile
     container_name: vision-ai-service-dev
     ports:
       - "1103:8001"  # External 1103 → Internal 8001
@@ -132,8 +132,8 @@ services:
   # =============================================================================
   
   persistence-platform:
-    build: 
-      context: ./platforms/persistence
+    build:
+      context: platforms/persistence
       dockerfile: Dockerfile
     container_name: persistence-platform-dev
     ports:

@@ -1,5 +1,5 @@
 """
-Unhinged Event Framework - Python Implementation
+Event Framework - Python Implementation
 
 Provides structured logging capabilities with OpenTelemetry integration
 and YAML output format for consistency with existing observability patterns.

@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "unhinged-events"
+name = "events"
 version = "1.0.0"
-description = "Polyglot event logging framework for Unhinged services with OpenTelemetry integration"
+description = "Polyglot event logging framework with OpenTelemetry integration"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}

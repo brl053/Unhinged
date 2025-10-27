@@ -20,7 +20,7 @@ gRPC-only service with health.proto implementation:
 import os
 import signal
 import sys
-from unhinged_events import create_service_logger
+from events import create_service_logger
 
 # Initialize event logger
 events = create_service_logger("vision-ai", "1.0.0")

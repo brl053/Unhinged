@@ -54,7 +54,7 @@ except ImportError:
     CONTROL_PLANE_AVAILABLE = False
 
 # Initialize event logger
-from unhinged_events import create_service_logger
+from events import create_service_logger
 events = create_service_logger("proxy-server", "1.0.0")
 
 # Initialize FastAPI app

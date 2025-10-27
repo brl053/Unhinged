@@ -18,6 +18,9 @@ openai==1.3.0
 # gRPC dependencies
 grpcio==1.60.0
 grpcio-tools==1.60.0
+
+# Event logging framework (local package)
+# events  # Conflicts with PyPI package - install from local source instead
 protobuf==4.25.1
 
 # Image processing

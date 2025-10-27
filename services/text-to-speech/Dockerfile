@@ -12,6 +12,12 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+# Copy local events package source (from project root context)
+COPY libs/event-framework/python/ /tmp/events-package/
+
+# Install local events package first
+RUN cd /tmp/events-package && pip install --no-cache-dir .
+
 # Copy requirements first for better caching
 COPY requirements.txt .
 
@@ -19,7 +25,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY services/text-to-speech/ .
 
 # Create directories for outputs
 RUN mkdir -p /app/outputs /app/models

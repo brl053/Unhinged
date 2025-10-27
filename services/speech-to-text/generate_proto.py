@@ -6,7 +6,7 @@ import subprocess
 import sys
 import os
 from pathlib import Path
-from unhinged_events import create_service_logger
+from events import create_service_logger
 
 # Initialize event logger
 events = create_service_logger("proto-generator", "1.0.0")

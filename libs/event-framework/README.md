@@ -135,7 +135,7 @@ autoTrackWebEvents(webLogger, 'user123');
 ### GUI Integration (Python GTK4)
 
 ```python
-from unhinged_events import create_gui_logger, create_gtk_click_handler
+from events import create_gui_logger, create_gtk_click_handler
 
 # Create GUI logger
 gui_logger = create_gui_logger("unhinged-control-center", "1.0.0")

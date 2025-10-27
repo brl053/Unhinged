@@ -19,7 +19,7 @@ gRPC-only service with health.proto implementation:
 import os
 import sys
 import signal
-from unhinged_events import create_service_logger
+from events import create_service_logger
 
 # Initialize event logger
 events = create_service_logger("text-to-speech", "1.0.0")

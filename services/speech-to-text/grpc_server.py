@@ -21,7 +21,7 @@ import os
 import tempfile
 import asyncio
 import grpc
-from unhinged_events import create_service_logger
+from events import create_service_logger
 from concurrent import futures
 from typing import Iterator, AsyncIterator
 import io

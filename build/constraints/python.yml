@@ -120,7 +120,7 @@ migration_patterns:
 
 # Required imports for migration
 required_imports:
-  event_framework: "from unhinged_events import create_gui_logger"
+  event_framework: "from events import create_gui_logger"
   logger_init: 'gui_logger = create_gui_logger("unhinged-{service_name}", "1.0.0")'
 
 # Validation rules

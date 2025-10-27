@@ -173,8 +173,8 @@ modules:
     class: "ServiceDiscoveryBuilder"
     config:
       docker_compose_files:
-        - "control/orchestration/docker-compose.yml"
-        - "control/orchestration/docker-compose.observability.yml"
+        - "build/orchestration/docker-compose.production.yml"
+        - "build/orchestration/docker-compose.development.yml"
         - "control/orchestration/docker-compose.development.yml"
       proto_directories:
         - "proto"
