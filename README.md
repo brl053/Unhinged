@@ -21,16 +21,23 @@ make start
 
 ```
 📦 Unhinged/
-├── libs/graphics/               # Native C graphics rendering library
-│   ├── src/                     # C graphics source code
-│   ├── examples/                # Hello world and demos
-│   └── include/                 # Graphics API headers
-├── control/native_c_launcher.py # Native C graphics launcher
+├── libs/
+│   ├── graphics/                # Native C graphics rendering library
+│   │   ├── src/                 # C graphics source code
+│   │   ├── examples/            # Hello world and demos
+│   │   └── include/             # Graphics API headers
+│   └── design_system/           # Two-tier design system architecture
+│       ├── tokens/              # Semantic design tokens (YAML)
+│       ├── build/               # Platform generators (GTK4, etc.)
+│       └── generated/           # Generated CSS and styling
+├── control/                     # Desktop application
+│   ├── native_gui/              # GTK4 + Libadwaita interface
+│   ├── native_c_launcher.py     # Native C graphics launcher
+│   └── service_launcher.py      # Service orchestration
 ├── services/                    # AI services (auto-starting)
 │   ├── speech-to-text/          # Whisper-based transcription
 │   ├── text-to-speech/          # Audio generation
 │   └── vision-ai/               # Image analysis
-├── control/service_launcher.py  # Service orchestration
 ├── build/                       # Polyglot build system
 └── docs/                        # LlmDocs-annotated documentation
 ```
@@ -39,6 +46,7 @@ make start
 
 - **Voice-First Interface**: Native audio → Whisper → AI chat
 - **Mobile-Responsive GUI**: Touch-friendly native interface
+- **Design System**: Two-tier semantic token architecture with GTK4 CSS generation
 - **Developer Tools**: API testing, service monitoring, logs
 - **System Monitoring**: Real-time system and service status
 - **Vision Integration**: Camera capture and AI analysis

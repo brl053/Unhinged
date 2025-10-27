@@ -16,9 +16,10 @@ Version: 1.0.0
 Date: 2025-10-27
 """
 
+import logging
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 class GTK4CSSGenerator:
@@ -35,40 +36,53 @@ class GTK4CSSGenerator:
     def __init__(self, tokens_dir: Path, output_dir: Path):
         self.tokens_dir = tokens_dir
         self.output_dir = output_dir
-        self.tokens = {}
+        self.tokens: Dict[str, Any] = {}
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         
-    def load_tokens(self):
+    def load_tokens(self) -> None:
         """Load all semantic token files"""
         token_files = [
             'colors.yaml',
-            'typography.yaml', 
+            'typography.yaml',
             'spacing.yaml',
             'elevation.yaml',
             'motion.yaml',
             'components.yaml'
         ]
-        
+
         for token_file in token_files:
             token_path = self.tokens_dir / token_file
             if token_path.exists():
-                with open(token_path, 'r') as f:
-                    token_name = token_file.replace('.yaml', '')
-                    self.tokens[token_name] = yaml.safe_load(f)
+                try:
+                    with open(token_path, 'r', encoding='utf-8') as f:
+                        token_name = token_file.replace('.yaml', '')
+                        self.tokens[token_name] = yaml.safe_load(f)
+                        self.logger.debug(f"Loaded tokens from {token_file}")
+                except Exception as e:
+                    self.logger.error(f"Failed to load {token_file}: {e}")
+                    raise
+            else:
+                self.logger.warning(f"Token file not found: {token_path}")
     
     def generate_css(self) -> Dict[str, str]:
         """Generate CSS files for GTK4"""
         css_files = {}
-        
-        # Generate base CSS with semantic tokens
+
+        # Performance: Generate files in order of dependency
+        # Base tokens first (most fundamental)
+        self.logger.debug("Generating base CSS with semantic tokens")
         css_files['design-tokens.css'] = self._generate_base_css()
-        
-        # Generate theme-specific CSS files
+
+        # Theme variants (depend on base tokens)
+        self.logger.debug("Generating theme-specific CSS files")
         css_files['theme-light.css'] = self._generate_theme_css('light')
         css_files['theme-dark.css'] = self._generate_theme_css('dark')
-        
-        # Generate component CSS with semantic token usage
+
+        # Component styles (depend on tokens and themes)
+        self.logger.debug("Generating component CSS with semantic token usage")
         css_files['components.css'] = self._generate_component_css()
-        
+
+        self.logger.info(f"Generated {len(css_files)} CSS files for GTK4")
         return css_files
     
     def _generate_base_css(self) -> str:

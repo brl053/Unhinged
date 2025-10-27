@@ -990,6 +990,35 @@ standardize-html: ## Standardize all HTML files to use consistent design system
 	@python3 build/standardize-html.py
 	$(call log_success,HTML standardization complete)
 
+# ============================================================================
+# Design System - Two-Tier Architecture
+# ============================================================================
+
+design-tokens: ## Generate all design system artifacts from semantic tokens
+	$(call log_info,🎨 Generating design system artifacts...)
+	@python3 build/build.py build design-tokens
+	$(call log_success,Design tokens generated)
+
+design-tokens-gtk4: ## Generate GTK4 CSS from semantic design tokens
+	$(call log_info,🎨 Generating GTK4 CSS from semantic tokens...)
+	@python3 build/build.py build design-tokens-gtk4
+	$(call log_success,GTK4 CSS generated)
+
+design-system: design-tokens ## Alias for design-tokens (generate all design system artifacts)
+
+css-tokens: design-tokens-gtk4 ## Alias for design-tokens-gtk4 (generate CSS tokens)
+
+clean-design-tokens: ## Clean generated design system artifacts
+	$(call log_info,🧹 Cleaning design system artifacts...)
+	@python3 libs/design_system/build/design_token_builder.py --clean 2>/dev/null || \
+		rm -rf generated/design_system/ 2>/dev/null || true
+	$(call log_success,Design system artifacts cleaned)
+
+validate-design-tokens: ## Validate semantic tokens against designer constraints
+	$(call log_info,✅ Validating design tokens...)
+	@python3 libs/design_system/build/design_token_builder.py --validate
+	$(call log_success,Design tokens validation passed)
+
 start-docker-services: ## Start Docker services only (database, kafka, etc.)
 	$(call log_info,🐳 Starting Docker services...)
 	@$(MAKE) check-docker

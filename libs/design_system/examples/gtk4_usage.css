@@ -1,0 +1,242 @@
+/* 
+ * GTK4 Design System Usage Examples
+ * 
+ * This file demonstrates how to use the generated design tokens
+ * in GTK4 applications following the semantic naming contract.
+ */
+
+/* ============================================================================
+ * IMPORT GENERATED DESIGN TOKENS
+ * ============================================================================ */
+
+/* Import in this order for proper cascade */
+@import url("../generated/gtk4/design-tokens.css");  /* Base semantic tokens */
+@import url("../generated/gtk4/theme-light.css");    /* Light theme (default) */
+@import url("../generated/gtk4/components.css");     /* Component patterns */
+
+/* ============================================================================
+ * SEMANTIC TOKEN USAGE EXAMPLES
+ * ============================================================================ */
+
+/* ✅ CORRECT: Using semantic tokens */
+.my-primary-button {
+  background-color: var(--color-action-primary);
+  color: var(--color-text-inverse);
+  padding: var(--spacing-sp-2) var(--spacing-sp-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  border: var(--border-thin) solid var(--color-action-primary);
+  box-shadow: var(--elevation-1);
+}
+
+.my-primary-button:hover {
+  box-shadow: var(--elevation-2);
+}
+
+.my-primary-button:disabled {
+  background-color: var(--color-action-disabled);
+  color: var(--color-text-disabled);
+  opacity: 0.5;
+}
+
+/* ✅ CORRECT: Form field with semantic tokens */
+.my-input-field {
+  background-color: var(--color-surface-default);
+  color: var(--color-text-primary);
+  border: var(--border-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sp-2) var(--spacing-sp-3);
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-body);
+}
+
+.my-input-field:focus {
+  border-width: var(--border-medium);
+  border-color: var(--color-interactive-focus);
+  outline: none;
+}
+
+.my-input-field::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* ✅ CORRECT: Card component with elevation */
+.my-card {
+  background-color: var(--color-surface-elevated);
+  border: var(--border-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sp-4);
+  box-shadow: var(--elevation-2);
+}
+
+.my-card:hover {
+  box-shadow: var(--elevation-3);
+}
+
+/* ✅ CORRECT: Typography hierarchy */
+.my-page-title {
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-display);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sp-6);
+}
+
+.my-section-header {
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-heading);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sp-3);
+}
+
+.my-body-text {
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sp-4);
+}
+
+.my-caption-text {
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-caption);
+  color: var(--color-text-secondary);
+}
+
+/* ✅ CORRECT: Status indicators */
+.my-success-message {
+  background-color: var(--color-feedback-success);
+  color: var(--color-text-inverse);
+  padding: var(--spacing-sp-3);
+  border-radius: var(--radius-sm);
+  margin: var(--spacing-sp-2) 0;
+}
+
+.my-error-message {
+  background-color: var(--color-feedback-error);
+  color: var(--color-text-inverse);
+  padding: var(--spacing-sp-3);
+  border-radius: var(--radius-sm);
+  margin: var(--spacing-sp-2) 0;
+}
+
+.my-warning-message {
+  background-color: var(--color-feedback-warning);
+  color: var(--color-text-inverse);
+  padding: var(--spacing-sp-3);
+  border-radius: var(--radius-sm);
+  margin: var(--spacing-sp-2) 0;
+}
+
+/* ============================================================================
+ * THEME SWITCHING EXAMPLES
+ * ============================================================================ */
+
+/* Dark theme support - tokens automatically switch */
+body[data-theme="dark"] {
+  /* All semantic tokens automatically use dark theme values */
+  /* No additional CSS needed - the design system handles it */
+}
+
+/* Alternative: CSS class approach */
+.theme-dark {
+  /* Dark theme applied via CSS class */
+}
+
+/* ============================================================================
+ * LAYOUT PATTERNS
+ * ============================================================================ */
+
+/* ✅ CORRECT: Responsive layout with semantic spacing */
+.my-layout-container {
+  padding: var(--spacing-sp-8);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.my-section {
+  margin-bottom: var(--spacing-sp-12);
+}
+
+.my-component-group {
+  display: flex;
+  gap: var(--spacing-sp-4);
+  margin-bottom: var(--spacing-sp-6);
+}
+
+/* ✅ CORRECT: Modal with proper z-index and elevation */
+.my-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-surface-inverse);
+  opacity: 0.6;
+  z-index: var(--z-index-modal);
+}
+
+.my-modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--color-surface-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sp-6);
+  box-shadow: var(--elevation-4);
+  z-index: calc(var(--z-index-modal) + 1);
+  max-width: 600px;
+  width: 90vw;
+}
+
+/* ============================================================================
+ * ANTI-PATTERNS (DO NOT USE)
+ * ============================================================================ */
+
+/* ❌ INCORRECT: Hardcoded values */
+.bad-button {
+  background-color: #0066CC;  /* Use var(--color-action-primary) instead */
+  padding: 8px 16px;          /* Use var(--spacing-sp-2) var(--spacing-sp-4) */
+  font-size: 16px;            /* Use var(--font-size-body) */
+  border-radius: 8px;         /* Use var(--radius-md) */
+}
+
+/* ❌ INCORRECT: Non-semantic naming */
+.bad-blue-text {
+  color: #0066CC;             /* Use semantic token like var(--color-action-primary) */
+}
+
+/* ❌ INCORRECT: Arbitrary spacing */
+.bad-spacing {
+  margin: 13px;               /* Use semantic spacing like var(--spacing-sp-3) */
+  padding: 7px 11px;          /* Use semantic spacing combinations */
+}
+
+/* ❌ INCORRECT: Custom font sizes */
+.bad-typography {
+  font-size: 17px;            /* Use var(--font-size-body) or other semantic sizes */
+  line-height: 1.3;           /* Use var(--line-height-body) */
+}
+
+/* ============================================================================
+ * PERFORMANCE NOTES
+ * ============================================================================ */
+
+/*
+ * The design system is optimized for performance:
+ * 
+ * 1. CSS custom properties have zero runtime cost
+ * 2. Theme switching is instant (just change CSS class/attribute)
+ * 3. All values are pre-computed at build time
+ * 4. No JavaScript required for basic theming
+ * 5. Minimal CSS file sizes due to token reuse
+ */
