@@ -36,6 +36,7 @@ import subprocess
 import threading
 import sys
 import os
+import time
 import tempfile
 from pathlib import Path
 
@@ -209,6 +210,189 @@ class HeadlessLoggingService:
     def get_logs(self, limit=100):
         """Get recent log messages"""
         return self.log_buffer[-limit:] if limit else self.log_buffer
+
+class HeadlessMonitoringService:
+    """
+    @llm-type service
+    @llm-legend System monitoring service for GTK4 desktop application integration
+    @llm-key Provides service health monitoring and management capabilities
+    @llm-map Service monitoring bridging GTK4 desktop application to Unhinged service infrastructure
+    @llm-axiom Continuous monitoring enables proactive service reliability management
+    @llm-contract Monitors service health via ServiceHealthMonitor and provides UI data
+    @llm-token monitoring-service: Service health monitoring with auto-recovery integration
+
+    System Monitoring Service for Desktop Application Integration
+
+    Implements comprehensive service monitoring capabilities for the GTK4 desktop application:
+    - Integration with ServiceHealthMonitor from control/service_health_monitor.py
+    - Periodic health checking and status tracking
+    - Service restart and recovery management
+    - Thread-safe data provision for UI updates
+    - Session logging integration for monitoring events
+    """
+
+    def __init__(self, project_root, session_logger=None):
+        self.project_root = project_root
+        self.session_logger = session_logger
+        self.health_monitor = None
+        self.monitoring_available = False
+        self.last_status_summary = None
+        self.service_status_cache = {}
+
+        # Initialize service health monitoring
+        self._initialize_health_monitoring()
+
+    def _initialize_health_monitoring(self):
+        """Initialize service health monitoring system"""
+        try:
+            # Import ServiceHealthMonitor
+            sys.path.append(str(self.project_root / "control"))
+            from service_health_monitor import ServiceHealthMonitor
+
+            self.health_monitor = ServiceHealthMonitor(self.project_root)
+            self.monitoring_available = True
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_INIT", "Service health monitoring initialized successfully")
+
+        except ImportError as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_INIT_ERROR", f"Failed to import ServiceHealthMonitor: {e}")
+            self.monitoring_available = False
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_INIT_ERROR", f"Failed to initialize monitoring: {e}")
+            self.monitoring_available = False
+
+    def is_monitoring_available(self):
+        """Check if monitoring system is available"""
+        return self.monitoring_available and self.health_monitor is not None
+
+    def get_service_status_summary(self):
+        """Get current status summary of all services"""
+        if not self.is_monitoring_available():
+            return {
+                'healthy': [],
+                'unhealthy': [],
+                'total': 0,
+                'critical_healthy': 0,
+                'critical_total': 0,
+                'health_percentage': 0,
+                'critical_health_percentage': 0,
+                'error': 'Monitoring system not available'
+            }
+
+        try:
+            summary = self.health_monitor.get_service_status_summary()
+            self.last_status_summary = summary
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_STATUS_CHECK",
+                    f"Health check completed: {summary['health_percentage']:.1f}% healthy")
+
+            return summary
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_STATUS_ERROR", f"Status check failed: {e}")
+
+            return {
+                'healthy': [],
+                'unhealthy': [],
+                'total': 0,
+                'critical_healthy': 0,
+                'critical_total': 0,
+                'health_percentage': 0,
+                'critical_health_percentage': 0,
+                'error': f'Status check failed: {e}'
+            }
+
+    def check_individual_service_health(self, service_id):
+        """Check health of a specific service"""
+        if not self.is_monitoring_available():
+            return False, "Monitoring system not available"
+
+        try:
+            healthy, status = self.health_monitor.check_service_health(service_id)
+
+            # Cache the result
+            self.service_status_cache[service_id] = {
+                'healthy': healthy,
+                'status': status,
+                'last_checked': time.time()
+            }
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_CHECK",
+                    f"Service {service_id}: {'healthy' if healthy else 'unhealthy'} - {status}")
+
+            return healthy, status
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_ERROR",
+                    f"Service check failed for {service_id}: {e}")
+            return False, f"Check failed: {e}"
+
+    def restart_service(self, service_id):
+        """Restart a specific service"""
+        if not self.is_monitoring_available():
+            return False, "Monitoring system not available"
+
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_START",
+                    f"User initiated restart for service {service_id}")
+
+            success, message = self.health_monitor.restart_service(service_id)
+
+            if self.session_logger:
+                event_name = "STATUS_SERVICE_RESTART_SUCCESS" if success else "STATUS_SERVICE_RESTART_FAILED"
+                self.session_logger.log_gui_event(event_name,
+                    f"Service {service_id} restart: {message}")
+
+            return success, message
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_ERROR",
+                    f"Service restart failed for {service_id}: {e}")
+            return False, f"Restart failed: {e}"
+
+    def get_service_configs(self):
+        """Get service configuration information"""
+        if not self.is_monitoring_available():
+            return {}
+
+        try:
+            return self.health_monitor.services
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_CONFIG_ERROR", f"Failed to get service configs: {e}")
+            return {}
+
+    def monitor_and_recover_all(self):
+        """Monitor all services and auto-recover failed ones"""
+        if not self.is_monitoring_available():
+            return {}
+
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_START", "Starting auto-recovery for all services")
+
+            results = self.health_monitor.monitor_and_recover_all()
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_COMPLETE",
+                    f"Auto-recovery completed for {len(results)} services")
+
+            return results
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_ERROR",
+                    f"Auto-recovery failed: {e}")
+            return {}
 
 class VoiceRecordingService:
     """
@@ -532,6 +716,7 @@ class UnhingedDesktopApp(Adw.Application):
         self.status_service = HeadlessStatusService(self.session_logger)
         self.logging_service = HeadlessLoggingService(self.session_logger)
         self.voice_service = VoiceRecordingService(self.project_root, self.session_logger)
+        self.monitoring_service = HeadlessMonitoringService(self.project_root, self.session_logger)
         
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -571,6 +756,9 @@ class UnhingedDesktopApp(Adw.Application):
         # Start periodic voice service status checking
         GLib.timeout_add_seconds(10, self._periodic_voice_status_check)
 
+        # Start periodic status checking
+        GLib.timeout_add_seconds(15, self._periodic_status_check)
+
         return window
 
     def create_minimal_navigation(self, window):
@@ -602,18 +790,86 @@ class UnhingedDesktopApp(Adw.Application):
         window.set_content(self.toast_overlay)
 
     def add_status_tab(self):
-        """Add Status tab with minimal content"""
+        """
+        @llm-key Add status tab with comprehensive service health monitoring capabilities
+        @llm-contract Creates comprehensive service status interface for GTK4 desktop application
+
+        Add Status tab with service health monitoring.
+
+        Implements comprehensive service status capabilities:
+        - Real-time service health status display
+        - Service restart and recovery controls
+        - Visual indicators for service states
+        - Integration with ServiceHealthMonitor
+        - Manual refresh and auto-recovery options
+        """
         status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         status_box.set_margin_top(24)
         status_box.set_margin_bottom(24)
         status_box.set_margin_start(24)
         status_box.set_margin_end(24)
 
-        # Minimal status content placeholder
-        status_label = Gtk.Label(label="Status monitoring content")
-        status_box.append(status_label)
+        # Overall Status Section
+        status_group = Adw.PreferencesGroup()
+        status_group.set_title("System Health Overview")
+        status_group.set_description("Overall health status of all monitored services")
+
+        # Overall status row
+        self.overall_status_row = Adw.ActionRow()
+        self.overall_status_row.set_title("System Health")
+        self.overall_status_row.set_subtitle("Checking system health...")
+
+        # Overall status icon
+        self.overall_status_icon = Gtk.Image.new_from_icon_name("system-run-symbolic")
+        self.overall_status_icon.set_icon_size(Gtk.IconSize.LARGE)
+        self.overall_status_row.add_prefix(self.overall_status_icon)
+
+        # Refresh button
+        refresh_button = Gtk.Button.new_with_label("Refresh")
+        refresh_button.add_css_class("suggested-action")
+        refresh_button.connect("clicked", self.on_status_refresh_clicked)
+        self.overall_status_row.add_suffix(refresh_button)
+
+        status_group.add(self.overall_status_row)
+
+        # Auto-recovery row
+        auto_recovery_row = Adw.ActionRow()
+        auto_recovery_row.set_title("Auto-Recovery")
+        auto_recovery_row.set_subtitle("Automatically restart failed critical services")
+
+        # Auto-recovery button
+        self.auto_recovery_button = Gtk.Button.new_with_label("Run Auto-Recovery")
+        self.auto_recovery_button.add_css_class("destructive-action")
+        self.auto_recovery_button.connect("clicked", self.on_auto_recovery_clicked)
+        auto_recovery_row.add_suffix(self.auto_recovery_button)
+
+        status_group.add(auto_recovery_row)
+
+        # Individual Services Section
+        services_group = Adw.PreferencesGroup()
+        services_group.set_title("Service Status")
+        services_group.set_description("Individual service health and management")
+
+        # Create scrolled window for services list
+        self.services_listbox = Gtk.ListBox()
+        self.services_listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.services_listbox.add_css_class("boxed-list")
+
+        scrolled_services = Gtk.ScrolledWindow()
+        scrolled_services.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled_services.set_min_content_height(300)
+        scrolled_services.set_child(self.services_listbox)
+
+        services_group.add(scrolled_services)
+
+        # Add groups to status box
+        status_box.append(status_group)
+        status_box.append(services_group)
 
         self.stack.add_titled(status_box, "status", "Status")
+
+        # Initialize status display
+        self._update_status_display()
 
     def add_actions_tab(self):
         """Add Actions tab with minimal content"""
@@ -896,6 +1152,312 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Continue periodic checking
         return True
+
+    def _periodic_status_check(self):
+        """
+        @llm-key Periodic status checking
+        @llm-contract Checks service health every 15 seconds and updates status UI
+        """
+        try:
+            if hasattr(self, 'monitoring_service') and hasattr(self, 'services_listbox'):
+                # Update status display in background thread
+                thread = threading.Thread(target=self._refresh_status_background, daemon=True)
+                thread.start()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_PERIODIC_CHECK_ERROR", f"Periodic status check failed: {e}")
+
+        # Continue periodic checking
+        return True
+
+    def _update_status_display(self):
+        """
+        @llm-key Update status display with current service status
+        @llm-contract Updates UI elements to reflect current service health status
+        """
+        try:
+            if not hasattr(self, 'monitoring_service'):
+                return
+
+            # Get service status summary
+            summary = self.monitoring_service.get_service_status_summary()
+
+            # Update overall status
+            if 'error' in summary:
+                self.overall_status_row.set_subtitle(f"Status monitoring unavailable: {summary['error']}")
+                self.overall_status_icon.set_from_icon_name("dialog-error-symbolic")
+                self.auto_recovery_button.set_sensitive(False)
+            else:
+                health_pct = summary.get('health_percentage', 0)
+                critical_pct = summary.get('critical_health_percentage', 0)
+
+                if health_pct == 100:
+                    self.overall_status_row.set_subtitle(f"All services healthy ({summary['total']} services)")
+                    self.overall_status_icon.set_from_icon_name("emblem-ok-symbolic")
+                elif critical_pct == 100:
+                    self.overall_status_row.set_subtitle(f"Critical services healthy ({health_pct:.1f}% overall)")
+                    self.overall_status_icon.set_from_icon_name("dialog-warning-symbolic")
+                else:
+                    self.overall_status_row.set_subtitle(f"Service issues detected ({health_pct:.1f}% healthy)")
+                    self.overall_status_icon.set_from_icon_name("dialog-error-symbolic")
+
+                self.auto_recovery_button.set_sensitive(True)
+
+            # Update individual service rows
+            self._update_service_rows(summary)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_DISPLAY_ERROR", f"Failed to update status display: {e}")
+
+    def _update_service_rows(self, summary):
+        """Update individual service status rows"""
+        try:
+            # Clear existing rows
+            while True:
+                row = self.services_listbox.get_first_child()
+                if row is None:
+                    break
+                self.services_listbox.remove(row)
+
+            # Add rows for healthy services
+            for service_info in summary.get('healthy', []):
+                self._add_service_row(service_info, True)
+
+            # Add rows for unhealthy services
+            for service_info in summary.get('unhealthy', []):
+                self._add_service_row(service_info, False)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_ROWS_ERROR", f"Failed to update service rows: {e}")
+
+    def _add_service_row(self, service_info, is_healthy):
+        """Add a service status row to the list"""
+        try:
+            service_row = Adw.ActionRow()
+            service_row.set_title(service_info.get('name', 'Unknown Service'))
+            service_row.set_subtitle(service_info.get('status', 'Unknown status'))
+
+            # Status icon
+            if is_healthy:
+                status_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
+            else:
+                status_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+
+            status_icon.set_icon_size(Gtk.IconSize.NORMAL)
+            service_row.add_prefix(status_icon)
+
+            # Critical service indicator
+            if service_info.get('critical', False):
+                critical_label = Gtk.Label(label="Critical")
+                critical_label.add_css_class("caption")
+                service_row.add_suffix(critical_label)
+
+            # Restart button for unhealthy services
+            if not is_healthy:
+                restart_button = Gtk.Button.new_with_label("Restart")
+                restart_button.add_css_class("destructive-action")
+                restart_button.connect("clicked", self.on_service_restart_clicked, service_info.get('id'))
+                service_row.add_suffix(restart_button)
+
+            self.services_listbox.append(service_row)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_ROW_ERROR", f"Failed to add service row: {e}")
+
+    def on_status_refresh_clicked(self, button):
+        """Handle status refresh button click"""
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_REFRESH_CLICKED", "User clicked status refresh")
+
+            # Update display in background thread
+            thread = threading.Thread(target=self._refresh_status_background, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_REFRESH_ERROR", f"Refresh failed: {e}")
+
+    def _refresh_status_background(self):
+        """Refresh status data in background thread"""
+        try:
+            # Force refresh of status data
+            if hasattr(self, 'monitoring_service'):
+                self.monitoring_service.get_service_status_summary()
+
+            # Update UI on main thread
+            GLib.idle_add(self._update_status_display)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_REFRESH_BG_ERROR", f"Background refresh failed: {e}")
+
+    def on_auto_recovery_clicked(self, button):
+        """Handle auto-recovery button click"""
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_CLICKED", "User clicked auto-recovery")
+
+            # Show confirmation dialog
+            dialog = Adw.MessageDialog.new(self.window)
+            dialog.set_heading("Confirm Auto-Recovery")
+            dialog.set_body("This will automatically restart all failed critical services. This may cause temporary service interruptions. Continue?")
+            dialog.add_response("cancel", "Cancel")
+            dialog.add_response("confirm", "Run Auto-Recovery")
+            dialog.set_response_appearance("confirm", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+
+            dialog.connect("response", self._on_auto_recovery_dialog_response, button)
+            dialog.present()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_ERROR", f"Auto-recovery failed: {e}")
+
+    def _on_auto_recovery_dialog_response(self, dialog, response, button):
+        """Handle auto-recovery confirmation dialog response"""
+        if response == "confirm":
+            try:
+                # Disable button during operation
+                button.set_sensitive(False)
+                button.set_label("Running...")
+
+                # Run auto-recovery in background thread
+                thread = threading.Thread(target=self._auto_recovery_background, daemon=True)
+                thread.start()
+
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_START_ERROR", f"Failed to start auto-recovery: {e}")
+                # Re-enable button on error
+                button.set_sensitive(True)
+                button.set_label("Run Auto-Recovery")
+
+    def _auto_recovery_background(self):
+        """Run auto-recovery in background thread"""
+        try:
+            if hasattr(self, 'monitoring_service'):
+                results = self.monitoring_service.monitor_and_recover_all()
+
+                # Update UI on main thread
+                GLib.idle_add(self._auto_recovery_complete, results)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_BG_ERROR", f"Background auto-recovery failed: {e}")
+            GLib.idle_add(self._auto_recovery_complete, {})
+
+    def _auto_recovery_complete(self, results):
+        """Handle auto-recovery completion on main thread"""
+        try:
+            # Re-enable button
+            self.auto_recovery_button.set_sensitive(True)
+            self.auto_recovery_button.set_label("Run Auto-Recovery")
+
+            # Show toast with results
+            if results:
+                recovered_count = sum(1 for r in results.values() if r.get('status') == 'recovered')
+                if recovered_count > 0:
+                    self.show_toast(f"Auto-recovery completed: {recovered_count} services recovered")
+                else:
+                    self.show_toast("Auto-recovery completed: no services needed recovery")
+            else:
+                self.show_toast("Auto-recovery failed")
+
+            # Refresh display
+            self._update_status_display()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_COMPLETE_ERROR", f"Auto-recovery completion failed: {e}")
+
+    def on_service_restart_clicked(self, button, service_id):
+        """Handle individual service restart button click"""
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_CLICKED", f"User clicked restart for {service_id}")
+
+            # Get service name for dialog
+            service_name = service_id
+            if hasattr(self, 'monitoring_service'):
+                configs = self.monitoring_service.get_service_configs()
+                if service_id in configs:
+                    service_name = configs[service_id].name
+
+            # Show confirmation dialog
+            dialog = Adw.MessageDialog.new(self.window)
+            dialog.set_heading("Confirm Service Restart")
+            dialog.set_body(f"This will restart the {service_name} service. This may cause temporary service interruptions. Continue?")
+            dialog.add_response("cancel", "Cancel")
+            dialog.add_response("confirm", "Restart Service")
+            dialog.set_response_appearance("confirm", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+
+            dialog.connect("response", self._on_service_restart_dialog_response, service_id, button)
+            dialog.present()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_ERROR", f"Service restart failed: {e}")
+
+    def _on_service_restart_dialog_response(self, dialog, response, service_id, button):
+        """Handle service restart confirmation dialog response"""
+        if response == "confirm":
+            try:
+                # Disable button during operation
+                button.set_sensitive(False)
+                button.set_label("Restarting...")
+
+                # Run restart in background thread
+                thread = threading.Thread(target=self._service_restart_background, args=(service_id, button), daemon=True)
+                thread.start()
+
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_START_ERROR", f"Failed to start service restart: {e}")
+                # Re-enable button on error
+                button.set_sensitive(True)
+                button.set_label("Restart")
+
+    def _service_restart_background(self, service_id, button):
+        """Restart service in background thread"""
+        try:
+            if hasattr(self, 'monitoring_service'):
+                success, message = self.monitoring_service.restart_service(service_id)
+
+                # Update UI on main thread
+                GLib.idle_add(self._service_restart_complete, service_id, success, message, button)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_BG_ERROR", f"Background service restart failed: {e}")
+            GLib.idle_add(self._service_restart_complete, service_id, False, str(e), button)
+
+    def _service_restart_complete(self, service_id, success, message, button):
+        """Handle service restart completion on main thread"""
+        try:
+            # Re-enable button
+            button.set_sensitive(True)
+            button.set_label("Restart")
+
+            # Show toast with result
+            if success:
+                self.show_toast(f"Service {service_id} restarted successfully")
+            else:
+                self.show_toast(f"Service {service_id} restart failed: {message}")
+
+            # Refresh display
+            self._update_status_display()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_COMPLETE_ERROR", f"Service restart completion failed: {e}")
 
     def setup_actions(self):
         """Setup application actions for menu"""
