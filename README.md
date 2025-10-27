@@ -5,10 +5,20 @@
 ## Quick Start - Voice-First Experience
 
 ```bash
-make start
+./unhinged
 ```
 
 **Launches native C graphics GUI with immediate voice capability** - activate the microphone and begin voice interaction.
+
+### Normal User (Toyota Experience)
+- Single command: `./unhinged`
+- Desktop icon integration
+- All complexity hidden
+
+### Power User (Car Enthusiast Experience)
+- Development mode: `./unhinged dev`
+- Component control: `./unhinged graphics build`
+- System administration: `./unhinged admin services`
 
 ## Voice-First User Experience
 
@@ -68,8 +78,20 @@ Comprehensive documentation available in `/docs/` directory.
 ## Available Commands
 
 ```bash
-make start               # Initialize all system components
-make clean               # Clean build artifacts and temporary files
+# Normal User Commands
+./unhinged                    # Start complete system
+./unhinged stop               # Graceful shutdown
+
+# Power User Commands
+./unhinged dev                # Development mode
+./unhinged graphics build     # Build graphics subsystem
+./unhinged build generate     # Generate design artifacts
+./unhinged admin services     # Manage services
+./unhinged debug status       # Debug system state
+
+# Legacy Commands (deprecated)
+make start               # Use './unhinged' instead
+make clean               # Use './unhinged build clean' instead
 ```
 
 ---
