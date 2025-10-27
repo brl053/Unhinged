@@ -16,10 +16,23 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
+# Import ServiceRegistry for unified service configuration
+import sys
+sys.path.append(str(Path(__file__).parent))
+from network.service_registry import ServiceRegistry, ServiceEndpoint
+
+# Import gRPC health checking (optional)
+try:
+    import grpc
+    from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
+    GRPC_HEALTH_AVAILABLE = True
+except ImportError:
+    GRPC_HEALTH_AVAILABLE = False
+
 
 @dataclass
 class ServiceConfig:
-    """Configuration for a monitored service"""
+    """Legacy configuration for a monitored service - DEPRECATED"""
     name: str
     container_name: str
     health_url: Optional[str]
@@ -31,12 +44,33 @@ class ServiceConfig:
 
 
 class ServiceHealthMonitor:
-    """Monitors and auto-recovers failed services"""
-    
+    """
+    Enhanced service health monitor with protocol-aware checking.
+
+    Uses ServiceRegistry for unified service configuration and supports:
+    - gRPC health.proto checking for internal services
+    - HTTP health endpoints for external services
+    - TCP port checking for database services
+    """
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.logger = logging.getLogger(__name__)
-        self.services = self._load_service_configs()
+
+        # Use ServiceRegistry for unified configuration
+        self.service_registry = ServiceRegistry()
+        self.services = self._load_service_configs()  # Legacy compatibility
+        self.service_endpoints = self.service_registry.get_all_services()
+
+        # Container mapping for Docker operations
+        self.container_mapping = {
+            'llm': 'ollama-service',
+            'persistence-platform': 'persistence-platform-service',
+            'speech-to-text': 'speech-to-text-service',
+            'text-to-speech': 'text-to-speech-service',
+            'vision-ai': 'vision-ai-service',
+            'database': 'unhinged-postgres'
+        }
         
     def _load_service_configs(self) -> Dict[str, ServiceConfig]:
         """Load service configurations"""
@@ -84,30 +118,79 @@ class ServiceHealthMonitor:
         }
     
     def check_service_health(self, service_id: str) -> Tuple[bool, str]:
-        """Check health of a specific service"""
-        if service_id not in self.services:
+        """
+        Enhanced health checking with protocol awareness.
+
+        Uses ServiceRegistry configuration to determine appropriate health check method:
+        - gRPC services: health.proto checking
+        - HTTP services: HTTP endpoint checking
+        - TCP services: Port connectivity checking
+        """
+        # Check if service exists in registry
+        if service_id not in self.service_endpoints:
             return False, f"Unknown service: {service_id}"
-        
-        service = self.services[service_id]
-        
-        # First check if container is running
-        container_running = self._is_container_running(service.container_name)
-        if not container_running:
-            return False, f"Container {service.container_name} is not running"
-        
-        # Check health endpoint if available
-        if service.health_url:
+
+        endpoint = self.service_endpoints[service_id]
+
+        # Check if container is running (if applicable)
+        if service_id in self.container_mapping:
+            container_name = self.container_mapping[service_id]
+            container_running = self._is_container_running(container_name)
+            if not container_running:
+                return False, f"Container {container_name} is not running"
+
+        # Use protocol-aware health checking
+        health_method = endpoint.health_check_method
+
+        if health_method == "grpc_health_proto":
+            return self._check_grpc_health(endpoint)
+        elif health_method == "http_endpoint":
+            return self._check_http_health(endpoint)
+        else:  # tcp_port
+            return self._check_tcp_health(endpoint)
+
+    def _check_grpc_health(self, endpoint: ServiceEndpoint) -> Tuple[bool, str]:
+        """Check health using gRPC health.proto"""
+        if not GRPC_HEALTH_AVAILABLE:
+            return False, "gRPC health checking not available (missing proto clients)"
+
+        try:
+            channel = grpc.insecure_channel(endpoint.grpc_endpoint)
+            health_client = health_pb2_grpc.HealthServiceStub(channel)
+
+            request = health_pb2.HeartbeatRequest()
+            response = health_client.Heartbeat(request, timeout=5.0)
+
+            if response.alive and response.status == health_pb2.HEALTH_STATUS_HEALTHY:
+                return True, f"gRPC healthy (v{response.version}, uptime: {response.uptime_ms}ms)"
+            else:
+                return False, f"gRPC unhealthy (status: {response.status})"
+
+        except grpc.RpcError as e:
+            return False, f"gRPC health check failed: {e.code()}"
+        except Exception as e:
+            return False, f"gRPC health check error: {e}"
+        finally:
             try:
-                response = requests.get(service.health_url, timeout=service.timeout)
-                if response.status_code == 200:
-                    return True, "Service healthy"
-                else:
-                    return False, f"Health check failed: HTTP {response.status_code}"
-            except requests.exceptions.RequestException as e:
-                return False, f"Health check failed: {e}"
-        else:
-            # TCP port check for services without HTTP health endpoints
-            return self._check_tcp_port(service.health_port), "Port check"
+                channel.close()
+            except:
+                pass
+
+    def _check_http_health(self, endpoint: ServiceEndpoint) -> Tuple[bool, str]:
+        """Check health using HTTP endpoint"""
+        try:
+            response = requests.get(endpoint.full_health_url, timeout=10)
+            if response.status_code == 200:
+                return True, "HTTP healthy"
+            else:
+                return False, f"HTTP health check failed: {response.status_code}"
+        except requests.exceptions.RequestException as e:
+            return False, f"HTTP health check failed: {e}"
+
+    def _check_tcp_health(self, endpoint: ServiceEndpoint) -> Tuple[bool, str]:
+        """Check health using TCP port connectivity"""
+        is_healthy = self._check_tcp_port(endpoint.port)
+        return is_healthy, "TCP port check"
     
     def _is_container_running(self, container_name: str) -> bool:
         """Check if Docker container is running"""

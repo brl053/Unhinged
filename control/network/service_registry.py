@@ -29,33 +29,64 @@ class ServiceStatus(Enum):
 
 @dataclass
 class ServiceEndpoint:
-    """Service endpoint configuration."""
+    """
+    Service endpoint configuration with proper protocol separation.
+
+    - gRPC services use health.proto for internal health checking
+    - HTTP services use traditional HTTP health endpoints
+    - TCP services use port connectivity checks
+    """
     name: str
     host: str
     port: int
-    protocol: str
-    health_url: Optional[str] = None
+    protocol: str  # "grpc", "http", "tcp", "postgresql"
+    health_url: Optional[str] = None  # For HTTP services only
     description: str = ""
     required: bool = False
     tags: List[str] = None
-    
+    # gRPC-specific configuration
+    grpc_port: Optional[int] = None  # If different from main port
+    implements_health_proto: bool = False  # Uses health.proto gRPC service
+
     def __post_init__(self):
         if self.tags is None:
             self.tags = []
-    
+        # Set grpc_port to main port if not specified for gRPC services
+        if self.protocol == "grpc" and self.grpc_port is None:
+            self.grpc_port = self.port
+
     @property
     def base_url(self) -> str:
-        """Get base URL for service."""
-        return f"{self.protocol}://{self.host}:{self.port}"
-    
+        """Get base URL for HTTP services."""
+        if self.protocol in ["http", "https"]:
+            return f"{self.protocol}://{self.host}:{self.port}"
+        return f"{self.host}:{self.port}"
+
+    @property
+    def grpc_endpoint(self) -> Optional[str]:
+        """Get gRPC endpoint for health.proto checking."""
+        if self.protocol == "grpc" and self.grpc_port:
+            return f"{self.host}:{self.grpc_port}"
+        return None
+
     @property
     def full_health_url(self) -> str:
-        """Get full health check URL."""
-        if self.health_url:
+        """Get full health check URL for HTTP services."""
+        if self.protocol in ["http", "https"] and self.health_url:
             if self.health_url.startswith('http'):
                 return self.health_url
             return f"{self.base_url}{self.health_url}"
         return f"{self.base_url}/health"
+
+    @property
+    def health_check_method(self) -> str:
+        """Determine the appropriate health check method."""
+        if self.protocol == "grpc" and self.implements_health_proto:
+            return "grpc_health_proto"
+        elif self.protocol in ["http", "https"]:
+            return "http_endpoint"
+        else:
+            return "tcp_port"
 
 
 class ServiceRegistry:
@@ -76,57 +107,59 @@ class ServiceRegistry:
     
     def _load_service_definitions(self):
         """Load service definitions from configuration."""
-        # Default service definitions
+        # Service definitions with correct protocol configurations
         default_services = {
             "llm": ServiceEndpoint(
                 name="LLM Service (Ollama)",
                 host="localhost",
                 port=1500,
                 protocol="http",
-                health_url="/api/tags",
+                health_url="/api/tags",  # Ollama's health endpoint
                 description="Local LLM service for chat functionality",
                 required=True,
                 tags=["ai", "llm", "ollama"]
             ),
             "persistence-platform": ServiceEndpoint(
                 name="Persistence Platform",
-                host="localhost", 
-                port=8190,
+                host="localhost",
+                port=1300,
                 protocol="http",
                 health_url="/api/v1/health",
                 description="Independent Kotlin persistence platform",
                 required=False,
-                tags=["database", "persistence", "kotlin"]
+                tags=["database", "persistence", "kotlin"],
+                grpc_port=1301,  # Future gRPC port
+                implements_health_proto=False  # Not yet implemented
             ),
             "speech-to-text": ServiceEndpoint(
                 name="Speech-to-Text Service",
                 host="localhost",
-                port=8100,
-                protocol="http", 
-                health_url="/health",
+                port=1191,  # gRPC port (external mapping)
+                protocol="grpc",
                 description="Whisper-based speech transcription",
                 required=False,
-                tags=["ai", "speech", "whisper"]
+                tags=["ai", "speech", "whisper"],
+                implements_health_proto=True  # Uses health.proto
             ),
             "text-to-speech": ServiceEndpoint(
                 name="Text-to-Speech Service",
                 host="localhost",
-                port=8002,
-                protocol="http",
-                health_url="/health", 
+                port=9092,  # Internal gRPC port
+                protocol="grpc",
                 description="Neural voice synthesis",
                 required=False,
-                tags=["ai", "tts", "voice"]
+                tags=["ai", "tts", "voice"],
+                implements_health_proto=True  # Uses health.proto
             ),
             "vision-ai": ServiceEndpoint(
                 name="Vision AI Service",
                 host="localhost",
-                port=8001,
-                protocol="http",
-                health_url="/health",
+                port=9093,  # Internal gRPC port
+                protocol="grpc",
                 description="BLIP-based image analysis",
                 required=False,
-                tags=["ai", "vision", "blip"]
+                tags=["ai", "vision", "blip"],
+                implements_health_proto=True  # Uses health.proto
             ),
             "database": ServiceEndpoint(
                 name="Database",
@@ -136,6 +169,7 @@ class ServiceRegistry:
                 description="PostgreSQL database",
                 required=False,
                 tags=["database", "postgresql"]
+                # Uses TCP port check (default for non-HTTP/gRPC)
             )
         }
         
