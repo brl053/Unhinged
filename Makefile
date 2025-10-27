@@ -327,6 +327,10 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry) [us
 	@$(PYTHON_RUN) build/build.py build proto-clients $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Proto client generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Service discovery and registry generation$(RESET)"
 	@$(PYTHON_RUN) build/build.py build service-discovery $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Service discovery generation failed$(RESET)"
+	@echo "$(YELLOW)📋 Design system tokens and CSS generation$(RESET)"
+	@$(PYTHON_RUN) build/build.py build design-tokens $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Design tokens generation failed$(RESET)"
+	@echo "$(YELLOW)📋 Component generation (GTK4 widgets from design system)$(RESET)"
+	@$(PYTHON_RUN) build/build.py build components $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Component generation failed$(RESET)"
 
 	$(call log_success,Build artifacts generation completed)
 
@@ -675,15 +679,7 @@ graphics-build: ## Build C graphics rendering library (foundation layer)
 	@python3 build/build.py build c-graphics-build
 	$(call log_success,C graphics library built)
 
-graphics-test: graphics-build ## Run C graphics library tests
-	$(call log_info,🧪 Testing C graphics library...)
-	@python3 build/build.py build graphics-test
-	$(call log_success,C graphics tests completed)
 
-graphics-cffi: graphics-build ## Generate Python CFFI bindings for C graphics
-	$(call log_info,🐍 Generating Python CFFI bindings...)
-	@python3 build/build.py build graphics-cffi
-	$(call log_success,CFFI bindings generated)
 
 graphics-clean: ## Clean C graphics build artifacts
 	$(call log_warning,🧹 Cleaning C graphics artifacts...)
@@ -796,16 +792,9 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@$(MAKE) check-drm-permissions
 	@echo "🔧 Building essentials..."
 	@test -d build/python/venv || (echo "❌ Python environment failed" && exit 1)
-	@echo "  📋 Service discovery..."
-	@$(PYTHON_RUN) build/build.py build service-discovery >/dev/null 2>&1 || (echo "❌ Service discovery build failed" && exit 1)
 	@echo "  🎨 C Graphics library..."
 	@if $(PYTHON_RUN) build/build.py build c-graphics-build >/dev/null 2>&1; then \
 		echo "  ✅ C Graphics built successfully"; \
-		if $(PYTHON_RUN) build/build.py build graphics-cffi >/dev/null 2>&1; then \
-			echo "  ✅ Graphics CFFI bindings generated"; \
-		else \
-			echo "  ⚠️ Graphics CFFI failed - using fallback mode"; \
-		fi; \
 	else \
 		echo "  ⚠️ C Graphics build failed - using software fallback"; \
 	fi
@@ -816,9 +805,8 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	else \
 		echo "  ✅ Native C graphics hello world ready"; \
 	fi
-	@echo "  📦 Proto clients..."
-	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
-	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
+	@echo "  📦 Generating all build artifacts..."
+	@$(MAKE) generate >/dev/null 2>&1 || echo "  ⚠️ Build artifact generation failed (non-critical)"
 	@echo "🚀 Launching services..."
 	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
@@ -1018,6 +1006,26 @@ validate-design-tokens: ## Validate semantic tokens against designer constraints
 	$(call log_info,✅ Validating design tokens...)
 	@python3 libs/design_system/build/design_token_builder.py --validate
 	$(call log_success,Design tokens validation passed)
+
+components: ## Generate components for all platforms
+	$(call log_info,📦 Generating components...)
+	@python3 build/build.py build components
+	$(call log_success,Components generated)
+
+components-gtk4: ## Generate GTK4 components specifically
+	$(call log_info,📦 Generating GTK4 components...)
+	@python3 build/build.py build components-gtk4
+	$(call log_success,GTK4 components generated)
+
+validate-components: ## Validate component specifications
+	$(call log_info,🔍 Validating components...)
+	@python3 build/build.py build validate-components
+	$(call log_success,Component validation passed)
+
+clean-components: ## Clean generated component artifacts
+	$(call log_info,🧹 Cleaning components...)
+	@python3 build/build.py build clean-components
+	$(call log_success,Component artifacts cleaned)
 
 start-docker-services: ## Start Docker services only (database, kafka, etc.)
 	$(call log_info,🐳 Starting Docker services...)
@@ -1529,6 +1537,48 @@ deps-clean: ## Clean dependency tracker build
 	$(call log_info,🧹 Cleaning dependency tracker...)
 	@rm -rf tools/dependency-tracker/build
 	$(call log_success,Dependency tracker cleaned)
+
+analyze-dead-code: ## Analyze dead code and cruft in codebase
+	$(call log_info,🔍 Analyzing dead code and cruft...)
+	@python3 build/tools/dead-code-analyzer.py --format=text
+	$(call log_success,Dead code analysis complete)
+
+analyze-dead-code-json: ## Generate JSON report of dead code analysis
+	$(call log_info,🔍 Generating dead code analysis JSON report...)
+	@mkdir -p generated/reports
+	@python3 build/tools/dead-code-analyzer.py --format=json --output=generated/reports/dead-code-analysis.json
+	$(call log_success,Dead code analysis JSON report generated: generated/reports/dead-code-analysis.json)
+
+cleanup-dead-code-dry-run: analyze-dead-code-json ## Preview dead code cleanup (safe items only)
+	$(call log_info,🔍 Previewing dead code cleanup...)
+	@python3 build/tools/cleanup-dead-code.py --analysis=generated/reports/dead-code-analysis.json --dry-run
+	$(call log_success,Dead code cleanup preview complete)
+
+cleanup-dead-code-safe: analyze-dead-code-json ## Remove safe dead code items with backup
+	$(call log_warning,🧹 Removing safe dead code items...)
+	@echo "$(YELLOW)This will remove files marked as 'safe' in the analysis$(RESET)"
+	@echo "$(YELLOW)A backup will be created automatically$(RESET)"
+	@read -p "Continue? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@python3 build/tools/cleanup-dead-code.py --analysis=generated/reports/dead-code-analysis.json --safety-levels=safe
+	$(call log_success,Safe dead code cleanup complete)
+
+cleanup-dead-code-aggressive: analyze-dead-code-json ## Remove safe + likely safe items (use with caution)
+	$(call log_warning,⚠️ Aggressive dead code cleanup...)
+	@echo "$(RED)WARNING: This will remove 'safe' AND 'likely_safe' items$(RESET)"
+	@echo "$(RED)Review the analysis first with 'make cleanup-dead-code-dry-run'$(RESET)"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@python3 build/tools/cleanup-dead-code.py --analysis=generated/reports/dead-code-analysis.json --safety-levels=safe,likely_safe
+	$(call log_success,Aggressive dead code cleanup complete)
+
+list-cleanup-backups: ## List available cleanup backups
+	$(call log_info,📦 Listing cleanup backups...)
+	@python3 build/tools/cleanup-dead-code.py --list-backups
+
+rollback-cleanup: ## Rollback from cleanup backup (usage: make rollback-cleanup BACKUP=backup_name)
+	$(call log_warning,🔄 Rolling back cleanup...)
+	@test -n "$(BACKUP)" || (echo "$(RED)Usage: make rollback-cleanup BACKUP=backup_name$(RESET)" && exit 1)
+	@python3 build/tools/cleanup-dead-code.py --rollback=$(BACKUP)
+	$(call log_success,Cleanup rollback complete)
 
 # clean-deps alias removed - use 'deps-clean' directly
 

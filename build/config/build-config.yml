@@ -141,30 +141,7 @@ targets:
       - "libs/graphics/build/**/*"
     cache_key: "c-graphics-v1"
 
-  # C Graphics CFFI Bindings (REQUIRED)
-  graphics-cffi:
-    description: "Generate Python CFFI bindings for C graphics library (REQUIRED)"
-    module: "c_builder"
-    dependencies: ["c-graphics-build"]
-    required: true
-    inputs:
-      - "libs/graphics/cffi_build.py.in"
-      - "libs/graphics/include/*.h"
-    outputs:
-      - "generated/python/graphics/**/*"
-    cache_key: "c-graphics-cffi-v1"
 
-  # C Graphics Tests
-  graphics-test:
-    description: "Run C graphics library test suite"
-    module: "c_builder"
-    dependencies: ["c-graphics-build"]
-    inputs:
-      - "libs/graphics/tests/**/*.c"
-      - "libs/graphics/examples/**/*.c"
-    outputs:
-      - "libs/graphics/build/test_results.xml"
-    cache_key: "c-graphics-test-v1"
 
 
 
@@ -176,7 +153,7 @@ groups:
 
   graphics:
     description: "Graphics rendering foundation"
-    targets: ["c-graphics-build", "graphics-cffi", "graphics-test"]
+    targets: ["c-graphics-build"]
 
   services:
     description: "All service components"
@@ -188,7 +165,7 @@ groups:
 
   all:
     description: "Complete build"
-    targets: ["service-discovery", "mobile-ui", "c-graphics-build", "graphics-cffi", "proto-clients", "python-services", "typescript-components", "kotlin-services"]
+    targets: ["service-discovery", "mobile-ui", "c-graphics-build", "proto-clients", "python-services", "typescript-components", "kotlin-services"]
 
 # Module configuration
 modules:

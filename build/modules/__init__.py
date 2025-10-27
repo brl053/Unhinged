@@ -304,6 +304,7 @@ def _auto_register_modules():
         ('c_builder', 'CBuilder'),
         ('dual_system_builder', 'DualSystemBuilder'),
         ('design_token_builder', 'DesignTokenBuilder'),
+        ('component_build_module', 'ComponentBuildModule'),
     ]
 
     for module_name, class_name in modules_to_register:
@@ -327,6 +328,13 @@ def _auto_register_modules():
                 sys.path.insert(0, str(design_system_path))
                 from design_token_builder import DesignTokenBuilder
                 register_module(DesignTokenBuilder(dummy_context))
+            elif module_name == 'component_build_module':
+                # Import component build module from design system
+                import sys
+                design_system_path = dummy_context.project_root / "libs" / "design_system" / "build"
+                sys.path.insert(0, str(design_system_path))
+                from component_build_module import ComponentBuildModule
+                register_module(ComponentBuildModule(dummy_context))
         except (ImportError, AttributeError) as e:
             # Module not available, skip silently
             logger.debug(f"Could not register {class_name}: {e}")

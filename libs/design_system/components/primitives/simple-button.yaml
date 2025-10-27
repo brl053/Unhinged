@@ -1,0 +1,137 @@
+# Simple Button Component Specification
+# @llm-type component-specification
+# @llm-legend Minimal button component specification for testing component generation pipeline
+# @llm-key Simple interactive button with correct token references for validation testing
+# @llm-map Test component for validating component generation system
+# @llm-axiom Simple component specifications should validate without errors
+# @llm-contract Minimal button interface with proper token references and required fields
+# @llm-token simple-button: Test component for component generation validation
+
+component:
+  id: "simple-button"
+  name: "Simple Button"
+  category: "primitive"
+  
+  description: |
+    Minimal button component for testing the component generation pipeline.
+    Uses only validated design tokens and includes all required fields.
+    
+    This is a test component to validate the component generation system
+    works correctly with proper token references.
+
+  interface:
+    properties:
+      label:
+        type: "string"
+        required: true
+        description: "Button text content displayed to user"
+      
+      disabled:
+        type: "boolean"
+        default: false
+        description: "When true, button is non-interactive and visually dimmed"
+    
+    states:
+      default:
+        description: "Initial appearance, ready for interaction"
+        visual_tokens: ["colors.action.primary", "colors.text.inverse"]
+        triggers: ["component_mount"]
+      
+      hover:
+        description: "Mouse hover state"
+        visual_tokens: ["colors.action.primary", "colors.interactive.hover"]
+        triggers: ["pointer_enter"]
+        transitions: ["default", "active"]
+      
+      active:
+        description: "Pressed/clicked state"
+        visual_tokens: ["colors.action.primary", "colors.interactive.active"]
+        triggers: ["pointer_down", "keyboard_enter"]
+        transitions: ["default", "hover"]
+      
+      disabled:
+        description: "Non-interactive state"
+        visual_tokens: ["colors.action.disabled", "colors.text.disabled"]
+        triggers: ["disabled_property_true"]
+        transitions: ["default"]
+    
+    events:
+      click:
+        description: "Button clicked by user"
+        payload:
+          button_id: "string"
+          timestamp: "number"
+
+  styling:
+    default_state:
+      background: "colors.action.primary"
+      color: "colors.text.inverse"
+      padding_vertical: "spacing.scale.sp_2"
+      padding_horizontal: "spacing.scale.sp_4"
+      border: "none"
+      border_radius: "4px"
+      font_family: "typography.families.prose"
+      font_size: "typography.scale.body.size"
+      cursor: "pointer"
+      min_height: "44px"
+    
+    state_overrides:
+      hover:
+        background: "colors.action.primary"
+        opacity: 0.9
+      
+      active:
+        background: "colors.action.primary"
+        opacity: 0.8
+      
+      disabled:
+        background: "colors.action.disabled"
+        color: "colors.text.disabled"
+        cursor: "not-allowed"
+        opacity: 0.6
+
+  composition:
+    is_leaf: true
+    can_contain: []
+    required_context: []
+    layout_type: "inline"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Enter"
+        action: "activate_button"
+      - key: "Space"
+        action: "activate_button"
+      - key: "Tab"
+        action: "focus_next_element"
+      - key: "Shift+Tab"
+        action: "focus_previous_element"
+    
+    aria_attributes:
+      - "aria-label or aria-labelledby required"
+      - "aria-disabled when disabled property is true"
+
+  examples:
+    - name: "Primary button"
+      description: "Standard primary action button"
+      properties:
+        label: "Save Changes"
+    
+    - name: "Disabled button"
+      description: "Non-interactive button state"
+      properties:
+        label: "Submit"
+        disabled: true
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-27"
+  design_review: "approved"
+  implementation_status:
+    gtk4: "pending"
+    alpine_native: "pending"
