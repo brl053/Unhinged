@@ -68,6 +68,11 @@ class UnhingedDesktopApp(Adw.Application):
 
     GTK4/Libadwaita application that provides graphical interface
     for Unhinged platform functionality.
+
+    Features:
+    - Design system integration with semantic tokens
+    - CSS loading from generated/design_system/gtk4/
+    - Graceful fallback to Libadwaita defaults
     """
 
     def __init__(self):
@@ -81,6 +86,9 @@ class UnhingedDesktopApp(Adw.Application):
         self.stop_button = None
         self.process = None
         self.running = False
+
+        # Development mode detection
+        self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
 
         # Initialize session logging
         self.session_logger = None
@@ -100,11 +108,100 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Control module availability
         self.control_available = CONTROL_MODULES_AVAILABLE
-        
+
+        # Design system CSS provider (for delayed loading)
+        self._pending_css_provider = None
+
+    def _load_design_system_css(self):
+        """
+        Load the generated design system CSS files.
+
+        Loads semantic tokens and theme CSS from the design system
+        to provide consistent styling across the application.
+        """
+        try:
+            css_provider = Gtk.CssProvider()
+
+            # Path to generated CSS files
+            css_dir = self.project_root / "generated" / "design_system" / "gtk4"
+
+            # Load CSS files in correct order
+            css_files = [
+                "design-tokens.css",    # Base semantic tokens
+                "theme-light.css",      # Light theme (default)
+                "components.css"        # Component patterns
+            ]
+
+            combined_css = ""
+            loaded_files = []
+
+            for css_file in css_files:
+                css_path = css_dir / css_file
+                if css_path.exists():
+                    combined_css += css_path.read_text() + "\n"
+                    loaded_files.append(css_file)
+                    print(f"✅ Loaded design system CSS: {css_file}")
+                else:
+                    print(f"⚠️  Design system CSS not found: {css_file}")
+
+            if combined_css:
+                # Add minimal semantic token test class
+                test_css = """
+                /* Design system integration test */
+                .ds-semantic-primary {
+                    background-color: var(--color-action-primary);
+                    color: var(--color-text-inverse);
+                }
+                """
+                combined_css += test_css
+
+                css_provider.load_from_data(combined_css.encode())
+
+                # Apply CSS to display (requires window to be created)
+                if self.window:
+                    display = self.window.get_display()
+                    Gtk.StyleContext.add_provider_for_display(
+                        display,
+                        css_provider,
+                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                    )
+                else:
+                    # Store CSS provider for later application
+                    self._pending_css_provider = css_provider
+
+                print(f"✅ Design system CSS loaded successfully ({len(loaded_files)} files)")
+
+                # Log to session if available
+                if self.session_logger:
+                    self.session_logger.log_gui_event("DESIGN_SYSTEM_LOADED",
+                                                    f"Loaded {len(loaded_files)} CSS files: {', '.join(loaded_files)}")
+            else:
+                print("ℹ️  No design system CSS files found - using Libadwaita defaults")
+
+        except Exception as e:
+            print(f"❌ Failed to load design system CSS: {e}")
+            # App continues with Libadwaita defaults
+            if self.session_logger:
+                self.session_logger.log_gui_event("DESIGN_SYSTEM_ERROR", f"CSS loading failed: {e}")
+
     def do_activate(self):
         """Application activation - create and show main window"""
         if not self.window:
             self.window = self.create_main_window()
+
+            # Load design system CSS after window creation
+            self._load_design_system_css()
+
+            # Apply any pending CSS provider
+            if self._pending_css_provider:
+                display = self.window.get_display()
+                Gtk.StyleContext.add_provider_for_display(
+                    display,
+                    self._pending_css_provider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+                self._pending_css_provider = None
+                print("✅ Applied pending design system CSS to display")
 
         # Log application activation
         if self.session_logger:
@@ -121,7 +218,13 @@ class UnhingedDesktopApp(Adw.Application):
         """
         # Create main window
         window = Adw.ApplicationWindow(application=self)
-        window.set_title("Unhinged - Native Graphics Platform")
+
+        # Set title based on mode
+        if self.dev_mode:
+            window.set_title("Unhinged - Development Mode")
+        else:
+            window.set_title("Unhinged - Native Graphics Platform")
+
         window.set_default_size(800, 600)
         window.set_icon_name("applications-graphics")
 
@@ -137,19 +240,24 @@ class UnhingedDesktopApp(Adw.Application):
         main_box.set_margin_bottom(24)
         main_box.set_margin_start(24)
         main_box.set_margin_end(24)
-        
+
         # Welcome section
         welcome_group = self.create_welcome_section()
         main_box.append(welcome_group)
-        
+
         # Control section
         control_group = self.create_control_section()
         main_box.append(control_group)
-        
+
         # Status section
         status_group = self.create_status_section()
         main_box.append(status_group)
-        
+
+        # Development section (only in dev mode)
+        if self.dev_mode:
+            dev_group = self.create_development_section()
+            main_box.append(dev_group)
+
         # Log section
         log_group = self.create_log_section()
         main_box.append(log_group)
@@ -273,7 +381,73 @@ class UnhingedDesktopApp(Adw.Application):
         group.add(features_row)
 
         return group
-    
+
+    def create_development_section(self):
+        """Create development section with power user tools (dev mode only)."""
+        group = Adw.PreferencesGroup()
+        group.set_title("Development Tools")
+        group.set_description("Power user interface for system development and debugging")
+
+        # Build system row
+        build_row = Adw.ActionRow()
+        build_row.set_title("Build System")
+        build_row.set_subtitle("Generate artifacts and build components")
+
+        # Build buttons
+        build_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        generate_btn = Gtk.Button.new_with_label("Generate")
+        generate_btn.add_css_class("suggested-action")
+        generate_btn.connect("clicked", lambda btn: self._run_command("generate"))
+        build_box.append(generate_btn)
+
+        clean_btn = Gtk.Button.new_with_label("Clean")
+        clean_btn.connect("clicked", lambda btn: self._run_command("clean"))
+        build_box.append(clean_btn)
+
+        build_row.add_suffix(build_box)
+        group.add(build_row)
+
+        # Service monitoring row
+        services_row = Adw.ActionRow()
+        services_row.set_title("Service Monitoring")
+        services_row.set_subtitle("Monitor and manage system services")
+
+        # Service buttons
+        service_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        health_btn = Gtk.Button.new_with_label("Health Check")
+        health_btn.connect("clicked", lambda btn: self._run_command("health"))
+        service_box.append(health_btn)
+
+        status_btn = Gtk.Button.new_with_label("Service Status")
+        status_btn.connect("clicked", lambda btn: self._run_command("service-status"))
+        service_box.append(status_btn)
+
+        services_row.add_suffix(service_box)
+        group.add(services_row)
+
+        # Graphics development row
+        graphics_row = Adw.ActionRow()
+        graphics_row.set_title("Graphics Development")
+        graphics_row.set_subtitle("Build and test graphics subsystem")
+
+        # Graphics buttons
+        graphics_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        graphics_build_btn = Gtk.Button.new_with_label("Build Graphics")
+        graphics_build_btn.connect("clicked", lambda btn: self._run_command("graphics-build"))
+        graphics_box.append(graphics_build_btn)
+
+        graphics_test_btn = Gtk.Button.new_with_label("Test Graphics")
+        graphics_test_btn.connect("clicked", lambda btn: self._run_command("graphics-hello-world"))
+        graphics_box.append(graphics_test_btn)
+
+        graphics_row.add_suffix(graphics_box)
+        group.add(graphics_row)
+
+        return group
+
     def create_control_section(self):
         """Create control section with start/stop buttons"""
         group = Adw.PreferencesGroup()
@@ -291,6 +465,8 @@ class UnhingedDesktopApp(Adw.Application):
         # Start button
         self.start_button = Gtk.Button.new_with_label("Start Platform")
         self.start_button.add_css_class("suggested-action")
+        # Add design system semantic token test
+        self.start_button.add_css_class("ds-semantic-primary")
         self.start_button.connect("clicked", self.on_start_clicked)
         button_box.append(self.start_button)
 
@@ -387,7 +563,44 @@ class UnhingedDesktopApp(Adw.Application):
         
         group.add(scrolled_log)
         return group
-    
+
+    def _run_command(self, command):
+        """Run a command using the unified entry point."""
+        try:
+            # Use the unified entry point for consistency
+            if command == "generate":
+                subprocess.run([str(self.project_root / "unhinged"), "build", "generate"],
+                             cwd=self.project_root, check=True)
+            elif command == "clean":
+                subprocess.run([str(self.project_root / "unhinged"), "build", "clean"],
+                             cwd=self.project_root, check=True)
+            elif command == "health":
+                subprocess.run([str(self.project_root / "unhinged"), "admin", "services", "check"],
+                             cwd=self.project_root, check=True)
+            elif command == "service-status":
+                subprocess.run([str(self.project_root / "unhinged"), "admin", "services", "list"],
+                             cwd=self.project_root, check=True)
+            elif command == "graphics-build":
+                subprocess.run([str(self.project_root / "unhinged"), "graphics", "build"],
+                             cwd=self.project_root, check=True)
+            elif command == "graphics-hello-world":
+                subprocess.run([str(self.project_root / "unhinged"), "graphics", "test"],
+                             cwd=self.project_root, check=True)
+            else:
+                # Fallback to make command
+                subprocess.run(["make", command], cwd=self.project_root, check=True)
+
+            self.show_toast(f"Command '{command}' completed successfully")
+
+        except subprocess.CalledProcessError as e:
+            self.show_toast(f"Command '{command}' failed: {e}")
+        except Exception as e:
+            self.show_toast(f"Error running command: {e}")
+
+    def show_toast(self, message):
+        """Show a toast notification."""
+        print(f"Toast: {message}")  # Simple fallback for now
+
     def update_status(self, message, progress=None):
         """Update status label and progress bar"""
         GLib.idle_add(self._update_status_ui, message, progress)
