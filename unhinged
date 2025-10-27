@@ -110,8 +110,19 @@ cmd_start() {
 cmd_stop() {
     log_info "Stopping Unhinged system gracefully..."
     cd "$PROJECT_ROOT"
-    # TODO: Implement graceful shutdown
-    exec make down "$@"
+
+    # Graceful shutdown sequence
+    log_info "Shutting down services..."
+    make down 2>/dev/null || true
+
+    log_info "Stopping development services..."
+    make dev-down 2>/dev/null || true
+
+    log_info "Cleaning up processes..."
+    pkill -f "python3.*desktop_app.py" 2>/dev/null || true
+    pkill -f "unhinged" 2>/dev/null || true
+
+    log_success "Unhinged system stopped gracefully"
 }
 
 cmd_status() {
@@ -128,8 +139,9 @@ cmd_logs() {
 
 cmd_restart() {
     log_info "Restarting Unhinged system..."
-    cd "$PROJECT_ROOT"
-    exec make restart "$@"
+    cmd_stop
+    sleep 2
+    cmd_start "$@"
 }
 
 cmd_dev() {
