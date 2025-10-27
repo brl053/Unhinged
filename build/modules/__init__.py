@@ -303,6 +303,7 @@ def _auto_register_modules():
         ('kotlin_builder', 'KotlinBuilder'),
         ('c_builder', 'CBuilder'),
         ('dual_system_builder', 'DualSystemBuilder'),
+        ('design_token_builder', 'DesignTokenBuilder'),
     ]
 
     for module_name, class_name in modules_to_register:
@@ -319,6 +320,13 @@ def _auto_register_modules():
             elif module_name == 'dual_system_builder':
                 from .dual_system_builder import DualSystemBuilder
                 register_module(DualSystemBuilder(dummy_context))
+            elif module_name == 'design_token_builder':
+                # Import from design system build directory
+                import sys
+                design_system_path = dummy_context.project_root / "libs" / "design_system" / "build"
+                sys.path.insert(0, str(design_system_path))
+                from design_token_builder import DesignTokenBuilder
+                register_module(DesignTokenBuilder(dummy_context))
         except (ImportError, AttributeError) as e:
             # Module not available, skip silently
             logger.debug(f"Could not register {class_name}: {e}")

@@ -2,28 +2,25 @@
 
 """
 @llm-type build-module
-@llm-legend Polyglot design token generation module using unified DRY architecture
-@llm-key Generates GTK4 CSS, TypeScript constants, Kotlin styling, C headers from YAML design tokens
-@llm-map Integrates with build orchestrator to provide cached, parallel design token generation with DRY principles
-@llm-axiom Design tokens must be generated before UI compilation and provide consistent styling across all platforms
-@llm-contract Implements BuildModule interface with polyglot engine for consistent multi-language design token generation
-@llm-token design-token-builder: DRY polyglot design system generation from YAML token definitions
+@llm-legend Design token generation module following ProtoClientBuilder architecture pattern
+@llm-key Generates GTK4 CSS from YAML design tokens with dependency tracking and caching
+@llm-map Integrates with build orchestrator to provide cached design token generation
+@llm-axiom Design tokens must be generated before UI compilation and provide consistent styling
+@llm-contract Implements BuildModule interface for design token generation with validation
+@llm-token design-token-builder: Design system generation from semantic YAML token definitions
 
-Design Token to Polyglot Generation Module (DRY Architecture)
+Design Token Builder Module (Following ProtoClientBuilder Pattern)
 
 Generates design system artifacts from YAML token definitions for:
-- GTK4 CSS (desktop applications)
-- TypeScript (web interfaces and React components)
-- Kotlin (JVM services and Android styling)
-- C/C++ (graphics library constants)
+- GTK4 CSS (desktop applications) - Primary target
+- Future: TypeScript, Kotlin, C implementations
 
 Features:
-- Unified polyglot generation engine (DRY principle)
-- Language-specific handlers for customization
+- Follows established ProtoClientBuilder architecture
 - Intelligent dependency tracking and caching
-- Parallel generation across languages
-- Cross-platform design consistency
-- Action-first semantic naming support
+- Semantic token validation
+- GTK4-specific CSS generation
+- Theme-aware output (light/dark variants)
 
 Author: Unhinged Team
 Version: 1.0.0
@@ -32,224 +29,390 @@ Date: 2025-10-27
 
 import time
 import yaml
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
+# Import build system components
 try:
     import sys
     sys.path.append(str(Path(__file__).parent.parent.parent.parent / "build" / "modules"))
     from __init__ import BuildModule, BuildContext, BuildModuleResult, BuildUtils, BuildArtifact
 except ImportError:
-    # Fallback for development
+    # Fallback for development/testing
+    print("Warning: Build system modules not available, using fallback classes")
     class BuildModule:
-        def __init__(self, context): pass
-    class BuildContext: pass
-    class BuildModuleResult: pass
+        def __init__(self, context):
+            self.context = context
+    class BuildContext:
+        def __init__(self):
+            self.project_root = Path.cwd()
+    class BuildModuleResult:
+        def __init__(self, success, artifacts, build_time, message):
+            self.success = success
+            self.artifacts = artifacts
+            self.build_time = build_time
+            self.message = message
     class BuildUtils: pass
-    class BuildArtifact: pass
+    class BuildArtifact:
+        def __init__(self, path, type, platform, description):
+            self.path = path
+            self.type = type
+            self.platform = platform
+            self.description = description
+
+# Import GTK4 generator
+from generators.gtk4_generator import GTK4CSSGenerator
 
 
 class DesignTokenBuilder(BuildModule):
     """
     @llm-type build-module
-    @llm-legend Polyglot design token generation using unified DRY engine architecture
-    @llm-key Orchestrates GTK4, TypeScript, Kotlin, C design token generation through pluggable handlers
-    @llm-map Build module that eliminates code duplication in design token generation across multiple platforms
-    @llm-axiom All design token generation must use the unified engine for consistency
-    @llm-contract Returns BuildModuleResult with generated design artifacts across all specified platforms
-    @llm-token polyglot-design-builder: Unified multi-platform design token generation orchestrator
+    @llm-legend Design token generation following ProtoClientBuilder architecture pattern
+    @llm-key Orchestrates GTK4 CSS generation from semantic YAML tokens with caching and validation
+    @llm-map Build module that generates design system artifacts with dependency tracking
+    @llm-axiom Design tokens serve as single source of truth for all styling decisions
+    @llm-contract Returns BuildModuleResult with generated design artifacts for specified platforms
+    @llm-token design-token-builder: Semantic design token generation with build system integration
     """
-    
+
     def __init__(self, context: BuildContext):
         super().__init__(context)
         self.tokens_dir = context.project_root / "libs" / "design_system" / "tokens"
-        self.themes_dir = context.project_root / "libs" / "design_system" / "themes"
         self.output_base = context.project_root / "generated" / "design_system"
-        
-        # Supported platforms
-        self.supported_platforms = ['gtk4', 'typescript', 'kotlin', 'c']
-        
-        # Token files to process
-        self.token_files = ['colors.yaml', 'typography.yaml', 'spacing.yaml', 'elevation.yaml', 'motion.yaml']
-        
-        # Loaded token data
-        self.tokens = {}
-        self.themes = {}
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
+        # Primary platform (following designer specifications)
+        self.primary_platform = 'gtk4'
+        self.supported_platforms = ['gtk4']  # Start with GTK4, expand later
+
+        # Token files to process (designer's constraint system)
+        self.token_files = [
+            'colors.yaml',      # 16 semantic color roles
+            'typography.yaml',  # 5 type sizes, 3 weights, 2 families
+            'spacing.yaml',     # 10 spacing values, 4px base unit
+            'elevation.yaml',   # 4 shadow depths, relative z-index
+            'motion.yaml',      # Interaction states system
+            'components.yaml'   # Component composition primitives
+        ]
+
+        # Initialize GTK4 generator
+        self.gtk4_generator = GTK4CSSGenerator(
+            self.tokens_dir,
+            self.output_base / "gtk4"
+        )
     
     def can_handle(self, target_name: str) -> bool:
         """Check if this module can handle design token generation targets"""
         design_targets = {
             'design-tokens', 'design-tokens-all', 'design-tokens-gtk4',
-            'design-tokens-typescript', 'design-tokens-kotlin', 'design-tokens-c',
-            'design-system', 'styling', 'tokens'
+            'design-system', 'styling', 'tokens', 'css-tokens'
         }
         return target_name in design_targets or 'design-token' in target_name
-    
+
     def get_dependencies(self, target_name: str) -> List[str]:
-        """Get design token file dependencies"""
+        """Get design token file dependencies for caching"""
         dependencies = []
-        
-        # All token files
+
+        # All semantic token files (designer's constraint system)
         if self.tokens_dir.exists():
             for token_file in self.token_files:
                 token_path = self.tokens_dir / token_file
                 if token_path.exists():
                     dependencies.append(str(token_path))
-        
-        # Theme files
-        if self.themes_dir.exists():
-            for theme_file in self.themes_dir.rglob("*.yaml"):
-                dependencies.append(str(theme_file))
-        
+
+        # Generator source files (for cache invalidation)
+        generator_dir = Path(__file__).parent / "generators"
+        if generator_dir.exists():
+            for py_file in generator_dir.glob("*.py"):
+                dependencies.append(str(py_file))
+
         return dependencies
+
+    def validate_tokens(self) -> Tuple[bool, List[str]]:
+        """Validate semantic tokens against designer constraints"""
+        errors = []
+
+        # Load tokens for validation
+        self.gtk4_generator.load_tokens()
+        tokens = self.gtk4_generator.tokens
+
+        # Validate color system (16 semantic roles)
+        if 'colors' in tokens:
+            color_errors = self._validate_color_system(tokens['colors'])
+            errors.extend(color_errors)
+
+        # Validate typography system (5 type sizes)
+        if 'typography' in tokens:
+            typo_errors = self._validate_typography_system(tokens['typography'])
+            errors.extend(typo_errors)
+
+        # Validate spacing system (10 spacing values)
+        if 'spacing' in tokens:
+            spacing_errors = self._validate_spacing_system(tokens['spacing'])
+            errors.extend(spacing_errors)
+
+        return len(errors) == 0, errors
+
+    def _validate_color_system(self, colors: Dict[str, Any]) -> List[str]:
+        """Validate color system follows designer constraints"""
+        errors = []
+
+        required_categories = ['action', 'feedback', 'surface', 'text', 'border', 'interactive']
+        if 'colors' in colors:
+            color_system = colors['colors']
+            for category in required_categories:
+                if category not in color_system:
+                    errors.append(f"Missing required color category: {category}")
+
+        return errors
+
+    def _validate_typography_system(self, typography: Dict[str, Any]) -> List[str]:
+        """Validate typography system follows designer constraints"""
+        errors = []
+
+        if 'typography' in typography:
+            typo_system = typography['typography']
+
+            # Check for 5 type sizes
+            if 'scale' in typo_system:
+                required_sizes = ['display', 'heading', 'body', 'caption', 'code']
+                scale = typo_system['scale']
+                for size in required_sizes:
+                    if size not in scale:
+                        errors.append(f"Missing required type size: {size}")
+
+            # Check for 2 font families maximum
+            if 'families' in typo_system:
+                families = typo_system['families']
+                if len(families) > 2:
+                    errors.append(f"Too many font families: {len(families)} (maximum 2 allowed)")
+
+        return errors
+
+    def _validate_spacing_system(self, spacing: Dict[str, Any]) -> List[str]:
+        """Validate spacing system follows designer constraints"""
+        errors = []
+
+        if 'spacing' in spacing:
+            spacing_system = spacing['spacing']
+
+            # Check for 10 spacing values
+            if 'scale' in spacing_system:
+                scale = spacing_system['scale']
+                if len(scale) != 10:
+                    errors.append(f"Incorrect spacing scale size: {len(scale)} (expected 10)")
+
+        return errors
     
     def build(self, target_name: str) -> BuildModuleResult:
-        """Build design tokens for specified target"""
+        """Build design tokens for specified target following ProtoClientBuilder pattern"""
         start_time = time.time()
-        
+
         try:
-            # Load token definitions
-            self._load_tokens()
-            
+            # Validate semantic tokens against designer constraints
+            is_valid, validation_errors = self.validate_tokens()
+            if not is_valid:
+                return BuildModuleResult(
+                    success=False,
+                    duration=time.time() - start_time,
+                    artifacts=[],
+                    error_message=f"Token validation failed: {'; '.join(validation_errors)}"
+                )
+
             # Determine target platforms
             platforms = self._get_target_platforms(target_name)
-            
+
             # Generate artifacts for each platform
             artifacts = []
             for platform in platforms:
                 platform_artifacts = self._generate_platform_artifacts(platform)
                 artifacts.extend(platform_artifacts)
-            
+
             build_time = time.time() - start_time
-            
+
             return BuildModuleResult(
                 success=True,
+                duration=build_time,
                 artifacts=artifacts,
-                build_time=build_time,
-                message=f"Generated design tokens for {len(platforms)} platforms in {build_time:.2f}s"
+                cache_hit=False,
+                metrics={
+                    "platforms": len(platforms),
+                    "token_files": len(self.token_files),
+                    "css_files_generated": len(artifacts)
+                }
             )
-            
+
         except Exception as e:
             return BuildModuleResult(
                 success=False,
+                duration=time.time() - start_time,
                 artifacts=[],
-                build_time=time.time() - start_time,
-                message=f"Design token generation failed: {e}"
+                error_message=f"Design token generation failed: {e}"
             )
-    
-    def _load_tokens(self):
-        """Load all token definitions from YAML files"""
-        self.tokens = {}
-        
-        for token_file in self.token_files:
-            token_path = self.tokens_dir / token_file
-            if token_path.exists():
-                with open(token_path, 'r') as f:
-                    token_name = token_file.replace('.yaml', '')
-                    self.tokens[token_name] = yaml.safe_load(f)
     
     def _get_target_platforms(self, target_name: str) -> List[str]:
         """Determine which platforms to generate for based on target"""
-        if target_name == 'design-tokens-all' or target_name == 'design-tokens':
+        if target_name in ['design-tokens-all', 'design-tokens', 'design-system']:
             return self.supported_platforms
-        elif target_name.startswith('design-tokens-'):
-            platform = target_name.replace('design-tokens-', '')
-            return [platform] if platform in self.supported_platforms else []
+        elif target_name == 'design-tokens-gtk4':
+            return ['gtk4']
         else:
-            return self.supported_platforms
-    
+            # Default to primary platform
+            return [self.primary_platform]
+
     def _generate_platform_artifacts(self, platform: str) -> List[BuildArtifact]:
         """Generate design token artifacts for a specific platform"""
         artifacts = []
-        
+
         if platform == 'gtk4':
             artifacts.extend(self._generate_gtk4_css())
-        elif platform == 'typescript':
-            artifacts.extend(self._generate_typescript_constants())
-        elif platform == 'kotlin':
-            artifacts.extend(self._generate_kotlin_constants())
-        elif platform == 'c':
-            artifacts.extend(self._generate_c_headers())
-        
+        # Future platform implementations can be added here
+
+        return artifacts
+
+    def _generate_gtk4_css(self) -> List[BuildArtifact]:
+        """Generate GTK4 CSS artifacts using the GTK4CSSGenerator"""
+        artifacts = []
+
+        # Ensure output directory exists
+        output_dir = self.output_base / "gtk4"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Load tokens and generate CSS
+        self.gtk4_generator.load_tokens()
+        css_files = self.gtk4_generator.generate_css()
+
+        # Create artifacts for each generated CSS file
+        for filename, css_content in css_files.items():
+            output_path = output_dir / filename
+
+            # Write CSS file
+            with open(output_path, 'w') as f:
+                f.write(css_content)
+
+            # Create build artifact
+            import hashlib
+            with open(output_path, 'rb') as f:
+                checksum = hashlib.md5(f.read()).hexdigest()
+
+            artifact = BuildArtifact(
+                path=output_path,
+                type="css",
+                size=len(css_content),
+                checksum=checksum,
+                metadata={
+                    "platform": "gtk4",
+                    "description": f"GTK4 {filename} - Generated from semantic design tokens",
+                    "generator": "DesignTokenBuilder",
+                    "semantic_tokens": True
+                }
+            )
+            artifacts.append(artifact)
+
         return artifacts
     
-    def _generate_gtk4_css(self) -> List[BuildArtifact]:
-        """Generate GTK4 CSS custom properties"""
-        css_content = self._build_gtk4_css_content()
-        
-        output_path = self.output_base / "gtk4" / "design-tokens.css"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(output_path, 'w') as f:
-            f.write(css_content)
-        
-        return [BuildArtifact(
-            path=str(output_path),
-            type="css",
-            platform="gtk4",
-            description="GTK4 design token CSS custom properties"
-        )]
-    
-    def _build_gtk4_css_content(self) -> str:
-        """Build CSS content with custom properties"""
-        css_lines = [
-            "/* Generated Design Tokens for GTK4 */",
-            "/* DO NOT EDIT - Generated from libs/design_system/tokens/ */",
-            "",
-            ":root {"
-        ]
-        
-        # Colors
-        if 'colors' in self.tokens:
-            css_lines.append("  /* Colors */")
-            css_lines.extend(self._flatten_css_properties(self.tokens['colors']['colors'], '--color'))
-            css_lines.append("")
-        
-        # Typography
-        if 'typography' in self.tokens:
-            css_lines.append("  /* Typography */")
-            families = self.tokens['typography']['typography']['families']
-            for family_name, family_value in families.items():
-                if isinstance(family_value, list):
-                    css_lines.append(f"  --font-family-{family_name}: {', '.join(family_value)};")
-                else:
-                    css_lines.append(f"  --font-family-{family_name}: {family_value};")
-            css_lines.append("")
-        
-        # Spacing
-        if 'spacing' in self.tokens:
-            css_lines.append("  /* Spacing */")
-            css_lines.extend(self._flatten_css_properties(self.tokens['spacing']['spacing'], '--spacing'))
-            css_lines.append("")
-        
-        css_lines.append("}")
-        
-        return "\n".join(css_lines)
-    
-    def _flatten_css_properties(self, obj: Dict[str, Any], prefix: str, result: List[str] = None) -> List[str]:
-        """Recursively flatten nested objects into CSS custom properties"""
-        if result is None:
-            result = []
-        
-        for key, value in obj.items():
-            if isinstance(value, dict):
-                self._flatten_css_properties(value, f"{prefix}-{key}", result)
-            else:
-                result.append(f"  {prefix}-{key}: {value};")
-        
-        return result
-    
-    def _generate_typescript_constants(self) -> List[BuildArtifact]:
-        """Generate TypeScript constant definitions"""
-        # Implementation for TypeScript generation
-        return []
-    
-    def _generate_kotlin_constants(self) -> List[BuildArtifact]:
-        """Generate Kotlin constant definitions"""
-        # Implementation for Kotlin generation
-        return []
-    
-    def _generate_c_headers(self) -> List[BuildArtifact]:
-        """Generate C header definitions"""
-        # Implementation for C generation
-        return []
+    def calculate_cache_key(self, target_name: str) -> str:
+        """Calculate cache key for build caching (BuildModule interface requirement)"""
+        dependencies = self.get_dependencies(target_name)
+
+        # Create hash from all dependency file modification times
+        import hashlib
+        cache_data = []
+
+        for dep_path in dependencies:
+            path = Path(dep_path)
+            if path.exists():
+                cache_data.append(f"{dep_path}:{path.stat().st_mtime}")
+
+        cache_string = "|".join(sorted(cache_data))
+        return hashlib.md5(cache_string.encode()).hexdigest()
+
+    def clean(self, target_name: str) -> bool:
+        """Clean build artifacts for the target (BuildModule interface requirement)"""
+        try:
+            # Determine platforms to clean
+            platforms = self._get_target_platforms(target_name)
+
+            for platform in platforms:
+                platform_output_dir = self.output_base / platform
+                if platform_output_dir.exists():
+                    import shutil
+                    shutil.rmtree(platform_output_dir)
+                    self.logger.info(f"Cleaned {platform} artifacts from {platform_output_dir}")
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to clean artifacts: {e}")
+            return False
+
+    def is_cache_valid(self, target_name: str, cache_key: str) -> bool:
+        """Check if cached artifacts are still valid"""
+        current_key = self.calculate_cache_key(target_name)
+        return current_key == cache_key
+
+    def get_build_info(self) -> Dict[str, Any]:
+        """Get build information for debugging and monitoring"""
+        return {
+            "module": "DesignTokenBuilder",
+            "version": "1.0.0",
+            "supported_platforms": self.supported_platforms,
+            "primary_platform": self.primary_platform,
+            "token_files": self.token_files,
+            "tokens_dir": str(self.tokens_dir),
+            "output_base": str(self.output_base),
+            "designer_constraints": {
+                "color_roles": 16,
+                "type_sizes": 5,
+                "font_families_max": 2,
+                "spacing_values": 10,
+                "shadow_depths": 4,
+                "base_unit": "4px"
+            }
+        }
+
+
+# Integration with build system
+def create_design_token_builder(context: BuildContext) -> DesignTokenBuilder:
+    """Factory function for build system integration"""
+    return DesignTokenBuilder(context)
+
+
+# CLI interface for testing
+if __name__ == "__main__":
+    # Test the design token builder
+    from pathlib import Path
+
+    # Mock context for testing
+    class MockContext:
+        def __init__(self):
+            self.project_root = Path(__file__).parent.parent.parent.parent
+
+    context = MockContext()
+    builder = DesignTokenBuilder(context)
+
+    print("Design Token Builder Test")
+    print(f"Can handle 'design-tokens': {builder.can_handle('design-tokens')}")
+    print(f"Dependencies: {len(builder.get_dependencies('design-tokens'))} files")
+
+    # Validate tokens
+    is_valid, errors = builder.validate_tokens()
+    print(f"Token validation: {'PASS' if is_valid else 'FAIL'}")
+    if errors:
+        for error in errors:
+            print(f"  - {error}")
+
+    # Test build
+    result = builder.build('design-tokens-gtk4')
+    print(f"Build result: {'SUCCESS' if result.success else 'FAILED'}")
+    print(f"Duration: {result.duration:.2f}s")
+    print(f"Artifacts: {len(result.artifacts)}")
+    if result.error_message:
+        print(f"Error: {result.error_message}")
+    if result.metrics:
+        print(f"Metrics: {result.metrics}")
+
+    # Show build info
+    info = builder.get_build_info()
+    print(f"Build info: {info['module']} v{info['version']}")
+    print(f"Designer constraints: {info['designer_constraints']}")

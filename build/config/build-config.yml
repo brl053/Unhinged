@@ -48,6 +48,33 @@ targets:
       - "generated/mobile_ui/**/*"
       - "generated/static_html/mobile_ui.css"
     cache_key: "mobile-ui-v1"
+
+  # Design System - Semantic token generation
+  design-tokens:
+    description: "Generate design system artifacts from semantic tokens"
+    module: "design_token_builder"
+    dependencies: []
+    inputs:
+      - "libs/design_system/tokens/*.yaml"
+      - "libs/design_system/build/generators/*.py"
+    outputs:
+      - "generated/design_system/gtk4/*.css"
+    cache_key: "design-tokens-v1"
+
+  # GTK4-specific design tokens
+  design-tokens-gtk4:
+    description: "Generate GTK4 CSS from semantic design tokens"
+    module: "design_token_builder"
+    dependencies: []
+    inputs:
+      - "libs/design_system/tokens/*.yaml"
+      - "libs/design_system/build/generators/gtk4_generator.py"
+    outputs:
+      - "generated/design_system/gtk4/design-tokens.css"
+      - "generated/design_system/gtk4/theme-light.css"
+      - "generated/design_system/gtk4/theme-dark.css"
+      - "generated/design_system/gtk4/components.css"
+    cache_key: "design-tokens-gtk4-v1"
     
   # Proto Client Generation
   proto-clients:
