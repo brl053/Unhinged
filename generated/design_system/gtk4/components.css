@@ -1,0 +1,66 @@
+/* Component Styles Using Semantic Tokens */
+/* GTK4-compatible component patterns */
+/* Selective overrides over Libadwaita base */
+
+/* Button Component - Semantic Token Usage */
+button, .btn {
+  padding: var(--spacing-sp-2) var(--spacing-sp-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  background-color: var(--color-action-primary);
+  color: var(--color-text-inverse);
+  border: var(--border-thin) solid var(--color-action-primary);
+  min-height: 44px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+button:hover, .btn:hover {
+  box-shadow: var(--elevation-1);
+}
+
+button:active, .btn:active {
+  transform: translateY(1px);
+}
+
+button:disabled, .btn:disabled {
+  background-color: var(--color-action-disabled);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Form Field Component - Semantic Token Usage */
+input, textarea, select {
+  padding: var(--spacing-sp-2) var(--spacing-sp-3);
+  border-radius: var(--radius-sm);
+  border: var(--border-thin) solid var(--color-border-default);
+  font-family: var(--font-family-prose);
+  font-size: var(--font-size-body);
+  background-color: var(--color-surface-default);
+  color: var(--color-text-primary);
+}
+
+input:focus, textarea:focus, select:focus {
+  border-width: var(--border-medium);
+  outline: none;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Card Component - Semantic Token Usage */
+.card {
+  padding: var(--spacing-sp-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-elevated);
+  border: var(--border-thin) solid var(--color-border-subtle);
+  box-shadow: var(--elevation-2);
+}
+
+.card:hover {
+  box-shadow: var(--elevation-3);
+}

@@ -1,0 +1,31 @@
+/* Dark Theme for GTK4 */
+/* Semantic token overrides for dark theme */
+/* Layers over Libadwaita base styling */
+
+/* Apply dark theme */
+[data-theme='dark'], .theme-dark {
+  /* Dark Theme Colors */
+  --color-action-primary: #4D94FF;
+  --color-action-secondary: #B3B3B3;
+  --color-action-tertiary: #808080;
+  --color-action-disabled: #404040;
+  --color-feedback-success: #4CAF50;
+  --color-feedback-warning: #FFC107;
+  --color-feedback-error: #EF5350;
+  --color-feedback-info: #4D94FF;
+  --color-surface-default: #1A1A1A;
+  --color-surface-elevated: #2D2D2D;
+  --color-surface-overlay: #2D2D2D;
+  --color-surface-inverse: #FFFFFF;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B3B3B3;
+  --color-text-tertiary: #808080;
+  --color-text-inverse: #1A1A1A;
+  --color-text-disabled: #404040;
+  --color-border-default: #404040;
+  --color-border-subtle: #333333;
+  --color-border-strong: #808080;
+  --color-interactive-hover: #FFFFFF;
+  --color-interactive-active: #FFFFFF;
+  --color-interactive-focus: #4D94FF;
+}
