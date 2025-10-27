@@ -1,0 +1,83 @@
+# Design System Spacing Tokens - Constraint System
+# Based on designer specifications: 10 spacing values, 4px base unit, vertical-dominant margins
+#
+# Spacing Contract:
+# - Everything derives from 4px base unit
+# - Ten tokens covering 2px to 48px
+# - Margins should be vertical-dominant to maintain rhythm
+# - Horizontal margins follow vertical decisions
+#
+# Usage: spacing.sp.2, spacing.sp.4, spacing.sp.8
+
+# BASE UNIT SYSTEM
+# One unit = sp.1 = 4px (atomic unit)
+spacing:
+  # SPACING SCALE (10 tokens exactly - designer constraint)
+  scale:
+    sp_0_5: "2px"        # Micro spacing, checkbox padding, tight groups
+    sp_1: "4px"          # Component internal spacing, icon margins
+    sp_1_5: "6px"        # Button internal padding
+    sp_2: "8px"          # Form field padding, card padding, element spacing
+    sp_3: "12px"         # Section margins, header spacing
+    sp_4: "16px"         # Major component margins, card gaps
+    sp_5: "20px"         # Page content margins (tight layout)
+    sp_6: "24px"         # Section breaks, modal internal spacing
+    sp_8: "32px"         # Page margins (medium layout), major breaks
+    sp_12: "48px"        # Page margins (generous layout), full-page spacing
+
+  # APPLIED PATTERNS (how to use the 10 spacing values)
+  patterns:
+    # Padding (internal component spacing)
+    padding:
+      micro: "sp_0_5"    # 2px - checkbox padding, tight groups
+      small: "sp_2"      # 8px - form fields, cards, standard elements
+      medium: "sp_4"     # 16px - major components, generous internal space
+      large: "sp_6"      # 24px - modals, major containers
+
+    # Gaps (between sibling elements)
+    gaps:
+      tight: "sp_1"      # 4px - icon margins, minimal separation
+      small: "sp_2"      # 8px - element spacing, list items
+      medium: "sp_3"     # 12px - section margins, header spacing
+      large: "sp_4"      # 16px - card gaps, major component margins
+
+    # Margins (section breaks, layout spacing)
+    margins:
+      small: "sp_4"      # 16px - component margins
+      medium: "sp_6"     # 24px - section breaks, modal spacing
+      large: "sp_8"      # 32px - page margins (medium layout)
+      generous: "sp_12"  # 48px - page margins (generous layout)
+
+# MARGIN AXIS RULE
+# Margins should be vertical-dominant to maintain rhythm
+# Horizontal margins follow vertical decisions
+#
+# Example patterns:
+# - Typical card: sp_6 top/bottom, sp_4 left/right
+# - Typical page: sp_12 horizontal, sp_8 top, sp_12 bottom
+# - Form fields: sp_2 all around, sp_4 between fields
+
+# PLATFORM-SPECIFIC ADAPTATIONS
+platforms:
+  gtk4:
+    # GTK4 uses pixel values directly - map semantic tokens to pixels
+    sp_0_5: 2
+    sp_1: 4
+    sp_1_5: 6
+    sp_2: 8
+    sp_3: 12
+    sp_4: 16
+    sp_5: 20
+    sp_6: 24
+    sp_8: 32
+    sp_12: 48
+
+    # Common GTK4 component patterns
+    button_padding: "sp_2"      # 8px internal padding
+    input_padding: "sp_2"       # 8px internal padding
+    card_padding: "sp_4"        # 16px internal padding
+    modal_padding: "sp_6"       # 24px internal padding
+
+  # Future platform mappings
+  # web: rem/px values for CSS
+  # mobile: dp values for touch targets

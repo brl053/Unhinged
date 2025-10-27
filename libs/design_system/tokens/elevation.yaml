@@ -1,0 +1,121 @@
+# Design System Elevation Tokens - Constraint System
+# Based on designer specifications: 4 shadow depths, relative z-index layers
+#
+# Elevation Contract:
+# - Two variables define all shadows: blur radius and vertical offset
+# - No spread radius, no complexity
+# - Shadow color uses text.primary at 8% opacity for consistency
+# - No arbitrary z-index values - use relative layers
+#
+# Usage: elevation.1, elevation.2, elevation.3, elevation.4
+
+# SHADOW SYSTEM (4 depths exactly - designer constraint)
+elevation:
+  shadows:
+    # Elevation 1 - Subtle lift, hover states on cards
+    "1":
+      blur: "4px"
+      offset: "2px"
+      color: "rgba(26, 26, 26, 0.08)"  # text.primary at 8% opacity
+
+    # Elevation 2 - Cards, floating buttons, dropdown menus
+    "2":
+      blur: "8px"
+      offset: "4px"
+      color: "rgba(26, 26, 26, 0.08)"  # text.primary at 8% opacity
+
+    # Elevation 3 - Popovers, tooltips, medium modals
+    "3":
+      blur: "12px"
+      offset: "6px"
+      color: "rgba(26, 26, 26, 0.08)"  # text.primary at 8% opacity
+
+    # Elevation 4 - Large modals, navigation drawers, context menus
+    "4":
+      blur: "16px"
+      offset: "8px"
+      color: "rgba(26, 26, 26, 0.08)"  # text.primary at 8% opacity
+
+  # Z-INDEX SYSTEM (relative layers, no arbitrary values)
+  layers:
+    base: 0          # Default document flow
+    raised: 10       # Cards above background
+    floating: 100    # Dropdowns, tooltips
+    modal: 1000      # Modal backdrops, dialogs
+    notification: 2000  # Toast notifications, alerts (always top)
+
+  # CORNER RADIUS SYSTEM (4 tokens exactly - designer constraint)
+  radius:
+    none: "0px"      # Cards with sharp edges, design statement
+    sm: "4px"        # Input fields, small components, form elements
+    md: "8px"        # Buttons, cards, standard components
+    lg: "16px"       # Large containers, modals, featured sections
+
+  # BORDER WIDTH SYSTEM (3 standard widths)
+  border:
+    thin: "1px"      # Default borders, form fields, subtle dividers
+    medium: "2px"    # Active states, emphasized borders, focus rings
+    thick: "4px"     # Accents, visual emphasis, decorative elements
+
+# APPLIED PATTERNS (how to use elevation system)
+  patterns:
+    # Cards - elevation.2 + radius.md + layers.raised
+    card:
+      shadow: "2"
+      radius: "md"
+      z_index: "raised"
+
+    # Buttons - elevation.1 on hover + radius.md + layers.base
+    button:
+      rest_shadow: "none"
+      hover_shadow: "1"
+      radius: "md"
+      z_index: "base"
+
+    # Modals - elevation.4 + radius.lg + layers.modal
+    modal:
+      shadow: "4"
+      radius: "lg"
+      z_index: "modal"
+
+    # Tooltips - elevation.3 + radius.sm + layers.floating
+    tooltip:
+      shadow: "3"
+      radius: "sm"
+      z_index: "floating"
+
+    # Dropdowns - elevation.2 + radius.md + layers.floating
+    dropdown:
+      shadow: "2"
+      radius: "md"
+      z_index: "floating"
+
+# CONSTRAINT RULES
+# - Use smallest radius that feels intentional (don't over-round)
+# - Thin borders on small radius feel sharp and clean
+# - Thick borders require at least radius.md to avoid visual harshness
+# - No arbitrary z-index values in code - add a layer token if needed
+
+# PLATFORM-SPECIFIC ADAPTATIONS
+platforms:
+  gtk4:
+    # GTK4 CSS shadow format - map semantic tokens to CSS box-shadow
+    elevation_1: "0 2px 4px rgba(26, 26, 26, 0.08)"
+    elevation_2: "0 4px 8px rgba(26, 26, 26, 0.08)"
+    elevation_3: "0 6px 12px rgba(26, 26, 26, 0.08)"
+    elevation_4: "0 8px 16px rgba(26, 26, 26, 0.08)"
+
+    # GTK4 border radius (CSS format)
+    radius_none: "0"
+    radius_sm: "4px"
+    radius_md: "8px"
+    radius_lg: "16px"
+
+    # GTK4 border width (CSS format)
+    border_thin: "1px"
+    border_medium: "2px"
+    border_thick: "4px"
+
+  # Future platform mappings
+  # web: Full CSS shadow capabilities with focus rings
+  # mobile: Stronger shadows for clarity on small screens

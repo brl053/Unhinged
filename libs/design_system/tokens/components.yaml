@@ -1,0 +1,220 @@
+# Design System Component Composition Primitives
+# Based on designer specifications: constraints that define how components are built
+#
+# Component Contract:
+# - These aren't components themselves - they're constraints for building components
+# - All components follow these exact composition patterns
+# - Deviations from these patterns require design system updates
+#
+# Usage: Reference when building actual UI components
+
+# COMPONENT COMPOSITION PRIMITIVES
+# Constraints that define how components are built across all platforms
+
+components:
+  # Buttons - Interactive action elements
+  button:
+    padding:
+      vertical: "sp_2"      # 8px - minimum touch target consideration
+      horizontal: "sp_4"    # 16px - generous click area
+    border_radius: "radius_md"  # 8px - standard component rounding
+    text: "typography.body + weights.medium"  # Clear, readable action text
+    minimum_height: "44px"  # Touch target accessibility requirement
+    
+    # Button states follow interaction_states system
+    states:
+      default: "base appearance"
+      hover: "interactive.hover overlay at 8%"
+      active: "interactive.active overlay at 12%" 
+      focus: "border.medium ring + interactive.focus color"
+      disabled: "action.disabled background + text.disabled + 50% opacity"
+      
+    # Icon adjacency rules
+    icon_spacing:
+      icon_plus_text: "sp_1_5"  # 6px gap between icon and text
+      icon_only: "no_gap"      # No additional spacing for icon-only buttons
+
+  # Form Fields - Input, Textarea, Select
+  form_field:
+    padding:
+      vertical: "sp_2"      # 8px - comfortable input area
+      horizontal: "sp_3"    # 12px - text breathing room
+    border: "border.thin + border.default"  # 1px standard border
+    border_radius: "radius_sm"  # 4px - subtle rounding for form elements
+    text: "typography.body + weights.regular"  # Standard readable text
+    
+    # Form field states
+    states:
+      default: "border.default"
+      focus: "border.medium + border.default"  # Thickness increase, not color change
+      error: "border.medium + feedback.error"  # Error indication
+      disabled: "action.disabled background + text.disabled"
+      
+    # Label positioning
+    label:
+      text: "typography.body + weights.medium"  # Slightly emphasized
+      position: "above_field"
+      spacing: "sp_2"       # 8px gap between label and field
+      
+    # Placeholder styling
+    placeholder:
+      text_color: "text.tertiary"  # Reduced emphasis
+
+  # Cards - Content containers
+  card:
+    padding: "sp_4"         # 16px - generous internal space
+    border_radius: "radius_md"  # 8px - standard container rounding
+    background: "surface.default OR surface.elevated"  # Context dependent
+    border: "border.thin + border.subtle"  # Optional separation from parent
+    shadow: "elevation.2"   # Standard card elevation
+    
+    # Internal spacing between card sections
+    internal_spacing: "sp_3"  # 12px between content sections
+    
+    # Card states
+    states:
+      default: "elevation.2"
+      hover: "elevation.3"   # Slight lift on interaction
+      
+  # Modals - Overlay dialogs
+  modal:
+    backdrop:
+      background: "surface.inverse at 60% opacity"
+      z_index: "layers.modal"
+      
+    container:
+      background: "surface.elevated"
+      border_radius: "radius_lg"  # 16px - prominent container rounding
+      shadow: "elevation.4"       # Maximum elevation for prominence
+      z_index: "layers.modal + 1" # Above backdrop
+      
+    padding:
+      header: "sp_6"        # 24px - generous header space
+      content: "sp_4 to sp_6"  # 16-24px - consistent with header
+      
+    sizing:
+      minimum_width: "360px"
+      maximum_width: "600px"  # Unless content requires more
+      
+    # Button group in modal footer
+    button_group:
+      spacing: "sp_3"       # 12px horizontal gap between buttons
+
+  # Sidebar Navigation - Hierarchical navigation
+  sidebar:
+    width:
+      collapsed: "240px"
+      expanded: "280px"
+      
+    item:
+      padding:
+        vertical: "sp_2"    # 8px - comfortable click target
+        horizontal: "sp_3"  # 12px - text breathing room
+      border_radius: "radius_sm"  # 4px - subtle item rounding
+      spacing: "sp_1"       # 4px - tight grouping between items
+      
+    section:
+      divider: "border.thin + border.subtle"
+      margin:
+        top: "sp_3"         # 12px above section
+        bottom: "sp_3"      # 12px below section
+        
+    active_indicator:
+      style: "colored left border"
+      border: "border.thick + action.primary"  # 4px prominent indicator
+      
+    background: "surface.default"
+
+  # Lists - Structured content display
+  list:
+    item:
+      padding:
+        vertical: "sp_2_5"  # 10px - slightly more generous than buttons
+        horizontal: "sp_3"  # 12px - consistent with other components
+      spacing: "sp_0_5"     # 2px - visual separation without gap
+      
+    divider: "border.thin + border.subtle"  # Optional item separation
+    
+    # Icon + text pattern
+    icon_text_gap: "sp_1_5"  # 6px - consistent with button pattern
+
+  # Tooltips - Contextual help
+  tooltip:
+    padding: "sp_2"         # 8px - compact but readable
+    border_radius: "radius_sm"  # 4px - subtle container
+    background: "surface.overlay"
+    text: "typography.caption + text.primary"  # Small but readable
+    max_width: "200px"      # Wrap at this point
+    distance_from_trigger: "sp_2"  # 8px separation
+    shadow: "elevation.3"   # Floating above content
+
+  # Badges & Tags - Status indicators
+  badge:
+    padding:
+      vertical: "sp_0_5"    # 2px - minimal internal space
+      horizontal: "sp_1_5"  # 6px - text breathing room
+    border_radius: "radius_sm"  # 4px - consistent small rounding
+    text: "typography.caption + weights.medium"  # Small but emphasized
+    
+    # Badge styling variants
+    variants:
+      neutral: "surface.elevated + border.thin + border.default"
+      primary: "action.primary background + text.inverse"
+
+# RESPONSIVE BEHAVIOR PATTERNS
+# How components adapt across different viewport sizes
+responsive:
+  # No hardcoded breakpoints - content determines breakpoints
+  behaviors:
+    compact:
+      description: "Single column, full-width components, vertical stacking"
+      trigger: "narrow_viewports"
+      
+    comfortable: 
+      description: "Two columns possible, sidebar optional, flexible layouts"
+      trigger: "medium_viewports"
+      
+    spacious:
+      description: "Multiple columns, sidebars expanded, max-width containers"
+      trigger: "large_viewports"
+
+  # Component adaptations
+  adaptations:
+    sidebar:
+      compact: "hidden"
+      comfortable: "collapse_expand_toggle"
+      spacious: "full_width_expanded"
+      
+    forms:
+      compact: "single_column"
+      comfortable: "two_columns"
+      spacious: "two_columns"
+      
+    modals:
+      compact: "full_viewport"
+      comfortable: "centered_80vw_max"
+      spacious: "centered_600px_max"
+
+# CONSTRAINT VALIDATION
+# Rules that must be followed when implementing these primitives
+validation:
+  touch_targets:
+    minimum_height: "44px"    # Accessibility requirement
+    minimum_width: "44px"     # For icon-only buttons
+    
+  contrast_requirements:
+    text_on_background: "4.5:1 minimum"
+    large_text: "3:1 minimum"
+    focus_indicators: "3:1 minimum"
+    
+  spacing_consistency:
+    use_spacing_scale_only: true
+    no_arbitrary_spacing_values: true
+    
+  color_usage:
+    use_semantic_tokens_only: true
+    no_hardcoded_color_values: true
+    
+  typography_consistency:
+    use_type_scale_only: true
+    no_arbitrary_font_sizes: true
