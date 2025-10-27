@@ -40,6 +40,15 @@ from pathlib import Path
 import time
 import json
 
+# Import component library for the new Status tab
+try:
+    sys.path.append(str(Path(__file__).parent / "components"))
+    from components import StatusCard, StatusLabel
+    COMPONENTS_AVAILABLE = True
+except ImportError:
+    COMPONENTS_AVAILABLE = False
+    print("⚠️  Component library not available - using basic widgets")
+
 # Import session logging from event framework
 sys.path.append(str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"))
 try:
@@ -245,6 +254,44 @@ class UnhingedDesktopApp(Adw.Application):
         # Create toast overlay for notifications
         self.toast_overlay = Adw.ToastOverlay()
 
+        # Create tab navigation
+        self.create_tab_navigation()
+
+        # Set up toast overlay with tab content
+        window.set_content(self.toast_overlay)
+        return window
+
+    def create_tab_navigation(self):
+        """Create tab navigation with main content and new status tab."""
+        # Create tab view
+        self.tab_view = Adw.TabView()
+
+        # Create main tab content (existing functionality)
+        main_content = self.create_main_tab_content()
+        main_page = self.tab_view.append(main_content)
+        main_page.set_title("Main")
+        main_page.set_icon(Gio.ThemedIcon.new("applications-graphics"))
+
+        # Create new status tab content
+        status_content = self.create_status_tab_content()
+        status_page = self.tab_view.append(status_content)
+        status_page.set_title("Status")
+        status_page.set_icon(Gio.ThemedIcon.new("dialog-information-symbolic"))
+
+        # Create tab bar
+        tab_bar = Adw.TabBar()
+        tab_bar.set_view(self.tab_view)
+
+        # Create main container
+        tab_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        tab_container.append(tab_bar)
+        tab_container.append(self.tab_view)
+
+        # Set up toast overlay
+        self.toast_overlay.set_child(tab_container)
+
+    def create_main_tab_content(self):
+        """Create the main tab content (existing functionality)."""
         # Create main content
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         main_box.set_margin_top(24)
@@ -272,16 +319,101 @@ class UnhingedDesktopApp(Adw.Application):
         # Log section
         log_group = self.create_log_section()
         main_box.append(log_group)
-        
+
         # Create scrolled window for content
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_child(main_box)
 
-        # Set up toast overlay
-        self.toast_overlay.set_child(scrolled)
-        window.set_content(self.toast_overlay)
-        return window
+        return scrolled
+
+    def create_status_tab_content(self):
+        """Create the new minimal status tab content using component library."""
+        # Create status content box
+        status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        status_box.set_margin_top(24)
+        status_box.set_margin_bottom(24)
+        status_box.set_margin_start(24)
+        status_box.set_margin_end(24)
+
+        # Header section
+        header_group = Adw.PreferencesGroup()
+        header_group.set_title("New Status Tab")
+        header_group.set_description("Minimal academic first step - parallel to existing status")
+        status_box.append(header_group)
+
+        # Use component library if available
+        if COMPONENTS_AVAILABLE:
+            # Status card using component library
+            status_card = StatusCard(
+                title="Platform Status",
+                status="info",
+                subtitle="Component library integration",
+                description="This tab demonstrates the new component library in a minimal way.",
+                icon_name="dialog-information-symbolic"
+            )
+            status_box.append(status_card.get_widget())
+
+            # Status labels section
+            labels_group = Adw.PreferencesGroup()
+            labels_group.set_title("Status Examples")
+
+            labels_row = Adw.ActionRow()
+            labels_row.set_title("Component Status Labels")
+            labels_row.set_subtitle("Different status types using the component library")
+
+            # Create a box for status labels
+            labels_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+
+            # Add different status labels
+            for status_type in ["success", "warning", "error", "info"]:
+                status_label = StatusLabel(
+                    text=status_type.title(),
+                    status=status_type
+                )
+                labels_box.append(status_label.get_widget())
+
+            labels_row.add_suffix(labels_box)
+            labels_group.add(labels_row)
+            status_box.append(labels_group)
+
+        else:
+            # Fallback to basic widgets
+            fallback_group = Adw.PreferencesGroup()
+            fallback_group.set_title("Basic Status")
+
+            fallback_row = Adw.ActionRow()
+            fallback_row.set_title("Platform Status")
+            fallback_row.set_subtitle("Component library not available - using basic widgets")
+
+            status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
+            status_icon.set_icon_size(Gtk.IconSize.LARGE)
+            fallback_row.add_prefix(status_icon)
+
+            status_label = Gtk.Label(label="Ready")
+            status_label.add_css_class("title-4")
+            fallback_row.add_suffix(status_label)
+
+            fallback_group.add(fallback_row)
+            status_box.append(fallback_group)
+
+        # Info section
+        info_group = Adw.PreferencesGroup()
+        info_group.set_title("Implementation Notes")
+
+        info_row = Adw.ActionRow()
+        info_row.set_title("Minimal Feature Set")
+        info_row.set_subtitle("No API calls, no extra functionality - just a new tab with static content")
+
+        info_group.add(info_row)
+        status_box.append(info_group)
+
+        # Create scrolled window
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_child(status_box)
+
+        return scrolled
 
     def setup_actions(self):
         """Setup application actions for menu"""

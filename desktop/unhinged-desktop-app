@@ -776,10 +776,7 @@ class UnhingedDesktopApp(Adw.Application):
         sidebar.set_size_request(150, -1)
 
         # Add tabs to stack
-        self.add_status_tab()
-        self.add_actions_tab()
-        self.add_logs_tab()
-        self.add_cli_tab()
+        self.add_minimal_status_tab()  # Only minimal status tab
 
         # Add sidebar and stack to main box
         main_box.append(sidebar)
@@ -789,273 +786,26 @@ class UnhingedDesktopApp(Adw.Application):
         self.toast_overlay.set_child(main_box)
         window.set_content(self.toast_overlay)
 
-    def add_status_tab(self):
-        """
-        @llm-key Add status tab with comprehensive service health monitoring capabilities
-        @llm-contract Creates comprehensive service status interface for GTK4 desktop application
-
-        Add Status tab with service health monitoring.
-
-        Implements comprehensive service status capabilities:
-        - Real-time service health status display
-        - Service restart and recovery controls
-        - Visual indicators for service states
-        - Integration with ServiceHealthMonitor
-        - Manual refresh and auto-recovery options
-        """
+    def add_minimal_status_tab(self):
+        """Minimal status tab with as little content as possible"""
         status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         status_box.set_margin_top(24)
         status_box.set_margin_bottom(24)
         status_box.set_margin_start(24)
         status_box.set_margin_end(24)
 
-        # Overall Status Section
+        # Single minimal status row
         status_group = Adw.PreferencesGroup()
-        status_group.set_title("System Health Overview")
-        status_group.set_description("Overall health status of all monitored services")
+        status_row = Adw.ActionRow()
+        status_row.set_title("Ready")
 
-        # Overall status row
-        self.overall_status_row = Adw.ActionRow()
-        self.overall_status_row.set_title("System Health")
-        self.overall_status_row.set_subtitle("Checking system health...")
-
-        # Overall status icon
-        self.overall_status_icon = Gtk.Image.new_from_icon_name("system-run-symbolic")
-        self.overall_status_icon.set_icon_size(Gtk.IconSize.LARGE)
-        self.overall_status_row.add_prefix(self.overall_status_icon)
-
-        # Refresh button
-        refresh_button = Gtk.Button.new_with_label("Refresh")
-        refresh_button.add_css_class("suggested-action")
-        refresh_button.connect("clicked", self.on_status_refresh_clicked)
-        self.overall_status_row.add_suffix(refresh_button)
-
-        status_group.add(self.overall_status_row)
-
-        # Auto-recovery row
-        auto_recovery_row = Adw.ActionRow()
-        auto_recovery_row.set_title("Auto-Recovery")
-        auto_recovery_row.set_subtitle("Automatically restart failed critical services")
-
-        # Auto-recovery button
-        self.auto_recovery_button = Gtk.Button.new_with_label("Run Auto-Recovery")
-        self.auto_recovery_button.add_css_class("destructive-action")
-        self.auto_recovery_button.connect("clicked", self.on_auto_recovery_clicked)
-        auto_recovery_row.add_suffix(self.auto_recovery_button)
-
-        status_group.add(auto_recovery_row)
-
-        # Individual Services Section
-        services_group = Adw.PreferencesGroup()
-        services_group.set_title("Service Status")
-        services_group.set_description("Individual service health and management")
-
-        # Create scrolled window for services list
-        self.services_listbox = Gtk.ListBox()
-        self.services_listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.services_listbox.add_css_class("boxed-list")
-
-        scrolled_services = Gtk.ScrolledWindow()
-        scrolled_services.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled_services.set_min_content_height(300)
-        scrolled_services.set_child(self.services_listbox)
-
-        services_group.add(scrolled_services)
-
-        # Add groups to status box
+        status_group.add(status_row)
         status_box.append(status_group)
-        status_box.append(services_group)
 
+        # Add to stack
         self.stack.add_titled(status_box, "status", "Status")
 
-        # Initialize status display
-        self._update_status_display()
 
-    def add_actions_tab(self):
-        """Add Actions tab with minimal content"""
-        actions_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        actions_box.set_margin_top(24)
-        actions_box.set_margin_bottom(24)
-        actions_box.set_margin_start(24)
-        actions_box.set_margin_end(24)
-
-        # Minimal actions content placeholder
-        actions_label = Gtk.Label(label="Platform actions content")
-        actions_box.append(actions_label)
-
-        self.stack.add_titled(actions_box, "actions", "Actions")
-
-    def add_logs_tab(self):
-        """Add Logs tab with minimal content"""
-        logs_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        logs_box.set_margin_top(24)
-        logs_box.set_margin_bottom(24)
-        logs_box.set_margin_start(24)
-        logs_box.set_margin_end(24)
-
-        # Minimal logs content placeholder
-        logs_label = Gtk.Label(label="System logs content")
-        logs_box.append(logs_label)
-
-        self.stack.add_titled(logs_box, "logs", "Logs")
-
-    def add_cli_tab(self):
-        """
-        @llm-key Add CLI tab with voice recording and transcription capabilities
-        @llm-contract Creates voice-first interface for GTK4 desktop application CLI integration
-
-        Add CLI tab with voice recording capabilities.
-
-        Implements voice-first interface for the CLI tab, providing:
-        - Voice recording controls with native audio capture
-        - Real-time transcription via Unhinged gRPC services
-        - Service status monitoring and health checking
-        - Graceful degradation when voice services unavailable
-        """
-        cli_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        cli_box.set_margin_top(24)
-        cli_box.set_margin_bottom(24)
-        cli_box.set_margin_start(24)
-        cli_box.set_margin_end(24)
-
-        # Voice Recording Section
-        voice_group = Adw.PreferencesGroup()
-        voice_group.set_title("Voice Recording")
-        voice_group.set_description("Native audio capture with speech-to-text transcription")
-
-        # Voice service status row
-        self.voice_status_row = Adw.ActionRow()
-        self.voice_status_row.set_title("Voice Service Status")
-        self.voice_status_row.set_subtitle("Checking voice service availability...")
-
-        # Status icon
-        self.voice_status_icon = Gtk.Image.new_from_icon_name("audio-input-microphone-symbolic")
-        self.voice_status_icon.set_icon_size(Gtk.IconSize.LARGE)
-        self.voice_status_row.add_prefix(self.voice_status_icon)
-
-        voice_group.add(self.voice_status_row)
-
-        # Voice recording controls row
-        recording_row = Adw.ActionRow()
-        recording_row.set_title("Voice Recording")
-        recording_row.set_subtitle("Record audio and transcribe using Whisper service")
-
-        # Recording controls box
-        controls_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-
-        # Record button
-        self.record_button = Gtk.Button.new_with_label("Record Voice")
-        self.record_button.add_css_class("suggested-action")
-        self.record_button.connect("clicked", self.on_record_voice_clicked)
-        controls_box.append(self.record_button)
-
-        # Duration spin button
-        duration_label = Gtk.Label(label="Duration:")
-        controls_box.append(duration_label)
-
-        self.duration_adjustment = Gtk.Adjustment(value=3.0, lower=1.0, upper=30.0, step_increment=1.0)
-        self.duration_spin = Gtk.SpinButton(adjustment=self.duration_adjustment, digits=1)
-        self.duration_spin.set_size_request(80, -1)
-        controls_box.append(self.duration_spin)
-
-        duration_unit_label = Gtk.Label(label="seconds")
-        controls_box.append(duration_unit_label)
-
-        recording_row.add_suffix(controls_box)
-        voice_group.add(recording_row)
-
-        # Transcription display
-        transcription_group = Adw.PreferencesGroup()
-        transcription_group.set_title("Transcription Results")
-        transcription_group.set_description("Speech-to-text output from Whisper service")
-
-        # Create text view for transcription display
-        self.transcription_textview = Gtk.TextView()
-        self.transcription_textview.set_editable(False)
-        self.transcription_textview.set_cursor_visible(False)
-        self.transcription_textview.set_monospace(True)
-        self.transcription_textview.set_wrap_mode(Gtk.WrapMode.WORD)
-
-        # Set up text buffer
-        buffer = self.transcription_textview.get_buffer()
-        buffer.set_text("Voice transcriptions will appear here...\n")
-
-        # Create scrolled window for text view
-        scrolled_transcription = Gtk.ScrolledWindow()
-        scrolled_transcription.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_transcription.set_min_content_height(150)
-        scrolled_transcription.set_child(self.transcription_textview)
-
-        transcription_group.add(scrolled_transcription)
-
-        # Add groups to CLI box
-        cli_box.append(voice_group)
-        cli_box.append(transcription_group)
-
-        self.stack.add_titled(cli_box, "cli", "CLI")
-
-        # Initialize voice service status
-        self._update_voice_service_status()
-
-    def _update_voice_service_status(self):
-        """
-        @llm-key Update voice service status display in CLI tab
-        @llm-contract Updates UI elements to reflect current voice service availability
-        """
-        try:
-            if hasattr(self, 'voice_service') and self.voice_service.is_voice_available():
-                self.voice_status_row.set_subtitle("Voice service available and ready")
-                self.voice_status_icon.set_from_icon_name("emblem-ok-symbolic")
-                self.record_button.set_sensitive(True)
-            else:
-                self.voice_status_row.set_subtitle("Voice service unavailable - check if services are running")
-                self.voice_status_icon.set_from_icon_name("dialog-warning-symbolic")
-                self.record_button.set_sensitive(False)
-        except Exception as e:
-            self.voice_status_row.set_subtitle(f"Voice service status check failed: {e}")
-            self.voice_status_icon.set_from_icon_name("dialog-error-symbolic")
-            self.record_button.set_sensitive(False)
-
-    def on_record_voice_clicked(self, button):
-        """
-        @llm-key Handle voice recording button click event
-        @llm-contract Initiates voice recording and transcription pipeline
-
-        Handle voice recording button click.
-
-        Implements the complete voice-to-text pipeline:
-        1. Disable UI controls during recording
-        2. Capture audio using native arecord
-        3. Send to Whisper service via gRPC
-        4. Display transcription results
-        5. Re-enable UI controls
-        """
-        try:
-            # Get recording duration from spin button
-            duration = self.duration_spin.get_value()
-
-            # Update UI for recording state
-            self.record_button.set_sensitive(False)
-            self.record_button.set_label("Recording...")
-
-            # Update transcription display
-            self._append_transcription(f"[{time.strftime('%H:%M:%S')}] Recording for {duration} seconds...")
-
-            # Log recording start
-            if self.session_logger:
-                self.session_logger.log_gui_event("VOICE_RECORDING_INITIATED", f"User started voice recording for {duration}s")
-
-            # Start recording in background thread
-            thread = threading.Thread(
-                target=self._record_voice_background,
-                args=(duration,),
-                daemon=True
-            )
-            thread.start()
-
-        except Exception as e:
-            self._append_transcription(f"ERROR: Failed to start recording: {e}")
-            self._reset_recording_ui()
 
     def _record_voice_background(self, duration):
         """
