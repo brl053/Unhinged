@@ -32,22 +32,25 @@
   "speech-to-text": {
     "name": "Speech-to-Text Service",
     "host": "localhost",
-    "port": 1191,
-    "protocol": "grpc",
+    "port": 1101,
+    "protocol": "http",
+    "health_url": "/health",
     "description": "Whisper-based speech transcription",
-    "required": false,
+    "required": true,
     "tags": [
       "ai",
       "speech",
       "whisper"
     ],
+    "grpc_port": 1191,
     "implements_health_proto": true
   },
   "text-to-speech": {
     "name": "Text-to-Speech Service",
     "host": "localhost",
-    "port": 9092,
-    "protocol": "grpc",
+    "port": 1102,
+    "protocol": "http",
+    "health_url": "/health",
     "description": "Neural voice synthesis",
     "required": false,
     "tags": [
@@ -55,13 +58,15 @@
       "tts",
       "voice"
     ],
+    "grpc_port": 9092,
     "implements_health_proto": true
   },
   "vision-ai": {
     "name": "Vision AI Service",
     "host": "localhost",
-    "port": 9093,
-    "protocol": "grpc",
+    "port": 1103,
+    "protocol": "http",
+    "health_url": "/health",
     "description": "BLIP-based image analysis",
     "required": false,
     "tags": [
@@ -69,6 +74,7 @@
       "vision",
       "blip"
     ],
+    "grpc_port": 9093,
     "implements_health_proto": true
   },
   "database": {

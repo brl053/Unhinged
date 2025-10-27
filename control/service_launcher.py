@@ -60,8 +60,8 @@ class ServiceLauncher:
         {
             "name": "Persistence Platform",
             "compose_service": "persistence-platform",
-            "health_url": "http://localhost:8190/api/v1/health",
-            "port": 8190,
+            "health_url": "http://localhost:1300/api/v1/health",
+            "port": 1300,
             "required": False,
             "description": "Independent Kotlin persistence platform (NO SPRING BOOT - pure independence)"
         },
@@ -81,6 +81,22 @@ class ServiceLauncher:
             "required": True,
             "description": "Whisper-based speech transcription service for voice input",
             "start_command": "python3 services/speech-to-text/simple_whisper_server.py"
+        },
+        {
+            "name": "Text-to-Speech Service",
+            "compose_service": "text-to-speech",
+            "health_url": "http://localhost:1102/health",
+            "port": 1102,
+            "required": False,
+            "description": "Neural voice synthesis service"
+        },
+        {
+            "name": "Vision AI Service",
+            "compose_service": "vision-ai",
+            "health_url": "http://localhost:1103/health",
+            "port": 1103,
+            "required": False,
+            "description": "BLIP-based image analysis service"
         }
     ]
     

@@ -198,20 +198,17 @@ class GTK4CSSGenerator:
     def _generate_elevation_properties(self) -> List[str]:
         """Generate CSS custom properties for elevation tokens"""
         properties = []
-        
+
         elevation = self.tokens['elevation']['elevation']
-        
-        # Shadows (4 depths)
+
+        # Shadows (4 depths) - GTK4 compatible format
         if 'shadows' in elevation:
-            properties.append("  /* Elevation Shadows (4 depths) */")
+            properties.append("  /* Elevation Shadows (GTK4 compatible) */")
             for shadow_level, shadow_props in elevation['shadows'].items():
                 if isinstance(shadow_props, dict):
-                    # Construct CSS box-shadow from blur, offset, color
-                    blur = shadow_props.get('blur', '0px')
-                    offset = shadow_props.get('offset', '0px')
-                    color = shadow_props.get('color', 'rgba(0,0,0,0.1)')
-                    box_shadow = f"0 {offset} {blur} {color}"
-                    properties.append(f"  --elevation-{shadow_level}: {box_shadow};")
+                    # Convert to GTK4-compatible shadow format
+                    gtk4_shadow = self._convert_shadow_to_gtk4_format(shadow_props)
+                    properties.append(f"  --elevation-{shadow_level}: {gtk4_shadow};")
         
         # Z-index layers
         if 'layers' in elevation:
@@ -232,6 +229,28 @@ class GTK4CSSGenerator:
                 properties.append(f"  --border-{border_name}: {border_value};")
         
         return properties
+
+    def _convert_shadow_to_gtk4_format(self, shadow_props: Dict) -> str:
+        """Convert shadow properties to GTK4-compatible format."""
+        # GTK4 has limited box-shadow support, use simple format
+        offset = shadow_props.get('offset', '2px').replace('px', '')
+        blur = shadow_props.get('blur', '4px').replace('px', '')
+
+        # Convert rgba to alpha() function for GTK4
+        color = shadow_props.get('color', 'rgba(0,0,0,0.1)')
+        if 'rgba' in color:
+            # Extract alpha value and convert to GTK4 alpha() format
+            try:
+                # Parse rgba(r, g, b, a) format
+                rgba_parts = color.replace('rgba(', '').replace(')', '').split(',')
+                if len(rgba_parts) == 4:
+                    alpha = float(rgba_parts[3].strip())
+                    return f"0 {offset}px {blur}px alpha(black, {alpha})"
+            except:
+                pass
+
+        # Fallback to simple shadow
+        return f"0 {offset}px {blur}px alpha(black, 0.1)"
     
     def _generate_theme_css(self, theme_name: str) -> str:
         """Generate theme-specific CSS overrides"""
@@ -302,7 +321,7 @@ class GTK4CSSGenerator:
             "  color: var(--color-text-inverse);",
             "  border: var(--border-thin) solid var(--color-action-primary);",
             f"  min-height: {button_config.get('minimum_height', '44px')};",
-            "  cursor: pointer;",
+            "  /* cursor: pointer; - GTK4 handles cursor automatically */",
             "  transition: all 150ms ease;",
             "}",
             "",
@@ -317,7 +336,7 @@ class GTK4CSSGenerator:
             "button:disabled, .btn:disabled {",
             "  background-color: var(--color-action-disabled);",
             "  color: var(--color-text-disabled);",
-            "  cursor: not-allowed;",
+            "  /* cursor: not-allowed; - GTK4 handles disabled cursor automatically */",
             "  opacity: 0.5;",
             "}"
         ]

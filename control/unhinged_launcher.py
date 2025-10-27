@@ -136,7 +136,7 @@ class UnhingedLauncher:
         
         # Setup steps using existing Makefile targets
         setup_steps = [
-            ("validate-independence", "Validating independence principles"),
+            # ("validate-independence", "Validating independence principles"),  # Phantom target - removed
             ("setup-python", "Setting up Python environment"),
             ("deps-install-essential", "Installing essential dependencies"),
             ("deps-install-graphics", "Installing graphics dependencies")
@@ -157,7 +157,7 @@ class UnhingedLauncher:
         
         build_steps = [
             ("graphics-build", "Building C graphics library"),
-            ("graphics-cffi", "Generating Python CFFI bindings"),
+            # ("graphics-cffi", "Generating Python CFFI bindings"),  # Phantom target - removed
             ("generate", "Generating build artifacts")
         ]
         

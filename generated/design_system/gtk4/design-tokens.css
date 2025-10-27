@@ -74,11 +74,11 @@
   --spacing-sp-12: 48px;
 
   /* === ELEVATION TOKENS === */
-  /* Elevation Shadows (4 depths) */
-  --elevation-1: 0 2px 4px rgba(26, 26, 26, 0.08);
-  --elevation-2: 0 4px 8px rgba(26, 26, 26, 0.08);
-  --elevation-3: 0 6px 12px rgba(26, 26, 26, 0.08);
-  --elevation-4: 0 8px 16px rgba(26, 26, 26, 0.08);
+  /* Elevation Shadows (GTK4 compatible) */
+  --elevation-1: 0 2px 4px alpha(black, 0.08);
+  --elevation-2: 0 4px 8px alpha(black, 0.08);
+  --elevation-3: 0 6px 12px alpha(black, 0.08);
+  --elevation-4: 0 8px 16px alpha(black, 0.08);
   /* Z-Index Layers */
   --z-index-base: 0;
   --z-index-raised: 10;

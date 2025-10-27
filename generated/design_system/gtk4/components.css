@@ -13,7 +13,7 @@ button, .btn {
   color: var(--color-text-inverse);
   border: var(--border-thin) solid var(--color-action-primary);
   min-height: 44px;
-  cursor: pointer;
+  /* cursor: pointer; - GTK4 handles cursor automatically */
   transition: all 150ms ease;
 }
 
@@ -28,7 +28,7 @@ button:active, .btn:active {
 button:disabled, .btn:disabled {
   background-color: var(--color-action-disabled);
   color: var(--color-text-disabled);
-  cursor: not-allowed;
+  /* cursor: not-allowed; - GTK4 handles disabled cursor automatically */
   opacity: 0.5;
 }
 

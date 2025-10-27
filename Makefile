@@ -836,11 +836,6 @@ start-continue: ## Continue start process after DRM permissions are fixed
 	@echo "  🎨 C Graphics library..."
 	@if python3 build/build.py build c-graphics-build >/dev/null 2>&1; then \
 		echo "  ✅ C Graphics built successfully"; \
-		if python3 build/build.py build graphics-cffi >/dev/null 2>&1; then \
-			echo "  ✅ Graphics CFFI bindings generated"; \
-		else \
-			echo "  ⚠️ Graphics CFFI failed - using fallback mode"; \
-		fi; \
 	else \
 		echo "  ⚠️ C Graphics build failed - using software fallback"; \
 	fi

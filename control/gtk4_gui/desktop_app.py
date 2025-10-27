@@ -119,6 +119,11 @@ class UnhingedDesktopApp(Adw.Application):
         Loads semantic tokens and theme CSS from the design system
         to provide consistent styling across the application.
         """
+        # Skip design system CSS if requested (for debugging)
+        if os.environ.get('SKIP_DESIGN_SYSTEM', '0') == '1':
+            print("ℹ️  Skipping design system CSS loading (SKIP_DESIGN_SYSTEM=1)")
+            return
+
         try:
             css_provider = Gtk.CssProvider()
 
@@ -155,19 +160,25 @@ class UnhingedDesktopApp(Adw.Application):
                 """
                 combined_css += test_css
 
-                css_provider.load_from_data(combined_css.encode())
+                try:
+                    css_provider.load_from_data(combined_css.encode())
 
-                # Apply CSS to display (requires window to be created)
-                if self.window:
-                    display = self.window.get_display()
-                    Gtk.StyleContext.add_provider_for_display(
-                        display,
-                        css_provider,
-                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                    )
-                else:
-                    # Store CSS provider for later application
-                    self._pending_css_provider = css_provider
+                    # Apply CSS to display (requires window to be created)
+                    if self.window:
+                        display = self.window.get_display()
+                        Gtk.StyleContext.add_provider_for_display(
+                            display,
+                            css_provider,
+                            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                        )
+                    else:
+                        # Store CSS provider for later application
+                        self._pending_css_provider = css_provider
+
+                except Exception as css_error:
+                    print(f"⚠️  CSS parsing error (using Libadwaita defaults): {css_error}")
+                    # Continue without design system CSS - app will use Libadwaita defaults
+                    self._pending_css_provider = None
 
                 print(f"✅ Design system CSS loaded successfully ({len(loaded_files)} files)")
 

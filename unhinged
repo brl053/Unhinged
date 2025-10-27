@@ -104,7 +104,18 @@ EOF
 cmd_start() {
     log_info "Starting Unhinged dual-system architecture..."
     cd "$PROJECT_ROOT"
-    exec make start "$@"
+
+    # Phase 1: Essential services via service launcher
+    log_info "🚀 Launching services..."
+    if python3 control/service_launcher.py --timeout 120; then
+        log_success "Essential services started"
+    else
+        log_warning "Some services failed to start - continuing with available services"
+    fi
+
+    # Phase 2: GUI and VM via existing Makefile
+    log_info "🎮 Launching GUI..."
+    exec make start-gui "$@"
 }
 
 cmd_stop() {
@@ -112,7 +123,8 @@ cmd_stop() {
     cd "$PROJECT_ROOT"
 
     # Graceful shutdown sequence
-    log_info "Shutting down services..."
+    log_info "🛑 Shutting down services..."
+    python3 control/service_launcher.py --stop || log_warning "Some services may still be running"
     make down 2>/dev/null || true
 
     log_info "Stopping development services..."
@@ -126,8 +138,30 @@ cmd_stop() {
 }
 
 cmd_status() {
-    log_info "Checking system status..."
+    log_info "Checking Unhinged system status..."
     cd "$PROJECT_ROOT"
+
+    # Service status via service launcher
+    log_info "📊 Service Status:"
+    python3 control/service_launcher.py --status
+
+    # Overall system status via Makefile
+    echo ""
+    log_info "🖥️  System Status:"
+    exec make status "$@"
+}
+
+cmd_status() {
+    log_info "Checking Unhinged system status..."
+    cd "$PROJECT_ROOT"
+
+    # Service status via service launcher
+    log_info "📊 Service Status:"
+    python3 control/service_launcher.py --status
+
+    # Overall system status via Makefile
+    echo ""
+    log_info "🖥️  System Status:"
     exec make status "$@"
 }
 
