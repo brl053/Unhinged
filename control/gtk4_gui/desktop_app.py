@@ -309,6 +309,12 @@ class UnhingedDesktopApp(Adw.Application):
         system_info_page.set_title("System Info")
         system_info_page.set_icon(Gio.ThemedIcon.new("computer-symbolic"))
 
+        # Create processes tab content
+        processes_content = self.create_processes_tab_content()
+        processes_page = self.tab_view.append(processes_content)
+        processes_page.set_title("Processes")
+        processes_page.set_icon(Gio.ThemedIcon.new("utilities-system-monitor-symbolic"))
+
         # Create tab bar
         tab_bar = Adw.TabBar()
         tab_bar.set_view(self.tab_view)
@@ -532,6 +538,89 @@ class UnhingedDesktopApp(Adw.Application):
         scrolled.set_child(system_info_box)
 
         return scrolled
+
+    def create_processes_tab_content(self):
+        """Create the processes tab content with live process monitoring."""
+        try:
+            # Import ProcessTable component
+            from components.complex import ProcessTable
+
+            # Create main content box
+            processes_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            processes_box.set_margin_top(24)
+            processes_box.set_margin_bottom(24)
+            processes_box.set_margin_start(24)
+            processes_box.set_margin_end(24)
+            processes_box.set_vexpand(True)
+            processes_box.set_hexpand(True)
+
+            # Create header section
+            header_group = Adw.PreferencesGroup()
+            header_group.set_title("Process Monitor")
+            header_group.set_description("Live process monitoring with aux/top command equivalence")
+
+            # Add header info row
+            info_row = Adw.ActionRow()
+            info_row.set_title("Process Management")
+            info_row.set_subtitle("View, sort, filter, and manage running processes")
+
+            # Add process monitor icon
+            monitor_icon = Gtk.Image.new_from_icon_name("utilities-system-monitor-symbolic")
+            monitor_icon.set_icon_size(Gtk.IconSize.LARGE)
+            monitor_icon.add_css_class("accent")
+            info_row.add_prefix(monitor_icon)
+
+            header_group.add(info_row)
+            processes_box.append(header_group)
+
+            # Create ProcessTable
+            self.process_table = ProcessTable()
+
+            # Create process table group
+            table_group = Adw.PreferencesGroup()
+            table_group.set_title("Running Processes")
+
+            # Add ProcessTable widget to the group
+            table_row = Adw.ActionRow()
+            table_row.set_child(self.process_table.get_widget())
+            table_group.add(table_row)
+
+            processes_box.append(table_group)
+
+            # Log processes tab creation
+            if self.session_logger:
+                self.session_logger.log_gui_event("PROCESSES_TAB_CREATED", "Processes tab with ProcessTable created")
+
+            return processes_box
+
+        except Exception as e:
+            # Create error fallback
+            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            error_box.set_margin_top(24)
+            error_box.set_margin_bottom(24)
+            error_box.set_margin_start(24)
+            error_box.set_margin_end(24)
+
+            error_group = Adw.PreferencesGroup()
+            error_group.set_title("Process Monitor Unavailable")
+            error_group.set_description("Process monitoring is not available")
+
+            error_row = Adw.ActionRow()
+            error_row.set_title("Error Loading Process Monitor")
+            error_row.set_subtitle(f"Error: {str(e)}")
+
+            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+            error_icon.add_css_class("error")
+            error_row.add_prefix(error_icon)
+
+            error_group.add(error_row)
+            error_box.append(error_group)
+
+            # Log error
+            if self.session_logger:
+                self.session_logger.log_gui_event("PROCESSES_TAB_ERROR", f"Failed to create processes tab: {e}")
+
+            return error_box
 
     def _create_system_overview_section(self, system_info):
         """Create system overview section with basic system information."""
@@ -1028,6 +1117,10 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Cleanup system info components
         self._cleanup_system_info_components()
+
+        # Cleanup process table
+        if hasattr(self, 'process_table') and self.process_table:
+            self.process_table.cleanup()
 
         # Close session logging
         if self.session_logger:

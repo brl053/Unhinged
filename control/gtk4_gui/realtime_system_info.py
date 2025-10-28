@@ -50,10 +50,12 @@ class RealTimeSystemInfoManager:
         
         # Update management
         self._update_callbacks = {}  # metric_type -> callback function
+        self._process_callbacks = {}  # process monitoring callbacks
         self._update_interval = 2.0  # seconds
         self._running = False
         self._update_thread = None
         self._last_values = {}
+        self._last_processes = {}  # PID -> ProcessInfo
         
         # Performance tracking
         self._update_count = 0
@@ -70,6 +72,17 @@ class RealTimeSystemInfoManager:
         if metric_type in self._update_callbacks:
             del self._update_callbacks[metric_type]
             logger.debug(f"Unregistered callback for {metric_type}")
+
+    def register_process_callback(self, callback_name: str, callback: Callable):
+        """Register a callback for process updates."""
+        self._process_callbacks[callback_name] = callback
+        logger.debug(f"Registered process callback: {callback_name}")
+
+    def unregister_process_callback(self, callback_name: str):
+        """Unregister a process callback."""
+        if callback_name in self._process_callbacks:
+            del self._process_callbacks[callback_name]
+            logger.debug(f"Unregistered process callback: {callback_name}")
     
     def start_updates(self, interval: float = 2.0):
         """Start real-time updates."""
@@ -108,7 +121,12 @@ class RealTimeSystemInfoManager:
                 
                 # Collect current performance data
                 performance_data = self._collect_performance_data()
-                
+
+                # Collect process data if there are process callbacks
+                if self._process_callbacks:
+                    process_data = self._collect_process_data()
+                    self._process_process_updates(process_data)
+
                 # Check for changes and trigger callbacks
                 self._process_updates(performance_data)
                 
@@ -147,6 +165,71 @@ class RealTimeSystemInfoManager:
         except Exception as e:
             logger.error(f"Failed to collect performance data: {e}")
             return {}
+
+    def _collect_process_data(self) -> Dict[int, Any]:
+        """Collect current process data for monitoring."""
+        try:
+            # Import process monitor
+            from process_monitor import get_top_processes
+
+            # Get top processes (limit to reduce overhead)
+            processes = get_top_processes(limit=100, sort_by='cpu_percent')
+
+            # Convert to dict keyed by PID
+            process_dict = {proc.pid: proc for proc in processes}
+
+            return process_dict
+
+        except Exception as e:
+            logger.error(f"Failed to collect process data: {e}")
+            return {}
+
+    def _process_process_updates(self, process_data: Dict[int, Any]):
+        """Process process updates and trigger callbacks for changes."""
+        try:
+            # Detect new, updated, and removed processes
+            current_pids = set(process_data.keys())
+            last_pids = set(self._last_processes.keys())
+
+            new_pids = current_pids - last_pids
+            removed_pids = last_pids - current_pids
+            existing_pids = current_pids & last_pids
+
+            # Check for significant changes in existing processes
+            updated_processes = []
+            for pid in existing_pids:
+                current_proc = process_data[pid]
+                last_proc = self._last_processes[pid]
+
+                # Check for significant CPU or memory changes (>1% change)
+                if (abs(current_proc.cpu_percent - last_proc.cpu_percent) > 1.0 or
+                    abs(current_proc.memory_percent - last_proc.memory_percent) > 1.0):
+                    updated_processes.append(current_proc)
+
+            # Trigger callbacks if there are changes
+            if new_pids or removed_pids or updated_processes:
+                for callback_name, callback in self._process_callbacks.items():
+                    if GLIB_AVAILABLE:
+                        GLib.idle_add(callback, {
+                            'new': [process_data[pid] for pid in new_pids],
+                            'removed': [self._last_processes[pid] for pid in removed_pids],
+                            'updated': updated_processes,
+                            'all': list(process_data.values())
+                        })
+                    else:
+                        # Fallback for testing without GTK
+                        callback({
+                            'new': [process_data[pid] for pid in new_pids],
+                            'removed': [self._last_processes[pid] for pid in removed_pids],
+                            'updated': updated_processes,
+                            'all': list(process_data.values())
+                        })
+
+            # Update last processes
+            self._last_processes = process_data.copy()
+
+        except Exception as e:
+            logger.error(f"Failed to process process updates: {e}")
     
     def _process_updates(self, performance_data: Dict[str, float]):
         """Process updates and trigger callbacks if values changed."""
@@ -187,7 +270,9 @@ class RealTimeSystemInfoManager:
         """Clean up resources."""
         self.stop_updates()
         self._update_callbacks.clear()
+        self._process_callbacks.clear()
         self._last_values.clear()
+        self._last_processes.clear()
 
 
 # Global instance for easy access
@@ -219,6 +304,16 @@ def unregister_metric_callback(metric_type: str):
     """Unregister a callback for metric updates."""
     manager = get_realtime_manager()
     manager.unregister_callback(metric_type)
+
+def register_process_callback(callback_name: str, callback: Callable):
+    """Register a callback for process updates."""
+    manager = get_realtime_manager()
+    manager.register_process_callback(callback_name, callback)
+
+def unregister_process_callback(callback_name: str):
+    """Unregister a process callback."""
+    manager = get_realtime_manager()
+    manager.unregister_process_callback(callback_name)
 
 
 if __name__ == "__main__":

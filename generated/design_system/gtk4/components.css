@@ -112,3 +112,127 @@
   from { opacity: 0.7; }
   to { opacity: 1.0; }
 }
+
+/* Process Table Specific Styling */
+.ds-process-table {
+  /* Inherits from ds-system-status-grid */
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+}
+
+.ds-generic-table {
+  border-radius: 8px;
+  background-color: #F5F5F5;
+}
+
+.ds-table-header {
+  background-color: #F0F0F0;
+  border-bottom: 1px solid #D9D9D9;
+  padding: 8px 0;
+}
+
+.ds-table-header-button {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-weight: 500;
+}
+
+.ds-table-header-button:hover {
+  background-color: rgba(0, 102, 204, 0.1);
+}
+
+.ds-table-header-title {
+  font-weight: 500;
+  color: #1A1A1A;
+}
+
+.ds-table-sort-indicator {
+  color: #0066CC;
+}
+
+.ds-table-body {
+  background-color: #FFFFFF;
+}
+
+.ds-table-row {
+  border-bottom: 1px solid #F0F0F0;
+  padding: 4px 0;
+}
+
+.ds-table-row:hover {
+  background-color: rgba(0, 102, 204, 0.05);
+}
+
+.ds-table-row:selected {
+  background-color: rgba(0, 102, 204, 0.1);
+}
+
+/* Process Row Specific Styling */
+.ds-process-row {
+  /* Inherits from ds-hardware-info-row */
+  transition: background-color 0.3s ease;
+}
+
+.ds-process-row-updated {
+  /* Brief highlight for updated processes */
+  background-color: rgba(33, 122, 60, 0.15); /* Success color with transparency */
+  transition: background-color 0.3s ease;
+}
+
+/* Process Action Menu Styling */
+.ds-process-action-menu {
+  /* Inherits from ds-action-secondary */
+  border-radius: 6px;
+}
+
+.ds-process-action-menu:hover {
+  background-color: rgba(102, 102, 102, 0.1);
+}
+
+/* Process Status Indicators */
+.process-running {
+  color: #217A3C;
+}
+
+.process-sleeping {
+  color: #666666;
+}
+
+.process-stopped {
+  color: #C17A00;
+}
+
+.process-zombie {
+  color: #C21E1E;
+}
+
+/* Process Usage Indicators */
+.process-cpu-high {
+  color: #C21E1E;
+  font-weight: 600;
+}
+
+.process-cpu-medium {
+  color: #C17A00;
+  font-weight: 500;
+}
+
+.process-cpu-low {
+  color: #217A3C;
+}
+
+.process-memory-high {
+  color: #C21E1E;
+  font-weight: 600;
+}
+
+.process-memory-medium {
+  color: #C17A00;
+  font-weight: 500;
+}
+
+.process-memory-low {
+  color: #217A3C;
+}

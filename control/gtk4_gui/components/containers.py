@@ -15,7 +15,7 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Adw, GLib, GObject, Pango
 from typing import Optional, List
-from base import ComponentBase, AdwComponentBase
+from .base import ComponentBase, AdwComponentBase
 from typing import Dict, Any, Optional, List
 
 
