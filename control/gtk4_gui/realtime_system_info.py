@@ -51,11 +51,13 @@ class RealTimeSystemInfoManager:
         # Update management
         self._update_callbacks = {}  # metric_type -> callback function
         self._process_callbacks = {}  # process monitoring callbacks
+        self._bluetooth_callbacks = {}  # Bluetooth monitoring callbacks
         self._update_interval = 2.0  # seconds
         self._running = False
         self._update_thread = None
         self._last_values = {}
         self._last_processes = {}  # PID -> ProcessInfo
+        self._last_bluetooth_devices = {}  # Address -> BluetoothDevice
         
         # Performance tracking
         self._update_count = 0
@@ -83,6 +85,17 @@ class RealTimeSystemInfoManager:
         if callback_name in self._process_callbacks:
             del self._process_callbacks[callback_name]
             logger.debug(f"Unregistered process callback: {callback_name}")
+
+    def register_bluetooth_callback(self, callback_name: str, callback: Callable):
+        """Register a callback for Bluetooth updates."""
+        self._bluetooth_callbacks[callback_name] = callback
+        logger.debug(f"Registered Bluetooth callback: {callback_name}")
+
+    def unregister_bluetooth_callback(self, callback_name: str):
+        """Unregister a Bluetooth callback."""
+        if callback_name in self._bluetooth_callbacks:
+            del self._bluetooth_callbacks[callback_name]
+            logger.debug(f"Unregistered Bluetooth callback: {callback_name}")
     
     def start_updates(self, interval: float = 2.0):
         """Start real-time updates."""
@@ -126,6 +139,11 @@ class RealTimeSystemInfoManager:
                 if self._process_callbacks:
                     process_data = self._collect_process_data()
                     self._process_process_updates(process_data)
+
+                # Collect Bluetooth data if there are Bluetooth callbacks
+                if self._bluetooth_callbacks:
+                    bluetooth_data = self._collect_bluetooth_data()
+                    self._process_bluetooth_updates(bluetooth_data)
 
                 # Check for changes and trigger callbacks
                 self._process_updates(performance_data)
@@ -230,6 +248,85 @@ class RealTimeSystemInfoManager:
 
         except Exception as e:
             logger.error(f"Failed to process process updates: {e}")
+
+    def _collect_bluetooth_data(self) -> Dict[str, Any]:
+        """Collect current Bluetooth data for monitoring."""
+        try:
+            # Import Bluetooth monitor
+            from bluetooth_monitor import get_bluetooth_devices, get_bluetooth_adapters
+
+            # Get devices and adapters
+            devices = get_bluetooth_devices(include_unpaired=True)
+            adapters = get_bluetooth_adapters()
+
+            # Convert devices to dict keyed by address
+            device_dict = {device.address: device for device in devices}
+
+            return {
+                'devices': device_dict,
+                'adapters': adapters,
+                'device_count': len(devices),
+                'adapter_count': len(adapters)
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to collect Bluetooth data: {e}")
+            return {'devices': {}, 'adapters': [], 'device_count': 0, 'adapter_count': 0}
+
+    def _process_bluetooth_updates(self, bluetooth_data: Dict[str, Any]):
+        """Process Bluetooth updates and trigger callbacks for changes."""
+        try:
+            current_devices = bluetooth_data.get('devices', {})
+            current_addresses = set(current_devices.keys())
+            last_addresses = set(self._last_bluetooth_devices.keys())
+
+            new_addresses = current_addresses - last_addresses
+            removed_addresses = last_addresses - current_addresses
+            existing_addresses = current_addresses & last_addresses
+
+            # Check for connection state changes in existing devices
+            updated_devices = []
+            for address in existing_addresses:
+                current_device = current_devices[address]
+                last_device = self._last_bluetooth_devices[address]
+
+                # Check for connection or pairing state changes
+                if (current_device.connected != last_device.connected or
+                    current_device.paired != last_device.paired or
+                    current_device.trusted != last_device.trusted or
+                    current_device.blocked != last_device.blocked):
+                    updated_devices.append(current_device)
+
+            # Trigger callbacks if there are changes
+            if new_addresses or removed_addresses or updated_devices:
+                for callback_name, callback in self._bluetooth_callbacks.items():
+                    if GLIB_AVAILABLE:
+                        GLib.idle_add(callback, {
+                            'new': [current_devices[addr] for addr in new_addresses],
+                            'removed': [self._last_bluetooth_devices[addr] for addr in removed_addresses],
+                            'updated': updated_devices,
+                            'all_devices': list(current_devices.values()),
+                            'adapters': bluetooth_data.get('adapters', []),
+                            'device_count': bluetooth_data.get('device_count', 0),
+                            'adapter_count': bluetooth_data.get('adapter_count', 0)
+                        })
+                    else:
+                        # Fallback for testing without GTK
+                        callback({
+                            'new': [current_devices[addr] for addr in new_addresses],
+                            'removed': [self._last_bluetooth_devices[addr] for addr in removed_addresses],
+                            'updated': updated_devices,
+                            'all_devices': list(current_devices.values()),
+                            'adapters': bluetooth_data.get('adapters', []),
+                            'device_count': bluetooth_data.get('device_count', 0),
+                            'adapter_count': bluetooth_data.get('adapter_count', 0)
+                        })
+
+            # Update last devices
+            self._last_bluetooth_devices = current_devices.copy()
+
+        except Exception as e:
+            logger.error(f"Failed to process Bluetooth updates: {e}")
     
     def _process_updates(self, performance_data: Dict[str, float]):
         """Process updates and trigger callbacks if values changed."""
@@ -271,8 +368,10 @@ class RealTimeSystemInfoManager:
         self.stop_updates()
         self._update_callbacks.clear()
         self._process_callbacks.clear()
+        self._bluetooth_callbacks.clear()
         self._last_values.clear()
         self._last_processes.clear()
+        self._last_bluetooth_devices.clear()
 
 
 # Global instance for easy access
@@ -314,6 +413,16 @@ def unregister_process_callback(callback_name: str):
     """Unregister a process callback."""
     manager = get_realtime_manager()
     manager.unregister_process_callback(callback_name)
+
+def register_bluetooth_callback(callback_name: str, callback: Callable):
+    """Register a callback for Bluetooth updates."""
+    manager = get_realtime_manager()
+    manager.register_bluetooth_callback(callback_name, callback)
+
+def unregister_bluetooth_callback(callback_name: str):
+    """Unregister a Bluetooth callback."""
+    manager = get_realtime_manager()
+    manager.unregister_bluetooth_callback(callback_name)
 
 
 if __name__ == "__main__":

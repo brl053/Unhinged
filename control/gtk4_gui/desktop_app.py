@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """
-@llm-doc Unhinged Desktop Application for Ubuntu GNOME
+@llm-doc Unhinged Desktop Application for GTK4 UI
 @llm-version 1.0.0
-@llm-date 2025-01-26
-@llm-author Unhinged Team
+@llm-date 2025-10-28
 
-## Overview
-Native Ubuntu GNOME desktop application that provides the same functionality
-as 'make start' through a graphical interface. Users can launch by double-clicking
-an icon or from the application menu.
-
-## Features
-- GTK4-based native Ubuntu GNOME interface
-- Visual representation of 'make start' functionality
+Enhanced GTK4 desktop application with comprehensive system monitoring, process management,
+Bluetooth device control, and audio output management. Features tabbed interface with
+real-time updates, component library integration, and professional design system.
 - Real-time status updates and progress indication
 - Integration with existing Makefile system and VM communication
 - User-friendly error handling and feedback
@@ -40,10 +34,14 @@ from pathlib import Path
 import time
 import json
 
-# Import component library for the new Status tab
+# Import component library
 try:
-    sys.path.append(str(Path(__file__).parent / "components"))
-    from components import StatusCard, StatusLabel, SystemInfoCard, HardwareInfoRow, PerformanceIndicator, SystemStatusGrid
+    sys.path.append(str(Path(__file__).parent))
+    from components import (
+        StatusCard, StatusLabel, SystemInfoCard, HardwareInfoRow,
+        PerformanceIndicator, SystemStatusGrid, ProcessTable,
+        BluetoothTable, AudioTable
+    )
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
@@ -314,6 +312,18 @@ class UnhingedDesktopApp(Adw.Application):
         processes_page = self.tab_view.append(processes_content)
         processes_page.set_title("Processes")
         processes_page.set_icon(Gio.ThemedIcon.new("utilities-system-monitor-symbolic"))
+
+        # Create bluetooth tab content
+        bluetooth_content = self.create_bluetooth_tab_content()
+        bluetooth_page = self.tab_view.append(bluetooth_content)
+        bluetooth_page.set_title("Bluetooth")
+        bluetooth_page.set_icon(Gio.ThemedIcon.new("bluetooth-symbolic"))
+
+        # Create output tab content
+        output_content = self.create_output_tab_content()
+        output_page = self.tab_view.append(output_content)
+        output_page.set_title("Output")
+        output_page.set_icon(Gio.ThemedIcon.new("audio-speakers-symbolic"))
 
         # Create tab bar
         tab_bar = Adw.TabBar()
@@ -619,6 +629,179 @@ class UnhingedDesktopApp(Adw.Application):
             # Log error
             if self.session_logger:
                 self.session_logger.log_gui_event("PROCESSES_TAB_ERROR", f"Failed to create processes tab: {e}")
+
+            return error_box
+
+    def create_bluetooth_tab_content(self):
+        """Create the Bluetooth tab content with device discovery and management."""
+        try:
+            # Import BluetoothTable component
+            from components.complex import BluetoothTable
+
+            # Create main content box
+            bluetooth_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            bluetooth_box.set_margin_top(24)
+            bluetooth_box.set_margin_bottom(24)
+            bluetooth_box.set_margin_start(24)
+            bluetooth_box.set_margin_end(24)
+            bluetooth_box.set_vexpand(True)
+            bluetooth_box.set_hexpand(True)
+
+            # Create header section
+            header_group = Adw.PreferencesGroup()
+            header_group.set_title("Bluetooth Manager")
+            header_group.set_description("Discover, pair, and manage Bluetooth devices")
+
+            # Add header info row
+            info_row = Adw.ActionRow()
+            info_row.set_title("Device Management")
+            info_row.set_subtitle("Scan for devices, manage connections, and configure pairing")
+
+            # Add Bluetooth icon
+            bluetooth_icon = Gtk.Image.new_from_icon_name("bluetooth-symbolic")
+            bluetooth_icon.set_icon_size(Gtk.IconSize.LARGE)
+            bluetooth_icon.add_css_class("accent")
+            info_row.add_prefix(bluetooth_icon)
+
+            header_group.add(info_row)
+            bluetooth_box.append(header_group)
+
+            # Create BluetoothTable
+            self.bluetooth_table = BluetoothTable()
+
+            # Create Bluetooth table group
+            table_group = Adw.PreferencesGroup()
+            table_group.set_title("Bluetooth Devices")
+
+            # Add BluetoothTable widget to the group
+            table_row = Adw.ActionRow()
+            table_row.set_child(self.bluetooth_table.get_widget())
+            table_group.add(table_row)
+
+            bluetooth_box.append(table_group)
+
+            # Log Bluetooth tab creation
+            if self.session_logger:
+                self.session_logger.log_gui_event("BLUETOOTH_TAB_CREATED", "Bluetooth tab with BluetoothTable created")
+
+            return bluetooth_box
+
+        except Exception as e:
+            # Create error fallback
+            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            error_box.set_margin_top(24)
+            error_box.set_margin_bottom(24)
+            error_box.set_margin_start(24)
+            error_box.set_margin_end(24)
+
+            error_group = Adw.PreferencesGroup()
+            error_group.set_title("Bluetooth Manager Unavailable")
+            error_group.set_description("Bluetooth management is not available")
+
+            error_row = Adw.ActionRow()
+            error_row.set_title("Error Loading Bluetooth Manager")
+            error_row.set_subtitle(f"Error: {str(e)}")
+
+            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+            error_icon.add_css_class("error")
+            error_row.add_prefix(error_icon)
+
+            error_group.add(error_row)
+            error_box.append(error_group)
+
+            # Log error
+            if self.session_logger:
+                self.session_logger.log_gui_event("BLUETOOTH_TAB_ERROR", f"Failed to create Bluetooth tab: {e}")
+
+            return error_box
+
+    def create_output_tab_content(self):
+        """Create the Output tab content with audio device management and connection switching."""
+        try:
+            # Import AudioTable component
+            from components.complex import AudioTable
+
+            # Create main content box
+            output_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            output_box.set_margin_top(24)
+            output_box.set_margin_bottom(24)
+            output_box.set_margin_start(24)
+            output_box.set_margin_end(24)
+
+            # Create header section
+            header_group = Adw.PreferencesGroup()
+            header_group.set_title("Audio Output Management")
+            header_group.set_description("Manage audio devices, volume control, and connection switching")
+
+            # Add audio info row
+            info_row = Adw.ActionRow()
+            info_row.set_title("Audio System")
+            info_row.set_subtitle("Control audio output devices and volume settings")
+
+            # Add audio icon
+            audio_icon = Gtk.Image.new_from_icon_name("audio-speakers-symbolic")
+            audio_icon.set_icon_size(Gtk.IconSize.LARGE)
+            info_row.add_prefix(audio_icon)
+
+            header_group.add(info_row)
+            output_box.append(header_group)
+
+            # Create AudioTable
+            self.audio_table = AudioTable()
+
+            # Create audio table group
+            table_group = Adw.PreferencesGroup()
+            table_group.set_title("Audio Devices")
+
+            # Add AudioTable widget directly to the group (no ActionRow wrapper)
+            audio_table_widget = self.audio_table.get_widget()
+            audio_table_widget.set_vexpand(True)
+            audio_table_widget.set_hexpand(True)
+
+            # Create a clamp for better layout
+            clamp = Adw.Clamp()
+            clamp.set_maximum_size(1200)
+            clamp.set_tightening_threshold(600)
+            clamp.set_child(audio_table_widget)
+            clamp.set_vexpand(True)
+
+            table_group.add(clamp)
+            output_box.append(table_group)
+
+            # Log Output tab creation
+            if self.session_logger:
+                self.session_logger.log_gui_event("OUTPUT_TAB_CREATED", "Output tab with AudioTable created")
+
+            return output_box
+
+        except Exception as e:
+            # Create error fallback
+            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            error_box.set_margin_top(24)
+            error_box.set_margin_bottom(24)
+            error_box.set_margin_start(24)
+            error_box.set_margin_end(24)
+
+            # Error group
+            error_group = Adw.PreferencesGroup()
+            error_group.set_title("Output Tab Error")
+            error_group.set_description("Failed to load audio management interface")
+
+            # Error row
+            error_row = Adw.ActionRow()
+            error_row.set_title("Audio Management Unavailable")
+            error_row.set_subtitle(f"Error: {str(e)}")
+
+            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+            error_icon.set_icon_size(Gtk.IconSize.LARGE)
+            error_row.add_prefix(error_icon)
+
+            error_group.add(error_row)
+            error_box.append(error_group)
+
+            # Log error
+            if self.session_logger:
+                self.session_logger.log_gui_event("OUTPUT_TAB_ERROR", f"Failed to create Output tab: {e}")
 
             return error_box
 
@@ -1121,6 +1304,14 @@ class UnhingedDesktopApp(Adw.Application):
         # Cleanup process table
         if hasattr(self, 'process_table') and self.process_table:
             self.process_table.cleanup()
+
+        # Cleanup Bluetooth table
+        if hasattr(self, 'bluetooth_table') and self.bluetooth_table:
+            self.bluetooth_table.cleanup()
+
+        # Cleanup audio table
+        if hasattr(self, 'audio_table') and self.audio_table:
+            self.audio_table.cleanup()
 
         # Close session logging
         if self.session_logger:

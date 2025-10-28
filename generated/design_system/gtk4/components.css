@@ -236,3 +236,298 @@
 .process-memory-low {
   color: #217A3C;
 }
+
+/* Bluetooth Table Specific Styling */
+.ds-bluetooth-table {
+  /* Inherits from ds-system-status-grid */
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+}
+
+/* Bluetooth Row Specific Styling */
+.ds-bluetooth-row {
+  /* Inherits from ds-hardware-info-row */
+  transition: background-color 0.3s ease;
+}
+
+/* Bluetooth Connection Status Indicators */
+.bluetooth-connected {
+  border-left: 3px solid #217A3C; /* Success color */
+}
+
+.bluetooth-paired {
+  border-left: 3px solid #C17A00; /* Warning color */
+}
+
+.bluetooth-discovered {
+  border-left: 3px solid #666666; /* Neutral color */
+}
+
+.bluetooth-blocked {
+  border-left: 3px solid #C21E1E; /* Error color */
+  opacity: 0.6;
+}
+
+/* Bluetooth Device Type Icons */
+.bluetooth-computer {
+  color: #0066CC;
+}
+
+.bluetooth-phone {
+  color: #217A3C;
+}
+
+.bluetooth-audio {
+  color: #8E44AD;
+}
+
+.bluetooth-peripheral {
+  color: #C17A00;
+}
+
+.bluetooth-imaging {
+  color: #E67E22;
+}
+
+.bluetooth-wearable {
+  color: #2ECC71;
+}
+
+.bluetooth-toy {
+  color: #F39C12;
+}
+
+.bluetooth-health {
+  color: #E74C3C;
+}
+
+.bluetooth-unknown {
+  color: #666666;
+}
+
+/* Bluetooth Signal Strength Indicators */
+.bluetooth-signal-excellent {
+  color: #217A3C;
+  font-weight: 600;
+}
+
+.bluetooth-signal-good {
+  color: #C17A00;
+  font-weight: 500;
+}
+
+.bluetooth-signal-poor {
+  color: #C21E1E;
+  font-weight: 400;
+}
+
+/* Bluetooth Action Buttons */
+.bluetooth-connect-button {
+  /* Inherits from ds-action-primary */
+  background-color: #0066CC;
+  color: #FFFFFF;
+}
+
+.bluetooth-disconnect-button {
+  /* Inherits from ds-action-secondary */
+  background-color: #C21E1E;
+  color: #FFFFFF;
+}
+
+.bluetooth-pair-button {
+  /* Inherits from ds-action-primary */
+  background-color: #217A3C;
+  color: #FFFFFF;
+}
+
+/* Bluetooth Discovery State */
+.bluetooth-discovering {
+  animation: bluetooth-pulse 2s ease-in-out infinite;
+}
+
+@keyframes bluetooth-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* Audio Table Specific Styling */
+.ds-audio-table {
+  /* Inherits from ds-system-status-grid */
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+}
+
+/* Audio Row Specific Styling */
+.ds-audio-row {
+  /* Inherits from ds-hardware-info-row */
+  transition: background-color 0.3s ease;
+}
+
+/* Audio Device Status Indicators */
+.audio-default {
+  border-left: 3px solid #217A3C; /* Success color */
+  background-color: rgba(33, 122, 60, 0.05);
+}
+
+.audio-active {
+  border-left: 3px solid #C17A00; /* Warning color */
+  background-color: rgba(193, 122, 0, 0.05);
+}
+
+.audio-muted {
+  border-left: 3px solid #C21E1E; /* Error color */
+  opacity: 0.7;
+}
+
+/* Audio Connection Type Icons */
+.audio-usb {
+  color: #0066CC;
+}
+
+.audio-hdmi {
+  color: #8E44AD;
+}
+
+.audio-bluetooth {
+  color: #2ECC71;
+}
+
+.audio-internal {
+  color: #E67E22;
+}
+
+.audio-unknown {
+  color: #666666;
+}
+
+/* Audio Volume Controls */
+.audio-volume-scale {
+  min-width: 100px;
+}
+
+.audio-volume-scale slider {
+  background-color: #0066CC;
+  border-radius: 50%;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+.audio-volume-scale trough {
+  background-color: #E5E5E5;
+  border-radius: 8px;
+  min-height: 4px;
+}
+
+.audio-volume-scale highlight {
+  background-color: #0066CC;
+  border-radius: 8px;
+}
+
+/* Audio Volume Percentage Labels */
+.audio-volume-label {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 12px;
+  color: #666666;
+  min-width: 35px;
+}
+
+/* Audio Mute Button Styling */
+.audio-mute-button {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 6px;
+}
+
+.audio-mute-button.toggle:checked {
+  background-color: #C21E1E;
+  color: #FFFFFF;
+}
+
+/* Audio Default Device Button */
+.audio-default-button {
+  /* Inherits from ds-action-primary */
+  background-color: #217A3C;
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+.audio-default-button button:hover {
+  background-color: #1B6532;
+}
+
+/* Audio Master Volume Control */
+.audio-master-volume {
+  background-color: rgba(0, 102, 204, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.audio-master-volume scale {
+  min-width: 150px;
+}
+
+/* Audio Device Type Indicators */
+.audio-device-usb::before {
+  content: "🔌";
+  margin-right: 4px;
+}
+
+.audio-device-hdmi::before {
+  content: "📺";
+  margin-right: 4px;
+}
+
+.audio-device-bluetooth::before {
+  content: "🔵";
+  margin-right: 4px;
+}
+
+.audio-device-internal::before {
+  content: "🔊";
+  margin-right: 4px;
+}
+
+/* Audio Connection Status Animation */
+.audio-connecting {
+  animation: audio-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes audio-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Audio Pull from Phone Button */
+.audio-bluetooth-pull {
+  background: linear-gradient(135deg, #2ECC71, #27AE60);
+  color: #FFFFFF;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+.audio-bluetooth-pull button:hover {
+  background: linear-gradient(135deg, #27AE60, #229954);
+}
+
+.audio-bluetooth-pull button:disabled {
+  background: #BDC3C7;
+  color: #7F8C8D;
+}
+
+/* Audio Device Count and Status */
+.audio-status-info {
+  color: #666666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.audio-device-count {
+  color: #0066CC;
+  font-weight: 600;
+}

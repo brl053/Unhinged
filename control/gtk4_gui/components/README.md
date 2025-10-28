@@ -1,31 +1,87 @@
 # Unhinged GTK4 Component Library
 
-A focused, practical component library for GTK4 applications that integrates seamlessly with the Unhinged design system.
+A comprehensive, production-ready component library for GTK4 applications with 21 components providing system monitoring, device management, and user interface capabilities.
 
 ## 🎯 **Design Principles**
 
-- **Design System Integration**: Uses semantic tokens from `libs/design_system/`
-- **Libadwaita First**: Builds on Adw widgets for native GNOME experience  
-- **Focused Components**: Only components actually needed by the application
+- **Design System Integration**: Uses semantic tokens from `generated/design_system/`
+- **Libadwaita First**: Builds on Adw widgets for native GNOME experience
+- **Production Ready**: Battle-tested components with error handling and cleanup
 - **Type Safety**: Proper GTK4 typing and signal handling
 - **Accessibility**: ARIA labels, keyboard navigation, screen reader support
+- **Real-time Updates**: Live data monitoring with configurable refresh intervals
+
+## 📊 **Component Statistics**
+
+- **21 Total Components** across 4 categories
+- **7 Primitive Components** for basic UI elements
+- **4 Container Components** for layout and grouping
+- **7 Complex Components** for advanced functionality
+- **3 Table Components** for data management
 
 ## 📦 **Components Overview**
 
-### **Primitives** (Basic building blocks)
+### **Primitives** (7 components - Basic building blocks)
 - **`ActionButton`** - Enhanced button with design system integration
-- **`StatusLabel`** - Label with semantic status styling  
-- **`ProgressIndicator`** - Progress bar with text and percentage
+- **`StatusLabel`** - Label with semantic status styling (success, warning, error)
+- **`ProgressIndicator`** - Progress bar with text and percentage display
+- **`HardwareInfoRow`** - Hardware information display with expandable details
+- **`ProcessRow`** - Process information display with kill/priority controls
+- **`BluetoothRow`** - Bluetooth device display with connection controls
+- **`AudioDeviceRow`** - Audio device display with volume controls
 
-### **Containers** (Layout and grouping)
+### **Containers** (4 components - Layout and grouping)
 - **`StatusCard`** - Card displaying status information with actions
 - **`ServicePanel`** - Panel for service information and controls
 - **`LogContainer`** - Scrollable container for log content
+- **`ComponentContainer`** - Generic container with design system integration
 
-### **Complex** (Stateful components)
+### **Complex** (7 components - Advanced functionality)
 - **`LogViewer`** - Advanced log viewer with filtering and search
 - **`ServiceRow`** - Complete service status row with controls
-- **`SystemStatus`** - Overall system status display
+- **`SystemStatus`** - Overall system status display with real-time updates
+- **`PerformanceIndicator`** - System performance monitoring with charts
+- **`ProcessTable`** - Complete process management interface
+- **`BluetoothTable`** - Bluetooth device management with discovery
+- **`AudioTable`** - Audio device management with volume control
+
+### **Tables** (3 components - Data management)
+- **`GenericTable`** - Base table component with sorting and filtering
+- **`TableColumn`** - Column definition with type-safe configuration
+- **`TableRow`** - Row component with selection and action support
+
+## 🏗️ **Architecture Overview**
+
+### **Component Hierarchy**
+```
+AdwComponentBase (base.py)
+├── Primitive Components (primitives.py)
+│   ├── ActionButton, StatusLabel, ProgressIndicator
+│   └── HardwareInfoRow, ProcessRow, BluetoothRow, AudioDeviceRow
+├── Container Components (containers.py)
+│   └── StatusCard, ServicePanel, LogContainer, ComponentContainer
+├── Complex Components (complex.py)
+│   └── LogViewer, ServiceRow, SystemStatus, PerformanceIndicator
+│   └── ProcessTable, BluetoothTable, AudioTable
+└── Table Components (tables.py)
+    └── GenericTable, TableColumn, TableRow
+```
+
+### **Data Flow**
+```
+Monitor Classes → Component Data → UI Components → User Interactions
+     ↓               ↓              ↓                ↓
+AudioMonitor → AudioDevice → AudioDeviceRow → Volume Control
+BluetoothMonitor → BluetoothDevice → BluetoothRow → Connection Control
+ProcessMonitor → ProcessInfo → ProcessRow → Kill/Priority Control
+SystemInfo → SystemData → SystemStatus → Real-time Updates
+```
+
+### **Design System Integration**
+- **CSS Classes**: All components use `ds-*` prefixed classes
+- **Semantic Tokens**: Colors, spacing, typography from design system
+- **Theme Support**: Automatic light/dark theme adaptation
+- **Accessibility**: ARIA labels, keyboard navigation, screen reader support
 
 ## 🚀 **Quick Start**
 

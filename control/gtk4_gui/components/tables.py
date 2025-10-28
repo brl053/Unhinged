@@ -91,6 +91,7 @@ class GenericTable(Gtk.Box):
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_vexpand(True)
         scrolled.set_hexpand(True)
+        scrolled.set_min_content_height(250)  # Ensure minimum height for table content
         
         # Create list box for rows
         self.list_box = Gtk.ListBox()
