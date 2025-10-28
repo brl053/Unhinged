@@ -1,31 +1,26 @@
 /* Light Theme for GTK4 */
-/* Semantic token overrides for light theme */
-/* Layers over Libadwaita base styling */
+/* GTK4-compatible light theme styling */
+/* Uses direct values instead of CSS variables */
 
-/* Apply light theme */
-[data-theme='light'], .theme-light {
-  /* Light Theme Colors */
-  --color-action-primary: #0066CC;
-  --color-action-secondary: #666666;
-  --color-action-tertiary: #999999;
-  --color-action-disabled: #CCCCCC;
-  --color-feedback-success: #217A3C;
-  --color-feedback-warning: #C17A00;
-  --color-feedback-error: #C21E1E;
-  --color-feedback-info: #0066CC;
-  --color-surface-default: #FFFFFF;
-  --color-surface-elevated: #F5F5F5;
-  --color-surface-overlay: #FFFFFF;
-  --color-surface-inverse: #1A1A1A;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #666666;
-  --color-text-tertiary: #999999;
-  --color-text-inverse: #FFFFFF;
-  --color-text-disabled: #CCCCCC;
-  --color-border-default: #D9D9D9;
-  --color-border-subtle: #F0F0F0;
-  --color-border-strong: #999999;
-  --color-interactive-hover: #000000;
-  --color-interactive-active: #000000;
-  --color-interactive-focus: #0066CC;
+/* Light theme base styling */
+.theme-light {
+  background-color: #FFFFFF;
+  color: #1A1A1A;
+}
+
+/* Light theme component overrides */
+.theme-light .ds-system-info-card {
+  background-color: #F5F5F5;
+  border-color: #F0F0F0;
+  color: #1A1A1A;
+}
+
+.theme-light .ds-hardware-info-row {
+  background-color: #FFFFFF;
+  color: #1A1A1A;
+}
+
+.theme-light .ds-performance-indicator {
+  background-color: #F5F5F5;
+  color: #1A1A1A;
 }

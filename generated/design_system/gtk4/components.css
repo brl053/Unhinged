@@ -1,66 +1,114 @@
-/* Component Styles Using Semantic Tokens */
-/* GTK4-compatible component patterns */
+/* Component Styles for GTK4 System Info */
+/* GTK4-compatible component patterns using direct values */
 /* Selective overrides over Libadwaita base */
 
-/* Button Component - Semantic Token Usage */
-button, .btn {
-  padding: var(--spacing-sp-2) var(--spacing-sp-4);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family-prose);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-body);
-  background-color: var(--color-action-primary);
-  color: var(--color-text-inverse);
-  border: var(--border-thin) solid var(--color-action-primary);
-  min-height: 44px;
-  /* cursor: pointer; - GTK4 handles cursor automatically */
-  transition: all 150ms ease;
+/* System Info Components */
+.ds-system-info-card {
+  padding: 16px 24px;
+  border-radius: 8px;
+  background-color: #F5F5F5;
+  border: 1px solid #F0F0F0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  margin: 8px;
 }
 
-button:hover, .btn:hover {
-  box-shadow: var(--elevation-1);
+.ds-hardware-info-row {
+  padding: 12px;
+  border-radius: 4px;
+  margin: 4px 0;
 }
 
-button:active, .btn:active {
-  transform: translateY(1px);
+.ds-performance-indicator {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 6px 0;
 }
 
-button:disabled, .btn:disabled {
-  background-color: var(--color-action-disabled);
-  color: var(--color-text-disabled);
-  /* cursor: not-allowed; - GTK4 handles disabled cursor automatically */
-  opacity: 0.5;
+.ds-system-status-grid {
+  padding: 16px;
+  margin: 8px;
 }
 
-/* Form Field Component - Semantic Token Usage */
-input, textarea, select {
-  padding: var(--spacing-sp-2) var(--spacing-sp-3);
-  border-radius: var(--radius-sm);
-  border: var(--border-thin) solid var(--color-border-default);
-  font-family: var(--font-family-prose);
-  font-size: var(--font-size-body);
-  background-color: var(--color-surface-default);
-  color: var(--color-text-primary);
+/* Status Indicators */
+.status-success, .success {
+  color: #217A3C;
 }
 
-input:focus, textarea:focus, select:focus {
-  border-width: var(--border-medium);
-  outline: none;
+.status-warning, .warning {
+  color: #C17A00;
 }
 
-input::placeholder, textarea::placeholder {
-  color: var(--color-text-tertiary);
+.status-error, .error {
+  color: #C21E1E;
 }
 
-/* Card Component - Semantic Token Usage */
-.card {
-  padding: var(--spacing-sp-4);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface-elevated);
-  border: var(--border-thin) solid var(--color-border-subtle);
-  box-shadow: var(--elevation-2);
+.status-info, .info {
+  color: #0066CC;
 }
 
-.card:hover {
-  box-shadow: var(--elevation-3);
+.status-normal {
+  color: #666666;
+}
+
+/* Hardware Type Styling */
+.hardware-cpu {
+  color: #0066CC;
+  border-left: 3px solid #0066CC;
+  padding-left: 8px;
+}
+
+.hardware-memory {
+  color: #217A3C;
+  border-left: 3px solid #217A3C;
+  padding-left: 8px;
+}
+
+.hardware-storage {
+  color: #C17A00;
+  border-left: 3px solid #C17A00;
+  padding-left: 8px;
+}
+
+.hardware-gpu {
+  color: #C21E1E;
+  border-left: 3px solid #C21E1E;
+  padding-left: 8px;
+}
+
+.hardware-network {
+  color: #666666;
+  border-left: 3px solid #666666;
+  padding-left: 8px;
+}
+
+/* Metric Type Styling */
+.metric-cpu {
+  border-left: 4px solid #0066CC;
+  padding-left: 12px;
+}
+
+.metric-memory {
+  border-left: 4px solid #217A3C;
+  padding-left: 12px;
+}
+
+.metric-disk {
+  border-left: 4px solid #C17A00;
+  padding-left: 12px;
+}
+
+.metric-network {
+  border-left: 4px solid #666666;
+  padding-left: 12px;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.7;
+  animation: pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.7; }
+  to { opacity: 1.0; }
 }

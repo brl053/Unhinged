@@ -43,33 +43,46 @@ import json
 # Import component library for the new Status tab
 try:
     sys.path.append(str(Path(__file__).parent / "components"))
-    from components import StatusCard, StatusLabel
+    from components import StatusCard, StatusLabel, SystemInfoCard, HardwareInfoRow, PerformanceIndicator, SystemStatusGrid
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
     print("⚠️  Component library not available - using basic widgets")
 
-# Import session logging from event framework
-sys.path.append(str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"))
+# Import system information collection
 try:
+    from system_info import SystemInfoCollector, get_system_info, get_performance_summary
+    from realtime_system_info import get_realtime_manager, start_realtime_updates, stop_realtime_updates
+    SYSTEM_INFO_AVAILABLE = True
+except ImportError as e:
+    SYSTEM_INFO_AVAILABLE = False
+    print(f"⚠️  System info collection not available: {e}")
+
+# Import session logging from event framework (optional)
+SESSION_LOGGING_AVAILABLE = False
+try:
+    # Try multiple possible paths for the event framework
+    event_paths = [
+        str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"),
+        str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"),
+        str(Path(__file__).parent.parent.parent / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages")
+    ]
+
+    for path in event_paths:
+        if Path(path).exists():
+            sys.path.append(path)
+            break
+
     from unhinged_events import create_gui_session_logger, GUIOutputCapture
     SESSION_LOGGING_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Session logging not available: {e}")
+    print("✅ Session logging available")
+except ImportError:
+    # Session logging is optional - continue without it
     SESSION_LOGGING_AVAILABLE = False
 
 # Simple approach: Use control modules as scripts (academic exercise)
 CONTROL_MODULES_AVAILABLE = True
-print("Control modules available as scripts")
-
-# Import session logging from event framework
-sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
-try:
-    from unhinged_events import create_gui_session_logger, GUIOutputCapture
-    SESSION_LOGGING_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Session logging not available: {e}")
-    SESSION_LOGGING_AVAILABLE = False
+print("✅ Control modules available as scripts")
 
 class UnhingedDesktopApp(Adw.Application):
     """
@@ -96,10 +109,19 @@ class UnhingedDesktopApp(Adw.Application):
         self.process = None
         self.running = False
 
+        # System info refresh state
+        self.system_info_auto_refresh = False
+        self.system_info_refresh_interval = 10  # seconds
+        self.system_info_refresh_timeout_id = None
+
+        # Real-time updates
+        self.realtime_updates_enabled = False
+        self.performance_indicators = {}  # Store references to performance indicators
+
         # Development mode detection
         self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
 
-        # Initialize session logging
+        # Initialize session logging (optional)
         self.session_logger = None
         self.output_capture = None
         if SESSION_LOGGING_AVAILABLE:
@@ -109,11 +131,14 @@ class UnhingedDesktopApp(Adw.Application):
                     self.session_logger,
                     self._gui_log_callback
                 )
-                self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with direct control integration")
+                self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with system info integration")
+                print("✅ Session logging initialized")
             except Exception as e:
-                print(f"Warning: Session logging initialization failed: {e}")
+                print(f"⚠️  Session logging initialization failed: {e}")
                 self.session_logger = None
                 self.output_capture = None
+        else:
+            print("ℹ️  Session logging not available (optional feature)")
 
         # Control module availability
         self.control_available = CONTROL_MODULES_AVAILABLE
@@ -278,6 +303,12 @@ class UnhingedDesktopApp(Adw.Application):
         status_page.set_title("Status")
         status_page.set_icon(Gio.ThemedIcon.new("dialog-information-symbolic"))
 
+        # Create system info tab content
+        system_info_content = self.create_system_info_tab_content()
+        system_info_page = self.tab_view.append(system_info_content)
+        system_info_page.set_title("System Info")
+        system_info_page.set_icon(Gio.ThemedIcon.new("computer-symbolic"))
+
         # Create tab bar
         tab_bar = Adw.TabBar()
         tab_bar.set_view(self.tab_view)
@@ -415,6 +446,507 @@ class UnhingedDesktopApp(Adw.Application):
 
         return scrolled
 
+    def create_system_info_tab_content(self):
+        """Create the system info tab content with comprehensive system information."""
+        # Create main content box
+        system_info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        system_info_box.set_margin_top(24)
+        system_info_box.set_margin_bottom(24)
+        system_info_box.set_margin_start(24)
+        system_info_box.set_margin_end(24)
+        system_info_box.set_vexpand(True)
+        system_info_box.set_hexpand(True)
+
+        # Header section
+        header_group = Adw.PreferencesGroup()
+        header_group.set_title("System Information")
+        header_group.set_description("Comprehensive system hardware and performance information")
+        system_info_box.append(header_group)
+
+        if SYSTEM_INFO_AVAILABLE and COMPONENTS_AVAILABLE:
+            # Collect system information
+            try:
+                system_info = get_system_info(self.project_root, use_cache=True)
+
+                # Create system overview section
+                overview_section = self._create_system_overview_section(system_info)
+                system_info_box.append(overview_section)
+
+                # Create performance metrics section
+                performance_section = self._create_performance_metrics_section(system_info)
+                system_info_box.append(performance_section)
+
+                # Create hardware information section
+                hardware_section = self._create_hardware_info_section(system_info)
+                system_info_box.append(hardware_section)
+
+                # Create platform status section
+                platform_section = self._create_platform_status_section(system_info)
+                system_info_box.append(platform_section)
+
+                # Add refresh button
+                refresh_section = self._create_refresh_section()
+                system_info_box.append(refresh_section)
+
+            except Exception as e:
+                # Error handling
+                error_group = Adw.PreferencesGroup()
+                error_group.set_title("Error")
+
+                error_row = Adw.ActionRow()
+                error_row.set_title("Failed to collect system information")
+                error_row.set_subtitle(str(e))
+
+                error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+                error_icon.add_css_class("error")
+                error_row.add_prefix(error_icon)
+
+                error_group.add(error_row)
+                system_info_box.append(error_group)
+        else:
+            # Fallback when system info or components not available
+            fallback_group = Adw.PreferencesGroup()
+            fallback_group.set_title("System Information Unavailable")
+
+            fallback_row = Adw.ActionRow()
+            if not SYSTEM_INFO_AVAILABLE:
+                fallback_row.set_title("System information collection not available")
+                fallback_row.set_subtitle("Missing system_info module or dependencies")
+            elif not COMPONENTS_AVAILABLE:
+                fallback_row.set_title("Component library not available")
+                fallback_row.set_subtitle("Missing component library for display")
+
+            fallback_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+            fallback_icon.add_css_class("warning")
+            fallback_row.add_prefix(fallback_icon)
+
+            fallback_group.add(fallback_row)
+            system_info_box.append(fallback_group)
+
+        # Create scrolled window with proper sizing
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+        scrolled.set_hexpand(True)
+        scrolled.set_min_content_height(400)
+        scrolled.set_child(system_info_box)
+
+        return scrolled
+
+    def _create_system_overview_section(self, system_info):
+        """Create system overview section with basic system information."""
+        overview_data = {
+            "os_name": f"{system_info.system.os_name} {system_info.system.os_version}",
+            "kernel_version": system_info.system.kernel_version,
+            "hostname": system_info.system.hostname,
+            "username": system_info.system.username,
+            "uptime_hours": f"{system_info.system.uptime_seconds / 3600:.1f} hours",
+            "architecture": system_info.system.architecture
+        }
+
+        overview_card = SystemInfoCard(
+            title="System Overview",
+            subtitle="Basic system information",
+            icon_name="computer-symbolic",
+            data=overview_data
+        )
+
+        return overview_card.get_widget()
+
+    def _create_performance_metrics_section(self, system_info):
+        """Create performance metrics section with real-time indicators."""
+        performance_group = Adw.PreferencesGroup()
+        performance_group.set_title("Performance Metrics")
+        performance_group.set_description("Real-time system performance indicators")
+
+        # CPU Performance
+        cpu_indicator = PerformanceIndicator(
+            metric_type="cpu",
+            title="CPU Usage",
+            current_value=system_info.cpu.usage_percent,
+            max_value=100.0,
+            unit="%"
+        )
+        performance_group.add(cpu_indicator.get_widget())
+        self.performance_indicators['cpu'] = cpu_indicator
+
+        # Memory Performance
+        memory_indicator = PerformanceIndicator(
+            metric_type="memory",
+            title="Memory Usage",
+            current_value=system_info.memory.usage_percent,
+            max_value=100.0,
+            unit="%"
+        )
+        performance_group.add(memory_indicator.get_widget())
+        self.performance_indicators['memory'] = memory_indicator
+
+        # Storage Performance
+        if system_info.storage.total_storage_gb > 0:
+            storage_usage = (system_info.storage.total_used_gb / system_info.storage.total_storage_gb) * 100
+            storage_indicator = PerformanceIndicator(
+                metric_type="disk",
+                title="Storage Usage",
+                current_value=storage_usage,
+                max_value=100.0,
+                unit="%"
+            )
+            performance_group.add(storage_indicator.get_widget())
+            self.performance_indicators['disk'] = storage_indicator
+
+        # Start real-time updates for performance indicators
+        self._setup_realtime_updates()
+
+        return performance_group
+
+    def _create_hardware_info_section(self, system_info):
+        """Create hardware information section with detailed hardware data."""
+        hardware_group = Adw.PreferencesGroup()
+        hardware_group.set_title("Hardware Information")
+        hardware_group.set_description("Detailed hardware specifications")
+
+        # CPU Information
+        cpu_details = {
+            "model": system_info.cpu.model,
+            "cores": system_info.cpu.cores,
+            "threads": system_info.cpu.threads,
+            "frequency_mhz": f"{system_info.cpu.frequency_mhz:.0f} MHz" if system_info.cpu.frequency_mhz > 0 else "Unknown",
+            "features": ", ".join(system_info.cpu.features[:5]) if system_info.cpu.features else "None detected"
+        }
+
+        cpu_row = HardwareInfoRow(
+            title=f"CPU: {system_info.cpu.model}",
+            subtitle=f"{system_info.cpu.cores} cores, {system_info.cpu.threads} threads",
+            hardware_type="cpu",
+            status="normal",
+            details=cpu_details
+        )
+        hardware_group.add(cpu_row.get_widget())
+
+        # Memory Information
+        memory_details = {
+            "total_gb": f"{system_info.memory.total_gb:.1f} GB",
+            "available_gb": f"{system_info.memory.available_gb:.1f} GB",
+            "used_gb": f"{system_info.memory.used_gb:.1f} GB",
+            "swap_total_gb": f"{system_info.memory.swap_total_gb:.1f} GB",
+            "swap_used_gb": f"{system_info.memory.swap_used_gb:.1f} GB"
+        }
+
+        memory_row = HardwareInfoRow(
+            title=f"Memory: {system_info.memory.total_gb:.1f} GB Total",
+            subtitle=f"{system_info.memory.usage_percent:.1f}% used ({system_info.memory.available_gb:.1f} GB available)",
+            hardware_type="memory",
+            status="normal",
+            details=memory_details
+        )
+        hardware_group.add(memory_row.get_widget())
+
+        # GPU Information
+        if system_info.gpu.vendor != "Unknown":
+            gpu_details = {
+                "vendor": system_info.gpu.vendor,
+                "model": system_info.gpu.model,
+                "driver": system_info.gpu.driver or "Unknown"
+            }
+
+            gpu_row = HardwareInfoRow(
+                title=f"GPU: {system_info.gpu.vendor}",
+                subtitle=system_info.gpu.model,
+                hardware_type="gpu",
+                status="normal",
+                details=gpu_details
+            )
+            hardware_group.add(gpu_row.get_widget())
+
+        return hardware_group
+
+    def _create_platform_status_section(self, system_info):
+        """Create platform status section with Unhinged-specific information."""
+        platform_group = Adw.PreferencesGroup()
+        platform_group.set_title("Platform Status")
+        platform_group.set_description("Unhinged platform services and components")
+
+        # Services Status
+        services_row = Adw.ActionRow()
+        services_row.set_title("Platform Services")
+
+        running_count = len(system_info.platform.services_running)
+        failed_count = len(system_info.platform.services_failed)
+
+        if running_count > 0 and failed_count == 0:
+            services_row.set_subtitle(f"{running_count} services running")
+            services_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
+            services_icon.add_css_class("success")
+        elif running_count > 0 and failed_count > 0:
+            services_row.set_subtitle(f"{running_count} running, {failed_count} failed")
+            services_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+            services_icon.add_css_class("warning")
+        else:
+            services_row.set_subtitle("No services detected")
+            services_icon = Gtk.Image.new_from_icon_name("dialog-information-symbolic")
+            services_icon.add_css_class("info")
+
+        services_row.add_prefix(services_icon)
+        platform_group.add(services_row)
+
+        # Build System Status
+        build_row = Adw.ActionRow()
+        build_row.set_title("Build System")
+        build_row.set_subtitle(system_info.platform.build_system_status)
+
+        build_icon = Gtk.Image.new_from_icon_name("applications-development-symbolic")
+        if "Available" in system_info.platform.build_system_status:
+            build_icon.add_css_class("success")
+        else:
+            build_icon.add_css_class("warning")
+
+        build_row.add_prefix(build_icon)
+        platform_group.add(build_row)
+
+        # Graphics Platform Status
+        graphics_row = Adw.ActionRow()
+        graphics_row.set_title("Graphics Platform")
+        graphics_row.set_subtitle(system_info.platform.graphics_platform_status)
+
+        graphics_icon = Gtk.Image.new_from_icon_name("video-display-symbolic")
+        if "Available" in system_info.platform.graphics_platform_status:
+            graphics_icon.add_css_class("success")
+        else:
+            graphics_icon.add_css_class("warning")
+
+        graphics_row.add_prefix(graphics_icon)
+        platform_group.add(graphics_row)
+
+        return platform_group
+
+    def _create_refresh_section(self):
+        """Create refresh controls section."""
+        refresh_group = Adw.PreferencesGroup()
+        refresh_group.set_title("Controls")
+
+        # Manual refresh row
+        refresh_row = Adw.ActionRow()
+        refresh_row.set_title("Refresh System Information")
+        refresh_row.set_subtitle("Update all system information and metrics")
+
+        refresh_button = Gtk.Button()
+        refresh_button.set_icon_name("view-refresh-symbolic")
+        refresh_button.add_css_class("suggested-action")
+        refresh_button.set_tooltip_text("Refresh system information")
+        refresh_button.connect("clicked", self._on_refresh_system_info)
+
+        refresh_row.add_suffix(refresh_button)
+        refresh_group.add(refresh_row)
+
+        # Auto-refresh row
+        auto_refresh_row = Adw.ActionRow()
+        auto_refresh_row.set_title("Auto-Refresh")
+        auto_refresh_row.set_subtitle(f"Automatically refresh every {self.system_info_refresh_interval} seconds")
+
+        auto_refresh_switch = Gtk.Switch()
+        auto_refresh_switch.set_active(self.system_info_auto_refresh)
+        auto_refresh_switch.connect("notify::active", self._on_auto_refresh_toggled)
+
+        auto_refresh_row.add_suffix(auto_refresh_switch)
+        refresh_group.add(auto_refresh_row)
+
+        # Real-time updates row
+        realtime_row = Adw.ActionRow()
+        realtime_row.set_title("Real-time Performance Updates")
+        realtime_row.set_subtitle("Live updating of CPU, memory, and disk usage (2s interval)")
+
+        realtime_switch = Gtk.Switch()
+        realtime_switch.set_active(self.realtime_updates_enabled)
+        realtime_switch.connect("notify::active", self._on_realtime_updates_toggled)
+
+        realtime_row.add_suffix(realtime_switch)
+        refresh_group.add(realtime_row)
+
+        return refresh_group
+
+    def _on_refresh_system_info(self, button):
+        """Handle refresh button click."""
+        if SYSTEM_INFO_AVAILABLE:
+            try:
+                # Clear cache and collect fresh data
+                from system_info import SystemInfoCollector
+                collector = SystemInfoCollector(self.project_root)
+                collector.clear_cache()
+
+                # Show toast notification
+                if hasattr(self, 'toast_overlay'):
+                    toast = Adw.Toast()
+                    toast.set_title("System information refreshed")
+                    toast.set_timeout(2)
+                    self.toast_overlay.add_toast(toast)
+
+                # Log refresh action
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SYSTEM_INFO_REFRESH", "User refreshed system information")
+
+                # Note: In a full implementation, we would refresh the tab content here
+                # For now, we just clear the cache so next view will be fresh
+
+            except Exception as e:
+                # Show error toast
+                if hasattr(self, 'toast_overlay'):
+                    toast = Adw.Toast()
+                    toast.set_title(f"Refresh failed: {str(e)}")
+                    toast.set_timeout(3)
+                    self.toast_overlay.add_toast(toast)
+
+    def _on_auto_refresh_toggled(self, switch, param):
+        """Handle auto-refresh toggle."""
+        self.system_info_auto_refresh = switch.get_active()
+
+        if self.system_info_auto_refresh:
+            # Start auto-refresh
+            self._start_system_info_auto_refresh()
+
+            # Show toast notification
+            if hasattr(self, 'toast_overlay'):
+                toast = Adw.Toast()
+                toast.set_title(f"Auto-refresh enabled ({self.system_info_refresh_interval}s)")
+                toast.set_timeout(2)
+                self.toast_overlay.add_toast(toast)
+        else:
+            # Stop auto-refresh
+            self._stop_system_info_auto_refresh()
+
+            # Show toast notification
+            if hasattr(self, 'toast_overlay'):
+                toast = Adw.Toast()
+                toast.set_title("Auto-refresh disabled")
+                toast.set_timeout(2)
+                self.toast_overlay.add_toast(toast)
+
+        # Log auto-refresh toggle
+        if self.session_logger:
+            self.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH_TOGGLE",
+                                            f"Auto-refresh {'enabled' if self.system_info_auto_refresh else 'disabled'}")
+
+    def _start_system_info_auto_refresh(self):
+        """Start auto-refresh timer."""
+        if self.system_info_refresh_timeout_id:
+            GLib.source_remove(self.system_info_refresh_timeout_id)
+
+        self.system_info_refresh_timeout_id = GLib.timeout_add_seconds(
+            self.system_info_refresh_interval,
+            self._auto_refresh_system_info
+        )
+
+    def _stop_system_info_auto_refresh(self):
+        """Stop auto-refresh timer."""
+        if self.system_info_refresh_timeout_id:
+            GLib.source_remove(self.system_info_refresh_timeout_id)
+            self.system_info_refresh_timeout_id = None
+
+    def _auto_refresh_system_info(self):
+        """Auto-refresh callback."""
+        if SYSTEM_INFO_AVAILABLE and self.system_info_auto_refresh:
+            try:
+                # Clear cache to get fresh data
+                from system_info import SystemInfoCollector
+                collector = SystemInfoCollector(self.project_root)
+                collector.clear_cache()
+
+                # Log auto-refresh
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH", "Auto-refresh triggered")
+
+                # Note: In a full implementation, we would update the displayed data here
+                # For now, we just clear the cache so the next manual view will be fresh
+
+            except Exception as e:
+                # Log error but don't show toast for auto-refresh errors
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH_ERROR", str(e))
+
+        # Return True to continue the timer
+        return self.system_info_auto_refresh
+
+    def _setup_realtime_updates(self):
+        """Setup real-time updates for performance indicators."""
+        if not SYSTEM_INFO_AVAILABLE:
+            return
+
+        try:
+            # Register callbacks for each performance indicator
+            for metric_type, indicator in self.performance_indicators.items():
+                def create_callback(ind):
+                    def callback(value):
+                        ind.update_value(value)
+                    return callback
+
+                manager = get_realtime_manager(self.project_root)
+                manager.register_callback(metric_type, create_callback(indicator))
+
+            # Log setup
+            if self.session_logger:
+                self.session_logger.log_gui_event("REALTIME_SETUP", f"Setup callbacks for {list(self.performance_indicators.keys())}")
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("REALTIME_SETUP_ERROR", str(e))
+
+    def _on_realtime_updates_toggled(self, switch, param):
+        """Handle real-time updates toggle."""
+        self.realtime_updates_enabled = switch.get_active()
+
+        if self.realtime_updates_enabled:
+            # Start real-time updates
+            if SYSTEM_INFO_AVAILABLE:
+                success = start_realtime_updates(interval=2.0)
+                if success:
+                    # Show toast notification
+                    if hasattr(self, 'toast_overlay'):
+                        toast = Adw.Toast()
+                        toast.set_title("Real-time updates enabled")
+                        toast.set_timeout(2)
+                        self.toast_overlay.add_toast(toast)
+                else:
+                    # Failed to start - reset switch
+                    switch.set_active(False)
+                    self.realtime_updates_enabled = False
+        else:
+            # Stop real-time updates
+            if SYSTEM_INFO_AVAILABLE:
+                stop_realtime_updates()
+
+                # Show toast notification
+                if hasattr(self, 'toast_overlay'):
+                    toast = Adw.Toast()
+                    toast.set_title("Real-time updates disabled")
+                    toast.set_timeout(2)
+                    self.toast_overlay.add_toast(toast)
+
+        # Log toggle action
+        if self.session_logger:
+            self.session_logger.log_gui_event("REALTIME_TOGGLE",
+                                            f"Real-time updates {'enabled' if self.realtime_updates_enabled else 'disabled'}")
+
+    def _cleanup_system_info_components(self):
+        """Clean up system info components to prevent memory leaks."""
+        if COMPONENTS_AVAILABLE:
+            try:
+                # Note: In a full implementation, we would track all created components
+                # and call their cleanup methods here. For now, we just clear any
+                # cached references.
+
+                # Clear system info cache
+                if SYSTEM_INFO_AVAILABLE:
+                    from system_info import SystemInfoCollector
+                    collector = SystemInfoCollector(self.project_root)
+                    collector.clear_cache()
+
+                # Log cleanup
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SYSTEM_INFO_CLEANUP", "System info components cleaned up")
+
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SYSTEM_INFO_CLEANUP_ERROR", str(e))
+
     def setup_actions(self):
         """Setup application actions for menu"""
         # About action
@@ -486,6 +1018,16 @@ class UnhingedDesktopApp(Adw.Application):
         """Quit application"""
         if self.running:
             self.on_stop_clicked(None)
+
+        # Stop auto-refresh timer
+        self._stop_system_info_auto_refresh()
+
+        # Stop real-time updates
+        if SYSTEM_INFO_AVAILABLE and self.realtime_updates_enabled:
+            stop_realtime_updates()
+
+        # Cleanup system info components
+        self._cleanup_system_info_components()
 
         # Close session logging
         if self.session_logger:

@@ -163,6 +163,30 @@ class ComponentBase(GObject.Object):
     def get_widget(self) -> Gtk.Widget:
         """Get the main GTK widget for this component."""
         return self.widget
+
+    def cleanup(self):
+        """Clean up component resources and disconnect signals."""
+        if hasattr(self, '_signal_handlers'):
+            for handler_id, widget in self._signal_handlers:
+                if widget and handler_id:
+                    try:
+                        widget.disconnect(handler_id)
+                    except:
+                        pass  # Widget may already be destroyed
+            self._signal_handlers.clear()
+
+        # Clear widget reference
+        if hasattr(self, 'widget'):
+            self.widget = None
+
+    def connect_signal(self, widget, signal, callback, *args):
+        """Connect a signal and track it for cleanup."""
+        if not hasattr(self, '_signal_handlers'):
+            self._signal_handlers = []
+
+        handler_id = widget.connect(signal, callback, *args)
+        self._signal_handlers.append((handler_id, widget))
+        return handler_id
     
     def set_sensitive(self, sensitive: bool):
         """Set component sensitivity (enabled/disabled)."""

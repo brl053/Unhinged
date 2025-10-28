@@ -83,6 +83,16 @@ except ImportError as e:
     print(f"Warning: Service discovery not available: {e}")
     SERVICE_DISCOVERY_AVAILABLE = False
 
+# Import service launcher for health checks
+try:
+    sys.path.append(str(Path(__file__).parent.parent / "control"))
+    from service_launcher import ServiceLauncher
+    SERVICE_LAUNCHER_AVAILABLE = True
+    print("Service launcher loaded successfully")
+except ImportError as e:
+    print(f"Warning: Service launcher not available: {e}")
+    SERVICE_LAUNCHER_AVAILABLE = False
+
 print("All imports completed, starting application classes...")
 
 # Headless service classes
@@ -717,6 +727,17 @@ class UnhingedDesktopApp(Adw.Application):
         self.logging_service = HeadlessLoggingService(self.session_logger)
         self.voice_service = VoiceRecordingService(self.project_root, self.session_logger)
         self.monitoring_service = HeadlessMonitoringService(self.project_root, self.session_logger)
+
+        # Initialize service launcher for health checks
+        self.service_launcher = None
+        if SERVICE_LAUNCHER_AVAILABLE:
+            try:
+                self.service_launcher = ServiceLauncher()
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SERVICE_LAUNCHER_INIT", "Service launcher initialized for health checks")
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SERVICE_LAUNCHER_INIT_ERROR", f"Service launcher initialization failed: {e}")
         
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -787,7 +808,7 @@ class UnhingedDesktopApp(Adw.Application):
         window.set_content(self.toast_overlay)
 
     def add_minimal_status_tab(self):
-        """Minimal status tab with as little content as possible"""
+        """Minimal status tab with dual-system health check"""
         status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         status_box.set_margin_top(24)
         status_box.set_margin_bottom(24)
@@ -796,14 +817,176 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Single minimal status row
         status_group = Adw.PreferencesGroup()
-        status_row = Adw.ActionRow()
-        status_row.set_title("Ready")
+        self.health_status_row = Adw.ActionRow()
+        self.health_status_row.set_title("Unhealthy")  # Default to unhealthy
 
-        status_group.add(status_row)
+        # Add refresh button with design system styling
+        refresh_button = Gtk.Button.new_with_label("Refresh")
+        refresh_button.add_css_class("ds-action-secondary")
+        refresh_button.connect("clicked", self.on_health_refresh_clicked)
+        self.health_status_row.add_suffix(refresh_button)
+
+        status_group.add(self.health_status_row)
         status_box.append(status_group)
 
         # Add to stack
         self.stack.add_titled(status_box, "status", "Status")
+
+        # Load minimal design system CSS
+        self._load_minimal_design_css()
+
+        # Apply initial styling to default "Unhealthy" status
+        GLib.timeout_add(100, self._apply_initial_status_styling)
+
+    def _load_minimal_design_css(self):
+        """Load minimal design system CSS for status styling"""
+        try:
+            css_provider = Gtk.CssProvider()
+
+            # Minimal CSS using design system color values directly (GTK4 compatible)
+            minimal_css = """
+            /* Minimal status styling using design system colors */
+            .ds-status-healthy {
+                color: #217A3C;
+                font-weight: 500;
+            }
+
+            .ds-status-unhealthy {
+                color: #C21E1E;
+                font-weight: 500;
+            }
+
+            .ds-action-secondary {
+                background-color: #666666;
+                color: #FFFFFF;
+                border: 1px solid #666666;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+
+            .ds-action-secondary:hover {
+                background-color: #0066CC;
+                border-color: #0066CC;
+            }
+            """
+
+            css_provider.load_from_data(minimal_css.encode('utf-8'))
+
+            # Apply CSS to display
+            if self.window:
+                Gtk.StyleContext.add_provider_for_display(
+                    self.window.get_display(),
+                    css_provider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("DESIGN_CSS_LOADED", "Minimal design system CSS loaded")
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("DESIGN_CSS_ERROR", f"Failed to load design CSS: {e}")
+
+    def _apply_initial_status_styling(self):
+        """Apply initial styling to the default status"""
+        try:
+            title_widget = self.health_status_row.get_first_child()
+            if title_widget:
+                title_widget.add_css_class("ds-status-unhealthy")
+        except Exception:
+            pass
+        return False  # Don't repeat
+
+    def on_health_refresh_clicked(self, button):
+        """Handle health refresh button click"""
+        try:
+            # Get dual-system health status
+            health_status = self.get_dual_system_health()
+
+            # Update UI with status and styling
+            self.health_status_row.set_title(health_status)
+
+            # Apply design system color coding
+            title_widget = self.health_status_row.get_first_child()
+            if title_widget:
+                # Remove existing status classes
+                title_widget.remove_css_class("ds-status-healthy")
+                title_widget.remove_css_class("ds-status-unhealthy")
+
+                # Add appropriate status class
+                if health_status == "Healthy":
+                    title_widget.add_css_class("ds-status-healthy")
+                else:
+                    title_widget.add_css_class("ds-status-unhealthy")
+
+            # Log the check
+            if self.session_logger:
+                self.session_logger.log_gui_event("HEALTH_CHECK", f"Dual-system status: {health_status}")
+
+        except Exception as e:
+            self.health_status_row.set_title("Unhealthy")
+            # Apply error styling
+            title_widget = self.health_status_row.get_first_child()
+            if title_widget:
+                title_widget.remove_css_class("ds-status-healthy")
+                title_widget.add_css_class("ds-status-unhealthy")
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("HEALTH_CHECK_ERROR", f"Health check failed: {e}")
+
+    def get_dual_system_health(self):
+        """Get overall dual-system architecture health status"""
+        try:
+            # Check host services
+            host_healthy = self.check_host_services()
+
+            # Check VM status
+            vm_healthy = self.check_vm_status()
+
+            # Return single status
+            return "Healthy" if (host_healthy and vm_healthy) else "Unhealthy"
+
+        except Exception:
+            return "Unhealthy"
+
+    def check_host_services(self):
+        """Check if essential host services are running"""
+        try:
+            # Use existing service launcher to check essential services
+            if hasattr(self, 'service_launcher'):
+                status = self.service_launcher.get_service_status()
+
+                # Check if required services are running
+                required_running = 0
+                total_required = 0
+
+                for service_name, service_data in status.items():
+                    # Count LLM service as required for basic functionality
+                    if "LLM" in service_name:
+                        total_required += 1
+                        if service_data.get("running", False):
+                            required_running += 1
+
+                # Host is healthy if at least LLM service is running
+                return required_running > 0
+
+            return False
+
+        except Exception:
+            return False
+
+    def check_vm_status(self):
+        """Check if VM is running"""
+        try:
+            # Simple check for QEMU process
+            import subprocess
+            result = subprocess.run(['pgrep', '-f', 'qemu-system-x86_64'],
+                                  capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+
+        except Exception:
+            return False
 
 
 

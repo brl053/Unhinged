@@ -910,7 +910,8 @@ start-gui: ## Launch enhanced GTK4 desktop application with dual-system architec
 	@echo "🎯 Dual-System Architecture: GTK4 Control Plane + Alpine Native"
 	@echo "🎙️ Voice-First Conversation Interface Integrated"
 	@echo "🏔️ Native C Graphics + Session Logging Active"
-	@python3 desktop/unhinged-desktop-app
+	@echo "📊 System Information Page Integrated"
+	@python3 control/gtk4_gui/desktop_app.py
 
 start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
 	$(call log_info,📺 Launching VM with direct console output...)

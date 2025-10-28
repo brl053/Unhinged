@@ -27,9 +27,9 @@ Provides reusable, accessible widgets following GNOME HIG patterns.
 
 # Component imports organized by category
 from base import ComponentBase, ComponentError
-from primitives import ActionButton, StatusLabel, ProgressIndicator
-from containers import StatusCard, ServicePanel, LogContainer
-from complex import LogViewer, ServiceRow, SystemStatus
+from primitives import ActionButton, StatusLabel, ProgressIndicator, HardwareInfoRow
+from containers import StatusCard, ServicePanel, LogContainer, SystemInfoCard, SystemStatusGrid
+from complex import LogViewer, ServiceRow, SystemStatus, PerformanceIndicator
 
 # Version and metadata
 __version__ = "1.0.0"
@@ -40,21 +40,25 @@ __all__ = [
     # Base classes
     "ComponentBase",
     "ComponentError",
-    
+
     # Primitive components
     "ActionButton",
-    "StatusLabel", 
+    "StatusLabel",
     "ProgressIndicator",
-    
+    "HardwareInfoRow",
+
     # Container components
     "StatusCard",
     "ServicePanel",
     "LogContainer",
-    
+    "SystemInfoCard",
+    "SystemStatusGrid",
+
     # Complex components
     "LogViewer",
     "ServiceRow",
     "SystemStatus",
+    "PerformanceIndicator",
 ]
 
 # Component registry for introspection and tooling
@@ -63,16 +67,20 @@ COMPONENT_REGISTRY = {
         "ActionButton",
         "StatusLabel",
         "ProgressIndicator",
+        "HardwareInfoRow",
     ],
     "containers": [
-        "StatusCard", 
+        "StatusCard",
         "ServicePanel",
         "LogContainer",
+        "SystemInfoCard",
+        "SystemStatusGrid",
     ],
     "complex": [
         "LogViewer",
-        "ServiceRow", 
+        "ServiceRow",
         "SystemStatus",
+        "PerformanceIndicator",
     ]
 }
 

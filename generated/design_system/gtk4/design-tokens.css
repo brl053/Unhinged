@@ -1,98 +1,102 @@
 /* Generated Design Tokens for GTK4 */
 /* DO NOT EDIT - Generated from libs/design_system/tokens/ */
-/* Semantic tokens as CSS custom properties */
+/* GTK4-compatible design tokens using direct values */
 
-:root {
-  /* === SEMANTIC COLOR TOKENS === */
-  /* Action Colors */
-  --color-action-primary: #0066CC;
-  --color-action-secondary: #666666;
-  --color-action-tertiary: #999999;
-  --color-action-disabled: #CCCCCC;
-  /* Feedback Colors */
-  --color-feedback-success: #217A3C;
-  --color-feedback-warning: #C17A00;
-  --color-feedback-error: #C21E1E;
-  --color-feedback-info: #0066CC;
-  /* Surface Colors */
-  --color-surface-default: #FFFFFF;
-  --color-surface-elevated: #F5F5F5;
-  --color-surface-overlay: #FFFFFF;
-  --color-surface-inverse: #1A1A1A;
-  /* Text Colors */
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #666666;
-  --color-text-tertiary: #999999;
-  --color-text-inverse: #FFFFFF;
-  --color-text-disabled: #CCCCCC;
-  /* Border Colors */
-  --color-border-default: #D9D9D9;
-  --color-border-subtle: #F0F0F0;
-  --color-border-strong: #999999;
-  /* Interactive Colors */
-  --color-interactive-hover: #000000;
-  --color-interactive-active: #000000;
-  --color-interactive-focus: #0066CC;
+/* === SEMANTIC COLOR TOKENS === */
+/* Action Colors - Applied directly to components */
+.ds-action-primary { background-color: #0066CC; color: white; }
+.ds-action-secondary { background-color: #666666; color: white; }
+.ds-action-tertiary { background-color: #999999; color: white; }
+.ds-action-disabled { background-color: #CCCCCC; color: #666666; }
 
-  /* === TYPOGRAPHY TOKENS === */
-  /* Font Families */
-  --font-family-prose: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-family-code: "JetBrains Mono", "Fira Code", "SF Mono", Monaco, Menlo, "Courier New", monospace;
-  /* Type Scale (5 sizes) */
-  --font-size-display: 2.25rem;
-  --line-height-display: 1.2;
-  --font-weight-display: 700;
-  --letter-spacing-display: -0.02em;
-  --font-size-heading: 1.5rem;
-  --line-height-heading: 1.2;
-  --font-weight-heading: 500;
-  --letter-spacing-heading: 0em;
-  --font-size-body: 1rem;
-  --line-height-body: 1.5;
-  --font-weight-body: 400;
-  --letter-spacing-body: 0em;
-  --font-size-caption: 0.875rem;
-  --line-height-caption: 1.6;
-  --font-weight-caption: 400;
-  --letter-spacing-caption: 0.04em;
-  --font-size-code: 0.875rem;
-  --line-height-code: 1.5;
-  --font-weight-code: 400;
-  --letter-spacing-code: 0em;
+/* Feedback Colors */
+.ds-feedback-success, .success { color: #217A3C; }
+.ds-feedback-warning, .warning { color: #C17A00; }
+.ds-feedback-error, .error { color: #C21E1E; }
+.ds-feedback-info, .info { color: #0066CC; }
 
-  /* === SPACING TOKENS === */
-  /* Spacing Scale (10 values, 4px base unit) */
-  --spacing-sp-0-5: 2px;
-  --spacing-sp-1: 4px;
-  --spacing-sp-1-5: 6px;
-  --spacing-sp-2: 8px;
-  --spacing-sp-3: 12px;
-  --spacing-sp-4: 16px;
-  --spacing-sp-5: 20px;
-  --spacing-sp-6: 24px;
-  --spacing-sp-8: 32px;
-  --spacing-sp-12: 48px;
+/* Surface Colors */
+.ds-surface-default { background-color: #FFFFFF; }
+.ds-surface-elevated { background-color: #F5F5F5; }
+.ds-surface-overlay { background-color: #FFFFFF; }
+.ds-surface-inverse { background-color: #1A1A1A; color: #FFFFFF; }
 
-  /* === ELEVATION TOKENS === */
-  /* Elevation Shadows (GTK4 compatible) */
-  --elevation-1: 0 2px 4px alpha(black, 0.08);
-  --elevation-2: 0 4px 8px alpha(black, 0.08);
-  --elevation-3: 0 6px 12px alpha(black, 0.08);
-  --elevation-4: 0 8px 16px alpha(black, 0.08);
-  /* Z-Index Layers */
-  --z-index-base: 0;
-  --z-index-raised: 10;
-  --z-index-floating: 100;
-  --z-index-modal: 1000;
-  --z-index-notification: 2000;
-  /* Border Radius (4 values) */
-  --radius-none: 0px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  /* Border Width (3 values) */
-  --border-thin: 1px;
-  --border-medium: 2px;
-  --border-thick: 4px;
+/* Text Colors */
+.ds-text-primary { color: #1A1A1A; }
+.ds-text-secondary { color: #666666; }
+.ds-text-tertiary { color: #999999; }
+.ds-text-inverse { color: #FFFFFF; }
+.ds-text-disabled { color: #CCCCCC; }
 
+/* Border Colors */
+.ds-border-default { border-color: #D9D9D9; }
+.ds-border-subtle { border-color: #F0F0F0; }
+.ds-border-strong { border-color: #999999; }
+
+/* === TYPOGRAPHY TOKENS === */
+/* Font Families */
+.ds-font-prose { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+.ds-font-code { font-family: "JetBrains Mono", "Fira Code", "SF Mono", Monaco, Menlo, "Courier New", monospace; }
+
+/* Type Scale (5 sizes) */
+.ds-text-display {
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
+.ds-text-heading {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: 0em;
+}
+.ds-text-body {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0em;
+}
+.ds-text-caption {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+.ds-text-code {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0em;
+}
+
+/* === SPACING TOKENS === */
+/* Spacing Scale (10 values, 4px base unit) */
+.ds-spacing-0-5 { margin: 2px; padding: 2px; }
+.ds-spacing-1 { margin: 4px; padding: 4px; }
+.ds-spacing-1-5 { margin: 6px; padding: 6px; }
+.ds-spacing-2 { margin: 8px; padding: 8px; }
+.ds-spacing-3 { margin: 12px; padding: 12px; }
+.ds-spacing-4 { margin: 16px; padding: 16px; }
+.ds-spacing-5 { margin: 20px; padding: 20px; }
+.ds-spacing-6 { margin: 24px; padding: 24px; }
+.ds-spacing-8 { margin: 32px; padding: 32px; }
+.ds-spacing-12 { margin: 48px; padding: 48px; }
+
+/* === ELEVATION TOKENS === */
+/* Elevation Shadows (GTK4 compatible) */
+.ds-elevation-1 { box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+.ds-elevation-2 { box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+.ds-elevation-3 { box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+.ds-elevation-4 { box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
+
+/* Border Radius (4 values) */
+.ds-radius-none { border-radius: 0px; }
+.ds-radius-sm { border-radius: 4px; }
+.ds-radius-md { border-radius: 8px; }
+.ds-radius-lg { border-radius: 16px; }
+
+/* Border Width (3 values) */
+.ds-border-thin { border-width: 1px; }
+.ds-border-medium { border-width: 2px; }
+.ds-border-thick { border-width: 4px; }
