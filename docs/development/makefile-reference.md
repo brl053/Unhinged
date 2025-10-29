@@ -2,7 +2,7 @@
 
 > **Purpose**: Comprehensive documentation of all Make targets and development workflows
 > **Audience**: Developers and AI assistants working on the Unhinged platform
-> **Last Updated**: Auto-generated on 2025-10-28 02:07:20
+> **Last Updated**: Auto-generated on 2025-10-28 23:46:46
 
 ## 🎯 Quick Reference
 

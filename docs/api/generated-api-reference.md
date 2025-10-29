@@ -1,6 +1,6 @@
 # 📡 API Reference - Auto-Generated
 
-> **Last Updated**: 2025-10-28 02:07:20
+> **Last Updated**: 2025-10-28 23:46:46
 > **Proto Files**: 16
 
 ## messaging.proto

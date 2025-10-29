@@ -2,7 +2,7 @@
 
 > **Purpose**: Fundamental design principles extracted from codebase
 > **Source**: Auto-generated from evolved LlmDocs format
-> **Last Updated**: 2025-10-28 22:48:24
+> **Last Updated**: 2025-10-28 23:46:47
 
 ## 🎯 Critical Business Rules
 
@@ -139,11 +139,6 @@ These are the non-negotiable constraints that guide all development:
 **Context**: dependency validation and conflict resolution across package managers
 
 ### unknown (python)
-**File**: `.llmdocs-backup/build/tools/llmdocs-evolution-engine.py`
-**Rule**: must preserve semantic meaning while eliminating redundancy
-**Context**: transforms 8-tag LlmDocs to 3-tag evolved format
-
-### unknown (python)
 **File**: `services/shared/__init__.py`
 **Rule**: shared service code must be simple, reusable, and eliminate duplication
 **Context**: shared service utilities and base classes for
@@ -227,6 +222,17 @@ These are the non-negotiable constraints that guide all development:
 
 System components organized by type and function:
 
+### architecture.system/unhinged-os-design
+- **unknown**: UnhingedOS system architecture documentation and design specifications for voice-first operating system built on Alpine Linux foundation (`vm/docs/unhinged-os-architecture.py`)
+
+### build.documentation/unhinged-os-build-system
+- **unknown**: UnhingedOS build system documentation with comprehensive build instructions, profile specifications, and development workflow (`vm/docs/unhinged-os-build-system.py`)
+
+### component
+- **unknown**: system component (`vm/testing/communication-tests/test-simple-communication.py`)
+- **unknown**: system component (`vm/testing/communication-tests/test-enhanced-communication.py`)
+- **unknown**: system component (`vm/testing/integration-tests/test-complete-system.py`)
+
 ### component.primitive
 - **test_extract_llm_context_from_typescript**: react component for user authentication (`build/docs-generation/test_llm_extraction.py`)
 - **ComponentSpecificationValidator**: core validator implementing comprehensive component speci... (`libs/design_system/build/component_validator.py`)
@@ -252,6 +258,9 @@ System components organized by type and function:
 - **TestLLMContextWarmerImprovements**: test suite for llm context warmer improvements (`build/docs-generation/test_llm_extraction.py`)
 - **test_element_name_detection_from_service_path**: test element name extraction from services directory (`build/docs-generation/test_llm_extraction.py`)
 - ... and 34 more
+
+### development.workflow/unhinged-os-development
+- **unknown**: UnhingedOS development workflow documentation with testing framework, image management, and contributing guidelines (`vm/docs/unhinged-os-development.py`)
 
 ### misc.control-monitor
 - **UnhingedHealthMonitor**: continuous health monitoring system for unhinged service (`control/deployment/health-checks.py`)
@@ -358,9 +367,6 @@ System components organized by type and function:
 
 ### util.generator
 - **unknown**: project structure documentation generation from filesystem analysis (`build/docs-generation/generate-project-structure.py`)
-
-### util.migrator
-- **unknown**: transforms 8-tag LlmDocs to 3-tag evolved format (`.llmdocs-backup/build/tools/llmdocs-evolution-engine.py`)
 
 ### util.setup
 - **unknown**: python environment setup and dependency management for build system (`build/python/setup.py`)

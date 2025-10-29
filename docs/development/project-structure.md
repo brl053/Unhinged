@@ -2,26 +2,26 @@
 
 > **Purpose**: Comprehensive overview of project organization and components
 > **Audience**: Developers and AI assistants working on the platform
-> **Last Updated**: Auto-generated on 2025-10-28 02:07:20
+> **Last Updated**: Auto-generated on 2025-10-28 23:46:46
 
 ## 📊 Project Overview
 
-- **Total Files**: 1353
+- **Total Files**: 278
 - **Services**: 5
 - **Key Files**: 29
 
 ### File Type Distribution
 ```
-.kt               488 files
-.java             470 files
-.py                87 files
-.h                 51 files
-.cc                50 files
-.ts                30 files
+.py                75 files
+.md                35 files
+.kt                28 files
 .proto             28 files
-.md                24 files
 no_extension       24 files
 .c                 24 files
+.yaml              13 files
+.txt                9 files
+.json               9 files
+.llm                4 files
 ```
 
 ## 🚀 Services
@@ -75,8 +75,8 @@ no_extension       24 files
 
 ### docs
 - **Description**: Project documentation
-- **Files**: 1
-- **Subdirectories**: 1
+- **Files**: 11
+- **Subdirectories**: 4
 
 ## 📋 Key Files
 
@@ -107,7 +107,7 @@ no_extension       24 files
 - **README.md** (`libs/graphics/README.md`) - Project overview and setup instructions
 - **build.gradle.kts** (`libs/service-framework/kotlin/build.gradle.kts`) - Kotlin/Java build configuration
 - **README.md** (`libs/design_system/README.md`) - Project overview and setup instructions
-- **build.gradle.kts** (`generated/kotlin/clients/build.gradle.kts`) - Kotlin/Java build configuration
+- **README.md** (`generated/README.md`) - Project overview and setup instructions
 - **Dockerfile** (`llm/Dockerfile`) - Container build instructions
 
 ---
