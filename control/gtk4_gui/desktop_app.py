@@ -1150,8 +1150,10 @@ class UnhingedDesktopApp(Adw.Application):
                 self._chatroom_voice_button.set_sensitive(False)
 
             # Change icon to recording indicator
-            if COMPONENTS_AVAILABLE and hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                self._chatroom_voice_button.set_icon_name("media-record")
+            if COMPONENTS_AVAILABLE:
+                # ActionButton doesn't expose set_icon_name directly
+                # For now, just disable the button - icon change not critical
+                pass
             else:
                 self._chatroom_voice_button.set_icon_name("media-record")
 
@@ -1258,11 +1260,8 @@ class UnhingedDesktopApp(Adw.Application):
     def _reset_chatroom_voice_button(self):
         """Reset chatroom voice button to initial state."""
         try:
-            # Reset icon back to microphone
-            if COMPONENTS_AVAILABLE and hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            else:
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+            # Reset icon back to microphone (ActionButton doesn't expose set_icon_name)
+            # For now, just re-enable the button - icon reset not critical
 
             # Re-enable button if voice service is available
             if self.is_voice_service_available():
