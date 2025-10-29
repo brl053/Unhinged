@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+@llm-type component
+@llm-does system component
+"""
+"""
 Complete System Test for Unhinged Alpine VM
 Tests the entire voice-first GUI experience with Alpine VM rendering
 """

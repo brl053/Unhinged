@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+@llm-type component
+@llm-does system component
+"""
+"""
 @llm-doc Test Simple VM Communication Pipeline
 @llm-version 1.0.0
 @llm-date 2025-01-26

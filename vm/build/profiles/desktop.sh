@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# @llm-type build-tool
+# @llm-does build system component
+#
 # UnhingedOS Desktop Profile Configuration
 # Target: Primary desktop replacement, voice-controlled workstations
 # Resources: 256MB RAM, 2 CPU cores, full voice-first desktop

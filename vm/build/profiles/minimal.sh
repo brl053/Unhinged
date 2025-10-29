@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# @llm-type build-tool
+# @llm-does build system component
+#
 # UnhingedOS Minimal Profile Configuration
 # Target: Embedded systems, IoT devices, voice-only interfaces
 # Resources: 64MB RAM, 1 CPU core, minimal footprint

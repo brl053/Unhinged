@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# @llm-type build-tool
+# @llm-does build system component
+#
 # UnhingedOS Builder - Unified build system for voice-first operating system
 # Supports multiple profiles: minimal, desktop, server, dev
 

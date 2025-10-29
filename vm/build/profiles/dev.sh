@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# @llm-type build-tool
+# @llm-does build system component
+#
 # UnhingedOS Development Profile Configuration
 # Target: UnhingedOS development, system debugging, research
 # Resources: 512MB RAM, 4 CPU cores, complete development environment

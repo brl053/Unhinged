@@ -216,8 +216,8 @@ class LLMDocsEnforcer:
 def main():
     parser = argparse.ArgumentParser(description="Enforce LLM documentation standards")
     parser.add_argument("--fix", action="store_true", help="Fix non-compliant files")
-    parser.add_argument("--directories", nargs="+", 
-                       default=["services", "control", "platforms", "build"],
+    parser.add_argument("--directories", nargs="+",
+                       default=["services", "control", "platforms", "build", "vm"],
                        help="Directories to scan")
     
     args = parser.parse_args()

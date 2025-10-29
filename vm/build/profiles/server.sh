@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# @llm-type build-tool
+# @llm-does build system component
+#
 # UnhingedOS Server Profile Configuration
 # Target: Voice processing backend, API servers, distributed computing
 # Resources: 128MB RAM, 1-2 CPU cores, headless operation

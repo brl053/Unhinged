@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+@llm-type component
+@llm-does system component
+"""
+"""
 @llm-doc Test Enhanced VM Communication System
 @llm-version 2.0.0
 @llm-date 2025-01-26
