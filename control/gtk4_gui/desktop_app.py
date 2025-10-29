@@ -1172,11 +1172,12 @@ class UnhingedDesktopApp(Adw.Application):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 self.recording_temp_file = Path(f.name)
 
-            # Start unlimited recording (no -d parameter)
+            # Use arecord with reasonable max duration (30 seconds) to ensure valid WAV files
             cmd = [
                 'arecord',
                 '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
                 '-t', 'wav',          # WAV format
+                '-d', '30',           # Max 30 seconds (user can stop earlier)
                 str(self.recording_temp_file)
             ]
 
@@ -1211,10 +1212,12 @@ class UnhingedDesktopApp(Adw.Application):
             if not self.is_recording or not self.recording_process:
                 return
 
-            # Send SIGINT to gracefully stop recording (allows WAV header finalization)
-            import signal
-            self.recording_process.send_signal(signal.SIGINT)
-            self.recording_process.wait(timeout=5)  # Wait for graceful shutdown
+            # Check if process is still running
+            if self.recording_process.poll() is None:
+                # Process is still running, send SIGINT to stop gracefully
+                import signal
+                self.recording_process.send_signal(signal.SIGINT)
+                self.recording_process.wait(timeout=3)  # Wait for graceful shutdown
 
             self.is_recording = False
 
@@ -1246,6 +1249,14 @@ class UnhingedDesktopApp(Adw.Application):
         try:
             if not self.recording_temp_file or not self.recording_temp_file.exists():
                 raise Exception("No recording file found")
+
+            # Debug: Check file size and basic info
+            file_size = self.recording_temp_file.stat().st_size
+            print(f"🔍 Debug: WAV file size: {file_size} bytes")
+
+            # Check if file is too small (WAV header is at least 44 bytes)
+            if file_size < 44:
+                raise Exception(f"WAV file too small ({file_size} bytes) - likely corrupted")
 
             # Transcribe using existing gRPC service
             transcript = self.transcribe_audio_file(self.recording_temp_file)
@@ -2462,7 +2473,7 @@ class UnhingedDesktopApp(Adw.Application):
             # Voice recording row
             record_row = Adw.ActionRow()
             record_row.set_title("Voice Input")
-            record_row.set_subtitle("Click to start/stop recording (unlimited duration)")
+            record_row.set_subtitle("Click to start/stop recording (max 30 seconds)")
 
             # Record button
             if COMPONENTS_AVAILABLE:
@@ -3110,10 +3121,12 @@ class UnhingedDesktopApp(Adw.Application):
             if not self.is_recording or not self.recording_process:
                 return
 
-            # Send SIGINT to gracefully stop recording (allows WAV header finalization)
-            import signal
-            self.recording_process.send_signal(signal.SIGINT)
-            self.recording_process.wait(timeout=5)  # Wait for graceful shutdown
+            # Check if process is still running
+            if self.recording_process.poll() is None:
+                # Process is still running, send SIGINT to stop gracefully
+                import signal
+                self.recording_process.send_signal(signal.SIGINT)
+                self.recording_process.wait(timeout=3)  # Wait for graceful shutdown
 
             self.is_recording = False
             self._show_voice_loading("Processing...")
