@@ -379,10 +379,6 @@ class UnhingedDesktopApp(Adw.Application):
         # Create navigation split view
         self.navigation_split_view = Adw.NavigationSplitView()
 
-        # Create sidebar navigation
-        sidebar = self.create_sidebar_navigation()
-        self.navigation_split_view.set_sidebar(sidebar)
-
         # Create content area with stack for different pages
         self.content_stack = Gtk.Stack()
         self.content_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
@@ -392,61 +388,51 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Main page
         main_content = self.create_main_tab_content()
-        main_page = Adw.NavigationPage.new(main_content, "Main")
-        main_page.set_title("Main")
-        self.content_stack.add_named(main_page, "main")
-        self.navigation_pages["main"] = main_page
+        self.content_stack.add_named(main_content, "main")
+        self.navigation_pages["main"] = main_content
 
         # Status page
         status_content = self.create_status_tab_content()
-        status_page = Adw.NavigationPage.new(status_content, "Status")
-        status_page.set_title("Status")
-        self.content_stack.add_named(status_page, "status")
-        self.navigation_pages["status"] = status_page
+        self.content_stack.add_named(status_content, "status")
+        self.navigation_pages["status"] = status_content
 
         # System Info page
         system_info_content = self.create_system_info_tab_content()
-        system_info_page = Adw.NavigationPage.new(system_info_content, "System Info")
-        system_info_page.set_title("System Info")
-        self.content_stack.add_named(system_info_page, "system_info")
-        self.navigation_pages["system_info"] = system_info_page
+        self.content_stack.add_named(system_info_content, "system_info")
+        self.navigation_pages["system_info"] = system_info_content
 
         # Processes page
         processes_content = self.create_processes_tab_content()
-        processes_page = Adw.NavigationPage.new(processes_content, "Processes")
-        processes_page.set_title("Processes")
-        self.content_stack.add_named(processes_page, "processes")
-        self.navigation_pages["processes"] = processes_page
+        self.content_stack.add_named(processes_content, "processes")
+        self.navigation_pages["processes"] = processes_content
 
         # Bluetooth page
         bluetooth_content = self.create_bluetooth_tab_content()
-        bluetooth_page = Adw.NavigationPage.new(bluetooth_content, "Bluetooth")
-        bluetooth_page.set_title("Bluetooth")
-        self.content_stack.add_named(bluetooth_page, "bluetooth")
-        self.navigation_pages["bluetooth"] = bluetooth_page
+        self.content_stack.add_named(bluetooth_content, "bluetooth")
+        self.navigation_pages["bluetooth"] = bluetooth_content
 
         # Output page
         output_content = self.create_output_tab_content()
-        output_page = Adw.NavigationPage.new(output_content, "Output")
-        output_page.set_title("Output")
-        self.content_stack.add_named(output_page, "output")
-        self.navigation_pages["output"] = output_page
+        self.content_stack.add_named(output_content, "output")
+        self.navigation_pages["output"] = output_content
 
         # Input page
         input_content = self.create_input_tab_content()
-        input_page = Adw.NavigationPage.new(input_content, "Input")
-        input_page.set_title("Input")
-        self.content_stack.add_named(input_page, "input")
-        self.navigation_pages["input"] = input_page
+        self.content_stack.add_named(input_content, "input")
+        self.navigation_pages["input"] = input_content
 
         # OS Chatroom page
         chatroom_content = self.create_chatroom_tab_content()
-        chatroom_page = Adw.NavigationPage.new(chatroom_content, "OS Chatroom")
-        chatroom_page.set_title("OS Chatroom")
-        self.content_stack.add_named(chatroom_page, "chatroom")
-        self.navigation_pages["chatroom"] = chatroom_page
+        self.content_stack.add_named(chatroom_content, "chatroom")
+        self.navigation_pages["chatroom"] = chatroom_content
 
-        # Set content area
+        # Create sidebar navigation page
+        sidebar_content = self.create_sidebar_navigation()
+        sidebar_page = Adw.NavigationPage.new(sidebar_content, "Navigation")
+        sidebar_page.set_title("Navigation")
+
+        # Set sidebar and content
+        self.navigation_split_view.set_sidebar(sidebar_page)
         self.navigation_split_view.set_content(self.content_stack)
 
         # Set initial page
