@@ -293,16 +293,37 @@ coverage/
 /*_verification*
 /*_proof*
 
-# Desktop test files
+# Desktop test files and development artifacts
 desktop/test-*.py
+desktop/debug-*.py
+desktop/dist/
+desktop/__pycache__/
 
 # Build system work-in-progress and backups
 build/backup/
 build/ci/
 build/dual-system/
 
-# BFG cleanup reports
+# BFG cleanup reports and Git LFS artifacts
 ..bfg-report/
+.bfg-report/
+*.bfg-report/
+
+# Large file storage and backup artifacts
+.llmdocs-backup/
+*.backup-*/
+backup-*/
+
+# Virtual machine images and ISOs (should use external storage)
+*.qcow2
+*.iso
+*.img
+*.vmdk
+*.vdi
+vm/*.qcow2
+vm/*.iso
+vm/*.img
+vm/alpine/*.iso
 
 # Prevent scattered proto build artifacts
 protoc-gen-*
@@ -312,8 +333,19 @@ protoc-gen-*
 *_pb2_grpc.py
 *_grpc.pb.go
 
-# Prevent scattered documentation
+# Prevent scattered documentation and analysis files
 /KOTLIN_*
 /PERSISTENCE_*
 /PROOF_*
+/ANALYSIS_*
+/REPORT_*
 /*.md.tmp
+/*.md.backup
+/*.analysis
+/*.report
+
+# Generated reports and logs
+generated/reports/*.log
+generated/reports/*.tmp
+generated/analysis/
+generated/validation/
