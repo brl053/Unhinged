@@ -1,0 +1,1 @@
+Architectural overview generation updated for evolved format
