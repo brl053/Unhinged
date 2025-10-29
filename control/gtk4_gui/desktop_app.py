@@ -1377,11 +1377,13 @@ class UnhingedDesktopApp(Adw.Application):
                 )
                 self.record_button.connect("clicked", self.on_record_voice_clicked)
                 record_row.add_suffix(self.record_button.get_widget())
+                self._is_action_button = True
             else:
                 self.record_button = Gtk.Button(label="Record Voice")
                 self.record_button.add_css_class("suggested-action")
                 self.record_button.connect("clicked", self.on_record_voice_clicked)
                 record_row.add_suffix(self.record_button)
+                self._is_action_button = False
 
             voice_group.add(record_row)
 
@@ -1424,10 +1426,12 @@ class UnhingedDesktopApp(Adw.Application):
                 )
                 self.copy_button.connect("clicked", self.on_copy_transcription_clicked)
                 copy_row.add_suffix(self.copy_button.get_widget())
+                self._is_copy_action_button = True
             else:
                 self.copy_button = Gtk.Button(label="Copy to Clipboard")
                 self.copy_button.connect("clicked", self.on_copy_transcription_clicked)
                 copy_row.add_suffix(self.copy_button)
+                self._is_copy_action_button = False
 
             voice_group.add(copy_row)
 
@@ -1819,12 +1823,8 @@ class UnhingedDesktopApp(Adw.Application):
                 return
 
             # Disable button during recording
-            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_sensitive'):
-                self.record_button.set_sensitive(False)
-                self.record_button.set_text("Recording...")
-            else:
-                self.record_button.set_sensitive(False)
-                self.record_button.set_label("Recording...")
+            self.record_button.set_sensitive(False)
+            self.record_button.set_label("Recording...")
 
             # Show recording status
             self.show_toast("Recording for 3 seconds...")
@@ -2151,10 +2151,7 @@ class UnhingedDesktopApp(Adw.Application):
     def reset_record_button(self):
         """Reset record button to initial state"""
         try:
-            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_text'):
-                self.record_button.set_text("Record Voice")
-            else:
-                self.record_button.set_label("Record Voice")
+            self.record_button.set_label("Record Voice")
 
             if self.is_voice_service_available():
                 self.record_button.set_sensitive(True)
