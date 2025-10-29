@@ -23,7 +23,8 @@ sys.path.append(str(Path(__file__).parent))
 from components import (
     ActionButton, StatusLabel, ProgressIndicator,
     StatusCard, ServicePanel, LogContainer,
-    LogViewer, ServiceRow, SystemStatus
+    LogViewer, ServiceRow, SystemStatus,
+    ChatBubble, LoadingDots, CopyButton
 )
 
 
@@ -65,6 +66,7 @@ class ComponentExampleApp(Adw.Application):
         main_box.append(self.create_primitives_section())
         main_box.append(self.create_containers_section())
         main_box.append(self.create_complex_section())
+        main_box.append(self.create_new_components_group())
         main_box.append(self.create_integration_section())
         
         window.set_content(scrolled)
@@ -252,6 +254,123 @@ class ComponentExampleApp(Adw.Application):
         system_status.update_services(services_data)
         group.add(system_status.get_widget())
         
+        return group
+
+    def create_new_components_group(self):
+        """Create examples of new components: ChatBubble, LoadingDots, CopyButton."""
+        group = Adw.PreferencesGroup()
+        group.set_title("New Components")
+        group.set_description("Chat bubbles, loading animations, and copy-paste functionality")
+
+        # Chat Bubble Examples
+        chat_row = Adw.ActionRow()
+        chat_row.set_title("Chat Bubbles")
+        chat_row.set_subtitle("Message display with sender/receiver alignment")
+
+        chat_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        chat_container.set_margin_top(12)
+        chat_container.set_margin_bottom(12)
+
+        # Left-aligned message (received)
+        received_bubble = ChatBubble(
+            message="Hello! This is a received message with proper alignment and styling.",
+            sender="Alice",
+            timestamp="2:30 PM",
+            alignment="left",
+            message_type="default"
+        )
+        chat_container.append(received_bubble.get_widget())
+
+        # Right-aligned message (sent)
+        sent_bubble = ChatBubble(
+            message="This is a sent message that appears on the right side.",
+            sender="You",
+            timestamp="2:31 PM",
+            alignment="right",
+            message_type="default"
+        )
+        chat_container.append(sent_bubble.get_widget())
+
+        # System message
+        system_bubble = ChatBubble(
+            message="Alice joined the conversation",
+            timestamp="2:29 PM",
+            alignment="left",
+            message_type="system"
+        )
+        chat_container.append(system_bubble.get_widget())
+
+        chat_row.add_suffix(chat_container)
+        group.add(chat_row)
+
+        # Loading Dots Examples
+        loading_row = Adw.ActionRow()
+        loading_row.set_title("Loading Animations")
+        loading_row.set_subtitle("Triple dot wave animations with different styles")
+
+        loading_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        loading_container.set_margin_top(12)
+        loading_container.set_margin_bottom(12)
+
+        # Normal loading dots
+        normal_dots = LoadingDots(size="normal", speed="normal", color="primary")
+        normal_dots.start_animation()
+        loading_container.append(normal_dots.get_widget())
+
+        # Small fast dots
+        small_dots = LoadingDots(size="small", speed="fast", color="secondary")
+        small_dots.start_animation()
+        loading_container.append(small_dots.get_widget())
+
+        # Large slow dots
+        large_dots = LoadingDots(size="large", speed="slow", color="muted")
+        large_dots.start_animation()
+        loading_container.append(large_dots.get_widget())
+
+        loading_row.add_suffix(loading_container)
+        group.add(loading_row)
+
+        # Copy Button Examples
+        copy_row = Adw.ActionRow()
+        copy_row.set_title("Copy Functionality")
+        copy_row.set_subtitle("Generic copy-paste components with different content sources")
+
+        copy_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        copy_container.set_margin_top(12)
+        copy_container.set_margin_bottom(12)
+
+        # Static content copy
+        static_copy = CopyButton(
+            content="This is static content to copy!",
+            label="Copy Text",
+            style="secondary"
+        )
+        copy_container.append(static_copy.get_widget())
+
+        # Dynamic content copy
+        def get_dynamic_content():
+            import datetime
+            return f"Generated at {datetime.datetime.now().strftime('%H:%M:%S')}"
+
+        dynamic_copy = CopyButton(
+            content_source=get_dynamic_content,
+            label="Copy Time",
+            style="primary"
+        )
+        copy_container.append(dynamic_copy.get_widget())
+
+        # Icon-only copy button
+        icon_copy = CopyButton(
+            content="Secret data: 42",
+            label="",
+            icon_name="edit-copy-symbolic",
+            style="flat"
+        )
+        copy_container.append(icon_copy.get_widget())
+
+        copy_row.add_suffix(copy_container)
+        group.add(copy_row)
+
         return group
 
 

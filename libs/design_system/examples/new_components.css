@@ -1,0 +1,266 @@
+/* 
+ * New Component Styles for Unhinged Design System
+ * Chat Bubbles, Loading Dots, and Copy Button enhancements
+ */
+
+/* ===== CHAT BUBBLE COMPONENT ===== */
+
+.ds-chat-bubble {
+    background: var(--ds-color-surface-container);
+    border-radius: var(--ds-radius-md);
+    padding: var(--ds-space-sm) var(--ds-space-md);
+    margin: var(--ds-space-xs) 0;
+    max-width: 70%;
+    box-shadow: var(--ds-elevation-sm);
+    transition: all var(--ds-motion-duration-fast) var(--ds-motion-easing-standard);
+}
+
+.ds-chat-bubble:hover {
+    box-shadow: var(--ds-elevation-md);
+}
+
+/* Chat bubble alignment */
+.ds-chat-left {
+    align-self: flex-start;
+    background: var(--ds-color-surface-container);
+    border-bottom-left-radius: var(--ds-radius-xs);
+}
+
+.ds-chat-right {
+    align-self: flex-end;
+    background: var(--ds-color-primary-container);
+    color: var(--ds-color-on-primary-container);
+    border-bottom-right-radius: var(--ds-radius-xs);
+}
+
+/* Chat bubble message types */
+.ds-chat-system {
+    background: var(--ds-color-surface-variant);
+    color: var(--ds-color-on-surface-variant);
+    font-style: italic;
+    text-align: center;
+    align-self: center;
+    max-width: 90%;
+}
+
+.ds-chat-error {
+    background: var(--ds-color-error-container);
+    color: var(--ds-color-on-error-container);
+    border-left: 3px solid var(--ds-color-error);
+}
+
+/* Chat text elements */
+.ds-chat-sender {
+    font-size: var(--ds-font-size-sm);
+    font-weight: var(--ds-font-weight-medium);
+    color: var(--ds-color-primary);
+    margin-bottom: var(--ds-space-xs);
+}
+
+.ds-chat-timestamp {
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-color-on-surface-variant);
+    margin-top: var(--ds-space-xs);
+    opacity: 0.7;
+}
+
+/* ===== LOADING DOTS COMPONENT ===== */
+
+.ds-loading-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ds-space-xs);
+}
+
+.ds-loading-dot {
+    color: var(--ds-color-primary);
+    font-size: var(--ds-font-size-lg);
+    opacity: 0.3;
+    transition: opacity var(--ds-motion-duration-fast) var(--ds-motion-easing-standard);
+}
+
+/* Loading animation - wave effect */
+.ds-loading-active .ds-loading-dot {
+    animation: loading-wave var(--ds-motion-duration-slow) infinite ease-in-out;
+}
+
+.ds-loading-active .ds-loading-dot-1 {
+    animation-delay: 0ms;
+}
+
+.ds-loading-active .ds-loading-dot-2 {
+    animation-delay: 150ms;
+}
+
+.ds-loading-active .ds-loading-dot-3 {
+    animation-delay: 300ms;
+}
+
+@keyframes loading-wave {
+    0%, 60%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* Loading sizes */
+.ds-loading-small .ds-loading-dot {
+    font-size: var(--ds-font-size-sm);
+}
+
+.ds-loading-large .ds-loading-dot {
+    font-size: var(--ds-font-size-xl);
+}
+
+/* Loading speeds */
+.ds-loading-slow .ds-loading-dot {
+    animation-duration: calc(var(--ds-motion-duration-slow) * 1.5);
+}
+
+.ds-loading-fast .ds-loading-dot {
+    animation-duration: calc(var(--ds-motion-duration-fast) * 2);
+}
+
+/* Loading colors */
+.ds-loading-secondary .ds-loading-dot {
+    color: var(--ds-color-secondary);
+}
+
+.ds-loading-muted .ds-loading-dot {
+    color: var(--ds-color-on-surface-variant);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .ds-loading-dot {
+        animation: none !important;
+    }
+    
+    .ds-loading-active .ds-loading-dot {
+        opacity: 0.8;
+        animation: loading-pulse 2s infinite ease-in-out;
+    }
+    
+    @keyframes loading-pulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 0.4; }
+    }
+}
+
+/* ===== COPY BUTTON ENHANCEMENTS ===== */
+
+/* Success state styling */
+.ds-button.success {
+    background: var(--ds-color-success-container);
+    color: var(--ds-color-on-success-container);
+    border-color: var(--ds-color-success);
+}
+
+.ds-button.success:hover {
+    background: var(--ds-color-success);
+    color: var(--ds-color-on-success);
+}
+
+/* Error state styling */
+.ds-button.error {
+    background: var(--ds-color-error-container);
+    color: var(--ds-color-on-error-container);
+    border-color: var(--ds-color-error);
+}
+
+.ds-button.error:hover {
+    background: var(--ds-color-error);
+    color: var(--ds-color-on-error);
+}
+
+/* Copy button specific styling */
+.ds-copy-button {
+    transition: all var(--ds-motion-duration-fast) var(--ds-motion-easing-standard);
+}
+
+.ds-copy-button.copying {
+    transform: scale(0.95);
+}
+
+/* ===== COMPONENT COMPOSITION HELPERS ===== */
+
+/* Chat container for multiple bubbles */
+.ds-chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-xs);
+    padding: var(--ds-space-md);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Loading overlay for components */
+.ds-loading-overlay {
+    position: relative;
+}
+
+.ds-loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(var(--ds-color-surface-rgb), 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+/* Copy-paste composition with other components */
+.ds-copyable-content {
+    position: relative;
+}
+
+.ds-copyable-content .ds-copy-button {
+    position: absolute;
+    top: var(--ds-space-xs);
+    right: var(--ds-space-xs);
+    opacity: 0;
+    transition: opacity var(--ds-motion-duration-fast) var(--ds-motion-easing-standard);
+}
+
+.ds-copyable-content:hover .ds-copy-button {
+    opacity: 1;
+}
+
+/* Accessibility enhancements */
+.ds-chat-bubble:focus-visible,
+.ds-loading-dots:focus-visible,
+.ds-copy-button:focus-visible {
+    outline: 2px solid var(--ds-color-primary);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .ds-chat-bubble {
+        border: 1px solid var(--ds-color-outline);
+    }
+    
+    .ds-loading-dot {
+        font-weight: bold;
+    }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .ds-chat-bubble {
+        box-shadow: var(--ds-elevation-sm-dark);
+    }
+    
+    .ds-chat-bubble:hover {
+        box-shadow: var(--ds-elevation-md-dark);
+    }
+}

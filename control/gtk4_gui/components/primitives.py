@@ -1240,6 +1240,425 @@ class AudioDeviceRow(HardwareInfoRow):
         # TODO: Implement Bluetooth audio connection
 
 
+class ChatBubble(AdwComponentBase):
+    """
+    Chat bubble component for message display with sender/receiver alignment.
+
+    Features:
+    - Sender/receiver alignment (left/right)
+    - Message content with timestamp
+    - Design system integration with card patterns
+    - Accessibility support
+    - Semantic styling based on message type
+    """
+
+    __gsignals__ = {
+        'message-clicked': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+    }
+
+    def __init__(self,
+                 message: str = "",
+                 sender: str = "",
+                 timestamp: str = "",
+                 alignment: str = "left",  # "left" or "right"
+                 message_type: str = "default",  # "default", "system", "error"
+                 **kwargs):
+        self.message = message
+        self.sender = sender
+        self.timestamp = timestamp
+        self.alignment = alignment
+        self.message_type = message_type
+        self._message_label = None
+        self._sender_label = None
+        self._timestamp_label = None
+
+        super().__init__("chat-bubble", **kwargs)
+
+    def _init_component(self, **kwargs):
+        """Initialize the chat bubble component."""
+        # Create main container with proper alignment
+        self.widget = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+
+        # Create bubble container (card-like)
+        bubble_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        bubble_container.set_margin_top(4)
+        bubble_container.set_margin_bottom(4)
+        bubble_container.set_margin_start(8)
+        bubble_container.set_margin_end(8)
+
+        # Add sender label if provided
+        if self.sender:
+            self._sender_label = Gtk.Label()
+            self._sender_label.set_text(self.sender)
+            self._sender_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+            self._sender_label.add_css_class("ds-chat-sender")
+            bubble_container.append(self._sender_label)
+
+        # Create message content container
+        message_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+
+        # Message label
+        self._message_label = Gtk.Label()
+        self._message_label.set_text(self.message)
+        self._message_label.set_wrap(True)
+        self._message_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        self._message_label.set_max_width_chars(50)
+        self._message_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+        self._message_label.set_selectable(True)
+        message_container.append(self._message_label)
+
+        # Timestamp label if provided
+        if self.timestamp:
+            self._timestamp_label = Gtk.Label()
+            self._timestamp_label.set_text(self.timestamp)
+            self._timestamp_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+            self._timestamp_label.add_css_class("ds-chat-timestamp")
+            message_container.append(self._timestamp_label)
+
+        bubble_container.append(message_container)
+
+        # Apply bubble styling
+        self._apply_bubble_styling(bubble_container)
+
+        # Add alignment spacing
+        if self.alignment == "right":
+            spacer = Gtk.Box()
+            spacer.set_hexpand(True)
+            self.widget.append(spacer)
+            self.widget.append(bubble_container)
+        else:
+            self.widget.append(bubble_container)
+            spacer = Gtk.Box()
+            spacer.set_hexpand(True)
+            self.widget.append(spacer)
+
+        # Make clickable
+        click_controller = Gtk.GestureClick()
+        click_controller.connect('pressed', self._on_bubble_clicked)
+        bubble_container.add_controller(click_controller)
+
+        # Accessibility
+        bubble_container.set_accessible_role(Gtk.AccessibleRole.ARTICLE)
+        if self.message:
+            bubble_container.update_property([Gtk.AccessibleProperty.LABEL], [f"Message from {self.sender}: {self.message}"])
+
+    def _apply_bubble_styling(self, container):
+        """Apply chat bubble styling using design system tokens."""
+        # Base bubble styling
+        container.add_css_class("ds-chat-bubble")
+        container.add_css_class(f"ds-chat-{self.alignment}")
+        container.add_css_class(f"ds-chat-{self.message_type}")
+
+        # Apply card-like appearance
+        container.add_css_class("ds-card")
+
+    def _on_bubble_clicked(self, gesture, n_press, x, y):
+        """Handle bubble click."""
+        self.emit('message-clicked', self.message)
+        self.trigger_action('message-clicked', self.message)
+
+    def set_message(self, message: str):
+        """Update message content."""
+        self.message = message
+        if self._message_label:
+            self._message_label.set_text(message)
+
+    def set_timestamp(self, timestamp: str):
+        """Update timestamp."""
+        self.timestamp = timestamp
+        if self._timestamp_label:
+            self._timestamp_label.set_text(timestamp)
+        elif timestamp:
+            # Create timestamp label if it doesn't exist
+            self._timestamp_label = Gtk.Label()
+            self._timestamp_label.set_text(timestamp)
+            self._timestamp_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+            self._timestamp_label.add_css_class("ds-chat-timestamp")
+            # Add to parent container (need to find message container)
+            parent = self._message_label.get_parent()
+            if parent:
+                parent.append(self._timestamp_label)
+
+
+class LoadingDots(AdwComponentBase):
+    """
+    Triple dot wave loading animation component.
+
+    Features:
+    - CSS wave animation with customizable timing
+    - Motion token integration (150ms-300ms)
+    - Gtk.Spinner fallback for accessibility
+    - Reduced motion preference support
+    - Semantic styling with design system
+    """
+
+    __gsignals__ = {
+        'animation-complete': (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
+
+    def __init__(self,
+                 size: str = "normal",  # "small", "normal", "large"
+                 speed: str = "normal",  # "slow", "normal", "fast"
+                 color: str = "primary",  # "primary", "secondary", "muted"
+                 **kwargs):
+        self.size = size
+        self.speed = speed
+        self.color = color
+        self._dots = []
+        self._spinner = None
+        self._use_fallback = False
+
+        super().__init__("loading-dots", **kwargs)
+
+    def _init_component(self, **kwargs):
+        """Initialize the loading dots component."""
+        # Check for reduced motion preference
+        self._check_motion_preference()
+
+        if self._use_fallback:
+            self._create_spinner_fallback()
+        else:
+            self._create_dot_animation()
+
+        # Apply styling
+        self._apply_loading_styling()
+
+    def _check_motion_preference(self):
+        """Check if user prefers reduced motion."""
+        # In a real implementation, this would check system settings
+        # For now, we'll use an environment variable or default to false
+        import os
+        self._use_fallback = os.environ.get('PREFER_REDUCED_MOTION', '0') == '1'
+
+    def _create_spinner_fallback(self):
+        """Create Gtk.Spinner fallback for accessibility."""
+        self.widget = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.widget.set_halign(Gtk.Align.CENTER)
+        self.widget.set_valign(Gtk.Align.CENTER)
+
+        self._spinner = Gtk.Spinner()
+        self._spinner.set_spinning(True)
+
+        # Size the spinner based on size parameter
+        if self.size == "small":
+            self._spinner.set_size_request(16, 16)
+        elif self.size == "large":
+            self._spinner.set_size_request(32, 32)
+        else:
+            self._spinner.set_size_request(24, 24)
+
+        self.widget.append(self._spinner)
+
+    def _create_dot_animation(self):
+        """Create the triple dot wave animation."""
+        self.widget = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        self.widget.set_halign(Gtk.Align.CENTER)
+        self.widget.set_valign(Gtk.Align.CENTER)
+
+        # Create three dots
+        for i in range(3):
+            dot = Gtk.Label()
+            dot.set_text("●")
+            dot.add_css_class("ds-loading-dot")
+            dot.add_css_class(f"ds-loading-dot-{i + 1}")  # For animation delay
+            self._dots.append(dot)
+            self.widget.append(dot)
+
+        # Set accessibility
+        self.widget.set_accessible_role(Gtk.AccessibleRole.PROGRESSBAR)
+        self.widget.update_property([Gtk.AccessibleProperty.LABEL], ["Loading"])
+
+    def _apply_loading_styling(self):
+        """Apply loading animation styling."""
+        self.widget.add_css_class("ds-loading-dots")
+        self.widget.add_css_class(f"ds-loading-{self.size}")
+        self.widget.add_css_class(f"ds-loading-{self.speed}")
+        self.widget.add_css_class(f"ds-loading-{self.color}")
+
+    def start_animation(self):
+        """Start the loading animation."""
+        if self._spinner:
+            self._spinner.set_spinning(True)
+        else:
+            self.widget.add_css_class("ds-loading-active")
+
+    def stop_animation(self):
+        """Stop the loading animation."""
+        if self._spinner:
+            self._spinner.set_spinning(False)
+        else:
+            self.widget.remove_css_class("ds-loading-active")
+
+        self.emit('animation-complete')
+
+    def set_speed(self, speed: str):
+        """Change animation speed."""
+        if self.speed != speed:
+            self.widget.remove_css_class(f"ds-loading-{self.speed}")
+            self.speed = speed
+            self.widget.add_css_class(f"ds-loading-{self.speed}")
+
+
+class CopyButton(ActionButton):
+    """
+    Generic copy-paste component that extends ActionButton.
+
+    Features:
+    - Automatic content detection from various sources
+    - Clipboard integration with toast notifications
+    - Composable design for use with other components
+    - Icon and text support
+    - Success/error feedback
+    """
+
+    __gsignals__ = {
+        'copy-success': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        'copy-error': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+    }
+
+    def __init__(self,
+                 content: str = "",
+                 content_source: callable = None,  # Function to get content dynamically
+                 label: str = "Copy",
+                 icon_name: str = "edit-copy-symbolic",
+                 success_message: str = "Copied to clipboard",
+                 error_message: str = "Failed to copy",
+                 **kwargs):
+        self.content = content
+        self.content_source = content_source
+        self.success_message = success_message
+        self.error_message = error_message
+        self._original_label = label
+        self._original_icon = icon_name
+
+        # Initialize with copy functionality
+        super().__init__(
+            label=label,
+            icon_name=icon_name,
+            **kwargs
+        )
+
+        # Connect to our own clicked signal to handle copy
+        self.connect('clicked', self._on_copy_clicked)
+
+    def _on_copy_clicked(self, button):
+        """Handle copy button click."""
+        try:
+            # Get content to copy
+            content_to_copy = self._get_content()
+
+            if not content_to_copy:
+                self._show_error("No content to copy")
+                return
+
+            # Get clipboard from the window
+            clipboard = self._get_clipboard()
+            if not clipboard:
+                self._show_error("Clipboard not available")
+                return
+
+            # Copy to clipboard
+            clipboard.set(content_to_copy)
+
+            # Show success feedback
+            self._show_success(content_to_copy)
+
+        except Exception as e:
+            self._show_error(f"Copy failed: {str(e)}")
+
+    def _get_content(self) -> str:
+        """Get content to copy from various sources."""
+        if self.content_source and callable(self.content_source):
+            try:
+                return str(self.content_source())
+            except Exception:
+                pass
+
+        return self.content or ""
+
+    def _get_clipboard(self):
+        """Get clipboard from the window hierarchy."""
+        # Walk up the widget hierarchy to find a window
+        widget = self.widget
+        while widget:
+            if isinstance(widget, Gtk.Window):
+                return widget.get_clipboard()
+            widget = widget.get_parent()
+
+        # Fallback to default display clipboard
+        try:
+            display = Gdk.Display.get_default()
+            if display:
+                return display.get_clipboard()
+        except:
+            pass
+
+        return None
+
+    def _show_success(self, content: str):
+        """Show success feedback."""
+        # Temporarily change button appearance
+        self._show_feedback("✓", "emblem-ok-symbolic", "success")
+
+        # Emit success signal
+        self.emit('copy-success', content)
+        self.trigger_action('copy-success', content)
+
+        # Show toast if possible
+        self._show_toast(self.success_message)
+
+    def _show_error(self, error: str):
+        """Show error feedback."""
+        # Temporarily change button appearance
+        self._show_feedback("✗", "dialog-error-symbolic", "error")
+
+        # Emit error signal
+        self.emit('copy-error', error)
+        self.trigger_action('copy-error', error)
+
+        # Show toast if possible
+        self._show_toast(f"{self.error_message}: {error}")
+
+    def _show_feedback(self, label: str, icon: str, style: str):
+        """Show temporary visual feedback."""
+        # Change appearance temporarily
+        original_style = self.style
+        self.set_label(label)
+        self.set_icon_name(icon)
+        self.set_style(style)
+
+        # Reset after delay
+        GLib.timeout_add(1500, self._reset_appearance, original_style)
+
+    def _reset_appearance(self, original_style: str):
+        """Reset button to original appearance."""
+        self.set_label(self._original_label)
+        self.set_icon_name(self._original_icon)
+        self.set_style(original_style)
+        return False  # Don't repeat timeout
+
+    def _show_toast(self, message: str):
+        """Show toast notification if possible."""
+        # Walk up to find a window that might have toast capability
+        widget = self.widget
+        while widget:
+            if hasattr(widget, 'show_toast'):
+                widget.show_toast(message)
+                return
+            widget = widget.get_parent()
+
+        # Fallback: print to console (for debugging)
+        print(f"Toast: {message}")
+
+    def set_content(self, content: str):
+        """Update content to copy."""
+        self.content = content
+
+    def set_content_source(self, source: callable):
+        """Update content source function."""
+        self.content_source = source
+
+
 class TextEditor(AdwComponentBase):
     """
     Multi-line text editor component following design system specification.
