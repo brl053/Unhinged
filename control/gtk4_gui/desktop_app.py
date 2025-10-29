@@ -203,6 +203,33 @@ class UnhingedDesktopApp(Adw.Application):
                 """
                 combined_css += test_css
 
+                # Add OS Chatroom design system styles
+                chatroom_css = """
+                /* OS Chatroom Design System Styles */
+                .ds-chatroom-container {
+                    background-color: var(--color-surface-default, #ffffff);
+                    border: var(--border-thin, 1px) solid var(--color-border-subtle, #e0e0e0);
+                    border-radius: var(--radius-md, 8px);
+                }
+
+                .ds-text-input {
+                    background-color: var(--color-surface-elevated, #f8f9fa);
+                    border: var(--border-thin, 1px) solid var(--color-border-default, #d0d7de);
+                    border-radius: var(--radius-sm, 4px);
+                    font-family: var(--font-family-prose, system-ui);
+                    font-size: var(--font-size-body, 14px);
+                    line-height: var(--line-height-body, 1.5);
+                    color: var(--color-text-primary, #24292f);
+                    min-height: 120px;
+                }
+
+                .ds-text-input:focus {
+                    border-color: var(--color-action-primary, #0969da);
+                    box-shadow: 0 0 0 2px var(--color-action-primary, #0969da) at 20% opacity;
+                }
+                """
+                combined_css += chatroom_css
+
                 try:
                     css_provider.load_from_data(combined_css.encode())
 
@@ -765,31 +792,62 @@ class UnhingedDesktopApp(Adw.Application):
             return error_box
 
     def create_chatroom_tab_content(self):
-        """Create the OS Chatroom tab content with edgeless chat layout."""
-        # Create main content box - completely edgeless
-        chatroom_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        chatroom_box.set_vexpand(True)
-        chatroom_box.set_hexpand(True)
+        """Create the OS Chatroom tab content with design system layout utilities."""
+        # Create main chat container using design system layout patterns
+        chatroom_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        chatroom_container.set_vexpand(True)
+        chatroom_container.set_hexpand(True)
 
-        # Text editor area at the bottom - edgeless design
-        text_editor = Gtk.TextView()
-        text_editor.set_vexpand(True)
-        text_editor.set_hexpand(True)
+        # Apply design system styling
+        chatroom_container.add_css_class("ds-chatroom-container")
 
-        # Remove all margins and padding for edgeless experience
-        text_editor.set_margin_top(0)
-        text_editor.set_margin_bottom(0)
-        text_editor.set_margin_start(0)
-        text_editor.set_margin_end(0)
+        # Chat messages area (expandable, will contain chat history)
+        # Using design system spacing: sp_4 (16px) for major component margins
+        messages_area = Gtk.ScrolledWindow()
+        messages_area.set_vexpand(True)
+        messages_area.set_hexpand(True)
+        messages_area.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
-        # Configure text view for clean appearance
-        text_editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        text_editor.set_accepts_tab(True)
+        # Messages container with design system padding
+        messages_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)  # sp_2 (8px) for element spacing
+        messages_container.set_margin_top(16)     # sp_4 - major component margins
+        messages_container.set_margin_bottom(16)  # sp_4 - major component margins
+        messages_container.set_margin_start(16)   # sp_4 - major component margins
+        messages_container.set_margin_end(16)     # sp_4 - major component margins
 
-        # Add text editor to the box
-        chatroom_box.append(text_editor)
+        messages_area.set_child(messages_container)
+        chatroom_container.append(messages_area)
 
-        return chatroom_box
+        # Input area container (fixed at bottom, will contain text editor)
+        # Using design system spacing: sp_6 (24px) for section breaks
+        input_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        input_area.set_margin_top(24)     # sp_6 - section breaks, modal internal spacing
+        input_area.set_margin_bottom(16)  # sp_4 - major component margins
+        input_area.set_margin_start(16)   # sp_4 - major component margins
+        input_area.set_margin_end(16)     # sp_4 - major component margins
+
+        # Placeholder for text editor component (will be replaced in Task 3)
+        # Using design system patterns for form field padding: sp_2 (8px)
+        placeholder_editor = Gtk.TextView()
+        placeholder_editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        placeholder_editor.set_accepts_tab(True)
+        placeholder_editor.set_margin_top(8)     # sp_2 - form field padding
+        placeholder_editor.set_margin_bottom(8)  # sp_2 - form field padding
+        placeholder_editor.set_margin_start(8)   # sp_2 - form field padding
+        placeholder_editor.set_margin_end(8)     # sp_2 - form field padding
+
+        # Apply design system styling for text input
+        placeholder_editor.add_css_class("ds-text-input")
+
+        input_area.append(placeholder_editor)
+        chatroom_container.append(input_area)
+
+        # Store references for Task 3 integration
+        self._chatroom_messages_container = messages_container
+        self._chatroom_input_area = input_area
+        self._chatroom_placeholder_editor = placeholder_editor
+
+        return chatroom_container
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content with device discovery and management."""
