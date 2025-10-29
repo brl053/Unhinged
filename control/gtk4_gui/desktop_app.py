@@ -1040,6 +1040,26 @@ class UnhingedDesktopApp(Adw.Application):
         text_editor_widget.set_hexpand(True)
         input_row.append(text_editor_widget)
 
+        # Create Voice button for chatroom
+        if COMPONENTS_AVAILABLE:
+            from components import ActionButton
+            self._chatroom_voice_button = ActionButton(
+                text="",
+                style="secondary",
+                icon_name="audio-input-microphone-symbolic"
+            )
+            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_clicked)
+            self._chatroom_voice_button.set_valign(Gtk.Align.END)  # Align to bottom of text editor
+            self._chatroom_voice_button.set_tooltip_text("Record voice message")
+            input_row.append(self._chatroom_voice_button.get_widget())
+        else:
+            self._chatroom_voice_button = Gtk.Button()
+            self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_clicked)
+            self._chatroom_voice_button.set_valign(Gtk.Align.END)
+            self._chatroom_voice_button.set_tooltip_text("Record voice message")
+            input_row.append(self._chatroom_voice_button)
+
         # Create Send button
         self._chatroom_send_button = Gtk.Button(label="Send")
         self._chatroom_send_button.add_css_class("suggested-action")
@@ -1113,6 +1133,144 @@ class UnhingedDesktopApp(Adw.Application):
         self._chatroom_text_editor.clear()
 
         # Button will be disabled automatically by content_changed handler
+
+    def _on_chatroom_voice_clicked(self, button):
+        """Handle voice recording button click in OS Chatroom."""
+        try:
+            # Check if voice service is available
+            if not self.is_voice_service_available():
+                self.show_toast("Voice service not available")
+                return
+
+            # Disable voice button during recording
+            if hasattr(self._chatroom_voice_button, 'set_sensitive'):
+                self._chatroom_voice_button.set_sensitive(False)
+            else:
+                self._chatroom_voice_button.set_sensitive(False)
+
+            # Change icon to recording indicator
+            if COMPONENTS_AVAILABLE and hasattr(self._chatroom_voice_button, 'set_icon_name'):
+                self._chatroom_voice_button.set_icon_name("media-record")
+            else:
+                self._chatroom_voice_button.set_icon_name("media-record")
+
+            # Show recording status
+            self.show_toast("Recording voice message...")
+
+            # Log the event
+            if self.session_logger:
+                self.session_logger.log_gui_event("CHATROOM_VOICE_CLICKED", "User clicked chatroom voice button")
+
+            # Start recording in background thread
+            import threading
+            thread = threading.Thread(target=self._chatroom_record_and_transcribe, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ Chatroom voice recording error: {e}")
+            if self.session_logger:
+                self.session_logger.log_gui_event("CHATROOM_VOICE_ERROR", f"Voice recording failed: {e}")
+            self._reset_chatroom_voice_button()
+            self.show_toast(f"Voice recording failed: {e}")
+
+    def _chatroom_record_and_transcribe(self):
+        """Record audio and transcribe for chatroom text input."""
+        try:
+            import subprocess
+            import tempfile
+            from pathlib import Path
+
+            # Create temporary file for recording
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                temp_audio_file = Path(f.name)
+
+            # Record 3 seconds of audio
+            cmd = [
+                'arecord',
+                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-t', 'wav',          # WAV format
+                '-d', '3',            # 3 seconds
+                str(temp_audio_file)
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+
+            if result.returncode != 0:
+                raise Exception(f"Recording failed: {result.stderr}")
+
+            # Update UI to show transcription phase
+            GLib.idle_add(self.show_toast, "Transcribing voice...")
+
+            # Transcribe using gRPC service (reuse existing method)
+            transcript = self.transcribe_audio_file(temp_audio_file)
+
+            # Update chatroom text editor on main thread
+            GLib.idle_add(self._insert_chatroom_transcription, transcript)
+
+            # Clean up
+            try:
+                temp_audio_file.unlink()
+            except:
+                pass
+
+        except Exception as e:
+            print(f"❌ Chatroom voice recording error: {e}")
+            GLib.idle_add(self._handle_chatroom_voice_error, str(e))
+
+    def _insert_chatroom_transcription(self, transcript):
+        """Insert transcription into chatroom text editor."""
+        try:
+            if transcript and transcript.strip():
+                # Get current content
+                current_content = self._chatroom_text_editor.get_content()
+
+                # Add transcription to current content (append with space if content exists)
+                if current_content.strip():
+                    new_content = current_content + " " + transcript.strip()
+                else:
+                    new_content = transcript.strip()
+
+                # Set new content
+                self._chatroom_text_editor.set_content(new_content)
+
+                # Focus the text editor for user to continue editing
+                self._chatroom_text_editor.focus()
+
+                self.show_toast("Voice transcription added!")
+            else:
+                self.show_toast("No speech detected in recording")
+
+        except Exception as e:
+            print(f"❌ Chatroom transcription insert error: {e}")
+        finally:
+            self._reset_chatroom_voice_button()
+
+    def _handle_chatroom_voice_error(self, error_message):
+        """Handle voice recording/transcription errors in chatroom."""
+        try:
+            self.show_toast(f"Voice error: {error_message}")
+        except Exception as e:
+            print(f"❌ Error handling chatroom voice error: {e}")
+        finally:
+            self._reset_chatroom_voice_button()
+
+    def _reset_chatroom_voice_button(self):
+        """Reset chatroom voice button to initial state."""
+        try:
+            # Reset icon back to microphone
+            if COMPONENTS_AVAILABLE and hasattr(self._chatroom_voice_button, 'set_icon_name'):
+                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+            else:
+                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+
+            # Re-enable button if voice service is available
+            if self.is_voice_service_available():
+                if hasattr(self._chatroom_voice_button, 'set_sensitive'):
+                    self._chatroom_voice_button.set_sensitive(True)
+                else:
+                    self._chatroom_voice_button.set_sensitive(True)
+        except Exception as e:
+            print(f"❌ Reset chatroom voice button error: {e}")
 
     def _send_to_llm(self, message):
         """Send message to LLM service via gRPC and handle response."""
