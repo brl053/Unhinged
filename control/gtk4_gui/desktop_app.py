@@ -136,6 +136,8 @@ class UnhingedDesktopApp(Adw.Application):
         self.recording_process = None
         self.recording_temp_file = None
         self.is_recording = False
+        self.recording_start_time = None
+        self.recording_timer_id = None
 
         # Development mode detection
         self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
@@ -334,6 +336,49 @@ class UnhingedDesktopApp(Adw.Application):
                 """
                 combined_css += chat_css
 
+                # Add toast stack visual hierarchy styles
+                toast_stack_css = """
+                /* Toast Stack Visual Hierarchy */
+                .toast-top-fade {
+                    opacity: 0.5;
+                    background: linear-gradient(135deg,
+                        var(--color-surface-overlay, rgba(0,0,0,0.8)) 0%,
+                        var(--color-surface-overlay, rgba(0,0,0,0.6)) 100%);
+                    transition: opacity 0.3s ease-in-out;
+                }
+
+                .toast-second {
+                    opacity: 0.8;
+                    transform: translateY(4px);
+                    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+                }
+
+                .toast-standard {
+                    opacity: 1.0;
+                    transform: translateY(8px);
+                    transition: transform 0.2s ease-out;
+                }
+
+                /* Toast stack container improvements */
+                toast {
+                    margin-bottom: 2px;
+                    box-shadow: var(--elevation-2, 0 2px 8px rgba(0,0,0,0.15));
+                }
+
+                toast.toast-top-fade {
+                    z-index: 1003;
+                }
+
+                toast.toast-second {
+                    z-index: 1002;
+                }
+
+                toast.toast-standard {
+                    z-index: 1001;
+                }
+                """
+                combined_css += toast_stack_css
+
                 try:
                     css_provider.load_from_data(combined_css.encode())
 
@@ -418,6 +463,10 @@ class UnhingedDesktopApp(Adw.Application):
         
         # Create toast overlay for notifications
         self.toast_overlay = Adw.ToastOverlay()
+
+        # Toast stack management
+        self.toast_stack = []
+        self.max_toast_stack = 3
 
         # Create tab navigation
         self.create_tab_navigation()
@@ -1172,12 +1221,12 @@ class UnhingedDesktopApp(Adw.Application):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 self.recording_temp_file = Path(f.name)
 
-            # Use arecord with reasonable max duration (30 seconds) to ensure valid WAV files
+            # Use arecord with 10-minute max duration for longer voice messages
             cmd = [
                 'arecord',
                 '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
                 '-t', 'wav',          # WAV format
-                '-d', '30',           # Max 30 seconds (user can stop earlier)
+                '-d', '600',          # Max 10 minutes (user can stop earlier)
                 str(self.recording_temp_file)
             ]
 
@@ -1191,7 +1240,7 @@ class UnhingedDesktopApp(Adw.Application):
 
             self.is_recording = True
 
-            # Update UI
+            # Update UI with timer
             self.show_toast("Recording... (click to stop)")
 
             # Log the event
@@ -1208,6 +1257,7 @@ class UnhingedDesktopApp(Adw.Application):
     def _stop_toggle_recording(self):
         """Stop toggle recording and transcribe."""
         import subprocess
+        import time
         try:
             if not self.is_recording or not self.recording_process:
                 return
@@ -1220,6 +1270,24 @@ class UnhingedDesktopApp(Adw.Application):
                 self.recording_process.wait(timeout=3)  # Wait for graceful shutdown
 
             self.is_recording = False
+
+            # Critical fix: Wait for file system to flush the WAV file
+            # This ensures the file is completely written before transcription
+            time.sleep(0.5)  # Allow file system buffer to flush
+
+            # Verify file exists and has content before proceeding
+            if self.recording_temp_file and self.recording_temp_file.exists():
+                file_size = self.recording_temp_file.stat().st_size
+                print(f"🔍 Debug: WAV file size after recording: {file_size} bytes")
+
+                # Wait a bit more if file is still being written (size is 0 or very small)
+                retry_count = 0
+                while file_size < 44 and retry_count < 10:  # WAV header is at least 44 bytes
+                    time.sleep(0.1)
+                    if self.recording_temp_file.exists():
+                        file_size = self.recording_temp_file.stat().st_size
+                        print(f"🔍 Debug: Retry {retry_count + 1}, WAV file size: {file_size} bytes")
+                    retry_count += 1
 
             # Update UI
             self.show_toast("Processing voice...")
@@ -1257,6 +1325,16 @@ class UnhingedDesktopApp(Adw.Application):
             # Check if file is too small (WAV header is at least 44 bytes)
             if file_size < 44:
                 raise Exception(f"WAV file too small ({file_size} bytes) - likely corrupted")
+
+            # Additional validation: Check if file is a valid WAV file
+            try:
+                with open(self.recording_temp_file, 'rb') as f:
+                    header = f.read(12)
+                    if len(header) < 12 or header[:4] != b'RIFF' or header[8:12] != b'WAVE':
+                        raise Exception("Invalid WAV file format - file may be corrupted")
+                    print(f"✅ WAV file validation passed")
+            except Exception as wav_error:
+                raise Exception(f"WAV file validation failed: {wav_error}")
 
             # Transcribe using existing gRPC service
             transcript = self.transcribe_audio_file(self.recording_temp_file)
@@ -1358,6 +1436,7 @@ class UnhingedDesktopApp(Adw.Application):
     def _stop_push_to_talk_recording(self):
         """Stop push-to-talk recording and transcribe."""
         try:
+            import time
             if not self.is_recording or not self.recording_process:
                 return
 
@@ -1366,6 +1445,23 @@ class UnhingedDesktopApp(Adw.Application):
             self.recording_process.wait(timeout=2)  # Wait for clean shutdown
 
             self.is_recording = False
+
+            # Critical fix: Wait for file system to flush the WAV file
+            time.sleep(0.5)  # Allow file system buffer to flush
+
+            # Verify file exists and has content before proceeding
+            if self.recording_temp_file and self.recording_temp_file.exists():
+                file_size = self.recording_temp_file.stat().st_size
+                print(f"🔍 Debug: Push-to-talk WAV file size: {file_size} bytes")
+
+                # Wait a bit more if file is still being written
+                retry_count = 0
+                while file_size < 44 and retry_count < 10:  # WAV header is at least 44 bytes
+                    time.sleep(0.1)
+                    if self.recording_temp_file.exists():
+                        file_size = self.recording_temp_file.stat().st_size
+                        print(f"🔍 Debug: Push-to-talk retry {retry_count + 1}, WAV file size: {file_size} bytes")
+                    retry_count += 1
 
             # Update UI
             self.show_toast("Processing voice...")
@@ -1419,6 +1515,7 @@ class UnhingedDesktopApp(Adw.Application):
         try:
             import subprocess
             import tempfile
+            import time
             from pathlib import Path
 
             # Create temporary file for recording
@@ -1438,6 +1535,20 @@ class UnhingedDesktopApp(Adw.Application):
 
             if result.returncode != 0:
                 raise Exception(f"Recording failed: {result.stderr}")
+
+            # Critical fix: Wait for file system to flush the WAV file
+            time.sleep(0.5)  # Allow file system buffer to flush
+
+            # Verify file exists and has content
+            if temp_audio_file.exists():
+                file_size = temp_audio_file.stat().st_size
+                print(f"🔍 Debug: Chatroom WAV file size: {file_size} bytes")
+
+                # Check if file is too small (WAV header is at least 44 bytes)
+                if file_size < 44:
+                    raise Exception(f"WAV file too small ({file_size} bytes) - recording may have failed")
+            else:
+                raise Exception("Recording file not found after recording completed")
 
             # Update UI to show transcription phase
             GLib.idle_add(self.show_toast, "Transcribing voice...")
@@ -2473,7 +2584,7 @@ class UnhingedDesktopApp(Adw.Application):
             # Voice recording row
             record_row = Adw.ActionRow()
             record_row.set_title("Voice Input")
-            record_row.set_subtitle("Click to start/stop recording (max 30 seconds)")
+            record_row.set_subtitle("Click to start/stop recording (max 10 minutes)")
 
             # Record button
             if COMPONENTS_AVAILABLE:
@@ -2504,7 +2615,18 @@ class UnhingedDesktopApp(Adw.Application):
                 )
                 voice_loading_row = Adw.ActionRow()
                 voice_loading_row.set_title("Recording &amp; Processing")
-                voice_loading_row.add_suffix(self.voice_loading_dots.get_widget())
+
+                # Create container for loading dots and timer
+                loading_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+                loading_container.append(self.voice_loading_dots.get_widget())
+
+                # Add timer label
+                self.voice_timer_label = Gtk.Label(label="00:00")
+                self.voice_timer_label.add_css_class("caption")
+                self.voice_timer_label.set_visible(False)  # Initially hidden
+                loading_container.append(self.voice_timer_label)
+
+                voice_loading_row.add_suffix(loading_container)
                 voice_loading_row.set_visible(False)  # Initially hidden
                 self.voice_loading_row = voice_loading_row
                 voice_group.add(voice_loading_row)
@@ -2840,9 +2962,7 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             self.show_toast(f"Error running command: {e}")
 
-    def show_toast(self, message):
-        """Show a toast notification."""
-        print(f"Toast: {message}")  # Simple fallback for now
+
 
     def update_status(self, message, progress=None):
         """Update status label and progress bar"""
@@ -3060,11 +3180,52 @@ class UnhingedDesktopApp(Adw.Application):
             self.voice_loading_row.set_visible(True)
             self.voice_loading_dots.start_animation()
 
+            # Show timer if recording
+            if title == "Recording..." and hasattr(self, 'voice_timer_label'):
+                self.voice_timer_label.set_visible(True)
+                self._start_recording_timer()
+
     def _hide_voice_loading(self):
         """Hide loading dots after voice operation completes."""
         if self.voice_loading_dots and self.voice_loading_row:
             self.voice_loading_dots.stop_animation()
             self.voice_loading_row.set_visible(False)
+
+            # Hide timer and stop updates
+            if hasattr(self, 'voice_timer_label'):
+                self.voice_timer_label.set_visible(False)
+                self._stop_recording_timer()
+
+    def _start_recording_timer(self):
+        """Start the recording timer display."""
+        import time
+        self.recording_start_time = time.time()
+        self.voice_timer_label.set_text("00:00")
+
+        # Start timer updates every second
+        self.recording_timer_id = GLib.timeout_add(1000, self._update_recording_timer)
+
+    def _stop_recording_timer(self):
+        """Stop the recording timer display."""
+        if self.recording_timer_id:
+            GLib.source_remove(self.recording_timer_id)
+            self.recording_timer_id = None
+        self.recording_start_time = None
+
+    def _update_recording_timer(self):
+        """Update the recording timer display."""
+        if not self.is_recording or not self.recording_start_time:
+            return False  # Stop the timer
+
+        import time
+        elapsed = int(time.time() - self.recording_start_time)
+        minutes = elapsed // 60
+        seconds = elapsed % 60
+
+        timer_text = f"{minutes:02d}:{seconds:02d}"
+        self.voice_timer_label.set_text(timer_text)
+
+        return True  # Continue the timer
 
     def _show_operation_loading(self, title="Processing"):
         """Show loading dots for long operations."""
@@ -3106,7 +3267,7 @@ class UnhingedDesktopApp(Adw.Application):
             # Use the same recording start logic
             self._start_toggle_recording()
 
-            # Update Status tab UI
+            # Update Status tab UI with timer
             self._show_voice_loading("Recording...")
             self._update_status_button_for_recording()
 
@@ -3117,6 +3278,7 @@ class UnhingedDesktopApp(Adw.Application):
     def _stop_status_toggle_recording(self):
         """Stop toggle recording for Status tab and update transcription display."""
         import subprocess
+        import time
         try:
             if not self.is_recording or not self.recording_process:
                 return
@@ -3129,6 +3291,24 @@ class UnhingedDesktopApp(Adw.Application):
                 self.recording_process.wait(timeout=3)  # Wait for graceful shutdown
 
             self.is_recording = False
+
+            # Critical fix: Wait for file system to flush the WAV file
+            time.sleep(0.5)  # Allow file system buffer to flush
+
+            # Verify file exists and has content before proceeding
+            if self.recording_temp_file and self.recording_temp_file.exists():
+                file_size = self.recording_temp_file.stat().st_size
+                print(f"🔍 Debug: Status toggle WAV file size: {file_size} bytes")
+
+                # Wait a bit more if file is still being written
+                retry_count = 0
+                while file_size < 44 and retry_count < 10:  # WAV header is at least 44 bytes
+                    time.sleep(0.1)
+                    if self.recording_temp_file.exists():
+                        file_size = self.recording_temp_file.stat().st_size
+                        print(f"🔍 Debug: Status toggle retry {retry_count + 1}, WAV file size: {file_size} bytes")
+                    retry_count += 1
+
             self._show_voice_loading("Processing...")
             self._update_status_button_for_processing()
 
@@ -3316,11 +3496,43 @@ class UnhingedDesktopApp(Adw.Application):
         GLib.idle_add(show_dialog)
 
     def show_toast(self, message, timeout=3):
-        """Show toast notification"""
+        """Show toast notification with visual stack management"""
         def show_toast_ui():
+            # Create new toast
             toast = Adw.Toast.new(message)
-            toast.set_timeout(timeout)
+
+            # Manage toast stack - remove oldest if at max capacity
+            if len(self.toast_stack) >= self.max_toast_stack:
+                # Remove oldest toast from stack
+                oldest_toast = self.toast_stack.pop(0)
+                # Note: Adwaita automatically manages toast removal, we just track them
+
+            # Add to stack tracking
+            self.toast_stack.append(toast)
+
+            # Set timeout based on position in stack
+            stack_position = len(self.toast_stack) - 1
+            if stack_position == 0:  # Most recent (top)
+                toast.set_timeout(1)  # 1s for top toast
+            elif stack_position == 1:  # Second toast
+                toast.set_timeout(2)  # 2s for second toast
+            else:  # Third toast (standard)
+                toast.set_timeout(timeout)  # Standard duration
+
+            # Add toast to overlay
             self.toast_overlay.add_toast(toast)
+
+            # Clean up stack tracking when toast is dismissed
+            def on_toast_dismissed():
+                if toast in self.toast_stack:
+                    self.toast_stack.remove(toast)
+
+            # Connect to toast dismissed signal if available
+            try:
+                toast.connect("dismissed", lambda t: on_toast_dismissed())
+            except:
+                # Fallback: use timeout to clean up stack
+                GLib.timeout_add_seconds(max(timeout, 3), lambda: on_toast_dismissed() or False)
 
         GLib.idle_add(show_toast_ui)
     
@@ -3402,6 +3614,20 @@ class UnhingedDesktopApp(Adw.Application):
 
             if result.returncode != 0:
                 raise Exception(f"Recording failed: {result.stderr}")
+
+            # Critical fix: Wait for file system to flush the WAV file
+            time.sleep(0.5)  # Allow file system buffer to flush
+
+            # Verify file exists and has content
+            if temp_audio_file.exists():
+                file_size = temp_audio_file.stat().st_size
+                print(f"🔍 Debug: Status tab WAV file size: {file_size} bytes")
+
+                # Check if file is too small (WAV header is at least 44 bytes)
+                if file_size < 44:
+                    raise Exception(f"WAV file too small ({file_size} bytes) - recording may have failed")
+            else:
+                raise Exception("Recording file not found after recording completed")
 
             # Update loading animation for transcription phase
             GLib.idle_add(self._show_voice_loading, "Transcribing Audio")
