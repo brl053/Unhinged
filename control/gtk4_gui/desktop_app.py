@@ -2106,7 +2106,7 @@ class UnhingedDesktopApp(Adw.Application):
                     color="primary"
                 )
                 voice_loading_row = Adw.ActionRow()
-                voice_loading_row.set_title("Recording & Processing")
+                voice_loading_row.set_title("Recording &amp; Processing")
                 voice_loading_row.add_suffix(self.voice_loading_dots.get_widget())
                 voice_loading_row.set_visible(False)  # Initially hidden
                 self.voice_loading_row = voice_loading_row
@@ -2656,7 +2656,7 @@ class UnhingedDesktopApp(Adw.Application):
         if self.session_logger:
             self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {error}")
 
-    def _show_voice_loading(self, title="Recording & Processing"):
+    def _show_voice_loading(self, title="Recording &amp; Processing"):
         """Show loading dots during voice recording and transcription."""
         if self.voice_loading_dots and self.voice_loading_row:
             self.voice_loading_row.set_title(title)
