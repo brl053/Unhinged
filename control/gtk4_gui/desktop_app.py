@@ -1206,13 +1206,15 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _stop_toggle_recording(self):
         """Stop toggle recording and transcribe."""
+        import subprocess
         try:
             if not self.is_recording or not self.recording_process:
                 return
 
-            # Stop recording process
-            self.recording_process.terminate()
-            self.recording_process.wait(timeout=2)  # Wait for clean shutdown
+            # Send SIGINT to gracefully stop recording (allows WAV header finalization)
+            import signal
+            self.recording_process.send_signal(signal.SIGINT)
+            self.recording_process.wait(timeout=5)  # Wait for graceful shutdown
 
             self.is_recording = False
 
@@ -1228,6 +1230,13 @@ class UnhingedDesktopApp(Adw.Application):
             thread = threading.Thread(target=self._transcribe_toggle_recording, daemon=True)
             thread.start()
 
+        except subprocess.TimeoutExpired:
+            # If graceful shutdown fails, force terminate
+            print("⚠️ Graceful recording stop timed out, force terminating")
+            self.recording_process.terminate()
+            self.recording_process.wait(timeout=2)
+            self.is_recording = False
+            self._cleanup_recording()
         except Exception as e:
             print(f"❌ Stop toggle recording error: {e}")
             self._cleanup_recording()
@@ -3096,13 +3105,15 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _stop_status_toggle_recording(self):
         """Stop toggle recording for Status tab and update transcription display."""
+        import subprocess
         try:
             if not self.is_recording or not self.recording_process:
                 return
 
-            # Stop recording process
-            self.recording_process.terminate()
-            self.recording_process.wait(timeout=2)
+            # Send SIGINT to gracefully stop recording (allows WAV header finalization)
+            import signal
+            self.recording_process.send_signal(signal.SIGINT)
+            self.recording_process.wait(timeout=5)  # Wait for graceful shutdown
 
             self.is_recording = False
             self._show_voice_loading("Processing...")
@@ -3113,6 +3124,14 @@ class UnhingedDesktopApp(Adw.Application):
             thread = threading.Thread(target=self._transcribe_status_toggle, daemon=True)
             thread.start()
 
+        except subprocess.TimeoutExpired:
+            # If graceful shutdown fails, force terminate
+            print("⚠️ Graceful recording stop timed out, force terminating")
+            self.recording_process.terminate()
+            self.recording_process.wait(timeout=2)
+            self.is_recording = False
+            self._cleanup_recording()
+            self._hide_voice_loading()
         except Exception as e:
             print(f"❌ Stop status toggle recording error: {e}")
             self._cleanup_recording()
