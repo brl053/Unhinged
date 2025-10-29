@@ -1115,14 +1115,14 @@ class UnhingedDesktopApp(Adw.Application):
             # Add protobuf clients to path (following existing pattern)
             import sys
             from pathlib import Path
+            import grpc
+            import json
+            import requests  # HTTP client for Ollama API
+
             project_root = Path(__file__).parent.parent.parent
             protobuf_path = project_root / "generated" / "python" / "clients"
             if protobuf_path.exists():
                 sys.path.insert(0, str(protobuf_path))
-
-            import grpc
-            import requests
-            import json
 
             # Log LLM request
             if self.session_logger:
