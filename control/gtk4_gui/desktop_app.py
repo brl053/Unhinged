@@ -130,6 +130,7 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Loading indicators
         self.llm_loading_dots = None
+        self.voice_loading_dots = None
 
         # Development mode detection
         self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
@@ -2097,6 +2098,23 @@ class UnhingedDesktopApp(Adw.Application):
 
             voice_group.add(record_row)
 
+            # Add voice loading dots (initially hidden)
+            if COMPONENTS_AVAILABLE:
+                self.voice_loading_dots = LoadingDots(
+                    size="small",
+                    speed="normal",
+                    color="primary"
+                )
+                voice_loading_row = Adw.ActionRow()
+                voice_loading_row.set_title("Recording & Processing")
+                voice_loading_row.add_suffix(self.voice_loading_dots.get_widget())
+                voice_loading_row.set_visible(False)  # Initially hidden
+                self.voice_loading_row = voice_loading_row
+                voice_group.add(voice_loading_row)
+            else:
+                self.voice_loading_dots = None
+                self.voice_loading_row = None
+
             # Transcription display row
             transcription_row = Adw.ActionRow()
             transcription_row.set_title("Transcription Results")
@@ -2559,6 +2577,13 @@ class UnhingedDesktopApp(Adw.Application):
             self.record_button.set_sensitive(False)
             self.record_button.set_label("Recording...")
 
+            # Change icon to recording indicator
+            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
+                self.record_button.set_icon_name("media-record")
+
+            # Show loading animation
+            self._show_voice_loading("Recording Audio")
+
             # Show recording status
             self.show_toast("Recording for 3 seconds...")
 
@@ -2630,6 +2655,19 @@ class UnhingedDesktopApp(Adw.Application):
         """Handle copy operation error."""
         if self.session_logger:
             self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {error}")
+
+    def _show_voice_loading(self, title="Recording & Processing"):
+        """Show loading dots during voice recording and transcription."""
+        if self.voice_loading_dots and self.voice_loading_row:
+            self.voice_loading_row.set_title(title)
+            self.voice_loading_row.set_visible(True)
+            self.voice_loading_dots.start_animation()
+
+    def _hide_voice_loading(self):
+        """Hide loading dots after voice operation completes."""
+        if self.voice_loading_dots and self.voice_loading_row:
+            self.voice_loading_dots.stop_animation()
+            self.voice_loading_row.set_visible(False)
 
     def _show_operation_loading(self, title="Processing"):
         """Show loading dots for long operations."""
@@ -2843,6 +2881,9 @@ class UnhingedDesktopApp(Adw.Application):
             if result.returncode != 0:
                 raise Exception(f"Recording failed: {result.stderr}")
 
+            # Update loading animation for transcription phase
+            GLib.idle_add(self._show_voice_loading, "Transcribing Audio")
+
             # Transcribe using gRPC service
             transcript = self.transcribe_audio_file(temp_audio_file)
 
@@ -2918,6 +2959,8 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             print(f"❌ Transcription display error: {e}")
         finally:
+            # Hide loading animation
+            self._hide_voice_loading()
             self.reset_record_button()
 
     def handle_voice_error(self, error_message):
@@ -2929,12 +2972,18 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             print(f"❌ Error handling error: {e}")
         finally:
+            # Hide loading animation
+            self._hide_voice_loading()
             self.reset_record_button()
 
     def reset_record_button(self):
         """Reset record button to initial state"""
         try:
             self.record_button.set_label("Record Voice")
+
+            # Reset icon back to microphone
+            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
+                self.record_button.set_icon_name("audio-input-microphone-symbolic")
 
             if self.is_voice_service_available():
                 self.record_button.set_sensitive(True)
