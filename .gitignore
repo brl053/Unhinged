@@ -309,8 +309,7 @@ build/dual-system/
 .bfg-report/
 *.bfg-report/
 
-# Large file storage and backup artifacts
-.llmdocs-backup/
+# Large file storage and backup artifacts (removed .llmdocs-backup/)
 *.backup-*/
 backup-*/
 
