@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type util.function
-@llm-does safe dead code cleanup tool with backup
-@llm-rule cleanup operations must be reversible and include comprehensive safety checks
+@llm-type util.cleaner
+@llm-does automated dead code cleanup with safety checks and rollback capability
+@llm-rule cleanup operations must be reversible and logged for safety
 """
 
 import json

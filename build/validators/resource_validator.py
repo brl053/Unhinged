@@ -1,7 +1,7 @@
 """
-@llm-type config.build
-@llm-does resource requirement validation at build time
-@llm-rule resource issues must be detected at build time, never at runtime
+@llm-type util.validator
+@llm-does resource allocation validation for memory, disk, and cpu limits
+@llm-rule resource allocation must be validated at build time to prevent runtime failures
 """
 
 from dataclasses import dataclass

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 @llm-type util.setup
-@llm-does python environment setup for unhinged on-premise ml/ai
-@llm-rule python environment must be reproducible, comprehensive, and big data ready
+@llm-does python environment setup and dependency management for build system
+@llm-rule python environment must be isolated and reproducible across platforms
 """
 
 import os

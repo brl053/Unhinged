@@ -1,6 +1,6 @@
 """
-@llm-type config.build
-@llm-does port conflict detection and resolution at build
+@llm-type util.validator
+@llm-does port conflict detection and auto-resolution across docker-compose files
 @llm-rule port conflicts must be resolved at build time, never at runtime
 """
 

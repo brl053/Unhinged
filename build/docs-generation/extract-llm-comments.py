@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-LLM Comment Extraction System
-
-Parses @llm-* tags from code comments across all programming languages
-in the Unhinged monorepo and generates architectural documentation.
+@llm-type util.extractor
+@llm-does llmdocs extraction and documentation generation from polyglot codebase
+@llm-rule extraction must be comprehensive and handle all supported file types
 """
 
 import os

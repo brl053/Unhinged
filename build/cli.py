@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does enhanced cli interface for the unhinged build
+@llm-type service.cli
+@llm-does enhanced cli interface for the unhinged build system
 """
 
 import argparse

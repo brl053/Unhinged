@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Project Structure Documentation Generator
-
-Automatically generates documentation of the project structure,
-including directory trees, file counts, and component descriptions.
+@llm-type util.generator
+@llm-does project structure documentation generation from filesystem analysis
+@llm-rule structure documentation must be accurate and reflect current state
 """
 
 import os

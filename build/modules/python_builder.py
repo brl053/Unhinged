@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does python build module with virtual environment management
+@llm-type service.builder
+@llm-does python builds with virtual environment and dependency management
 """
 
 import os

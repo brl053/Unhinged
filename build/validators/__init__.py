@@ -1,6 +1,6 @@
 """
-@llm-type config.build
-@llm-does compile-time validation system that eliminates runtime er...
+@llm-type service.validator
+@llm-does compile-time validation system preventing runtime errors
 """
 
 from .port_validator import PortValidator, PortConflict

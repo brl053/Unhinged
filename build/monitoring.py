@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
+@llm-type service.monitor
 @llm-does build performance monitoring and metrics collection system
-@llm-rule performance monitoring must be lightweight and provide actionable insights fo...
+@llm-rule performance monitoring must be lightweight and provide actionable insights
 """
 
 import json

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type util.function
-@llm-does comprehensive dead code and cruft detection tool
-@llm-rule dead code analysis must be conservative to avoid deleting functional code
+@llm-type util.analyzer
+@llm-does dead code detection and removal recommendations across polyglot codebase
+@llm-rule dead code analysis must be conservative to prevent accidental removal
 """
 
 import json

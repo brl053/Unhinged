@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-LLM Comment Validation System
-
-Validates consistency and quality of @llm-* comments across the codebase.
-Integrates with the existing documentation validation workflow.
+@llm-type util.validator
+@llm-does llmdocs validation and quality assurance for evolved format compliance
+@llm-rule validation must enforce evolved format standards and provide actionable feedback
 """
 
 import os

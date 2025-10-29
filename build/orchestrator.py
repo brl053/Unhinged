@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does enhanced build orchestrator for unhinged polyglot monorepo
-@llm-rule build operations must be deterministic, cacheable, and provide clear feedback...
+@llm-type service.orchestrator
+@llm-does polyglot build orchestration with dependency resolution and intelligent caching
+@llm-rule builds must be deterministic and provide comprehensive error reporting
 """
 
 import asyncio

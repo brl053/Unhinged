@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does c/c++ build module with cmake integration and
-@llm-rule c builds must be deterministic, fast, and provide direct cpu instruction acce...
+@llm-type service.builder
+@llm-does c/c++ builds with cmake integration and SIMD optimization
+@llm-rule c builds must be deterministic and provide direct cpu instruction access
 """
 
 import os

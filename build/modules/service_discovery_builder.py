@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type config.build
-@llm-does service discovery build module for compile-time service
-@llm-rule service discovery must happen at build time to ensure html dashboard is alway...
+@llm-type service.builder
+@llm-does service discovery registry generation from docker-compose and proto files
+@llm-rule service discovery must happen at build time for dashboard consistency
 """
 
 import json

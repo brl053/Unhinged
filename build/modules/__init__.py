@@ -1,6 +1,6 @@
 """
-@llm-type config.build
-@llm-does language-specific build modules for enhanced build orches...
+@llm-type service.framework
+@llm-does build module framework with abstract base classes and registry
 """
 
 from abc import ABC, abstractmethod

@@ -1,7 +1,7 @@
 """
-@llm-type config.build
-@llm-does dependency validation at build time to prevent
-@llm-rule dependency issues must be resolved at build time, never at runtime
+@llm-type util.validator
+@llm-does dependency validation and conflict resolution across package managers
+@llm-rule dependency conflicts must be resolved at build time to prevent runtime failures
 """
 
 from dataclasses import dataclass

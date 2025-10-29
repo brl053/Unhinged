@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does kotlin/gradle build module with incremental compilation and
-@llm-rule gradle builds must be deterministic and support incremental compilation for f...
+@llm-type service.builder
+@llm-does kotlin/gradle builds with incremental compilation and parallel execution
+@llm-rule gradle builds must be deterministic and support incremental compilation
 """
 
 import re

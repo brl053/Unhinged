@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type util.function
-@llm-does automated llm documentation header enforcement across all
+@llm-type util.enforcer
+@llm-does llmdocs enforcement and template generation for evolved format
+@llm-rule all code files must have proper llmdocs tags for ai comprehension
 """
 
 import os

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does typescript/npm build module with webpack optimization and
+@llm-type service.builder
+@llm-does typescript/npm builds with webpack optimization and hot reloading
 """
 
 import json

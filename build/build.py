@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service.api
-@llm-does main entry point for the unhinged build
+@llm-type service.launcher
+@llm-does main entry point for the unhinged build system
 @llm-rule build system must be simple, fast, and provide clear feedback
 """
 

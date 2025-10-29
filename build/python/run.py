@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-@llm-type config.build
+@llm-type util.executor
 @llm-does python environment operations and execution management
 @llm-rule all execution must be reproducible and pipeline ready
 """

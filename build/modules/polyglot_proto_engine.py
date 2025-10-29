@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type config.build
-@llm-does unified polyglot protobuf client generation engine with
+@llm-type service.builder
+@llm-does polyglot protobuf client generation for multiple languages
 """
 
 import hashlib
