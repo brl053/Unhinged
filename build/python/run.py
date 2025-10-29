@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-@llm-type python-runner
-@llm-legend Universal Python runner for Unhinged on-premise ML/AI ETL & Big Data pipelines
-@llm-key Centralized Python execution with Apache stack integration and ML/AI environment
-@llm-map Core Python execution engine supporting Kafka, Spark, Flink, Cassandra, Elasticsearch
-@llm-axiom All Python execution must be consistent, reproducible, and ML/AI pipeline ready
-@llm-token python-runner: Universal Python execution for on-premise big data and ML workflows
+@llm-type util.runner
+@llm-purpose Executes Python scripts with ML/AI environment isolation
+@llm-contract Python Script -> Execution Result
+@llm-axiom All execution must be reproducible and pipeline ready
+@llm-deps Apache Stack, Virtual Environment
 
 Universal Python Runner for Unhinged System:
 - Single virtual environment for all Python execution

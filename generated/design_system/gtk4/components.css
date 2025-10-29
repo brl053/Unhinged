@@ -470,25 +470,31 @@
   min-width: 150px;
 }
 
-/* Audio Device Type Indicators */
-.audio-device-usb::before {
-  content: "🔌";
-  margin-right: 4px;
+/* Audio Device Type Indicators - GTK4 Compatible */
+/* Note: GTK4 doesn't support ::before pseudo-elements with content */
+/* Use icon names or labels in the component code instead */
+.audio-device-usb {
+  /* USB device styling - use "usb-symbolic" icon in component */
+  border-left: 3px solid #0066CC;
+  padding-left: 8px;
 }
 
-.audio-device-hdmi::before {
-  content: "📺";
-  margin-right: 4px;
+.audio-device-hdmi {
+  /* HDMI device styling - use "video-display-symbolic" icon in component */
+  border-left: 3px solid #8E44AD;
+  padding-left: 8px;
 }
 
-.audio-device-bluetooth::before {
-  content: "🔵";
-  margin-right: 4px;
+.audio-device-bluetooth {
+  /* Bluetooth device styling - use "bluetooth-symbolic" icon in component */
+  border-left: 3px solid #2ECC71;
+  padding-left: 8px;
 }
 
-.audio-device-internal::before {
-  content: "🔊";
-  margin-right: 4px;
+.audio-device-internal {
+  /* Internal device styling - use "audio-speakers-symbolic" icon in component */
+  border-left: 3px solid #E67E22;
+  padding-left: 8px;
 }
 
 /* Audio Connection Status Animation */

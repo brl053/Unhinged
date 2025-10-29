@@ -140,46 +140,46 @@ component:
     # Size variations
     size_overrides:
       compact:
-        padding: ["sp.1_5", "sp.3"]
-        font: "type.caption"
+        padding: ["spacing.scale.sp_1_5", "spacing.scale.sp_3"]
+        font: "typography.scale.caption"
         min_height: "32px"
-      
+
       large:
-        padding: ["sp.2_5", "sp.5"]
-        font: "type.heading"
+        padding: ["spacing.scale.sp_3", "spacing.scale.sp_5"]
+        font: "typography.scale.heading"
         min_height: "56px"
     
     # Semantic type variations
     semantic_overrides:
       secondary:
-        background: "surface.elevated"
-        text_color: "text.primary"
-        border: ["border.thin", "border.default"]
-      
+        background: "colors.surface.elevated"
+        text_color: "colors.text.primary"
+        border: ["1px", "colors.border.default"]
+
       tertiary:
         background: "transparent"
-        text_color: "action.primary"
+        text_color: "colors.action.primary"
         border: "none"
-      
+
       danger:
-        background: "feedback.error"
-        text_color: "text.inverse"
+        background: "colors.feedback.error"
+        text_color: "colors.text.inverse"
     
     # State overlays and modifications
     state_overlays:
       hover:
-        overlay: "interactive.hover"
+        overlay: "colors.interactive.hover"
         opacity: 0.08
-      
+
       active:
-        overlay: "interactive.active"
+        overlay: "colors.interactive.active"
         opacity: 0.12
-      
+
       disabled:
         opacity: 0.5
-      
+
       focus:
-        ring: ["border.medium", "interactive.focus"]
+        ring: ["2px", "colors.interactive.focus"]
         ring_offset: "2px"
       
       loading:

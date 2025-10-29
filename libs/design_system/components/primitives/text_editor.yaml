@@ -2,7 +2,7 @@
 # Platform-agnostic definition for multi-line text editing component
 
 component:
-  id: "text_editor"
+  id: "text-editor"
   name: "Text Editor"
   category: "complex"
   

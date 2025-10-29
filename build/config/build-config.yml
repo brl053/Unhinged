@@ -17,7 +17,7 @@ settings:
   cache_enabled: true
   validation_enabled: true
   environment: "development"
-  
+
 # Build targets configuration
 targets:
   # Service Discovery - Core system component
@@ -35,7 +35,7 @@ targets:
       - "generated/service-topology.json"
       - "generated/health-endpoints.json"
     cache_key: "service-discovery-v1"
-    
+
   # Mobile UI Framework
   mobile-ui:
     description: "Mobile-first responsive UI framework"
@@ -75,7 +75,7 @@ targets:
       - "generated/design_system/gtk4/theme-dark.css"
       - "generated/design_system/gtk4/components.css"
     cache_key: "design-tokens-gtk4-v1"
-    
+
   # Proto Client Generation
   proto-clients:
     description: "Generate gRPC clients for all services"
@@ -87,7 +87,7 @@ targets:
     outputs:
       - "generated/clients/**/*"
     cache_key: "proto-clients-v1"
-    
+
   # Python Services
   python-services:
     description: "Build Python service components"
@@ -99,7 +99,7 @@ targets:
     outputs:
       - "generated/python/**/*"
     cache_key: "python-services-v1"
-    
+
   # TypeScript/JavaScript Components
   typescript-components:
     description: "Build TypeScript/JavaScript components"
@@ -112,7 +112,7 @@ targets:
     outputs:
       - "generated/web/**/*"
     cache_key: "typescript-v1"
-    
+
   # Kotlin Services
   kotlin-services:
     description: "Build Kotlin service components"
@@ -140,6 +140,46 @@ targets:
       - "generated/c/graphics/**/*"
       - "libs/graphics/build/**/*"
     cache_key: "c-graphics-v1"
+
+  # Component Validation
+  validate-components:
+    description: "Validate component specifications against schema"
+    module: "component_builder"
+    dependencies: ["design-tokens-gtk4"]
+    inputs:
+      - "libs/design_system/components/**/*.yaml"
+      - "libs/design_system/components/_schema.yaml"
+      - "libs/design_system/tokens/**/*.yaml"
+    outputs:
+      - "generated/components/validation-report.json"
+    cache_key: "component-validation-v1"
+
+  # Component Generation - All Platforms
+  components:
+    description: "Generate components for all platforms"
+    module: "component_builder"
+    dependencies: ["validate-components"]
+    inputs:
+      - "libs/design_system/components/**/*.yaml"
+      - "libs/design_system/tokens/**/*.yaml"
+      - "libs/design_system/build/generators/**/*.py"
+    outputs:
+      - "generated/components/**/*"
+    cache_key: "components-all-v1"
+
+  # Component Generation - GTK4 Specific
+  components-gtk4:
+    description: "Generate GTK4 components specifically"
+    module: "component_builder"
+    dependencies: ["validate-components", "design-tokens-gtk4"]
+    inputs:
+      - "libs/design_system/components/**/*.yaml"
+      - "libs/design_system/tokens/**/*.yaml"
+      - "libs/design_system/build/generators/gtk4/**/*.py"
+    outputs:
+      - "generated/components/gtk4/**/*"
+      - "control/gtk4_gui/components/generated/**/*"
+    cache_key: "components-gtk4-v1"
 
 
 
@@ -180,14 +220,14 @@ modules:
         - "proto"
         - "services/*/proto"
       output_directory: "generated"
-      
+
   mobile_ui_builder:
     class: "MobileUIBuilder"
     config:
       source_directory: "control/native_gui/ui"
       output_directory: "generated/mobile_ui"
       css_output_directory: "generated/static_html"
-      
+
   proto_client_builder:
     class: "ProtoClientBuilder"
     config:
@@ -196,7 +236,7 @@ modules:
         - "services/*/proto"
       output_directory: "generated/clients"
       languages: ["python", "typescript", "kotlin"]
-      
+
   python_builder:
     class: "PythonBuilder"
     config:
@@ -204,7 +244,7 @@ modules:
         - "services"
         - "control"
       output_directory: "generated/python"
-      
+
   typescript_builder:
     class: "TypeScriptBuilder"
     config:
@@ -212,7 +252,7 @@ modules:
         - "web"
         - "control/web"
       output_directory: "generated/web"
-      
+
   kotlin_builder:
     class: "KotlinBuilder"
     config:
@@ -233,6 +273,17 @@ modules:
         - "-DENABLE_SIMD=ON"
         - "-DENABLE_TESTING=ON"
 
+  component_builder:
+    class: "ComponentBuildModule"
+    config:
+      components_directory: "libs/design_system/components"
+      tokens_directory: "libs/design_system/tokens"
+      schema_path: "libs/design_system/components/_schema.yaml"
+      generators_directory: "libs/design_system/build/generators"
+      output_directory: "generated/components"
+      gtk4_output_directory: "control/gtk4_gui/components/generated"
+      platforms: ["GTK4"]
+
 # Validation configuration
 validation:
   enabled: true
@@ -240,19 +291,19 @@ validation:
     - "dependency_validator"
     - "port_validator"
     - "resource_validator"
-    
+
 # Cache configuration
 cache:
   enabled: true
   directory: ".build-cache"
   max_size: "1GB"
   ttl: "24h"
-  
+
 # Logging configuration
 logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  
+
 # Environment-specific overrides
 environments:
   development:
@@ -261,7 +312,7 @@ environments:
       validation_enabled: true
     logging:
       level: "DEBUG"
-      
+
   production:
     settings:
       parallel: true
@@ -270,7 +321,7 @@ environments:
       ttl: "7d"
     logging:
       level: "INFO"
-      
+
   ci:
     settings:
       parallel: true
