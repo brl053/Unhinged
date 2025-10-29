@@ -342,6 +342,12 @@ class UnhingedDesktopApp(Adw.Application):
         input_page.set_title("Input")
         input_page.set_icon(Gio.ThemedIcon.new("audio-input-microphone-symbolic"))
 
+        # Create OS chatroom tab content
+        chatroom_content = self.create_chatroom_tab_content()
+        chatroom_page = self.tab_view.append(chatroom_content)
+        chatroom_page.set_title("OS Chatroom")
+        chatroom_page.set_icon(Gio.ThemedIcon.new("user-available-symbolic"))
+
         # Create tab bar
         tab_bar = Adw.TabBar()
         tab_bar.set_view(self.tab_view)
@@ -757,6 +763,33 @@ class UnhingedDesktopApp(Adw.Application):
                 self.session_logger.log_gui_event("INPUT_TAB_ERROR", str(e))
 
             return error_box
+
+    def create_chatroom_tab_content(self):
+        """Create the OS Chatroom tab content with edgeless chat layout."""
+        # Create main content box - completely edgeless
+        chatroom_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        chatroom_box.set_vexpand(True)
+        chatroom_box.set_hexpand(True)
+
+        # Text editor area at the bottom - edgeless design
+        text_editor = Gtk.TextView()
+        text_editor.set_vexpand(True)
+        text_editor.set_hexpand(True)
+
+        # Remove all margins and padding for edgeless experience
+        text_editor.set_margin_top(0)
+        text_editor.set_margin_bottom(0)
+        text_editor.set_margin_start(0)
+        text_editor.set_margin_end(0)
+
+        # Configure text view for clean appearance
+        text_editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        text_editor.set_accepts_tab(True)
+
+        # Add text editor to the box
+        chatroom_box.append(text_editor)
+
+        return chatroom_box
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content with device discovery and management."""
