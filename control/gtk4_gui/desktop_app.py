@@ -700,6 +700,12 @@ class UnhingedDesktopApp(Adw.Application):
                     device_icon.set_icon_size(Gtk.IconSize.NORMAL)
                     device_row.add_prefix(device_icon)
 
+                    # Add "Set as Default" button
+                    default_button = Gtk.Button(label="Set as Default")
+                    default_button.add_css_class("suggested-action")
+                    default_button.connect("clicked", self._on_set_default_input_device, device)
+                    device_row.add_suffix(default_button)
+
                     devices_group.add(device_row)
             else:
                 # No devices found
@@ -2328,6 +2334,66 @@ class UnhingedDesktopApp(Adw.Application):
                 self.session_logger.log_gui_event("INPUT_DEVICES_ERROR", str(e))
 
         return devices
+
+    def _on_set_default_input_device(self, button, device):
+        """Set the selected device as the Ubuntu host OS default input device."""
+        try:
+            import os
+            from pathlib import Path
+
+            # Create ALSA configuration for default input device
+            asoundrc_content = f"""# ALSA configuration - Default input device set by Unhinged
+# Device: {device['name']} ({device['alsa_device']})
+
+pcm.!default {{
+    type plug
+    slave {{
+        pcm "hw:{device['card_id']},{device['device_id']}"
+    }}
+}}
+
+ctl.!default {{
+    type hw
+    card {device['card_id']}
+}}
+"""
+
+            # Write to ~/.asoundrc
+            asoundrc_path = Path.home() / ".asoundrc"
+            with open(asoundrc_path, 'w') as f:
+                f.write(asoundrc_content)
+
+            # Update button to show success (if button exists)
+            if button:
+                button.set_label("✓ Set as Default")
+                button.set_sensitive(False)
+                button.remove_css_class("suggested-action")
+                button.add_css_class("success")
+
+            # Reset other buttons (simple approach - disable all others)
+            # In a more complex implementation, we'd track and reset other buttons
+
+            # Log the change
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_DEVICE_SET_DEFAULT",
+                    f"Set {device['name']} ({device['alsa_device']}) as system default input device")
+
+            print(f"✅ Set {device['name']} as Ubuntu system default input device")
+            print(f"   ALSA device: {device['alsa_device']}")
+            print(f"   Configuration written to: {asoundrc_path}")
+
+        except Exception as e:
+            # Handle errors gracefully
+            if button:
+                button.set_label("❌ Error")
+                button.set_sensitive(False)
+                button.remove_css_class("suggested-action")
+                button.add_css_class("destructive")
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_DEVICE_SET_DEFAULT_ERROR", str(e))
+
+            print(f"❌ Failed to set default input device: {e}")
 
 def main():
     """Main function"""
