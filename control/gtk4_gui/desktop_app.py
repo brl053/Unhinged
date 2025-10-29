@@ -1187,16 +1187,16 @@ class UnhingedDesktopApp(Adw.Application):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 temp_audio_file = Path(f.name)
 
-            # Record 3 seconds of audio
+            # Record 10 seconds of audio
             cmd = [
                 'arecord',
                 '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
                 '-t', 'wav',          # WAV format
-                '-d', '3',            # 3 seconds
+                '-d', '10',           # 10 seconds
                 str(temp_audio_file)
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
 
             if result.returncode != 0:
                 raise Exception(f"Recording failed: {result.stderr}")
@@ -2235,7 +2235,7 @@ class UnhingedDesktopApp(Adw.Application):
             # Voice recording row
             record_row = Adw.ActionRow()
             record_row.set_title("Voice Input")
-            record_row.set_subtitle("Click to record 3 seconds of audio")
+            record_row.set_subtitle("Click to record 10 seconds of audio")
 
             # Record button
             if COMPONENTS_AVAILABLE:
@@ -2743,7 +2743,7 @@ class UnhingedDesktopApp(Adw.Application):
             self._show_voice_loading("Recording Audio")
 
             # Show recording status
-            self.show_toast("Recording for 3 seconds...")
+            self.show_toast("Recording for 10 seconds...")
 
             # Log the event
             if hasattr(self, 'session_logger') and self.session_logger:
@@ -3025,16 +3025,16 @@ class UnhingedDesktopApp(Adw.Application):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 temp_audio_file = Path(f.name)
 
-            # Record 3 seconds of audio
+            # Record 10 seconds of audio
             cmd = [
                 'arecord',
                 '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
                 '-t', 'wav',          # WAV format
-                '-d', '3',            # 3 seconds
+                '-d', '10',           # 10 seconds
                 str(temp_audio_file)
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
 
             if result.returncode != 0:
                 raise Exception(f"Recording failed: {result.stderr}")
