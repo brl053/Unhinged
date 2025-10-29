@@ -908,10 +908,10 @@ build-dual-system: ## Build complete dual-system architecture (CI/CD target)
 start-gui: ## Launch enhanced GTK4 desktop application with dual-system architecture
 	$(call log_info,🖥️ Starting Enhanced Unhinged Desktop Application...)
 	@echo "🎯 Dual-System Architecture: GTK4 Control Plane + Alpine Native"
-	@echo "🎙️ Voice-First Conversation Interface Integrated"
+	@echo "🎙️ Voice Transcription Integrated in Status Tab"
 	@echo "🏔️ Native C Graphics + Session Logging Active"
 	@echo "📊 System Information Page Integrated"
-	@python3 control/gtk4_gui/desktop_app.py
+	@python3 control/gtk4_gui/launch.py
 
 start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
 	$(call log_info,📺 Launching VM with direct console output...)
