@@ -46,6 +46,11 @@ build_venv_path = project_root / "build" / "python" / "venv" / "lib" / "python3.
 if build_venv_path.exists():
     sys.path.insert(0, str(build_venv_path))
 
+# Add protobuf clients to Python path
+protobuf_clients_path = project_root / "generated" / "python" / "clients"
+if protobuf_clients_path.exists():
+    sys.path.insert(0, str(protobuf_clients_path))
+
 import grpc
 
 # Import auto-updater
@@ -829,6 +834,64 @@ class UnhingedDesktopApp(Adw.Application):
         status_group.add(self.health_status_row)
         status_box.append(status_group)
 
+        # Voice Recording Section
+        voice_group = Adw.PreferencesGroup()
+        voice_group.set_title("Voice Transcription")
+        voice_group.set_description("Record audio and transcribe using Whisper AI")
+
+        # Voice service status row
+        self.voice_status_row = Adw.ActionRow()
+        self.voice_status_row.set_title("Voice Service")
+        self.voice_status_row.set_subtitle("Checking service health...")
+        voice_group.add(self.voice_status_row)
+
+        # Voice recording row with button
+        voice_record_row = Adw.ActionRow()
+        voice_record_row.set_title("Voice Input")
+        voice_record_row.set_subtitle("Click to record 3 seconds of audio")
+
+        # Record button
+        self.record_button = Gtk.Button.new_with_label("Record Voice")
+        self.record_button.add_css_class("ds-action-secondary")
+        self.record_button.set_sensitive(False)  # Disabled until service is available
+        self.record_button.connect("clicked", self.on_record_voice_clicked)
+        voice_record_row.add_suffix(self.record_button)
+
+        voice_group.add(voice_record_row)
+        status_box.append(voice_group)
+
+        # Transcription display section
+        transcription_group = Adw.PreferencesGroup()
+        transcription_group.set_title("Transcription Results")
+
+        # Create scrolled window for transcription text
+        transcription_scroll = Gtk.ScrolledWindow()
+        transcription_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        transcription_scroll.set_min_content_height(120)
+        transcription_scroll.set_max_content_height(200)
+
+        # Transcription text view
+        self.transcription_textview = Gtk.TextView()
+        self.transcription_textview.set_editable(False)
+        self.transcription_textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.transcription_textview.set_margin_top(8)
+        self.transcription_textview.set_margin_bottom(8)
+        self.transcription_textview.set_margin_start(8)
+        self.transcription_textview.set_margin_end(8)
+
+        # Set initial placeholder text
+        buffer = self.transcription_textview.get_buffer()
+        buffer.set_text("Transcription results will appear here...")
+
+        transcription_scroll.set_child(self.transcription_textview)
+
+        # Add transcription scroll to group using a custom container
+        transcription_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        transcription_container.append(transcription_scroll)
+        transcription_group.add(transcription_container)
+
+        status_box.append(transcription_group)
+
         # Add to stack
         self.stack.add_titled(status_box, "status", "Status")
 
@@ -869,6 +932,26 @@ class UnhingedDesktopApp(Adw.Application):
                 background-color: #0066CC;
                 border-color: #0066CC;
             }
+
+            .ds-action-secondary:disabled {
+                background-color: #CCCCCC;
+                color: #666666;
+                border-color: #CCCCCC;
+            }
+
+            /* Voice transcription text view styling */
+            textview {
+                background-color: #F8F9FA;
+                border: 1px solid #E0E0E0;
+                border-radius: 4px;
+                font-family: monospace;
+                font-size: 13px;
+            }
+
+            textview text {
+                background-color: transparent;
+                color: #333333;
+            }
             """
 
             css_provider.load_from_data(minimal_css.encode('utf-8'))
@@ -894,6 +977,9 @@ class UnhingedDesktopApp(Adw.Application):
             title_widget = self.health_status_row.get_first_child()
             if title_widget:
                 title_widget.add_css_class("ds-status-unhealthy")
+
+            # Update voice service status
+            self._update_voice_service_status()
         except Exception:
             pass
         return False  # Don't repeat
@@ -934,6 +1020,35 @@ class UnhingedDesktopApp(Adw.Application):
 
             if self.session_logger:
                 self.session_logger.log_gui_event("HEALTH_CHECK_ERROR", f"Health check failed: {e}")
+
+    def on_record_voice_clicked(self, button):
+        """Handle voice recording button click"""
+        try:
+            if not self.voice_service.is_voice_available():
+                self.show_toast("Voice service not available")
+                return
+
+            # Disable button during recording
+            self.record_button.set_sensitive(False)
+            self.record_button.set_label("Recording...")
+
+            # Show recording status
+            self.show_toast("Recording for 3 seconds...")
+
+            # Log the event
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORD_CLICKED", "User clicked voice record button")
+
+            # Start recording in background thread (3 seconds default)
+            import threading
+            thread = threading.Thread(target=self._record_voice_background, args=(3.0,), daemon=True)
+            thread.start()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORD_ERROR", f"Voice recording failed: {e}")
+            self._reset_recording_ui()
+            self.show_toast(f"Recording failed: {e}")
 
     def get_dual_system_health(self):
         """Get overall dual-system architecture health status"""
@@ -1064,6 +1179,45 @@ class UnhingedDesktopApp(Adw.Application):
 
         except Exception as e:
             print(f"Failed to append transcription: {e}")
+
+    def _update_voice_service_status(self):
+        """
+        @llm-key Update voice service status row based on service health
+        @llm-contract Updates voice_status_row with current service availability and health
+        """
+        try:
+            if self.voice_service.is_voice_available():
+                self.voice_status_row.set_title("Voice Service")
+                self.voice_status_row.set_subtitle("✅ Ready - Whisper AI available")
+
+                # Enable record button
+                self.record_button.set_sensitive(True)
+
+                # Apply healthy styling
+                title_widget = self.voice_status_row.get_first_child()
+                if title_widget:
+                    title_widget.remove_css_class("ds-status-unhealthy")
+                    title_widget.add_css_class("ds-status-healthy")
+            else:
+                self.voice_status_row.set_title("Voice Service")
+                self.voice_status_row.set_subtitle("❌ Unavailable - Check gRPC service")
+
+                # Disable record button
+                self.record_button.set_sensitive(False)
+
+                # Apply unhealthy styling
+                title_widget = self.voice_status_row.get_first_child()
+                if title_widget:
+                    title_widget.remove_css_class("ds-status-healthy")
+                    title_widget.add_css_class("ds-status-unhealthy")
+
+        except Exception as e:
+            self.voice_status_row.set_title("Voice Service")
+            self.voice_status_row.set_subtitle(f"⚠️ Error: {e}")
+            self.record_button.set_sensitive(False)
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_STATUS_UPDATE_ERROR", f"Voice status update failed: {e}")
 
     def _periodic_voice_status_check(self):
         """
