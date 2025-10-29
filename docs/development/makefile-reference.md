@@ -2,14 +2,14 @@
 
 > **Purpose**: Comprehensive documentation of all Make targets and development workflows
 > **Audience**: Developers and AI assistants working on the Unhinged platform
-> **Last Updated**: Auto-generated on 2025-10-24 22:33:42
+> **Last Updated**: Auto-generated on 2025-10-28 02:07:20
 
 ## 🎯 Quick Reference
 
 ### Most Used Commands
 ```bash
 make help            # Show this help message
-make status          # Show build system status and performance metrics
+make status          # Quick system status check (read-only)
 make setup           # Initial project setup
 make dev             # Start development environment
 make clean           # Clean build artifacts (smart cleanup)
@@ -17,18 +17,13 @@ make clean           # Clean build artifacts (smart cleanup)
 
 ## 🔧 Setup and Installation
 
-#### `make validate-independence`
-**Purpose**: CRITICAL: Validate architectural independence
-**Usage**: `make validate-independence`
-**Actions**:
-
 #### `make browser-gui`
-**Purpose**: FORBIDDEN: External browser usage
+**Purpose**: Launch browser interface (if available)
 **Usage**: `make browser-gui`
 **Actions**:
 
 #### `make firefox-gui`
-**Purpose**: FORBIDDEN: Firefox usage
+**Purpose**: Launch Firefox interface (if available)
 **Usage**: `make firefox-gui`
 **Actions**:
 
@@ -84,6 +79,128 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_info,🔨 Building presentation gateway...)
 - $(call log_success,Presentation gateway built)
+
+#### `make deps-list`
+**Purpose**: List available packages
+**Usage**: `make deps-list`
+**Actions**:
+
+#### `make deps-install-essential`
+**Purpose**: Install essential packages
+**Usage**: `make deps-install-essential`
+**Actions**:
+- $(call log_info,📦 Installing essential Ubuntu packages...)
+
+#### `make deps-install-graphics`
+**Purpose**: Install graphics packages
+**Usage**: `make deps-install-graphics`
+**Actions**:
+- $(call log_info,🎨 Installing graphics Ubuntu packages...)
+
+#### `make ubuntu-setup`
+**Purpose**: Quick Ubuntu dependency setup for new users
+**Usage**: `make ubuntu-setup`
+**Dependencies**: deps-install-essential, deps-install-graphics
+**Actions**:
+- $(call log_info,🎯 Ubuntu setup complete!)
+
+#### `make check-cmake`
+**Purpose**: Check if CMake is available
+**Usage**: `make check-cmake`
+**Actions**:
+- echo "❌ CMake not found"; \
+- echo "📦 Install command: sudo apt-get install cmake"; \
+
+#### `make install-cmake`
+**Purpose**: Install CMake interactively
+**Usage**: `make install-cmake`
+**Actions**:
+
+#### `make check-build-tools`
+**Purpose**: Check if build tools are available
+**Usage**: `make check-build-tools`
+**Actions**:
+- echo "❌ No C compiler found"; \
+- echo "📦 Install command: sudo apt-get install build-essential"; \
+
+#### `make install-build-tools`
+**Purpose**: Install build tools interactively
+**Usage**: `make install-build-tools`
+**Actions**:
+
+#### `make check-python-dev`
+**Purpose**: Check if Python development headers are available
+**Usage**: `make check-python-dev`
+**Actions**:
+- echo "❌ Python dev headers not found"; \
+- echo "📦 Install command: sudo apt-get install python3-dev"; \
+
+#### `make install-python-dev`
+**Purpose**: Install Python dev headers interactively
+**Usage**: `make install-python-dev`
+**Actions**:
+
+#### `make check-cffi`
+**Purpose**: Check if CFFI is available
+**Usage**: `make check-cffi`
+**Actions**:
+- echo "❌ CFFI not found"; \
+- echo "📦 Install command: pip3 install --user cffi"; \
+
+#### `make install-cffi`
+**Purpose**: Install CFFI interactively
+**Usage**: `make install-cffi`
+**Actions**:
+
+#### `make install-deps-interactive`
+**Purpose**: Interactively install all required dependencies
+**Usage**: `make install-deps-interactive`
+**Actions**:
+- $(call log_info,📦 Installing all required dependencies...)
+
+#### `make auto-install-deps`
+**Purpose**: Alias for interactive installation
+**Usage**: `make auto-install-deps`
+**Dependencies**: install-deps-interactive
+
+#### `make check-dependencies-ci`
+**Purpose**: Non-interactive dependency checking for CI environments
+**Usage**: `make check-dependencies-ci`
+**Actions**:
+
+#### `make graphics-build`
+**Purpose**: Build C graphics rendering library (foundation layer)
+**Usage**: `make graphics-build`
+**Actions**:
+- $(call log_info,🎨 Building C graphics foundation layer...)
+- $(call log_success,C graphics library built)
+
+#### `make graphics-example`
+**Purpose**: Run C graphics example
+**Usage**: `make graphics-example`
+**Actions**:
+- $(call log_info,🎯 Running C graphics example...)
+- $(call log_success,C graphics example completed)
+
+#### `make graphics-benchmark`
+**Purpose**: Run C graphics performance benchmarks
+**Usage**: `make graphics-benchmark`
+**Actions**:
+- $(call log_info,⚡ Running C graphics benchmarks...)
+- $(call log_success,C graphics benchmarks completed)
+
+#### `make graphics-install-deps`
+**Purpose**: Install REQUIRED C graphics dependencies (CMake, CFFI) - now automatic
+**Usage**: `make graphics-install-deps`
+**Actions**:
+- $(call log_info,📦 All dependencies are automatically checked and installed...)
+- $(call log_success,Dependencies handled automatically by dependency chain)
+
+#### `make graphics-hello-world`
+**Purpose**: Build native C graphics hello world example
+**Usage**: `make graphics-hello-world`
+**Actions**:
+- $(call log_info,🎮 Building native C graphics hello world...)
 
 #### `make build-full`
 **Purpose**: Build complete environment with all services
@@ -153,18 +270,82 @@ make clean           # Clean build artifacts (smart cleanup)
 - $(call log_info,✅ Validating build system...)
 
 #### `make start`
-**Purpose**: Generate service registry, launch essential services, and start native GUI
+**Purpose**: Remove all friction barriers - setup dependencies and launch GUI
 **Usage**: `make start`
-**Dependencies**: validate-independence
 **Actions**:
-- $(call log_info,🏥 Starting System Health Command Center...)
+- $(call log_info,🚀 Welcome to Unhinged! Starting System Health Command Center...)
+
+#### `make start-continue`
+**Purpose**: Continue start process after DRM permissions are fixed
+**Usage**: `make start-continue`
+**Actions**:
+
+#### `make start-vm`
+**Purpose**: Launch Unhinged in QEMU VM with GPU isolation
+**Usage**: `make start-vm`
+**Actions**:
+- $(call log_info,🔥 Launching Unhinged in QEMU VM...)
 
 #### `make start-offline`
 **Purpose**: Launch native GUI without starting services (offline mode)
 **Usage**: `make start-offline`
-**Dependencies**: validate-independence
+**Dependencies**: status
 **Actions**:
 - $(call log_info,🏥 Starting System Health Command Center (Offline Mode)...)
+
+#### `make build-custom-alpine`
+**Purpose**: Build custom Alpine ISO with Unhinged pre-installed
+**Usage**: `make build-custom-alpine`
+**Actions**:
+- $(call log_info,🏔️ Building custom Alpine ISO for Unhinged...)
+
+#### `make start-custom-iso`
+**Purpose**: Launch custom Alpine ISO (recommended)
+**Usage**: `make start-custom-iso`
+**Actions**:
+- $(call log_info,🎨 Launching custom Alpine ISO...)
+
+#### `make build-dual-system`
+**Purpose**: Build complete dual-system architecture (CI/CD target)
+**Usage**: `make build-dual-system`
+**Actions**:
+- $(call log_info,🔧 Building Dual-System Architecture...)
+
+#### `make start-gui`
+**Purpose**: Launch enhanced GTK4 desktop application with dual-system architecture
+**Usage**: `make start-gui`
+**Actions**:
+- $(call log_info,🖥️ Starting Enhanced Unhinged Desktop Application...)
+
+#### `make start-simple`
+**Purpose**: Launch VM with simple unidirectional communication (VM → Host)
+**Usage**: `make start-simple`
+**Actions**:
+- $(call log_info,📺 Launching VM with direct console output...)
+
+#### `make start-enhanced`
+**Purpose**: Launch VM with bidirectional communication (Host ↔ VM)
+**Usage**: `make start-enhanced`
+**Actions**:
+- $(call log_info,🔄 Launching VM with bidirectional communication...)
+
+#### `make start-qol`
+**Purpose**: Launch with quality-of-life interface (calls Makefile behind scenes)
+**Usage**: `make start-qol`
+**Actions**:
+- $(call log_info,🚀 Launching Unhinged with enhanced experience...)
+
+#### `make alpine-install`
+**Purpose**: Install Alpine Linux in QEMU VM for Unhinged (legacy)
+**Usage**: `make alpine-install`
+**Actions**:
+- $(call log_info,🏔️ Installing Alpine Linux for Unhinged...)
+
+#### `make alpine-run`
+**Purpose**: Run installed Alpine Linux VM (legacy)
+**Usage**: `make alpine-run`
+**Actions**:
+- $(call log_info,🏔️ Launching Alpine Linux VM...)
 
 #### `make start-services`
 **Purpose**: Launch essential services only (LLM, Backend, Database)
@@ -196,6 +377,44 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_info,🔧 Standardizing HTML files...)
 - $(call log_success,HTML standardization complete)
+
+#### `make design-tokens`
+**Purpose**: Generate all design system artifacts from semantic tokens
+**Usage**: `make design-tokens`
+**Actions**:
+- $(call log_info,🎨 Generating design system artifacts...)
+- $(call log_success,Design tokens generated)
+
+#### `make design-system`
+**Purpose**: Alias for design-tokens (generate all design system artifacts)
+**Usage**: `make design-system`
+**Dependencies**: design-tokens
+
+#### `make css-tokens`
+**Purpose**: Alias for design-tokens-gtk4 (generate CSS tokens)
+**Usage**: `make css-tokens`
+**Dependencies**: design-tokens-gtk4
+
+#### `make validate-design-tokens`
+**Purpose**: Validate semantic tokens against designer constraints
+**Usage**: `make validate-design-tokens`
+**Actions**:
+- $(call log_info,✅ Validating design tokens...)
+- $(call log_success,Design tokens validation passed)
+
+#### `make components`
+**Purpose**: Generate components for all platforms
+**Usage**: `make components`
+**Actions**:
+- $(call log_info,📦 Generating components...)
+- $(call log_success,Components generated)
+
+#### `make validate-components`
+**Purpose**: Validate component specifications
+**Usage**: `make validate-components`
+**Actions**:
+- $(call log_info,🔍 Validating components...)
+- $(call log_success,Component validation passed)
 
 #### `make start-docker-services`
 **Purpose**: Start Docker services only (database, kafka, etc.)
@@ -233,10 +452,16 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - echo "$(YELLOW)📦 Detected Ubuntu/Debian$(RESET)"; \
 
-#### `make check-dependencies`
+#### `make check-docker-dependencies`
 **Purpose**: Check and install required dependencies interactively
-**Usage**: `make check-dependencies`
+**Usage**: `make check-docker-dependencies`
 **Actions**:
+
+#### `make check-drm-permissions`
+**Purpose**: Check and fix DRM permissions for native C graphics
+**Usage**: `make check-drm-permissions`
+**Actions**:
+- echo "$(YELLOW)⚠️  No DRM devices found - graphics may not work$(RESET)"; \
 
 #### `make check-docker-interactive`
 **Purpose**: Check Docker installation with interactive prompts
@@ -477,6 +702,19 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_warning,🔧 Applying code formatters (this will modify files)...)
 
+#### `make analyze-dead-code`
+**Purpose**: Analyze dead code and cruft in codebase
+**Usage**: `make analyze-dead-code`
+**Actions**:
+- $(call log_info,🔍 Analyzing dead code and cruft...)
+- $(call log_success,Dead code analysis complete)
+
+#### `make analyze-dead-code-json`
+**Purpose**: Generate JSON report of dead code analysis
+**Usage**: `make analyze-dead-code-json`
+**Actions**:
+- $(call log_info,🔍 Generating dead code analysis JSON report...)
+
 #### `make analyze-deps`
 **Purpose**: Run static analysis on dependency tracker
 **Usage**: `make analyze-deps`
@@ -489,48 +727,6 @@ make clean           # Clean build artifacts (smart cleanup)
 **Usage**: `make html-setup`
 **Actions**:
 - $(call log_info,🔗 Setting up HTML interface access...)
-
-#### `make html-dashboard`
-**Purpose**: Open health monitoring dashboard
-**Usage**: `make html-dashboard`
-**Actions**:
-- $(call log_info,📊 Opening health dashboard...)
-
-#### `make html-vision`
-**Purpose**: Open Vision AI testing interface
-**Usage**: `make html-vision`
-**Actions**:
-- $(call log_info,👁️ Opening Vision AI testing...)
-
-#### `make html-audio`
-**Purpose**: Open Whisper TTS testing interface
-**Usage**: `make html-audio`
-**Actions**:
-- $(call log_info,🎤 Opening Audio processing testing...)
-
-#### `make html-context`
-**Purpose**: Open Context LLM testing interface
-**Usage**: `make html-context`
-**Actions**:
-- $(call log_info,🧠 Opening Context LLM testing...)
-
-#### `make html-list`
-**Purpose**: List all available HTML interfaces
-**Usage**: `make html-list`
-**Actions**:
-- $(call log_info,📋 Available HTML interfaces:)
-
-#### `make html-server`
-**Purpose**: Start local HTTP server for HTML interfaces
-**Usage**: `make html-server`
-**Actions**:
-- $(call log_info,🌐 Starting HTTP server for HTML interfaces...)
-
-#### `make html-sanity`
-**Purpose**: Run complete HTML interface sanity check
-**Usage**: `make html-sanity`
-**Actions**:
-- $(call log_info,🔍 Running HTML interface sanity check...)
 
 #### `make validate-system`
 **Purpose**: Complete system validation using walking skeletons
@@ -622,6 +818,40 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_info,📚 Updating all documentation...)
 - $(call log_success,Documentation updated)
+
+#### `make cleanup-dead-code-dry-run`
+**Purpose**: Preview dead code cleanup (safe items only)
+**Usage**: `make cleanup-dead-code-dry-run`
+**Dependencies**: analyze-dead-code-json
+**Actions**:
+- $(call log_info,🔍 Previewing dead code cleanup...)
+- $(call log_success,Dead code cleanup preview complete)
+
+#### `make cleanup-dead-code-safe`
+**Purpose**: Remove safe dead code items with backup
+**Usage**: `make cleanup-dead-code-safe`
+**Dependencies**: analyze-dead-code-json
+**Actions**:
+- $(call log_warning,🧹 Removing safe dead code items...)
+
+#### `make cleanup-dead-code-aggressive`
+**Purpose**: Remove safe + likely safe items (use with caution)
+**Usage**: `make cleanup-dead-code-aggressive`
+**Dependencies**: analyze-dead-code-json
+**Actions**:
+- $(call log_warning,⚠️ Aggressive dead code cleanup...)
+
+#### `make list-cleanup-backups`
+**Purpose**: List available cleanup backups
+**Usage**: `make list-cleanup-backups`
+**Actions**:
+- $(call log_info,📦 Listing cleanup backups...)
+
+#### `make rollback-cleanup`
+**Purpose**: Rollback from cleanup backup (usage: make rollback-cleanup BACKUP=backup_name)
+**Usage**: `make rollback-cleanup`
+**Actions**:
+- $(call log_warning,🔄 Rolling back cleanup...)
 
 ## 🗄️ Database Operations
 
@@ -815,19 +1045,18 @@ make clean           # Clean build artifacts (smart cleanup)
 **Actions**:
 - $(call log_info,🧪 Testing build system...)
 
+#### `make test-vm`
+**Purpose**: Test QEMU VM without GPU passthrough requirements
+**Usage**: `make test-vm`
+**Actions**:
+- $(call log_info,🧪 Testing QEMU VM in basic mode...)
+
 #### `make deps-test`
 **Purpose**: Run dependency tracker tests
 **Usage**: `make deps-test`
 **Actions**:
 - $(call log_info,🧪 Running dependency tracker tests...)
 - $(call log_success,Dependency tracker tests complete)
-
-#### `make html-test`
-**Purpose**: Launch HTML testing interface hub
-**Usage**: `make html-test`
-**Actions**:
-- $(call log_info,🧪 Opening HTML testing interfaces...)
-- $(call log_success,HTML testing hub opened)
 
 #### `make health`
 **Purpose**: Check health of all services
@@ -855,6 +1084,26 @@ make clean           # Clean build artifacts (smart cleanup)
 
 ## 🧹 Cleanup Operations
 
+#### `make graphics-clean`
+**Purpose**: Clean C graphics build artifacts
+**Usage**: `make graphics-clean`
+**Actions**:
+- $(call log_warning,🧹 Cleaning C graphics artifacts...)
+
+#### `make clean-design-tokens`
+**Purpose**: Clean generated design system artifacts
+**Usage**: `make clean-design-tokens`
+**Actions**:
+- $(call log_info,🧹 Cleaning design system artifacts...)
+- rm -rf generated/design_system/ 2>/dev/null || true
+
+#### `make clean-components`
+**Purpose**: Clean generated component artifacts
+**Usage**: `make clean-components`
+**Actions**:
+- $(call log_info,🧹 Cleaning components...)
+- $(call log_success,Component artifacts cleaned)
+
 #### `make clean`
 **Purpose**: Clean build artifacts (smart cleanup)
 **Usage**: `make clean`
@@ -881,12 +1130,6 @@ make clean           # Clean build artifacts (smart cleanup)
 - $(call log_info,🧹 Cleaning dependency tracker...)
 - $(call log_success,Dependency tracker cleaned)
 
-#### `make html-clean`
-**Purpose**: Clean HTML interface symlinks and generated files
-**Usage**: `make html-clean`
-**Actions**:
-- $(call log_warning,🧹 Cleaning HTML interface symlinks...)
-
 ## 📋 Information and Help
 
 #### `make help`
@@ -902,10 +1145,10 @@ make clean           # Clean build artifacts (smart cleanup)
 - $(call log_warning,Docker Services:)
 
 #### `make status`
-**Purpose**: Show build system status and performance metrics
+**Purpose**: Quick system status check (read-only)
 **Usage**: `make status`
 **Actions**:
-- $(call log_info,📊 Build system status...)
+- $(call log_info,📊 System Status Check...)
 
 #### `make service-status`
 **Purpose**: Show status of essential services
@@ -952,9 +1195,13 @@ make clean           # Clean build artifacts (smart cleanup)
 - **DOCKER_DB**: postgres-db
 - **DB_NAME**: unhinged_db
 - **DB_USER**: postgres
-- **PYTHON_RUN**: build/python/run.py - Universal Python Runner
+- **PYTHON_RUN**: python3 build/python/run.py - Universal Python Runner
 - **NATIVE_GUI**: python3 control/gui/native_app.py - Native GUI
-- **HTML_NATIVE**: PYTHONPATH="$(shell pwd)/build/python/venv/lib/python3.12/site-packages:$$PYTHONPATH" python3 control/native_gui/launcher.py --launched-by-ai - Use system Python with centralized venv in PYTHONPATH for dependencies
+- **NATIVE_C_GRAPHICS**: if getent group video | grep -q $$USER && ! groups | grep -q video; then sg video "python3 control/native_c_launcher.py"; else python3 control/native_c_launcher.py; fi - Pure C graphics rendering with DRM framebuffer
+- **QEMU_VM_GRAPHICS**: python3 control/qemu_vm_launcher.py --custom-iso - Complete virtualization with GPU passthrough capability
+- **SIMPLE_VM_COMMUNICATION**: python3 control/simple_vm_launcher.py - Direct console output streaming for immediate visibility
+- **ENHANCED_VM_COMMUNICATION**: python3 control/enhanced_vm_launcher.py - QEMU monitor + serial console for full bidirectional communication
+- **UNHINGED_LAUNCHER**: python3 control/unhinged_launcher.py - Quality-of-life launcher that calls Makefile targets behind the scenes
 - **PORT_BACKEND**: 8080 - Service ports
 - **PORT_TTS**: 8000
 - **PORT_VISION**: 8001

@@ -2,7 +2,7 @@
 
 > **Purpose**: Fundamental design principles extracted from codebase
 > **Source**: Auto-generated from @llm-axiom and @llm-token comments
-> **Last Updated**: 2025-10-24 22:33:44
+> **Last Updated**: 2025-10-28 02:07:22
 
 ## 🎯 Fundamental Axioms
 
@@ -64,14 +64,14 @@ These are the non-negotiable principles that guide all development:
 **Context**: Validates user input
 
 ### unknown (python)
-**File**: `build/scripts/validate_mobile_ui_integration.py`
-**Axiom**: Validation must be thorough, reliable, and provide actionable feedback
-**Context**: Comprehensive validation script for mobile UI framework integration
+**File**: `build/tools/dead-code-analyzer.py`
+**Axiom**: Dead code analysis must be conservative to avoid deleting functional code
+**Context**: Comprehensive dead code and cruft detection tool for Unhinged codebase
 
-### MobileUIIntegrationValidator (python)
-**File**: `build/scripts/validate_mobile_ui_integration.py`
-**Axiom**: Validation must be comprehensive and provide actionable feedback
-**Context**: Comprehensive validator for mobile UI framework integration
+### unknown (python)
+**File**: `build/tools/cleanup-dead-code.py`
+**Axiom**: Cleanup operations must be reversible and include comprehensive safety checks
+**Context**: Safe dead code cleanup tool with backup and rollback capabilities
 
 ### unknown (python)
 **File**: `build/tools/llm-docs-enforcer.py`
@@ -87,6 +87,21 @@ These are the non-negotiable principles that guide all development:
 **File**: `build/tools/llm-docs-enforcer.py`
 **Axiom**: Maintains system independence and architectural compliance {line_comment}
 **Context**: {file_name} - {purpose} {line_comment}
+
+### version (yaml)
+**File**: `build/ci/ci-config.yml`
+**Axiom**: CI/CD must maintain build system independence and caching benefits
+**Context**: CI/CD pipeline configuration integrating with enhanced build system
+
+### version (yaml)
+**File**: `build/orchestration/docker-compose.production.yml`
+**Axiom**: All services use categorical port allocation for conflict prevention
+**Context**: Production docker-compose with unified service definitions
+
+### version (yaml)
+**File**: `build/orchestration/docker-compose.development.yml`
+**Axiom**: Development services include debugging and monitoring capabilities
+**Context**: Development docker-compose with debug tools and hot-reload
 
 ### version (yaml)
 **File**: `build/config/build-config.yml`
@@ -124,26 +139,6 @@ These are the non-negotiable principles that guide all development:
 **Context**: Polyglot protobuf client generation using unified DRY engine architecture
 
 ### unknown (python)
-**File**: `build/modules/mobile_ui_builder.py`
-**Axiom**: Mobile UI must maintain native GTK performance while providing responsive design
-**Context**: Mobile UI Builder - Build system integration for mobile-responsive UI components
-
-### MobileUIBuilder (python)
-**File**: `build/modules/mobile_ui_builder.py`
-**Axiom**: Build process must be deterministic and maintain component independence
-**Context**: Build system integration for mobile UI framework
-
-### build (python)
-**File**: `build/modules/mobile_ui_builder.py`
-**Axiom**: Build must be idempotent and handle incremental updates
-**Context**: Main build process for mobile UI framework
-
-### _generate_css_themes (python)
-**File**: `build/modules/mobile_ui_builder.py`
-**Axiom**: CSS must be valid and follow GTK4 theming conventions
-**Context**: Generate CSS themes for mobile UI components
-
-### unknown (python)
 **File**: `build/modules/typescript_proto_handler.py`
 **Axiom**: TypeScript proto clients must support both Node.js and browser environments with type safety
 **Context**: TypeScript protobuf client generation handler with gRPC-Web support for browser applications
@@ -157,6 +152,11 @@ These are the non-negotiable principles that guide all development:
 **File**: `build/modules/__init__.py`
 **Axiom**: Build validation must prevent chaos and maintain architectural integrity
 **Context**: Validate build system patterns and cultural commandments
+
+### unknown (python)
+**File**: `build/modules/c_builder.py`
+**Axiom**: C builds must be deterministic, fast, and provide direct CPU instruction access for maximum performance
+**Context**: C/C++ build module with CMake integration and CFFI bindings
 
 ### unknown (python)
 **File**: `build/modules/python_builder.py`
@@ -177,6 +177,11 @@ These are the non-negotiable principles that guide all development:
 **File**: `build/modules/service_discovery_builder.py`
 **Axiom**: Service registry must be generated before HTML dashboard access
 **Context**: Build-time service discovery module following existing BuildModule contract
+
+### unknown (python)
+**File**: `build/modules/dual_system_builder.py`
+**Axiom**: Desktop application must include all dual-system components and be ready for immediate deployment
+**Context**: Dual-system desktop application build module for CI/CD integration
 
 ### unknown (python)
 **File**: `build/modules/kotlin_proto_handler.py`
@@ -254,6 +259,11 @@ These are the non-negotiable principles that guide all development:
 **Context**: Service path manager providing standardized directory access
 
 ### unknown (python)
+**File**: `services/speech-to-text/simple_whisper_server.py`
+**Axiom**: Voice transcription must work immediately without setup
+**Context**: Simple Whisper HTTP server for voice transcription
+
+### unknown (python)
 **File**: `services/speech-to-text/__init__.py`
 **Axiom**: Maintains system independence and architectural compliance
 **Context**: __init__.py - microservice component
@@ -288,12 +298,15 @@ These are the non-negotiable principles that guide all development:
 **Axiom**: Service must implement health.proto for service discovery and monitoring
 **Context**: Vision AI gRPC server with health.proto implementation
 
-
-
 ### unknown (python)
 **File**: `control/proxy_server.py`
 **Axiom**: This is where Unhinged abstractions meet raw system operations - design with future OS in mind
 **Context**: HTTP proxy server that represents the line-in-the-sand between Unhinged System Commands and host OS operations
+
+### unknown (python)
+**File**: `control/conversation_cli.py`
+**Axiom**: Voice-first interaction must be immediate, natural, and work seamlessly across both systems
+**Context**: Conversation-based CLI interface for Unhinged dual-system architecture
 
 ### unknown (python)
 **File**: `control/service_launcher.py`
@@ -349,368 +362,6 @@ These are the non-negotiable principles that guide all development:
 **File**: `control/system/operation_result.py`
 **Axiom**: All operations must return structured, auditable results
 **Context**: Operation result data model for system control operations
-
-### unknown (python)
-**File**: `control/native_gui/health_client.py`
-**Axiom**: All services must implement health.proto for service discovery
-**Context**: gRPC health client for native GUI service discovery and monitoring
-
-### unknown (python)
-**File**: `control/native_gui/launcher.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: launcher.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/main_window.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: main_window.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/bridge/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/bridge/grpc_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: grpc_client.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/bridge/http_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: http_client.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/bridge/proto_scanner.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: proto_scanner.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/health/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/services/llm_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: llm_client.py - microservice component
-
-### unknown (python)
-**File**: `control/native_gui/services/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - microservice component
-
-### unknown (python)
-**File**: `control/native_gui/tools/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/mobile_chat_tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: mobile_chat_tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/simple_whisper_server.py`
-**Axiom**: Simple, focused services superior to complex multi-dependency solutions
-**Context**: Minimal HTTP server providing Whisper-based speech-to-text transcription
-
-### load_wav_file (python)
-**File**: `control/native_gui/tools/chat/bridge/simple_whisper_server.py`
-**Axiom**: Pure Python audio processing eliminates ffmpeg dependency complexity
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/web_speech_bridge.py`
-**Axiom**: Browser-native APIs provide superior user experience to system-level audio capture
-**Context**: WebKit-based bridge for browser Web Speech API integration
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/audio_installer.py`
-**Axiom**: Clear installation guidance reduces user friction in voice feature adoption
-**Context**: Automated audio dependency installation and setup guidance system
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/speech_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: speech_client.py - system control component
-
-### _native_audio_recording (python)
-**File**: `control/native_gui/tools/chat/bridge/speech_client.py`
-**Axiom**: Native OS audio capabilities superior to Python library abstractions
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/native_audio_capture.py`
-**Axiom**: Native OS capabilities superior to Python library abstractions for audio processing
-**Context**: Native Ubuntu audio capture using system-level ALSA/PipeWire integration
-
-### record_and_transcribe (python)
-**File**: `control/native_gui/tools/chat/bridge/native_audio_capture.py`
-**Axiom**: Native system tools (arecord) provide superior audio capture to Python libraries
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/native_speech_recognition.py`
-**Axiom**: Multiple fallback options ensure voice functionality across diverse system configurations
-**Context**: Python speech_recognition library integration as fallback for voice transcription
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/bridge/simple_audio_capture.py`
-**Axiom**: Service-oriented architecture enables cross-platform voice transcription deployment
-**Context**: Python speech_recognition library bridge to Whisper service integration
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/widgets/chat_interface.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: chat_interface.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/chat/widgets/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/service_manager/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/service_manager/tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/system_monitor/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/system_monitor/tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/file_browser/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/file_browser/tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/bridge/reflection_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: reflection_client.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/bridge/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/bridge/network_scanner.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: network_scanner.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/bridge/grpc_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: grpc_client.py - system control component
-
-### BuildSystemIntegration (python)
-**File**: `control/native_gui/tools/api_dev/bridge/build_integration.py`
-**Axiom**: Build operations must be non-blocking and provide real-time feedback
-**Context**: Build system integration for API development tool
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/bridge/http_client.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: http_client.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/widgets/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/widgets/schema_validator.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: schema_validator.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/widgets/response_viewer.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: response_viewer.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/widgets/request_builder.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: request_builder.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/api_dev/widgets/proto_browser.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: proto_browser.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/input_capture/__init__.py`
-**Axiom**: Input monitoring must respect user privacy and provide transparent controls
-**Context**: Input Capture Tool Module - Advanced input monitoring and analysis
-
-### unknown (python)
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Axiom**: Input monitoring must respect user privacy and provide transparent controls
-**Context**: Input Capture Tool - Advanced input monitoring and analysis
-
-### InputCaptureTool (python)
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Axiom**: Maintains user privacy while providing valuable input insights
-**Context**: Advanced input capture tool with mobile-responsive interface
-
-### _create_viewport_widget (python)
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Axiom**: Interface must be functional and accessible across all viewport sizes
-**Context**: Create viewport-specific widget for input capture tool
-
-### create_tool (python)
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Axiom**: Must return a properly initialized tool instance
-**Context**: Factory function for creating InputCaptureTool instances
-
-### unknown (python)
-**File**: `control/native_gui/tools/log_viewer/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/tools/log_viewer/tool.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: tool.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/core/theme_manager.py`
-**Axiom**: Themes must maintain consistency across desktop and mobile viewports
-**Context**: Enhanced Theme Manager - Unified theming system with mobile-responsive CSS support
-
-### ThemeManager (python)
-**File**: `control/native_gui/core/theme_manager.py`
-**Axiom**: Themes must provide consistent experience across all viewport sizes
-**Context**: Enhanced theme manager with mobile-responsive capabilities
-
-### unknown (python)
-**File**: `control/native_gui/core/tool_manager.py`
-**Axiom**: Tools must support both desktop and mobile viewports while maintaining native GTK performance
-**Context**: tool_manager.py - Enhanced tool management with mobile-responsive capabilities
-
-### BaseTool (python)
-**File**: `control/native_gui/core/tool_manager.py`
-**Axiom**: Tools must gracefully adapt to different screen sizes while maintaining functionality
-**Context**: Enhanced base class for all tools with mobile-responsive capabilities
-
-### create_widget (python)
-**File**: `control/native_gui/core/tool_manager.py`
-**Axiom**: Widgets must adapt to viewport constraints while maintaining functionality
-**Context**: Create viewport-specific widget for the tool
-
-### unknown (python)
-**File**: `control/native_gui/core/mobile_components.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: mobile_components.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/core/viewport_manager.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: viewport_manager.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/core/tool_config.py`
-**Axiom**: Tool configuration must be consistent and follow established patterns
-**Context**: Tool Configuration System - Standardized tool initialization and metadata
-
-### ToolConfigFactory (python)
-**File**: `control/native_gui/core/tool_config.py`
-**Axiom**: Factory methods must provide sensible defaults and consistent patterns
-**Context**: Factory for creating standardized tool configurations
-
-### unknown (python)
-**File**: `control/native_gui/core/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/core/css_generator.py`
-**Axiom**: CSS generation must be consistent and follow GTK4 theming conventions
-**Context**: Shared CSS Generator - Consolidated CSS generation for mobile UI framework
-
-### CSSGenerator (python)
-**File**: `control/native_gui/core/css_generator.py`
-**Axiom**: CSS generation must be consistent and eliminate duplication
-**Context**: Unified CSS generator for mobile-responsive UI framework
-
-### unknown (python)
-**File**: `control/native_gui/core/application.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: application.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/ui/widget_factory.py`
-**Axiom**: Widget creation must be consistent and follow GTK4 best practices
-**Context**: Widget Factory - Standardized widget creation utilities
-
-### WidgetFactory (python)
-**File**: `control/native_gui/ui/widget_factory.py`
-**Axiom**: Widget creation must be consistent and follow established patterns
-**Context**: Factory for creating standardized GTK4 widgets
-
-### unknown (python)
-**File**: `control/native_gui/widgets/__init__.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: __init__.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/widgets/response_viewer.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: response_viewer.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/widgets/request_builder.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: request_builder.py - system control component
-
-### unknown (python)
-**File**: `control/native_gui/widgets/proto_browser.py`
-**Axiom**: Maintains system independence and architectural compliance
-**Context**: proto_browser.py - system control component
 
 ### environment (yaml)
 **File**: `control/config/environments/production.yml`
@@ -807,25 +458,75 @@ These are the non-negotiable principles that guide all development:
 **Axiom**: Maintains system independence and architectural compliance
 **Context**: persistence-platform.yaml - platform infrastructure component
 
-### version (yaml)
-**File**: `orchestration/docker-compose.production.yml`
-**Axiom**: All services use categorical port allocation for conflict prevention
-**Context**: Production docker-compose with unified service definitions
+### unknown (python)
+**File**: `desktop/auto_updater.py`
+**Axiom**: Applications should stay current automatically without user intervention
+**Context**: Auto-update system for Unhinged desktop application
 
-### version (yaml)
-**File**: `orchestration/docker-compose.development.yml`
-**Axiom**: Development services include debugging and monitoring capabilities
-**Context**: Development docker-compose with debug tools and hot-reload
+### unknown (python)
+**File**: `libs/design_system/build/design_token_builder.py`
+**Axiom**: Design tokens must be generated before UI compilation and provide consistent styling
+**Context**: Design token generation module following ProtoClientBuilder architecture pattern
 
-### unknown (typescript)
-**File**: `generated/static_html/registry.js`
-**Axiom**: Registry must be regenerated whenever HTML files are added/removed/modified
-**Context**: Global registry of static HTML files for browser navigation
+### DesignTokenBuilder (python)
+**File**: `libs/design_system/build/design_token_builder.py`
+**Axiom**: Design tokens serve as single source of truth for all styling decisions
+**Context**: Design token generation following ProtoClientBuilder architecture pattern
 
-### unknown (typescript)
-**File**: `generated/static_html/registry.js`
-**Axiom**: File structure regenerated on every make start to reflect current filesystem
-**Context**: Hierarchical file structure for table-of-contents navigation
+### unknown (python)
+**File**: `libs/design_system/build/component_validator.py`
+**Axiom**: All component specifications must be validated before generator consumption
+**Context**: Component specification validator ensuring YAML specs conform to schema and design constraints
+
+### unknown (python)
+**File**: `libs/design_system/build/component_generator.py`
+**Axiom**: Component generation is specification-first with platform equality, not GTK4-first
+**Context**: Component generation orchestrator coordinating platform-specific generators from YAML specifications
+
+### unknown (python)
+**File**: `libs/design_system/build/component_build_module.py`
+**Axiom**: Component generation follows build system patterns with proper caching and validation
+**Context**: Component generation build module integrating with Unhinged build system
+
+### unknown (python)
+**File**: `libs/design_system/build/generators/_abstract_generator.py`
+**Axiom**: All platform generators must implement identical interface for specification consumption
+**Context**: Abstract component generator interface ensuring platform equality in design system
+
+### unknown (python)
+**File**: `libs/design_system/build/generators/gtk4/generator.py`
+**Axiom**: GTK4 generator is one equal platform among many, not primary implementation
+**Context**: GTK4 component generator producing Python widget implementations from YAML specifications
+
+### unknown (python)
+**File**: `libs/design_system/build/generators/gtk4/generator.py`
+**Axiom**: Generated code should not be manually edited - regenerate from YAML specification #
+**Context**: Auto-generated GTK4 widget from design system component specification #
+
+### schema_version (yaml)
+**File**: `libs/design_system/components/_schema.yaml`
+**Axiom**: Component specifications must be platform-agnostic and describe WHAT not HOW
+**Context**: Component specification meta-schema defining platform-agnostic component structure
+
+### component (yaml)
+**File**: `libs/design_system/components/primitives/modal.yaml`
+**Axiom**: Modal specifications must be platform-agnostic describing semantic behavior not implementation
+**Context**: Platform-agnostic modal dialog component specification for overlay content presentation
+
+### component (yaml)
+**File**: `libs/design_system/components/primitives/input.yaml`
+**Axiom**: Input specifications must be platform-agnostic describing semantic behavior not implementation
+**Context**: Platform-agnostic input field component specification for single-line text entry
+
+### component (yaml)
+**File**: `libs/design_system/components/primitives/button.yaml`
+**Axiom**: Button specifications must be platform-agnostic describing WHAT not HOW
+**Context**: Platform-agnostic button component specification defining semantic behavior and styling
+
+### component (yaml)
+**File**: `libs/design_system/components/primitives/simple-button.yaml`
+**Axiom**: Simple component specifications should validate without errors
+**Context**: Minimal button component specification for testing component generation pipeline
 
 ## 📚 Domain Vocabulary
 
@@ -876,12 +577,12 @@ Project-specific terminology and concepts:
 **Source**: `build/docs-generation/test_llm_extraction.py` (python)
 
 ### unknown
-**Definition**: mobile_ui_validation: Complete integration validation for mobile-responsive UI framework
-**Source**: `build/scripts/validate_mobile_ui_integration.py` (python)
+**Definition**: dead-code-analyzer: Systematic cruft detection and cleanup tool
+**Source**: `build/tools/dead-code-analyzer.py` (python)
 
-### MobileUIIntegrationValidator
-**Definition**: MobileUIIntegrationValidator: Complete integration validation system
-**Source**: `build/scripts/validate_mobile_ui_integration.py` (python)
+### unknown
+**Definition**: cleanup-tool: Safe dead code removal with backup and rollback
+**Source**: `build/tools/cleanup-dead-code.py` (python)
 
 ### unknown
 **Definition**: llm-docs-enforcer: Automated documentation header validation and injection
@@ -894,6 +595,18 @@ Project-specific terminology and concepts:
 ### unknown
 **Definition**: {file_path.stem}: {purpose}
 **Source**: `build/tools/llm-docs-enforcer.py` (python)
+
+### version
+**Definition**: ci-config: CI/CD configuration for automated testing and deployment
+**Source**: `build/ci/ci-config.yml` (yaml)
+
+### version
+**Definition**: docker-compose-production: Unified production service orchestration
+**Source**: `build/orchestration/docker-compose.production.yml` (yaml)
+
+### version
+**Definition**: docker-compose-development: Development environment with debugging tools
+**Source**: `build/orchestration/docker-compose.development.yml` (yaml)
 
 ### version
 **Definition**: build-config: Central build configuration for Unhinged platform
@@ -924,22 +637,6 @@ Project-specific terminology and concepts:
 **Source**: `build/modules/proto_client_builder.py` (python)
 
 ### unknown
-**Definition**: mobile_ui_builder: Build system integration for mobile-first responsive UI framework
-**Source**: `build/modules/mobile_ui_builder.py` (python)
-
-### MobileUIBuilder
-**Definition**: MobileUIBuilder: Centralized build system for mobile-responsive UI framework
-**Source**: `build/modules/mobile_ui_builder.py` (python)
-
-### build
-**Definition**: build: Main mobile UI build process
-**Source**: `build/modules/mobile_ui_builder.py` (python)
-
-### _generate_css_themes
-**Definition**: _generate_css_themes: CSS theme generation for mobile-responsive UI
-**Source**: `build/modules/mobile_ui_builder.py` (python)
-
-### unknown
 **Definition**: typescript-proto-handler: Type-safe TypeScript protobuf client generation for web applications
 **Source**: `build/modules/typescript_proto_handler.py` (python)
 
@@ -950,6 +647,10 @@ Project-specific terminology and concepts:
 ### validate_build_patterns
 **Definition**: build-validation: Pattern enforcement integrated into build system
 **Source**: `build/modules/__init__.py` (python)
+
+### unknown
+**Definition**: c-builder: CMake-based build module for C graphics rendering layer
+**Source**: `build/modules/c_builder.py` (python)
 
 ### unknown
 **Definition**: python-builder: pip/poetry-based build module for Python services
@@ -966,6 +667,10 @@ Project-specific terminology and concepts:
 ### ServiceDiscoveryBuilder
 **Definition**: build-time-service-discovery: Compile-time service discovery for health monitoring
 **Source**: `build/modules/service_discovery_builder.py` (python)
+
+### unknown
+**Definition**: dual-system-builder: Build module for dual-system desktop application packaging
+**Source**: `build/modules/dual_system_builder.py` (python)
 
 ### unknown
 **Definition**: kotlin-proto-handler: Kotlin protobuf client generation for JVM services and persistence platform
@@ -1028,6 +733,10 @@ Project-specific terminology and concepts:
 **Source**: `services/shared/paths.py` (python)
 
 ### unknown
+**Definition**: whisper-server: HTTP service for voice transcription
+**Source**: `services/speech-to-text/simple_whisper_server.py` (python)
+
+### unknown
 **Definition**: __init__: microservice component
 **Source**: `services/speech-to-text/__init__.py` (python)
 
@@ -1055,11 +764,13 @@ Project-specific terminology and concepts:
 **Definition**: vision-service: Vision AI with gRPC and health.proto
 **Source**: `services/vision-ai/grpc_server.py` (python)
 
-
-
 ### unknown
 **Definition**: virtualization-proxy: The foundational HTTP layer that will become the Unhinged OS system call interface
 **Source**: `control/proxy_server.py` (python)
+
+### unknown
+**Definition**: conversation-cli: Voice-first conversation interface for dual-system architecture
+**Source**: `control/conversation_cli.py` (python)
 
 ### unknown
 **Definition**: service-launcher: Unified service orchestration with registry integration
@@ -1104,286 +815,6 @@ Project-specific terminology and concepts:
 ### unknown
 **Definition**: operation-result: Data model for system operation results and future OS return values
 **Source**: `control/system/operation_result.py` (python)
-
-### unknown
-**Definition**: health-client: gRPC client for health.proto service discovery
-**Source**: `control/native_gui/health_client.py` (python)
-
-### unknown
-**Definition**: launcher: system control component
-**Source**: `control/native_gui/launcher.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/__init__.py` (python)
-
-### unknown
-**Definition**: main_window: system control component
-**Source**: `control/native_gui/main_window.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/bridge/__init__.py` (python)
-
-### unknown
-**Definition**: grpc_client: system control component
-**Source**: `control/native_gui/bridge/grpc_client.py` (python)
-
-### unknown
-**Definition**: http_client: system control component
-**Source**: `control/native_gui/bridge/http_client.py` (python)
-
-### unknown
-**Definition**: proto_scanner: system control component
-**Source**: `control/native_gui/bridge/proto_scanner.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/health/__init__.py` (python)
-
-### unknown
-**Definition**: llm_client: microservice component
-**Source**: `control/native_gui/services/llm_client.py` (python)
-
-### unknown
-**Definition**: __init__: microservice component
-**Source**: `control/native_gui/services/__init__.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/__init__.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/chat/__init__.py` (python)
-
-### unknown
-**Definition**: tool: system control component
-**Source**: `control/native_gui/tools/chat/tool.py` (python)
-
-### unknown
-**Definition**: mobile_chat_tool: system control component
-**Source**: `control/native_gui/tools/chat/mobile_chat_tool.py` (python)
-
-### unknown
-**Definition**: whisper-http-server: Lightweight speech transcription service for voice pipeline
-**Source**: `control/native_gui/tools/chat/bridge/simple_whisper_server.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/chat/bridge/__init__.py` (python)
-
-### unknown
-**Definition**: web-speech-bridge: Browser API integration for voice transcription
-**Source**: `control/native_gui/tools/chat/bridge/web_speech_bridge.py` (python)
-
-### unknown
-**Definition**: audio-installer: Dependency management for voice transcription components
-**Source**: `control/native_gui/tools/chat/bridge/audio_installer.py` (python)
-
-### unknown
-**Definition**: speech_client: system control component
-**Source**: `control/native_gui/tools/chat/bridge/speech_client.py` (python)
-
-### unknown
-**Definition**: native-audio-capture: System-level audio input for voice-first user experience
-**Source**: `control/native_gui/tools/chat/bridge/native_audio_capture.py` (python)
-
-### unknown
-**Definition**: native-speech-recognition: Python library fallback for voice transcription
-**Source**: `control/native_gui/tools/chat/bridge/native_speech_recognition.py` (python)
-
-### unknown
-**Definition**: simple-audio-capture: Python library bridge for voice service integration
-**Source**: `control/native_gui/tools/chat/bridge/simple_audio_capture.py` (python)
-
-### unknown
-**Definition**: chat_interface: system control component
-**Source**: `control/native_gui/tools/chat/widgets/chat_interface.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/chat/widgets/__init__.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/service_manager/__init__.py` (python)
-
-### unknown
-**Definition**: tool: system control component
-**Source**: `control/native_gui/tools/service_manager/tool.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/system_monitor/__init__.py` (python)
-
-### unknown
-**Definition**: tool: system control component
-**Source**: `control/native_gui/tools/system_monitor/tool.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/file_browser/__init__.py` (python)
-
-### unknown
-**Definition**: tool: system control component
-**Source**: `control/native_gui/tools/file_browser/tool.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/api_dev/__init__.py` (python)
-
-### unknown
-**Definition**: tool: system control component
-**Source**: `control/native_gui/tools/api_dev/tool.py` (python)
-
-### unknown
-**Definition**: reflection_client: system control component
-**Source**: `control/native_gui/tools/api_dev/bridge/reflection_client.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/api_dev/bridge/__init__.py` (python)
-
-### unknown
-**Definition**: network_scanner: system control component
-**Source**: `control/native_gui/tools/api_dev/bridge/network_scanner.py` (python)
-
-### unknown
-**Definition**: grpc_client: system control component
-**Source**: `control/native_gui/tools/api_dev/bridge/grpc_client.py` (python)
-
-### BuildSystemIntegration
-**Definition**: BuildSystemIntegration: Build system integration for API development workflow
-**Source**: `control/native_gui/tools/api_dev/bridge/build_integration.py` (python)
-
-### unknown
-**Definition**: http_client: system control component
-**Source**: `control/native_gui/tools/api_dev/bridge/http_client.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/api_dev/widgets/__init__.py` (python)
-
-### unknown
-**Definition**: schema_validator: system control component
-**Source**: `control/native_gui/tools/api_dev/widgets/schema_validator.py` (python)
-
-### unknown
-**Definition**: response_viewer: system control component
-**Source**: `control/native_gui/tools/api_dev/widgets/response_viewer.py` (python)
-
-### unknown
-**Definition**: request_builder: system control component
-**Source**: `control/native_gui/tools/api_dev/widgets/request_builder.py` (python)
-
-### unknown
-**Definition**: proto_browser: system control component
-**Source**: `control/native_gui/tools/api_dev/widgets/proto_browser.py` (python)
-
-### unknown
-**Definition**: input_capture_module: Advanced input monitoring tool module
-**Source**: `control/native_gui/tools/input_capture/__init__.py` (python)
-
-### unknown
-**Definition**: input_capture_tool: Advanced input monitoring tool with mobile-first responsive design
-**Source**: `control/native_gui/tools/input_capture/tool.py` (python)
-
-### InputCaptureTool
-**Definition**: InputCaptureTool: Advanced input monitoring with mobile-first design
-**Source**: `control/native_gui/tools/input_capture/tool.py` (python)
-
-### _create_viewport_widget
-**Definition**: _create_viewport_widget: Responsive input capture interface creation
-**Source**: `control/native_gui/tools/input_capture/tool.py` (python)
-
-### create_tool
-**Definition**: create_tool: Tool factory function for plugin system integration
-**Source**: `control/native_gui/tools/input_capture/tool.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/tools/log_viewer/__init__.py` (python)
-
-### unknown
-**Definition**: tool: system control component
-**Source**: `control/native_gui/tools/log_viewer/tool.py` (python)
-
-### unknown
-**Definition**: theme_manager: Enhanced theming system with mobile-responsive CSS integration
-**Source**: `control/native_gui/core/theme_manager.py` (python)
-
-### ThemeManager
-**Definition**: ThemeManager: Enhanced theming system with mobile-responsive CSS support
-**Source**: `control/native_gui/core/theme_manager.py` (python)
-
-### unknown
-**Definition**: tool_manager: Enhanced tool management system with mobile-first responsive design
-**Source**: `control/native_gui/core/tool_manager.py` (python)
-
-### BaseTool
-**Definition**: BaseTool: Enhanced tool base class with mobile-first responsive design
-**Source**: `control/native_gui/core/tool_manager.py` (python)
-
-### create_widget
-**Definition**: create_widget: Enhanced widget creation with mobile-responsive design
-**Source**: `control/native_gui/core/tool_manager.py` (python)
-
-### unknown
-**Definition**: mobile_components: system control component
-**Source**: `control/native_gui/core/mobile_components.py` (python)
-
-### unknown
-**Definition**: viewport_manager: system control component
-**Source**: `control/native_gui/core/viewport_manager.py` (python)
-
-### unknown
-**Definition**: tool_config: Unified tool configuration system for standardized initialization
-**Source**: `control/native_gui/core/tool_config.py` (python)
-
-### ToolConfigFactory
-**Definition**: ToolConfigFactory: Factory for standardized tool configuration creation
-**Source**: `control/native_gui/core/tool_config.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/core/__init__.py` (python)
-
-### unknown
-**Definition**: css_generator: Unified CSS generation system for mobile-responsive UI framework
-**Source**: `control/native_gui/core/css_generator.py` (python)
-
-### CSSGenerator
-**Definition**: CSSGenerator: Consolidated CSS generation system for mobile-first responsive design
-**Source**: `control/native_gui/core/css_generator.py` (python)
-
-### unknown
-**Definition**: application: system control component
-**Source**: `control/native_gui/core/application.py` (python)
-
-### unknown
-**Definition**: widget_factory: Unified widget creation system for consistent UI patterns
-**Source**: `control/native_gui/ui/widget_factory.py` (python)
-
-### WidgetFactory
-**Definition**: WidgetFactory: Unified widget creation system for consistent UI patterns
-**Source**: `control/native_gui/ui/widget_factory.py` (python)
-
-### unknown
-**Definition**: __init__: system control component
-**Source**: `control/native_gui/widgets/__init__.py` (python)
-
-### unknown
-**Definition**: response_viewer: system control component
-**Source**: `control/native_gui/widgets/response_viewer.py` (python)
-
-### unknown
-**Definition**: request_builder: system control component
-**Source**: `control/native_gui/widgets/request_builder.py` (python)
-
-### unknown
-**Definition**: proto_browser: system control component
-**Source**: `control/native_gui/widgets/proto_browser.py` (python)
 
 ### environment
 **Definition**: production-config: Production environment configuration for operational control
@@ -1461,18 +892,54 @@ Project-specific terminology and concepts:
 **Definition**: persistence-platform: platform infrastructure component
 **Source**: `platforms/persistence/config/persistence-platform.yaml` (yaml)
 
-### version
-**Definition**: docker-compose-production: Unified production service orchestration
-**Source**: `orchestration/docker-compose.production.yml` (yaml)
-
-### version
-**Definition**: docker-compose-development: Development environment with debugging tools
-**Source**: `orchestration/docker-compose.development.yml` (yaml)
+### unknown
+**Definition**: auto-updater: Automatic update system for desktop application
+**Source**: `desktop/auto_updater.py` (python)
 
 ### unknown
-**Definition**: unhinged-registry: Complete file registry for static HTML interface
-**Source**: `generated/static_html/registry.js` (typescript)
+**Definition**: design-token-builder: Design system generation from semantic YAML token definitions
+**Source**: `libs/design_system/build/design_token_builder.py` (python)
+
+### DesignTokenBuilder
+**Definition**: design-token-builder: Semantic design token generation with build system integration
+**Source**: `libs/design_system/build/design_token_builder.py` (python)
 
 ### unknown
-**Definition**: unhinged-file-structure: Complete directory tree for navigation
-**Source**: `generated/static_html/registry.js` (typescript)
+**Definition**: component-validator: YAML specification validation with comprehensive error reporting
+**Source**: `libs/design_system/build/component_validator.py` (python)
+
+### unknown
+**Definition**: component-orchestrator: Platform-agnostic component generation coordination
+**Source**: `libs/design_system/build/component_generator.py` (python)
+
+### unknown
+**Definition**: component-build-module: Build system integration for component generation pipeline
+**Source**: `libs/design_system/build/component_build_module.py` (python)
+
+### unknown
+**Definition**: component-generator-interface: Abstract base for platform-specific component code generation
+**Source**: `libs/design_system/build/generators/_abstract_generator.py` (python)
+
+### unknown
+**Definition**: gtk4-generator: Platform-specific generator for GTK4 Python widget implementations
+**Source**: `libs/design_system/build/generators/gtk4/generator.py` (python)
+
+### schema_version
+**Definition**: component-schema: Meta-schema for platform-agnostic component specifications
+**Source**: `libs/design_system/components/_schema.yaml` (yaml)
+
+### component
+**Definition**: modal-component: Overlay dialog specification with focus trapping and backdrop interaction
+**Source**: `libs/design_system/components/primitives/modal.yaml` (yaml)
+
+### component
+**Definition**: input-component: Single-line text input specification with validation and accessibility
+**Source**: `libs/design_system/components/primitives/input.yaml` (yaml)
+
+### component
+**Definition**: button-component: Interactive element specification with semantic styling and accessibility
+**Source**: `libs/design_system/components/primitives/button.yaml` (yaml)
+
+### component
+**Definition**: simple-button: Test component for component generation validation
+**Source**: `libs/design_system/components/primitives/simple-button.yaml` (yaml)

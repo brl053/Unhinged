@@ -2,7 +2,7 @@
 
 > **Purpose**: System architecture extracted from code comments
 > **Source**: Auto-generated from @llm-map and @llm-type comments
-> **Last Updated**: 2025-10-24 22:33:44
+> **Last Updated**: 2025-10-28 02:07:22
 
 ## Service Components
 
@@ -56,11 +56,25 @@
 **Implementation**: Provides optimized npm builds with webpack, hot module replacement, and intelligent caching
 
 ### unknown
+**File**: `build/modules/c_builder.py`
+**Language**: python
+**Purpose**: C/C++ build module with CMake integration and CFFI bindings
+**Architecture**: C build module that integrates with CMake build system and provides graphics rendering capabilities
+**Implementation**: Provides optimized C builds with CMake, custom memory management, and Python CFFI integration
+
+### unknown
 **File**: `build/modules/python_builder.py`
 **Language**: python
 **Purpose**: Python build module with virtual environment management and dependency caching
 **Architecture**: Python build module that integrates with pip/poetry build systems and provides enhanced caching
 **Implementation**: Provides optimized Python builds with pip/poetry, virtual environments, and intelligent caching
+
+### unknown
+**File**: `build/modules/dual_system_builder.py`
+**Language**: python
+**Purpose**: Dual-system desktop application build module for CI/CD integration
+**Architecture**: Build module that creates distribution packages for the dual-system architecture
+**Implementation**: Builds and packages the enhanced GTK4 desktop application with conversation CLI integration
 
 ### unknown
 **File**: `build/modules/kotlin_builder.py`
@@ -89,6 +103,13 @@
 **Purpose**: Service path manager providing standardized directory access
 **Architecture**: Service path manager enabling consistent directory structure across services
 **Implementation**: Centralized service path management eliminating hardcoded paths
+
+### unknown
+**File**: `services/speech-to-text/simple_whisper_server.py`
+**Language**: python
+**Purpose**: Simple Whisper HTTP server for voice transcription
+**Architecture**: Core voice transcription service for voice-first GUI experience
+**Implementation**: Provides HTTP endpoint for audio transcription using Whisper
 
 ### unknown
 **File**: `services/speech-to-text/__init__.py`
@@ -140,18 +161,18 @@
 **Implementation**: Provides vision analysis via gRPC with standardized health endpoints
 
 ### unknown
-**File**: `control/native_gui/services/llm_client.py`
+**File**: `control/conversation_cli.py`
 **Language**: python
-**Purpose**: llm_client.py - microservice component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for llm_client
+**Purpose**: Conversation-based CLI interface for Unhinged dual-system architecture
+**Architecture**: Conversation CLI that bridges GTK4 control plane with Alpine VM conversation system
+**Implementation**: Provides voice-first conversation interface accessible from both GTK4 control plane and native Alpine environment
 
 ### unknown
-**File**: `control/native_gui/services/__init__.py`
+**File**: `desktop/auto_updater.py`
 **Language**: python
-**Purpose**: __init__.py - microservice component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
+**Purpose**: Auto-update system for Unhinged desktop application
+**Architecture**: Auto-updater that checks for new versions and can update the desktop application automatically
+**Implementation**: Provides automatic update checking and installation for the dual-system architecture desktop application
 
 ## Python Components
 
@@ -192,13 +213,6 @@
 **Architecture**: Part of validation pipeline
 **Implementation**: Checks format and business rules
 
-### MobileUIIntegrationValidator
-**File**: `build/scripts/validate_mobile_ui_integration.py`
-**Language**: python
-**Purpose**: Comprehensive validator for mobile UI framework integration
-**Architecture**: Central validation system for mobile UI framework integration
-**Implementation**: Validates all aspects of mobile UI framework integration with Unhinged
-
 ### unknown
 **File**: `build/validators/kotlin_validator.py`
 **Language**: python
@@ -213,28 +227,30 @@
 **Architecture**: Language-specific validator that checks Python code patterns and conventions
 **Implementation**: Validates Python files for proper imports, llm-docs usage, and centralized environment compliance
 
-## Validation Components
+### unknown
+**File**: `libs/design_system/build/component_validator.py`
+**Language**: python
+**Purpose**: Component specification validator ensuring YAML specs conform to schema and design constraints
+**Architecture**: Integrates with component generation pipeline to ensure specification quality before code generation
+**Implementation**: Validates component specifications against meta-schema, token references, and accessibility requirements
+
+## Dead Components
 
 ### unknown
-**File**: `build/scripts/validate_mobile_ui_integration.py`
+**File**: `build/tools/dead-code-analyzer.py`
 **Language**: python
-**Purpose**: Comprehensive validation script for mobile UI framework integration
-**Architecture**: Validation script for mobile UI framework in Unhinged build system
-**Implementation**: Validates complete mobile UI framework integration with Unhinged architecture
+**Purpose**: Comprehensive dead code and cruft detection tool for Unhinged codebase
+**Architecture**: Integrates with existing dependency tracker and build system for accurate analysis
+**Implementation**: Identifies unused files, phantom modules, orphaned documentation, and build artifacts
 
-### validate_build_patterns
-**File**: `build/modules/__init__.py`
-**Language**: python
-**Purpose**: Validate build system patterns and cultural commandments
-**Architecture**: Integrated enforcement that runs as part of build validation
-**Implementation**: Checks for scattered files, proper generated content location, and cultural compliance
+## Cleanup Components
 
 ### unknown
-**File**: `build/validators/polyglot_validator.py`
+**File**: `build/tools/cleanup-dead-code.py`
 **Language**: python
-**Purpose**: Polyglot validation system for enforcing Unhinged codebase patterns and cultural commandments
-**Architecture**: Central validation orchestrator that coordinates language-specific validators and pattern checkers
-**Implementation**: Modular, parallel validation runner that checks file patterns, build structure, and cultural compliance across all languages
+**Purpose**: Safe dead code cleanup tool with backup and rollback capabilities
+**Architecture**: Integrates with dead-code-analyzer for systematic codebase cleanup
+**Implementation**: Removes identified dead code with safety checks and backup mechanisms
 
 ## Build Components
 
@@ -279,13 +295,6 @@
 **Purpose**: Polyglot protobuf client generation using unified DRY engine architecture
 **Architecture**: Build module that eliminates code duplication in proto generation across multiple languages
 **Implementation**: Orchestrates TypeScript, C, Python, Kotlin proto client generation through pluggable handlers
-
-### unknown
-**File**: `build/modules/mobile_ui_builder.py`
-**Language**: python
-**Purpose**: Mobile UI Builder - Build system integration for mobile-responsive UI components
-**Architecture**: Build system module for mobile UI framework integration in Unhinged architecture
-**Implementation**: Generates CSS themes, validates responsive layouts, and integrates mobile UI framework
 
 ### unknown
 **File**: `build/modules/service_discovery_builder.py`
@@ -335,6 +344,59 @@
 **Purpose**: Dependency validation at build time to prevent runtime dependency failures
 **Architecture**: Compile-time dependency validation preventing runtime startup failures
 **Implementation**: Statically analyzes service dependencies to ensure proper startup order
+
+### unknown
+**File**: `libs/design_system/build/design_token_builder.py`
+**Language**: python
+**Purpose**: Design token generation module following ProtoClientBuilder architecture pattern
+**Architecture**: Integrates with build orchestrator to provide cached design token generation
+**Implementation**: Generates GTK4 CSS from YAML design tokens with dependency tracking and caching
+
+### DesignTokenBuilder
+**File**: `libs/design_system/build/design_token_builder.py`
+**Language**: python
+**Purpose**: Design token generation following ProtoClientBuilder architecture pattern
+**Architecture**: Build module that generates design system artifacts with dependency tracking
+**Implementation**: Orchestrates GTK4 CSS generation from semantic YAML tokens with caching and validation
+
+### unknown
+**File**: `libs/design_system/build/component_generator.py`
+**Language**: python
+**Purpose**: Component generation orchestrator coordinating platform-specific generators from YAML specifications
+**Architecture**: Central orchestrator integrating with build system for component code generation
+**Implementation**: Manages component generation pipeline with platform equality and specification-first architecture
+
+### unknown
+**File**: `libs/design_system/build/component_build_module.py`
+**Language**: python
+**Purpose**: Component generation build module integrating with Unhinged build system
+**Architecture**: Integrates component generation orchestrator with existing build infrastructure
+**Implementation**: Implements BuildModule interface for component generation with caching and dependency tracking
+
+## Ci Components
+
+### version
+**File**: `build/ci/ci-config.yml`
+**Language**: yaml
+**Purpose**: CI/CD pipeline configuration integrating with enhanced build system
+**Architecture**: Central CI/CD configuration extending build-config.yml
+**Implementation**: Defines CI/CD workflows, test suites, and deployment automation
+
+## Infrastructure Components
+
+### version
+**File**: `build/orchestration/docker-compose.production.yml`
+**Language**: yaml
+**Purpose**: Production docker-compose with unified service definitions
+**Architecture**: Primary production deployment replacing fragmented compose files
+**Implementation**: Single source of truth for production service orchestration
+
+### version
+**File**: `build/orchestration/docker-compose.development.yml`
+**Language**: yaml
+**Purpose**: Development docker-compose with debug tools and hot-reload
+**Architecture**: Development deployment with additional observability services
+**Implementation**: Development environment with debugging and monitoring tools
 
 ## Function Components
 
@@ -417,59 +479,6 @@
 **Architecture**: Central configuration that drives all persistence platform behavior and routing decisions
 **Implementation**: Root configuration object containing all platform settings and technology definitions
 
-### unknown
-**File**: `generated/static_html/registry.js`
-**Language**: typescript
-**Purpose**: Global registry of static HTML files for browser navigation
-**Architecture**: Used by index.html and navigation components for file discovery
-**Implementation**: Auto-generated from filesystem scan, provides metadata for each HTML file
-
-### unknown
-**File**: `generated/static_html/registry.js`
-**Language**: typescript
-**Purpose**: Hierarchical file structure for table-of-contents navigation
-**Architecture**: Used by table-of-contents.html for dynamic file structure display
-**Implementation**: Auto-generated directory tree with file metadata for browser navigation
-
-## Builder Components
-
-### MobileUIBuilder
-**File**: `build/modules/mobile_ui_builder.py`
-**Language**: python
-**Purpose**: Build system integration for mobile UI framework
-**Architecture**: Core build module for mobile UI framework in Unhinged build system
-**Implementation**: Handles CSS generation, asset compilation, and responsive layout validation
-
-## Method Components
-
-### build
-**File**: `build/modules/mobile_ui_builder.py`
-**Language**: python
-**Purpose**: Main build process for mobile UI framework
-**Architecture**: Primary build entry point for mobile UI components
-**Implementation**: Orchestrates CSS generation, validation, and asset compilation
-
-### _generate_css_themes
-**File**: `build/modules/mobile_ui_builder.py`
-**Language**: python
-**Purpose**: Generate CSS themes for mobile UI components
-**Architecture**: Generates CSS assets for GTK4 application theming
-**Implementation**: Creates responsive CSS with mobile-first design principles
-
-### _create_viewport_widget
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Language**: python
-**Purpose**: Create viewport-specific widget for input capture tool
-**Architecture**: Implements responsive design patterns for input monitoring interface
-**Implementation**: Provides optimized layouts for mobile, tablet, and desktop viewports
-
-### create_widget
-**File**: `control/native_gui/core/tool_manager.py`
-**Language**: python
-**Purpose**: Create viewport-specific widget for the tool
-**Architecture**: Core method for tool widget instantiation with viewport awareness
-**Implementation**: Enhanced widget creation with responsive design support
-
 ## Proto Components
 
 ### unknown
@@ -516,9 +525,21 @@
 **Architecture**: Build module system that integrates with main orchestrator for multi-language support
 **Implementation**: Provides specialized builders for Kotlin, TypeScript, Python, and Protobuf with caching and optimization
 
-## Architectural Components
+## Validation Components
 
+### validate_build_patterns
+**File**: `build/modules/__init__.py`
+**Language**: python
+**Purpose**: Validate build system patterns and cultural commandments
+**Architecture**: Integrated enforcement that runs as part of build validation
+**Implementation**: Checks for scattered files, proper generated content location, and cultural compliance
 
+### unknown
+**File**: `build/validators/polyglot_validator.py`
+**Language**: python
+**Purpose**: Polyglot validation system for enforcing Unhinged codebase patterns and cultural commandments
+**Architecture**: Central validation orchestrator that coordinates language-specific validators and pattern checkers
+**Implementation**: Modular, parallel validation runner that checks file patterns, build structure, and cultural compliance across all languages
 
 ## Virtualization Components
 
@@ -594,321 +615,6 @@
 **Architecture**: Central control plane that will evolve into virtualization boundary between Unhinged and host OS
 **Implementation**: Translates DevOps operations (start/stop/restart) into build system targets while maintaining operational context
 
-### unknown
-**File**: `control/native_gui/launcher.py`
-**Language**: python
-**Purpose**: launcher.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for launcher
-
-### unknown
-**File**: `control/native_gui/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/main_window.py`
-**Language**: python
-**Purpose**: main_window.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for main_window
-
-### unknown
-**File**: `control/native_gui/bridge/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/bridge/grpc_client.py`
-**Language**: python
-**Purpose**: grpc_client.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for grpc_client
-
-### unknown
-**File**: `control/native_gui/bridge/http_client.py`
-**Language**: python
-**Purpose**: http_client.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for http_client
-
-### unknown
-**File**: `control/native_gui/bridge/proto_scanner.py`
-**Language**: python
-**Purpose**: proto_scanner.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for proto_scanner
-
-### unknown
-**File**: `control/native_gui/health/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/chat/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/chat/tool.py`
-**Language**: python
-**Purpose**: tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for tool
-
-### unknown
-**File**: `control/native_gui/tools/chat/mobile_chat_tool.py`
-**Language**: python
-**Purpose**: mobile_chat_tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for mobile_chat_tool
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/speech_client.py`
-**Language**: python
-**Purpose**: speech_client.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for speech_client
-
-### unknown
-**File**: `control/native_gui/tools/chat/widgets/chat_interface.py`
-**Language**: python
-**Purpose**: chat_interface.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for chat_interface
-
-### unknown
-**File**: `control/native_gui/tools/chat/widgets/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/service_manager/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/service_manager/tool.py`
-**Language**: python
-**Purpose**: tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for tool
-
-### unknown
-**File**: `control/native_gui/tools/system_monitor/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/system_monitor/tool.py`
-**Language**: python
-**Purpose**: tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for tool
-
-### unknown
-**File**: `control/native_gui/tools/file_browser/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/file_browser/tool.py`
-**Language**: python
-**Purpose**: tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for tool
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/tool.py`
-**Language**: python
-**Purpose**: tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for tool
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/bridge/reflection_client.py`
-**Language**: python
-**Purpose**: reflection_client.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for reflection_client
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/bridge/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/bridge/network_scanner.py`
-**Language**: python
-**Purpose**: network_scanner.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for network_scanner
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/bridge/grpc_client.py`
-**Language**: python
-**Purpose**: grpc_client.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for grpc_client
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/bridge/http_client.py`
-**Language**: python
-**Purpose**: http_client.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for http_client
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/widgets/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/widgets/schema_validator.py`
-**Language**: python
-**Purpose**: schema_validator.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for schema_validator
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/widgets/response_viewer.py`
-**Language**: python
-**Purpose**: response_viewer.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for response_viewer
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/widgets/request_builder.py`
-**Language**: python
-**Purpose**: request_builder.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for request_builder
-
-### unknown
-**File**: `control/native_gui/tools/api_dev/widgets/proto_browser.py`
-**Language**: python
-**Purpose**: proto_browser.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for proto_browser
-
-### unknown
-**File**: `control/native_gui/tools/log_viewer/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/tools/log_viewer/tool.py`
-**Language**: python
-**Purpose**: tool.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for tool
-
-### unknown
-**File**: `control/native_gui/core/tool_manager.py`
-**Language**: python
-**Purpose**: tool_manager.py - Enhanced tool management with mobile-responsive capabilities
-**Architecture**: Central component in Unhinged tool architecture, bridges desktop and mobile interfaces
-**Implementation**: Core functionality for tool lifecycle, registration, and mobile UI integration
-
-### unknown
-**File**: `control/native_gui/core/mobile_components.py`
-**Language**: python
-**Purpose**: mobile_components.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for mobile_components
-
-### unknown
-**File**: `control/native_gui/core/viewport_manager.py`
-**Language**: python
-**Purpose**: viewport_manager.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for viewport_manager
-
-### unknown
-**File**: `control/native_gui/core/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/core/application.py`
-**Language**: python
-**Purpose**: application.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for application
-
-### unknown
-**File**: `control/native_gui/widgets/__init__.py`
-**Language**: python
-**Purpose**: __init__.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for __init__
-
-### unknown
-**File**: `control/native_gui/widgets/response_viewer.py`
-**Language**: python
-**Purpose**: response_viewer.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for response_viewer
-
-### unknown
-**File**: `control/native_gui/widgets/request_builder.py`
-**Language**: python
-**Purpose**: request_builder.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for request_builder
-
-### unknown
-**File**: `control/native_gui/widgets/proto_browser.py`
-**Language**: python
-**Purpose**: proto_browser.py - system control component
-**Architecture**: Part of the Unhinged system architecture
-**Implementation**: Core functionality for proto_browser
-
 ### environment
 **File**: `control/config/environments/production.yml`
 **Language**: yaml
@@ -932,13 +638,6 @@
 **Architecture**: Client library that makes system operations feel like native JavaScript
 **Implementation**: Beautiful API abstractions over HTTP control proxy for system calls
 
-### unknown
-**File**: `control/native_gui/health_client.py`
-**Language**: python
-**Purpose**: gRPC health client for native GUI service discovery and monitoring
-**Architecture**: Health client for native GUI to communicate with gRPC services
-**Implementation**: Provides health.proto client for checking service status via gRPC
-
 ## Data Components
 
 ### unknown
@@ -947,176 +646,6 @@
 **Purpose**: Operation result data model for system control operations
 **Architecture**: Result model that will evolve into OS system call return values
 **Implementation**: Standardized result format for all system operations with future OS compatibility
-
-## Transcription Components
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/simple_whisper_server.py`
-**Language**: python
-**Purpose**: Minimal HTTP server providing Whisper-based speech-to-text transcription
-**Architecture**: Backend transcription service in voice-first GUI pipeline architecture
-**Implementation**: Pure Python Whisper service with native WAV processing and zero external dependencies
-
-## Web Components
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/web_speech_bridge.py`
-**Language**: python
-**Purpose**: WebKit-based bridge for browser Web Speech API integration
-**Architecture**: Future enhancement component for browser-native voice transcription
-**Implementation**: Embedded browser speech recognition using native Web Speech API capabilities
-
-## Dependency Components
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/audio_installer.py`
-**Language**: python
-**Purpose**: Automated audio dependency installation and setup guidance system
-**Architecture**: Support component providing installation guidance for voice transcription pipeline
-**Implementation**: Cross-platform audio dependency detection, installation, and user guidance
-
-## Audio Components
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/native_audio_capture.py`
-**Language**: python
-**Purpose**: Native Ubuntu audio capture using system-level ALSA/PipeWire integration
-**Architecture**: Core audio input component bridging GUI voice interface to Whisper transcription service
-**Implementation**: System audio capture without Python library dependencies for voice transcription pipeline
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/simple_audio_capture.py`
-**Language**: python
-**Purpose**: Python speech_recognition library bridge to Whisper service integration
-**Architecture**: Intermediate component bridging Python audio libraries to service architecture
-**Implementation**: Minimal audio capture using speech_recognition library with Whisper service backend
-
-## Speech Components
-
-### unknown
-**File**: `control/native_gui/tools/chat/bridge/native_speech_recognition.py`
-**Language**: python
-**Purpose**: Python speech_recognition library integration as fallback for voice transcription
-**Architecture**: Fallback component in voice transcription pipeline when native audio unavailable
-**Implementation**: Multi-backend speech recognition with Google Web Speech API and offline options
-
-## Integration Components
-
-### BuildSystemIntegration
-**File**: `control/native_gui/tools/api_dev/bridge/build_integration.py`
-**Language**: python
-**Purpose**: Build system integration for API development tool
-**Architecture**: Central integration point for build operations in API development workflow
-**Implementation**: Provides integration between API dev tool and build system
-
-## Module Components
-
-### unknown
-**File**: `control/native_gui/tools/input_capture/__init__.py`
-**Language**: python
-**Purpose**: Input Capture Tool Module - Advanced input monitoring and analysis
-**Architecture**: Input capture tool module in the Unhinged tool architecture
-**Implementation**: Provides comprehensive keyboard and mouse capture with privacy controls
-
-## Tool Components
-
-### unknown
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Language**: python
-**Purpose**: Input Capture Tool - Advanced input monitoring and analysis
-**Architecture**: Integrates input capture system with the Unhinged tool architecture
-**Implementation**: Provides comprehensive keyboard and mouse capture with privacy controls
-
-### InputCaptureTool
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Language**: python
-**Purpose**: Advanced input capture tool with mobile-responsive interface
-**Architecture**: Core tool for input capture functionality in the Unhinged system
-**Implementation**: Provides comprehensive input monitoring, analysis, and privacy controls
-
-### unknown
-**File**: `control/native_gui/core/tool_config.py`
-**Language**: python
-**Purpose**: Tool Configuration System - Standardized tool initialization and metadata
-**Architecture**: Central tool configuration component in Unhinged native GUI architecture
-**Implementation**: Provides unified tool configuration to eliminate duplicate initialization patterns
-
-## Factory Components
-
-### create_tool
-**File**: `control/native_gui/tools/input_capture/tool.py`
-**Language**: python
-**Purpose**: Factory function for creating InputCaptureTool instances
-**Architecture**: Entry point for tool registration in the Unhinged tool manager
-**Implementation**: Required by the tool plugin system for automatic tool discovery
-
-### ToolConfigFactory
-**File**: `control/native_gui/core/tool_config.py`
-**Language**: python
-**Purpose**: Factory for creating standardized tool configurations
-**Architecture**: Central factory for tool configuration creation in Unhinged native GUI
-**Implementation**: Provides convenient methods for creating common tool configuration patterns
-
-### WidgetFactory
-**File**: `control/native_gui/ui/widget_factory.py`
-**Language**: python
-**Purpose**: Factory for creating standardized GTK4 widgets
-**Architecture**: Central widget factory for Unhinged native GUI with consistent styling
-**Implementation**: Eliminates duplicate widget creation patterns across tools
-
-## Theme Components
-
-### unknown
-**File**: `control/native_gui/core/theme_manager.py`
-**Language**: python
-**Purpose**: Enhanced Theme Manager - Unified theming system with mobile-responsive CSS support
-**Architecture**: Central theming component in Unhinged native GUI architecture
-**Implementation**: Manages GTK4 themes, mobile-responsive styles, and dynamic theme switching
-
-## Manager Components
-
-### ThemeManager
-**File**: `control/native_gui/core/theme_manager.py`
-**Language**: python
-**Purpose**: Enhanced theme manager with mobile-responsive capabilities
-**Architecture**: Central theming system for Unhinged native GUI with mobile support
-**Implementation**: Manages GTK4 themes, CSS loading, and responsive design adaptation
-
-## Base Components
-
-### BaseTool
-**File**: `control/native_gui/core/tool_manager.py`
-**Language**: python
-**Purpose**: Enhanced base class for all tools with mobile-responsive capabilities
-**Architecture**: Foundation of the tool plugin system, supports both desktop and mobile interfaces
-**Implementation**: Provides standardized interface for tool creation with viewport adaptation
-
-## Css Components
-
-### unknown
-**File**: `control/native_gui/core/css_generator.py`
-**Language**: python
-**Purpose**: Shared CSS Generator - Consolidated CSS generation for mobile UI framework
-**Architecture**: Central CSS generation component in Unhinged native GUI architecture
-**Implementation**: Provides unified CSS generation logic to eliminate duplication across theme and build systems
-
-## Generator Components
-
-### CSSGenerator
-**File**: `control/native_gui/core/css_generator.py`
-**Language**: python
-**Purpose**: Unified CSS generator for mobile-responsive UI framework
-**Architecture**: Central CSS generation system for Unhinged native GUI with mobile support
-**Implementation**: Consolidates CSS generation logic from theme manager and mobile UI builder
-
-## Widget Components
-
-### unknown
-**File**: `control/native_gui/ui/widget_factory.py`
-**Language**: python
-**Purpose**: Widget Factory - Standardized widget creation utilities
-**Architecture**: Central widget factory component in Unhinged native GUI architecture
-**Implementation**: Provides unified widget creation patterns to eliminate duplicate code
 
 ## Platform Components
 
@@ -1252,18 +781,66 @@
 **Architecture**: Central lifecycle management system that optimizes data placement and enforces retention policies
 **Implementation**: Manages complete data lifecycle with automatic tiering, archival, and retention across all database technologies
 
-## Infrastructure Components
+## Generator Components
 
-### version
-**File**: `orchestration/docker-compose.production.yml`
-**Language**: yaml
-**Purpose**: Production docker-compose with unified service definitions
-**Architecture**: Primary production deployment replacing fragmented compose files
-**Implementation**: Single source of truth for production service orchestration
+### unknown
+**File**: `libs/design_system/build/generators/_abstract_generator.py`
+**Language**: python
+**Purpose**: Abstract component generator interface ensuring platform equality in design system
+**Architecture**: Core abstraction enabling platform-agnostic component specifications with platform-specific implementations
+**Implementation**: Defines consistent interface for generating platform-specific code from YAML specifications
 
-### version
-**File**: `orchestration/docker-compose.development.yml`
+## Component Components
+
+### unknown
+**File**: `libs/design_system/build/generators/gtk4/generator.py`
+**Language**: python
+**Purpose**: GTK4 component generator producing Python widget implementations from YAML specifications
+**Architecture**: Platform-specific implementation of abstract generator interface for GTK4 desktop applications
+**Implementation**: Generates GtkWidget subclasses with GObject properties, signals, and design token integration
+
+### component
+**File**: `libs/design_system/components/primitives/modal.yaml`
 **Language**: yaml
-**Purpose**: Development docker-compose with debug tools and hot-reload
-**Architecture**: Development deployment with additional observability services
-**Implementation**: Development environment with debugging and monitoring tools
+**Purpose**: Platform-agnostic modal dialog component specification for overlay content presentation
+**Architecture**: Core container component for interrupting user flow with contextual content
+**Implementation**: Modal container with focus management, backdrop handling, and keyboard navigation support
+
+### component
+**File**: `libs/design_system/components/primitives/input.yaml`
+**Language**: yaml
+**Purpose**: Platform-agnostic input field component specification for single-line text entry
+**Architecture**: Core primitive component for form data collection in design system
+**Implementation**: Text input element with validation states, placeholder support, and accessibility features
+
+### component
+**File**: `libs/design_system/components/primitives/button.yaml`
+**Language**: yaml
+**Purpose**: Platform-agnostic button component specification defining semantic behavior and styling
+**Architecture**: Core primitive component in design system component hierarchy
+**Implementation**: Primary interactive element specification with semantic types, states, and accessibility requirements
+
+### component
+**File**: `libs/design_system/components/primitives/simple-button.yaml`
+**Language**: yaml
+**Purpose**: Minimal button component specification for testing component generation pipeline
+**Architecture**: Test component for validating component generation system
+**Implementation**: Simple interactive button with correct token references for validation testing
+
+## Generated Components
+
+### unknown
+**File**: `libs/design_system/build/generators/gtk4/generator.py`
+**Language**: python
+**Purpose**: Auto-generated GTK4 widget from design system component specification #
+**Architecture**: Generated component implementing platform-agnostic specification #
+**Implementation**: GTK4 implementation of {component_name} with design token integration #
+
+## Schema Components
+
+### schema_version
+**File**: `libs/design_system/components/_schema.yaml`
+**Language**: yaml
+**Purpose**: Component specification meta-schema defining platform-agnostic component structure
+**Architecture**: Central schema authority for design system component generation architecture
+**Implementation**: Validates YAML component specifications ensuring consistency across all platform generators
