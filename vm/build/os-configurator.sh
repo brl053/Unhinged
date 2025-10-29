@@ -1,75 +1,169 @@
 #!/bin/bash
-# Alpine Linux Configuration Script for Unhinged
-# Run this script INSIDE the Alpine VM after basic installation
+"""
+@llm-does UnhingedOS system configuration orchestrator for Alpine Linux base system setup with voice-first optimizations
+@llm-type build.config/os-configurator
+@llm-context UnhingedOS build system configuration management for Alpine Linux base system preparation, package installation, graphics stack setup, and voice interface optimization for voice-first operating system deployment
+"""
 
 set -e
 
-echo "🏔️ ALPINE LINUX CONFIGURATION FOR UNHINGED"
-echo "=" * 60
+# Script metadata
+SCRIPT_VERSION="1.0.0"
+SCRIPT_NAME="UnhingedOS Configurator"
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+log_error() { echo -e "${RED}❌ $1${NC}"; }
+log_header() { echo -e "${PURPLE}🎯 $1${NC}"; }
+
+# Display header
+echo -e "${CYAN}"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║                UnhingedOS Configurator                       ║"
+echo "║           Voice-First Operating System Setup                 ║"
+echo "║                     Version $SCRIPT_VERSION                         ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ Please run as root"
+    log_error "Please run as root"
     exit 1
 fi
 
-echo "📦 Updating Alpine packages..."
-apk update
-apk upgrade
+log_header "UnhingedOS System Configuration Starting"
 
-echo "🔧 Installing build tools and dependencies..."
-apk add \
-    build-base \
-    cmake \
-    git \
-    python3 \
-    python3-dev \
-    py3-pip \
-    linux-headers \
-    mesa-dev \
-    libdrm-dev \
-    eudev-dev \
-    pkgconfig \
-    gcc \
-    musl-dev \
-    curl \
-    wget
+# Update Alpine packages
+update_system() {
+    log_info "Updating Alpine Linux packages..."
+    if apk update && apk upgrade; then
+        log_success "System packages updated"
+    else
+        log_error "Failed to update system packages"
+        exit 1
+    fi
+}
 
-echo "🎮 Installing DRM and graphics drivers..."
-apk add \
-    mesa-dri-gallium \
-    mesa-va-gallium \
-    mesa-vdpau-gallium \
-    xf86-video-qxl \
-    libdrm \
-    linux-firmware-amdgpu \
-    linux-firmware-radeon \
-    linux-firmware-i915
+# Install UnhingedOS development tools
+install_build_tools() {
+    log_info "Installing UnhingedOS build tools and dependencies..."
 
-echo "👤 Adding root to video group for DRM access..."
-addgroup root video
+    local build_packages=(
+        "build-base"
+        "cmake"
+        "git"
+        "python3"
+        "python3-dev"
+        "py3-pip"
+        "linux-headers"
+        "mesa-dev"
+        "libdrm-dev"
+        "eudev-dev"
+        "pkgconfig"
+        "gcc"
+        "musl-dev"
+        "curl"
+        "wget"
+    )
 
-echo "🖥️ Configuring framebuffer console..."
-if [ -f /etc/default/grub ]; then
-    echo 'GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty0 console=ttyS0,115200"' >> /etc/default/grub
-    update-grub
-fi
+    if apk add "${build_packages[@]}"; then
+        log_success "Build tools installed successfully"
+    else
+        log_error "Failed to install build tools"
+        exit 1
+    fi
+}
 
-echo "🔐 Configuring auto-login for development..."
-sed -i 's/#tty1::respawn:\/sbin\/getty 38400 tty1/tty1::respawn:\/sbin\/getty -a root 38400 tty1/' /etc/inittab
+# Install UnhingedOS graphics stack
+install_graphics_stack() {
+    log_info "Installing UnhingedOS graphics drivers and DRM support..."
 
-echo "🐍 Installing Python packages for Unhinged..."
-pip3 install \
-    cffi \
-    numpy \
-    requests \
-    websockets
+    local graphics_packages=(
+        "mesa-dri-gallium"
+        "mesa-va-gallium"
+        "mesa-vdpau-gallium"
+        "xf86-video-qxl"
+        "libdrm"
+        "linux-firmware-amdgpu"
+        "linux-firmware-radeon"
+        "linux-firmware-i915"
+    )
 
-echo "📁 Creating Unhinged directory..."
-mkdir -p /opt/unhinged
+    if apk add "${graphics_packages[@]}"; then
+        log_success "Graphics stack installed"
+    else
+        log_error "Failed to install graphics stack"
+        exit 1
+    fi
 
-echo "🚀 Creating Unhinged startup script..."
-cat > /opt/unhinged/start_unhinged.py << 'EOF'
+    # Configure DRM access
+    log_info "Configuring DRM access for UnhingedOS..."
+    addgroup root video
+    log_success "Root user added to video group"
+}
+
+# Configure UnhingedOS system settings
+configure_system() {
+    log_info "Configuring UnhingedOS system settings..."
+
+    # Configure framebuffer console
+    if [ -f /etc/default/grub ]; then
+        echo 'GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty0 console=ttyS0,115200"' >> /etc/default/grub
+        update-grub
+        log_success "Framebuffer console configured"
+    fi
+
+    # Configure auto-login for development
+    sed -i 's/#tty1::respawn:\/sbin\/getty 38400 tty1/tty1::respawn:\/sbin\/getty -a root 38400 tty1/' /etc/inittab
+    log_success "Auto-login configured"
+}
+
+# Install UnhingedOS Python dependencies
+install_python_dependencies() {
+    log_info "Installing Python packages for UnhingedOS..."
+
+    local python_packages=(
+        "cffi"
+        "numpy"
+        "requests"
+        "websockets"
+    )
+
+    if pip3 install "${python_packages[@]}"; then
+        log_success "Python dependencies installed"
+    else
+        log_error "Failed to install Python dependencies"
+        exit 1
+    fi
+}
+
+# Setup UnhingedOS directory structure
+setup_unhinged_structure() {
+    log_info "Creating UnhingedOS directory structure..."
+
+    mkdir -p /opt/unhinged/{bin,lib,config}
+    mkdir -p /etc/unhinged
+    mkdir -p /var/log/unhinged
+
+    log_success "UnhingedOS directory structure created"
+}
+
+# Create UnhingedOS startup script
+create_startup_script() {
+    log_info "Creating UnhingedOS startup script..."
+
+    cat > /opt/unhinged/start_unhinged.py << 'EOF'
 #!/usr/bin/env python3
 """
 Unhinged Native Graphics Launcher for Alpine Linux
@@ -176,10 +270,15 @@ if __name__ == "__main__":
     main()
 EOF
 
-chmod +x /opt/unhinged/start_unhinged.py
+    chmod +x /opt/unhinged/start_unhinged.py
+    log_success "UnhingedOS startup script created"
+}
 
-echo "🔧 Creating Unhinged service..."
-cat > /etc/init.d/unhinged << 'EOF'
+# Create UnhingedOS system service
+create_system_service() {
+    log_info "Creating UnhingedOS system service..."
+
+    cat > /etc/init.d/unhinged << 'EOF'
 #!/sbin/openrc-run
 
 name="Unhinged Native Graphics"
@@ -202,27 +301,65 @@ start_pre() {
 }
 EOF
 
-chmod +x /etc/init.d/unhinged
-rc-update add unhinged default
+    chmod +x /etc/init.d/unhinged
+    rc-update add unhinged default
+    log_success "UnhingedOS system service created and enabled"
+}
 
-echo "🌐 Configuring SSH access..."
-rc-service sshd start
-rc-update add sshd default
+# Configure SSH access
+configure_ssh() {
+    log_info "Configuring SSH access for UnhingedOS development..."
 
-# Allow root SSH login for development
-sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-rc-service sshd restart
+    rc-service sshd start
+    rc-update add sshd default
 
-echo "✅ ALPINE LINUX CONFIGURATION COMPLETE!"
-echo ""
-echo "📋 NEXT STEPS:"
-echo "1. Reboot Alpine VM: reboot"
-echo "2. Copy Unhinged graphics library from host"
-echo "3. Test Unhinged graphics rendering"
-echo ""
-echo "🌐 SSH Access: ssh -p 2222 root@localhost"
-echo "🎯 Manual Test: /opt/unhinged/start_unhinged.py"
-echo ""
-echo "🔄 Rebooting in 10 seconds... (Ctrl+C to cancel)"
-sleep 10
-reboot
+    # Allow root SSH login for development
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+    rc-service sshd restart
+
+    log_success "SSH access configured"
+}
+
+# Main configuration orchestration
+main() {
+    log_header "UnhingedOS Configuration Starting"
+
+    # Execute configuration steps
+    update_system
+    install_build_tools
+    install_graphics_stack
+    configure_system
+    install_python_dependencies
+    setup_unhinged_structure
+    create_startup_script
+    create_system_service
+    configure_ssh
+
+    # Final status
+    log_header "UnhingedOS Configuration Complete!"
+    log_success "Alpine Linux configured for UnhingedOS"
+    log_success "Voice-first operating system ready"
+
+    echo ""
+    log_info "Next Steps:"
+    echo "  1. Reboot Alpine VM: reboot"
+    echo "  2. Copy UnhingedOS graphics library from host"
+    echo "  3. Test UnhingedOS graphics rendering"
+    echo ""
+    log_info "Access Information:"
+    echo "  🌐 SSH Access: ssh -p 2222 root@localhost"
+    echo "  🎯 Manual Test: /opt/unhinged/start_unhinged.py"
+    echo ""
+
+    read -p "Reboot now? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Rebooting UnhingedOS..."
+        reboot
+    else
+        log_info "Reboot manually when ready: reboot"
+    fi
+}
+
+# Execute main function
+main "$@"
