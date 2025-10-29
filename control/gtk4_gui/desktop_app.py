@@ -282,6 +282,48 @@ class UnhingedDesktopApp(Adw.Application):
                 """
                 combined_css += sidebar_css
 
+                # Add chat message design system styles
+                chat_css = """
+                /* Chat Message Design System Styles */
+                .chat-message-user {
+                    background-color: var(--color-surface-elevated, #f8f9fa);
+                    border-left: 4px solid var(--color-action-primary, #0969da);
+                    border-radius: var(--radius-sm, 4px);
+                }
+
+                .chat-message-assistant {
+                    background-color: var(--color-surface-default, #ffffff);
+                    border-left: 4px solid var(--color-success-default, #1a7f37);
+                    border-radius: var(--radius-sm, 4px);
+                }
+
+                .chat-message-error {
+                    background-color: var(--color-danger-subtle, #ffebe9);
+                    border-left: 4px solid var(--color-danger-default, #cf222e);
+                    border-radius: var(--radius-sm, 4px);
+                }
+
+                .chat-sender {
+                    font-weight: var(--font-weight-semibold, 600);
+                    font-size: var(--font-size-small, 12px);
+                    color: var(--color-text-secondary, #656d76);
+                }
+
+                .chat-timestamp {
+                    font-size: var(--font-size-small, 12px);
+                    color: var(--color-text-tertiary, #8c959f);
+                    font-family: var(--font-family-mono, monospace);
+                }
+
+                .chat-content {
+                    font-family: var(--font-family-prose, system-ui);
+                    font-size: var(--font-size-body, 14px);
+                    line-height: var(--line-height-body, 1.5);
+                    color: var(--color-text-primary, #24292f);
+                }
+                """
+                combined_css += chat_css
+
                 try:
                     css_provider.load_from_data(combined_css.encode())
 
@@ -1090,15 +1132,19 @@ class UnhingedDesktopApp(Adw.Application):
             # TODO: Replace with proper gRPC when llm_pb2 clients are generated
             response = self._send_to_ollama_http(message)
 
+            # Display user message first
+            self._add_chat_message(message, "user")
+
             if response:
-                # Display response in messages area (will be implemented in next task)
-                print(f"🤖 LLM Response: {response[:100]}...")
+                # Display LLM response
+                self._add_chat_message(response, "assistant")
 
                 # Log successful response
                 if self.session_logger:
                     self.session_logger.log_gui_event("LLM_RESPONSE_RECEIVED", f"Response length: {len(response)}")
             else:
-                print("❌ No response from LLM service")
+                # Display error message
+                self._add_chat_message("❌ No response from LLM service", "error")
 
         except Exception as e:
             print(f"❌ LLM communication error: {e}")
@@ -1132,6 +1178,75 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             print(f"❌ Unexpected error: {e}")
             return f"Unexpected error: {str(e)}"
+
+    def _add_chat_message(self, message, sender_type):
+        """Add a chat message to the messages area with proper styling."""
+        from datetime import datetime
+
+        # Create message container
+        message_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)  # sp_1 spacing
+        message_box.set_margin_top(8)     # sp_2 - message spacing
+        message_box.set_margin_bottom(8)  # sp_2 - message spacing
+        message_box.set_margin_start(12)  # sp_3 - message margins
+        message_box.set_margin_end(12)    # sp_3 - message margins
+
+        # Create header with sender and timestamp
+        header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
+
+        # Sender label
+        if sender_type == "user":
+            sender_label = Gtk.Label(label="👤 You")
+            message_box.add_css_class("chat-message-user")
+        elif sender_type == "assistant":
+            sender_label = Gtk.Label(label="🤖 Assistant")
+            message_box.add_css_class("chat-message-assistant")
+        else:  # error
+            sender_label = Gtk.Label(label="⚠️ System")
+            message_box.add_css_class("chat-message-error")
+
+        sender_label.set_halign(Gtk.Align.START)
+        sender_label.add_css_class("chat-sender")
+        header_box.append(sender_label)
+
+        # Timestamp label
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp_label = Gtk.Label(label=timestamp)
+        timestamp_label.set_halign(Gtk.Align.END)
+        timestamp_label.set_hexpand(True)
+        timestamp_label.add_css_class("chat-timestamp")
+        header_box.append(timestamp_label)
+
+        message_box.append(header_box)
+
+        # Message content
+        content_label = Gtk.Label(label=message)
+        content_label.set_wrap(True)
+        content_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        content_label.set_halign(Gtk.Align.START)
+        content_label.set_selectable(True)  # Allow text selection
+        content_label.add_css_class("chat-content")
+
+        message_box.append(content_label)
+
+        # Add to messages container
+        self._chatroom_messages_container.append(message_box)
+
+        # Auto-scroll to bottom
+        self._scroll_messages_to_bottom()
+
+    def _scroll_messages_to_bottom(self):
+        """Scroll the messages area to the bottom to show latest message."""
+        # Get the scrolled window parent of messages container
+        parent = self._chatroom_messages_container.get_parent()
+        while parent and not isinstance(parent, Gtk.ScrolledWindow):
+            parent = parent.get_parent()
+
+        if parent:
+            # Get vertical adjustment and scroll to bottom
+            vadj = parent.get_vadjustment()
+            if vadj:
+                # Use idle_add to ensure scroll happens after widget is rendered
+                GLib.idle_add(lambda: vadj.set_value(vadj.get_upper() - vadj.get_page_size()))
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content with device discovery and management."""
