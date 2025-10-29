@@ -132,6 +132,11 @@ class UnhingedDesktopApp(Adw.Application):
         self.llm_loading_dots = None
         self.voice_loading_dots = None
 
+        # Voice recording state
+        self.recording_process = None
+        self.recording_temp_file = None
+        self.is_recording = False
+
         # Development mode detection
         self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
 
@@ -1048,17 +1053,30 @@ class UnhingedDesktopApp(Adw.Application):
                 style="secondary",
                 icon_name="audio-input-microphone-symbolic"
             )
-            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_clicked)
+            # Connect to press and release events for push-to-talk
             voice_widget = self._chatroom_voice_button.get_widget()
+
+            # Create gesture for press and release
+            press_gesture = Gtk.GestureClick.new()
+            press_gesture.connect("pressed", self._on_chatroom_voice_press)
+            press_gesture.connect("released", self._on_chatroom_voice_release)
+            voice_widget.add_controller(press_gesture)
+
             voice_widget.set_valign(Gtk.Align.END)  # Align to bottom of text editor
-            voice_widget.set_tooltip_text("Record voice message")
+            voice_widget.set_tooltip_text("Hold to record voice message")
             input_row.append(voice_widget)
         else:
             self._chatroom_voice_button = Gtk.Button()
             self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_clicked)
+
+            # Create gesture for press and release
+            press_gesture = Gtk.GestureClick.new()
+            press_gesture.connect("pressed", self._on_chatroom_voice_press)
+            press_gesture.connect("released", self._on_chatroom_voice_release)
+            self._chatroom_voice_button.add_controller(press_gesture)
+
             self._chatroom_voice_button.set_valign(Gtk.Align.END)
-            self._chatroom_voice_button.set_tooltip_text("Record voice message")
+            self._chatroom_voice_button.set_tooltip_text("Hold to record voice message")
             input_row.append(self._chatroom_voice_button)
 
         # Create Send button
@@ -1135,6 +1153,33 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Button will be disabled automatically by content_changed handler
 
+    def _on_chatroom_voice_press(self, gesture, n_press, x, y):
+        """Handle voice button press - start recording."""
+        try:
+            # Check if voice service is available
+            if not self.is_voice_service_available():
+                self.show_toast("Voice service not available")
+                return
+
+            # Prevent multiple recordings
+            if self.is_recording:
+                return
+
+            # Start recording immediately
+            self._start_push_to_talk_recording()
+
+        except Exception as e:
+            print(f"❌ Voice press error: {e}")
+            self.show_toast(f"Voice recording failed: {e}")
+
+    def _on_chatroom_voice_release(self, gesture, n_press, x, y):
+        """Handle voice button release - stop recording and transcribe."""
+        try:
+            if self.is_recording:
+                self._stop_push_to_talk_recording()
+        except Exception as e:
+            print(f"❌ Voice release error: {e}")
+
     def _on_chatroom_voice_clicked(self, button):
         """Handle voice recording button click in OS Chatroom."""
         try:
@@ -1175,6 +1220,108 @@ class UnhingedDesktopApp(Adw.Application):
                 self.session_logger.log_gui_event("CHATROOM_VOICE_ERROR", f"Voice recording failed: {e}")
             self._reset_chatroom_voice_button()
             self.show_toast(f"Voice recording failed: {e}")
+
+    def _start_push_to_talk_recording(self):
+        """Start push-to-talk recording (no duration limit)."""
+        try:
+            import subprocess
+            import tempfile
+            from pathlib import Path
+
+            # Create temporary file for recording
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                self.recording_temp_file = Path(f.name)
+
+            # Start unlimited recording (no -d parameter)
+            cmd = [
+                'arecord',
+                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-t', 'wav',          # WAV format
+                str(self.recording_temp_file)
+            ]
+
+            # Start recording process (non-blocking)
+            self.recording_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            self.is_recording = True
+
+            # Update UI
+            self.show_toast("Recording... (release to stop)")
+
+            # Log the event
+            if self.session_logger:
+                self.session_logger.log_gui_event("PUSH_TO_TALK_START", "Started push-to-talk recording")
+
+        except Exception as e:
+            print(f"❌ Start recording error: {e}")
+            self.is_recording = False
+            self.recording_process = None
+            self.recording_temp_file = None
+            raise e
+
+    def _stop_push_to_talk_recording(self):
+        """Stop push-to-talk recording and transcribe."""
+        try:
+            if not self.is_recording or not self.recording_process:
+                return
+
+            # Stop recording process
+            self.recording_process.terminate()
+            self.recording_process.wait(timeout=2)  # Wait for clean shutdown
+
+            self.is_recording = False
+
+            # Update UI
+            self.show_toast("Processing voice...")
+
+            # Log the event
+            if self.session_logger:
+                self.session_logger.log_gui_event("PUSH_TO_TALK_STOP", "Stopped push-to-talk recording")
+
+            # Start transcription in background thread
+            import threading
+            thread = threading.Thread(target=self._transcribe_push_to_talk, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ Stop recording error: {e}")
+            self._cleanup_recording()
+
+    def _transcribe_push_to_talk(self):
+        """Transcribe the push-to-talk recording."""
+        try:
+            if not self.recording_temp_file or not self.recording_temp_file.exists():
+                raise Exception("No recording file found")
+
+            # Transcribe using existing gRPC service
+            transcript = self.transcribe_audio_file(self.recording_temp_file)
+
+            # Update chatroom text editor on main thread
+            GLib.idle_add(self._insert_chatroom_transcription, transcript)
+
+        except Exception as e:
+            print(f"❌ Push-to-talk transcription error: {e}")
+            GLib.idle_add(self._handle_chatroom_voice_error, str(e))
+        finally:
+            # Clean up
+            self._cleanup_recording()
+
+    def _cleanup_recording(self):
+        """Clean up recording resources."""
+        try:
+            if self.recording_temp_file and self.recording_temp_file.exists():
+                self.recording_temp_file.unlink()
+        except:
+            pass
+        finally:
+            self.recording_process = None
+            self.recording_temp_file = None
+            self.is_recording = False
 
     def _chatroom_record_and_transcribe(self):
         """Record audio and transcribe for chatroom text input."""
@@ -2235,7 +2382,7 @@ class UnhingedDesktopApp(Adw.Application):
             # Voice recording row
             record_row = Adw.ActionRow()
             record_row.set_title("Voice Input")
-            record_row.set_subtitle("Click to record 10 seconds of audio")
+            record_row.set_subtitle("Hold to record voice (unlimited duration)")
 
             # Record button
             if COMPONENTS_AVAILABLE:
@@ -2244,13 +2391,22 @@ class UnhingedDesktopApp(Adw.Application):
                     style="secondary",
                     icon_name="audio-input-microphone-symbolic"
                 )
-                self.record_button.connect("clicked", self.on_record_voice_clicked)
-                record_row.add_suffix(self.record_button.get_widget())
+                # Connect to press and release events for push-to-talk
+                record_widget = self.record_button.get_widget()
+                press_gesture = Gtk.GestureClick.new()
+                press_gesture.connect("pressed", self._on_status_voice_press)
+                press_gesture.connect("released", self._on_status_voice_release)
+                record_widget.add_controller(press_gesture)
+                record_row.add_suffix(record_widget)
                 self._is_action_button = True
             else:
-                self.record_button = Gtk.Button(label="Record Voice")
+                self.record_button = Gtk.Button(label="Hold to Record")
                 self.record_button.add_css_class("suggested-action")
-                self.record_button.connect("clicked", self.on_record_voice_clicked)
+                # Connect to press and release events for push-to-talk
+                press_gesture = Gtk.GestureClick.new()
+                press_gesture.connect("pressed", self._on_status_voice_press)
+                press_gesture.connect("released", self._on_status_voice_release)
+                self.record_button.add_controller(press_gesture)
                 record_row.add_suffix(self.record_button)
                 self._is_action_button = False
 
@@ -2839,6 +2995,74 @@ class UnhingedDesktopApp(Adw.Application):
         if self.operation_loading_dots and self.operation_loading_row:
             self.operation_loading_dots.stop_animation()
             self.operation_loading_row.set_visible(False)
+
+    def _on_status_voice_press(self, gesture, n_press, x, y):
+        """Handle Status tab voice button press - start recording."""
+        try:
+            if not self.is_voice_service_available():
+                self.show_toast("Voice service not available")
+                return
+
+            if self.is_recording:
+                return
+
+            self._start_push_to_talk_recording()
+            self._show_voice_loading("Recording...")
+
+        except Exception as e:
+            print(f"❌ Status voice press error: {e}")
+            self.show_toast(f"Voice recording failed: {e}")
+
+    def _on_status_voice_release(self, gesture, n_press, x, y):
+        """Handle Status tab voice button release - stop recording and transcribe."""
+        try:
+            if self.is_recording:
+                self._stop_push_to_talk_recording_status()
+        except Exception as e:
+            print(f"❌ Status voice release error: {e}")
+
+    def _stop_push_to_talk_recording_status(self):
+        """Stop push-to-talk recording for Status tab and update transcription display."""
+        try:
+            if not self.is_recording or not self.recording_process:
+                return
+
+            # Stop recording process
+            self.recording_process.terminate()
+            self.recording_process.wait(timeout=2)
+
+            self.is_recording = False
+            self._show_voice_loading("Processing...")
+
+            # Start transcription in background thread for Status tab
+            import threading
+            thread = threading.Thread(target=self._transcribe_push_to_talk_status, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ Stop status recording error: {e}")
+            self._cleanup_recording()
+            self._hide_voice_loading()
+
+    def _transcribe_push_to_talk_status(self):
+        """Transcribe push-to-talk recording for Status tab."""
+        try:
+            if not self.recording_temp_file or not self.recording_temp_file.exists():
+                raise Exception("No recording file found")
+
+            # Transcribe using existing gRPC service
+            transcript = self.transcribe_audio_file(self.recording_temp_file)
+
+            # Update Status tab transcription display on main thread
+            GLib.idle_add(self.update_transcription_display, transcript)
+
+        except Exception as e:
+            print(f"❌ Status transcription error: {e}")
+            GLib.idle_add(self.handle_voice_error, str(e))
+        finally:
+            # Clean up and hide loading
+            self._cleanup_recording()
+            GLib.idle_add(self._hide_voice_loading)
 
     def start_platform(self):
         """
