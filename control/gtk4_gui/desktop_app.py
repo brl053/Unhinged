@@ -336,6 +336,12 @@ class UnhingedDesktopApp(Adw.Application):
         output_page.set_title("Output")
         output_page.set_icon(Gio.ThemedIcon.new("audio-speakers-symbolic"))
 
+        # Create input tab content
+        input_content = self.create_input_tab_content()
+        input_page = self.tab_view.append(input_content)
+        input_page.set_title("Input")
+        input_page.set_icon(Gio.ThemedIcon.new("audio-input-microphone-symbolic"))
+
         # Create tab bar
         tab_bar = Adw.TabBar()
         tab_bar.set_view(self.tab_view)
@@ -645,6 +651,104 @@ class UnhingedDesktopApp(Adw.Application):
             # Log error
             if self.session_logger:
                 self.session_logger.log_gui_event("PROCESSES_TAB_ERROR", f"Failed to create processes tab: {e}")
+
+            return error_box
+
+    def create_input_tab_content(self):
+        """Create the Input tab content with audio input device listing."""
+        try:
+            # Create main content box
+            input_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            input_box.set_margin_top(24)
+            input_box.set_margin_bottom(24)
+            input_box.set_margin_start(24)
+            input_box.set_margin_end(24)
+
+            # Create header section
+            header_group = Adw.PreferencesGroup()
+            header_group.set_title("Audio Input Devices")
+            header_group.set_description("Available microphones and audio input devices")
+
+            # Add audio info row
+            info_row = Adw.ActionRow()
+            info_row.set_title("Input System")
+            info_row.set_subtitle("List of available audio input devices")
+
+            # Add microphone icon
+            mic_icon = Gtk.Image.new_from_icon_name("audio-input-microphone-symbolic")
+            mic_icon.set_icon_size(Gtk.IconSize.LARGE)
+            info_row.add_prefix(mic_icon)
+
+            header_group.add(info_row)
+            input_box.append(header_group)
+
+            # Create input devices list
+            devices_group = Adw.PreferencesGroup()
+            devices_group.set_title("Input Devices")
+
+            # Get input devices and create list
+            input_devices = self._get_input_devices()
+
+            if input_devices:
+                for device in input_devices:
+                    device_row = Adw.ActionRow()
+                    device_row.set_title(device['name'])
+                    device_row.set_subtitle(device['description'])
+
+                    # Add device type icon
+                    device_icon = Gtk.Image.new_from_icon_name(device['icon'])
+                    device_icon.set_icon_size(Gtk.IconSize.NORMAL)
+                    device_row.add_prefix(device_icon)
+
+                    devices_group.add(device_row)
+            else:
+                # No devices found
+                no_devices_row = Adw.ActionRow()
+                no_devices_row.set_title("No Input Devices Found")
+                no_devices_row.set_subtitle("No audio input devices detected")
+
+                warning_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+                warning_icon.set_icon_size(Gtk.IconSize.NORMAL)
+                no_devices_row.add_prefix(warning_icon)
+
+                devices_group.add(no_devices_row)
+
+            input_box.append(devices_group)
+
+            # Log Input tab creation
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_TAB_CREATED", f"Input tab created with {len(input_devices)} devices")
+
+            return input_box
+
+        except Exception as e:
+            # Create error fallback
+            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            error_box.set_margin_top(24)
+            error_box.set_margin_bottom(24)
+            error_box.set_margin_start(24)
+            error_box.set_margin_end(24)
+
+            # Error group
+            error_group = Adw.PreferencesGroup()
+            error_group.set_title("Input Tab Error")
+            error_group.set_description("Failed to load audio input interface")
+
+            # Error row
+            error_row = Adw.ActionRow()
+            error_row.set_title("Audio Input Unavailable")
+            error_row.set_subtitle(f"Error: {str(e)}")
+
+            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+            error_icon.set_icon_size(Gtk.IconSize.LARGE)
+            error_row.add_prefix(error_icon)
+
+            error_group.add(error_row)
+            error_box.append(error_group)
+
+            # Log error
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_TAB_ERROR", str(e))
 
             return error_box
 
@@ -2160,6 +2264,70 @@ class UnhingedDesktopApp(Adw.Application):
                 self.record_button.set_sensitive(True)
         except Exception as e:
             print(f"❌ Reset button error: {e}")
+
+    def _get_input_devices(self):
+        """Get list of audio input devices using arecord."""
+        devices = []
+
+        try:
+            import subprocess
+            import re
+
+            # Use arecord -l to list input devices
+            result = subprocess.run(
+                ['arecord', '-l'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    line = line.strip()
+
+                    # Parse card line: "card 1: LIGHTSPEED [PRO X 2 LIGHTSPEED], device 0: USB Audio [USB Audio]"
+                    card_match = re.match(r'card (\d+): (\w+) \[([^\]]+)\], device (\d+): ([^[]+) \[([^\]]+)\]', line)
+                    if card_match:
+                        card_id = int(card_match.group(1))
+                        card_name = card_match.group(2)
+                        card_desc = card_match.group(3)
+                        device_id = int(card_match.group(4))
+                        device_name = card_match.group(5).strip()
+                        device_desc = card_match.group(6)
+
+                        # Classify device type for icon
+                        name_lower = card_desc.lower()
+                        if 'usb' in name_lower:
+                            icon = "audio-headphones-symbolic"
+                        elif 'bluetooth' in name_lower:
+                            icon = "bluetooth-symbolic"
+                        elif 'webcam' in name_lower or 'camera' in name_lower:
+                            icon = "camera-web-symbolic"
+                        else:
+                            icon = "audio-input-microphone-symbolic"
+
+                        device = {
+                            'name': card_desc,
+                            'description': f"Card {card_id}, Device {device_id} - {device_desc}",
+                            'card_id': card_id,
+                            'device_id': device_id,
+                            'alsa_device': f"hw:{card_id},{device_id}",
+                            'icon': icon
+                        }
+
+                        devices.append(device)
+
+        except subprocess.TimeoutExpired:
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_DEVICES_TIMEOUT", "arecord -l timeout")
+        except FileNotFoundError:
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_DEVICES_MISSING", "arecord command not found")
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_DEVICES_ERROR", str(e))
+
+        return devices
 
 def main():
     """Main function"""
