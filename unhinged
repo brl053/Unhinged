@@ -107,7 +107,13 @@ cmd_start() {
 
     # Phase 1: Essential services via service launcher
     log_info "🚀 Launching services..."
-    if python3 control/service_launcher.py --timeout 120; then
+    if [ -f "build/python/venv/bin/python" ]; then
+        PYTHON_CMD="build/python/venv/bin/python"
+    else
+        PYTHON_CMD="python3"
+    fi
+
+    if $PYTHON_CMD control/service_launcher.py --timeout 120; then
         log_success "Essential services started"
     else
         log_warning "Some services failed to start - continuing with available services"

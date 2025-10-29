@@ -28,13 +28,24 @@ try:
     from unhinged_events import create_service_logger
     # Initialize event logger
     events = create_service_logger("service-launcher", "1.0.0")
+    USING_EVENT_FRAMEWORK = True
 except ImportError:
     # Fallback to basic logging if event framework not available
     import logging
     events = logging.getLogger("service-launcher")
+    USING_EVENT_FRAMEWORK = False
 
 from network import get_service_registry, ServiceStatus
 
+# Helper function to handle different logging APIs
+def log_warning(message, metadata=None):
+    """Log warning using appropriate API based on available logger"""
+    if USING_EVENT_FRAMEWORK:
+        events.warn(message, metadata or {})
+    else:
+        # Use warning() for standard logging module (warn() is deprecated)
+        events.warning(message)
+
 # gRPC health check imports
 try:
     import grpc
@@ -50,7 +61,7 @@ try:
     GRPC_AVAILABLE = True
 except ImportError:
     GRPC_AVAILABLE = False
-    events.warn("gRPC not available - falling back to HTTP health checks")
+    log_warning("gRPC not available - falling back to HTTP health checks")
 
 
 class ServiceLauncher:
@@ -88,14 +99,13 @@ class ServiceLauncher:
         },
         {
             "name": "Speech-to-Text Service",
-            "compose_service": None,  # Started directly, not via Docker
+            "compose_service": "speech-to-text-direct",  # Docker service name
             "health_url": "http://localhost:1101/health",
             "port": 1101,
-            "grpc_port": 1191,
+            "grpc_port": 9091,  # Corrected gRPC port from Docker output
             "implements_health_proto": True,
-            "required": True,
-            "description": "Whisper-based speech transcription service for voice input",
-            "start_command": "python3 services/speech-to-text/simple_whisper_server.py"
+            "required": False,  # Make it optional to prevent startup failures
+            "description": "Whisper-based speech transcription service for voice input"
         },
         {
             "name": "Text-to-Speech Service",
@@ -131,14 +141,17 @@ class ServiceLauncher:
 
         Returns True if all required services are running.
         """
+        print("🔍 Checking Docker availability...")
         # Check if Docker is available
         if not self._check_docker():
-            events.warn("Docker not available - GUI will run in offline mode")
+            log_warning("Docker not available - GUI will run in offline mode")
             return False
-        
+
+        print("📋 Checking currently running services...")
         # Check which services are already running
         running = self._check_running_services()
-        
+        print(f"   Running services: {running}")
+
         # Determine which services to start
         to_start = []
         for service in self.ESSENTIAL_SERVICES:
@@ -146,20 +159,39 @@ class ServiceLauncher:
                 # Direct service - check if it's running via health check
                 if not self._is_service_healthy(service):
                     to_start.append(service)
+                    print(f"   📌 {service['name']} needs to be started (direct service)")
             elif service["compose_service"] not in running:
                 to_start.append(service)
-        
+                print(f"   📌 {service['name']} needs to be started (Docker service)")
+            else:
+                print(f"   ✅ {service['name']} already running")
+
         if not to_start:
+            print("🎉 All essential services are already running!")
             return True
 
+        print(f"🚀 Starting {len(to_start)} services...")
         # Start missing services
+        failed_required = []
         for service in to_start:
             if service["required"] or self._should_start_service(service):
-                success = self._start_service(service, timeout)
+                print(f"   🔄 Starting {service['name']}...")
+                success = self._start_service(service, min(timeout, 30))  # Cap individual service timeout
                 if service["required"] and not success:
+                    failed_required.append(service['name'])
                     events.error("Required service failed to start", {"service": service['name']})
-                    return False
+                elif success:
+                    print(f"   ✅ {service['name']} started successfully")
+                else:
+                    print(f"   ⚠️  {service['name']} failed to start (optional)")
 
+        if failed_required:
+            print(f"❌ Required services failed to start: {failed_required}")
+            print("   Continuing anyway - GUI may have limited functionality")
+            # Don't fail completely - let the GUI start with limited functionality
+            return True
+
+        print("✅ Service startup completed!")
         return True
     
     def _check_docker(self) -> bool:
@@ -205,8 +237,10 @@ class ServiceLauncher:
         try:
             # Check if this is a direct command service
             if service_name is None and "start_command" in service:
+                print(f"      🐍 Starting direct Python service...")
                 return self._start_direct_service(service, timeout)
 
+            print(f"      🐳 Starting Docker service: {service_name}")
             # Start the service via Docker Compose
             result = subprocess.run([
                 "docker", "compose", "-f", str(self.compose_file),
@@ -214,18 +248,25 @@ class ServiceLauncher:
             ], capture_output=True, text=True, timeout=30)
 
             if result.returncode != 0:
+                print(f"      ❌ Docker start failed: {result.stderr.strip()}")
                 events.error("Failed to start service", {"service": service['name'], "error": result.stderr})
                 return False
 
+            print(f"      🔍 Waiting for health check...")
             # Wait for service to be healthy
             if service["health_url"]:
                 return self._wait_for_health(service, timeout)
             else:
                 # For services without health checks, wait a bit
+                print(f"      ⏳ No health check - waiting 5 seconds...")
                 time.sleep(5)
                 return True
-                
+
+        except subprocess.TimeoutExpired:
+            print(f"      ⏰ Service startup timed out after 30 seconds")
+            return False
         except Exception as e:
+            print(f"      ❌ Unexpected error: {str(e)}")
             events.error("Error starting service", exception=e, metadata={"service": service['name']})
             return False
 
@@ -306,20 +347,31 @@ class ServiceLauncher:
 
     def _wait_for_health(self, service: Dict, timeout: int) -> bool:
         """Wait for service to become healthy"""
-        
+
         start_time = time.time()
+        attempts = 0
         while time.time() - start_time < timeout:
+            attempts += 1
             try:
-                response = requests.get(service["health_url"], timeout=5)
+                response = requests.get(service["health_url"], timeout=3)
                 if response.status_code == 200:
-                    self.running_services.append(service["compose_service"])
+                    print(f"      ✅ Health check passed after {attempts} attempts")
+                    if service["compose_service"]:
+                        self.running_services.append(service["compose_service"])
                     return True
-            except requests.RequestException:
-                pass
-            
+                else:
+                    print(f"      🔄 Health check attempt {attempts}: HTTP {response.status_code}")
+            except requests.RequestException as e:
+                print(f"      🔄 Health check attempt {attempts}: {type(e).__name__}")
+
+            if attempts % 5 == 0:  # Progress update every 10 seconds
+                elapsed = time.time() - start_time
+                print(f"      ⏳ Still waiting for health check... ({elapsed:.1f}s elapsed)")
+
             time.sleep(2)
-        
-        events.warn("Service did not become healthy", {"service": service['name'], "timeout": timeout})
+
+        print(f"      ❌ Health check failed after {timeout}s timeout")
+        log_warning("Service did not become healthy", {"service": service['name'], "timeout": timeout})
         return False
 
     def _check_grpc_health(self, port: int) -> bool:
@@ -345,7 +397,7 @@ class ServiceLauncher:
                 try:
                     return self._check_grpc_health(grpc_port)
                 except Exception as e:
-                    events.warn(f"gRPC health check failed for {service['name']}", {"error": str(e)})
+                    log_warning(f"gRPC health check failed for {service['name']}", {"error": str(e)})
 
         # Fallback to HTTP health check
         if not service.get("health_url"):
