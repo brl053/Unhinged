@@ -986,7 +986,27 @@ class UnhingedDesktopApp(Adw.Application):
         text_editor.connect('focus-gained', self._on_chatroom_focus_gained)
         text_editor.connect('focus-lost', self._on_chatroom_focus_lost)
 
-        input_area.append(text_editor_widget)
+        # Create horizontal box for text editor and send button
+        input_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
+
+        # Add text editor to horizontal box (expand to fill space)
+        text_editor_widget.set_hexpand(True)
+        input_row.append(text_editor_widget)
+
+        # Create Send button
+        self._chatroom_send_button = Gtk.Button(label="Send")
+        self._chatroom_send_button.add_css_class("suggested-action")
+        self._chatroom_send_button.set_valign(Gtk.Align.END)  # Align to bottom of text editor
+        self._chatroom_send_button.set_sensitive(False)  # Initially disabled
+
+        # Connect send button handler
+        self._chatroom_send_button.connect("clicked", self._on_chatroom_send_clicked)
+
+        # Add send button to horizontal box
+        input_row.append(self._chatroom_send_button)
+
+        # Add horizontal box to input area
+        input_area.append(input_row)
         chatroom_container.append(input_area)
 
         # Store references for future integration
@@ -1001,6 +1021,11 @@ class UnhingedDesktopApp(Adw.Application):
         # Log content changes for debugging
         if self.session_logger:
             self.session_logger.log_gui_event("CHATROOM_CONTENT_CHANGED", f"Content length: {len(content)}")
+
+        # Enable/disable send button based on content
+        has_content = bool(content.strip())
+        if hasattr(self, '_chatroom_send_button'):
+            self._chatroom_send_button.set_sensitive(has_content)
 
         # Future: Add real-time features like typing indicators
         # Future: Add auto-save functionality
@@ -1021,6 +1046,26 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Future: Add auto-save on focus loss
         # Future: Add content validation on blur
+
+    def _on_chatroom_send_clicked(self, button):
+        """Handle send button click in OS Chatroom."""
+        # Get current text content
+        content = self._chatroom_text_editor.get_content()
+
+        if not content.strip():
+            return  # Nothing to send
+
+        # Log send action
+        if self.session_logger:
+            self.session_logger.log_gui_event("CHATROOM_SEND_CLICKED", f"Sending message: {len(content)} characters")
+
+        # TODO: Implement LLM communication in next task
+        print(f"🗨️ Sending message: {content[:50]}...")  # Debug output for now
+
+        # Clear text editor after sending
+        self._chatroom_text_editor.clear()
+
+        # Button will be disabled automatically by content_changed handler
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content with device discovery and management."""
