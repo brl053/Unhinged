@@ -15,10 +15,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "enhanced cli interface for the unhinged build",
+    "llm_type": "service.cli",
+    "llm_does": "enhanced cli interface for the unhinged build system",
     "llm_rule": null,
-    "raw_comment": "@llm-type service.api\n@llm-does enhanced cli interface for the unhinged build",
+    "raw_comment": "@llm-type service.cli\n@llm-does enhanced cli interface for the unhinged build system",
     "context": ""
   },
   {
@@ -26,10 +26,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "enhanced build orchestrator for unhinged polyglot monorepo",
-    "llm_rule": "build operations must be deterministic, cacheable, and provide clear feedback...",
-    "raw_comment": "@llm-type service.api\n@llm-does enhanced build orchestrator for unhinged polyglot monorepo\n@llm-rule build operations must be deterministic, cacheable, and provide clear feedback...",
+    "llm_type": "service.orchestrator",
+    "llm_does": "polyglot build orchestration with dependency resolution and intelligent caching",
+    "llm_rule": "builds must be deterministic and provide comprehensive error reporting",
+    "raw_comment": "@llm-type service.orchestrator\n@llm-does polyglot build orchestration with dependency resolution and intelligent caching\n@llm-rule builds must be deterministic and provide comprehensive error reporting",
     "context": ""
   },
   {
@@ -48,10 +48,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
+    "llm_type": "service.monitor",
     "llm_does": "build performance monitoring and metrics collection system",
-    "llm_rule": "performance monitoring must be lightweight and provide actionable insights fo...",
-    "raw_comment": "@llm-type service.api\n@llm-does build performance monitoring and metrics collection system\n@llm-rule performance monitoring must be lightweight and provide actionable insights fo...",
+    "llm_rule": "performance monitoring must be lightweight and provide actionable insights",
+    "raw_comment": "@llm-type service.monitor\n@llm-does build performance monitoring and metrics collection system\n@llm-rule performance monitoring must be lightweight and provide actionable insights",
     "context": ""
   },
   {
@@ -70,10 +70,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "main entry point for the unhinged build",
+    "llm_type": "service.launcher",
+    "llm_does": "main entry point for the unhinged build system",
     "llm_rule": "build system must be simple, fast, and provide clear feedback",
-    "raw_comment": "@llm-type service.api\n@llm-does main entry point for the unhinged build\n@llm-rule build system must be simple, fast, and provide clear feedback",
+    "raw_comment": "@llm-type service.launcher\n@llm-does main entry point for the unhinged build system\n@llm-rule build system must be simple, fast, and provide clear feedback",
     "context": ""
   },
   {
@@ -81,10 +81,10 @@
     "line_number": 2,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
+    "llm_type": "util.executor",
     "llm_does": "python environment operations and execution management",
     "llm_rule": "all execution must be reproducible and pipeline ready",
-    "raw_comment": "@llm-type config.build\n@llm-does python environment operations and execution management\n@llm-rule all execution must be reproducible and pipeline ready",
+    "raw_comment": "@llm-type util.executor\n@llm-does python environment operations and execution management\n@llm-rule all execution must be reproducible and pipeline ready",
     "context": ""
   },
   {
@@ -104,9 +104,9 @@
     "element_name": "unknown",
     "language": "python",
     "llm_type": "util.setup",
-    "llm_does": "python environment setup for unhinged on-premise ml/ai",
-    "llm_rule": "python environment must be reproducible, comprehensive, and big data ready",
-    "raw_comment": "@llm-type util.setup\n@llm-does python environment setup for unhinged on-premise ml/ai\n@llm-rule python environment must be reproducible, comprehensive, and big data ready",
+    "llm_does": "python environment setup and dependency management for build system",
+    "llm_rule": "python environment must be isolated and reproducible across platforms",
+    "raw_comment": "@llm-type util.setup\n@llm-does python environment setup and dependency management for build system\n@llm-rule python environment must be isolated and reproducible across platforms",
     "context": ""
   },
   {
@@ -466,15 +466,15 @@
     "line_number": 2,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": null,
-    "llm_does": null,
-    "llm_rule": null,
-    "raw_comment": "LLM Comment Extraction System\n\nParses @llm-* tags from code comments across all programming languages\nin the Unhinged monorepo and generates architectural documentation.",
+    "llm_type": "util.extractor",
+    "llm_does": "llmdocs extraction and documentation generation from polyglot codebase",
+    "llm_rule": "extraction must be comprehensive and handle all supported file types",
+    "raw_comment": "@llm-type util.extractor\n@llm-does llmdocs extraction and documentation generation from polyglot codebase\n@llm-rule extraction must be comprehensive and handle all supported file types",
     "context": ""
   },
   {
     "file_path": "build/docs-generation/extract-llm-comments.py",
-    "line_number": 127,
+    "line_number": 126,
     "element_name": "_parse_llm_tags",
     "language": "python",
     "llm_type": null,
@@ -485,7 +485,7 @@
   },
   {
     "file_path": "build/docs-generation/extract-llm-comments.py",
-    "line_number": 233,
+    "line_number": 232,
     "element_name": "_parse_llm_tags",
     "language": "python",
     "llm_type": null,
@@ -496,7 +496,7 @@
   },
   {
     "file_path": "build/docs-generation/extract-llm-comments.py",
-    "line_number": 542,
+    "line_number": 541,
     "element_name": "extract_comments_from_file",
     "language": "python",
     "llm_type": "function",
@@ -507,7 +507,7 @@
   },
   {
     "file_path": "build/docs-generation/extract-llm-comments.py",
-    "line_number": 563,
+    "line_number": 562,
     "element_name": "extract_comments_from_codebase",
     "language": "python",
     "llm_type": "function",
@@ -518,7 +518,7 @@
   },
   {
     "file_path": "build/docs-generation/extract-llm-comments.py",
-    "line_number": 573,
+    "line_number": 572,
     "element_name": "parse_llm_tags",
     "language": "python",
     "llm_type": "function",
@@ -529,7 +529,7 @@
   },
   {
     "file_path": "build/docs-generation/extract-llm-comments.py",
-    "line_number": 598,
+    "line_number": 597,
     "element_name": "save_extraction_results",
     "language": "python",
     "llm_type": "function",
@@ -539,19 +539,30 @@
     "context": "def save_extraction_results(comments: List[LLMComment], output_path: Path) -> Dict:"
   },
   {
-    "file_path": "build/docs-generation/validate-llm-comments.py",
+    "file_path": "build/docs-generation/generate-project-structure.py",
     "line_number": 2,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": null,
-    "llm_does": null,
-    "llm_rule": null,
-    "raw_comment": "LLM Comment Validation System\n\nValidates consistency and quality of @llm-* comments across the codebase.\nIntegrates with the existing documentation validation workflow.",
+    "llm_type": "util.generator",
+    "llm_does": "project structure documentation generation from filesystem analysis",
+    "llm_rule": "structure documentation must be accurate and reflect current state",
+    "raw_comment": "@llm-type util.generator\n@llm-does project structure documentation generation from filesystem analysis\n@llm-rule structure documentation must be accurate and reflect current state",
     "context": ""
   },
   {
     "file_path": "build/docs-generation/validate-llm-comments.py",
-    "line_number": 287,
+    "line_number": 2,
+    "element_name": "unknown",
+    "language": "python",
+    "llm_type": "util.validator",
+    "llm_does": "llmdocs validation and quality assurance for evolved format compliance",
+    "llm_rule": "validation must enforce evolved format standards and provide actionable feedback",
+    "raw_comment": "@llm-type util.validator\n@llm-does llmdocs validation and quality assurance for evolved format compliance\n@llm-rule validation must enforce evolved format standards and provide actionable feedback",
+    "context": ""
+  },
+  {
+    "file_path": "build/docs-generation/validate-llm-comments.py",
+    "line_number": 286,
     "element_name": "validate_comment",
     "language": "python",
     "llm_type": "util.function",
@@ -562,7 +573,7 @@
   },
   {
     "file_path": "build/docs-generation/validate-llm-comments.py",
-    "line_number": 297,
+    "line_number": 296,
     "element_name": "validate_all_comments",
     "language": "python",
     "llm_type": "util.function",
@@ -573,7 +584,7 @@
   },
   {
     "file_path": "build/docs-generation/validate-llm-comments.py",
-    "line_number": 320,
+    "line_number": 319,
     "element_name": "check_required_tags",
     "language": "python",
     "llm_type": "util.function",
@@ -584,7 +595,7 @@
   },
   {
     "file_path": "build/docs-generation/validate-llm-comments.py",
-    "line_number": 345,
+    "line_number": 344,
     "element_name": "check_tag_format",
     "language": "python",
     "llm_type": "util.function",
@@ -609,10 +620,10 @@
     "line_number": 2,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "util.function",
-    "llm_does": "comprehensive dead code and cruft detection tool",
-    "llm_rule": "dead code analysis must be conservative to avoid deleting functional code",
-    "raw_comment": "@llm-type util.function\n@llm-does comprehensive dead code and cruft detection tool\n@llm-rule dead code analysis must be conservative to avoid deleting functional code",
+    "llm_type": "util.analyzer",
+    "llm_does": "dead code detection and removal recommendations across polyglot codebase",
+    "llm_rule": "dead code analysis must be conservative to prevent accidental removal",
+    "raw_comment": "@llm-type util.analyzer\n@llm-does dead code detection and removal recommendations across polyglot codebase\n@llm-rule dead code analysis must be conservative to prevent accidental removal",
     "context": ""
   },
   {
@@ -631,10 +642,10 @@
     "line_number": 2,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "util.function",
-    "llm_does": "safe dead code cleanup tool with backup",
-    "llm_rule": "cleanup operations must be reversible and include comprehensive safety checks",
-    "raw_comment": "@llm-type util.function\n@llm-does safe dead code cleanup tool with backup\n@llm-rule cleanup operations must be reversible and include comprehensive safety checks",
+    "llm_type": "util.cleaner",
+    "llm_does": "automated dead code cleanup with safety checks and rollback capability",
+    "llm_rule": "cleanup operations must be reversible and logged for safety",
+    "raw_comment": "@llm-type util.cleaner\n@llm-does automated dead code cleanup with safety checks and rollback capability\n@llm-rule cleanup operations must be reversible and logged for safety",
     "context": ""
   },
   {
@@ -664,15 +675,15 @@
     "line_number": 2,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "util.function",
-    "llm_does": "automated llm documentation header enforcement across all",
-    "llm_rule": null,
-    "raw_comment": "@llm-type util.function\n@llm-does automated llm documentation header enforcement across all",
+    "llm_type": "util.enforcer",
+    "llm_does": "llmdocs enforcement and template generation for evolved format",
+    "llm_rule": "all code files must have proper llmdocs tags for ai comprehension",
+    "raw_comment": "@llm-type util.enforcer\n@llm-does llmdocs enforcement and template generation for evolved format\n@llm-rule all code files must have proper llmdocs tags for ai comprehension",
     "context": ""
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 16,
+    "line_number": 17,
     "element_name": "LLMDocsEnforcer",
     "language": "python",
     "llm_type": null,
@@ -683,7 +694,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 44,
+    "line_number": 45,
     "element_name": "scan_files",
     "language": "python",
     "llm_type": null,
@@ -694,7 +705,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 66,
+    "line_number": 67,
     "element_name": "_should_process_file",
     "language": "python",
     "llm_type": null,
@@ -705,7 +716,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 85,
+    "line_number": 86,
     "element_name": "validate_file",
     "language": "python",
     "llm_type": null,
@@ -716,7 +727,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 102,
+    "line_number": 103,
     "element_name": "inject_headers",
     "language": "python",
     "llm_type": null,
@@ -727,7 +738,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 140,
+    "line_number": 141,
     "element_name": "_generate_header",
     "language": "python",
     "llm_type": null,
@@ -738,7 +749,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 165,
+    "line_number": 166,
     "element_name": "unknown",
     "language": "python",
     "llm_type": "{llm_type}",
@@ -749,7 +760,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 170,
+    "line_number": 171,
     "element_name": "unknown",
     "language": "python",
     "llm_type": "{llm_type}",
@@ -760,7 +771,7 @@
   },
   {
     "file_path": "build/tools/llm-docs-enforcer.py",
-    "line_number": 176,
+    "line_number": 177,
     "element_name": "enforce_compliance",
     "language": "python",
     "llm_type": null,
@@ -840,10 +851,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "typescript/npm build module with webpack optimization and",
+    "llm_type": "service.builder",
+    "llm_does": "typescript/npm builds with webpack optimization and hot reloading",
     "llm_rule": null,
-    "raw_comment": "@llm-type service.api\n@llm-does typescript/npm build module with webpack optimization and",
+    "raw_comment": "@llm-type service.builder\n@llm-does typescript/npm builds with webpack optimization and hot reloading",
     "context": ""
   },
   {
@@ -1016,10 +1027,10 @@
     "line_number": 1,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "language-specific build modules for enhanced build orches...",
+    "llm_type": "service.framework",
+    "llm_does": "build module framework with abstract base classes and registry",
     "llm_rule": null,
-    "raw_comment": "@llm-type config.build\n@llm-does language-specific build modules for enhanced build orches...",
+    "raw_comment": "@llm-type service.framework\n@llm-does build module framework with abstract base classes and registry",
     "context": ""
   },
   {
@@ -1038,10 +1049,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "c/c++ build module with cmake integration and",
-    "llm_rule": "c builds must be deterministic, fast, and provide direct cpu instruction acce...",
-    "raw_comment": "@llm-type service.api\n@llm-does c/c++ build module with cmake integration and\n@llm-rule c builds must be deterministic, fast, and provide direct cpu instruction acce...",
+    "llm_type": "service.builder",
+    "llm_does": "c/c++ builds with cmake integration and SIMD optimization",
+    "llm_rule": "c builds must be deterministic and provide direct cpu instruction access",
+    "raw_comment": "@llm-type service.builder\n@llm-does c/c++ builds with cmake integration and SIMD optimization\n@llm-rule c builds must be deterministic and provide direct cpu instruction access",
     "context": ""
   },
   {
@@ -1049,10 +1060,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "python build module with virtual environment management",
+    "llm_type": "service.builder",
+    "llm_does": "python builds with virtual environment and dependency management",
     "llm_rule": null,
-    "raw_comment": "@llm-type service.api\n@llm-does python build module with virtual environment management",
+    "raw_comment": "@llm-type service.builder\n@llm-does python builds with virtual environment and dependency management",
     "context": ""
   },
   {
@@ -1071,10 +1082,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "service discovery build module for compile-time service",
-    "llm_rule": "service discovery must happen at build time to ensure html dashboard is alway...",
-    "raw_comment": "@llm-type config.build\n@llm-does service discovery build module for compile-time service\n@llm-rule service discovery must happen at build time to ensure html dashboard is alway...",
+    "llm_type": "service.builder",
+    "llm_does": "service discovery registry generation from docker-compose and proto files",
+    "llm_rule": "service discovery must happen at build time for dashboard consistency",
+    "raw_comment": "@llm-type service.builder\n@llm-does service discovery registry generation from docker-compose and proto files\n@llm-rule service discovery must happen at build time for dashboard consistency",
     "context": ""
   },
   {
@@ -1115,10 +1126,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "unified polyglot protobuf client generation engine with",
+    "llm_type": "service.builder",
+    "llm_does": "polyglot protobuf client generation for multiple languages",
     "llm_rule": null,
-    "raw_comment": "@llm-type config.build\n@llm-does unified polyglot protobuf client generation engine with",
+    "raw_comment": "@llm-type service.builder\n@llm-does polyglot protobuf client generation for multiple languages",
     "context": ""
   },
   {
@@ -1148,10 +1159,10 @@
     "line_number": 3,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "service.api",
-    "llm_does": "kotlin/gradle build module with incremental compilation and",
-    "llm_rule": "gradle builds must be deterministic and support incremental compilation for f...",
-    "raw_comment": "@llm-type service.api\n@llm-does kotlin/gradle build module with incremental compilation and\n@llm-rule gradle builds must be deterministic and support incremental compilation for f...",
+    "llm_type": "service.builder",
+    "llm_does": "kotlin/gradle builds with incremental compilation and parallel execution",
+    "llm_rule": "gradle builds must be deterministic and support incremental compilation",
+    "raw_comment": "@llm-type service.builder\n@llm-does kotlin/gradle builds with incremental compilation and parallel execution\n@llm-rule gradle builds must be deterministic and support incremental compilation",
     "context": ""
   },
   {
@@ -1159,10 +1170,10 @@
     "line_number": 1,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "port conflict detection and resolution at build",
+    "llm_type": "util.validator",
+    "llm_does": "port conflict detection and auto-resolution across docker-compose files",
     "llm_rule": "port conflicts must be resolved at build time, never at runtime",
-    "raw_comment": "@llm-type config.build\n@llm-does port conflict detection and resolution at build\n@llm-rule port conflicts must be resolved at build time, never at runtime",
+    "raw_comment": "@llm-type util.validator\n@llm-does port conflict detection and auto-resolution across docker-compose files\n@llm-rule port conflicts must be resolved at build time, never at runtime",
     "context": ""
   },
   {
@@ -1181,10 +1192,10 @@
     "line_number": 1,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "resource requirement validation at build time",
-    "llm_rule": "resource issues must be detected at build time, never at runtime",
-    "raw_comment": "@llm-type config.build\n@llm-does resource requirement validation at build time\n@llm-rule resource issues must be detected at build time, never at runtime",
+    "llm_type": "util.validator",
+    "llm_does": "resource allocation validation for memory, disk, and cpu limits",
+    "llm_rule": "resource allocation must be validated at build time to prevent runtime failures",
+    "raw_comment": "@llm-type util.validator\n@llm-does resource allocation validation for memory, disk, and cpu limits\n@llm-rule resource allocation must be validated at build time to prevent runtime failures",
     "context": ""
   },
   {
@@ -1225,10 +1236,10 @@
     "line_number": 1,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "compile-time validation system that eliminates runtime er...",
+    "llm_type": "service.validator",
+    "llm_does": "compile-time validation system preventing runtime errors",
     "llm_rule": null,
-    "raw_comment": "@llm-type config.build\n@llm-does compile-time validation system that eliminates runtime er...",
+    "raw_comment": "@llm-type service.validator\n@llm-does compile-time validation system preventing runtime errors",
     "context": ""
   },
   {
@@ -1335,10 +1346,10 @@
     "line_number": 1,
     "element_name": "unknown",
     "language": "python",
-    "llm_type": "config.build",
-    "llm_does": "dependency validation at build time to prevent",
-    "llm_rule": "dependency issues must be resolved at build time, never at runtime",
-    "raw_comment": "@llm-type config.build\n@llm-does dependency validation at build time to prevent\n@llm-rule dependency issues must be resolved at build time, never at runtime",
+    "llm_type": "util.validator",
+    "llm_does": "dependency validation and conflict resolution across package managers",
+    "llm_rule": "dependency conflicts must be resolved at build time to prevent runtime failures",
+    "raw_comment": "@llm-type util.validator\n@llm-does dependency validation and conflict resolution across package managers\n@llm-rule dependency conflicts must be resolved at build time to prevent runtime failures",
     "context": ""
   },
   {
