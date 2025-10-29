@@ -1465,7 +1465,7 @@ class LoadingDots(AdwComponentBase):
             self.widget.append(dot)
 
         # Set accessibility
-        self.widget.set_accessible_role(Gtk.AccessibleRole.PROGRESSBAR)
+        self.widget.set_accessible_role(Gtk.AccessibleRole.PROGRESS_BAR)
         self.widget.update_property([Gtk.AccessibleProperty.LABEL], ["Loading"])
 
     def _apply_loading_styling(self):
