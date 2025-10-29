@@ -252,6 +252,36 @@ class UnhingedDesktopApp(Adw.Application):
                 """
                 combined_css += chatroom_css
 
+                # Add sidebar navigation design system styles
+                sidebar_css = """
+                /* Sidebar Navigation Design System Styles */
+                .navigation-sidebar {
+                    background-color: var(--color-surface-default, #ffffff);
+                    border-right: var(--border-thin, 1px) solid var(--color-border-subtle, #e0e0e0);
+                }
+
+                .sidebar-nav-item {
+                    padding: 8px 12px; /* sp_2 vertical, sp_3 horizontal */
+                    border-radius: var(--radius-sm, 4px);
+                    margin: 2px 8px; /* sp_0_5 vertical, sp_2 horizontal */
+                }
+
+                .sidebar-nav-item:hover {
+                    background-color: var(--color-surface-elevated, #f8f9fa);
+                }
+
+                .sidebar-nav-active {
+                    background-color: var(--color-action-primary, #0969da);
+                    color: var(--color-text-inverse, #ffffff);
+                    border-left: 4px solid var(--color-action-primary, #0969da); /* Design system: thick border */
+                }
+
+                .sidebar-nav-active:hover {
+                    background-color: var(--color-action-primary, #0969da);
+                }
+                """
+                combined_css += sidebar_css
+
                 try:
                     css_provider.load_from_data(combined_css.encode())
 
@@ -345,69 +375,165 @@ class UnhingedDesktopApp(Adw.Application):
         return window
 
     def create_tab_navigation(self):
-        """Create tab navigation with main content and new status tab."""
-        # Create tab view
-        self.tab_view = Adw.TabView()
+        """Create sidebar navigation with NavigationSplitView."""
+        # Create navigation split view
+        self.navigation_split_view = Adw.NavigationSplitView()
 
-        # Create main tab content (existing functionality)
+        # Create sidebar navigation
+        sidebar = self.create_sidebar_navigation()
+        self.navigation_split_view.set_sidebar(sidebar)
+
+        # Create content area with stack for different pages
+        self.content_stack = Gtk.Stack()
+        self.content_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+        # Create navigation pages and add to stack
+        self.navigation_pages = {}
+
+        # Main page
         main_content = self.create_main_tab_content()
-        main_page = self.tab_view.append(main_content)
+        main_page = Adw.NavigationPage.new(main_content, "Main")
         main_page.set_title("Main")
-        main_page.set_icon(Gio.ThemedIcon.new("applications-graphics"))
+        self.content_stack.add_named(main_page, "main")
+        self.navigation_pages["main"] = main_page
 
-        # Create new status tab content
+        # Status page
         status_content = self.create_status_tab_content()
-        status_page = self.tab_view.append(status_content)
+        status_page = Adw.NavigationPage.new(status_content, "Status")
         status_page.set_title("Status")
-        status_page.set_icon(Gio.ThemedIcon.new("dialog-information-symbolic"))
+        self.content_stack.add_named(status_page, "status")
+        self.navigation_pages["status"] = status_page
 
-        # Create system info tab content
+        # System Info page
         system_info_content = self.create_system_info_tab_content()
-        system_info_page = self.tab_view.append(system_info_content)
+        system_info_page = Adw.NavigationPage.new(system_info_content, "System Info")
         system_info_page.set_title("System Info")
-        system_info_page.set_icon(Gio.ThemedIcon.new("computer-symbolic"))
+        self.content_stack.add_named(system_info_page, "system_info")
+        self.navigation_pages["system_info"] = system_info_page
 
-        # Create processes tab content
+        # Processes page
         processes_content = self.create_processes_tab_content()
-        processes_page = self.tab_view.append(processes_content)
+        processes_page = Adw.NavigationPage.new(processes_content, "Processes")
         processes_page.set_title("Processes")
-        processes_page.set_icon(Gio.ThemedIcon.new("utilities-system-monitor-symbolic"))
+        self.content_stack.add_named(processes_page, "processes")
+        self.navigation_pages["processes"] = processes_page
 
-        # Create bluetooth tab content
+        # Bluetooth page
         bluetooth_content = self.create_bluetooth_tab_content()
-        bluetooth_page = self.tab_view.append(bluetooth_content)
+        bluetooth_page = Adw.NavigationPage.new(bluetooth_content, "Bluetooth")
         bluetooth_page.set_title("Bluetooth")
-        bluetooth_page.set_icon(Gio.ThemedIcon.new("bluetooth-symbolic"))
+        self.content_stack.add_named(bluetooth_page, "bluetooth")
+        self.navigation_pages["bluetooth"] = bluetooth_page
 
-        # Create output tab content
+        # Output page
         output_content = self.create_output_tab_content()
-        output_page = self.tab_view.append(output_content)
+        output_page = Adw.NavigationPage.new(output_content, "Output")
         output_page.set_title("Output")
-        output_page.set_icon(Gio.ThemedIcon.new("audio-speakers-symbolic"))
+        self.content_stack.add_named(output_page, "output")
+        self.navigation_pages["output"] = output_page
 
-        # Create input tab content
+        # Input page
         input_content = self.create_input_tab_content()
-        input_page = self.tab_view.append(input_content)
+        input_page = Adw.NavigationPage.new(input_content, "Input")
         input_page.set_title("Input")
-        input_page.set_icon(Gio.ThemedIcon.new("audio-input-microphone-symbolic"))
+        self.content_stack.add_named(input_page, "input")
+        self.navigation_pages["input"] = input_page
 
-        # Create OS chatroom tab content
+        # OS Chatroom page
         chatroom_content = self.create_chatroom_tab_content()
-        chatroom_page = self.tab_view.append(chatroom_content)
+        chatroom_page = Adw.NavigationPage.new(chatroom_content, "OS Chatroom")
         chatroom_page.set_title("OS Chatroom")
-        chatroom_page.set_icon(Gio.ThemedIcon.new("user-available-symbolic"))
+        self.content_stack.add_named(chatroom_page, "chatroom")
+        self.navigation_pages["chatroom"] = chatroom_page
 
-        # Create tab bar
-        tab_bar = Adw.TabBar()
-        tab_bar.set_view(self.tab_view)
+        # Set content area
+        self.navigation_split_view.set_content(self.content_stack)
 
-        # Create main container
-        tab_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        tab_container.append(tab_bar)
-        tab_container.append(self.tab_view)
+        # Set initial page
+        self.content_stack.set_visible_child_name("main")
 
         # Set up toast overlay
-        self.toast_overlay.set_child(tab_container)
+        self.toast_overlay.set_child(self.navigation_split_view)
+
+    def create_sidebar_navigation(self):
+        """Create sidebar navigation with design system styling."""
+        # Create sidebar list box
+        sidebar_list = Gtk.ListBox()
+        sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        sidebar_list.add_css_class("navigation-sidebar")
+
+        # Define navigation items (1:1 mapping from tabs)
+        nav_items = [
+            {"id": "main", "title": "Main", "icon": "applications-graphics"},
+            {"id": "status", "title": "Status", "icon": "dialog-information-symbolic"},
+            {"id": "system_info", "title": "System Info", "icon": "computer-symbolic"},
+            {"id": "processes", "title": "Processes", "icon": "utilities-system-monitor-symbolic"},
+            {"id": "bluetooth", "title": "Bluetooth", "icon": "bluetooth-symbolic"},
+            {"id": "output", "title": "Output", "icon": "audio-speakers-symbolic"},
+            {"id": "input", "title": "Input", "icon": "audio-input-microphone-symbolic"},
+            {"id": "chatroom", "title": "OS Chatroom", "icon": "user-available-symbolic"},
+        ]
+
+        # Create sidebar rows
+        for item in nav_items:
+            row = Adw.ActionRow()
+            row.set_title(item["title"])
+
+            # Add icon
+            icon = Gtk.Image.new_from_icon_name(item["icon"])
+            icon.set_icon_size(Gtk.IconSize.NORMAL)
+            row.add_prefix(icon)
+
+            # Store item ID for navigation
+            row.item_id = item["id"]
+
+            # Apply design system styling
+            row.add_css_class("sidebar-nav-item")
+
+            sidebar_list.append(row)
+
+        # Connect selection handler
+        sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
+
+        # Select first item by default
+        first_row = sidebar_list.get_row_at_index(0)
+        if first_row:
+            sidebar_list.select_row(first_row)
+
+        # Create scrolled window for sidebar
+        sidebar_scrolled = Gtk.ScrolledWindow()
+        sidebar_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        sidebar_scrolled.set_child(sidebar_list)
+
+        # Apply design system width
+        sidebar_scrolled.set_size_request(240, -1)  # Design system: collapsed width
+
+        return sidebar_scrolled
+
+    def _on_sidebar_selection_changed(self, list_box, row):
+        """Handle sidebar navigation selection."""
+        if row and hasattr(row, 'item_id'):
+            # Switch to selected page
+            self.content_stack.set_visible_child_name(row.item_id)
+
+            # Update active styling
+            self._update_sidebar_active_state(row)
+
+    def _update_sidebar_active_state(self, active_row):
+        """Update sidebar active state styling."""
+        # Remove active class from all rows
+        parent = active_row.get_parent()
+        if parent:
+            row_index = 0
+            while True:
+                row = parent.get_row_at_index(row_index)
+                if not row:
+                    break
+                row.remove_css_class("sidebar-nav-active")
+                row_index += 1
+
+        # Add active class to selected row
+        active_row.add_css_class("sidebar-nav-active")
 
     def create_main_tab_content(self):
         """Create the main tab content (existing functionality)."""
