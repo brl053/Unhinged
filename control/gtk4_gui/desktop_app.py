@@ -52,7 +52,7 @@ try:
     from components import (
         StatusCard, StatusLabel, SystemInfoCard, HardwareInfoRow,
         PerformanceIndicator, SystemStatusGrid, ProcessTable,
-        BluetoothTable, AudioTable
+        BluetoothTable, AudioTable, ChatBubble, LoadingDots, CopyButton
     )
     COMPONENTS_AVAILABLE = True
 except ImportError:
@@ -127,6 +127,9 @@ class UnhingedDesktopApp(Adw.Application):
         # Real-time updates
         self.realtime_updates_enabled = False
         self.performance_indicators = {}  # Store references to performance indicators
+
+        # Loading indicators
+        self.llm_loading_dots = None
 
         # Development mode detection
         self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
@@ -1127,12 +1130,18 @@ class UnhingedDesktopApp(Adw.Application):
             if self.session_logger:
                 self.session_logger.log_gui_event("LLM_REQUEST_SENT", f"Message: {message[:100]}")
 
+            # Display user message first
+            self._add_chat_message(message, "user")
+
+            # Show loading dots while waiting for response
+            self._show_llm_loading()
+
             # For now, use Ollama HTTP API since gRPC protobuf clients aren't generated
             # TODO: Replace with proper gRPC when llm_pb2 clients are generated
             response = self._send_to_ollama_http(message)
 
-            # Display user message first
-            self._add_chat_message(message, "user")
+            # Hide loading dots
+            self._hide_llm_loading()
 
             if response:
                 # Display LLM response
@@ -1179,7 +1188,51 @@ class UnhingedDesktopApp(Adw.Application):
             return f"Unexpected error: {str(e)}"
 
     def _add_chat_message(self, message, sender_type):
-        """Add a chat message to the messages area with proper styling."""
+        """Add a chat message to the messages area using ChatBubble component."""
+        from datetime import datetime
+
+        if not COMPONENTS_AVAILABLE:
+            # Fallback to basic implementation if components not available
+            self._add_chat_message_basic(message, sender_type)
+            return
+
+        # Determine sender name and alignment
+        if sender_type == "user":
+            sender = "You"
+            alignment = "right"
+            message_type = "default"
+        elif sender_type == "assistant":
+            sender = "Assistant"
+            alignment = "left"
+            message_type = "default"
+        else:  # error
+            sender = "System"
+            alignment = "left"
+            message_type = "error"
+
+        # Create timestamp
+        timestamp = datetime.now().strftime("%H:%M:%S")
+
+        # Create ChatBubble component
+        chat_bubble = ChatBubble(
+            message=message,
+            sender=sender,
+            timestamp=timestamp,
+            alignment=alignment,
+            message_type=message_type
+        )
+
+        # Connect to message click events for potential future features
+        chat_bubble.connect('message-clicked', self._on_chat_message_clicked)
+
+        # Add to messages container
+        self._chatroom_messages_container.append(chat_bubble.get_widget())
+
+        # Auto-scroll to bottom
+        self._scroll_messages_to_bottom()
+
+    def _add_chat_message_basic(self, message, sender_type):
+        """Fallback basic chat message implementation."""
         from datetime import datetime
 
         # Create message container
@@ -1232,6 +1285,64 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Auto-scroll to bottom
         self._scroll_messages_to_bottom()
+
+    def _on_chat_message_clicked(self, chat_bubble, message):
+        """Handle chat message click events."""
+        # Future feature: could show message details, copy, etc.
+        print(f"Chat message clicked: {message[:50]}...")
+        if self.session_logger:
+            self.session_logger.log_gui_event("CHAT_MESSAGE_CLICKED", f"Message length: {len(message)}")
+
+    def _show_llm_loading(self):
+        """Show loading dots while waiting for LLM response."""
+        if not COMPONENTS_AVAILABLE:
+            return
+
+        # Create loading dots if not exists
+        if not self.llm_loading_dots:
+            self.llm_loading_dots = LoadingDots(
+                size="normal",
+                speed="normal",
+                color="primary"
+            )
+
+        # Add loading message with dots
+        loading_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        loading_container.set_halign(Gtk.Align.CENTER)
+        loading_container.set_margin_top(8)
+        loading_container.set_margin_bottom(8)
+
+        loading_label = Gtk.Label(label="Assistant is thinking")
+        loading_label.add_css_class("chat-loading-label")
+        loading_container.append(loading_label)
+        loading_container.append(self.llm_loading_dots.get_widget())
+
+        # Start animation
+        self.llm_loading_dots.start_animation()
+
+        # Add to messages container with special class for easy removal
+        loading_container.add_css_class("llm-loading-indicator")
+        self._chatroom_messages_container.append(loading_container)
+
+        # Auto-scroll to bottom
+        self._scroll_messages_to_bottom()
+
+    def _hide_llm_loading(self):
+        """Hide loading dots after LLM response."""
+        if not COMPONENTS_AVAILABLE or not self.llm_loading_dots:
+            return
+
+        # Stop animation
+        self.llm_loading_dots.stop_animation()
+
+        # Find and remove loading indicator from messages container
+        child = self._chatroom_messages_container.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            if child.has_css_class("llm-loading-indicator"):
+                self._chatroom_messages_container.remove(child)
+                break
+            child = next_child
 
     def _scroll_messages_to_bottom(self):
         """Scroll the messages area to the bottom to show latest message."""
@@ -2018,12 +2129,18 @@ class UnhingedDesktopApp(Adw.Application):
             copy_row.set_subtitle("Copy the transcription text to clipboard")
 
             if COMPONENTS_AVAILABLE:
-                self.copy_button = ActionButton(
-                    text="Copy to Clipboard",
+                # Use enhanced CopyButton component
+                self.copy_button = CopyButton(
+                    content_source=self._get_transcription_content,
+                    label="Copy to Clipboard",
                     style="secondary",
-                    icon_name="edit-copy-symbolic"
+                    icon_name="edit-copy-symbolic",
+                    success_message="Transcription copied to clipboard",
+                    error_message="Failed to copy transcription"
                 )
-                self.copy_button.connect("clicked", self.on_copy_transcription_clicked)
+                # Connect to success/error events for additional logging
+                self.copy_button.connect("copy-success", self._on_copy_success)
+                self.copy_button.connect("copy-error", self._on_copy_error)
                 copy_row.add_suffix(self.copy_button.get_widget())
                 self._is_copy_action_button = True
             else:
@@ -2226,6 +2343,23 @@ class UnhingedDesktopApp(Adw.Application):
         self.progress_bar.set_margin_end(12)
 
         group.add(self.progress_bar)
+
+        # Add loading dots for operations (initially hidden)
+        if COMPONENTS_AVAILABLE:
+            self.operation_loading_dots = LoadingDots(
+                size="small",
+                speed="normal",
+                color="primary"
+            )
+            loading_row = Adw.ActionRow()
+            loading_row.set_title("Processing")
+            loading_row.add_suffix(self.operation_loading_dots.get_widget())
+            loading_row.set_visible(False)  # Initially hidden
+            self.operation_loading_row = loading_row
+            group.add(loading_row)
+        else:
+            self.operation_loading_dots = None
+            self.operation_loading_row = None
         return group
     
     def create_log_section(self):
@@ -2471,6 +2605,45 @@ class UnhingedDesktopApp(Adw.Application):
                 self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {e}")
             self.show_toast("Failed to copy transcription")
 
+    def _get_transcription_content(self):
+        """Get transcription content for CopyButton component."""
+        if not hasattr(self, 'transcription_textview'):
+            return ""
+
+        buffer = self.transcription_textview.get_buffer()
+        start_iter = buffer.get_start_iter()
+        end_iter = buffer.get_end_iter()
+        text = buffer.get_text(start_iter, end_iter, False)
+
+        # Return empty if placeholder text
+        if text == "Transcription results will appear here...":
+            return ""
+
+        return text.strip()
+
+    def _on_copy_success(self, copy_button, content):
+        """Handle successful copy operation."""
+        if self.session_logger:
+            self.session_logger.log_gui_event("TRANSCRIPTION_COPIED", f"Copied {len(content)} characters")
+
+    def _on_copy_error(self, copy_button, error):
+        """Handle copy operation error."""
+        if self.session_logger:
+            self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {error}")
+
+    def _show_operation_loading(self, title="Processing"):
+        """Show loading dots for long operations."""
+        if self.operation_loading_dots and self.operation_loading_row:
+            self.operation_loading_row.set_title(title)
+            self.operation_loading_row.set_visible(True)
+            self.operation_loading_dots.start_animation()
+
+    def _hide_operation_loading(self):
+        """Hide loading dots after operation completes."""
+        if self.operation_loading_dots and self.operation_loading_row:
+            self.operation_loading_dots.stop_animation()
+            self.operation_loading_row.set_visible(False)
+
     def start_platform(self):
         """
         @llm-doc Start Platform Backend
@@ -2496,6 +2669,9 @@ class UnhingedDesktopApp(Adw.Application):
             self.append_log("🚀 Starting Unhinged Platform")
             self.append_log(f"📁 Working directory: {self.project_root}")
             self.append_log(f"🎯 Launch mode: {mode_name}")
+
+            # Show loading animation
+            self._show_operation_loading("Starting Platform")
 
             # Execute make command
             self.update_status(f"Executing make {command}...", 0.3)
@@ -2538,6 +2714,9 @@ class UnhingedDesktopApp(Adw.Application):
             self.append_log("SUCCESS: Platform session completed")
             self.show_toast("Platform session completed successfully", 5)
 
+            # Hide loading animation
+            self._hide_operation_loading()
+
         except FileNotFoundError:
             self.update_status("Error: Makefile not found", 0)
             self.append_log("ERROR: Makefile not found in project directory")
@@ -2560,6 +2739,8 @@ class UnhingedDesktopApp(Adw.Application):
                                  f"Please check the output log for more details.")
         finally:
             self.running = False
+            # Hide loading animation in all cases
+            self._hide_operation_loading()
             GLib.idle_add(self._reset_buttons)
 
     def show_error_dialog(self, title, message):
