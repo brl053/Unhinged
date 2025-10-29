@@ -11,9 +11,9 @@ WORKDIR /app
 
 # Install only required dependencies for speech-to-text
 RUN pip install --no-cache-dir \
-    grpcio==1.60.0 \
-    grpcio-tools==1.60.0 \
-    protobuf==4.21.12 \
+    grpcio>=1.75.1 \
+    grpcio-tools>=1.75.1 \
+    protobuf>=4.21.12 \
     openai-whisper==20231117 \
     torch==2.1.0 \
     "numpy<2.0.0"

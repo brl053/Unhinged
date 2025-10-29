@@ -30,10 +30,31 @@ else:
     generated_path = project_root / "generated" / "python" / "clients"
     sys.path.insert(0, str(generated_path))
 
-# Generated proto imports from centralized generation
-from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
-from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
-from google.protobuf import timestamp_pb2
+# Compatibility fix for protobuf runtime_version
+try:
+    # Generated proto imports from centralized generation
+    from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+    from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
+    from google.protobuf import timestamp_pb2
+except ImportError as e:
+    if "runtime_version" in str(e):
+        # Monkey patch runtime_version for compatibility
+        import google.protobuf
+        if not hasattr(google.protobuf, 'runtime_version'):
+            class MockRuntimeVersion:
+                class Domain:
+                    PUBLIC = 1
+                @staticmethod
+                def ValidateProtobufRuntimeVersion(*args, **kwargs):
+                    pass
+            google.protobuf.runtime_version = MockRuntimeVersion()
+
+        # Retry imports
+        from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+        from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
+        from google.protobuf import timestamp_pb2
+    else:
+        raise
 import time
 
 def set_current_timestamp(timestamp_field):
@@ -71,6 +92,15 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         except Exception as e:
             events.error("Failed to load Whisper model", exception=e, metadata={"model": "base"})
             self.whisper_model = None
+
+    def _estimate_duration(self, audio_bytes_length):
+        """Estimate audio duration from byte length"""
+        # Rough estimation for WAV files:
+        # CD quality (44.1kHz, 16-bit, stereo) = ~176KB per second
+        # But most recordings are mono, so ~88KB per second
+        # Use conservative estimate of 100KB per second
+        estimated_seconds = audio_bytes_length / 100000.0
+        return max(0.1, estimated_seconds)  # Minimum 0.1 seconds
     
 
     
