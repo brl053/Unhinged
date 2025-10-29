@@ -34,6 +34,17 @@ from pathlib import Path
 import time
 import json
 
+# Add virtual environment packages to path for gRPC support
+# Calculate project root correctly (control/gtk4_gui/desktop_app.py -> project root)
+project_root = Path(__file__).parent.parent.parent
+venv_packages = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
+protobuf_clients = project_root / "generated" / "python" / "clients"
+
+if venv_packages.exists():
+    sys.path.insert(0, str(venv_packages))
+if protobuf_clients.exists():
+    sys.path.insert(0, str(protobuf_clients))
+
 # Import component library
 try:
     sys.path.append(str(Path(__file__).parent))
@@ -454,6 +465,11 @@ class UnhingedDesktopApp(Adw.Application):
 
         info_group.add(info_row)
         status_box.append(info_group)
+
+        # Voice Transcription Section
+        voice_group = self.create_voice_transcription_section()
+        if voice_group:
+            status_box.append(voice_group)
 
         # Create scrolled window
         scrolled = Gtk.ScrolledWindow()
@@ -1319,7 +1335,113 @@ class UnhingedDesktopApp(Adw.Application):
             self.session_logger.close_session()
 
         self.quit()
-    
+
+    def create_voice_transcription_section(self):
+        """Create voice transcription section for the status tab."""
+        try:
+            # Import required components
+            if COMPONENTS_AVAILABLE:
+                from components import ActionButton, StatusLabel
+
+            # Create voice transcription group
+            voice_group = Adw.PreferencesGroup()
+            voice_group.set_title("Voice Transcription")
+            voice_group.set_description("Record audio and transcribe using Whisper AI")
+
+            # Voice service status row
+            self.voice_status_row = Adw.ActionRow()
+            self.voice_status_row.set_title("Voice Service")
+            self.voice_status_row.set_subtitle("Checking service health...")
+
+            # Add status indicator
+            if COMPONENTS_AVAILABLE:
+                self.voice_status_label = StatusLabel(text="Checking...", status="info")
+                self.voice_status_row.add_suffix(self.voice_status_label.get_widget())
+            else:
+                self.voice_status_label = Gtk.Label(label="Checking...")
+                self.voice_status_row.add_suffix(self.voice_status_label)
+
+            voice_group.add(self.voice_status_row)
+
+            # Voice recording row
+            record_row = Adw.ActionRow()
+            record_row.set_title("Voice Input")
+            record_row.set_subtitle("Click to record 3 seconds of audio")
+
+            # Record button
+            if COMPONENTS_AVAILABLE:
+                self.record_button = ActionButton(
+                    text="Record Voice",
+                    style="secondary",
+                    icon_name="audio-input-microphone-symbolic"
+                )
+                self.record_button.connect("clicked", self.on_record_voice_clicked)
+                record_row.add_suffix(self.record_button.get_widget())
+            else:
+                self.record_button = Gtk.Button(label="Record Voice")
+                self.record_button.add_css_class("suggested-action")
+                self.record_button.connect("clicked", self.on_record_voice_clicked)
+                record_row.add_suffix(self.record_button)
+
+            voice_group.add(record_row)
+
+            # Transcription display row
+            transcription_row = Adw.ActionRow()
+            transcription_row.set_title("Transcription Results")
+
+            # Create transcription text view
+            self.transcription_textview = Gtk.TextView()
+            self.transcription_textview.set_editable(False)
+            self.transcription_textview.set_wrap_mode(Gtk.WrapMode.WORD)
+            self.transcription_textview.set_margin_top(8)
+            self.transcription_textview.set_margin_bottom(8)
+            self.transcription_textview.set_margin_start(8)
+            self.transcription_textview.set_margin_end(8)
+
+            # Set initial placeholder text
+            buffer = self.transcription_textview.get_buffer()
+            buffer.set_text("Transcription results will appear here...")
+
+            # Create scrolled window for text view
+            transcription_scroll = Gtk.ScrolledWindow()
+            transcription_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+            transcription_scroll.set_min_content_height(80)
+            transcription_scroll.set_max_content_height(150)
+            transcription_scroll.set_child(self.transcription_textview)
+
+            voice_group.add(transcription_scroll)
+
+            # Copy button row
+            copy_row = Adw.ActionRow()
+            copy_row.set_title("Copy Transcription")
+            copy_row.set_subtitle("Copy the transcription text to clipboard")
+
+            if COMPONENTS_AVAILABLE:
+                self.copy_button = ActionButton(
+                    text="Copy to Clipboard",
+                    style="secondary",
+                    icon_name="edit-copy-symbolic"
+                )
+                self.copy_button.connect("clicked", self.on_copy_transcription_clicked)
+                copy_row.add_suffix(self.copy_button.get_widget())
+            else:
+                self.copy_button = Gtk.Button(label="Copy to Clipboard")
+                self.copy_button.connect("clicked", self.on_copy_transcription_clicked)
+                copy_row.add_suffix(self.copy_button)
+
+            voice_group.add(copy_row)
+
+            # Initialize voice service status
+            GLib.timeout_add_seconds(1, self.update_voice_service_status)
+
+            return voice_group
+
+        except Exception as e:
+            print(f"⚠️  Failed to create voice transcription section: {e}")
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_gui_event("VOICE_SECTION_ERROR", f"Failed to create voice section: {e}")
+            return None
+
     def create_welcome_section(self):
         """Create welcome section with app info"""
         group = Adw.PreferencesGroup()
@@ -1687,7 +1809,69 @@ class UnhingedDesktopApp(Adw.Application):
                 self.append_log(f"ERROR: Error stopping platform: {e}")
 
         self.update_status("Stopped", 0)
-    
+
+    def on_record_voice_clicked(self, button):
+        """Handle voice recording button click"""
+        try:
+            # Check if voice service is available
+            if not self.is_voice_service_available():
+                self.show_toast("Voice service not available")
+                return
+
+            # Disable button during recording
+            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_sensitive'):
+                self.record_button.set_sensitive(False)
+                self.record_button.set_text("Recording...")
+            else:
+                self.record_button.set_sensitive(False)
+                self.record_button.set_label("Recording...")
+
+            # Show recording status
+            self.show_toast("Recording for 3 seconds...")
+
+            # Log the event
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORD_CLICKED", "User clicked voice record button")
+
+            # Start recording in background thread
+            import threading
+            thread = threading.Thread(target=self.record_and_transcribe_voice, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ Voice recording error: {e}")
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORD_ERROR", f"Voice recording failed: {e}")
+            self.reset_record_button()
+            self.show_toast(f"Recording failed: {e}")
+
+    def on_copy_transcription_clicked(self, button):
+        """Handle copy transcription button click"""
+        try:
+            # Get transcription text
+            buffer = self.transcription_textview.get_buffer()
+            start_iter = buffer.get_start_iter()
+            end_iter = buffer.get_end_iter()
+            text = buffer.get_text(start_iter, end_iter, False)
+
+            if text and text.strip() and text != "Transcription results will appear here...":
+                # Copy to clipboard
+                clipboard = self.window.get_clipboard()
+                clipboard.set(text.strip())
+                self.show_toast("Transcription copied to clipboard")
+
+                # Log the event
+                if hasattr(self, 'session_logger') and self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_COPIED", f"Copied {len(text)} characters")
+            else:
+                self.show_toast("No transcription to copy")
+
+        except Exception as e:
+            print(f"❌ Copy transcription error: {e}")
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {e}")
+            self.show_toast("Failed to copy transcription")
+
     def start_platform(self):
         """
         @llm-doc Start Platform Backend
@@ -1805,6 +1989,177 @@ class UnhingedDesktopApp(Adw.Application):
         self.start_button.set_sensitive(True)
         self.stop_button.set_sensitive(False)
         return False
+
+    def is_voice_service_available(self):
+        """Check if the voice service is available"""
+        try:
+            import socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2)
+            result = sock.connect_ex(('localhost', 9091))
+            sock.close()
+            return result == 0
+        except Exception:
+            return False
+
+    def update_voice_service_status(self):
+        """Update voice service status display"""
+        try:
+            if self.is_voice_service_available():
+                if COMPONENTS_AVAILABLE and hasattr(self, 'voice_status_label'):
+                    self.voice_status_label.set_text("Ready")
+                    self.voice_status_label.set_status("success")
+                else:
+                    self.voice_status_label.set_text("Ready")
+
+                self.voice_status_row.set_subtitle("✅ Whisper AI service available")
+
+                # Enable record button
+                if hasattr(self, 'record_button'):
+                    self.record_button.set_sensitive(True)
+            else:
+                if COMPONENTS_AVAILABLE and hasattr(self, 'voice_status_label'):
+                    self.voice_status_label.set_text("Unavailable")
+                    self.voice_status_label.set_status("error")
+                else:
+                    self.voice_status_label.set_text("Unavailable")
+
+                self.voice_status_row.set_subtitle("❌ Speech-to-text service not running")
+
+                # Disable record button
+                if hasattr(self, 'record_button'):
+                    self.record_button.set_sensitive(False)
+
+        except Exception as e:
+            print(f"❌ Voice status update error: {e}")
+
+        # Schedule next update in 10 seconds
+        GLib.timeout_add_seconds(10, self.update_voice_service_status)
+        return False  # Don't repeat this timeout
+
+    def record_and_transcribe_voice(self):
+        """Record audio and transcribe it using the speech-to-text service"""
+        try:
+            import subprocess
+            import tempfile
+            import time
+            from pathlib import Path
+
+            # Create temporary file for recording
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                temp_audio_file = Path(f.name)
+
+            # Record 3 seconds of audio
+            cmd = [
+                'arecord',
+                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-t', 'wav',          # WAV format
+                '-d', '3',            # 3 seconds
+                str(temp_audio_file)
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+
+            if result.returncode != 0:
+                raise Exception(f"Recording failed: {result.stderr}")
+
+            # Transcribe using gRPC service
+            transcript = self.transcribe_audio_file(temp_audio_file)
+
+            # Update UI on main thread
+            GLib.idle_add(self.update_transcription_display, transcript)
+
+            # Clean up
+            try:
+                temp_audio_file.unlink()
+            except:
+                pass
+
+        except Exception as e:
+            print(f"❌ Voice recording and transcription error: {e}")
+            GLib.idle_add(self.handle_voice_error, str(e))
+
+    def transcribe_audio_file(self, audio_file):
+        """Transcribe audio file using the gRPC speech-to-text service"""
+        try:
+            # Add protobuf clients to path
+            import sys
+            from pathlib import Path
+            project_root = Path(__file__).parent.parent.parent
+            protobuf_path = project_root / "generated" / "python" / "clients"
+            if protobuf_path.exists():
+                sys.path.insert(0, str(protobuf_path))
+
+            import grpc
+            from unhinged_proto_clients import audio_pb2, audio_pb2_grpc
+
+            # Connect to speech-to-text service
+            channel = grpc.insecure_channel('localhost:9091')
+            audio_client = audio_pb2_grpc.AudioServiceStub(channel)
+
+            # Read audio file
+            with open(audio_file, 'rb') as f:
+                audio_data = f.read()
+
+            # Create gRPC request
+            request = audio_pb2.ProcessAudioRequest()
+            request.audio_file.data = audio_data
+            request.audio_file.filename = str(audio_file)
+            request.processing_type = audio_pb2.PROCESSING_TYPE_TRANSCRIBE
+
+            # Send to speech-to-text service
+            response = audio_client.ProcessAudioFile(request, timeout=30.0)
+
+            channel.close()
+
+            if response.response.success:
+                return response.transcript.strip()
+            else:
+                raise Exception(f"Transcription failed: {response.response.message}")
+
+        except Exception as e:
+            raise Exception(f"Transcription error: {e}")
+
+    def update_transcription_display(self, transcript):
+        """Update transcription display on main thread"""
+        try:
+            if transcript and transcript.strip():
+                buffer = self.transcription_textview.get_buffer()
+                buffer.set_text(transcript)
+                self.show_toast("Transcription complete!")
+            else:
+                buffer = self.transcription_textview.get_buffer()
+                buffer.set_text("No speech detected in recording")
+                self.show_toast("No speech detected")
+
+        except Exception as e:
+            print(f"❌ Transcription display error: {e}")
+        finally:
+            self.reset_record_button()
+
+    def handle_voice_error(self, error_message):
+        """Handle voice recording/transcription errors on main thread"""
+        try:
+            buffer = self.transcription_textview.get_buffer()
+            buffer.set_text(f"Error: {error_message}")
+            self.show_toast(f"Voice error: {error_message}")
+        except Exception as e:
+            print(f"❌ Error handling error: {e}")
+        finally:
+            self.reset_record_button()
+
+    def reset_record_button(self):
+        """Reset record button to initial state"""
+        try:
+            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_text'):
+                self.record_button.set_text("Record Voice")
+            else:
+                self.record_button.set_label("Record Voice")
+
+            if self.is_voice_service_available():
+                self.record_button.set_sensitive(True)
+        except Exception as e:
+            print(f"❌ Reset button error: {e}")
 
 def main():
     """Main function"""
