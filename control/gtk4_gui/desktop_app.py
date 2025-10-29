@@ -227,6 +227,28 @@ class UnhingedDesktopApp(Adw.Application):
                     border-color: var(--color-action-primary, #0969da);
                     box-shadow: 0 0 0 2px var(--color-action-primary, #0969da) at 20% opacity;
                 }
+
+                /* TextEditor Component Styles */
+                .ds-text-editor {
+                    background-color: transparent;
+                }
+
+                .ds-placeholder {
+                    color: var(--color-text-tertiary, #656d76);
+                    font-style: italic;
+                    opacity: 0.8;
+                }
+
+                .ds-focused .ds-text-input {
+                    border-color: var(--color-action-primary, #0969da);
+                    box-shadow: 0 0 0 1px var(--color-action-primary, #0969da);
+                }
+
+                .ds-typography-body {
+                    font-family: var(--font-family-prose, system-ui);
+                    font-size: var(--font-size-body, 14px);
+                    line-height: var(--line-height-body, 1.5);
+                }
                 """
                 combined_css += chatroom_css
 
@@ -826,28 +848,63 @@ class UnhingedDesktopApp(Adw.Application):
         input_area.set_margin_start(16)   # sp_4 - major component margins
         input_area.set_margin_end(16)     # sp_4 - major component margins
 
-        # Placeholder for text editor component (will be replaced in Task 3)
-        # Using design system patterns for form field padding: sp_2 (8px)
-        placeholder_editor = Gtk.TextView()
-        placeholder_editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        placeholder_editor.set_accepts_tab(True)
-        placeholder_editor.set_margin_top(8)     # sp_2 - form field padding
-        placeholder_editor.set_margin_bottom(8)  # sp_2 - form field padding
-        placeholder_editor.set_margin_start(8)   # sp_2 - form field padding
-        placeholder_editor.set_margin_end(8)     # sp_2 - form field padding
+        # Import and create TextEditor component
+        from .components import TextEditor
 
-        # Apply design system styling for text input
-        placeholder_editor.add_css_class("ds-text-input")
+        # Create proper text editor component following design system specification
+        text_editor = TextEditor(
+            placeholder="Type your message here...",
+            word_wrap=True,
+            min_height=120
+        )
 
-        input_area.append(placeholder_editor)
+        # Apply design system margins (already handled by TextEditor component)
+        text_editor_widget = text_editor.get_widget()
+        text_editor_widget.set_margin_top(8)     # sp_2 - form field padding
+        text_editor_widget.set_margin_bottom(8)  # sp_2 - form field padding
+        text_editor_widget.set_margin_start(8)   # sp_2 - form field padding
+        text_editor_widget.set_margin_end(8)     # sp_2 - form field padding
+
+        # Connect text editor events
+        text_editor.connect('content-changed', self._on_chatroom_content_changed)
+        text_editor.connect('focus-gained', self._on_chatroom_focus_gained)
+        text_editor.connect('focus-lost', self._on_chatroom_focus_lost)
+
+        input_area.append(text_editor_widget)
         chatroom_container.append(input_area)
 
-        # Store references for Task 3 integration
+        # Store references for future integration
         self._chatroom_messages_container = messages_container
         self._chatroom_input_area = input_area
-        self._chatroom_placeholder_editor = placeholder_editor
+        self._chatroom_text_editor = text_editor
 
         return chatroom_container
+
+    def _on_chatroom_content_changed(self, text_editor, content):
+        """Handle text editor content changes in OS Chatroom."""
+        # Log content changes for debugging
+        if self.session_logger:
+            self.session_logger.log_gui_event("CHATROOM_CONTENT_CHANGED", f"Content length: {len(content)}")
+
+        # Future: Add real-time features like typing indicators
+        # Future: Add auto-save functionality
+        # Future: Add content validation
+
+    def _on_chatroom_focus_gained(self, text_editor):
+        """Handle text editor focus gained in OS Chatroom."""
+        if self.session_logger:
+            self.session_logger.log_gui_event("CHATROOM_FOCUS_GAINED", "Text editor focused")
+
+        # Future: Add focus-related UI changes
+        # Future: Add keyboard shortcuts activation
+
+    def _on_chatroom_focus_lost(self, text_editor):
+        """Handle text editor focus lost in OS Chatroom."""
+        if self.session_logger:
+            self.session_logger.log_gui_event("CHATROOM_FOCUS_LOST", "Text editor unfocused")
+
+        # Future: Add auto-save on focus loss
+        # Future: Add content validation on blur
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content with device discovery and management."""

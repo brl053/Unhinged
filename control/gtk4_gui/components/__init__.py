@@ -27,7 +27,7 @@ Provides reusable, accessible widgets following GNOME HIG patterns.
 
 # Component imports organized by category
 from .base import ComponentBase, ComponentError
-from .primitives import ActionButton, StatusLabel, ProgressIndicator, HardwareInfoRow, ProcessRow, BluetoothRow, AudioDeviceRow
+from .primitives import ActionButton, StatusLabel, ProgressIndicator, HardwareInfoRow, ProcessRow, BluetoothRow, AudioDeviceRow, TextEditor
 from .containers import StatusCard, ServicePanel, LogContainer, SystemInfoCard, SystemStatusGrid
 from .complex import LogViewer, ServiceRow, SystemStatus, PerformanceIndicator, ProcessTable, BluetoothTable, AudioTable
 from .tables import GenericTable, TableColumn
@@ -50,6 +50,7 @@ __all__ = [
     "ProcessRow",
     "BluetoothRow",
     "AudioDeviceRow",
+    "TextEditor",
 
     # Container components
     "StatusCard",
@@ -82,6 +83,7 @@ COMPONENT_REGISTRY = {
         "ProcessRow",
         "BluetoothRow",
         "AudioDeviceRow",
+        "TextEditor",
     ],
     "containers": [
         "StatusCard",
