@@ -25,7 +25,7 @@ sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / 
 sys.path.append(str(Path(__file__).parent.parent / "generated/python/clients"))
 
 try:
-    from unhinged_events import create_service_logger
+    from events import create_service_logger
     # Initialize event logger
     events = create_service_logger("service-launcher", "1.0.0")
     USING_EVENT_FRAMEWORK = True

@@ -83,7 +83,7 @@ try:
             sys.path.append(path)
             break
 
-    from unhinged_events import create_gui_session_logger, GUIOutputCapture
+    from events import create_gui_session_logger, GUIOutputCapture
     SESSION_LOGGING_AVAILABLE = True
     print("✅ Session logging available")
 except ImportError:

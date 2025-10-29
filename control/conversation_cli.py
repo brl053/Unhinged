@@ -21,7 +21,7 @@ from enum import Enum
 sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
 
 try:
-    from unhinged_events import create_gui_session_logger, GUIOutputCapture
+    from events import create_gui_session_logger, GUIOutputCapture
     SESSION_LOGGING_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ Session logging not available: {e}")
