@@ -2091,7 +2091,7 @@ class UnhingedDesktopApp(Adw.Application):
                 sys.path.insert(0, str(protobuf_path))
 
             import grpc
-            from unhinged_proto_clients import audio_pb2, audio_pb2_grpc
+            from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
 
             # Connect to speech-to-text service
             channel = grpc.insecure_channel('localhost:9091')
@@ -2101,14 +2101,17 @@ class UnhingedDesktopApp(Adw.Application):
             with open(audio_file, 'rb') as f:
                 audio_data = f.read()
 
-            # Create gRPC request
-            request = audio_pb2.ProcessAudioRequest()
-            request.audio_file.data = audio_data
-            request.audio_file.filename = str(audio_file)
-            request.processing_type = audio_pb2.PROCESSING_TYPE_TRANSCRIBE
+            # Use streaming approach instead of ProcessAudioFile
+            # Create stream chunk with audio data
+            def generate_audio_chunks():
+                chunk = common_pb2.StreamChunk()
+                chunk.data = audio_data
+                chunk.type = common_pb2.CHUNK_TYPE_DATA
+                chunk.is_final = True
+                yield chunk
 
-            # Send to speech-to-text service
-            response = audio_client.ProcessAudioFile(request, timeout=30.0)
+            # Send to speech-to-text service using streaming method
+            response = audio_client.SpeechToText(generate_audio_chunks(), timeout=30.0)
 
             channel.close()
 
