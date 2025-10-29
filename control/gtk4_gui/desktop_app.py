@@ -1049,9 +1049,10 @@ class UnhingedDesktopApp(Adw.Application):
                 icon_name="audio-input-microphone-symbolic"
             )
             self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_clicked)
-            self._chatroom_voice_button.set_valign(Gtk.Align.END)  # Align to bottom of text editor
-            self._chatroom_voice_button.set_tooltip_text("Record voice message")
-            input_row.append(self._chatroom_voice_button.get_widget())
+            voice_widget = self._chatroom_voice_button.get_widget()
+            voice_widget.set_valign(Gtk.Align.END)  # Align to bottom of text editor
+            voice_widget.set_tooltip_text("Record voice message")
+            input_row.append(voice_widget)
         else:
             self._chatroom_voice_button = Gtk.Button()
             self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
