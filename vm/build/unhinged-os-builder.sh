@@ -1,10 +1,9 @@
 #!/bin/bash
-#
-# @llm-type build-tool
-# @llm-does build system component
-#
-# UnhingedOS Builder - Unified build system for voice-first operating system
-# Supports multiple profiles: minimal, desktop, server, dev
+"""
+@llm-does UnhingedOS build system orchestrator with profile-based Alpine Linux customization, ISO generation, and QCOW2 VM image creation for voice-first operating system deployment
+@llm-type build.orchestrator/unhinged-os-builder
+@llm-context UnhingedOS represents a paradigm shift from traditional desktop computing to voice-first interaction. Built as a custom Linux distribution on Alpine Linux 3.22.2 foundation, designed for voice-first interaction and native graphics performance. Core philosophy: Voice-First Computing where primary interface is voice interaction with visual elements as feedback rather than main interaction method. Architecture includes: (1) Alpine Linux Foundation - 64MB base footprint with hardened kernel and minimal attack surface, (2) Voice Interface Layer with natural language command processing, speech-to-text engine, text-to-speech feedback, and conversation state management, (3) Native Graphics Stack with direct DRM/framebuffer access, SIMD-optimized rendering (AVX2, NEON), memory pool management for zero-allocation rendering, and hardware-accelerated compositing, (4) Security & Isolation through complete VM boundary, minimal attack surface, and secure host-VM communication via 9p virtio filesystem. Build system supports 4 profiles: Minimal (64MB RAM, core voice interface, embedded systems), Desktop (256MB RAM, full voice-first desktop, primary desktop replacement), Server (128MB RAM, headless voice processing, API server), Development (512MB RAM, full dev tools, debugging environment). Build pipeline: Source Components (os/ directory) → Profile Selection (build/profiles/) → Alpine Customization (package selection) → ISO Generation (bootable ISO) → VM Image (QCOW2 format). Directory structure: os/ (alpine-base, unhinged-layer, boot-system, graphics-stack), build/ (unhinged-os-builder.sh, os-configurator.sh, profiles/), runtime/ (images/, isos/, shared/), testing/ (boot-tests, graphics-tests, voice-tests, integration-tests). Security model: VM isolation, minimal attack surface, secure communication, memory safety, reproducible builds. Development workflow: source development in os/, build process with build/ tools, comprehensive testing in testing/, deployment artifacts in runtime/.
+"""
 
 set -e
 

@@ -2,7 +2,7 @@
 """
 @llm-does UnhingedOS system configuration orchestrator for Alpine Linux base system setup with voice-first optimizations
 @llm-type build.config/os-configurator
-@llm-context UnhingedOS build system configuration management for Alpine Linux base system preparation, package installation, graphics stack setup, and voice interface optimization for voice-first operating system deployment
+@llm-context UnhingedOS system configuration for voice-first operating system built on Alpine Linux 3.22.2. Configures: (1) System Update - Alpine package updates with error handling, (2) Build Tools - systematic installation of development dependencies (build-base, cmake, git, python3, mesa-dev, libdrm-dev), (3) Graphics Stack - UnhingedOS-specific graphics drivers and DRM setup (mesa-dri-gallium, mesa-va-gallium, xf86-video-qxl, libdrm, linux-firmware), (4) System Configuration - framebuffer console, auto-login, boot settings, (5) Python Dependencies - voice-first OS packages (cffi, numpy, requests, websockets), (6) Directory Structure - /opt/unhinged/{bin,lib,config}, /etc/unhinged, /var/log/unhinged, (7) Startup Script - voice-first graphics launcher with device detection, (8) System Service - OpenRC service for UnhingedOS graphics with proper dependencies, (9) SSH Configuration - development access with security. Graphics optimization: DRM access configuration, framebuffer setup, video group permissions, hardware acceleration enablement. Voice-first focus: all configuration optimized for voice-first computing paradigm with visual feedback systems.
 """
 
 set -e

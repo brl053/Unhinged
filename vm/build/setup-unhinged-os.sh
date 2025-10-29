@@ -2,7 +2,7 @@
 """
 @llm-does Unified UnhingedOS setup script with profile-based configuration and multiple communication modes
 @llm-type build.setup/unhinged-os-setup
-@llm-context UnhingedOS build system setup orchestration with profile-specific configuration, host-VM communication, and systematic package installation for voice-first operating system deployment
+@llm-context UnhingedOS unified setup system for voice-first operating system deployment with profile-based configuration. Supports 4 profiles: (1) Minimal - basic voice interface, minimal packages (python3, py3-pip, mesa-dri-gallium, libdrm), networking/chronyd/syslog services, embedded systems target, (2) Desktop - full voice-first desktop with X11, PulseAudio, Espeak (python3, py3-pip, mesa-dri-gallium, libdrm, build-base, xorg-server, pulseaudio, espeak), networking/chronyd/syslog/dbus/pulseaudio services, primary desktop replacement, (3) Server - headless voice processing with SSH, Nginx (python3, py3-pip, mesa-dri-gallium, libdrm, openssh, nginx), networking/chronyd/syslog/sshd/nginx services, API server target, (4) Development - complete toolchain with debugging (python3, py3-pip, mesa-dri-gallium, libdrm, build-base, gdb, valgrind, git, cmake), networking/chronyd/syslog/sshd services, development environment. Communication modes: auto-detection, shared directory (9p virtio), console output, silent mode. Setup orchestration: host communication setup, profile loading, package installation, UnhingedOS directory structure (/opt/unhinged/{bin,lib,config}, /etc/unhinged, /var/log/unhinged), graphics library installation, service configuration. Command line interface with comprehensive argument parsing, dry run support, verbose output, error handling.
 """
 
 set -e
