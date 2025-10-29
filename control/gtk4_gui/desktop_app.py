@@ -1059,13 +1059,79 @@ class UnhingedDesktopApp(Adw.Application):
         if self.session_logger:
             self.session_logger.log_gui_event("CHATROOM_SEND_CLICKED", f"Sending message: {len(content)} characters")
 
-        # TODO: Implement LLM communication in next task
-        print(f"🗨️ Sending message: {content[:50]}...")  # Debug output for now
+        # Send message to LLM service
+        self._send_to_llm(content)
 
         # Clear text editor after sending
         self._chatroom_text_editor.clear()
 
         # Button will be disabled automatically by content_changed handler
+
+    def _send_to_llm(self, message):
+        """Send message to LLM service via gRPC and handle response."""
+        try:
+            # Add protobuf clients to path (following existing pattern)
+            import sys
+            from pathlib import Path
+            project_root = Path(__file__).parent.parent.parent
+            protobuf_path = project_root / "generated" / "python" / "clients"
+            if protobuf_path.exists():
+                sys.path.insert(0, str(protobuf_path))
+
+            import grpc
+            import requests
+            import json
+
+            # Log LLM request
+            if self.session_logger:
+                self.session_logger.log_gui_event("LLM_REQUEST_SENT", f"Message: {message[:100]}")
+
+            # For now, use Ollama HTTP API since gRPC protobuf clients aren't generated
+            # TODO: Replace with proper gRPC when llm_pb2 clients are generated
+            response = self._send_to_ollama_http(message)
+
+            if response:
+                # Display response in messages area (will be implemented in next task)
+                print(f"🤖 LLM Response: {response[:100]}...")
+
+                # Log successful response
+                if self.session_logger:
+                    self.session_logger.log_gui_event("LLM_RESPONSE_RECEIVED", f"Response length: {len(response)}")
+            else:
+                print("❌ No response from LLM service")
+
+        except Exception as e:
+            print(f"❌ LLM communication error: {e}")
+            if self.session_logger:
+                self.session_logger.log_gui_event("LLM_ERROR", f"Error: {str(e)}")
+
+    def _send_to_ollama_http(self, message):
+        """Send message to Ollama HTTP API (temporary until gRPC is ready)."""
+        try:
+            # Use Ollama HTTP API on port 1500
+            url = "http://localhost:1500/api/generate"
+            payload = {
+                "model": "llama2",  # Default model, will be configurable later
+                "prompt": message,
+                "stream": False
+            }
+
+            response = requests.post(url, json=payload, timeout=30)
+
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("response", "No response from model")
+            else:
+                error_msg = response.json().get("error", "Unknown error")
+                print(f"❌ Ollama API error: {error_msg}")
+                return f"Error: {error_msg}"
+
+        except requests.exceptions.RequestException as e:
+            print(f"❌ HTTP request error: {e}")
+            return f"Connection error: {str(e)}"
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+            return f"Unexpected error: {str(e)}"
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content with device discovery and management."""
