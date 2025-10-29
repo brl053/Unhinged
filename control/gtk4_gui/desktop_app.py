@@ -431,9 +431,13 @@ class UnhingedDesktopApp(Adw.Application):
         sidebar_page = Adw.NavigationPage.new(sidebar_content, "Navigation")
         sidebar_page.set_title("Navigation")
 
+        # Create content navigation page
+        content_page = Adw.NavigationPage.new(self.content_stack, "Content")
+        content_page.set_title("Content")
+
         # Set sidebar and content
         self.navigation_split_view.set_sidebar(sidebar_page)
-        self.navigation_split_view.set_content(self.content_stack)
+        self.navigation_split_view.set_content(content_page)
 
         # Set initial page
         self.content_stack.set_visible_child_name("main")
