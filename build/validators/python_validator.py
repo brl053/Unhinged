@@ -1,21 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type validator
-@llm-legend Python-specific validation for code quality, imports, and Unhinged patterns
-@llm-key Validates Python files for proper imports, llm-docs usage, and centralized environment compliance
-@llm-map Language-specific validator that checks Python code patterns and conventions
-@llm-axiom Python validation must enforce centralized environment usage and proper documentation
-@llm-contract Validates Python files for imports, documentation, and pattern compliance
-@llm-token python-validator: Python-specific pattern and quality validation
-
-Python Validator for Unhinged Monorepo
-
-Validates Python-specific patterns:
-- Proper use of centralized Python environment
-- LLM-docs comment standard compliance
-- Import patterns and dependencies
-- Code quality and formatting
-- Service structure and patterns
+@llm-type util.validator
+@llm-does python-specific validation for code quality, imports, and
 """
 
 import ast
@@ -26,10 +12,9 @@ from ..validators.polyglot_validator import BaseValidator, ValidationResult
 
 class PythonValidator(BaseValidator):
     """
-    @llm-type validator
-    @llm-legend Python-specific validation for code quality and Unhinged patterns
-    @llm-key Validates Python files for proper structure, imports, and documentation
-    """
+@llm-type util.validator
+@llm-does python-specific validation for code quality and unhinged
+"""
     
     def get_file_patterns(self) -> List[str]:
         return ["*.py"]
@@ -170,7 +155,7 @@ class PythonValidator(BaseValidator):
         
         # Check for llm-docs comments
         has_llm_type = "@llm-type" in content
-        has_llm_legend = "@llm-legend" in content
+        has_llm_does = "@llm-does" in content
         
         if not has_llm_type and len(content.strip()) > 100:  # Only for substantial files
             results.append(ValidationResult(
@@ -182,13 +167,13 @@ class PythonValidator(BaseValidator):
                 category="docs"
             ))
         
-        if has_llm_type and not has_llm_legend:
+        if has_llm_type and not has_llm_does:
             results.append(ValidationResult(
                 validator_name=self.name,
-                severity="WARNING", 
-                message="Has @llm-type but missing @llm-legend",
+                severity="WARNING",
+                message="Has @llm-type but missing @llm-does",
                 file_path=file_path,
-                fix_suggestion="Add @llm-legend comment to describe functionality",
+                fix_suggestion="Add @llm-does comment to describe functionality",
                 category="docs"
             ))
     
@@ -254,10 +239,9 @@ class PythonValidator(BaseValidator):
 
 class PythonFormatterValidator(BaseValidator):
     """
-    @llm-type validator
-    @llm-legend Python code formatting validation using black and isort
-    @llm-key Validates Python code formatting and can auto-fix formatting issues
-    """
+@llm-type util.validator
+@llm-does python code formatting validation using black and
+"""
     
     def get_file_patterns(self) -> List[str]:
         return ["*.py"]

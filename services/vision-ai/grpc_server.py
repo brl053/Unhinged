@@ -1,19 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type service
-@llm-legend Vision AI gRPC server with health.proto implementation
-@llm-key Provides vision analysis via gRPC with standardized health endpoints
-@llm-map gRPC server for vision AI service using health.proto compliance
-@llm-axiom Service must implement health.proto for service discovery and monitoring
-@llm-contract Provides vision analysis via gRPC API with health.proto compliance
-@llm-token vision-service: Vision AI with gRPC and health.proto
-
-Vision AI gRPC Server
-
-Implements health.proto for service discovery:
-- Health checks: Implements unhinged.health.v1.HealthService
-- Vision processing: Image analysis and captioning
-- Service discovery integration via health.proto
+@llm-type service.api
+@llm-does vision ai grpc server with health.proto implementation
 """
 
 import os

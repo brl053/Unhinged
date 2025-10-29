@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type control-tool
-@llm-legend Service health monitoring and validation for Unhinged runtime control
-@llm-key Continuous health monitoring with alerting and automatic recovery capabilities
-@llm-map Runtime health monitoring enabling proactive service management and reliability
-@llm-axiom Service health must be continuously monitored with automatic recovery actions
-@llm-token health-monitor: Continuous service health monitoring with automated recovery
-
-Service Health Monitoring:
-- Real-time health check execution
-- Service dependency validation
-- Automatic recovery actions
-- Health metrics collection
-- Alert generation and notification
+@llm-type misc.control-tool
+@llm-does service health monitoring and validation for unhinged
+@llm-rule service health must be continuously monitored with automatic recovery actions
 """
 
 import asyncio
@@ -55,13 +45,10 @@ class ServiceHealth:
 
 class UnhingedHealthMonitor:
     """
-    @llm-type control-monitor
-    @llm-legend Continuous health monitoring system for Unhinged service ecosystem
-    @llm-key Real-time health validation with dependency checking and automatic recovery
-    @llm-map Core operational monitoring enabling proactive service reliability management
-    @llm-axiom Health monitoring must be continuous, accurate, and trigger automatic recovery
-    @llm-token health-monitor-core: Production health monitoring with automated recovery
-    """
+@llm-type misc.control-monitor
+@llm-does continuous health monitoring system for unhinged service
+@llm-rule health monitoring must be continuous, accurate, and trigger automatic recovery
+"""
     
     def __init__(self, project_root: Path):
         self.project_root = project_root

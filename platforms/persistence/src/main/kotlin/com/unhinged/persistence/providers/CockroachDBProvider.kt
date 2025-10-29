@@ -32,14 +32,9 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
-/**
- * @llm-type provider
- * @llm-legend CockroachDB database provider for distributed SQL with ACID transactions
- * @llm-key Implements DatabaseProvider interface for CockroachDB with strong consistency and horizontal scaling
- * @llm-map CockroachDB provider for transactional data, financial records, and relational operations
- * @llm-axiom All CockroachDB operations must maintain ACID properties and strong consistency
- * @llm-contract Provides SQL operations with distributed transactions and automatic sharding
- * @llm-token cockroachdb-provider: Distributed SQL database provider implementation
+/*
+ * @llm-type misc.provider
+ * @llm-does cockroachdb database provider for distributed sql with
  */
 class CockroachDBProvider : DatabaseProvider {
     

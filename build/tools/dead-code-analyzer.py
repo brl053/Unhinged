@@ -1,29 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type dead-code-analyzer
-@llm-legend Comprehensive dead code and cruft detection tool for Unhinged codebase
-@llm-key Identifies unused files, phantom modules, orphaned documentation, and build artifacts
-@llm-map Integrates with existing dependency tracker and build system for accurate analysis
-@llm-axiom Dead code analysis must be conservative to avoid deleting functional code
-@llm-contract Provides systematic cleanup recommendations with safety classifications
-@llm-token dead-code-analyzer: Systematic cruft detection and cleanup tool
-
-Dead Code and Cruft Analyzer for Unhinged
-
-Systematic analysis tool that identifies unused/dead code and files using multiple
-approaches including dependency tracing, build system analysis, and static analysis.
-
-Features:
-- Makefile dependency root analysis
-- Build system integration tracing
-- Phantom module detection
-- Orphaned documentation identification
-- Static file reference analysis
-- Conservative safety classifications
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-01-27
+@llm-type util.function
+@llm-does comprehensive dead code and cruft detection tool
+@llm-rule dead code analysis must be conservative to avoid deleting functional code
 """
 
 import json
@@ -59,12 +38,9 @@ class DeadCodeItem:
 
 class DeadCodeAnalyzer:
     """
-    Comprehensive dead code and cruft analyzer.
-    
-    @llm-type analyzer-class
-    @llm-legend Main analyzer implementing multi-approach dead code detection
-    @llm-key Uses dependency tracing, build analysis, and static analysis for accuracy
-    """
+@llm-type util.function
+@llm-does main analyzer implementing multi-approach dead code detec...
+"""
     
     def __init__(self, project_root: Path):
         """Initialize analyzer with project root."""

@@ -1,0 +1,28 @@
+# Core dependencies
+flask==3.0.0
+flask-cors==4.0.0
+requests==2.31.0
+werkzeug==3.0.1
+
+# Event logging framework (local package)
+# events  # Conflicts with PyPI package - install from local source instead
+numpy<2.0.0
+
+# Local TTS - Coqui TTS
+TTS==0.22.0
+
+# PyTorch (required by Coqui TTS)
+torch==2.1.0
+torchaudio==2.1.0
+
+# Audio processing
+librosa==0.10.1
+soundfile==0.12.1
+
+# Optional: pyttsx3 as fallback
+pyttsx3==2.90
+
+# gRPC dependencies (for future API compatibility)
+grpcio==1.60.0
+grpcio-tools==1.60.0
+protobuf==4.25.1

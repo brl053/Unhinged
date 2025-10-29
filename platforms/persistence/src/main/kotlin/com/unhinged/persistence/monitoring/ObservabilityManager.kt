@@ -31,14 +31,10 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.DoubleAdder
 
-/**
- * @llm-type observability-manager
- * @llm-legend Comprehensive observability system providing metrics, tracing, and monitoring for the persistence platform
- * @llm-key Central observability hub that collects metrics, traces requests, monitors health, and provides analytics
- * @llm-map Complete monitoring solution with metrics collection, distributed tracing, and performance analytics
- * @llm-axiom All persistence operations must be observable for proper monitoring and troubleshooting
- * @llm-contract Provides comprehensive observability including metrics, tracing, health checks, and alerting
- * @llm-token observability-manager: Complete monitoring and observability system
+/*
+ * @llm-type misc.observability-manager
+ * @llm-does comprehensive observability system providing metrics, tra...
+ * @llm-rule all persistence operations must be observable for proper monitoring and troub...
  */
 class ObservabilityManager(
     private val providerRegistry: ProviderRegistry,

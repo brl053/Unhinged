@@ -31,21 +31,32 @@ class LLMCommentValidator:
         self.root_path = Path(root_path)
         self.issues = []
         
-        # Required tags for different element types
+        # Required tags for different element types - Evolved 3-tag format
         self.required_tags = {
-            'service': ['llm_type', 'llm_legend', 'llm_key', 'llm_map'],
-            'function': ['llm_type', 'llm_legend'],
-            'class': ['llm_type', 'llm_legend', 'llm_key'],
-            'repository': ['llm_type', 'llm_legend', 'llm_key', 'llm_map'],
-            'endpoint': ['llm_type', 'llm_legend', 'llm_contract'],
-            'config': ['llm_type', 'llm_legend', 'llm_key']
+            'service': ['llm_type', 'llm_does'],
+            'function': ['llm_type', 'llm_does'],
+            'class': ['llm_type', 'llm_does'],
+            'repository': ['llm_type', 'llm_does'],
+            'endpoint': ['llm_type', 'llm_does'],
+            'config': ['llm_type', 'llm_does']
         }
         
-        # Valid values for llm_type
+        # Valid values for llm_type - Evolved hierarchical format
         self.valid_types = {
+            # Flat types (legacy compatibility)
             'function', 'class', 'service', 'config', 'type-definition',
             'constant', 'interface', 'endpoint', 'repository', 'entity',
-            'component', 'validator', 'contract', 'test', 'tool'
+            'component', 'validator', 'contract', 'test', 'tool',
+            # Hierarchical types (evolved format)
+            'service.api', 'service.worker', 'service.launcher', 'service.shared', 'service.util',
+            'component.primitive', 'component.container', 'component.complex', 'component.spec',
+            'util.function', 'util.parser', 'util.validator', 'util.formatter', 'util.converter',
+            'util.migrator', 'util.runner', 'util.cli', 'util.tool', 'util.executor', 'util.setup',
+            'model.entity', 'model.dto', 'model.config', 'model.schema',
+            'config.build', 'config.deploy', 'config.env', 'config.app',
+            'misc.virtualization-boundary', 'misc.control-system', 'misc.control-tool',
+            'misc.control-orchestrator', 'misc.control-monitor', 'misc.control-plane-package',
+            'misc.control-plane', 'misc.platform'
         }
         
         # Quality thresholds
@@ -63,7 +74,7 @@ class LLMCommentValidator:
             import importlib.util
 
             # Load the extractor module dynamically
-            extractor_path = Path("scripts/docs/extract-llm-comments.py")
+            extractor_path = Path("build/docs-generation/extract-llm-comments.py")
             spec = importlib.util.spec_from_file_location("extract_llm_comments", extractor_path)
             extractor_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(extractor_module)
@@ -94,10 +105,10 @@ class LLMCommentValidator:
     
     def _validate_comment(self, comment):
         """Validate a single LLM comment"""
-        # Check required tags based on type
+        # Check required tags based on type - Evolved format
         if comment.llm_type:
-            required = self.required_tags.get(comment.llm_type, ['llm_type', 'llm_legend'])
-            
+            required = self.required_tags.get(comment.llm_type, ['llm_type', 'llm_does'])
+
             for tag in required:
                 if not getattr(comment, tag, None):
                     self.issues.append(ValidationIssue(
@@ -120,30 +131,30 @@ class LLMCommentValidator:
                 severity="error"
             ))
         
-        # Check content quality
-        if comment.llm_legend and len(comment.llm_legend) < self.min_legend_length:
+        # Check content quality - Evolved format
+        if comment.llm_does and len(comment.llm_does) < 10:
             self.issues.append(ValidationIssue(
                 file_path=comment.file_path,
                 line_number=comment.line_number,
                 element_name=comment.element_name,
-                issue_type="short_legend",
-                message=f"@llm-legend too short ({len(comment.llm_legend)} chars). Minimum: {self.min_legend_length}",
+                issue_type="short_does",
+                message=f"@llm-does too short ({len(comment.llm_does)} chars). Minimum: 10",
                 severity="warning"
             ))
-        
-        if comment.llm_key and len(comment.llm_key) < self.min_key_length:
+
+        if comment.llm_rule and len(comment.llm_rule) < 15:
             self.issues.append(ValidationIssue(
                 file_path=comment.file_path,
                 line_number=comment.line_number,
                 element_name=comment.element_name,
-                issue_type="short_key",
-                message=f"@llm-key too short ({len(comment.llm_key)} chars). Minimum: {self.min_key_length}",
+                issue_type="short_rule",
+                message=f"@llm-rule too short ({len(comment.llm_rule)} chars). Minimum: 15",
                 severity="warning"
             ))
         
         # Check for placeholder text
         placeholders = ['TODO', 'FIXME', '[Business purpose]', '[Technical implementation]']
-        for field_name in ['llm_legend', 'llm_key', 'llm_map', 'llm_axiom', 'llm_contract']:
+        for field_name in ['llm_does', 'llm_rule']:
             field_value = getattr(comment, field_name, None)
             if field_value:
                 for placeholder in placeholders:
@@ -159,35 +170,24 @@ class LLMCommentValidator:
     
     def _validate_consistency(self, comments):
         """Validate consistency across comments"""
-        # Check for duplicate tokens
-        tokens = defaultdict(list)
+        # Check for type consistency - Evolved format
+        type_actions = defaultdict(set)
         for comment in comments:
-            if comment.llm_token:
-                # Extract token name (before colon)
-                token_parts = comment.llm_token.split(':')
-                if len(token_parts) >= 2:
-                    token_name = token_parts[0].strip()
-                    tokens[token_name].append(comment)
-        
-        for token_name, token_comments in tokens.items():
-            if len(token_comments) > 1:
-                # Check if definitions are consistent
-                definitions = set()
-                for comment in token_comments:
-                    token_parts = comment.llm_token.split(':', 1)
-                    if len(token_parts) >= 2:
-                        definitions.add(token_parts[1].strip())
-                
-                if len(definitions) > 1:
-                    for comment in token_comments:
-                        self.issues.append(ValidationIssue(
-                            file_path=comment.file_path,
-                            line_number=comment.line_number,
-                            element_name=comment.element_name,
-                            issue_type="inconsistent_token",
-                            message=f"Token '{token_name}' has inconsistent definitions across files",
-                            severity="warning"
-                        ))
+            if comment.llm_type and comment.llm_does:
+                type_actions[comment.llm_type].add(comment.llm_does.lower())
+
+        # Warn if same type has very different actions (potential inconsistency)
+        for type_name, actions in type_actions.items():
+            if len(actions) > 5:  # Many different actions for same type
+                sample_comment = next(c for c in comments if c.llm_type == type_name)
+                self.issues.append(ValidationIssue(
+                    file_path=sample_comment.file_path,
+                    line_number=sample_comment.line_number,
+                    element_name=sample_comment.element_name,
+                    issue_type="type_action_diversity",
+                    message=f"Type '{type_name}' has {len(actions)} different actions - consider more specific types",
+                    severity="info"
+                ))
     
     def _validate_coverage(self, comments):
         """Validate coverage of LLM comments across the codebase"""
@@ -284,24 +284,20 @@ def main():
 # ============================================================================
 
 def validate_comment(comment) -> List[Dict]:
-    """Validate a single LLM comment.
-
-    @llm-type function
-    @llm-legend Validates individual comment for completeness and quality
-    @llm-context TDD interface function for testing single comment validation
     """
+@llm-type util.function
+@llm-does individual comment for completeness and quality
+"""
     validator = LLMCommentValidator()
     validator.issues = []
     validator._validate_comment(comment)
     return [asdict(issue) for issue in validator.issues]
 
 def validate_all_comments(comments: List) -> Dict:
-    """Validate all LLM comments.
-
-    @llm-type function
-    @llm-legend Validates batch of comments and returns summary
-    @llm-context TDD interface function for testing batch validation
     """
+@llm-type util.function
+@llm-does batch of comments and returns summary
+"""
     from datetime import datetime
 
     validator = LLMCommentValidator()
@@ -321,12 +317,10 @@ def validate_all_comments(comments: List) -> Dict:
     }
 
 def check_required_tags(comment) -> List[Dict]:
-    """Check if comment has required tags.
-
-    @llm-type function
-    @llm-legend Validates comment has all required tags for its type
-    @llm-context TDD interface function for testing required tag validation
     """
+@llm-type util.function
+@llm-does comment has all required tags for its
+"""
     validator = LLMCommentValidator()
     validator.issues = []
 
@@ -348,12 +342,10 @@ def check_required_tags(comment) -> List[Dict]:
     return [asdict(issue) for issue in validator.issues]
 
 def check_tag_format(comment) -> List[Dict]:
-    """Check tag format and content quality.
-
-    @llm-type function
-    @llm-legend Validates tag content meets quality standards
-    @llm-context TDD interface function for testing tag format validation
     """
+@llm-type util.function
+@llm-does tag content meets quality standards
+"""
     validator = LLMCommentValidator()
     validator.issues = []
 

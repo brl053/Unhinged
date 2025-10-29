@@ -1,0 +1,290 @@
+# Input Component Specification
+# @llm-type component-specification
+# @llm-legend Platform-agnostic input field component specification for single-line text entry
+# @llm-key Text input element with validation states, placeholder support, and accessibility features
+# @llm-map Core primitive component for form data collection in design system
+# @llm-axiom Input specifications must be platform-agnostic describing semantic behavior not implementation
+# @llm-contract Defines input interface, validation states, events, and styling for generator consumption
+# @llm-token input-component: Single-line text input specification with validation and accessibility
+
+component:
+  id: "input"
+  name: "Input Field"
+  category: "primitive"
+  
+  description: |
+    Single-line text input component for user data entry with support for validation,
+    placeholder text, and various input types. Provides consistent styling and
+    behavior across different form contexts.
+    
+    Use for collecting short text data like names, emails, passwords, and search queries.
+    For multi-line text, use text-editor component instead.
+
+  interface:
+    properties:
+      value:
+        type: "string"
+        default: ""
+        description: "Current input value"
+      
+      placeholder:
+        type: "string"
+        default: ""
+        description: "Hint text displayed when input is empty"
+      
+      label:
+        type: "string"
+        required: false
+        description: "Associated label text for accessibility"
+      
+      error_message:
+        type: "string"
+        required: false
+        description: "Error text displayed below field when validation fails"
+      
+      disabled:
+        type: "boolean"
+        default: false
+        description: "When true, input is non-interactive and visually dimmed"
+      
+      read_only:
+        type: "boolean"
+        default: false
+        description: "When true, input displays value but prevents editing"
+      
+      required:
+        type: "boolean"
+        default: false
+        description: "When true, input must have value for form validation"
+      
+      input_type:
+        type: "enum"
+        values: ["text", "email", "password", "number", "search", "url", "tel"]
+        default: "text"
+        description: "Input type for browser validation and keyboard optimization"
+      
+      max_length:
+        type: "number"
+        required: false
+        description: "Maximum number of characters allowed"
+      
+      autocomplete:
+        type: "string"
+        required: false
+        description: "Browser autocomplete hint (e.g., 'email', 'current-password')"
+    
+    states:
+      default:
+        description: "Initial appearance, ready for input"
+        visual_tokens: ["surface.default", "text.primary", "border.default"]
+        triggers: ["component_mount"]
+      
+      focused:
+        description: "Has keyboard focus, cursor visible"
+        visual_tokens: ["border.medium", "interactive.focus"]
+        triggers: ["click", "keyboard_focus", "programmatic_focus"]
+      
+      filled:
+        description: "Contains user-entered text"
+        visual_tokens: ["text.primary"]
+        triggers: ["value_change"]
+      
+      error:
+        description: "Validation failed, shows error styling"
+        visual_tokens: ["border.medium", "feedback.error"]
+        triggers: ["validation_failed", "error_message_set"]
+      
+      disabled:
+        description: "Non-interactive state"
+        visual_tokens: ["surface.subtle", "text.disabled"]
+        triggers: ["disabled_property_true"]
+      
+      read_only:
+        description: "Display-only state, no editing allowed"
+        visual_tokens: ["surface.subtle", "text.secondary"]
+        triggers: ["read_only_property_true"]
+    
+    events:
+      change:
+        description: "Value changed by user input"
+        payload:
+          value: "string"
+          previous_value: "string"
+      
+      input:
+        description: "Real-time input as user types"
+        payload:
+          value: "string"
+          cursor_position: "number"
+      
+      focus:
+        description: "Input gained keyboard focus"
+        payload: {}
+      
+      blur:
+        description: "Input lost keyboard focus"
+        payload:
+          value: "string"
+          was_modified: "boolean"
+      
+      enter:
+        description: "User pressed Enter key"
+        payload:
+          value: "string"
+      
+      validation_error:
+        description: "Input validation failed"
+        payload:
+          error_type: "string"
+          error_message: "string"
+
+  styling:
+    default_state:
+      background: "surface.default"
+      text_color: "text.primary"
+      border: ["border.thin", "border.default"]
+      border_radius: "radius.sm"
+      padding_vertical: "sp.2"
+      padding_horizontal: "sp.3"
+      font_family: "prose"
+      font_size: "type.body"
+      min_height: "44px"
+      transition: "border-color 0.2s ease"
+    
+    placeholder_styling:
+      text_color: "text.tertiary"
+      font_style: "normal"
+    
+    label_styling:
+      text_color: "text.primary"
+      font_size: "type.caption"
+      font_weight: "medium"
+      margin_bottom: "sp.1"
+    
+    error_message_styling:
+      text_color: "feedback.error"
+      font_size: "type.caption"
+      margin_top: "sp.1"
+    
+    state_overrides:
+      focused:
+        border: ["border.medium", "interactive.focus"]
+        ring: ["border.thin", "interactive.focus"]
+        ring_offset: "1px"
+      
+      error:
+        border: ["border.medium", "feedback.error"]
+        background: "feedback.error"
+        background_opacity: 0.05
+      
+      disabled:
+        background: "surface.subtle"
+        text_color: "text.disabled"
+        border_color: "border.subtle"
+        cursor: "not-allowed"
+        opacity: 0.6
+      
+      read_only:
+        background: "surface.subtle"
+        border_color: "border.subtle"
+        cursor: "default"
+    
+    input_type_variants:
+      password:
+        font_family: "monospace"
+      
+      number:
+        text_align: "right"
+      
+      search:
+        border_radius: "radius.full"
+
+  composition:
+    is_leaf: true
+    can_contain: []
+    required_context: []
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Tab"
+        action: "focus_next_element"
+      - key: "Shift+Tab"
+        action: "focus_previous_element"
+      - key: "Enter"
+        action: "submit_form_or_emit_enter_event"
+      - key: "Escape"
+        action: "clear_focus"
+      - key: "Ctrl+A"
+        action: "select_all_text"
+      - key: "Ctrl+C"
+        action: "copy_selected_text"
+      - key: "Ctrl+V"
+        action: "paste_text"
+      - key: "Ctrl+X"
+        action: "cut_selected_text"
+    
+    aria_attributes:
+      - "aria-label or aria-labelledby required"
+      - "aria-describedby for error messages"
+      - "aria-invalid when in error state"
+      - "aria-required when required property is true"
+
+  examples:
+    - name: "Basic text input"
+      description: "Simple text input with placeholder"
+      properties:
+        placeholder: "Enter your name"
+        label: "Full Name"
+    
+    - name: "Email input with validation"
+      description: "Email input with type validation"
+      properties:
+        input_type: "email"
+        placeholder: "user@example.com"
+        label: "Email Address"
+        required: true
+        autocomplete: "email"
+    
+    - name: "Password input"
+      description: "Secure password input field"
+      properties:
+        input_type: "password"
+        placeholder: "Enter password"
+        label: "Password"
+        required: true
+        autocomplete: "current-password"
+    
+    - name: "Search input"
+      description: "Search field with rounded styling"
+      properties:
+        input_type: "search"
+        placeholder: "Search..."
+        label: "Search"
+    
+    - name: "Input with error state"
+      description: "Input showing validation error"
+      properties:
+        value: "invalid-email"
+        error_message: "Please enter a valid email address"
+        label: "Email"
+    
+    - name: "Disabled input"
+      description: "Non-interactive input field"
+      properties:
+        value: "Read-only value"
+        disabled: true
+        label: "Status"
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-27"
+  design_review: "approved"
+  implementation_status:
+    gtk4: "pending"
+    alpine_native: "pending"

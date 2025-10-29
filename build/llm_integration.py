@@ -1,27 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend LLM integration for enhanced build system with context generation and error explanation
-@llm-key Provides AI-powered build assistance, error explanation, and context generation for developer onboarding
-@llm-map LLM integration layer that connects build system with existing documentation system for enhanced developer experience
-@llm-axiom LLM integration must provide helpful, accurate, and contextual assistance without overwhelming developers
-@llm-contract Returns structured LLM responses with build context, error explanations, and optimization suggestions
-@llm-token llm-build-integration: AI-powered assistance for build system operations
-
-LLM Integration for Enhanced Build System
-
-Integrates the enhanced build system with the existing LLM documentation system
-to provide:
-- Build context generation for AI assistance
-- Error explanation and troubleshooting
-- Optimization suggestions
-- Developer onboarding assistance
-- Build process documentation
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does llm integration for enhanced build system with context generation
 """
 
 import json

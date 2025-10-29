@@ -1,24 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type validation-system
-@llm-legend Polyglot validation system for enforcing Unhinged codebase patterns and cultural commandments
-@llm-key Modular, parallel validation runner that checks file patterns, build structure, and cultural compliance across all languages
-@llm-map Central validation orchestrator that coordinates language-specific validators and pattern checkers
-@llm-axiom All validation must be fast, parallel, actionable, and educational
-@llm-contract Provides unified validation interface with detailed reporting and optional auto-fixing
-@llm-token polyglot-validator: Comprehensive codebase pattern enforcement and validation system
-
-Polyglot Validation System for Unhinged Monorepo
-
-Provides comprehensive validation of:
-- File creation patterns and locations
-- Build system structure and compliance
-- Cultural commandments (independence, centralization)
-- Language-specific patterns and conventions
-- Generated content management
-- Documentation standards (llm-docs)
-
-Designed for parallel execution and actionable feedback.
+@llm-type config.build
+@llm-does polyglot validation system for enforcing unhinged codebase
+@llm-rule all validation must be fast, parallel, actionable, and educational
 """
 
 import os
@@ -38,10 +22,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationResult:
     """
-    @llm-type data-model
-    @llm-legend Result from a validation check with severity, location, and fix suggestions
-    @llm-key Structured validation result that provides actionable feedback to developers
-    """
+@llm-type model.entity
+@llm-does result from a validation check with severity,
+"""
     validator_name: str
     severity: str  # ERROR, WARNING, INFO
     message: str
@@ -54,10 +37,9 @@ class ValidationResult:
 @dataclass
 class ValidationSummary:
     """
-    @llm-type data-model
-    @llm-legend Summary of all validation results with metrics and categorization
-    @llm-key Comprehensive validation report for build system integration
-    """
+@llm-type model.entity
+@llm-does summary of all validation results with metrics
+"""
     total_files_checked: int
     total_violations: int
     errors: int
@@ -69,10 +51,9 @@ class ValidationSummary:
 
 class BaseValidator(ABC):
     """
-    @llm-type interface
-    @llm-legend Abstract base class for all validators in the polyglot system
-    @llm-key Defines common interface for pattern validation, cultural checks, and language-specific rules
-    """
+@llm-type config.build
+@llm-does abstract base class for all validators in
+"""
     
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
@@ -98,10 +79,9 @@ class BaseValidator(ABC):
 
 class FilePatternValidator(BaseValidator):
     """
-    @llm-type validator
-    @llm-legend Validates file creation patterns and prevents scattered cruft
-    @llm-key Checks for forbidden files in root, scattered build files, and proper directory usage
-    """
+@llm-type util.validator
+@llm-does file creation patterns and prevents scattered cruft
+"""
     
     async def validate(self) -> List[ValidationResult]:
         results = []
@@ -219,10 +199,9 @@ class FilePatternValidator(BaseValidator):
 
 class GeneratedContentValidator(BaseValidator):
     """
-    @llm-type validator
-    @llm-legend Validates that generated content is properly located in /generated/
-    @llm-key Checks for proto-generated files, build artifacts, and other generated content outside /generated/
-    """
+@llm-type util.validator
+@llm-does that generated content is properly located in
+"""
     
     async def validate(self) -> List[ValidationResult]:
         results = []
@@ -259,10 +238,9 @@ class GeneratedContentValidator(BaseValidator):
 
 class PolyglotValidationRunner:
     """
-    @llm-type orchestrator
-    @llm-legend Main validation runner that coordinates all validators in parallel
-    @llm-key Executes validation checks concurrently and provides comprehensive reporting
-    """
+@llm-type config.build
+@llm-does main validation runner that coordinates all validators
+"""
     
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
@@ -299,10 +277,9 @@ class PolyglotValidationRunner:
     
     async def run_validation(self, auto_fix: bool = False) -> ValidationSummary:
         """
-        @llm-type function
-        @llm-legend Run all validators in parallel and return comprehensive summary
-        @llm-key Main entry point for validation system with optional auto-fixing
-        """
+@llm-type util.function
+@llm-does run all validators in parallel and return
+"""
         start_time = time.time()
         all_results = []
         
@@ -361,10 +338,9 @@ class PolyglotValidationRunner:
 
 async def main():
     """
-    @llm-type function
-    @llm-legend Main entry point for polyglot validation system
-    @llm-key Command-line interface for running validation with reporting
-    """
+@llm-type util.function
+@llm-does main entry point for polyglot validation system
+"""
     import argparse
     
     parser = argparse.ArgumentParser(description="Unhinged Polyglot Validation System")

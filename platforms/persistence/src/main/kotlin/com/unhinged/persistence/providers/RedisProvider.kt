@@ -32,14 +32,9 @@ import redis.clients.jedis.exceptions.JedisException
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * @llm-type provider
- * @llm-legend Redis database provider for high-performance caching and session storage
- * @llm-key Implements DatabaseProvider interface for Redis with TTL support and pub/sub capabilities
- * @llm-map Redis provider for cache operations, session management, and real-time data storage
- * @llm-axiom All Redis operations must handle TTL and provide fast access patterns
- * @llm-contract Provides Redis-specific operations including caching, sessions, and pub/sub messaging
- * @llm-token redis-provider: High-performance Redis database provider implementation
+/*
+ * @llm-type misc.provider
+ * @llm-does redis database provider for high-performance caching and
  */
 class RedisProvider : DatabaseProvider {
     

@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type service-utilities
-@llm-legend Shared utilities for service path management and common service operations
-@llm-key Centralized path utilities eliminating hardcoded Docker paths across services
-@llm-map Common service utilities reducing DRY violations and standardizing service behavior
-@llm-axiom Service utilities must be simple, reusable, and eliminate path hardcoding
-@llm-contract Provides standardized path resolution and service directory management
-@llm-token service-utilities: Shared utilities for consistent service path management
-
-Shared Service Utilities for Unhinged Services
-Eliminates DRY violations and standardizes service behavior across all services
+@llm-type service.util
+@llm-does shared utilities for service path management and
+@llm-rule service utilities must be simple, reusable, and eliminate path hardcoding
 """
 
 import os
@@ -80,16 +73,10 @@ def get_logs_directory() -> str:
 
 class ServicePaths:
     """
-    @llm-type service-path-manager
-    @llm-legend Service path manager providing standardized directory access
-    @llm-key Centralized service path management eliminating hardcoded paths
-    @llm-map Service path manager enabling consistent directory structure across services
-    @llm-axiom Service paths must be consistent, predictable, and environment-agnostic
-    @llm-contract Provides standardized service directory access and management
-    @llm-token service-path-manager: Centralized service directory management
-    
-    Centralized service path management for consistent directory structure
-    """
+@llm-type service.api
+@llm-does service path manager providing standardized directory access
+@llm-rule service paths must be consistent, predictable, and environment-agnostic
+"""
     
     def __init__(self, service_root: Optional[str] = None):
         """

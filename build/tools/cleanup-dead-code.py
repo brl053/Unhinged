@@ -1,28 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type cleanup-tool
-@llm-legend Safe dead code cleanup tool with backup and rollback capabilities
-@llm-key Removes identified dead code with safety checks and backup mechanisms
-@llm-map Integrates with dead-code-analyzer for systematic codebase cleanup
-@llm-axiom Cleanup operations must be reversible and include comprehensive safety checks
-@llm-contract Provides safe cleanup with backup, dry-run, and rollback capabilities
-@llm-token cleanup-tool: Safe dead code removal with backup and rollback
-
-Dead Code Cleanup Tool
-
-Safe removal tool for dead code identified by the dead-code-analyzer.
-Includes backup mechanisms, dry-run mode, and rollback capabilities.
-
-Features:
-- Safety level filtering (only remove safe items by default)
-- Backup creation before deletion
-- Dry-run mode for preview
-- Rollback capability
-- Size and impact reporting
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-01-27
+@llm-type util.function
+@llm-does safe dead code cleanup tool with backup
+@llm-rule cleanup operations must be reversible and include comprehensive safety checks
 """
 
 import json
@@ -46,12 +26,9 @@ class CleanupResult:
 
 class DeadCodeCleanup:
     """
-    Safe dead code cleanup tool.
-    
-    @llm-type cleanup-class
-    @llm-legend Safe cleanup implementation with backup and rollback capabilities
-    @llm-key Removes dead code with comprehensive safety checks and recovery options
-    """
+@llm-type util.function
+@llm-does safe cleanup implementation with backup and rollback
+"""
     
     def __init__(self, project_root: Path, backup_dir: Optional[Path] = None):
         """Initialize cleanup tool."""

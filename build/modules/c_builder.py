@@ -1,27 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend C/C++ build module with CMake integration and CFFI bindings
-@llm-key Provides optimized C builds with CMake, custom memory management, and Python CFFI integration
-@llm-map C build module that integrates with CMake build system and provides graphics rendering capabilities
-@llm-axiom C builds must be deterministic, fast, and provide direct CPU instruction access for maximum performance
-@llm-contract Returns BuildModuleResult with shared library artifacts and CFFI bindings
-@llm-token c-builder: CMake-based build module for C graphics rendering layer
-
-C Graphics Build Module
-
-Provides optimized builds for C graphics rendering projects with:
-- CMake configuration and build management
-- SIMD optimization detection (AVX2, NEON)
-- Platform-specific optimizations
-- CFFI Python bindings generation
-- Custom memory allocators
-- Performance profiling integration
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-25
+@llm-type service.api
+@llm-does c/c++ build module with cmake integration and
+@llm-rule c builds must be deterministic, fast, and provide direct cpu instruction acce...
 """
 
 import os

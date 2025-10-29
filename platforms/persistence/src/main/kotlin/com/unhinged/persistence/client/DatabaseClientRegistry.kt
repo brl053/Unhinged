@@ -21,14 +21,9 @@ import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * @llm-type database-registry
- * @llm-legend Unified database client registry for multi-database persistence platform
- * @llm-key Manages CockroachDB, Redis, Cassandra, Chroma connections with health monitoring
- * @llm-map Central access point for all database operations in Kotlin services
- * @llm-axiom All database access must go through registry for monitoring and connection management
- * @llm-contract Provides type-safe database clients with automatic health checking and reconnection
- * @llm-token database-client-registry: Unified database access management for Kotlin backend
+/*
+ * @llm-type misc.database-registry
+ * @llm-does unified database client registry for multi-database persi...
  */
 class DatabaseClientRegistry {
     

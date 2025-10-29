@@ -1,10 +1,7 @@
 """
-@llm-type build-validator
-@llm-legend Resource requirement validation at build time
-@llm-key Statically analyzes resource requirements to prevent runtime resource exhaustion
-@llm-map Compile-time resource validation ensuring adequate system resources
-@llm-axiom Resource issues must be detected at build time, never at runtime
-@llm-token resource-validator: Static resource analyzer preventing runtime resource failures
+@llm-type config.build
+@llm-does resource requirement validation at build time
+@llm-rule resource issues must be detected at build time, never at runtime
 """
 
 from dataclasses import dataclass

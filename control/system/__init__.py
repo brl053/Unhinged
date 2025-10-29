@@ -1,12 +1,7 @@
 """
-Unhinged Control System
-
-@llm-type control-plane-package
-@llm-legend System control abstraction layer package for Unhinged platform
-@llm-key Provides operational abstractions over build system while preparing for future OS virtualization
-@llm-map Central control plane that bridges DevOps operations with build orchestration
-@llm-axiom All system operations must be auditable, reversible, and provide clear operational feedback
-@llm-token control-system: Package containing system control abstractions and virtualization boundary interfaces
+@llm-type misc.control-plane-package
+@llm-does system control abstraction layer package for unhinged
+@llm-rule all system operations must be auditable, reversible, and provide clear operat...
 """
 
 from .system_controller import SystemController

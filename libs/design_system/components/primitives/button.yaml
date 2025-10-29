@@ -1,12 +1,6 @@
-# Button Component Specification
-# @llm-type component-specification
-# @llm-legend Platform-agnostic button component specification defining semantic behavior and styling
-# @llm-key Primary interactive element specification with semantic types, states, and accessibility requirements
-# @llm-map Core primitive component in design system component hierarchy
-# @llm-axiom Button specifications must be platform-agnostic describing WHAT not HOW
-# @llm-contract Defines button interface, states, events, and token mappings for generator consumption
-# @llm-token button-component: Interactive element specification with semantic styling and accessibility
-
+# @llm-type component.spec
+# @llm-does platform-agnostic button component specification defining...
+# @llm-rule button specifications must be platform-agnostic describing what not how
 component:
   id: "button"
   name: "Button"

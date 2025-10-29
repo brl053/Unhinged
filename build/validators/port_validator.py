@@ -1,10 +1,7 @@
 """
-@llm-type build-validator
-@llm-legend Port conflict detection and resolution at build time
-@llm-key Statically analyzes port allocations to prevent runtime binding failures
-@llm-map Compile-time port validation that eliminates Docker port conflicts
-@llm-axiom Port conflicts must be resolved at build time, never at runtime
-@llm-token port-validator: Static port allocation analyzer preventing runtime binding errors
+@llm-type config.build
+@llm-does port conflict detection and resolution at build
+@llm-rule port conflicts must be resolved at build time, never at runtime
 """
 
 from dataclasses import dataclass, field

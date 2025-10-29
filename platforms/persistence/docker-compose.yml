@@ -1,29 +1,5 @@
-#
-# @llm-type platform
-# @llm-legend docker-compose.yml - platform infrastructure component
-# @llm-key Core functionality for docker-compose
-# @llm-map Part of the Unhinged system architecture
-# @llm-axiom Maintains system independence and architectural compliance
-# @llm-contract Provides standardized interface for system integration
-# @llm-token docker-compose: platform infrastructure component
-#
-# ============================================================================
-# Unhinged Persistence Platform - Docker Compose Configuration
-# ============================================================================
-#
-# @file docker-compose.yml
-# @version 1.0.0
-# @author Unhinged Team
-# @date 2025-10-19
-# @description Docker Compose setup for the persistence platform
-#
-# This Docker Compose file sets up all database technologies and the
-# persistence platform service with proper networking, volumes, and
-# environment configuration for development and testing.
-#
-# Location: platforms/persistence/docker-compose.yml
-# ============================================================================
-
+# @llm-type misc.platform
+# @llm-does docker-compose.yml - platform infrastructure component
 version: '3.8'
 
 services:

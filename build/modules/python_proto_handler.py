@@ -1,32 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type proto-handler
-@llm-legend Python protobuf client generation handler for AI/ML services and backend systems
-@llm-key Generates Python protobuf clients with gRPC support for AI services and backend applications
-@llm-map Python language handler for the polyglot proto engine providing gRPC client generation for ML/AI services
-@llm-axiom Python proto clients must support async/await patterns and integrate with AI/ML frameworks
-@llm-contract Implements ProtoLanguageHandler interface for Python protobuf and gRPC client generation
-@llm-token python-proto-handler: Python protobuf client generation for AI/ML services and backend systems
-
-Python Protocol Buffer Client Handler
-
-Generates Python protobuf clients for:
-- AI/ML services (Whisper, Vision, LLM)
-- Backend gRPC services
-- Data processing pipelines
-- Async service integration
-
-Features:
-- Standard protoc Python generation
-- gRPC Python service stubs
-- Async/await support
-- Type hints integration
-- Package structure organization
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does python protobuf client generation handler for ai/ml
 """
 
 import os

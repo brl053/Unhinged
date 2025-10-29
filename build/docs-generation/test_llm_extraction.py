@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Test suite for LLM comment extraction and validation.
-
-@llm-type test
-@llm-legend TDD test suite ensuring extraction and validation correctness
-@llm-context Defines expected behavior for all LLM comment processing functions
+"""
+@llm-type config.build
+@llm-does tdd test suite ensuring extraction and validation
 """
 
 import unittest
@@ -41,9 +39,8 @@ class TestLLMExtraction(unittest.TestCase):
         """Test extraction of @llm-context from Python docstring."""
         content = '''#!/usr/bin/env python3
 """
-@llm-type service
-@llm-legend Processes user requests
-@llm-context Handles HTTP requests with rate limiting and caching
+@llm-type service.api
+@llm-does user requests
 """
 def process():
     pass
@@ -68,11 +65,10 @@ def process():
     def test_extract_llm_context_from_typescript(self):
         """Test extraction of @llm-context from TypeScript JSDoc."""
         content = '''
-/**
- * @llm-type component
- * @llm-legend React component for user authentication
- * @llm-context Manages login state and JWT token refresh
- */
+"""
+@llm-type component.primitive
+@llm-does react component for user authentication
+"""
 export const AuthComponent = () => {
     return null;
 };
@@ -89,14 +85,9 @@ export const AuthComponent = () => {
     def test_parse_llm_tags_with_context(self):
         """Test parsing of all tags including @llm-context."""
         text = """
-@llm-type validator
-@llm-legend Validates user input
-@llm-key Checks format and business rules
-@llm-map Part of validation pipeline
-@llm-axiom Never trust user input
-@llm-contract Returns ValidationResult or throws
-@llm-token user-validator
-@llm-context Integrates with form handling and error display
+@llm-type util.validator
+@llm-does user input
+@llm-rule never trust user input
 """
         import extract_llm_comments
         from extract_llm_comments import parse_llm_tags
@@ -201,17 +192,15 @@ class TestLLMValidation(unittest.TestCase):
 
 class TestLLMContextWarmerImprovements(unittest.TestCase):
     """
-    @llm-type test
-    @llm-legend Test suite for LLM context warmer improvements based on feedback
-    @llm-context Validates element name detection, cross-references, and context completeness
-    """
+@llm-type config.build
+@llm-does test suite for llm context warmer improvements
+"""
 
     def test_element_name_detection_from_service_path(self):
         """
-        @llm-type test
-        @llm-legend Test element name extraction from services directory paths
-        @llm-context Addresses LLM feedback about unknown element names in service files
-        """
+@llm-type config.build
+@llm-does test element name extraction from services directory
+"""
         # Test data with unknown element name but clear service path
         comment = LLMComment(
             file_path="services/vision-ai/main.py",
@@ -239,10 +228,9 @@ class TestLLMContextWarmerImprovements(unittest.TestCase):
 
     def test_element_name_detection_from_python_file(self):
         """
-        @llm-type test
-        @llm-legend Test element name extraction from Python file names
-        @llm-context Ensures Python modules get proper names instead of unknown
-        """
+@llm-type config.build
+@llm-does test element name extraction from python file
+"""
         comment = LLMComment(
             file_path="scripts/docs/extract-llm-comments.py",
             line_number=1,
@@ -268,10 +256,9 @@ class TestLLMContextWarmerImprovements(unittest.TestCase):
 
     def test_find_related_services_by_port_references(self):
         """
-        @llm-type test
-        @llm-legend Test cross-reference detection between services using port numbers
-        @llm-context Addresses LLM feedback about lack of cross-reference navigation
-        """
+@llm-type config.build
+@llm-does test cross-reference detection between services using port
+"""
         comments = [
             LLMComment(
                 file_path="services/vision-ai/main.py",
@@ -313,10 +300,9 @@ class TestLLMContextWarmerImprovements(unittest.TestCase):
 
     def test_context_completeness_validation(self):
         """
-        @llm-type test
-        @llm-legend Test validation of context completeness for service components
-        @llm-context Addresses LLM feedback about null llm_context fields where context should exist
-        """
+@llm-type config.build
+@llm-does test validation of context completeness for service
+"""
         comments = [
             LLMComment(
                 file_path="services/audio-service/main.py",
@@ -355,10 +341,9 @@ class TestLLMContextWarmerImprovements(unittest.TestCase):
 
     def test_pagination_data_integrity(self):
         """
-        @llm-type test
-        @llm-legend Test that pagination maintains complete data integrity across pages
-        @llm-context Ensures no data loss or corruption when browsing paginated comments
-        """
+@llm-type config.build
+@llm-does test that pagination maintains complete data integrity
+"""
         # Create test comments
         test_comments = []
         for i in range(25):  # More than 2 pages worth
@@ -416,17 +401,15 @@ class TestLLMContextWarmerImprovements(unittest.TestCase):
 
 class TestLLMContextWarmerEnhancements(unittest.TestCase):
     """
-    @llm-type test
-    @llm-legend Test suite for final LLM context warmer enhancements addressing 9/10 feedback
-    @llm-context Validates getting started section, dependency info, and complete legend handling
-    """
+@llm-type config.build
+@llm-does test suite for final llm context warmer
+"""
 
     def test_getting_started_section_generation(self):
         """
-        @llm-type test
-        @llm-legend Test generation of getting started section with setup and dependency information
-        @llm-context Addresses LLM feedback about missing getting started section in overview
-        """
+@llm-type config.build
+@llm-does test generation of getting started section with
+"""
         import sys
         import importlib.util
         spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
@@ -467,10 +450,9 @@ class TestLLMContextWarmerEnhancements(unittest.TestCase):
 
     def test_dependency_information_extraction(self):
         """
-        @llm-type test
-        @llm-legend Test extraction of dependency and setup information from build files
-        @llm-context Addresses LLM feedback about missing dependency/setup information in overview
-        """
+@llm-type config.build
+@llm-does test extraction of dependency and setup information
+"""
         import sys
         import importlib.util
         spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
@@ -504,10 +486,9 @@ class TestLLMContextWarmerEnhancements(unittest.TestCase):
 
     def test_complete_legend_validation(self):
         """
-        @llm-type test
-        @llm-legend Test validation that legends are complete and not truncated
-        @llm-context Addresses LLM feedback about incomplete/truncated @llm-legend entries
-        """
+@llm-type config.build
+@llm-does test validation that legends are complete and
+"""
         import sys
         import importlib.util
         spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")
@@ -547,10 +528,9 @@ class TestLLMContextWarmerEnhancements(unittest.TestCase):
 
     def test_enhanced_overview_with_getting_started(self):
         """
-        @llm-type test
-        @llm-legend Test that enhanced overview includes getting started and dependency sections
-        @llm-context Validates complete overview addresses all LLM feedback points for 10/10 rating
-        """
+@llm-type config.build
+@llm-does test that enhanced overview includes getting started
+"""
         import sys
         import importlib.util
         spec = importlib.util.spec_from_file_location("llm_context_warmer", "llm-context-warmer.py")

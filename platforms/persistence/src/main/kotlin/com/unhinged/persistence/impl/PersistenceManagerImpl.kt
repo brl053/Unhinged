@@ -26,14 +26,9 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * @llm-type implementation
- * @llm-legend Main persistence manager implementation that orchestrates all database operations
- * @llm-key Central implementation that coordinates providers, routing, caching, and lifecycle management
- * @llm-map Core persistence platform implementation that provides unified access to all database technologies
- * @llm-axiom All persistence operations flow through this implementation for consistency and observability
- * @llm-contract Implements PersistenceManager interface with intelligent routing and multi-technology coordination
- * @llm-token persistence-manager-impl: Core persistence platform implementation
+/*
+ * @llm-type misc.implementation
+ * @llm-does main persistence manager implementation that orchestrates...
  */
 class PersistenceManagerImpl : PersistenceManager {
     

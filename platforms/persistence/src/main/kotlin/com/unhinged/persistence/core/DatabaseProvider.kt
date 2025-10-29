@@ -22,14 +22,9 @@ import com.unhinged.persistence.config.TechnologyConfiguration
 import com.unhinged.persistence.model.*
 import kotlinx.coroutines.flow.Flow
 
-/**
- * @llm-type interface
- * @llm-legend Database provider interface that each technology implements for platform integration
- * @llm-key Defines contract for database operations that enables unified access across all technologies
- * @llm-map Technology-specific implementations provide database access while maintaining common interface
- * @llm-axiom Each database technology must implement this interface to participate in the platform
- * @llm-contract Provides standardized CRUD, query, and management operations for any database technology
- * @llm-token database-provider: Technology-specific database access interface
+/*
+ * @llm-type misc.interface
+ * @llm-does database provider interface that each technology implements
  */
 interface DatabaseProvider {
     

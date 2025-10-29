@@ -1,11 +1,6 @@
 //
-// @llm-type platform
-// @llm-legend CockroachDbCrud.kt - platform infrastructure component
-// @llm-key Core functionality for CockroachDbCrud
-// @llm-map Part of the Unhinged system architecture
-// @llm-axiom Maintains system independence and architectural compliance
-// @llm-contract Provides standardized interface for system integration
-// @llm-token CockroachDbCrud: platform infrastructure component
+// @llm-type service.api
+// @llm-does cockroachdb crud operations for persistence platform
 //
 package platforms.persistence.repository
 

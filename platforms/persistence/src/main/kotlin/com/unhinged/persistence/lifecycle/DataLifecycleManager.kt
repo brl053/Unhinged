@@ -29,14 +29,9 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
-/**
- * @llm-type lifecycle-manager
- * @llm-legend Data lifecycle manager that handles hot/warm/cold data tiering and retention policies
- * @llm-key Manages complete data lifecycle with automatic tiering, archival, and retention across all database technologies
- * @llm-map Central lifecycle management system that optimizes data placement and enforces retention policies
- * @llm-axiom All data must follow defined lifecycle policies for optimal performance and compliance
- * @llm-contract Provides automated data tiering, archival, retention, and cross-technology migration
- * @llm-token data-lifecycle-manager: Automated data lifecycle and tiering management
+/*
+ * @llm-type misc.lifecycle-manager
+ * @llm-does data lifecycle manager that handles hot/warm/cold data
  */
 class DataLifecycleManager(
     private val providerRegistry: ProviderRegistry,

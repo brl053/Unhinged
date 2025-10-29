@@ -1,12 +1,6 @@
-# Input Component Specification
-# @llm-type component-specification
-# @llm-legend Platform-agnostic input field component specification for single-line text entry
-# @llm-key Text input element with validation states, placeholder support, and accessibility features
-# @llm-map Core primitive component for form data collection in design system
-# @llm-axiom Input specifications must be platform-agnostic describing semantic behavior not implementation
-# @llm-contract Defines input interface, validation states, events, and styling for generator consumption
-# @llm-token input-component: Single-line text input specification with validation and accessibility
-
+# @llm-type component.spec
+# @llm-does platform-agnostic input field component specification for...
+# @llm-rule input specifications must be platform-agnostic describing semantic behavior n...
 component:
   id: "input"
   name: "Input Field"

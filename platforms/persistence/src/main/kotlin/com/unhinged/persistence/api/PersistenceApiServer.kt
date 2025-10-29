@@ -39,14 +39,9 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
-/**
- * @llm-type api-server
- * @llm-legend Unified API server providing REST and gRPC endpoints for all persistence operations
- * @llm-key Central API gateway that routes requests to appropriate database technologies with authentication and rate limiting
- * @llm-map Unified API layer that abstracts database complexity behind consistent REST/gRPC endpoints
- * @llm-axiom All persistence operations must go through this API layer for consistency and security
- * @llm-contract Provides technology-agnostic REST/gRPC APIs with automatic routing and observability
- * @llm-token persistence-api-server: Unified API gateway for all database operations
+/*
+ * @llm-type service.api
+ * @llm-does unified api server providing rest and grpc
  */
 class PersistenceApiServer(
     private val persistenceManager: PersistenceManager,

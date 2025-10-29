@@ -1,18 +1,6 @@
-/**
- * Unhinged System SDK - JavaScript Client
- * 
- * @llm-type client-sdk
- * @llm-legend JavaScript client SDK providing syntax sugar for Unhinged system operations
- * @llm-key Beautiful API abstractions over HTTP control proxy for system calls
- * @llm-map Client library that makes system operations feel like native JavaScript
- * @llm-axiom All system operations should feel natural and intuitive to developers
- * @llm-token unhinged-sdk: JavaScript client providing elegant system call abstractions
- * 
- * Beautiful syntax sugar for system operations:
- * - file.write(path, content) instead of fetch('/control/system/file/write')
- * - service.start('applications') instead of fetch('/control/system/tier/applications/start')
- * - network.ping(host) instead of raw HTTP calls
- * - package.apt.install(name) instead of subprocess calls
+/*
+ * @llm-type misc.client-sdk
+ * @llm-does javascript client sdk providing syntax sugar for
  */
 
 class UnhingedSDK {

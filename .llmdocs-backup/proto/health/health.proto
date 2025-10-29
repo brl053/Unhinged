@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package unhinged.health.v1;
+
+option java_package = "com.unhinged.health.v1";
+option java_multiple_files = true;
+option java_outer_classname = "HealthProto";
+
+import "google/protobuf/timestamp.proto";
+
+// Unified Health Service - DRY principle applied
+// Provides both fast heartbeat and detailed diagnostics
+service HealthService {
+  // FAST: Proof-of-life check (< 10ms response)
+  // Perfect for load balancers and monitoring systems
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  
+  // DETAILED: Full diagnostics (< 1s response, internal use)
+  // Comprehensive health state for debugging and monitoring
+  rpc Diagnostics(DiagnosticsRequest) returns (DiagnosticsResponse);
+}
+
+// ============================================================================
+// HEARTBEAT - Fast proof-of-life
+// ============================================================================
+
+message HeartbeatRequest {
+  // Empty for minimal overhead
+}
+
+message HeartbeatResponse {
+  // Core vitals - cached for speed
+  bool alive = 1;                           // Simple boolean alive check
+  int64 timestamp_ms = 2;                   // Unix timestamp in milliseconds
+  string service_id = 3;                    // "audio-service-v1"
+  string version = 4;                       // "1.2.3"
+  int64 uptime_ms = 5;                     // Process uptime in milliseconds
+  HealthStatus status = 6;                  // Overall health status
+}
+
+// ============================================================================
+// DIAGNOSTICS - Detailed health information
+// ============================================================================
+
+message DiagnosticsRequest {
+  bool include_metrics = 1;                 // Include performance metrics
+  bool include_dependencies = 2;            // Check downstream services
+  bool include_resources = 3;               // Memory, CPU, disk usage
+  bool include_custom_checks = 4;           // Service-specific health checks
+}
+
+message DiagnosticsResponse {
+  HeartbeatResponse heartbeat = 1;          // Include basic vitals
+  repeated DependencyHealth dependencies = 2; // Downstream service health
+  ResourceMetrics resources = 3;            // System resource usage
+  repeated CustomHealthCheck custom_checks = 4; // Service-specific checks
+  map<string, string> metadata = 5;        // Additional service metadata
+  google.protobuf.Timestamp last_updated = 6; // When diagnostics were generated
+}
+
+// ============================================================================
+// HEALTH STATUS ENUMERATION
+// ============================================================================
+
+enum HealthStatus {
+  HEALTH_STATUS_UNKNOWN = 0;               // Unknown/uninitialized state
+  HEALTH_STATUS_HEALTHY = 1;               // All systems operational
+  HEALTH_STATUS_DEGRADED = 2;              // Some non-critical issues
+  HEALTH_STATUS_UNHEALTHY = 3;             // Critical issues present
+  HEALTH_STATUS_MAINTENANCE = 4;           // Planned maintenance mode
+}
+
+// ============================================================================
+// DEPENDENCY HEALTH
+// ============================================================================
+
+message DependencyHealth {
+  string name = 1;                         // "redis-cache", "postgres-db"
+  string type = 2;                         // "database", "cache", "service"
+  HealthStatus status = 3;                 // Dependency health status
+  string endpoint = 4;                     // "localhost:6379"
+  int64 response_time_ms = 5;              // Last check response time
+  string version = 6;                      // Dependency version if available
+  google.protobuf.Timestamp last_check = 7; // When dependency was last checked
+  string error_message = 8;                // Error details if unhealthy
+}
+
+// ============================================================================
+// RESOURCE METRICS
+// ============================================================================
+
+message ResourceMetrics {
+  CpuMetrics cpu = 1;                      // CPU utilization
+  MemoryMetrics memory = 2;                // Memory usage
+  DiskMetrics disk = 3;                    // Disk usage
+  NetworkMetrics network = 4;              // Network statistics
+}
+
+message CpuMetrics {
+  double usage_percent = 1;                // CPU usage percentage (0-100)
+  double load_average_1m = 2;              // 1-minute load average
+  int32 core_count = 3;                    // Number of CPU cores
+}
+
+message MemoryMetrics {
+  int64 used_bytes = 1;                    // Used memory in bytes
+  int64 total_bytes = 2;                   // Total memory in bytes
+  double usage_percent = 3;                // Memory usage percentage (0-100)
+  int64 heap_used_bytes = 4;               // JVM heap usage (if applicable)
+  int64 heap_max_bytes = 5;                // JVM max heap (if applicable)
+}
+
+message DiskMetrics {
+  int64 used_bytes = 1;                    // Used disk space in bytes
+  int64 total_bytes = 2;                   // Total disk space in bytes
+  double usage_percent = 3;                // Disk usage percentage (0-100)
+  int64 free_bytes = 4;                    // Free disk space in bytes
+}
+
+message NetworkMetrics {
+  int64 bytes_sent = 1;                    // Total bytes sent
+  int64 bytes_received = 2;                // Total bytes received
+  int64 packets_sent = 3;                  // Total packets sent
+  int64 packets_received = 4;              // Total packets received
+  int32 active_connections = 5;            // Current active connections
+}
+
+// ============================================================================
+// CUSTOM HEALTH CHECKS
+// ============================================================================
+
+message CustomHealthCheck {
+  string name = 1;                         // "gpu-availability", "model-loaded"
+  HealthStatus status = 2;                 // Check result
+  string message = 3;                      // Human-readable status message
+  google.protobuf.Timestamp last_check = 4; // When check was performed
+  int64 response_time_ms = 5;              // Check execution time
+  map<string, string> details = 6;        // Additional check-specific data
+}

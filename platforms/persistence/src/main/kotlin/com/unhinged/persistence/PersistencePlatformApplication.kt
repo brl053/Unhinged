@@ -24,14 +24,9 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
-/**
- * @llm-type application
- * @llm-legend Main application entry point for the Persistence Platform
- * @llm-key Application bootstrap that initializes platform, loads configuration, and starts API server
- * @llm-map Main application orchestrating platform startup, configuration loading, and service initialization
- * @llm-axiom Application must handle graceful startup and shutdown with proper error handling
- * @llm-contract Provides complete platform initialization and API server startup with configuration management
- * @llm-token persistence-platform-app: Main application entry point and bootstrap
+/*
+ * @llm-type misc.application
+ * @llm-does main application entry point for the persistence
  */
 class PersistencePlatformApplication {
     

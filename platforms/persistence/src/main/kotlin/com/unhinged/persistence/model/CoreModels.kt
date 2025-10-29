@@ -23,14 +23,9 @@ import java.util.*
 // Execution Context
 // ==========================================================================
 
-/**
- * @llm-type model
- * @llm-legend Execution context that carries request metadata, tracing, and security information
- * @llm-key Provides request context for all persistence operations including auth, tracing, and metadata
- * @llm-map Context object passed through all persistence operations for observability and security
- * @llm-axiom All persistence operations must include execution context for proper tracing and security
- * @llm-contract Contains user identity, trace information, and request metadata for operation execution
- * @llm-token execution-context: Request context for persistence operations
+/*
+ * @llm-type model.entity
+ * @llm-does execution context that carries request metadata, tracing,
  */
 data class ExecutionContext(
     val requestId: String = UUID.randomUUID().toString(),

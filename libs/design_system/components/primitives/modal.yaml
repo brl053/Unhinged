@@ -1,12 +1,6 @@
-# Modal Component Specification
-# @llm-type component-specification
-# @llm-legend Platform-agnostic modal dialog component specification for overlay content presentation
-# @llm-key Modal container with focus management, backdrop handling, and keyboard navigation support
-# @llm-map Core container component for interrupting user flow with contextual content
-# @llm-axiom Modal specifications must be platform-agnostic describing semantic behavior not implementation
-# @llm-contract Defines modal interface, states, focus management, and accessibility for generator consumption
-# @llm-token modal-component: Overlay dialog specification with focus trapping and backdrop interaction
-
+# @llm-type component.spec
+# @llm-does platform-agnostic modal dialog component specification fo...
+# @llm-rule modal specifications must be platform-agnostic describing semantic behavior n...
 component:
   id: "modal"
   name: "Modal Dialog"

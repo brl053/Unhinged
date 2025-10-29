@@ -1,0 +1,92 @@
+{
+  "llm": {
+    "name": "LLM Service (Ollama)",
+    "host": "localhost",
+    "port": 1500,
+    "protocol": "http",
+    "health_url": "/api/tags",
+    "description": "Local LLM service for chat functionality",
+    "required": true,
+    "tags": [
+      "ai",
+      "llm",
+      "ollama"
+    ]
+  },
+  "persistence-platform": {
+    "name": "Persistence Platform",
+    "host": "localhost",
+    "port": 1300,
+    "protocol": "http",
+    "health_url": "/api/v1/health",
+    "description": "Independent Kotlin persistence platform",
+    "required": false,
+    "tags": [
+      "database",
+      "persistence",
+      "kotlin"
+    ],
+    "grpc_port": 1301,
+    "implements_health_proto": false
+  },
+  "speech-to-text": {
+    "name": "Speech-to-Text Service",
+    "host": "localhost",
+    "port": 1101,
+    "protocol": "http",
+    "health_url": "/health",
+    "description": "Whisper-based speech transcription",
+    "required": true,
+    "tags": [
+      "ai",
+      "speech",
+      "whisper"
+    ],
+    "grpc_port": 1191,
+    "implements_health_proto": true
+  },
+  "text-to-speech": {
+    "name": "Text-to-Speech Service",
+    "host": "localhost",
+    "port": 1102,
+    "protocol": "http",
+    "health_url": "/health",
+    "description": "Neural voice synthesis",
+    "required": false,
+    "tags": [
+      "ai",
+      "tts",
+      "voice"
+    ],
+    "grpc_port": 9092,
+    "implements_health_proto": true
+  },
+  "vision-ai": {
+    "name": "Vision AI Service",
+    "host": "localhost",
+    "port": 1103,
+    "protocol": "http",
+    "health_url": "/health",
+    "description": "BLIP-based image analysis",
+    "required": false,
+    "tags": [
+      "ai",
+      "vision",
+      "blip"
+    ],
+    "grpc_port": 9093,
+    "implements_health_proto": true
+  },
+  "database": {
+    "name": "Database",
+    "host": "localhost",
+    "port": 1200,
+    "protocol": "postgresql",
+    "description": "PostgreSQL database",
+    "required": false,
+    "tags": [
+      "database",
+      "postgresql"
+    ]
+  }
+}

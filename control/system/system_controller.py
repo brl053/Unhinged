@@ -1,12 +1,7 @@
 """
-@llm-type control-plane
-@llm-legend System control abstraction layer that bridges build orchestration with operations semantics
-@llm-key Translates DevOps operations (start/stop/restart) into build system targets while maintaining operational context
-@llm-map Central control plane that will evolve into virtualization boundary between Unhinged and host OS
-@llm-axiom All system operations must be auditable, reversible, and provide clear operational feedback
-@llm-contract Returns OperationResult with success status, affected services, and system state changes
-@llm-token system-controller: Control plane service managing the boundary between application logic and system operations
-@llm-evolution This is the foundation layer for future OS virtualization - every command here represents a potential kernel operation
+@llm-type misc.control-plane
+@llm-does system control abstraction layer that bridges build
+@llm-rule all system operations must be auditable, reversible, and provide clear operat...
 """
 
 import asyncio

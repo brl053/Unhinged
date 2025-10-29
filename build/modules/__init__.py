@@ -1,28 +1,6 @@
 """
-@llm-type contract
-@llm-legend Language-specific build modules for enhanced build orchestration
-@llm-key Provides specialized builders for Kotlin, TypeScript, Python, and Protobuf with caching and optimization
-@llm-map Build module system that integrates with main orchestrator for multi-language support
-@llm-axiom Each language builder must provide consistent interface and caching capabilities
-@llm-contract All builders implement BuildModule interface with build, cache, and validate methods
-@llm-token build-modules: Specialized build handlers for different programming languages
-
-Enhanced Build Modules Package
-
-Provides language-specific build modules that integrate with the main build orchestrator
-to provide optimized, cached, and parallel builds for different technologies.
-
-Modules:
-- kotlin_builder: Gradle-based Kotlin/JVM builds with incremental compilation
-- typescript_builder: npm/webpack-based TypeScript builds with hot reloading
-- python_builder: pip/poetry-based Python builds with virtual environment management
-- protobuf_builder: Multi-language protobuf generation with smart caching
-- mobile_ui_builder: Mobile-responsive UI framework with CSS generation and validation
-- docker_builder: Container build optimization with layer caching
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type config.build
+@llm-does language-specific build modules for enhanced build orches...
 """
 
 from abc import ABC, abstractmethod
@@ -249,20 +227,9 @@ class BuildUtils:
     @staticmethod
     def validate_build_patterns(repo_root: Path) -> List[str]:
         """
-        @llm-type validation
-        @llm-legend Validate build system patterns and cultural commandments
-        @llm-key Checks for scattered files, proper generated content location, and cultural compliance
-        @llm-map Integrated enforcement that runs as part of build validation
-        @llm-axiom Build validation must prevent chaos and maintain architectural integrity
-        @llm-contract Returns list of violations, empty list means all patterns are valid
-        @llm-token build-validation: Pattern enforcement integrated into build system
-
-        Validate that build patterns are followed:
-        - No scattered build files in root
-        - Generated content in /generated/
-        - No backup/temp files
-        - Proper use of centralized Python environment
-        """
+@llm-type config.build
+@llm-does validate build system patterns and cultural commandments
+"""
         violations = []
 
         try:

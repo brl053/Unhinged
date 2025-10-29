@@ -1,17 +1,5 @@
-# ============================================================================
-# Unhinged Production Docker Compose - Unified Service Orchestration
-# ============================================================================
-#
-# @llm-type infrastructure-config
-# @llm-legend Production docker-compose with unified service definitions
-# @llm-key Single source of truth for production service orchestration
-# @llm-map Primary production deployment replacing fragmented compose files
-# @llm-axiom All services use categorical port allocation for conflict prevention
-# @llm-contract Provides complete service stack with health checks and networking
-# @llm-token docker-compose-production: Unified production service orchestration
-#
-# ============================================================================
-
+# @llm-type config.build
+# @llm-does production docker-compose with unified service definitions
 version: '3.8'
 
 services:

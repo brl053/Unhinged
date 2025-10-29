@@ -1,32 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type proto-handler
-@llm-legend C/C++ protobuf client generation handler for high-performance native services
-@llm-key Generates C++ protobuf clients with gRPC support for native performance-critical services
-@llm-map C++ language handler for the polyglot proto engine providing native gRPC client generation
-@llm-axiom C++ proto clients must provide maximum performance for system-level services
-@llm-contract Implements ProtoLanguageHandler interface for C++ protobuf and gRPC client generation
-@llm-token c-proto-handler: High-performance C++ protobuf client generation for native services
-
-C/C++ Protocol Buffer Client Handler
-
-Generates high-performance C++ protobuf clients for:
-- Native gRPC services
-- System-level integrations
-- Performance-critical components
-- Low-latency applications
-
-Features:
-- Standard protoc C++ generation
-- gRPC C++ service stubs
-- CMake build integration
-- Header/source file organization
-- Namespace management
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does c/c++ protobuf client generation handler for high-perform...
+@llm-rule c++ proto clients must provide maximum performance for system-level services
 """
 
 import os

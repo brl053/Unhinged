@@ -1,30 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type build-module
-@llm-legend Design token generation module following ProtoClientBuilder architecture pattern
-@llm-key Generates GTK4 CSS from YAML design tokens with dependency tracking and caching
-@llm-map Integrates with build orchestrator to provide cached design token generation
-@llm-axiom Design tokens must be generated before UI compilation and provide consistent styling
-@llm-contract Implements BuildModule interface for design token generation with validation
-@llm-token design-token-builder: Design system generation from semantic YAML token definitions
-
-Design Token Builder Module (Following ProtoClientBuilder Pattern)
-
-Generates design system artifacts from YAML token definitions for:
-- GTK4 CSS (desktop applications) - Primary target
-- Future: TypeScript, Kotlin, C implementations
-
-Features:
-- Follows established ProtoClientBuilder architecture
-- Intelligent dependency tracking and caching
-- Semantic token validation
-- GTK4-specific CSS generation
-- Theme-aware output (light/dark variants)
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-27
+@llm-type config.build
+@llm-does design token generation module following protoclientbuild...
+@llm-rule design tokens must be generated before ui compilation and provide consistent ...
 """
 
 import hashlib
@@ -69,14 +48,9 @@ from generators.gtk4_generator import GTK4CSSGenerator
 
 class DesignTokenBuilder(BuildModule):
     """
-    @llm-type build-module
-    @llm-legend Design token generation following ProtoClientBuilder architecture pattern
-    @llm-key Orchestrates GTK4 CSS generation from semantic YAML tokens with caching and validation
-    @llm-map Build module that generates design system artifacts with dependency tracking
-    @llm-axiom Design tokens serve as single source of truth for all styling decisions
-    @llm-contract Returns BuildModuleResult with generated design artifacts for specified platforms
-    @llm-token design-token-builder: Semantic design token generation with build system integration
-    """
+@llm-type config.build
+@llm-does design token generation following protoclientbuilder arch...
+"""
 
     def __init__(self, context: BuildContext):
         super().__init__(context)

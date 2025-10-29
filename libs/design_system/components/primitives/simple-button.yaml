@@ -1,12 +1,5 @@
-# Simple Button Component Specification
-# @llm-type component-specification
-# @llm-legend Minimal button component specification for testing component generation pipeline
-# @llm-key Simple interactive button with correct token references for validation testing
-# @llm-map Test component for validating component generation system
-# @llm-axiom Simple component specifications should validate without errors
-# @llm-contract Minimal button interface with proper token references and required fields
-# @llm-token simple-button: Test component for component generation validation
-
+# @llm-type component.spec
+# @llm-does minimal button component specification for testing component
 component:
   id: "simple-button"
   name: "Simple Button"

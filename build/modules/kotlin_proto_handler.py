@@ -1,32 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type proto-handler
-@llm-legend Kotlin protobuf client generation handler for JVM services and persistence platform
-@llm-key Generates Kotlin protobuf clients with gRPC support for JVM-based services and persistence layer
-@llm-map Kotlin language handler for the polyglot proto engine providing JVM gRPC client generation
-@llm-axiom Kotlin proto clients must integrate seamlessly with existing JVM services and provide coroutine support
-@llm-contract Implements ProtoLanguageHandler interface for Kotlin protobuf and gRPC client generation
-@llm-token kotlin-proto-handler: Kotlin protobuf client generation for JVM services and persistence platform
-
-Kotlin Protocol Buffer Client Handler
-
-Generates Kotlin protobuf clients for:
-- Persistence platform services
-- JVM-based microservices
-- Ktor web applications
-- Coroutine-based async services
-
-Features:
-- Kotlin protobuf generation
-- gRPC Kotlin stubs
-- Coroutine integration
-- Gradle build integration
-- Package organization
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does kotlin protobuf client generation handler for jvm
 """
 
 from pathlib import Path

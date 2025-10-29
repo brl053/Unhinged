@@ -1,0 +1,463 @@
+// ============================================================================
+// Audio Service Protocol Buffer Definition - DRY Refactored
+// ============================================================================
+//
+// @file audio.proto
+// @version 1.1.0
+// @author Unhinged Team
+// @date 2025-01-04
+// @description gRPC service definition for audio processing (TTS/STT)
+//
+// This service provides:
+// - Text-to-Speech (TTS) with streaming audio output
+// - Speech-to-Text (STT) with streaming audio input
+// - Voice management and configuration
+// - Audio format conversion and processing
+//
+// DRY Benefits:
+// - Uses common.proto for streaming, usage metrics, pagination
+// - Standardized error handling and health checks
+// - Universal attachment support for audio files
+// ============================================================================
+
+syntax = "proto3";
+
+package unhinged.audio.v1;
+
+import "common.proto";
+
+option java_package = "unhinged.audio";
+option java_multiple_files = true;
+option java_outer_classname = "AudioProto";
+
+// ============================================================================
+// Audio Service Definition
+// ============================================================================
+
+/**
+ * Audio processing service for TTS and STT operations
+ * 
+ * Uses common streaming patterns for consistent behavior
+ */
+service AudioService {
+  // Text-to-Speech (streaming audio output)
+  rpc TextToSpeech(TTSRequest) returns (stream common.v1.StreamChunk);  // ← DRY!
+  
+  // Speech-to-Text (streaming audio input)
+  rpc SpeechToText(stream common.v1.StreamChunk) returns (STTResponse);  // ← DRY!
+  
+  // Batch processing
+  rpc ProcessAudioFile(ProcessAudioRequest) returns (ProcessAudioResponse);
+  
+  // Voice management
+  rpc ListVoices(ListVoicesRequest) returns (ListVoicesResponse);
+  rpc GetVoice(GetVoiceRequest) returns (GetVoiceResponse);
+  rpc CreateCustomVoice(CreateCustomVoiceRequest) returns (CreateCustomVoiceResponse);
+  
+  // Audio utilities
+  rpc ConvertAudioFormat(ConvertAudioRequest) returns (ConvertAudioResponse);
+  rpc AnalyzeAudio(AnalyzeAudioRequest) returns (AnalyzeAudioResponse);
+  
+  // Standard health check
+  rpc HealthCheck(common.v1.HealthCheckRequest) returns (common.v1.HealthCheckResponse);  // ← DRY!
+}
+
+// ============================================================================
+// Core Message Types
+// ============================================================================
+
+/**
+ * Text-to-Speech request
+ */
+message TTSRequest {
+  string text = 1;
+  string voice_id = 2;
+  AudioOptions options = 3;
+  
+  // Output configuration
+  AudioFormat output_format = 4;
+  int32 sample_rate = 5;
+  int32 channels = 6;
+  
+  // Processing options
+  bool enable_ssml = 7;             // Support SSML markup
+  repeated AudioEffect effects = 8;  // Audio effects to apply
+}
+
+/**
+ * Speech-to-Text response
+ */
+message STTResponse {
+  common.v1.StandardResponse response = 1;  // ← DRY!
+  
+  string transcript = 2;
+  float confidence = 3;
+  repeated TranscriptSegment segments = 4;
+  
+  common.v1.AudioUsage usage = 5;           // ← DRY! (duration, bytes, etc.)
+  STTMetadata metadata = 6;
+}
+
+/**
+ * Audio processing options
+ */
+message AudioOptions {
+  float speed = 1;                  // 0.25 to 4.0 (playback speed)
+  float pitch = 2;                  // -20 to 20 semitones
+  float volume = 3;                 // 0.0 to 2.0 (volume multiplier)
+  
+  // Quality settings
+  AudioQuality quality = 4;
+  bool enable_noise_reduction = 5;
+  bool enable_echo_cancellation = 6;
+}
+
+/**
+ * Audio quality levels
+ */
+enum AudioQuality {
+  AUDIO_QUALITY_UNSPECIFIED = 0;
+  AUDIO_QUALITY_LOW = 1;            // 16kHz, compressed
+  AUDIO_QUALITY_STANDARD = 2;       // 22kHz, balanced
+  AUDIO_QUALITY_HIGH = 3;           // 44kHz, high quality
+  AUDIO_QUALITY_PREMIUM = 4;        // 48kHz, studio quality
+}
+
+/**
+ * Audio format specification
+ */
+enum AudioFormat {
+  AUDIO_FORMAT_UNSPECIFIED = 0;
+  AUDIO_FORMAT_WAV = 1;             // Uncompressed WAV
+  AUDIO_FORMAT_MP3 = 2;             // MP3 compressed
+  AUDIO_FORMAT_OGG = 3;             // OGG Vorbis
+  AUDIO_FORMAT_FLAC = 4;            // Lossless FLAC
+  AUDIO_FORMAT_PCM = 5;             // Raw PCM data
+  AUDIO_FORMAT_OPUS = 6;            // Opus codec (low latency)
+  AUDIO_FORMAT_AAC = 7;             // AAC compressed
+}
+
+/**
+ * Audio effects that can be applied
+ */
+message AudioEffect {
+  AudioEffectType type = 1;
+  float intensity = 2;              // 0.0 to 1.0
+  map<string, string> parameters = 3;
+}
+
+/**
+ * Available audio effects
+ */
+enum AudioEffectType {
+  AUDIO_EFFECT_TYPE_UNSPECIFIED = 0;
+  AUDIO_EFFECT_TYPE_REVERB = 1;
+  AUDIO_EFFECT_TYPE_ECHO = 2;
+  AUDIO_EFFECT_TYPE_CHORUS = 3;
+  AUDIO_EFFECT_TYPE_DISTORTION = 4;
+  AUDIO_EFFECT_TYPE_NORMALIZE = 5;
+  AUDIO_EFFECT_TYPE_COMPRESSOR = 6;
+}
+
+/**
+ * Transcript segment with timing information
+ */
+message TranscriptSegment {
+  string text = 1;
+  float start_time = 2;             // Seconds from start
+  float end_time = 3;               // Seconds from start
+  float confidence = 4;             // 0.0 to 1.0
+  
+  repeated WordTiming words = 5;    // Word-level timing (optional)
+  string speaker_id = 6;            // Speaker identification (if available)
+}
+
+/**
+ * Word-level timing information
+ */
+message WordTiming {
+  string word = 1;
+  float start_time = 2;
+  float end_time = 3;
+  float confidence = 4;
+}
+
+/**
+ * STT processing metadata
+ */
+message STTMetadata {
+  string model = 1;
+  string language = 2;              // Detected or specified language
+  float processing_time_ms = 3;
+  
+  // Audio analysis
+  float signal_to_noise_ratio = 4;
+  float speech_rate_wpm = 5;        // Words per minute
+  repeated string detected_languages = 6;
+  
+  // Quality metrics
+  bool has_background_noise = 7;
+  bool has_multiple_speakers = 8;
+  AudioQuality detected_quality = 9;
+}
+
+/**
+ * Voice definition for TTS
+ */
+message Voice {
+  common.v1.ResourceMetadata metadata = 1;  // ← DRY! (id, timestamps, etc.)
+  
+  string name = 2;
+  string display_name = 3;
+  string description = 4;
+  
+  string language = 5;
+  string language_code = 6;         // ISO 639-1 code
+  VoiceGender gender = 7;
+  VoiceAge age = 8;
+  VoiceStyle style = 9;
+  
+  // Technical specifications
+  repeated AudioFormat supported_formats = 10;
+  repeated int32 supported_sample_rates = 11;
+  
+  // Availability and pricing
+  bool is_available = 12;
+  bool is_premium = 13;
+  float cost_per_character = 14;    // USD per character
+  
+  // Preview
+  string preview_url = 15;
+  string preview_text = 16;
+}
+
+/**
+ * Voice gender classification
+ */
+enum VoiceGender {
+  VOICE_GENDER_UNSPECIFIED = 0;
+  VOICE_GENDER_MALE = 1;
+  VOICE_GENDER_FEMALE = 2;
+  VOICE_GENDER_NEUTRAL = 3;
+  VOICE_GENDER_CHILD = 4;
+}
+
+/**
+ * Voice age classification
+ */
+enum VoiceAge {
+  VOICE_AGE_UNSPECIFIED = 0;
+  VOICE_AGE_CHILD = 1;              // Under 18
+  VOICE_AGE_YOUNG_ADULT = 2;        // 18-30
+  VOICE_AGE_ADULT = 3;              // 30-50
+  VOICE_AGE_SENIOR = 4;             // Over 50
+}
+
+/**
+ * Voice style and personality
+ */
+enum VoiceStyle {
+  VOICE_STYLE_UNSPECIFIED = 0;
+  VOICE_STYLE_CONVERSATIONAL = 1;   // Natural, casual
+  VOICE_STYLE_PROFESSIONAL = 2;     // Business, formal
+  VOICE_STYLE_FRIENDLY = 3;         // Warm, approachable
+  VOICE_STYLE_AUTHORITATIVE = 4;    // Confident, commanding
+  VOICE_STYLE_CALM = 5;             // Soothing, relaxed
+  VOICE_STYLE_ENERGETIC = 6;        // Upbeat, enthusiastic
+  VOICE_STYLE_DRAMATIC = 7;         // Expressive, theatrical
+}
+
+// ============================================================================
+// Streaming Payload Types
+// ============================================================================
+
+/**
+ * TTS audio chunk payload
+ * Used with common.v1.StreamChunk.data field for binary audio
+ */
+message TTSChunkPayload {
+  string tts_id = 1;
+  AudioMetadata audio_metadata = 2;
+  int32 chunk_index = 3;
+  float progress_percent = 4;       // 0.0 to 100.0
+}
+
+/**
+ * STT audio input payload
+ * Used with common.v1.StreamChunk.data field for binary audio input
+ */
+message STTChunkPayload {
+  string stt_id = 1;
+  AudioMetadata audio_metadata = 2;
+  bool is_final_chunk = 3;
+}
+
+/**
+ * Audio metadata for streaming
+ */
+message AudioMetadata {
+  AudioFormat format = 1;
+  int32 sample_rate = 2;
+  int32 channels = 3;
+  int32 bit_depth = 4;
+  float duration_seconds = 5;
+  int64 total_bytes = 6;
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+message ProcessAudioRequest {
+  common.v1.Attachment audio_file = 1;      // ← DRY! (universal attachment)
+  ProcessingType processing_type = 2;
+  AudioOptions options = 3;
+}
+
+enum ProcessingType {
+  PROCESSING_TYPE_UNSPECIFIED = 0;
+  PROCESSING_TYPE_TRANSCRIBE = 1;
+  PROCESSING_TYPE_TRANSLATE = 2;
+  PROCESSING_TYPE_ENHANCE = 3;
+  PROCESSING_TYPE_CONVERT = 4;
+}
+
+message ProcessAudioResponse {
+  common.v1.StandardResponse response = 1;  // ← DRY!
+  
+  oneof result {
+    string transcript = 2;          // For transcription
+    string translation = 3;         // For translation
+    common.v1.Attachment enhanced_audio = 4;  // ← DRY! For enhancement
+    common.v1.Attachment converted_audio = 5; // ← DRY! For conversion
+  }
+  
+  common.v1.AudioUsage usage = 6;           // ← DRY!
+}
+
+message ListVoicesRequest {
+  string language = 1;
+  VoiceGender gender = 2;
+  VoiceStyle style = 3;
+  bool premium_only = 4;
+  common.v1.PaginationRequest pagination = 5;  // ← DRY!
+  repeated common.v1.Filter filters = 6;       // ← DRY!
+}
+
+message ListVoicesResponse {
+  common.v1.StandardResponse response = 1;     // ← DRY!
+  repeated Voice voices = 2;
+  common.v1.PaginationResponse pagination = 3; // ← DRY!
+}
+
+message GetVoiceRequest {
+  string voice_id = 1;
+  bool include_preview = 2;
+}
+
+message GetVoiceResponse {
+  common.v1.StandardResponse response = 1;  // ← DRY!
+  Voice voice = 2;
+}
+
+message CreateCustomVoiceRequest {
+  string name = 1;
+  string description = 2;
+  repeated common.v1.Attachment training_samples = 3;  // ← DRY!
+  VoiceGender target_gender = 4;
+  VoiceStyle target_style = 5;
+}
+
+message CreateCustomVoiceResponse {
+  common.v1.StandardResponse response = 1;  // ← DRY!
+  Voice voice = 2;
+  string training_job_id = 3;       // For tracking training progress
+}
+
+message ConvertAudioRequest {
+  common.v1.Attachment input_audio = 1;     // ← DRY!
+  AudioFormat target_format = 2;
+  int32 target_sample_rate = 3;
+  AudioOptions options = 4;
+}
+
+message ConvertAudioResponse {
+  common.v1.StandardResponse response = 1;  // ← DRY!
+  common.v1.Attachment converted_audio = 2; // ← DRY!
+  common.v1.AudioUsage usage = 3;           // ← DRY!
+}
+
+message AnalyzeAudioRequest {
+  common.v1.Attachment audio_file = 1;      // ← DRY!
+  repeated AnalysisType analysis_types = 2;
+}
+
+enum AnalysisType {
+  ANALYSIS_TYPE_UNSPECIFIED = 0;
+  ANALYSIS_TYPE_SPEECH_DETECTION = 1;
+  ANALYSIS_TYPE_LANGUAGE_DETECTION = 2;
+  ANALYSIS_TYPE_SPEAKER_IDENTIFICATION = 3;
+  ANALYSIS_TYPE_EMOTION_DETECTION = 4;
+  ANALYSIS_TYPE_QUALITY_ASSESSMENT = 5;
+}
+
+message AnalyzeAudioResponse {
+  common.v1.StandardResponse response = 1;  // ← DRY!
+  AudioAnalysis analysis = 2;
+  common.v1.AudioUsage usage = 3;           // ← DRY!
+}
+
+message AudioAnalysis {
+  // Speech detection
+  bool contains_speech = 1;
+  float speech_percentage = 2;
+  repeated SpeechSegment speech_segments = 3;
+  
+  // Language detection
+  repeated LanguageDetection detected_languages = 4;
+  
+  // Speaker identification
+  int32 speaker_count = 5;
+  repeated SpeakerSegment speaker_segments = 6;
+  
+  // Emotion detection
+  repeated EmotionSegment emotion_segments = 7;
+  
+  // Quality assessment
+  AudioQualityMetrics quality_metrics = 8;
+}
+
+message SpeechSegment {
+  float start_time = 1;
+  float end_time = 2;
+  float confidence = 3;
+}
+
+message LanguageDetection {
+  string language = 1;
+  string language_code = 2;
+  float confidence = 3;
+}
+
+message SpeakerSegment {
+  string speaker_id = 1;
+  float start_time = 2;
+  float end_time = 3;
+  float confidence = 4;
+}
+
+message EmotionSegment {
+  string emotion = 1;              // "happy", "sad", "angry", "neutral", etc.
+  float start_time = 2;
+  float end_time = 3;
+  float confidence = 4;
+  float intensity = 5;             // 0.0 to 1.0
+}
+
+message AudioQualityMetrics {
+  float signal_to_noise_ratio = 1;
+  float dynamic_range = 2;
+  bool has_clipping = 3;
+  bool has_background_noise = 4;
+  float overall_quality_score = 5; // 0.0 to 1.0
+}

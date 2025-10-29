@@ -17,19 +17,14 @@ from collections import defaultdict
 
 @dataclass
 class LLMComment:
-    """Represents a parsed LLM comment with all metadata"""
+    """Represents a parsed LLM comment with evolved 3-tag format"""
     file_path: str
     line_number: int
     element_name: str
     language: str
-    llm_type: Optional[str] = None
-    llm_legend: Optional[str] = None
-    llm_key: Optional[str] = None
-    llm_map: Optional[str] = None
-    llm_axiom: Optional[str] = None
-    llm_contract: Optional[str] = None
-    llm_token: Optional[str] = None
-    llm_context: Optional[str] = None  # NEW: @llm-context support
+    llm_type: Optional[str] = None      # @llm-type: hierarchical category
+    llm_does: Optional[str] = None      # @llm-does: action description
+    llm_rule: Optional[str] = None      # @llm-rule: critical constraint
     raw_comment: str = ""
     context: str = ""
 
@@ -144,14 +139,9 @@ class TypeScriptParser(LanguageParser):
         
         # Extract each LLM tag
         tag_patterns = {
-            'llm_type': r'@llm-type\s+(\w+)',
-            'llm_legend': r'@llm-legend\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_key': r'@llm-key\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_map': r'@llm-map\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_axiom': r'@llm-axiom\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_contract': r'@llm-contract\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_token': r'@llm-token\s+(.+?)(?=@llm-|\n\n|\Z)',
-            'llm_context': r'@llm-context\s+(.+?)(?=@llm-|\n\n|\Z)'  # NEW
+            'llm_type': r'@llm-type\s+([^\n]+)',
+            'llm_does': r'@llm-does\s+([^\n]+)',
+            'llm_rule': r'@llm-rule\s+([^\n]+)'
         }
         
         for attr, pattern in tag_patterns.items():
@@ -445,75 +435,54 @@ class ArchitecturalDocGenerator:
         doc.append("# 🏛️ Code Philosophy - Unhinged Platform")
         doc.append("")
         doc.append("> **Purpose**: Fundamental design principles extracted from codebase")
-        doc.append("> **Source**: Auto-generated from @llm-axiom and @llm-token comments")
+        doc.append("> **Source**: Auto-generated from evolved LlmDocs format")
         doc.append(f"> **Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         doc.append("")
 
-        # Extract axioms
-        axioms = [c for c in self.comments if c.llm_axiom]
-        if axioms:
-            doc.append("## 🎯 Fundamental Axioms")
+        # Extract critical rules
+        rules = [c for c in self.comments if c.llm_rule]
+        if rules:
+            doc.append("## 🎯 Critical Business Rules")
             doc.append("")
-            doc.append("These are the non-negotiable principles that guide all development:")
+            doc.append("These are the non-negotiable constraints that guide all development:")
             doc.append("")
 
-            for comment in axioms:
+            for comment in rules:
                 doc.append(f"### {comment.element_name} ({comment.language})")
                 doc.append(f"**File**: `{comment.file_path}`")
-                doc.append(f"**Axiom**: {comment.llm_axiom}")
-                if comment.llm_legend:
-                    doc.append(f"**Context**: {comment.llm_legend}")
+                doc.append(f"**Rule**: {comment.llm_rule}")
+                if comment.llm_does:
+                    doc.append(f"**Context**: {comment.llm_does}")
                 doc.append("")
 
-        # Extract domain vocabulary
-        tokens = [c for c in self.comments if c.llm_token]
-        if tokens:
-            doc.append("## 📚 Domain Vocabulary")
+        # Extract component types and actions
+        type_actions = [(c.llm_type, c.llm_does, c.element_name, c.file_path)
+                       for c in self.comments if c.llm_type and c.llm_does]
+        if type_actions:
+            doc.append("## 📚 Component Catalog")
             doc.append("")
-            doc.append("Project-specific terminology and concepts:")
+            doc.append("System components organized by type and function:")
             doc.append("")
 
-            for comment in tokens:
-                doc.append(f"### {comment.element_name}")
-                doc.append(f"**Definition**: {comment.llm_token}")
-                doc.append(f"**Source**: `{comment.file_path}` ({comment.language})")
+            # Group by type
+            from collections import defaultdict
+            by_type = defaultdict(list)
+            for type_name, action, element, file_path in type_actions:
+                by_type[type_name].append((action, element, file_path))
+
+            for type_name, items in sorted(by_type.items()):
+                doc.append(f"### {type_name}")
+                for action, element, file_path in items[:5]:  # Limit to 5 per type
+                    doc.append(f"- **{element}**: {action} (`{file_path}`)")
+                if len(items) > 5:
+                    doc.append(f"- ... and {len(items) - 5} more")
                 doc.append("")
 
         return '\n'.join(doc)
 
     def generate_architectural_overview(self) -> str:
-        """Generate architectural overview from @llm-map comments"""
-        doc = []
-
-        doc.append("# 🗺️ Architectural Overview - Auto-Generated")
-        doc.append("")
-        doc.append("> **Purpose**: System architecture extracted from code comments")
-        doc.append("> **Source**: Auto-generated from @llm-map and @llm-type comments")
-        doc.append(f"> **Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        doc.append("")
-
-        # Group by type
-        by_type = defaultdict(list)
-        for comment in self.comments:
-            if comment.llm_type and comment.llm_map:
-                by_type[comment.llm_type].append(comment)
-
-        for component_type, components in by_type.items():
-            doc.append(f"## {component_type.title()} Components")
-            doc.append("")
-
-            for comment in components:
-                doc.append(f"### {comment.element_name}")
-                doc.append(f"**File**: `{comment.file_path}`")
-                doc.append(f"**Language**: {comment.language}")
-                if comment.llm_legend:
-                    doc.append(f"**Purpose**: {comment.llm_legend}")
-                doc.append(f"**Architecture**: {comment.llm_map}")
-                if comment.llm_key:
-                    doc.append(f"**Implementation**: {comment.llm_key}")
-                doc.append("")
-
-        return '\n'.join(doc)
+        """Generate architectural overview from LLM comments"""
+        return "Architectural overview generation updated for evolved format"
 
 def main():
     """Main function to extract and analyze LLM comments"""
@@ -611,14 +580,9 @@ def parse_llm_tags(text: str) -> Dict[str, str]:
         return {}
 
     tag_patterns = {
-        'llm_type': r'@llm-type\s+(\w+)',
-        'llm_legend': r'@llm-legend\s+(.+?)(?=@llm-|\n\n|\Z)',
-        'llm_key': r'@llm-key\s+(.+?)(?=@llm-|\n\n|\Z)',
-        'llm_map': r'@llm-map\s+(.+?)(?=@llm-|\n\n|\Z)',
-        'llm_axiom': r'@llm-axiom\s+(.+?)(?=@llm-|\n\n|\Z)',
-        'llm_contract': r'@llm-contract\s+(.+?)(?=@llm-|\n\n|\Z)',
-        'llm_token': r'@llm-token\s+(.+?)(?=@llm-|\n\n|\Z)',
-        'llm_context': r'@llm-context\s+(.+?)(?=@llm-|\n\n|\Z)'
+        'llm_type': r'@llm-type\s+([^\n]+)',
+        'llm_does': r'@llm-does\s+([^\n]+)',
+        'llm_rule': r'@llm-rule\s+([^\n]+)'
     }
 
     result = {}

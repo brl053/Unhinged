@@ -1,20 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type service
-@llm-legend Speech-to-Text gRPC server with health.proto implementation
-@llm-key Provides STT capabilities via gRPC with standardized health endpoints
-@llm-map gRPC server for speech-to-text service using health.proto compliance
-@llm-axiom Service must implement health.proto for service discovery and monitoring
-@llm-contract Provides speech transcription via gRPC API with health.proto compliance
-@llm-token stt-service: Speech-to-text with gRPC and health.proto
-
-Speech-to-Text gRPC Server - Proto-Compliant Implementation
-
-Provides Speech-to-Text (Whisper) capabilities with health.proto implementation:
-- STT processing: Whisper-based speech transcription
-- Health checks: Implements unhinged.health.v1.HealthService
-- Service discovery integration via health.proto
-- Whisper model management and CUDA optimization
+@llm-type service.api
+@llm-does speech-to-text grpc server with health.proto implementation
 """
 
 import os

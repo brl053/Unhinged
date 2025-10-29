@@ -1,21 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type validator
-@llm-legend Kotlin-specific validation for build patterns and code quality
-@llm-key Validates Kotlin files for proper build structure, dependencies, and Unhinged patterns
-@llm-map Language-specific validator that checks Kotlin/Gradle patterns and conventions
-@llm-axiom Kotlin validation must enforce centralized build patterns and proper structure
-@llm-contract Validates Kotlin files for build compliance, dependencies, and pattern adherence
-@llm-token kotlin-validator: Kotlin and Gradle pattern validation for centralized build system
-
-Kotlin Validator for Unhinged Monorepo
-
-Validates Kotlin-specific patterns:
-- Proper Gradle build structure
-- Dependency management patterns
-- Package structure and naming
-- Integration with centralized build system
-- Proto client generation compliance
+@llm-type util.validator
+@llm-does kotlin-specific validation for build patterns and code
 """
 
 import re
@@ -25,10 +11,9 @@ from ..validators.polyglot_validator import BaseValidator, ValidationResult
 
 class KotlinValidator(BaseValidator):
     """
-    @llm-type validator
-    @llm-legend Kotlin-specific validation for build patterns and code structure
-    @llm-key Validates Kotlin files for proper build integration and patterns
-    """
+@llm-type util.validator
+@llm-does kotlin-specific validation for build patterns and code
+"""
     
     def get_file_patterns(self) -> List[str]:
         return ["*.kt", "*.kts", "build.gradle*", "settings.gradle*"]

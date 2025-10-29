@@ -1,31 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type virtualization-boundary
-@llm-legend HTTP proxy server that represents the line-in-the-sand between Unhinged System Commands and host OS operations
-@llm-key Temporary shim server that will evolve into the primary interface for Unhinged OS virtualization layer
-@llm-map This server is the future kernel interface - every endpoint here represents a system call in Unhinged OS
-@llm-axiom This is where Unhinged abstractions meet raw system operations - design with future OS in mind
-@llm-contract Provides HTTP interface for system operations while maintaining audit trail for future OS development
-@llm-token virtualization-proxy: The foundational HTTP layer that will become the Unhinged OS system call interface
-@llm-evolution Every endpoint added here is a candidate for a future Unhinged OS system call or kernel operation
-
-ARCHITECTURAL VISION:
-This proxy server represents the exact boundary where Unhinged will eventually replace the host OS.
-Current: HTML → HTTP Proxy → System Controller → Build System → Docker → Host OS
-Future:  HTML → HTTP Proxy → System Controller → Unhinged Kernel → Unhinged Hardware Abstraction
-
-VIRTUALIZATION ROADMAP:
-1. Phase 1 (Current): HTTP shim over existing build system
-2. Phase 2: Direct container orchestration bypassing Docker
-3. Phase 3: Custom process management and resource allocation  
-4. Phase 4: Hardware abstraction layer
-5. Phase 5: Full Unhinged OS with custom kernel
-
-DESIGN PRINCIPLES:
-- Every HTTP endpoint maps to a future OS system call
-- All operations must be auditable for OS development insights
-- Resource management patterns here inform future kernel design
-- Security model here becomes the foundation for OS security
+@llm-type misc.virtualization-boundary
+@llm-does http proxy server that represents the line-in-the-sand
 """
 
 import asyncio

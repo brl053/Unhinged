@@ -1,26 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Dual-system desktop application build module for CI/CD integration
-@llm-key Builds and packages the enhanced GTK4 desktop application with conversation CLI integration
-@llm-map Build module that creates distribution packages for the dual-system architecture
-@llm-axiom Desktop application must include all dual-system components and be ready for immediate deployment
-@llm-contract Returns BuildModuleResult with desktop application packages and conversation CLI integration
-@llm-token dual-system-builder: Build module for dual-system desktop application packaging
-
-Dual-System Desktop Application Build Module
-
-Provides comprehensive build and packaging for the dual-system architecture:
-- Enhanced GTK4 desktop application with conversation interface
-- Conversation CLI integration and packaging
-- Native C graphics dependency validation
-- Distribution package creation (DEB, AppImage, installation guides)
-- CI/CD integration for automated deployment
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-26
+@llm-type service.api
+@llm-does dual-system desktop application build module for ci/cd
 """
 
 import os

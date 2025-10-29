@@ -1,0 +1,391 @@
+syntax = "proto3";
+
+package unhinged.persistence;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/any.proto";
+
+// ============================================================================
+// Persistence Platform API v1.0.0
+// ============================================================================
+//
+// @version 1.0.0
+// @author Unhinged Team
+// @date 2025-10-19
+// @description Unified persistence platform abstracting multiple database technologies
+// @breaking false
+//
+// This schema provides a unified persistence API over multiple database technologies:
+// - Redis (caching, sessions)
+// - CockroachDB (distributed SQL)
+// - MongoDB (document store)
+// - Weaviate (vector database)
+// - Elasticsearch (search & analytics)
+// - Cassandra (wide-column store)
+// - Neo4j (graph database)
+// - Data Lake (OLAP warehouse)
+//
+// The platform provides:
+// - Unified CRUD operations across all technologies
+// - Named query execution with caching
+// - Vector search and semantic operations
+// - Graph traversal and relationship queries
+// - Complex operation orchestration
+// - Data lifecycle management
+// ============================================================================
+
+// Core execution context for all operations
+message ExecutionContext {
+  string request_id = 1;
+  string user_id = 2;
+  string session_id = 3;
+  string trace_id = 4;
+  string span_id = 5;
+  google.protobuf.Timestamp timestamp = 6;
+  google.protobuf.Struct metadata = 7;
+}
+
+// Generic record structure
+message Record {
+  string id = 1;
+  google.protobuf.Struct data = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string version = 5;
+}
+
+// Query criteria
+message QueryCriteria {
+  oneof criteria {
+    EqualsFilter equals = 1;
+    GreaterThanFilter greater_than = 2;
+    LessThanFilter less_than = 3;
+    InFilter in_filter = 4;
+    RangeFilter range = 5;
+    TextSearchFilter text_search = 6;
+    VectorSearchFilter vector_search = 7;
+    AndFilter and_filter = 8;
+    OrFilter or_filter = 9;
+  }
+}
+
+message EqualsFilter {
+  string field = 1;
+  google.protobuf.Any value = 2;
+}
+
+message GreaterThanFilter {
+  string field = 1;
+  google.protobuf.Any value = 2;
+}
+
+message LessThanFilter {
+  string field = 1;
+  google.protobuf.Any value = 2;
+}
+
+message InFilter {
+  string field = 1;
+  repeated google.protobuf.Any values = 2;
+}
+
+message RangeFilter {
+  string field = 1;
+  google.protobuf.Any min_value = 2;
+  google.protobuf.Any max_value = 3;
+}
+
+message TextSearchFilter {
+  repeated string fields = 1;
+  string query = 2;
+  string analyzer = 3;
+}
+
+message VectorSearchFilter {
+  string field = 1;
+  repeated float query_vector = 2;
+  int32 limit = 3;
+  double threshold = 4;
+  string distance_metric = 5;
+}
+
+message AndFilter {
+  repeated QueryCriteria filters = 1;
+}
+
+message OrFilter {
+  repeated QueryCriteria filters = 1;
+}
+
+// Order by specification
+message OrderBy {
+  string field = 1;
+  bool ascending = 2;
+}
+
+// Query specification
+message QuerySpec {
+  string table_name = 1;
+  QueryType query_type = 2;
+  QueryCriteria criteria = 3;
+  repeated string projections = 4;
+  repeated OrderBy order_by = 5;
+  int32 limit = 6;
+  int32 offset = 7;
+}
+
+enum QueryType {
+  POINT_LOOKUP = 0;
+  RANGE_SCAN = 1;
+  FULL_TEXT_SEARCH = 2;
+  VECTOR_SIMILARITY = 3;
+  GRAPH_TRAVERSAL = 4;
+  AGGREGATION = 5;
+  TIME_SERIES = 6;
+  GEOSPATIAL = 7;
+  DOCUMENT_QUERY = 8;
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+// CRUD Operations
+message InsertRequest {
+  string table_name = 1;
+  Record record = 2;
+  ExecutionContext context = 3;
+}
+
+message InsertResponse {
+  bool success = 1;
+  Record record = 2;
+  string error_message = 3;
+  int64 execution_time_ms = 4;
+}
+
+message InsertBatchRequest {
+  string table_name = 1;
+  repeated Record records = 2;
+  ExecutionContext context = 3;
+}
+
+message InsertBatchResponse {
+  bool success = 1;
+  repeated Record records = 2;
+  int32 inserted_count = 3;
+  string error_message = 4;
+  int64 execution_time_ms = 5;
+}
+
+message UpdateRequest {
+  string table_name = 1;
+  string id = 2;
+  google.protobuf.Struct updates = 3;
+  ExecutionContext context = 4;
+}
+
+message UpdateResponse {
+  bool success = 1;
+  Record record = 2;
+  string error_message = 3;
+  int64 execution_time_ms = 4;
+}
+
+message DeleteRequest {
+  string table_name = 1;
+  QueryCriteria criteria = 2;
+  ExecutionContext context = 3;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  int64 deleted_count = 2;
+  string error_message = 3;
+  int64 execution_time_ms = 4;
+}
+
+// Query Operations
+message ExecuteQueryRequest {
+  string query_name = 1;
+  google.protobuf.Struct parameters = 2;
+  ExecutionContext context = 3;
+}
+
+message ExecuteQueryResponse {
+  bool success = 1;
+  repeated Record results = 2;
+  int32 count = 3;
+  string error_message = 4;
+  int64 execution_time_ms = 5;
+  bool from_cache = 6;
+}
+
+message ExecuteRawQueryRequest {
+  QuerySpec query_spec = 1;
+  ExecutionContext context = 2;
+}
+
+message ExecuteRawQueryResponse {
+  bool success = 1;
+  repeated Record results = 2;
+  int32 count = 3;
+  string error_message = 4;
+  int64 execution_time_ms = 5;
+}
+
+// Vector Operations
+message VectorSearchRequest {
+  string table_name = 1;
+  repeated float query_vector = 2;
+  int32 limit = 3;
+  double threshold = 4;
+  string distance_metric = 5;
+  ExecutionContext context = 6;
+}
+
+message VectorSearchResponse {
+  bool success = 1;
+  repeated VectorSearchResult results = 2;
+  string error_message = 3;
+  int64 execution_time_ms = 4;
+}
+
+message VectorSearchResult {
+  Record record = 1;
+  double similarity_score = 2;
+  double distance = 3;
+}
+
+// Graph Operations
+message GraphTraverseRequest {
+  string table_name = 1;
+  string start_node = 2;
+  GraphTraversalSpec traversal_spec = 3;
+  ExecutionContext context = 4;
+}
+
+message GraphTraverseResponse {
+  bool success = 1;
+  repeated GraphNode nodes = 2;
+  repeated GraphEdge edges = 3;
+  string error_message = 4;
+  int64 execution_time_ms = 5;
+}
+
+message GraphTraversalSpec {
+  GraphTraversalType traversal_type = 1;
+  int32 max_depth = 2;
+  repeated string relationship_types = 3;
+  QueryCriteria node_filter = 4;
+  QueryCriteria edge_filter = 5;
+}
+
+enum GraphTraversalType {
+  BREADTH_FIRST = 0;
+  DEPTH_FIRST = 1;
+  SHORTEST_PATH = 2;
+  ALL_PATHS = 3;
+}
+
+message GraphNode {
+  string id = 1;
+  string label = 2;
+  google.protobuf.Struct properties = 3;
+}
+
+message GraphEdge {
+  string id = 1;
+  string source_id = 2;
+  string target_id = 3;
+  string relationship_type = 4;
+  google.protobuf.Struct properties = 5;
+}
+
+// Complex Operations
+message ExecuteOperationRequest {
+  string operation_name = 1;
+  google.protobuf.Struct parameters = 2;
+  ExecutionContext context = 3;
+}
+
+message ExecuteOperationResponse {
+  bool success = 1;
+  google.protobuf.Any result = 2;
+  string error_message = 3;
+  int64 execution_time_ms = 4;
+  repeated string affected_tables = 5;
+}
+
+// Health and Status
+message HealthCheckRequest {
+  bool include_details = 1;
+}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string version = 2;
+  int64 uptime_seconds = 3;
+  repeated TechnologyHealth technology_health = 4;
+}
+
+message TechnologyHealth {
+  string technology = 1;
+  bool healthy = 2;
+  string status = 3;
+  int64 response_time_ms = 4;
+  string error_message = 5;
+}
+
+// Platform Information
+message GetPlatformInfoRequest {}
+
+message GetPlatformInfoResponse {
+  string platform_name = 1;
+  string version = 2;
+  repeated string supported_technologies = 3;
+  repeated string supported_features = 4;
+  google.protobuf.Struct configuration = 5;
+}
+
+// Metrics
+message GetMetricsRequest {
+  string format = 1; // "prometheus", "json"
+}
+
+message GetMetricsResponse {
+  string format = 1;
+  string metrics_data = 2;
+  google.protobuf.Timestamp collected_at = 3;
+}
+
+// ============================================================================
+// Service Definition
+// ============================================================================
+
+service PersistencePlatformService {
+  // CRUD Operations
+  rpc Insert(InsertRequest) returns (InsertResponse);
+  rpc InsertBatch(InsertBatchRequest) returns (InsertBatchResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  
+  // Query Operations
+  rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse);
+  rpc ExecuteRawQuery(ExecuteRawQueryRequest) returns (ExecuteRawQueryResponse);
+  
+  // Vector Operations
+  rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
+  
+  // Graph Operations
+  rpc GraphTraverse(GraphTraverseRequest) returns (GraphTraverseResponse);
+  
+  // Complex Operations
+  rpc ExecuteOperation(ExecuteOperationRequest) returns (ExecuteOperationResponse);
+  
+  // Platform Management
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc GetPlatformInfo(GetPlatformInfoRequest) returns (GetPlatformInfoResponse);
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+}

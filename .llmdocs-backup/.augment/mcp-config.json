@@ -1,0 +1,85 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/puyamoayer/projects/Unhinged"
+      ],
+      "description": "File system access for the Unhinged monorepo"
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "/Users/puyamoayer/projects/Unhinged"
+      ],
+      "description": "Git operations for version control"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-postgres",
+        "--connection-string",
+        "postgresql://postgres:postgres@localhost:5432/unhinged_db"
+      ],
+      "description": "PostgreSQL database access (when running locally)"
+    },
+    "docker": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-docker"
+      ],
+      "description": "Docker container management"
+    },
+    "web-search": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "description": "Web search capabilities for research and documentation",
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    }
+  },
+  "tools": {
+    "enabled": [
+      "filesystem",
+      "git",
+      "postgres",
+      "docker",
+      "web-search"
+    ],
+    "development": {
+      "auto_format": true,
+      "auto_lint": true,
+      "test_on_save": false
+    }
+  },
+  "project_context": {
+    "include_patterns": [
+      "**/*.kt",
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.sql",
+      "**/*.md",
+      "**/Dockerfile",
+      "**/docker-compose.yml",
+      "**/package.json",
+      "**/build.gradle.kts",
+      "**/settings.gradle.kts"
+    ],
+    "exclude_patterns": [
+      "**/node_modules/**",
+      "**/build/**",
+      "**/dist/**",
+      "**/target/**",
+      "**/.gradle/**",
+      "**/gradle/wrapper/**"
+    ]
+  }
+}

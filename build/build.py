@@ -1,31 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Main entry point for the Unhinged build system (v1)
-@llm-key Provides unified access to intelligent build orchestration with caching, parallelism, and AI assistance
-@llm-map Primary build system entry point with clean v1 interface
-@llm-axiom Build system must be simple, fast, and provide clear feedback
-@llm-contract Provides clean v1 interface for all build operations
-@llm-token build-v1: Main entry point for v1 build system
-
-Unhinged Build System (v1)
-
-Primary entry point for the consolidated build system with:
-- Intelligent caching and parallel execution
-- AI-powered development assistance
-- Performance monitoring and optimization
-- Clean, simple interface
-
-Usage:
-    python build/build.py build dev-fast        # Fast development build
-    python build/build.py status                # Show build status
-    python build/build.py list                  # List all targets
-    python build/build.py explain dev-fast      # Explain build target
-
-Author: Unhinged Team
-Version: 1.0.0 (Consolidated)
-Date: 2025-10-19
+@llm-type service.api
+@llm-does main entry point for the unhinged build
+@llm-rule build system must be simple, fast, and provide clear feedback
 """
 
 import sys

@@ -23,14 +23,10 @@ import java.time.Duration
 // Main Configuration
 // ==========================================================================
 
-/**
- * @llm-type config
- * @llm-legend Main persistence platform configuration loaded from YAML
- * @llm-key Root configuration object containing all platform settings and technology definitions
- * @llm-map Central configuration that drives all persistence platform behavior and routing decisions
- * @llm-axiom Configuration must be validated before platform initialization
- * @llm-contract Provides complete platform configuration including technologies, databases, and operations
- * @llm-token persistence-configuration: Complete platform configuration object
+/*
+ * @llm-type model.config
+ * @llm-does main persistence platform configuration loaded from yaml
+ * @llm-rule configuration must be validated before platform initialization
  */
 data class PersistenceConfiguration(
     val version: String,

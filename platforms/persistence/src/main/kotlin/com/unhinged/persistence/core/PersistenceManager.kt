@@ -21,14 +21,9 @@ import com.unhinged.persistence.config.PersistenceConfiguration
 import com.unhinged.persistence.model.*
 import kotlinx.coroutines.flow.Flow
 
-/**
- * @llm-type interface
- * @llm-legend Main persistence platform manager that provides unified access to all database technologies
- * @llm-key Abstracts database complexity behind single API, handles routing, caching, and lifecycle management
- * @llm-map Central orchestrator for all persistence operations across multiple database technologies
- * @llm-axiom All database operations must go through this interface to ensure consistency and observability
- * @llm-contract Provides technology-agnostic CRUD operations with automatic routing and optimization
- * @llm-token persistence-manager: Core interface for unified database access
+/*
+ * @llm-type misc.interface
+ * @llm-does main persistence platform manager that provides unified
  */
 interface PersistenceManager {
     

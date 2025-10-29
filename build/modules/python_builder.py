@@ -1,26 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Python build module with virtual environment management and dependency caching
-@llm-key Provides optimized Python builds with pip/poetry, virtual environments, and intelligent caching
-@llm-map Python build module that integrates with pip/poetry build systems and provides enhanced caching
-@llm-axiom Python builds must use isolated virtual environments and cache dependencies effectively
-@llm-contract Returns BuildModuleResult with Python package artifacts and build metrics
-@llm-token python-builder: pip/poetry-based build module for Python services
-
-Python Build Module
-
-Provides optimized builds for Python projects with:
-- Virtual environment management
-- Dependency caching
-- Package building
-- Test execution
-- Requirements analysis
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does python build module with virtual environment management
 """
 
 import os

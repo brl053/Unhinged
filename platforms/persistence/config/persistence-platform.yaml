@@ -1,38 +1,5 @@
-#
-# @llm-type platform
-# @llm-legend persistence-platform.yaml - platform infrastructure component
-# @llm-key Core functionality for persistence-platform
-# @llm-map Part of the Unhinged system architecture
-# @llm-axiom Maintains system independence and architectural compliance
-# @llm-contract Provides standardized interface for system integration
-# @llm-token persistence-platform: platform infrastructure component
-#
-# ============================================================================
-# Persistence Platform Configuration
-# ============================================================================
-#
-# @file persistence-platform.yaml
-# @version 2.1.0
-# @author Unhinged Team
-# @date 2025-10-19
-# @description Complete self-service persistence platform configuration
-#
-# This configuration enables declarative provisioning of databases, tables,
-# queries, and operations across multiple database technologies without
-# requiring infrastructure knowledge.
-#
-# Supported Technologies:
-# - Redis: High-performance caching and session storage
-# - CockroachDB: Distributed SQL for transactional data
-# - MongoDB: Document-oriented NoSQL for flexible schemas
-# - Weaviate: Vector database for AI/ML embeddings and semantic search
-# - Elasticsearch: Full-text search and analytics
-# - Cassandra: Wide-column store for time-series and high-write workloads
-# - Neo4j: Graph database for relationship modeling
-# - Data Lake: OLAP capabilities with Apache Iceberg
-#
-# ============================================================================
-
+# @llm-type config.app
+# @llm-does persistence-platform.yaml - platform infrastructure compo...
 persistence_platform:
   version: "2.1.0"
   

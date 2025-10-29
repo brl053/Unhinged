@@ -1,0 +1,877 @@
+// ============================================================================
+// Observability Events - CDC Integration Schema
+// ============================================================================
+//
+// @file observability.proto
+// @version 1.0.0
+// @author Unhinged Team
+// @date 2025-10-06
+// @description Protocol buffer definitions for observability events in CDC stream
+//
+// This schema extends our existing CDC event system to support OpenTelemetry
+// traces, metrics, and logs with proper context preservation and dual persistence
+// to both Kafka CDC stream and data lake storage.
+// ============================================================================
+
+syntax = "proto3";
+
+package unhinged.observability.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+import "common.proto";
+
+option java_package = "unhinged.observability";
+option java_multiple_files = true;
+option java_outer_classname = "ObservabilityProto";
+
+// ============================================================================
+// OpenTelemetry Context Preservation
+// ============================================================================
+
+/**
+ * OpenTelemetry trace context for correlation across services
+ */
+message TraceContext {
+  string trace_id = 1;           // OpenTelemetry trace ID (32 hex chars)
+  string span_id = 2;            // OpenTelemetry span ID (16 hex chars)
+  string parent_span_id = 3;     // Parent span ID for hierarchy
+  TraceFlags trace_flags = 4;    // Trace flags (sampled, etc.)
+  string trace_state = 5;        // W3C trace state for vendor data
+
+  // Additional context for correlation
+  string correlation_id = 10;    // Business correlation ID
+  string request_id = 11;        // Request-specific ID
+  string session_id = 12;        // User session ID
+  string user_id = 13;           // User identifier
+}
+
+/**
+ * OpenTelemetry trace flags
+ */
+message TraceFlags {
+  bool sampled = 1;              // Whether trace is sampled
+  bool random_trace_id = 2;      // Whether trace ID is random
+}
+
+/**
+ * Resource information for service identification
+ */
+message Resource {
+  string service_name = 1;       // Service name (e.g., "chat-service")
+  string service_version = 2;    // Service version
+  string service_instance_id = 3; // Instance identifier
+  string deployment_environment = 4; // Environment (dev/staging/prod)
+  string k8s_cluster_name = 5;   // Kubernetes cluster
+  string k8s_namespace = 6;      // Kubernetes namespace
+  string k8s_pod_name = 7;       // Pod name
+  string host_name = 8;          // Host name
+  string host_arch = 9;          // Host architecture
+
+  // Custom resource attributes
+  map<string, string> attributes = 20;
+}
+
+// ============================================================================
+// Log Events for CDC Stream
+// ============================================================================
+
+/**
+ * Log entry event for CDC stream integration
+ * Extends the existing CDC event pattern with observability data
+ */
+message LogEvent {
+  // Standard CDC event fields
+  string event_id = 1;           // Unique event identifier
+  google.protobuf.Timestamp timestamp = 2; // Event timestamp
+  string event_type = 3;         // Always "log_entry"
+  int64 sequence_number = 4;     // CDC sequence for ordering
+
+  // OpenTelemetry context
+  TraceContext trace_context = 5;
+  Resource resource = 6;
+
+  // Log entry data
+  LogLevel level = 10;           // Log level
+  string message = 11;           // Log message
+  google.protobuf.Struct metadata = 12; // Structured metadata
+
+  // Error information (if applicable)
+  ErrorInfo error = 15;
+
+  // Destination flags for dual persistence
+  DestinationFlags destinations = 20;
+
+  // Data lake partitioning hints
+  PartitionInfo partition_info = 25;
+}
+
+/**
+ * Log levels matching OpenTelemetry severity
+ */
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_TRACE = 1;
+  LOG_LEVEL_DEBUG = 2;
+  LOG_LEVEL_INFO = 3;
+  LOG_LEVEL_WARN = 4;
+  LOG_LEVEL_ERROR = 5;
+  LOG_LEVEL_FATAL = 6;
+}
+
+/**
+ * Error information for exception tracking
+ */
+message ErrorInfo {
+  string error_type = 1;         // Exception class name
+  string error_message = 2;      // Exception message
+  string stack_trace = 3;        // Full stack trace
+  string error_code = 4;         // Application error code
+  map<string, string> error_attributes = 5; // Additional error context
+}
+
+/**
+ * Destination flags for dual persistence routing
+ */
+message DestinationFlags {
+  bool console = 1;              // Output to console (C flag)
+  bool cdc_stream = 2;           // Persist to CDC stream (D flag)
+  bool data_lake = 3;            // Send to data lake (L flag)
+
+  // Data lake specific options
+  DataLakeOptions data_lake_options = 10;
+}
+
+/**
+ * Data lake storage options
+ */
+message DataLakeOptions {
+  string table_name = 1;         // Target table/dataset
+  string partition_strategy = 2; // Partitioning strategy
+  int32 batch_size = 3;          // Batching configuration
+  int32 flush_interval_seconds = 4; // Flush interval
+  CompressionType compression = 5; // Compression type
+}
+
+/**
+ * Compression types for data lake storage
+ */
+enum CompressionType {
+  COMPRESSION_UNSPECIFIED = 0;
+  COMPRESSION_NONE = 1;
+  COMPRESSION_GZIP = 2;
+  COMPRESSION_SNAPPY = 3;
+  COMPRESSION_LZ4 = 4;
+  COMPRESSION_ZSTD = 5;
+}
+
+/**
+ * Partitioning information for data lake optimization
+ */
+message PartitionInfo {
+  string date_partition = 1;     // Date-based partition (YYYY-MM-DD)
+  string hour_partition = 2;     // Hour-based partition (HH)
+  string service_partition = 3;  // Service-based partition
+  string level_partition = 4;    // Log level partition
+  map<string, string> custom_partitions = 10; // Custom partition keys
+}
+
+// ============================================================================
+// Trace Events for Distributed Tracing
+// ============================================================================
+
+/**
+ * Trace span event for CDC stream integration
+ * Represents a single operation within a distributed trace
+ */
+message TraceEvent {
+  // Standard CDC event fields
+  string event_id = 1;           // Unique event identifier
+  google.protobuf.Timestamp timestamp = 2; // Event timestamp
+  string event_type = 3;         // Always "trace_span"
+  int64 sequence_number = 4;     // CDC sequence for ordering
+
+  // OpenTelemetry context
+  TraceContext trace_context = 5;
+  Resource resource = 6;
+
+  // Span data
+  SpanData span = 10;
+
+  // Destination flags for dual persistence
+  DestinationFlags destinations = 20;
+
+  // Data lake partitioning hints
+  PartitionInfo partition_info = 25;
+}
+
+/**
+ * OpenTelemetry span data
+ */
+message SpanData {
+  string name = 1;               // Span name (operation name)
+  SpanKind kind = 2;             // Span kind (client, server, etc.)
+  google.protobuf.Timestamp start_time = 3; // Span start time
+  google.protobuf.Timestamp end_time = 4;   // Span end time
+  int64 duration_nanos = 5;      // Duration in nanoseconds
+
+  // Span status
+  SpanStatus status = 10;
+
+  // Span attributes (tags)
+  map<string, AttributeValue> attributes = 15;
+
+  // Span events (logs within span)
+  repeated SpanEvent events = 20;
+
+  // Span links (references to other spans)
+  repeated SpanLink links = 25;
+
+  // Instrumentation library info
+  InstrumentationLibrary instrumentation_library = 30;
+}
+
+/**
+ * OpenTelemetry span kinds
+ */
+enum SpanKind {
+  SPAN_KIND_UNSPECIFIED = 0;
+  SPAN_KIND_INTERNAL = 1;       // Internal operation
+  SPAN_KIND_SERVER = 2;         // Server-side operation
+  SPAN_KIND_CLIENT = 3;         // Client-side operation
+  SPAN_KIND_PRODUCER = 4;       // Message producer
+  SPAN_KIND_CONSUMER = 5;       // Message consumer
+}
+
+/**
+ * Span status information
+ */
+message SpanStatus {
+  StatusCode code = 1;           // Status code
+  string message = 2;            // Optional status message
+}
+
+/**
+ * OpenTelemetry status codes
+ */
+enum StatusCode {
+  STATUS_CODE_UNSET = 0;         // Default status
+  STATUS_CODE_OK = 1;            // Success
+  STATUS_CODE_ERROR = 2;         // Error occurred
+}
+
+/**
+ * Span event (log within a span)
+ */
+message SpanEvent {
+  google.protobuf.Timestamp timestamp = 1; // Event timestamp
+  string name = 2;               // Event name
+  map<string, AttributeValue> attributes = 3; // Event attributes
+}
+
+/**
+ * Span link (reference to another span)
+ */
+message SpanLink {
+  TraceContext trace_context = 1; // Linked span context
+  map<string, AttributeValue> attributes = 2; // Link attributes
+}
+
+/**
+ * Instrumentation library information
+ */
+message InstrumentationLibrary {
+  string name = 1;               // Library name
+  string version = 2;            // Library version
+  string schema_url = 3;         // Schema URL
+}
+
+/**
+ * Attribute value (supports multiple types)
+ */
+message AttributeValue {
+  oneof value {
+    string string_value = 1;
+    bool bool_value = 2;
+    int64 int_value = 3;
+    double double_value = 4;
+    bytes bytes_value = 5;
+    AttributeArray array_value = 6;
+    AttributeKeyValueList kvlist_value = 7;
+  }
+}
+
+/**
+ * Array of attribute values
+ */
+message AttributeArray {
+  repeated AttributeValue values = 1;
+}
+
+/**
+ * Key-value list of attributes
+ */
+message AttributeKeyValueList {
+  repeated AttributeKeyValue values = 1;
+}
+
+/**
+ * Key-value pair for attributes
+ */
+message AttributeKeyValue {
+  string key = 1;
+  AttributeValue value = 2;
+}
+
+// ============================================================================
+// Metric Events for Performance Monitoring
+// ============================================================================
+
+/**
+ * Metric event for CDC stream integration
+ * Represents performance metrics and measurements
+ */
+message MetricEvent {
+  // Standard CDC event fields
+  string event_id = 1;           // Unique event identifier
+  google.protobuf.Timestamp timestamp = 2; // Event timestamp
+  string event_type = 3;         // Always "metric_data"
+  int64 sequence_number = 4;     // CDC sequence for ordering
+
+  // OpenTelemetry context
+  TraceContext trace_context = 5;
+  Resource resource = 6;
+
+  // Metric data
+  MetricData metric = 10;
+
+  // Destination flags for dual persistence
+  DestinationFlags destinations = 20;
+
+  // Data lake partitioning hints
+  PartitionInfo partition_info = 25;
+}
+
+/**
+ * OpenTelemetry metric data
+ */
+message MetricData {
+  string name = 1;               // Metric name
+  string description = 2;        // Metric description
+  string unit = 3;               // Metric unit (e.g., "ms", "bytes", "1")
+
+  // Metric type and data
+  oneof data {
+    GaugeData gauge = 10;        // Gauge metric
+    CounterData counter = 11;    // Counter metric
+    HistogramData histogram = 12; // Histogram metric
+    SummaryData summary = 13;    // Summary metric
+  }
+
+  // Instrumentation library info
+  InstrumentationLibrary instrumentation_library = 20;
+}
+
+/**
+ * Gauge metric data (current value)
+ */
+message GaugeData {
+  repeated NumberDataPoint data_points = 1;
+}
+
+/**
+ * Counter metric data (monotonic sum)
+ */
+message CounterData {
+  repeated NumberDataPoint data_points = 1;
+  bool is_monotonic = 2;         // Whether counter is monotonic
+}
+
+/**
+ * Histogram metric data (distribution)
+ */
+message HistogramData {
+  repeated HistogramDataPoint data_points = 1;
+  AggregationTemporality aggregation_temporality = 2;
+}
+
+/**
+ * Summary metric data (quantiles)
+ */
+message SummaryData {
+  repeated SummaryDataPoint data_points = 1;
+}
+
+/**
+ * Number data point for gauge/counter metrics
+ */
+message NumberDataPoint {
+  map<string, AttributeValue> attributes = 1; // Metric labels
+  google.protobuf.Timestamp start_time = 2;   // Start time
+  google.protobuf.Timestamp time = 3;         // Measurement time
+
+  oneof value {
+    double as_double = 10;       // Double value
+    int64 as_int = 11;           // Integer value
+  }
+
+  repeated Exemplar exemplars = 20; // Associated exemplars
+}
+
+/**
+ * Histogram data point
+ */
+message HistogramDataPoint {
+  map<string, AttributeValue> attributes = 1; // Metric labels
+  google.protobuf.Timestamp start_time = 2;   // Start time
+  google.protobuf.Timestamp time = 3;         // Measurement time
+
+  uint64 count = 10;             // Total count
+  double sum = 11;               // Sum of all values
+  repeated double explicit_bounds = 12; // Bucket boundaries
+  repeated uint64 bucket_counts = 13;   // Bucket counts
+
+  repeated Exemplar exemplars = 20; // Associated exemplars
+}
+
+/**
+ * Summary data point
+ */
+message SummaryDataPoint {
+  map<string, AttributeValue> attributes = 1; // Metric labels
+  google.protobuf.Timestamp start_time = 2;   // Start time
+  google.protobuf.Timestamp time = 3;         // Measurement time
+
+  uint64 count = 10;             // Total count
+  double sum = 11;               // Sum of all values
+  repeated QuantileValue quantile_values = 12; // Quantile values
+}
+
+/**
+ * Quantile value for summary metrics
+ */
+message QuantileValue {
+  double quantile = 1;           // Quantile (0.0 to 1.0)
+  double value = 2;              // Value at quantile
+}
+
+/**
+ * Exemplar for linking metrics to traces
+ */
+message Exemplar {
+  map<string, AttributeValue> filtered_attributes = 1; // Filtered attributes
+  google.protobuf.Timestamp timestamp = 2; // Exemplar timestamp
+
+  oneof value {
+    double as_double = 10;       // Double value
+    int64 as_int = 11;           // Integer value
+  }
+
+  string span_id = 20;           // Associated span ID
+  string trace_id = 21;          // Associated trace ID
+}
+
+/**
+ * Aggregation temporality for metrics
+ */
+enum AggregationTemporality {
+  AGGREGATION_TEMPORALITY_UNSPECIFIED = 0;
+  AGGREGATION_TEMPORALITY_DELTA = 1;        // Delta aggregation
+  AGGREGATION_TEMPORALITY_CUMULATIVE = 2;   // Cumulative aggregation
+}
+
+// ============================================================================
+// Service Health and Status Monitoring
+// ============================================================================
+
+/**
+ * Service health event for status page integration
+ * Represents overall service health and dependencies
+ */
+message ServiceHealthEvent {
+  // Standard CDC event fields
+  string event_id = 1;           // Unique event identifier
+  google.protobuf.Timestamp timestamp = 2; // Event timestamp
+  string event_type = 3;         // Always "service_health"
+  int64 sequence_number = 4;     // CDC sequence for ordering
+
+  // Service identification
+  Resource resource = 5;
+
+  // Health data
+  ServiceHealth health = 10;
+
+  // Destination flags for dual persistence
+  DestinationFlags destinations = 20;
+
+  // Data lake partitioning hints
+  PartitionInfo partition_info = 25;
+}
+
+/**
+ * Service health status
+ */
+message ServiceHealth {
+  string service_name = 1;       // Service identifier
+  HealthStatus status = 2;       // Overall health status
+  string status_message = 3;     // Human-readable status message
+
+  // Health check details
+  repeated HealthCheck health_checks = 10;
+
+  // Service dependencies
+  repeated DependencyHealth dependencies = 15;
+
+  // Service Level Indicators (SLIs)
+  ServiceLevelIndicators slis = 20;
+
+  // System metrics
+  SystemMetrics system_metrics = 25;
+
+  // Uptime information
+  UptimeInfo uptime = 30;
+}
+
+/**
+ * Health status enumeration
+ */
+enum HealthStatus {
+  HEALTH_STATUS_UNKNOWN = 0;     // Unknown status
+  HEALTH_STATUS_HEALTHY = 1;     // Service is healthy
+  HEALTH_STATUS_DEGRADED = 2;    // Service is degraded
+  HEALTH_STATUS_UNHEALTHY = 3;   // Service is unhealthy
+  HEALTH_STATUS_MAINTENANCE = 4; // Service is in maintenance
+}
+
+/**
+ * Individual health check result
+ */
+message HealthCheck {
+  string name = 1;               // Health check name
+  HealthStatus status = 2;       // Check status
+  string message = 3;            // Check message
+  google.protobuf.Timestamp last_check = 4; // Last check time
+  int64 response_time_ms = 5;    // Response time in milliseconds
+  map<string, string> metadata = 10; // Additional check metadata
+}
+
+/**
+ * Dependency health status
+ */
+message DependencyHealth {
+  string name = 1;               // Dependency name
+  string type = 2;               // Dependency type (database, service, etc.)
+  HealthStatus status = 3;       // Dependency status
+  string endpoint = 4;           // Dependency endpoint
+  int64 response_time_ms = 5;    // Response time in milliseconds
+  string version = 6;            // Dependency version
+  google.protobuf.Timestamp last_check = 10; // Last check time
+}
+
+/**
+ * Service Level Indicators
+ */
+message ServiceLevelIndicators {
+  double availability_percent = 1;    // Availability percentage
+  double error_rate_percent = 2;      // Error rate percentage
+  double latency_p50_ms = 3;          // 50th percentile latency
+  double latency_p95_ms = 4;          // 95th percentile latency
+  double latency_p99_ms = 5;          // 99th percentile latency
+  double throughput_rps = 6;          // Requests per second
+
+  // Time window for these metrics
+  google.protobuf.Timestamp window_start = 10;
+  google.protobuf.Timestamp window_end = 11;
+}
+
+/**
+ * System-level metrics
+ */
+message SystemMetrics {
+  // CPU metrics
+  double cpu_usage_percent = 1;       // CPU usage percentage
+  double cpu_load_1m = 2;             // 1-minute load average
+  double cpu_load_5m = 3;             // 5-minute load average
+  double cpu_load_15m = 4;            // 15-minute load average
+
+  // Memory metrics
+  uint64 memory_total_bytes = 10;     // Total memory
+  uint64 memory_used_bytes = 11;      // Used memory
+  uint64 memory_available_bytes = 12; // Available memory
+  double memory_usage_percent = 13;   // Memory usage percentage
+
+  // Disk metrics
+  uint64 disk_total_bytes = 20;       // Total disk space
+  uint64 disk_used_bytes = 21;        // Used disk space
+  uint64 disk_available_bytes = 22;   // Available disk space
+  double disk_usage_percent = 23;     // Disk usage percentage
+
+  // Network metrics
+  uint64 network_bytes_sent = 30;     // Network bytes sent
+  uint64 network_bytes_received = 31; // Network bytes received
+  uint64 network_packets_sent = 32;   // Network packets sent
+  uint64 network_packets_received = 33; // Network packets received
+
+  // Process metrics
+  uint32 process_count = 40;          // Number of processes
+  uint32 thread_count = 41;           // Number of threads
+  uint32 file_descriptor_count = 42;  // Number of open file descriptors
+}
+
+/**
+ * Service uptime information
+ */
+message UptimeInfo {
+  google.protobuf.Timestamp start_time = 1; // Service start time
+  int64 uptime_seconds = 2;           // Uptime in seconds
+  uint32 restart_count = 3;           // Number of restarts
+  google.protobuf.Timestamp last_restart = 4; // Last restart time
+}
+
+// ============================================================================
+// Incident Management and Alerting
+// ============================================================================
+
+/**
+ * Incident event for status page and alerting
+ * Represents service incidents and their lifecycle
+ */
+message IncidentEvent {
+  // Standard CDC event fields
+  string event_id = 1;           // Unique event identifier
+  google.protobuf.Timestamp timestamp = 2; // Event timestamp
+  string event_type = 3;         // Always "incident"
+  int64 sequence_number = 4;     // CDC sequence for ordering
+
+  // Incident data
+  IncidentData incident = 10;
+
+  // Destination flags for dual persistence
+  DestinationFlags destinations = 20;
+
+  // Data lake partitioning hints
+  PartitionInfo partition_info = 25;
+}
+
+/**
+ * Incident data for tracking service issues
+ */
+message IncidentData {
+  string incident_id = 1;        // Unique incident identifier
+  string title = 2;              // Incident title
+  string description = 3;        // Incident description
+  IncidentSeverity severity = 4; // Incident severity
+  IncidentStatus status = 5;     // Current incident status
+
+  // Timing information
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp resolved_at = 12;
+
+  // Affected services and components
+  repeated string affected_services = 15;
+  repeated string affected_components = 16;
+
+  // Incident updates
+  repeated IncidentUpdate updates = 20;
+
+  // Impact assessment
+  IncidentImpact impact = 25;
+
+  // Resolution information
+  IncidentResolution resolution = 30;
+}
+
+/**
+ * Incident severity levels
+ */
+enum IncidentSeverity {
+  INCIDENT_SEVERITY_UNKNOWN = 0;
+  INCIDENT_SEVERITY_LOW = 1;     // Minor impact
+  INCIDENT_SEVERITY_MEDIUM = 2;  // Moderate impact
+  INCIDENT_SEVERITY_HIGH = 3;    // Major impact
+  INCIDENT_SEVERITY_CRITICAL = 4; // Critical impact
+}
+
+/**
+ * Incident status lifecycle
+ */
+enum IncidentStatus {
+  INCIDENT_STATUS_UNKNOWN = 0;
+  INCIDENT_STATUS_INVESTIGATING = 1; // Under investigation
+  INCIDENT_STATUS_IDENTIFIED = 2;    // Root cause identified
+  INCIDENT_STATUS_MONITORING = 3;    // Fix deployed, monitoring
+  INCIDENT_STATUS_RESOLVED = 4;      // Fully resolved
+  INCIDENT_STATUS_POSTMORTEM = 5;    // Post-mortem phase
+}
+
+/**
+ * Incident update/communication
+ */
+message IncidentUpdate {
+  string update_id = 1;          // Unique update identifier
+  google.protobuf.Timestamp timestamp = 2; // Update timestamp
+  IncidentStatus status = 3;     // Status at time of update
+  string message = 4;            // Update message
+  string author = 5;             // Update author
+  UpdateType type = 6;           // Type of update
+}
+
+/**
+ * Types of incident updates
+ */
+enum UpdateType {
+  UPDATE_TYPE_UNKNOWN = 0;
+  UPDATE_TYPE_INVESTIGATING = 1; // Investigation update
+  UPDATE_TYPE_UPDATE = 2;        // General update
+  UPDATE_TYPE_RESOLVED = 3;      // Resolution update
+  UPDATE_TYPE_POSTMORTEM = 4;    // Post-mortem update
+}
+
+/**
+ * Incident impact assessment
+ */
+message IncidentImpact {
+  double availability_impact = 1;     // Impact on availability (0-1)
+  double performance_impact = 2;      // Impact on performance (0-1)
+  uint32 affected_users = 3;          // Number of affected users
+  repeated string affected_regions = 4; // Affected geographical regions
+  string business_impact = 5;         // Business impact description
+}
+
+/**
+ * Incident resolution information
+ */
+message IncidentResolution {
+  string root_cause = 1;         // Root cause description
+  string resolution_steps = 2;   // Steps taken to resolve
+  string prevention_measures = 3; // Measures to prevent recurrence
+  repeated string lessons_learned = 4; // Lessons learned
+  string postmortem_url = 5;     // Link to detailed post-mortem
+}
+
+// ============================================================================
+// Observability Service Definitions
+// ============================================================================
+
+/**
+ * Observability service for collecting and querying telemetry data
+ */
+service ObservabilityService {
+  // Log ingestion
+  rpc IngestLogs(stream LogEvent) returns (IngestResponse);
+
+  // Trace ingestion
+  rpc IngestTraces(stream TraceEvent) returns (IngestResponse);
+
+  // Metric ingestion
+  rpc IngestMetrics(stream MetricEvent) returns (IngestResponse);
+
+  // Health monitoring
+  rpc ReportHealth(ServiceHealthEvent) returns (HealthResponse);
+
+  // Incident management
+  rpc ReportIncident(IncidentEvent) returns (IncidentResponse);
+  rpc UpdateIncident(IncidentEvent) returns (IncidentResponse);
+
+  // Query APIs for status page
+  rpc GetServiceHealth(HealthQuery) returns (HealthQueryResponse);
+  rpc GetActiveIncidents(IncidentQuery) returns (IncidentQueryResponse);
+  rpc GetMetrics(MetricQuery) returns (MetricQueryResponse);
+  rpc GetTraces(TraceQuery) returns (TraceQueryResponse);
+}
+
+/**
+ * Generic ingestion response
+ */
+message IngestResponse {
+  bool success = 1;
+  string message = 2;
+  uint32 processed_count = 3;
+  uint32 failed_count = 4;
+}
+
+/**
+ * Health reporting response
+ */
+message HealthResponse {
+  bool success = 1;
+  string message = 2;
+  google.protobuf.Timestamp next_check = 3;
+}
+
+/**
+ * Incident reporting response
+ */
+message IncidentResponse {
+  bool success = 1;
+  string message = 2;
+  string incident_id = 3;
+}
+
+/**
+ * Health query request
+ */
+message HealthQuery {
+  repeated string service_names = 1; // Filter by service names
+  google.protobuf.Timestamp since = 2; // Since timestamp
+}
+
+/**
+ * Health query response
+ */
+message HealthQueryResponse {
+  repeated ServiceHealth services = 1;
+}
+
+/**
+ * Incident query request
+ */
+message IncidentQuery {
+  repeated IncidentStatus statuses = 1; // Filter by status
+  repeated IncidentSeverity severities = 2; // Filter by severity
+  google.protobuf.Timestamp since = 3; // Since timestamp
+}
+
+/**
+ * Incident query response
+ */
+message IncidentQueryResponse {
+  repeated IncidentData incidents = 1;
+}
+
+/**
+ * Metric query request
+ */
+message MetricQuery {
+  string metric_name = 1;        // Metric name to query
+  map<string, string> labels = 2; // Label filters
+  google.protobuf.Timestamp start_time = 3; // Query start time
+  google.protobuf.Timestamp end_time = 4;   // Query end time
+}
+
+/**
+ * Metric query response
+ */
+message MetricQueryResponse {
+  repeated MetricData metrics = 1;
+}
+
+/**
+ * Trace query request
+ */
+message TraceQuery {
+  string trace_id = 1;           // Specific trace ID
+  string service_name = 2;       // Filter by service
+  google.protobuf.Timestamp start_time = 3; // Query start time
+  google.protobuf.Timestamp end_time = 4;   // Query end time
+  int32 limit = 5;               // Result limit
+}
+
+/**
+ * Trace query response
+ */
+message TraceQueryResponse {
+  repeated TraceEvent traces = 1;
+}

@@ -1,11 +1,5 @@
-# Unhinged Production Environment Configuration
-# @llm-type control-config
-# @llm-legend Production environment settings for Unhinged system deployment
-# @llm-key Production-grade configuration with security, performance, and reliability settings
-# @llm-map Production environment control configuration for operational deployment
-# @llm-axiom Production environment must prioritize security, performance, and reliability
-# @llm-token production-config: Production environment configuration for operational control
-
+# @llm-type config.app
+# @llm-does production environment settings for unhinged system deplo...
 environment: "production"
 version: "1.0"
 last_updated: "2025-10-20T20:00:00Z"

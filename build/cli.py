@@ -1,27 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Enhanced CLI interface for the Unhinged build system
-@llm-key Provides developer-friendly command-line interface with progress indicators, build status, and LLM integration
-@llm-map CLI layer that wraps the build orchestrator with enhanced user experience and developer tools
-@llm-axiom CLI must provide clear feedback, helpful error messages, and efficient developer workflows
-@llm-contract Returns appropriate exit codes and provides structured output for both humans and scripts
-@llm-token build-cli: Command-line interface for enhanced build system
-
-Enhanced Build System CLI
-
-Provides a developer-friendly command-line interface for the enhanced build system
-with features like:
-- Real-time progress indicators
-- Build status monitoring
-- LLM-powered error explanation
-- Performance profiling
-- Interactive build selection
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does enhanced cli interface for the unhinged build
 """
 
 import argparse

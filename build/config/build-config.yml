@@ -1,12 +1,5 @@
-# Unhinged Build Configuration
-# @llm-type build-configuration
-# @llm-legend Main build configuration for Unhinged platform
-# @llm-key Defines build targets, dependencies, and orchestration settings
-# @llm-map Central configuration for build system orchestration
-# @llm-axiom Build configuration must maintain system independence
-# @llm-contract Provides build target definitions and dependency management
-# @llm-token build-config: Central build configuration for Unhinged platform
-
+# @llm-type config.app
+# @llm-does main build configuration for unhinged platform
 version: "1.0"
 name: "unhinged-platform"
 description: "Independent AI platform with native GUI and gRPC services"

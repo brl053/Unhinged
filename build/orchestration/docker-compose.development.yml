@@ -1,17 +1,5 @@
-# ============================================================================
-# Unhinged Development Docker Compose - Development Environment
-# ============================================================================
-#
-# @llm-type infrastructure-config
-# @llm-legend Development docker-compose with debug tools and hot-reload
-# @llm-key Development environment with debugging and monitoring tools
-# @llm-map Development deployment with additional observability services
-# @llm-axiom Development services include debugging and monitoring capabilities
-# @llm-contract Provides complete development stack with hot-reload and debugging
-# @llm-token docker-compose-development: Development environment with debugging tools
-#
-# ============================================================================
-
+# @llm-type config.build
+# @llm-does development docker-compose with debug tools and hot-reload
 version: '3.8'
 
 services:

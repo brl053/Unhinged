@@ -1,30 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Enhanced build orchestrator for Unhinged polyglot monorepo
-@llm-key Provides intelligent dependency tracking, parallel execution, caching, and multi-language build coordination
-@llm-map Central build coordination system that integrates with existing Makefile and Docker Compose workflows
-@llm-axiom Build operations must be deterministic, cacheable, and provide clear feedback to developers
-@llm-contract Returns BuildResult with success status, artifacts, and performance metrics
-@llm-token build-orchestrator: Python service coordinating all build operations across languages
-
-Enhanced Build Orchestrator for Unhinged Platform
-
-Coordinates builds across Kotlin, TypeScript, Python, and Protobuf with intelligent
-dependency tracking, parallel execution, and comprehensive caching.
-
-Features:
-- Dependency graph resolution
-- Parallel execution with resource management
-- Intelligent caching with content-based keys
-- Build performance monitoring
-- Integration with existing Makefile commands
-- LLM-powered error explanation
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does enhanced build orchestrator for unhinged polyglot monorepo
+@llm-rule build operations must be deterministic, cacheable, and provide clear feedback...
 """
 
 import asyncio

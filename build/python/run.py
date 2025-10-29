@@ -1,17 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type util.runner
-@llm-purpose Executes Python scripts with ML/AI environment isolation
-@llm-contract Python Script -> Execution Result
-@llm-axiom All execution must be reproducible and pipeline ready
-@llm-deps Apache Stack, Virtual Environment
-
-Universal Python Runner for Unhinged System:
-- Single virtual environment for all Python execution
-- Apache stack integration (Kafka, Spark, Flink, Cassandra)
-- ML/AI pipeline support with proper environment setup
-- Consistent execution across build system, services, and ETL
-- On-premise big data processing capabilities
+@llm-type config.build
+@llm-does python environment operations and execution management
+@llm-rule all execution must be reproducible and pipeline ready
 """
 
 import os
@@ -30,13 +21,10 @@ logger = logging.getLogger(__name__)
 
 class UnhingedPythonRunner:
     """
-    @llm-type python-executor
-    @llm-legend Centralized Python execution engine for ML/AI ETL and big data pipelines
-    @llm-key Universal Python runner with Apache stack integration and environment management
-    @llm-map Core execution engine enabling consistent Python environments across all services
-    @llm-axiom Python execution must be reproducible, environment-aware, and big data ready
-    @llm-token python-executor: Production Python execution with ML/AI and big data support
-    """
+@llm-type util.executor
+@llm-does centralized python execution engine for ml/ai etl
+@llm-rule python execution must be reproducible, environment-aware, and big data ready
+"""
     
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent

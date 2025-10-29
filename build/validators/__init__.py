@@ -1,12 +1,6 @@
 """
-Build-Time Validators
-
-@llm-type build-validation
-@llm-legend Compile-time validation system that eliminates runtime errors through static analysis
-@llm-key Validates port allocations, dependencies, and resource requirements before any deployment
-@llm-map Central validation system that ensures zero-failure runtime execution
-@llm-axiom All runtime errors should be prevented by compile-time validation
-@llm-token build-validators: Static analysis system preventing runtime failures
+@llm-type config.build
+@llm-does compile-time validation system that eliminates runtime er...
 """
 
 from .port_validator import PortValidator, PortConflict

@@ -1,0 +1,290 @@
+# Modal Component Specification
+# @llm-type component-specification
+# @llm-legend Platform-agnostic modal dialog component specification for overlay content presentation
+# @llm-key Modal container with focus management, backdrop handling, and keyboard navigation support
+# @llm-map Core container component for interrupting user flow with contextual content
+# @llm-axiom Modal specifications must be platform-agnostic describing semantic behavior not implementation
+# @llm-contract Defines modal interface, states, focus management, and accessibility for generator consumption
+# @llm-token modal-component: Overlay dialog specification with focus trapping and backdrop interaction
+
+component:
+  id: "modal"
+  name: "Modal Dialog"
+  category: "container"
+  
+  description: |
+    Overlay container component that interrupts the main application flow to present
+    contextual content, forms, or confirmations. Manages focus trapping, backdrop
+    interaction, and keyboard navigation according to accessibility standards.
+    
+    Use modals for critical decisions, forms that require user attention, or content
+    that must be addressed before continuing. Avoid for non-essential information.
+
+  interface:
+    properties:
+      open:
+        type: "boolean"
+        default: false
+        description: "Controls modal visibility and focus management"
+      
+      title:
+        type: "string"
+        required: true
+        description: "Modal header title for accessibility and context"
+      
+      size:
+        type: "enum"
+        values: ["small", "medium", "large", "fullscreen"]
+        default: "medium"
+        description: |
+          Modal size variants:
+          - small: Confirmations, simple forms (360px max)
+          - medium: Standard dialogs, detailed forms (600px max)
+          - large: Complex content, data tables (800px max)
+          - fullscreen: Mobile or immersive content
+      
+      backdrop_dismissible:
+        type: "boolean"
+        default: true
+        description: "Whether clicking backdrop closes modal"
+      
+      escape_dismissible:
+        type: "boolean"
+        default: true
+        description: "Whether Escape key closes modal"
+      
+      has_close_button:
+        type: "boolean"
+        default: true
+        description: "Show close button in header"
+      
+      prevent_scroll:
+        type: "boolean"
+        default: true
+        description: "Prevent background scrolling when modal is open"
+      
+      role:
+        type: "enum"
+        values: ["dialog", "alertdialog"]
+        default: "dialog"
+        description: "ARIA role for screen reader context"
+    
+    states:
+      closed:
+        description: "Modal not visible, no focus management"
+        visual_tokens: ["z.base"]
+        triggers: ["open_false", "backdrop_click", "escape_key"]
+      
+      opening:
+        description: "Transition state while modal appears"
+        visual_tokens: ["z.modal"]
+        triggers: ["open_true"]
+        transitions: ["open"]
+      
+      open:
+        description: "Fully visible with focus trapped inside"
+        visual_tokens: ["z.modal", "surface.elevated", "elevation.4"]
+        triggers: ["opening_complete"]
+        transitions: ["closing"]
+      
+      closing:
+        description: "Transition state while modal disappears"
+        visual_tokens: ["z.modal"]
+        triggers: ["close_requested"]
+        transitions: ["closed"]
+      
+      backdrop_hover:
+        description: "User hovering over backdrop area"
+        visual_tokens: ["surface.inverse"]
+        triggers: ["pointer_over_backdrop"]
+    
+    events:
+      open:
+        description: "Modal opened and focus trapped"
+        payload:
+          previous_focus_element: "string"
+      
+      close:
+        description: "Modal close requested by user"
+        payload:
+          trigger: "enum[backdrop_click|escape_key|close_button|programmatic]"
+      
+      closed:
+        description: "Modal fully closed and focus restored"
+        payload:
+          focus_restored: "boolean"
+      
+      backdrop_click:
+        description: "User clicked backdrop area"
+        payload:
+          dismissible: "boolean"
+      
+      focus_trapped:
+        description: "Focus successfully trapped within modal"
+        payload:
+          focused_element: "string"
+
+  styling:
+    backdrop:
+      background: "surface.inverse"
+      opacity: 0.6
+      z_index: "z.modal"
+      position: "fixed"
+      inset: "0"
+      backdrop_filter: "blur(2px)"
+    
+    container:
+      background: "surface.elevated"
+      border_radius: "radius.lg"
+      box_shadow: "elevation.4"
+      z_index: "calc(z.modal + 1)"
+      position: "fixed"
+      max_height: "90vh"
+      max_width: "90vw"
+      overflow: "hidden"
+      display: "flex"
+      flex_direction: "column"
+    
+    size_variants:
+      small:
+        width: "360px"
+        min_height: "200px"
+      
+      medium:
+        width: "600px"
+        min_height: "300px"
+      
+      large:
+        width: "800px"
+        min_height: "400px"
+      
+      fullscreen:
+        width: "100vw"
+        height: "100vh"
+        border_radius: "0"
+    
+    header:
+      padding: "sp.6"
+      border_bottom: ["border.thin", "border.subtle"]
+      display: "flex"
+      align_items: "center"
+      justify_content: "space-between"
+      flex_shrink: "0"
+    
+    title:
+      font_family: "prose"
+      font_size: "type.heading"
+      font_weight: "medium"
+      color: "text.primary"
+      margin: "0"
+    
+    close_button:
+      background: "transparent"
+      border: "none"
+      color: "text.secondary"
+      padding: "sp.2"
+      border_radius: "radius.sm"
+      cursor: "pointer"
+      min_width: "44px"
+      min_height: "44px"
+    
+    body:
+      padding: "sp.6"
+      overflow_y: "auto"
+      flex_grow: "1"
+    
+    footer:
+      padding: "sp.4 sp.6"
+      border_top: ["border.thin", "border.subtle"]
+      display: "flex"
+      gap: "sp.3"
+      justify_content: "flex-end"
+      flex_shrink: "0"
+    
+    state_transitions:
+      opening:
+        animation: "modal-enter 0.2s ease-out"
+        backdrop_animation: "backdrop-enter 0.2s ease-out"
+      
+      closing:
+        animation: "modal-exit 0.15s ease-in"
+        backdrop_animation: "backdrop-exit 0.15s ease-in"
+
+  composition:
+    is_leaf: false
+    can_contain: ["button", "input", "text-display", "card", "form"]
+    required_context: ["focus_manager", "z_index_manager"]
+    layout_type: "overlay"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    focus_management:
+      - "Focus moves to modal when opened"
+      - "Focus trapped within modal boundaries"
+      - "Tab cycles through focusable elements inside modal"
+      - "Focus restored to trigger element when closed"
+      - "First focusable element receives initial focus"
+    
+    keyboard_interactions:
+      - key: "Escape"
+        action: "close_modal"
+        condition: "escape_dismissible is true"
+      - key: "Tab"
+        action: "focus_next_element_in_modal"
+      - key: "Shift+Tab"
+        action: "focus_previous_element_in_modal"
+      - key: "Enter"
+        action: "activate_focused_element"
+      - key: "Space"
+        action: "activate_focused_element"
+    
+    aria_attributes:
+      - "role='dialog' or role='alertdialog'"
+      - "aria-modal='true'"
+      - "aria-labelledby pointing to title"
+      - "aria-describedby for additional context"
+      - "aria-hidden='true' when closed"
+
+  examples:
+    - name: "Confirmation dialog"
+      description: "Simple confirmation with yes/no buttons"
+      properties:
+        title: "Delete Item"
+        size: "small"
+        role: "alertdialog"
+        backdrop_dismissible: false
+    
+    - name: "Form modal"
+      description: "Medium modal containing a form"
+      properties:
+        title: "Edit Profile"
+        size: "medium"
+        has_close_button: true
+    
+    - name: "Large content modal"
+      description: "Large modal for complex content"
+      properties:
+        title: "Data Analysis"
+        size: "large"
+        backdrop_dismissible: true
+    
+    - name: "Fullscreen modal"
+      description: "Immersive fullscreen experience"
+      properties:
+        title: "Image Editor"
+        size: "fullscreen"
+        has_close_button: true
+        prevent_scroll: true
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-27"
+  design_review: "approved"
+  complexity: "high"
+  implementation_status:
+    gtk4: "pending"
+    alpine_native: "pending"

@@ -1,27 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Auto-update system for Unhinged desktop application
-@llm-key Provides automatic update checking and installation for the dual-system architecture desktop application
-@llm-map Auto-updater that checks for new versions and can update the desktop application automatically
-@llm-axiom Applications should stay current automatically without user intervention
-@llm-contract Provides version checking, update downloading, and automatic installation capabilities
-@llm-token auto-updater: Automatic update system for desktop application
-
-Auto-Update System for Unhinged Desktop Application
-
-Provides comprehensive auto-update functionality:
-- Version checking against local and remote sources
-- Automatic update detection on application launch
-- Safe update downloading and installation
-- Rollback capability in case of update failures
-- User notification and consent management
-- Integration with existing desktop application
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-26
+@llm-type service.api
+@llm-does auto-update system for unhinged desktop application
 """
 
 import os

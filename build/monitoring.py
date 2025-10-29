@@ -1,26 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Build performance monitoring and metrics collection system
-@llm-key Provides comprehensive build performance tracking, caching analytics, and optimization insights
-@llm-map Performance monitoring system that tracks build metrics and provides optimization recommendations
-@llm-axiom Performance monitoring must be lightweight and provide actionable insights for developers
-@llm-contract Returns structured performance data and optimization recommendations
-@llm-token build-monitoring: Performance tracking and analytics for build system
-
-Build Performance Monitoring System
-
-Provides comprehensive monitoring and analytics for the enhanced build system:
-- Build time tracking and analysis
-- Cache performance metrics
-- Resource utilization monitoring
-- Performance trend analysis
-- Optimization recommendations
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does build performance monitoring and metrics collection system
+@llm-rule performance monitoring must be lightweight and provide actionable insights fo...
 """
 
 import json

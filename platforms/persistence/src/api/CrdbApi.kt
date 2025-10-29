@@ -1,11 +1,6 @@
 //
-// @llm-type platform
-// @llm-legend CrdbApi.kt - platform infrastructure component
-// @llm-key Core functionality for CrdbApi
-// @llm-map Part of the Unhinged system architecture
-// @llm-axiom Maintains system independence and architectural compliance
-// @llm-contract Provides standardized interface for system integration
-// @llm-token CrdbApi: platform infrastructure component
+// @llm-type service.api
+// @llm-does cockroachdb api endpoints and request handlers
 //
 package platforms.persistence.api
 

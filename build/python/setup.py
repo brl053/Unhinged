@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type python-setup
-@llm-legend Python environment setup for Unhinged on-premise ML/AI ETL & Big Data pipelines
-@llm-key Centralized Python environment creation with Apache stack and ML/AI dependencies
-@llm-map Environment setup enabling ML/AI ETL pipelines with Kafka, Spark, Flink, Cassandra
-@llm-axiom Python environment must be reproducible, comprehensive, and big data ready
-@llm-token python-setup: Production Python environment setup for ML/AI and big data workflows
-
-Python Environment Setup for Unhinged System:
-- Creates single virtual environment for all Python execution
-- Installs comprehensive ML/AI and big data dependencies
-- Configures Apache stack integration (Kafka, Spark, Flink)
-- Sets up development tools and Jupyter environment
-- Ensures reproducible on-premise big data processing
+@llm-type util.setup
+@llm-does python environment setup for unhinged on-premise ml/ai
+@llm-rule python environment must be reproducible, comprehensive, and big data ready
 """
 
 import os
@@ -31,13 +21,10 @@ logger = logging.getLogger(__name__)
 
 class UnhingedPythonSetup:
     """
-    @llm-type python-environment-setup
-    @llm-legend Comprehensive Python environment setup for ML/AI ETL and big data processing
-    @llm-key Environment creation with Apache stack integration and ML/AI pipeline support
-    @llm-map Core setup tool enabling consistent Python environments for on-premise big data
-    @llm-axiom Environment setup must be reproducible, comprehensive, and failure-resistant
-    @llm-token python-environment-setup: Production environment creation for ML/AI workflows
-    """
+@llm-type config.build
+@llm-does comprehensive python environment setup for ml/ai etl
+@llm-rule environment setup must be reproducible, comprehensive, and failure-resistant
+"""
     
     def __init__(self):
         self.project_root = Path(__file__).parent.parent.parent

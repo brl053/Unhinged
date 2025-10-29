@@ -1,0 +1,846 @@
+#
+# @llm-type platform
+# @llm-legend persistence-platform.yaml - platform infrastructure component
+# @llm-key Core functionality for persistence-platform
+# @llm-map Part of the Unhinged system architecture
+# @llm-axiom Maintains system independence and architectural compliance
+# @llm-contract Provides standardized interface for system integration
+# @llm-token persistence-platform: platform infrastructure component
+#
+# ============================================================================
+# Persistence Platform Configuration
+# ============================================================================
+#
+# @file persistence-platform.yaml
+# @version 2.1.0
+# @author Unhinged Team
+# @date 2025-10-19
+# @description Complete self-service persistence platform configuration
+#
+# This configuration enables declarative provisioning of databases, tables,
+# queries, and operations across multiple database technologies without
+# requiring infrastructure knowledge.
+#
+# Supported Technologies:
+# - Redis: High-performance caching and session storage
+# - CockroachDB: Distributed SQL for transactional data
+# - MongoDB: Document-oriented NoSQL for flexible schemas
+# - Weaviate: Vector database for AI/ML embeddings and semantic search
+# - Elasticsearch: Full-text search and analytics
+# - Cassandra: Wide-column store for time-series and high-write workloads
+# - Neo4j: Graph database for relationship modeling
+# - Data Lake: OLAP capabilities with Apache Iceberg
+#
+# ============================================================================
+
+persistence_platform:
+  version: "2.1.0"
+  
+  # ==========================================================================
+  # Technology Stack Configuration
+  # ==========================================================================
+  technologies:
+    # Caching & Session Store
+    redis:
+      type: "cache"
+      clusters: ["redis-cache", "redis-sessions", "redis-realtime"]
+      default_ttl: "1h"
+      max_memory_policy: "allkeys-lru"
+      use_cases: ["caching", "sessions", "real_time", "pub_sub"]
+      
+    # NewSQL - Distributed ACID Transactions
+    cockroachdb:
+      type: "newsql"
+      clusters: ["crdb-primary", "crdb-analytics"]
+      default_replication: 3
+      consistency_level: "strong"
+      use_cases: ["transactional", "relational", "financial", "consistency"]
+      
+    # NoSQL - Document Store
+    mongodb:
+      type: "nosql_document"
+      clusters: ["mongo-primary", "mongo-content"]
+      default_replication: 3
+      consistency_level: "eventual"
+      use_cases: ["content_management", "flexible_schema", "rapid_prototyping"]
+      
+    # Vector Database - AI/ML Embeddings
+    weaviate:
+      type: "vector_database"
+      clusters: ["weaviate-embeddings", "weaviate-search"]
+      vector_dimensions: [384, 768, 1536]  # Support multiple embedding models
+      distance_metrics: ["cosine", "euclidean", "dot_product"]
+      use_cases: ["semantic_search", "recommendation", "rag", "similarity"]
+      
+    # Search & Analytics
+    elasticsearch:
+      type: "search_analytics"
+      clusters: ["es-search", "es-logs", "es-metrics"]
+      default_shards: 3
+      default_replicas: 1
+      use_cases: ["full_text_search", "log_analytics", "metrics"]
+      
+    # Wide Column - Time Series & High Write
+    cassandra:
+      type: "wide_column"
+      clusters: ["cass-timeseries", "cass-events"]
+      consistency_level: "quorum"
+      compaction_strategy: "TimeWindowCompactionStrategy"
+      use_cases: ["time_series", "event_streaming", "iot_data"]
+      
+    # Graph Database
+    neo4j:
+      type: "graph"
+      clusters: ["neo4j-graph"]
+      memory_config: "8G"
+      use_cases: ["social_networks", "recommendations", "fraud_detection"]
+      
+    # Data Lake - OLAP & Cold Storage
+    datalake:
+      type: "olap_warehouse"
+      technology: "apache_iceberg"
+      storage: "s3_compatible"
+      format: "parquet"
+      compression: "snappy"
+      use_cases: ["analytics", "data_science", "reporting", "archival"]
+
+  # ==========================================================================
+  # Database Definitions
+  # ==========================================================================
+  databases:
+    # NewSQL for ACID transactions
+    user_data:
+      primary_technology: "cockroachdb"
+      backup_technology: "datalake"
+      retention_policy: "7_years"
+      use_case: "user_profiles_financial_data"
+      
+    # NoSQL for flexible content
+    content_management:
+      primary_technology: "mongodb"
+      backup_technology: "datalake"
+      schema_validation: "flexible"
+      use_case: "cms_blogs_dynamic_content"
+      
+    # Vector DB for AI/ML
+    ai_embeddings:
+      primary_technology: "weaviate"
+      backup_technology: "datalake"
+      vector_index: "hnsw"
+      use_case: "semantic_search_recommendations"
+      
+    # Cache for performance
+    session_store:
+      primary_technology: "redis"
+      ttl: "24h"
+      use_case: "user_sessions_real_time"
+      
+    # Search for discovery
+    search_index:
+      primary_technology: "elasticsearch"
+      refresh_interval: "1s"
+      use_case: "content_discovery_logs"
+      
+    # Time series for events
+    activity_stream:
+      primary_technology: "cassandra"
+      partition_strategy: "time_based"
+      use_case: "user_events_metrics_iot"
+      
+    # Graph for relationships
+    relationship_graph:
+      primary_technology: "neo4j"
+      use_case: "social_connections_recommendations"
+      
+    # Data lake for analytics
+    analytics_warehouse:
+      primary_technology: "datalake"
+      partition_strategy: "date_based"
+      use_case: "business_intelligence_data_science"
+
+  # ==========================================================================
+  # Table/Collection Definitions
+  # ==========================================================================
+  tables:
+    # NewSQL: Traditional relational data
+    users:
+      database: "user_data"
+      technology: "cockroachdb"
+      schema:
+        id: { type: "uuid", primary_key: true }
+        email: { type: "string", unique: true, indexed: true }
+        created_at: { type: "timestamp", indexed: true }
+        profile: { type: "jsonb" }
+        financial_data: { type: "jsonb", encrypted: true }
+      access_patterns:
+        - { type: "point_lookup", fields: ["id"] }
+        - { type: "range_scan", fields: ["created_at"] }
+        
+    # NoSQL: Flexible document structure
+    content_items:
+      database: "content_management"
+      technology: "mongodb"
+      schema:
+        _id: { type: "objectid" }
+        title: { type: "string", indexed: true }
+        content: { type: "mixed" }  # Flexible schema
+        metadata: { type: "object" }
+        tags: { type: "array" }
+        created_at: { type: "date", indexed: true }
+        author_id: { type: "string", indexed: true }
+      access_patterns:
+        - { type: "document_query", fields: ["author_id"] }
+        - { type: "text_search", fields: ["title", "content"] }
+        
+    # Vector DB: AI embeddings and semantic search
+    document_embeddings:
+      database: "ai_embeddings"
+      technology: "weaviate"
+      schema:
+        id: { type: "uuid" }
+        content: { type: "text" }
+        vector: { type: "vector", dimensions: 768 }
+        metadata: { type: "object" }
+        source_type: { type: "string" }
+      vector_config:
+        model: "sentence-transformers/all-MiniLM-L6-v2"
+        distance_metric: "cosine"
+      access_patterns:
+        - { type: "vector_similarity", threshold: 0.7 }
+        - { type: "hybrid_search", weights: { vector: 0.7, text: 0.3 } }
+        
+    # Cache: Session data
+    user_sessions:
+      database: "session_store"
+      technology: "redis"
+      schema:
+        session_id: { type: "string", primary_key: true }
+        user_id: { type: "uuid", indexed: true }
+        data: { type: "json" }
+        expires_at: { type: "timestamp" }
+      access_patterns:
+        - { type: "point_lookup", fields: ["session_id"] }
+        - { type: "expiration", ttl: "24h" }
+        
+    # Search: Content discovery
+    content_search:
+      database: "search_index"
+      technology: "elasticsearch"
+      schema:
+        id: { type: "keyword" }
+        title: { type: "text", analyzer: "standard" }
+        content: { type: "text", analyzer: "english" }
+        tags: { type: "keyword", multi: true }
+        created_at: { type: "date" }
+      access_patterns:
+        - { type: "full_text_search", fields: ["title", "content"] }
+        - { type: "faceted_search", fields: ["tags"] }
+        
+    # Time Series: User events
+    user_events:
+      database: "activity_stream"
+      technology: "cassandra"
+      schema:
+        user_id: { type: "uuid", partition_key: true }
+        event_time: { type: "timestamp", clustering_key: true }
+        event_type: { type: "string" }
+        event_data: { type: "json" }
+      access_patterns:
+        - { type: "time_range_query", fields: ["user_id", "event_time"] }
+        - { type: "latest_events", limit: 100 }
+        
+    # Graph: User relationships
+    user_relationships:
+      database: "relationship_graph"
+      technology: "neo4j"
+      schema:
+        nodes:
+          User: ["id", "email", "created_at"]
+          Organization: ["id", "name", "type"]
+        relationships:
+          FOLLOWS: { from: "User", to: "User", properties: ["since"] }
+          BELONGS_TO: { from: "User", to: "Organization", properties: ["role"] }
+      access_patterns:
+        - { type: "graph_traversal", max_depth: 3 }
+        - { type: "shortest_path", algorithms: ["dijkstra"] }
+        
+    # Data Lake: Analytics data
+    user_analytics:
+      database: "analytics_warehouse"
+      technology: "datalake"
+      schema:
+        user_id: { type: "uuid", partition_key: true }
+        date: { type: "date", partition_key: true }
+        metrics: { type: "struct" }
+        events_count: { type: "bigint" }
+        session_duration: { type: "interval" }
+      access_patterns:
+        - { type: "olap_query", aggregations: ["sum", "avg", "count"] }
+        - { type: "time_series_analysis", window: "daily" }
+
+  # ==========================================================================
+  # Query Definitions
+  # ==========================================================================
+  queries:
+    # NewSQL queries
+    get_user_by_id:
+      table: "users"
+      type: "point_lookup"
+      parameters: ["user_id"]
+      cache_strategy: "redis_aside"
+      cache_ttl: "5m"
+
+    get_user_financial_data:
+      table: "users"
+      type: "point_lookup"
+      parameters: ["user_id"]
+      security: "encryption_required"
+      cache_strategy: "none"  # Never cache financial data
+
+    # NoSQL queries
+    find_content_by_author:
+      table: "content_items"
+      type: "document_query"
+      parameters: ["author_id", "limit", "skip"]
+      indexes: ["author_id", "created_at"]
+
+    search_content_flexible:
+      table: "content_items"
+      type: "aggregation_pipeline"
+      parameters: ["search_criteria", "filters"]
+
+    # Vector DB queries
+    semantic_search:
+      table: "document_embeddings"
+      type: "vector_similarity"
+      parameters: ["query_vector", "limit", "threshold"]
+      distance_metric: "cosine"
+
+    find_similar_documents:
+      table: "document_embeddings"
+      type: "vector_similarity"
+      parameters: ["document_id", "limit"]
+
+    hybrid_search:
+      tables: ["content_items", "document_embeddings"]
+      type: "hybrid_vector_text"
+      parameters: ["text_query", "vector_query", "weights"]
+
+    # Cache queries
+    get_user_session:
+      table: "user_sessions"
+      type: "point_lookup"
+      parameters: ["session_id"]
+
+    get_user_sessions:
+      table: "user_sessions"
+      type: "scan_by_index"
+      parameters: ["user_id"]
+
+    # Search queries
+    search_content:
+      table: "content_search"
+      type: "full_text_search"
+      parameters: ["query", "filters", "limit", "offset"]
+
+    faceted_search:
+      table: "content_search"
+      type: "faceted_search"
+      parameters: ["query", "facets", "limit"]
+
+    # Time series queries
+    get_user_activity:
+      table: "user_events"
+      type: "range_scan"
+      parameters: ["user_id", "start_time", "end_time"]
+
+    get_recent_events:
+      table: "user_events"
+      type: "latest_events"
+      parameters: ["user_id", "limit"]
+
+    # Graph queries
+    find_user_connections:
+      table: "user_relationships"
+      type: "graph_traversal"
+      parameters: ["user_id", "relationship_type", "depth"]
+
+    shortest_path_users:
+      table: "user_relationships"
+      type: "shortest_path"
+      parameters: ["from_user_id", "to_user_id"]
+
+    # Analytics queries
+    user_metrics_daily:
+      table: "user_analytics"
+      type: "olap_query"
+      parameters: ["user_id", "date_range"]
+      aggregations: ["sum", "avg", "count"]
+
+    user_trends:
+      table: "user_analytics"
+      type: "time_series_analysis"
+      parameters: ["user_id", "metric", "window"]
+
+  # ==========================================================================
+  # Operation Definitions
+  # ==========================================================================
+  operations:
+    # Cross-technology user creation
+    create_user_complete:
+      type: "distributed_transaction"
+      steps:
+        - { table: "users", operation: "insert", technology: "cockroachdb" }
+        - { table: "user_sessions", operation: "insert", technology: "redis" }
+        - { operation: "create_graph_node", technology: "neo4j" }
+        - { operation: "create_search_index", technology: "elasticsearch" }
+      rollback_strategy: "compensating_transactions"
+      timeout: "30s"
+
+    # Content with vector embedding
+    create_content_with_embedding:
+      type: "async_pipeline"
+      steps:
+        - { table: "content_items", operation: "insert", technology: "mongodb" }
+        - { operation: "generate_embedding", service: "embedding_service" }
+        - { table: "document_embeddings", operation: "insert", technology: "weaviate" }
+        - { operation: "update_search_index", technology: "elasticsearch" }
+      retry_policy: "exponential_backoff"
+      max_retries: 3
+
+    # User profile update
+    update_user_profile:
+      type: "update"
+      table: "users"
+      conditions: ["user_owns_profile"]
+      side_effects:
+        - { operation: "update_search_index", technology: "elasticsearch" }
+        - { operation: "invalidate_cache", technology: "redis" }
+        - { operation: "update_graph_properties", technology: "neo4j" }
+
+    # Event recording
+    record_user_event:
+      type: "insert"
+      table: "user_events"
+      async: true
+      batch_size: 1000
+      side_effects:
+        - { operation: "update_analytics", technology: "datalake" }
+
+    # User deletion (GDPR compliant)
+    delete_user:
+      type: "soft_delete"
+      table: "users"
+      cascade:
+        - { operation: "anonymize_user_events", technology: "cassandra" }
+        - { operation: "remove_graph_relationships", technology: "neo4j" }
+        - { operation: "delete_search_entries", technology: "elasticsearch" }
+        - { operation: "clear_cache", technology: "redis" }
+        - { operation: "archive_analytics", technology: "datalake" }
+      compliance: "gdpr"
+
+    # AI-powered recommendation
+    get_personalized_recommendations:
+      type: "ml_pipeline"
+      steps:
+        - { operation: "get_user_vector", technology: "weaviate" }
+        - { operation: "vector_similarity_search", technology: "weaviate" }
+        - { operation: "enrich_with_metadata", technology: "mongodb" }
+        - { operation: "rank_and_filter", service: "recommendation_service" }
+        - { operation: "cache_results", technology: "redis" }
+      cache_ttl: "1h"
+
+  # ==========================================================================
+  # Data Routing Rules
+  # ==========================================================================
+  routing:
+    # Hot data - frequently accessed
+    hot_data:
+      criteria: "accessed_within_24h"
+      technologies: ["redis", "cockroachdb"]
+      priority: "high"
+
+    # Warm data - occasionally accessed
+    warm_data:
+      criteria: "accessed_within_30d"
+      technologies: ["cockroachdb", "elasticsearch", "mongodb"]
+      priority: "medium"
+
+    # Cold data - rarely accessed
+    cold_data:
+      criteria: "older_than_30d"
+      technologies: ["datalake"]
+      priority: "low"
+
+    # Real-time data
+    real_time:
+      criteria: "requires_sub_second_response"
+      technologies: ["redis"]
+      priority: "critical"
+
+    # Analytical workloads
+    analytical:
+      criteria: "olap_workload"
+      technologies: ["datalake", "elasticsearch"]
+      priority: "batch"
+
+    # Transactional data
+    transactional_data:
+      criteria: "requires_acid_transactions"
+      technologies: ["cockroachdb"]
+      priority: "high"
+
+    # Flexible schema requirements
+    flexible_schema:
+      criteria: "dynamic_schema_requirements"
+      technologies: ["mongodb"]
+      priority: "medium"
+
+    # Vector operations
+    vector_operations:
+      criteria: "semantic_search_or_similarity"
+      technologies: ["weaviate"]
+      priority: "high"
+
+    # High write volume
+    high_write_volume:
+      criteria: "time_series_or_event_streaming"
+      technologies: ["cassandra"]
+      priority: "high"
+
+    # Complex relationships
+    complex_relationships:
+      criteria: "graph_traversal_required"
+      technologies: ["neo4j"]
+      priority: "medium"
+
+  # ==========================================================================
+  # Sharding Configuration
+  # ==========================================================================
+  sharding:
+    strategies:
+      user_based:
+        shard_key: "user_id"
+        shard_count: 64
+        hash_function: "consistent_hash"
+
+      time_based:
+        shard_key: "created_at"
+        shard_interval: "1_month"
+        retention_policy: "auto_archive"
+
+      hash_based:
+        shard_key: "id"
+        hash_function: "murmur3"
+        shard_count: 32
+
+      geographic:
+        shard_key: "region"
+        regions: ["us-east", "us-west", "eu-west", "asia-pacific"]
+
+    rebalancing:
+      auto_rebalance: true
+      threshold: "80%"
+      strategy: "gradual_migration"
+      maintenance_window: "02:00-04:00 UTC"
+
+  # ==========================================================================
+  # Data Lifecycle Management
+  # ==========================================================================
+  lifecycle:
+    policies:
+      user_data_retention:
+        applies_to: ["users", "user_events", "user_analytics"]
+        rules:
+          - { age: "7_years", action: "archive_to_datalake" }
+          - { age: "10_years", action: "delete" }
+        compliance: "gdpr"
+
+      cache_eviction:
+        applies_to: ["session_store"]
+        rules:
+          - { condition: "expired", action: "delete" }
+          - { condition: "memory_pressure", action: "lru_evict" }
+
+      content_lifecycle:
+        applies_to: ["content_items", "document_embeddings"]
+        rules:
+          - { age: "1_year", action: "move_to_warm_storage" }
+          - { age: "3_years", action: "archive_to_datalake" }
+          - { condition: "inactive_content", action: "compress" }
+
+      analytics_retention:
+        applies_to: ["user_analytics"]
+        rules:
+          - { age: "90_days", action: "aggregate_daily" }
+          - { age: "1_year", action: "aggregate_monthly" }
+          - { age: "5_years", action: "archive_summary_only" }
+
+      event_stream_retention:
+        applies_to: ["user_events"]
+        rules:
+          - { age: "30_days", action: "move_to_cold_storage" }
+          - { age: "2_years", action: "archive_to_datalake" }
+
+    automation:
+      schedule: "daily_at_02:00_utc"
+      batch_size: 10000
+      parallel_workers: 4
+      monitoring: "enabled"
+
+  # ==========================================================================
+  # API Configuration
+  # ==========================================================================
+  api:
+    endpoints:
+      "/api/v1/users":
+        operations: ["create_user_complete", "get_user_by_id", "update_user_profile"]
+        rate_limit: "1000/hour"
+        authentication: "required"
+        authorization: "user_context"
+
+      "/api/v1/content":
+        operations: ["create_content_with_embedding", "find_content_by_author"]
+        rate_limit: "500/hour"
+        authentication: "required"
+
+      "/api/v1/search":
+        operations: ["search_content", "semantic_search", "hybrid_search"]
+        rate_limit: "100/minute"
+        authentication: "optional"
+        caching: "enabled"
+
+      "/api/v1/analytics":
+        operations: ["user_metrics_daily", "user_trends"]
+        rate_limit: "10/minute"
+        authentication: "admin_required"
+
+      "/api/v1/recommendations":
+        operations: ["get_personalized_recommendations"]
+        rate_limit: "50/hour"
+        authentication: "required"
+        caching: "enabled"
+        cache_ttl: "1h"
+
+      "/api/v1/events":
+        operations: ["record_user_event", "get_user_activity"]
+        rate_limit: "1000/hour"
+        authentication: "required"
+
+      "/api/v1/relationships":
+        operations: ["find_user_connections", "shortest_path_users"]
+        rate_limit: "100/hour"
+        authentication: "required"
+
+    protocols:
+      rest:
+        enabled: true
+        port: 8090
+        base_path: "/api/v1"
+
+      grpc:
+        enabled: true
+        port: 9090
+        reflection: true
+
+      graphql:
+        enabled: true
+        port: 8091
+        playground: true
+
+    security:
+      authentication:
+        jwt:
+          enabled: true
+          secret_key: "${JWT_SECRET}"
+          expiration: "24h"
+
+      authorization:
+        rbac:
+          enabled: true
+          roles: ["user", "admin", "system"]
+
+      rate_limiting:
+        enabled: true
+        storage: "redis"
+
+      cors:
+        enabled: true
+        allowed_origins: ["http://localhost:3000", "https://unhinged.app", "file://", "null"]
+
+  # ==========================================================================
+  # AI/ML Integration
+  # ==========================================================================
+  ai_ml_integration:
+    embedding_models:
+      text_embeddings:
+        model: "sentence-transformers/all-MiniLM-L6-v2"
+        dimensions: 384
+        use_cases: ["general_text", "search"]
+
+      large_embeddings:
+        model: "text-embedding-ada-002"
+        dimensions: 1536
+        use_cases: ["high_accuracy", "openai_integration"]
+
+      multilingual_embeddings:
+        model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        dimensions: 384
+        use_cases: ["multilingual_content"]
+
+    vector_operations:
+      similarity_search:
+        default_limit: 10
+        default_threshold: 0.7
+        max_limit: 100
+
+      clustering:
+        algorithm: "k_means"
+        max_clusters: 100
+
+      recommendation:
+        hybrid_weights: { vector: 0.7, metadata: 0.3 }
+        diversity_factor: 0.2
+
+    model_serving:
+      embedding_service:
+        endpoint: "http://embedding-service:8080"
+        timeout: "5s"
+        retry_attempts: 3
+
+      recommendation_service:
+        endpoint: "http://recommendation-service:8080"
+        timeout: "10s"
+        batch_size: 100
+
+  # ==========================================================================
+  # Monitoring & Observability
+  # ==========================================================================
+  monitoring:
+    metrics:
+      # Platform-wide metrics
+      - query_latency_p50
+      - query_latency_p95
+      - query_latency_p99
+      - throughput_per_technology
+      - error_rate_per_operation
+      - cache_hit_ratio
+      - data_distribution_balance
+      - connection_pool_utilization
+
+    technology_specific_metrics:
+      cockroachdb:
+        - transaction_latency
+        - replication_lag
+        - query_performance
+        - connection_count
+
+      mongodb:
+        - document_scan_ratio
+        - index_usage
+        - collection_size
+        - operation_latency
+
+      weaviate:
+        - vector_search_latency
+        - index_build_time
+        - memory_usage
+        - vector_count
+
+      elasticsearch:
+        - search_latency
+        - indexing_rate
+        - cluster_health
+        - shard_allocation
+
+      redis:
+        - memory_usage
+        - hit_ratio
+        - eviction_rate
+        - connection_count
+
+      cassandra:
+        - write_latency
+        - read_latency
+        - compaction_rate
+        - disk_usage
+
+      neo4j:
+        - query_execution_time
+        - memory_usage
+        - transaction_count
+        - relationship_count
+
+      datalake:
+        - query_execution_time
+        - data_size
+        - partition_count
+        - compression_ratio
+
+    alerts:
+      - { condition: "query_latency_p99 > 1000ms", severity: "warning" }
+      - { condition: "error_rate > 1%", severity: "critical" }
+      - { condition: "cache_hit_ratio < 80%", severity: "warning" }
+      - { condition: "connection_pool_utilization > 90%", severity: "warning" }
+      - { condition: "disk_usage > 85%", severity: "critical" }
+      - { condition: "memory_usage > 90%", severity: "critical" }
+
+    dashboards:
+      - persistence_platform_overview
+      - technology_specific_metrics
+      - data_lifecycle_tracking
+      - query_performance_analysis
+      - resource_utilization
+      - error_tracking
+
+    logging:
+      level: "INFO"
+      format: "json"
+      destinations: ["stdout", "elasticsearch"]
+
+    tracing:
+      enabled: true
+      sampling_rate: 0.1
+      exporter: "jaeger"
+
+    health_checks:
+      interval: "30s"
+      timeout: "10s"
+      endpoints:
+        - "/health"
+        - "/ready"
+        - "/metrics"
+
+  # ==========================================================================
+  # Environment Configuration
+  # ==========================================================================
+  environments:
+    development:
+      technologies:
+        redis: { replicas: 1, memory: "512MB" }
+        cockroachdb: { replicas: 1, memory: "1GB" }
+        mongodb: { replicas: 1, memory: "1GB" }
+        weaviate: { replicas: 1, memory: "2GB" }
+        elasticsearch: { replicas: 1, memory: "1GB" }
+        cassandra: { replicas: 1, memory: "1GB" }
+        neo4j: { replicas: 1, memory: "1GB" }
+
+    staging:
+      technologies:
+        redis: { replicas: 2, memory: "1GB" }
+        cockroachdb: { replicas: 3, memory: "2GB" }
+        mongodb: { replicas: 3, memory: "2GB" }
+        weaviate: { replicas: 2, memory: "4GB" }
+        elasticsearch: { replicas: 3, memory: "2GB" }
+        cassandra: { replicas: 3, memory: "2GB" }
+        neo4j: { replicas: 2, memory: "2GB" }
+
+    production:
+      technologies:
+        redis: { replicas: 3, memory: "4GB" }
+        cockroachdb: { replicas: 5, memory: "8GB" }
+        mongodb: { replicas: 5, memory: "8GB" }
+        weaviate: { replicas: 3, memory: "16GB" }
+        elasticsearch: { replicas: 5, memory: "8GB" }
+        cassandra: { replicas: 5, memory: "8GB" }
+        neo4j: { replicas: 3, memory: "8GB" }

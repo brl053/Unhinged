@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type tool
-@llm-legend LLM context warming system for onboarding new AI agents to the Unhinged monorepo
-@llm-context Provides paginated, structured summaries of codebase culture, vision, and architecture
+@llm-type util.tool
+@llm-does llm context warming system for onboarding new
 """
 
 import json
@@ -15,10 +14,9 @@ from datetime import datetime
 
 class LLMContextWarmer:
     """
-    @llm-type class
-    @llm-legend Generates structured context summaries for new LLM agents joining the project
-    @llm-context Converts extracted comments into digestible chunks with pagination support
-    """
+@llm-type config.build
+@llm-does structured context summaries for new llm agents
+"""
     
     def __init__(self, comments_file: str = "docs/architecture/extracted-comments.json"):
         self.comments_file = Path(comments_file)
@@ -35,10 +33,9 @@ class LLMContextWarmer:
     
     def generate_project_overview(self) -> Dict[str, Any]:
         """
-        @llm-type function
-        @llm-legend Generates comprehensive project overview from extracted comments
-        @llm-context Creates high-level summary perfect for LLM context warming
-        """
+@llm-type util.function
+@llm-does comprehensive project overview from extracted comments
+"""
         overview = {
             'project_name': 'Unhinged',
             'description': 'AI-powered multimodal conversation platform with vision, speech, and text capabilities',
@@ -84,10 +81,9 @@ class LLMContextWarmer:
     
     def _extract_key_components(self) -> List[Dict[str, str]]:
         """
-        @llm-type function
-        @llm-legend Extract key system components with improved name resolution and cross-references
-        @llm-context Addresses LLM feedback about unknown element names and missing navigation
-        """
+@llm-type util.function
+@llm-does extract key system components with improved name
+"""
         components = []
         for comment in self.comments:
             if comment.get('llm_type') in ['service', 'component', 'config'] and comment.get('llm_legend'):
@@ -121,10 +117,9 @@ class LLMContextWarmer:
     
     def paginate_comments(self, page: int = 1) -> Dict[str, Any]:
         """
-        @llm-type function
-        @llm-legend Provides paginated access to all extracted comments for detailed review
-        @llm-context Allows LLMs to scroll through codebase comments in digestible chunks
-        """
+@llm-type util.function
+@llm-does paginated access to all extracted comments for
+"""
         start_idx = (page - 1) * self.page_size
         end_idx = start_idx + self.page_size
         
@@ -154,10 +149,9 @@ class LLMContextWarmer:
 
     def _improve_element_name(self, comment: Dict[str, Any]) -> str:
         """
-        @llm-type function
-        @llm-legend Improve element name detection from file paths when element_name is unknown
-        @llm-context Addresses LLM feedback about unknown element names in service files
-        """
+@llm-type util.function
+@llm-does improve element name detection from file paths
+"""
         element_name = comment.get('element_name', 'unknown')
         if element_name == 'unknown':
             file_path = comment['file_path']
@@ -177,10 +171,9 @@ class LLMContextWarmer:
 
     def _find_related_services(self, comment: Dict[str, Any]) -> List[str]:
         """
-        @llm-type function
-        @llm-legend Find related services through port references, API calls, and integration patterns
-        @llm-context Addresses LLM feedback about lack of cross-reference navigation capabilities
-        """
+@llm-type util.function
+@llm-does find related services through port references, api
+"""
         related = []
         current_file = comment['file_path']
         current_text = ' '.join([
@@ -230,10 +223,9 @@ class LLMContextWarmer:
 
     def _validate_context_completeness(self, comments: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         """
-        @llm-type function
-        @llm-legend Validate that service and component comments have proper context information
-        @llm-context Addresses LLM feedback about null llm_context fields where context should exist
-        """
+@llm-type util.function
+@llm-does validate that service and component comments have
+"""
         missing_context = []
 
         for comment in comments:
@@ -252,10 +244,9 @@ class LLMContextWarmer:
 
     def _generate_getting_started_section(self) -> Dict[str, Any]:
         """
-        @llm-type function
-        @llm-legend Generate getting started section with setup commands and prerequisites
-        @llm-context Addresses LLM feedback about missing getting started section in overview
-        """
+@llm-type util.function
+@llm-does generate getting started section with setup commands
+"""
         return {
             'quick_start_commands': [
                 'make setup    # Initial project setup',
@@ -281,10 +272,9 @@ class LLMContextWarmer:
 
     def _extract_dependency_information(self) -> Dict[str, Any]:
         """
-        @llm-type function
-        @llm-legend Extract dependency and build system information from configuration files
-        @llm-context Addresses LLM feedback about missing dependency/setup information
-        """
+@llm-type util.function
+@llm-does extract dependency and build system information from
+"""
         dependencies = {
             'frontend': {
                 'language': 'TypeScript/React',
@@ -314,10 +304,9 @@ class LLMContextWarmer:
 
     def _validate_legend_completeness(self, comments: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         """
-        @llm-type function
-        @llm-legend Validate that @llm-legend entries are complete and not truncated
-        @llm-context Addresses LLM feedback about incomplete/truncated legend entries
-        """
+@llm-type util.function
+@llm-does validate that
+"""
         truncated_legends = []
 
         for comment in comments:
@@ -349,10 +338,9 @@ class LLMContextWarmer:
 
     def generate_enhanced_project_overview(self) -> Dict[str, Any]:
         """
-        @llm-type function
-        @llm-legend Generate enhanced project overview addressing all LLM feedback for 10/10 rating
-        @llm-context Includes getting started, dependencies, and complete information sections
-        """
+@llm-type util.function
+@llm-does generate enhanced project overview addressing all llm
+"""
         base_overview = self.generate_project_overview()
 
         # Add the missing sections identified in LLM feedback

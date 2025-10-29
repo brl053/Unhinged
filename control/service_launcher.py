@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type control-system
-@llm-legend Service launcher with unified service registry integration
-@llm-key Launches essential services using centralized service discovery
-@llm-map Core service orchestration component replacing hardcoded configurations
-@llm-axiom Uses service registry for dynamic service discovery and health monitoring
-@llm-contract Provides cohesive service integration for GUI startup
-@llm-token service-launcher: Unified service orchestration with registry integration
+@llm-type service.api
+@llm-does service launcher with unified service registry integration
 """
 """
 🚀 Service Launcher - Cohesive Service Integration
@@ -236,10 +231,6 @@ class ServiceLauncher:
 
     def _start_direct_service(self, service: Dict, timeout: int) -> bool:
         """
-        @llm-key Direct service execution for non-Docker components
-        @llm-contract Starts services via direct command execution with environment setup
-        @llm-map Service launcher extension enabling voice transcription service integration
-
         Start a service using direct command execution rather than Docker Compose.
 
         This method extends the service launcher to support services that run directly
@@ -292,10 +283,6 @@ class ServiceLauncher:
 
     def _is_service_healthy(self, service: Dict) -> bool:
         """
-        @llm-key Service health verification for direct and Docker services
-        @llm-contract HTTP health check validation for service availability
-        @llm-map Health monitoring component supporting voice transcription service integration
-
         Check if a service is currently healthy via HTTP health endpoint.
 
         This method provides unified health checking for both Docker Compose services

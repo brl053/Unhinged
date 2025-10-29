@@ -20,14 +20,10 @@ package com.unhinged.persistence.core
 import com.unhinged.persistence.model.*
 import kotlinx.coroutines.flow.Flow
 
-/**
- * @llm-type interface
- * @llm-legend Query executor that handles query planning, optimization, caching, and routing
- * @llm-key Provides intelligent query execution with automatic optimization and caching strategies
- * @llm-map Central query processing engine that routes queries to optimal database technologies
- * @llm-axiom All queries must be processed through this executor for consistency and optimization
- * @llm-contract Handles query planning, caching, routing, and execution across all database technologies
- * @llm-token query-executor: Intelligent query processing and routing engine
+/*
+ * @llm-type misc.interface
+ * @llm-does query executor that handles query planning, optimization,
+ * @llm-rule all queries must be processed through this executor for consistency and optim...
  */
 interface QueryExecutor {
     

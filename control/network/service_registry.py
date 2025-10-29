@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type control-system
-@llm-legend service_registry.py - Central service discovery and registration system
-@llm-key Unified service discovery replacing hardcoded service configurations
-@llm-map Core component of the network control system providing service location transparency
-@llm-axiom Single source of truth for all service endpoints and health status
-@llm-contract Provides standardized service discovery interface for all system components
-@llm-token service_registry: Centralized service discovery and health monitoring
+@llm-type service.api
+@llm-does service_registry.py - central service discovery and regis...
 """
 
 import json

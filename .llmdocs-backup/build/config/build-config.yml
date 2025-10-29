@@ -1,0 +1,332 @@
+# Unhinged Build Configuration
+# @llm-type build-configuration
+# @llm-legend Main build configuration for Unhinged platform
+# @llm-key Defines build targets, dependencies, and orchestration settings
+# @llm-map Central configuration for build system orchestration
+# @llm-axiom Build configuration must maintain system independence
+# @llm-contract Provides build target definitions and dependency management
+# @llm-token build-config: Central build configuration for Unhinged platform
+
+version: "1.0"
+name: "unhinged-platform"
+description: "Independent AI platform with native GUI and gRPC services"
+
+# Global build settings
+settings:
+  parallel: false
+  cache_enabled: true
+  validation_enabled: true
+  environment: "development"
+
+# Build targets configuration
+targets:
+  # Service Discovery - Core system component
+  service-discovery:
+    description: "Build-time service discovery and registry generation"
+    module: "service_discovery_builder"
+    dependencies: []
+    inputs:
+      - "orchestration/docker-compose.yml"
+      - "orchestration/docker-compose.*.yml"
+      - "proto/**/*.proto"
+      - "services/*/proto/*.proto"
+    outputs:
+      - "generated/service-registry.js"
+      - "generated/service-topology.json"
+      - "generated/health-endpoints.json"
+    cache_key: "service-discovery-v1"
+
+  # Mobile UI Framework
+  mobile-ui:
+    description: "Mobile-first responsive UI framework"
+    module: "mobile_ui_builder"
+    dependencies: []
+    inputs:
+      - "control/native_gui/ui/**/*.py"
+      - "control/native_gui/core/**/*.py"
+    outputs:
+      - "generated/mobile_ui/**/*"
+      - "generated/static_html/mobile_ui.css"
+    cache_key: "mobile-ui-v1"
+
+  # Design System - Semantic token generation
+  design-tokens:
+    description: "Generate design system artifacts from semantic tokens"
+    module: "design_token_builder"
+    dependencies: []
+    inputs:
+      - "libs/design_system/tokens/*.yaml"
+      - "libs/design_system/build/generators/*.py"
+    outputs:
+      - "generated/design_system/gtk4/*.css"
+    cache_key: "design-tokens-v1"
+
+  # GTK4-specific design tokens
+  design-tokens-gtk4:
+    description: "Generate GTK4 CSS from semantic design tokens"
+    module: "design_token_builder"
+    dependencies: []
+    inputs:
+      - "libs/design_system/tokens/*.yaml"
+      - "libs/design_system/build/generators/gtk4_generator.py"
+    outputs:
+      - "generated/design_system/gtk4/design-tokens.css"
+      - "generated/design_system/gtk4/theme-light.css"
+      - "generated/design_system/gtk4/theme-dark.css"
+      - "generated/design_system/gtk4/components.css"
+    cache_key: "design-tokens-gtk4-v1"
+
+  # Proto Client Generation
+  proto-clients:
+    description: "Generate gRPC clients for all services"
+    module: "proto_client_builder"
+    dependencies: []
+    inputs:
+      - "proto/**/*.proto"
+      - "services/*/proto/*.proto"
+    outputs:
+      - "generated/clients/**/*"
+    cache_key: "proto-clients-v1"
+
+  # Python Services
+  python-services:
+    description: "Build Python service components"
+    module: "python_builder"
+    dependencies: ["proto-clients"]
+    inputs:
+      - "services/**/*.py"
+      - "control/**/*.py"
+    outputs:
+      - "generated/python/**/*"
+    cache_key: "python-services-v1"
+
+  # TypeScript/JavaScript Components
+  typescript-components:
+    description: "Build TypeScript/JavaScript components"
+    module: "typescript_builder"
+    dependencies: ["proto-clients"]
+    inputs:
+      - "web/**/*.ts"
+      - "web/**/*.js"
+      - "control/web/**/*.ts"
+    outputs:
+      - "generated/web/**/*"
+    cache_key: "typescript-v1"
+
+  # Kotlin Services
+  kotlin-services:
+    description: "Build Kotlin service components"
+    module: "kotlin_builder"
+    dependencies: ["proto-clients"]
+    inputs:
+      - "services/**/*.kt"
+      - "kotlin/**/*.kt"
+    outputs:
+      - "generated/kotlin/**/*"
+    cache_key: "kotlin-services-v1"
+
+  # C Graphics Library - Foundation Layer (REQUIRED)
+  c-graphics-build:
+    description: "Build C graphics rendering library (REQUIRED foundation layer)"
+    module: "c_builder"
+    dependencies: []
+    required: true
+    inputs:
+      - "libs/graphics/**/*.c"
+      - "libs/graphics/**/*.h"
+      - "libs/graphics/CMakeLists.txt"
+      - "libs/graphics/cffi_build.py.in"
+    outputs:
+      - "generated/c/graphics/**/*"
+      - "libs/graphics/build/**/*"
+    cache_key: "c-graphics-v1"
+
+  # Component Validation
+  validate-components:
+    description: "Validate component specifications against schema"
+    module: "component_builder"
+    dependencies: ["design-tokens-gtk4"]
+    inputs:
+      - "libs/design_system/components/**/*.yaml"
+      - "libs/design_system/components/_schema.yaml"
+      - "libs/design_system/tokens/**/*.yaml"
+    outputs:
+      - "generated/components/validation-report.json"
+    cache_key: "component-validation-v1"
+
+  # Component Generation - All Platforms
+  components:
+    description: "Generate components for all platforms"
+    module: "component_builder"
+    dependencies: ["validate-components"]
+    inputs:
+      - "libs/design_system/components/**/*.yaml"
+      - "libs/design_system/tokens/**/*.yaml"
+      - "libs/design_system/build/generators/**/*.py"
+    outputs:
+      - "generated/components/**/*"
+    cache_key: "components-all-v1"
+
+  # Component Generation - GTK4 Specific
+  components-gtk4:
+    description: "Generate GTK4 components specifically"
+    module: "component_builder"
+    dependencies: ["validate-components", "design-tokens-gtk4"]
+    inputs:
+      - "libs/design_system/components/**/*.yaml"
+      - "libs/design_system/tokens/**/*.yaml"
+      - "libs/design_system/build/generators/gtk4/**/*.py"
+    outputs:
+      - "generated/components/gtk4/**/*"
+      - "control/gtk4_gui/components/generated/**/*"
+    cache_key: "components-gtk4-v1"
+
+
+
+
+
+# Build groups for orchestration
+groups:
+  core:
+    description: "Core system components"
+    targets: ["service-discovery", "mobile-ui", "c-graphics-build"]
+
+  graphics:
+    description: "Graphics rendering foundation"
+    targets: ["c-graphics-build"]
+
+  services:
+    description: "All service components"
+    targets: ["python-services", "kotlin-services"]
+
+  clients:
+    description: "Client generation"
+    targets: ["proto-clients", "typescript-components"]
+
+  all:
+    description: "Complete build"
+    targets: ["service-discovery", "mobile-ui", "c-graphics-build", "proto-clients", "python-services", "typescript-components", "kotlin-services"]
+
+# Module configuration
+modules:
+  service_discovery_builder:
+    class: "ServiceDiscoveryBuilder"
+    config:
+      docker_compose_files:
+        - "build/orchestration/docker-compose.production.yml"
+        - "build/orchestration/docker-compose.development.yml"
+        - "control/orchestration/docker-compose.development.yml"
+      proto_directories:
+        - "proto"
+        - "services/*/proto"
+      output_directory: "generated"
+
+  mobile_ui_builder:
+    class: "MobileUIBuilder"
+    config:
+      source_directory: "control/native_gui/ui"
+      output_directory: "generated/mobile_ui"
+      css_output_directory: "generated/static_html"
+
+  proto_client_builder:
+    class: "ProtoClientBuilder"
+    config:
+      proto_directories:
+        - "proto"
+        - "services/*/proto"
+      output_directory: "generated/clients"
+      languages: ["python", "typescript", "kotlin"]
+
+  python_builder:
+    class: "PythonBuilder"
+    config:
+      source_directories:
+        - "services"
+        - "control"
+      output_directory: "generated/python"
+
+  typescript_builder:
+    class: "TypeScriptBuilder"
+    config:
+      source_directories:
+        - "web"
+        - "control/web"
+      output_directory: "generated/web"
+
+  kotlin_builder:
+    class: "KotlinBuilder"
+    config:
+      source_directories:
+        - "services"
+        - "kotlin"
+      output_directory: "generated/kotlin"
+
+  c_builder:
+    class: "CBuilder"
+    config:
+      graphics_directory: "libs/graphics"
+      build_directory: "libs/graphics/build"
+      install_directory: "generated/c/graphics"
+      cffi_directory: "generated/python/graphics"
+      cmake_options:
+        - "-DCMAKE_BUILD_TYPE=Release"
+        - "-DENABLE_SIMD=ON"
+        - "-DENABLE_TESTING=ON"
+
+  component_builder:
+    class: "ComponentBuildModule"
+    config:
+      components_directory: "libs/design_system/components"
+      tokens_directory: "libs/design_system/tokens"
+      schema_path: "libs/design_system/components/_schema.yaml"
+      generators_directory: "libs/design_system/build/generators"
+      output_directory: "generated/components"
+      gtk4_output_directory: "control/gtk4_gui/components/generated"
+      platforms: ["GTK4"]
+
+# Validation configuration
+validation:
+  enabled: true
+  validators:
+    - "dependency_validator"
+    - "port_validator"
+    - "resource_validator"
+
+# Cache configuration
+cache:
+  enabled: true
+  directory: ".build-cache"
+  max_size: "1GB"
+  ttl: "24h"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Environment-specific overrides
+environments:
+  development:
+    settings:
+      parallel: false
+      validation_enabled: true
+    logging:
+      level: "DEBUG"
+
+  production:
+    settings:
+      parallel: true
+      validation_enabled: true
+    cache:
+      ttl: "7d"
+    logging:
+      level: "INFO"
+
+  ci:
+    settings:
+      parallel: true
+      validation_enabled: true
+    cache:
+      enabled: false
+    logging:
+      level: "WARNING"

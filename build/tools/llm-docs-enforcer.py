@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type build-tool
-@llm-legend Automated LLM documentation header enforcement across all source files
-@llm-key Validates and injects standardized @llm- headers into Python, Kotlin, and other source files
-@llm-map Build-time tool ensuring documentation consistency across the entire codebase
-@llm-axiom All source files must have @llm- documentation headers for AI comprehension
-@llm-contract Fails build if files lack proper documentation headers
-@llm-token llm-docs-enforcer: Automated documentation header validation and injection
+@llm-type util.function
+@llm-does automated llm documentation header enforcement across all
 """
 
 import os
@@ -37,8 +32,8 @@ class LLMDocsEnforcer:
         '.yaml': ('#', '#', '#'),
     }
     
-    # Required @llm- tags
-    REQUIRED_TAGS = ['@llm-type', '@llm-legend', '@llm-key']
+    # Required @llm- tags - Evolved 3-tag format
+    REQUIRED_TAGS = ['@llm-type', '@llm-does']
     
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -169,22 +164,12 @@ class LLMDocsEnforcer:
         if file_type == '.py':
             return f'''"""
 @llm-type {llm_type}
-@llm-legend {file_name} - {purpose}
-@llm-key Core functionality for {file_path.stem}
-@llm-map Part of the Unhinged system architecture
-@llm-axiom Maintains system independence and architectural compliance
-@llm-contract Provides standardized interface for system integration
-@llm-token {file_path.stem}: {purpose}
+@llm-does {purpose}
 """'''
         else:
             return f'''{line_comment}
 {line_comment} @llm-type {llm_type}
-{line_comment} @llm-legend {file_name} - {purpose}
-{line_comment} @llm-key Core functionality for {file_path.stem}
-{line_comment} @llm-map Part of the Unhinged system architecture
-{line_comment} @llm-axiom Maintains system independence and architectural compliance
-{line_comment} @llm-contract Provides standardized interface for system integration
-{line_comment} @llm-token {file_path.stem}: {purpose}
+{line_comment} @llm-does {purpose}
 {line_comment}'''
     
     def enforce_compliance(self, directories: List[str], fix: bool = False) -> bool:

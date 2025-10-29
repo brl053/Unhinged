@@ -1,26 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend TypeScript/npm build module with webpack optimization and hot reloading
-@llm-key Provides optimized npm builds with webpack, hot module replacement, and intelligent caching
-@llm-map TypeScript build module that integrates with npm/webpack build system and provides enhanced caching
-@llm-axiom TypeScript builds must support hot reloading for development and optimization for production
-@llm-contract Returns BuildModuleResult with JS bundle artifacts and build metrics
-@llm-token typescript-builder: npm/webpack-based build module for TypeScript/React projects
-
-TypeScript/npm Build Module
-
-Provides optimized builds for TypeScript projects using npm/webpack with:
-- Hot module replacement for development
-- Bundle optimization for production
-- Source map generation
-- Dependency analysis
-- Asset management
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does typescript/npm build module with webpack optimization and
 """
 
 import json

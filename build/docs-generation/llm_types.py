@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Type definitions and contracts for LLM comment system.
-
-@llm-type contract
-@llm-legend Defines data structures and interfaces for LLM comment extraction/validation
-@llm-context Central type system ensuring consistency across extraction and validation pipeline
+"""
+@llm-type config.build
+@llm-does defines data structures and interfaces for llm
 """
 
 from typing import TypedDict, Optional, List, Dict, Literal
@@ -13,34 +11,23 @@ from pathlib import Path
 # Supported languages for extraction
 LanguageType = Literal["typescript", "python", "kotlin", "yaml", "javascript"]
 
-# LLM tag names
+# LLM tag names - Evolved 3-tag format
 TagType = Literal[
-    "llm_type", 
-    "llm_legend", 
-    "llm_key", 
-    "llm_map", 
-    "llm_axiom", 
-    "llm_contract", 
-    "llm_token",
-    "llm_context"  # NEW
+    "llm_type",   # Hierarchical category (required)
+    "llm_does",   # Action description (required)
+    "llm_rule"    # Critical constraint (optional)
 ]
 
 @dataclass
 class LLMComment:
-    """Single LLM comment with all possible tags."""
+    """Single LLM comment with evolved 3-tag format."""
     file_path: str
     line_number: int
     language: LanguageType
     element_name: str = "unknown"
-    type: Optional[str] = None
-    legend: Optional[str] = None
-    key: Optional[str] = None
-    map: Optional[str] = None
-    axiom: Optional[str] = None
-    contract: Optional[str] = None
-    token: Optional[str] = None
-    context: Optional[str] = None  # generic context
-    llm_context: Optional[str] = None  # NEW: specific @llm-context tag
+    type: Optional[str] = None      # @llm-type: hierarchical category
+    does: Optional[str] = None      # @llm-does: action description
+    rule: Optional[str] = None      # @llm-rule: critical constraint
     raw_comment: str = ""
 
 class ExtractionResult(TypedDict):
@@ -65,27 +52,22 @@ class ValidationResult(TypedDict):
     passed: bool
     validation_timestamp: str
 
-# Tag parsing patterns
+# Tag parsing patterns - Evolved 3-tag format
 TAG_PATTERNS = {
-    'llm_type': r'@llm-type\s+(\w+)',
-    'llm_legend': r'@llm-legend\s+(.+?)(?=@llm-|\n\n|\Z)',
-    'llm_key': r'@llm-key\s+(.+?)(?=@llm-|\n\n|\Z)',
-    'llm_map': r'@llm-map\s+(.+?)(?=@llm-|\n\n|\Z)',
-    'llm_axiom': r'@llm-axiom\s+(.+?)(?=@llm-|\n\n|\Z)',
-    'llm_contract': r'@llm-contract\s+(.+?)(?=@llm-|\n\n|\Z)',
-    'llm_token': r'@llm-token\s+(.+?)(?=@llm-|\n\n|\Z)',
-    'llm_context': r'@llm-context\s+(.+?)(?=@llm-|\n\n|\Z)'  # NEW
+    'llm_type': r'@llm-type\s+([^\n]+)',
+    'llm_does': r'@llm-does\s+([^\n]+)',
+    'llm_rule': r'@llm-rule\s+([^\n]+)'
 }
 
-# Required tags by element type
+# Required tags by element type - Evolved format
 REQUIRED_TAGS = {
-    'service': ['type', 'legend'],
-    'function': ['type', 'legend'],
-    'class': ['type', 'legend'],
-    'component': ['type', 'legend'],
-    'config': ['type', 'legend'],
-    'repository': ['type', 'legend'],
-    'endpoint': ['type', 'legend', 'contract'],
+    'service': ['type', 'does'],
+    'function': ['type', 'does'],
+    'class': ['type', 'does'],
+    'component': ['type', 'does'],
+    'config': ['type', 'does'],
+    'repository': ['type', 'does'],
+    'endpoint': ['type', 'does'],
 }
 
 # Valid values for llm_type

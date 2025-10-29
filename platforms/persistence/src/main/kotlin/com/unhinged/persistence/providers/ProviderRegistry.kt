@@ -22,14 +22,10 @@ import com.unhinged.persistence.config.TechnologyConfiguration
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * @llm-type registry
- * @llm-legend Provider registry that manages all database technology providers and their lifecycle
- * @llm-key Central registry for creating, configuring, and managing database providers across all technologies
- * @llm-map Provider factory and lifecycle manager for all database technology implementations
- * @llm-axiom All database providers must be registered and managed through this registry
- * @llm-contract Provides provider creation, configuration, and lifecycle management for all database technologies
- * @llm-token provider-registry: Central database provider management and factory
+/*
+ * @llm-type misc.registry
+ * @llm-does provider registry that manages all database technology
+ * @llm-rule all database providers must be registered and managed through this registry
  */
 class ProviderRegistry {
     

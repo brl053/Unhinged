@@ -1,0 +1,33 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Unhinged
+Comment=Voice-First AI Control Center with Dual-System Architecture
+GenericName=AI Control Center
+Exec=/home/e-bliss-station-1/Projects/Unhinged/desktop/unhinged-desktop-launcher
+Icon=unhinged
+Terminal=false
+StartupNotify=true
+Categories=Graphics;Development;System;AudioVideo;
+Keywords=voice;ai;conversation;graphics;vm;communication;native;platform;dual-system;
+MimeType=application/x-unhinged;
+StartupWMClass=unhinged-desktop-app
+
+# Desktop file for Unhinged Native Graphics Platform
+# @llm-doc Ubuntu GNOME Desktop Integration
+# @llm-version 1.0.0
+# @llm-date 2025-01-26
+# @llm-author Unhinged Team
+
+# This desktop file provides Ubuntu GNOME integration for the Unhinged platform
+# allowing users to launch the application from the desktop or application menu
+
+# Installation:
+# 1. Copy to ~/.local/share/applications/ for user installation
+# 2. Copy to /usr/share/applications/ for system-wide installation
+# 3. Run: update-desktop-database ~/.local/share/applications/
+
+# Requirements:
+# - Unhinged desktop application executable
+# - Application icon (PNG format recommended)
+# - Proper file permissions (executable)

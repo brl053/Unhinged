@@ -1,28 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type build-module
-@llm-legend Service discovery build module for compile-time service registry generation
-@llm-key Discovers Docker and gRPC services at build time, generates static JavaScript registry for system health dashboard
-@llm-map Integrates with existing build orchestrator using BuildModule contract for cached service discovery
-@llm-axiom Service discovery must happen at build time to ensure HTML dashboard is always up-to-date
-@llm-contract Implements BuildModule interface with docker-compose.yml and proto file parsing
-@llm-token service-discovery-builder: Build-time service discovery for system health monitoring
-
-Service Discovery Build Module
-
-Discovers services at build time from:
-- Docker Compose services (docker-compose.yml)
-- gRPC services (proto/*.proto files)
-- Health endpoint mappings
-- Service dependency topology
-
-Generates static JavaScript registry consumed by system-health.html dashboard.
-Follows existing BuildModule contract pattern for consistency and caching.
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does service discovery build module for compile-time service
+@llm-rule service discovery must happen at build time to ensure html dashboard is alway...
 """
 
 import json
@@ -43,14 +24,10 @@ except ImportError:
 
 class ServiceDiscoveryBuilder(BuildModule):
     """
-    @llm-type build-module
-    @llm-legend Build-time service discovery module following existing BuildModule contract
-    @llm-key Parses docker-compose.yml and proto files to generate static service registry
-    @llm-map Integrates with build orchestrator for cached, dependency-aware service discovery
-    @llm-axiom Service registry must be generated before HTML dashboard access
-    @llm-contract Returns BuildModuleResult with service-registry.js artifact
-    @llm-token build-time-service-discovery: Compile-time service discovery for health monitoring
-    """
+@llm-type config.build
+@llm-does build-time service discovery module following existing bu...
+@llm-rule service registry must be generated before html dashboard access
+"""
     
     def __init__(self, context: BuildContext):
         super().__init__(context)

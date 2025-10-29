@@ -1,10 +1,6 @@
 """
-@llm-type data-model
-@llm-legend Operation result data model for system control operations
-@llm-key Standardized result format for all system operations with future OS compatibility
-@llm-map Result model that will evolve into OS system call return values
-@llm-axiom All operations must return structured, auditable results
-@llm-token operation-result: Data model for system operation results and future OS return values
+@llm-type model.entity
+@llm-does operation result data model for system control
 """
 
 from dataclasses import dataclass

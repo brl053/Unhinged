@@ -1,27 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Developer experience enhancements for the enhanced build system
-@llm-key Provides developer-friendly features like progress indicators, quick commands, and better error messages
-@llm-map Developer experience layer that makes the build system more accessible and productive for developers
-@llm-axiom Developer experience must reduce friction and provide clear, actionable feedback
-@llm-contract Returns enhanced user interfaces and developer productivity tools
-@llm-token dev-experience: Developer productivity enhancements for build system
-
-Developer Experience Enhancements
-
-Provides developer-friendly features for the enhanced build system:
-- Progress indicators and status displays
-- Quick setup and development commands
-- Interactive target selection
-- Build status dashboard
-- Error recovery suggestions
-- Performance insights
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does developer experience enhancements for the enhanced build
 """
 
 import os

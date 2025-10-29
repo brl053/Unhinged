@@ -1,30 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type build-module
-@llm-legend Static HTML registry generation module for control plane browser interface
-@llm-key Scans control/static_html directory and generates JavaScript registry following BuildModule interface
-@llm-map Integrates with existing build orchestrator as specialized module for static asset management
-@llm-axiom Must follow BuildModule contract and provide caching, validation, and artifact management
-@llm-contract Implements BuildModule interface with build(), cache_key(), and validate() methods
-@llm-token registry-builder: Build module for static HTML file registry generation
-
-Registry Builder Module
-
-Specialized build module that scans the control/static_html directory and generates
-a JavaScript registry file for browser consumption. Integrates with the existing
-build orchestrator to provide caching, dependency tracking, and performance monitoring.
-
-Features:
-- Recursive HTML file discovery
-- Metadata extraction from HTML files
-- JavaScript registry generation
-- Content-based caching
-- Build artifact management
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-19
+@llm-type config.build
+@llm-does static html registry generation module for control
 """
 
 import json
@@ -45,14 +23,10 @@ except ImportError:
 
 class RegistryBuilder(BuildModule):
     """
-    @llm-type build-module
-    @llm-legend Generates JavaScript registry of static HTML files for browser navigation
-    @llm-key Scans filesystem, extracts HTML metadata, generates registry.js with kawaii ASCII TOC
-    @llm-map Integrates with build orchestrator for caching and dependency management
-    @llm-axiom Registry must be generated before browser access to ensure accurate file discovery
-    @llm-contract Returns BuildResult with registry.js artifact or error details
-    @llm-token static-html-registry: Browser-consumable file registry for navigation
-    """
+@llm-type config.build
+@llm-does javascript registry of static html files for
+@llm-rule registry must be generated before browser access to ensure accurate file disc...
+"""
     
     def __init__(self):
         self.name = "registry_builder"
@@ -60,12 +34,9 @@ class RegistryBuilder(BuildModule):
         
     def can_handle(self, context: BuildContext) -> bool:
         """
-        @llm-type function
-        @llm-legend Determines if this module can handle the given build context
-        @llm-key Checks for registry-related target names and static_html directory existence
-        @llm-map Called by build orchestrator during module selection phase
-        @llm-contract Returns True for registry targets, False otherwise
-        """
+@llm-type util.function
+@llm-does determines if this module can handle the
+"""
         registry_targets = ["generate-registry", "registry", "static-html-registry"]
         return (
             context.target_name in registry_targets or
@@ -74,12 +45,9 @@ class RegistryBuilder(BuildModule):
     
     def get_dependencies(self, context: BuildContext) -> List[str]:
         """
-        @llm-type function
-        @llm-legend Returns list of files that affect registry generation
-        @llm-key Scans control/static_html for all HTML files to establish dependencies
-        @llm-map Used by build orchestrator for cache invalidation and dependency tracking
-        @llm-contract Returns list of file paths that trigger registry regeneration when changed
-        """
+@llm-type util.function
+@llm-does returns list of files that affect registry
+"""
         static_html_dir = context.project_root / "control" / "static_html"
         dependencies = []
         
@@ -92,12 +60,9 @@ class RegistryBuilder(BuildModule):
     
     def calculate_cache_key(self, context: BuildContext) -> str:
         """
-        @llm-type function
-        @llm-legend Generates content-based cache key for registry generation
-        @llm-key Combines file modification times and content hashes of all HTML files
-        @llm-map Used by build orchestrator for intelligent cache invalidation
-        @llm-contract Returns stable cache key that changes only when HTML files change
-        """
+@llm-type util.function
+@llm-does content-based cache key for registry generation
+"""
         static_html_dir = context.project_root / "control" / "static_html"
         
         if not static_html_dir.exists():
@@ -119,12 +84,9 @@ class RegistryBuilder(BuildModule):
     
     def extract_html_metadata(self, file_path: Path) -> Dict[str, any]:
         """
-        @llm-type function
-        @llm-legend Extracts title, description, and metadata from HTML file
-        @llm-key Parses HTML content using regex to find title and meta tags
-        @llm-map Helper function for registry generation process
-        @llm-contract Returns metadata dict with title, description, category, and file info
-        """
+@llm-type util.function
+@llm-does extracts title, description, and metadata from html
+"""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -187,12 +149,9 @@ class RegistryBuilder(BuildModule):
     
     def scan_static_html_directory(self, project_root: Path) -> Dict[str, Dict]:
         """
-        @llm-type function
-        @llm-legend Recursively scans control/static_html for HTML files and extracts metadata
-        @llm-key Walks filesystem tree, processes each HTML file, builds registry dictionary
-        @llm-map Core scanning function that builds the complete file registry
-        @llm-contract Returns registry dict with absolute paths as keys and metadata as values
-        """
+@llm-type util.function
+@llm-does recursively scans control/static_html for html files and
+"""
         static_html_dir = project_root / "control" / "static_html"
         registry = {}
 
@@ -215,12 +174,9 @@ class RegistryBuilder(BuildModule):
 
     def build_file_structure(self, project_root: Path) -> Dict:
         """
-        @llm-type function
-        @llm-legend Builds hierarchical file structure for table-of-contents navigation
-        @llm-key Scans control/static_html directory and creates nested structure with metadata
-        @llm-map Generates browser-consumable file tree for navigation components
-        @llm-contract Returns nested dict with directories and files organized hierarchically
-        """
+@llm-type util.function
+@llm-does hierarchical file structure for table-of-contents navigation
+"""
         static_html_dir = project_root / "control" / "static_html"
 
         if not static_html_dir.exists():
@@ -282,36 +238,24 @@ class RegistryBuilder(BuildModule):
     
     def generate_registry_js(self, registry: Dict[str, Dict], file_structure: Dict = None) -> str:
         """
-        @llm-type function
-        @llm-legend Generates JavaScript registry file with helper functions and kawaii ASCII TOC
-        @llm-key Creates JavaScript module with registry object and utility functions
-        @llm-map Converts Python registry dict to browser-consumable JavaScript
-        @llm-contract Returns valid JavaScript code with UNHINGED_REGISTRY global
-        """
+@llm-type util.function
+@llm-does javascript registry file with helper functions and
+"""
         js_content = f'''// Auto-generated registry - DO NOT EDIT MANUALLY
 // Generated at: {datetime.now().isoformat()}
 // Run 'make start' to regenerate
 
-/**
- * @llm-type config
- * @llm-legend Global registry of static HTML files for browser navigation
- * @llm-key Auto-generated from filesystem scan, provides metadata for each HTML file
- * @llm-map Used by index.html and navigation components for file discovery
- * @llm-axiom Registry must be regenerated whenever HTML files are added/removed/modified
- * @llm-contract Provides consistent interface for file metadata and navigation
- * @llm-token unhinged-registry: Complete file registry for static HTML interface
- */
+"""
+@llm-type model.config
+@llm-does global registry of static html files for
+@llm-rule registry must be regenerated whenever html files are added/removed/modified
+"""
 window.UNHINGED_REGISTRY = {json.dumps(registry, indent=2)};
 
-/**
- * @llm-type config
- * @llm-legend Hierarchical file structure for table-of-contents navigation
- * @llm-key Auto-generated directory tree with file metadata for browser navigation
- * @llm-map Used by table-of-contents.html for dynamic file structure display
- * @llm-axiom File structure regenerated on every make start to reflect current filesystem
- * @llm-contract Provides nested directory structure with file metadata
- * @llm-token unhinged-file-structure: Complete directory tree for navigation
- */
+"""
+@llm-type model.config
+@llm-does hierarchical file structure for table-of-contents navigation
+"""
 window.UNHINGED_FILE_STRUCTURE = {json.dumps(file_structure or {}, indent=2)};
 
 // Helper functions for registry access
@@ -429,12 +373,9 @@ console.log('🗂️ File structure loaded with', Object.keys(window.UNHINGED_FI
     
     def build(self, context: BuildContext) -> BuildModuleResult:
         """
-        @llm-type function
-        @llm-legend Main build function that generates the static HTML registry
-        @llm-key Scans filesystem, generates JavaScript registry, writes output file
-        @llm-map Called by build orchestrator to execute registry generation
-        @llm-contract Returns BuildModuleResult with success status and generated artifacts
-        """
+@llm-type util.function
+@llm-does main build function that generates the static
+"""
         start_time = time.time()
         
         try:
@@ -501,12 +442,9 @@ console.log('🗂️ File structure loaded with', Object.keys(window.UNHINGED_FI
     
     def clean(self, context: BuildContext) -> bool:
         """
-        @llm-type function
-        @llm-legend Removes generated registry.js file
-        @llm-key Deletes output file to force regeneration on next build
-        @llm-map Called by build orchestrator during clean operations
-        @llm-contract Returns True if cleanup successful, False otherwise
-        """
+@llm-type util.function
+@llm-does removes generated registry.js file
+"""
         try:
             output_path = context.project_root / "generated" / "static_html" / "registry.js"
             if output_path.exists():

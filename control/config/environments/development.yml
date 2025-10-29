@@ -1,11 +1,5 @@
-# Unhinged Development Environment Configuration
-# @llm-type control-config
-# @llm-legend Development environment settings for Unhinged system development
-# @llm-key Development-friendly configuration with debugging and rapid iteration support
-# @llm-map Development environment control configuration for local development
-# @llm-axiom Development environment must prioritize developer experience and debugging
-# @llm-token development-config: Development environment configuration for local control
-
+# @llm-type config.app
+# @llm-does development environment settings for unhinged system deve...
 environment: "development"
 version: "1.0"
 last_updated: "2025-10-20T20:00:00Z"

@@ -1,20 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type service-launcher
-@llm-legend Vision AI service launcher with gRPC health.proto implementation
-@llm-key Launches gRPC API for vision analysis with standardized health endpoints
-@llm-map Main entry point for vision AI service using health.proto
-@llm-axiom Service must implement health.proto for service discovery and monitoring
-@llm-contract Provides vision analysis via gRPC API with health.proto compliance
-@llm-token vision-service: Vision AI with gRPC and health.proto
-
-Vision AI Service Main Entry Point
-
-gRPC-only service with health.proto implementation:
-- gRPC API: Image analysis and captioning
-- Health checks: Implements unhinged.health.v1.HealthService
-- Service discovery integration via health.proto
-- BLIP model management and processing
+@llm-type service.launcher
+@llm-does vision ai service launcher with grpc health.proto
 """
 
 import os

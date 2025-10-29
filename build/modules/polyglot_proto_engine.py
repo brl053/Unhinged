@@ -1,33 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type build-engine
-@llm-legend Unified polyglot protobuf client generation engine with DRY architecture
-@llm-key Generates TypeScript, C, Python, Kotlin clients from protobuf definitions using shared generation patterns
-@llm-map Central proto generation engine that eliminates code duplication across language-specific generators
-@llm-axiom All proto client generation must use this unified engine to maintain consistency and reduce duplication
-@llm-contract Provides language-agnostic proto generation with pluggable language-specific handlers
-@llm-token polyglot-proto-engine: Unified DRY protobuf client generation for multiple languages
-
-Polyglot Protocol Buffer Client Generation Engine
-
-Implements DRY principle for proto client generation across:
-- TypeScript (gRPC-Web, browser clients)
-- C/C++ (native gRPC, high-performance services)  
-- Python (gRPC services, AI/ML backends)
-- Kotlin (JVM services, persistence platform)
-
-Features:
-- Unified protoc command generation
-- Shared error handling and validation
-- Cross-language type coordination
-- Pluggable language handlers
-- Intelligent dependency tracking
-- Parallel generation support
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does unified polyglot protobuf client generation engine with
 """
 
 import hashlib
@@ -173,14 +148,9 @@ class ProtoLanguageHandler(ABC):
 
 class PolyglotProtoEngine:
     """
-    @llm-type proto-engine
-    @llm-legend Unified engine for generating protobuf clients across multiple languages with DRY architecture
-    @llm-key Coordinates TypeScript, C, Python, Kotlin proto generation using pluggable language handlers
-    @llm-map Central orchestrator that eliminates duplication in proto generation logic across languages
-    @llm-axiom All proto client generation must use this engine for consistency and maintainability
-    @llm-contract Provides unified interface for multi-language proto generation with shared validation and error handling
-    @llm-token polyglot-proto-coordinator: Multi-language protobuf client generation orchestrator
-    """
+@llm-type config.build
+@llm-does unified engine for generating protobuf clients across
+"""
     
     def __init__(self, context: BuildContext):
         self.context = context

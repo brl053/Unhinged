@@ -1,20 +1,7 @@
 #!/usr/bin/env python3
 """
-@llm-type service-launcher
-@llm-legend Speech-to-text service launcher with gRPC health.proto implementation
-@llm-key Launches gRPC API for speech transcription with standardized health endpoints
-@llm-map Main entry point for whisper-based speech-to-text service using health.proto
-@llm-axiom Service must implement health.proto for service discovery and monitoring
-@llm-contract Provides speech transcription via gRPC streaming API with health.proto compliance
-@llm-token speech-service: Whisper-based speech-to-text with gRPC and health.proto
-
-Speech-to-Text Service Main Entry Point
-
-gRPC-only service with health.proto implementation:
-- gRPC API: Streaming audio processing and real-time transcription
-- Health checks: Implements unhinged.health.v1.HealthService
-- Service discovery integration via health.proto
-- Whisper model management and CUDA optimization
+@llm-type service.launcher
+@llm-does speech-to-text service launcher with grpc health.proto im...
 """
 
 import os

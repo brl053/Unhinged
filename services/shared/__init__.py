@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type service-shared
-@llm-legend Shared service utilities and base classes for Unhinged services
-@llm-key Common service functionality eliminating DRY violations across services
-@llm-map Shared service components enabling consistent service architecture
-@llm-axiom Shared service code must be simple, reusable, and eliminate duplication
-@llm-contract Provides common service utilities, paths, and base classes
-@llm-token service-shared: Shared utilities and base classes for service consistency
-
-Shared Service Components for Unhinged Services
-Eliminates DRY violations and provides consistent service architecture
+@llm-type service.shared
+@llm-does shared service utilities and base classes for
+@llm-rule shared service code must be simple, reusable, and eliminate duplication
 """
 
 from .paths import (

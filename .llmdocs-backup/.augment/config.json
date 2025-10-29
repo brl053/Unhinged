@@ -1,0 +1,84 @@
+{
+  "project": {
+    "name": "Unhinged",
+    "description": "A full-stack application with Kotlin backend, TypeScript frontend, PostgreSQL database, and Ollama LLM integration",
+    "type": "monorepo",
+    "architecture": "microservices"
+  },
+  "components": {
+    "backend": {
+      "path": "./backend",
+      "language": "kotlin",
+      "framework": "spring-boot",
+      "build_tool": "gradle",
+      "port": 8080,
+      "dependencies": [
+        "database",
+        "llm"
+      ]
+    },
+    "frontend": {
+      "path": "./frontend",
+      "language": "typescript",
+      "framework": "react",
+      "build_tool": "webpack",
+      "package_manager": "npm",
+      "port": 3000,
+      "dependencies": [
+        "backend"
+      ]
+    },
+    "database": {
+      "path": "./database",
+      "type": "postgresql",
+      "version": "15",
+      "port": 5432,
+      "default_db": "unhinged_db"
+    },
+    "llm": {
+      "path": "./llm",
+      "type": "ollama",
+      "port": 11434,
+      "models_volume": "llm-models"
+    }
+  },
+  "development": {
+    "setup_commands": [
+      "docker-compose up --build",
+      "cd frontend && npm install && npm start"
+    ],
+    "test_commands": {
+      "backend": "cd backend && ./gradlew test",
+      "frontend": "cd frontend && npm test"
+    },
+    "build_commands": {
+      "backend": "cd backend && ./gradlew build",
+      "frontend": "cd frontend && npm run build"
+    }
+  },
+  "docker": {
+    "compose_file": "./docker-compose.yml",
+    "services": [
+      "backend",
+      "frontend",
+      "database",
+      "llm"
+    ],
+    "volumes": [
+      "llm-models",
+      "postgres-data"
+    ]
+  },
+  "coding_standards": {
+    "backend": {
+      "style": "kotlin-official",
+      "linting": "ktlint",
+      "testing": "junit5"
+    },
+    "frontend": {
+      "style": "typescript-standard",
+      "linting": "eslint",
+      "testing": "jest"
+    }
+  }
+}

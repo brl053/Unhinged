@@ -1,26 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Conversation-based CLI interface for Unhinged dual-system architecture
-@llm-key Provides voice-first conversation interface accessible from both GTK4 control plane and native Alpine environment
-@llm-map Conversation CLI that bridges GTK4 control plane with Alpine VM conversation system
-@llm-axiom Voice-first interaction must be immediate, natural, and work seamlessly across both systems
-@llm-contract Provides conversation interface with voice pipeline integration and session logging
-@llm-token conversation-cli: Voice-first conversation interface for dual-system architecture
-
-Conversation-Based CLI Interface
-
-Provides voice-first conversation interface for the Unhinged dual-system architecture:
-- Accessible from both GTK4 control plane and native Alpine environment
-- Integrates with voice pipeline (arecord → Whisper → AI)
-- Maintains feature parity between host and guest systems
-- Session logging and diagnostics integration
-- Real-time conversation processing
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-26
+@llm-type service.api
+@llm-does conversation-based cli interface for unhinged dual-system...
+@llm-rule voice-first interaction must be immediate, natural, and work seamlessly acros...
 """
 
 import asyncio

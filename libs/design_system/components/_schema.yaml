@@ -1,12 +1,6 @@
-# Component Specification Meta-Schema
-# @llm-type schema
-# @llm-legend Component specification meta-schema defining platform-agnostic component structure
-# @llm-key Validates YAML component specifications ensuring consistency across all platform generators
-# @llm-map Central schema authority for design system component generation architecture
-# @llm-axiom Component specifications must be platform-agnostic and describe WHAT not HOW
-# @llm-contract Defines required fields, validation rules, and token integration patterns for components
-# @llm-token component-schema: Meta-schema for platform-agnostic component specifications
-
+# @llm-type model.schema
+# @llm-does component specification meta-schema defining platform-agn...
+# @llm-rule component specifications must be platform-agnostic and describe what not how
 schema_version: "1.0.0"
 
 component_specification:

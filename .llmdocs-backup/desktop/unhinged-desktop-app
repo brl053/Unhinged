@@ -1,0 +1,1710 @@
+#!/usr/bin/env python3
+"""
+@llm-doc Unhinged Desktop Application for Ubuntu GNOME
+@llm-version 1.0.0
+@llm-date 2025-01-26
+@llm-author Unhinged Team
+
+## Overview
+Native Ubuntu GNOME desktop application that provides the same functionality
+as 'make start' through a graphical interface. Users can launch by double-clicking
+an icon or from the application menu.
+
+## Features
+- GTK4-based native Ubuntu GNOME interface
+- Visual representation of 'make start' functionality
+- Real-time status updates and progress indication
+- Integration with existing Makefile system and VM communication
+- User-friendly error handling and feedback
+
+## Design Principles
+- **Native Integration**: Uses GTK4 for authentic Ubuntu GNOME experience
+- **Functionality Mapping**: Executes same operations as 'make start'
+- **Visual Appeal**: Modern, clean interface following GNOME HIG
+- **Accessibility**: Keyboard navigation and screen reader support
+
+@llm-principle Native desktop integration with existing backend
+@llm-culture Independence through accessible graphical interface
+"""
+
+import gi
+gi.require_version('Gtk', '4.0')
+gi.require_version('Adw', '1')
+
+from gi.repository import Gtk, Adw, GLib, Gio, Pango
+import subprocess
+import threading
+import sys
+import os
+import time
+import tempfile
+from pathlib import Path
+
+# Add build environment to Python path for gRPC and protobuf clients
+project_root = Path(__file__).parent.parent
+build_venv_path = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
+if build_venv_path.exists():
+    sys.path.insert(0, str(build_venv_path))
+
+import grpc
+
+# Import auto-updater
+try:
+    from auto_updater import AutoUpdater, UpdateStatus
+    AUTO_UPDATE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Auto-updater not available: {e}")
+    AUTO_UPDATE_AVAILABLE = False
+import time
+import json
+
+# Voice integration imports
+print("Loading voice integration imports...")
+try:
+    # Add protobuf clients to path
+    sys.path.append(str(Path(__file__).parent.parent / "generated" / "python" / "clients"))
+    print("Importing protobuf clients...")
+    from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+    from unhinged_proto_clients.health import health_pb2_grpc
+    VOICE_PROTO_AVAILABLE = True
+    print("Voice protobuf clients loaded successfully")
+except ImportError as e:
+    print(f"Warning: Voice protobuf clients not available: {e}")
+    VOICE_PROTO_AVAILABLE = False
+
+# Service discovery imports
+print("Loading service discovery imports...")
+try:
+    sys.path.append(str(Path(__file__).parent.parent / "control" / "network"))
+    from service_registry import ServiceRegistry
+    SERVICE_DISCOVERY_AVAILABLE = True
+    print("Service discovery loaded successfully")
+except ImportError as e:
+    print(f"Warning: Service discovery not available: {e}")
+    SERVICE_DISCOVERY_AVAILABLE = False
+
+# Import service launcher for health checks
+try:
+    sys.path.append(str(Path(__file__).parent.parent / "control"))
+    from service_launcher import ServiceLauncher
+    SERVICE_LAUNCHER_AVAILABLE = True
+    print("Service launcher loaded successfully")
+except ImportError as e:
+    print(f"Warning: Service launcher not available: {e}")
+    SERVICE_LAUNCHER_AVAILABLE = False
+
+print("All imports completed, starting application classes...")
+
+# Headless service classes
+class HeadlessConversationService:
+    """Headless conversation interface service"""
+    def __init__(self, project_root, session_logger=None):
+        self.project_root = project_root
+        self.session_logger = session_logger
+
+    def start_gtk4_conversation(self):
+        """Start GTK4 conversation interface"""
+        try:
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "voice_first",
+                "--context", "gtk4_control_plane"
+            ])
+            if self.session_logger:
+                self.session_logger.log_gui_event("GTK4_CONVERSATION_STARTED", "GTK4 conversation interface launched")
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("GTK4_CONVERSATION_ERROR", f"Failed to start GTK4 conversation: {e}")
+            return False
+
+    def start_alpine_conversation(self):
+        """Start Alpine conversation interface"""
+        try:
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "voice_first",
+                "--context", "alpine_native"
+            ])
+            if self.session_logger:
+                self.session_logger.log_gui_event("ALPINE_CONVERSATION_STARTED", "Alpine conversation interface launched")
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("ALPINE_CONVERSATION_ERROR", f"Failed to start Alpine conversation: {e}")
+            return False
+
+    def start_text_conversation(self):
+        """Start text-only conversation interface"""
+        try:
+            conversation_script = self.project_root / "control" / "conversation_cli.py"
+            subprocess.Popen([
+                "python3", str(conversation_script),
+                "--mode", "text_only"
+            ])
+            if self.session_logger:
+                self.session_logger.log_gui_event("TEXT_CONVERSATION_STARTED", "Text conversation interface launched")
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("TEXT_CONVERSATION_ERROR", f"Failed to start text conversation: {e}")
+            return False
+
+class HeadlessUpdateService:
+    """Headless auto-update service"""
+    def __init__(self, project_root, auto_updater=None, session_logger=None):
+        self.project_root = project_root
+        self.auto_updater = auto_updater
+        self.session_logger = session_logger
+        self.update_info = None
+
+    def check_for_updates(self):
+        """Check for updates in background"""
+        if not self.auto_updater:
+            return False
+        try:
+            self.update_info = self.auto_updater.check_for_updates()
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_CHECK_ERROR", f"Update check failed: {e}")
+            return False
+
+    def install_update(self):
+        """Install update in background"""
+        if not self.auto_updater or not self.update_info:
+            return False
+        try:
+            result = self.auto_updater.install_update(self.update_info.latest_version)
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_INSTALLED", "Update installed successfully")
+            return result
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("UPDATE_INSTALL_ERROR", f"Update installation failed: {e}")
+            return False
+
+class HeadlessStatusService:
+    """Headless status monitoring service"""
+    def __init__(self, session_logger=None):
+        self.session_logger = session_logger
+        self.current_status = "Ready"
+        self.progress = 0.0
+
+    def update_status(self, status, progress=None):
+        """Update status without UI"""
+        self.current_status = status
+        if progress is not None:
+            self.progress = progress
+        if self.session_logger:
+            self.session_logger.log_gui_event("STATUS_UPDATE", f"Status: {status}, Progress: {progress}")
+
+    def get_status(self):
+        """Get current status"""
+        return {"status": self.current_status, "progress": self.progress}
+
+class HeadlessLoggingService:
+    """Headless logging service"""
+    def __init__(self, session_logger=None):
+        self.session_logger = session_logger
+        self.log_buffer = []
+
+    def append_log(self, message):
+        """Append log message without UI"""
+        self.log_buffer.append(message)
+        if self.session_logger:
+            self.session_logger.log_gui_event("LOG_MESSAGE", message)
+
+    def get_logs(self, limit=100):
+        """Get recent log messages"""
+        return self.log_buffer[-limit:] if limit else self.log_buffer
+
+class HeadlessMonitoringService:
+    """
+    @llm-type service
+    @llm-legend System monitoring service for GTK4 desktop application integration
+    @llm-key Provides service health monitoring and management capabilities
+    @llm-map Service monitoring bridging GTK4 desktop application to Unhinged service infrastructure
+    @llm-axiom Continuous monitoring enables proactive service reliability management
+    @llm-contract Monitors service health via ServiceHealthMonitor and provides UI data
+    @llm-token monitoring-service: Service health monitoring with auto-recovery integration
+
+    System Monitoring Service for Desktop Application Integration
+
+    Implements comprehensive service monitoring capabilities for the GTK4 desktop application:
+    - Integration with ServiceHealthMonitor from control/service_health_monitor.py
+    - Periodic health checking and status tracking
+    - Service restart and recovery management
+    - Thread-safe data provision for UI updates
+    - Session logging integration for monitoring events
+    """
+
+    def __init__(self, project_root, session_logger=None):
+        self.project_root = project_root
+        self.session_logger = session_logger
+        self.health_monitor = None
+        self.monitoring_available = False
+        self.last_status_summary = None
+        self.service_status_cache = {}
+
+        # Initialize service health monitoring
+        self._initialize_health_monitoring()
+
+    def _initialize_health_monitoring(self):
+        """Initialize service health monitoring system"""
+        try:
+            # Import ServiceHealthMonitor
+            sys.path.append(str(self.project_root / "control"))
+            from service_health_monitor import ServiceHealthMonitor
+
+            self.health_monitor = ServiceHealthMonitor(self.project_root)
+            self.monitoring_available = True
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_INIT", "Service health monitoring initialized successfully")
+
+        except ImportError as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_INIT_ERROR", f"Failed to import ServiceHealthMonitor: {e}")
+            self.monitoring_available = False
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_INIT_ERROR", f"Failed to initialize monitoring: {e}")
+            self.monitoring_available = False
+
+    def is_monitoring_available(self):
+        """Check if monitoring system is available"""
+        return self.monitoring_available and self.health_monitor is not None
+
+    def get_service_status_summary(self):
+        """Get current status summary of all services"""
+        if not self.is_monitoring_available():
+            return {
+                'healthy': [],
+                'unhealthy': [],
+                'total': 0,
+                'critical_healthy': 0,
+                'critical_total': 0,
+                'health_percentage': 0,
+                'critical_health_percentage': 0,
+                'error': 'Monitoring system not available'
+            }
+
+        try:
+            summary = self.health_monitor.get_service_status_summary()
+            self.last_status_summary = summary
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_STATUS_CHECK",
+                    f"Health check completed: {summary['health_percentage']:.1f}% healthy")
+
+            return summary
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_STATUS_ERROR", f"Status check failed: {e}")
+
+            return {
+                'healthy': [],
+                'unhealthy': [],
+                'total': 0,
+                'critical_healthy': 0,
+                'critical_total': 0,
+                'health_percentage': 0,
+                'critical_health_percentage': 0,
+                'error': f'Status check failed: {e}'
+            }
+
+    def check_individual_service_health(self, service_id):
+        """Check health of a specific service"""
+        if not self.is_monitoring_available():
+            return False, "Monitoring system not available"
+
+        try:
+            healthy, status = self.health_monitor.check_service_health(service_id)
+
+            # Cache the result
+            self.service_status_cache[service_id] = {
+                'healthy': healthy,
+                'status': status,
+                'last_checked': time.time()
+            }
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_CHECK",
+                    f"Service {service_id}: {'healthy' if healthy else 'unhealthy'} - {status}")
+
+            return healthy, status
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_SERVICE_ERROR",
+                    f"Service check failed for {service_id}: {e}")
+            return False, f"Check failed: {e}"
+
+    def restart_service(self, service_id):
+        """Restart a specific service"""
+        if not self.is_monitoring_available():
+            return False, "Monitoring system not available"
+
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_START",
+                    f"User initiated restart for service {service_id}")
+
+            success, message = self.health_monitor.restart_service(service_id)
+
+            if self.session_logger:
+                event_name = "STATUS_SERVICE_RESTART_SUCCESS" if success else "STATUS_SERVICE_RESTART_FAILED"
+                self.session_logger.log_gui_event(event_name,
+                    f"Service {service_id} restart: {message}")
+
+            return success, message
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_ERROR",
+                    f"Service restart failed for {service_id}: {e}")
+            return False, f"Restart failed: {e}"
+
+    def get_service_configs(self):
+        """Get service configuration information"""
+        if not self.is_monitoring_available():
+            return {}
+
+        try:
+            return self.health_monitor.services
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("MONITORING_CONFIG_ERROR", f"Failed to get service configs: {e}")
+            return {}
+
+    def monitor_and_recover_all(self):
+        """Monitor all services and auto-recover failed ones"""
+        if not self.is_monitoring_available():
+            return {}
+
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_START", "Starting auto-recovery for all services")
+
+            results = self.health_monitor.monitor_and_recover_all()
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_COMPLETE",
+                    f"Auto-recovery completed for {len(results)} services")
+
+            return results
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_ERROR",
+                    f"Auto-recovery failed: {e}")
+            return {}
+
+class VoiceRecordingService:
+    """
+    @llm-type service
+    @llm-legend Voice recording and transcription service for GTK4 CLI tab integration
+    @llm-key Provides native audio capture and gRPC-based speech-to-text transcription
+    @llm-map Voice service bridging GTK4 desktop application to Unhinged speech infrastructure
+    @llm-axiom Native OS audio capabilities superior to Python library abstractions
+    @llm-contract Records system audio via arecord and transcribes via Whisper gRPC service
+    @llm-token voice-recording-service: Native audio capture with gRPC transcription integration
+
+    Voice Recording Service for CLI Tab Integration
+
+    Implements voice-first capabilities for the GTK4 desktop application CLI tab:
+    - Native audio capture using system arecord tool
+    - gRPC integration with Unhinged speech-to-text service (port 9091)
+    - Service discovery and health checking
+    - WAV file generation and management
+    - Graceful degradation when voice services unavailable
+    """
+
+    def __init__(self, project_root, session_logger=None):
+        self.project_root = project_root
+        self.session_logger = session_logger
+        self.service_registry = None
+        self.audio_client = None
+        self.voice_available = False
+
+        # Initialize service discovery
+        self._initialize_service_discovery()
+
+    def _initialize_service_discovery(self):
+        """
+        @llm-key Initialize service discovery for speech-to-text service detection
+        @llm-contract Establishes connection to service registry and checks voice service availability
+        """
+        try:
+            if SERVICE_DISCOVERY_AVAILABLE:
+                self.service_registry = ServiceRegistry()
+                self._check_voice_service_availability()
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_SERVICE_INIT", "Service discovery not available")
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_SERVICE_INIT_ERROR", f"Service discovery initialization failed: {e}")
+
+    def _check_voice_service_availability(self):
+        """
+        @llm-key Check if speech-to-text service is available and healthy
+        @llm-contract Verifies gRPC service health before attempting voice operations
+        """
+        try:
+            if not self.service_registry:
+                return False
+
+            # Get speech-to-text service configuration
+            stt_service = self.service_registry.get_service("speech-to-text")
+            if not stt_service:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_SERVICE_CHECK", "Speech-to-text service not configured")
+                return False
+
+            # Check service health via gRPC
+            if VOICE_PROTO_AVAILABLE:
+                try:
+                    # Use gRPC port 9091 as confirmed in investigation
+                    channel = grpc.insecure_channel('localhost:9091')
+                    health_client = health_pb2_grpc.HealthServiceStub(channel)
+
+                    # Import health protobuf messages
+                    from unhinged_proto_clients.health import health_pb2
+
+                    # Perform health check with timeout
+                    request = health_pb2.HeartbeatRequest()
+                    response = health_client.Heartbeat(request, timeout=2.0)
+
+                    self.audio_client = audio_pb2_grpc.AudioServiceStub(channel)
+                    self.voice_available = True
+
+                    if self.session_logger:
+                        self.session_logger.log_gui_event("VOICE_SERVICE_AVAILABLE", "Speech-to-text service healthy and available")
+
+                    return True
+
+                except grpc.RpcError as e:
+                    if self.session_logger:
+                        self.session_logger.log_gui_event("VOICE_SERVICE_UNAVAILABLE", f"gRPC health check failed: {e}")
+                    return False
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_SERVICE_CHECK", "Voice protobuf clients not available")
+                return False
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_SERVICE_CHECK_ERROR", f"Voice service availability check failed: {e}")
+            return False
+
+    def is_voice_available(self):
+        """
+        @llm-key Check if voice recording and transcription capabilities are available
+        @llm-contract Returns boolean indicating voice service readiness
+        """
+        return self.voice_available and VOICE_PROTO_AVAILABLE
+
+    def record_audio_to_file(self, duration=3.0, output_file=None):
+        """
+        @llm-key Primary voice recording method using native system audio capture
+        @llm-contract Records system audio via arecord and saves as WAV file
+        @llm-axiom Native OS audio capabilities superior to Python library abstractions
+
+        Record audio using native arecord tool and save as WAV file.
+
+        This method implements the preferred voice input approach: leveraging Ubuntu's
+        native audio system (arecord/PipeWire) rather than complex Python audio libraries.
+
+        Architecture:
+        Native System Audio → arecord → WAV File → File Storage
+
+        Args:
+            duration: Recording duration in seconds (default: 3.0)
+            output_file: Output file path (auto-generated if None)
+
+        Returns:
+            Path to recorded WAV file or None if recording failed
+        """
+        try:
+            # Generate output file if not provided
+            if output_file is None:
+                timestamp = int(time.time())
+                output_file = self.project_root / "build" / "tmp" / f"voice_recording_{timestamp}.wav"
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Use arecord for native audio capture
+            cmd = [
+                'arecord',
+                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-t', 'wav',          # WAV format
+                '-d', str(int(duration)),  # Duration in seconds (integer)
+                str(output_file)
+            ]
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_START", f"Starting audio recording for {duration}s")
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=duration + 5)
+
+            if result.returncode == 0 and output_file.exists():
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_RECORDING_SUCCESS", f"Audio recorded to {output_file}")
+                return output_file
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_RECORDING_ERROR", f"arecord failed: {result.stderr}")
+                return None
+
+        except subprocess.TimeoutExpired:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_TIMEOUT", f"Recording timeout after {duration}s")
+            return None
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_RECORDING_ERROR", f"Recording failed: {e}")
+            return None
+
+    def transcribe_audio_file(self, audio_file_path):
+        """
+        @llm-key Transcribe audio file using Unhinged gRPC speech-to-text service
+        @llm-contract Sends WAV file to Whisper service via gRPC and returns transcription
+
+        Transcribe audio file using the established voice pipeline:
+        WAV File → gRPC ProcessAudioFile → Whisper Service → Transcript
+
+        Args:
+            audio_file_path: Path to WAV audio file
+
+        Returns:
+            Transcription text or None if transcription failed
+        """
+        try:
+            if not self.is_voice_available():
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_ERROR", "Voice service not available")
+                return None
+
+            # Read audio file
+            with open(audio_file_path, 'rb') as f:
+                audio_data = f.read()
+
+            # Create gRPC request using ProcessAudioFile method
+            request = audio_pb2.ProcessAudioRequest()
+            request.audio_file.data = audio_data
+            request.audio_file.filename = str(audio_file_path)
+            request.processing_type = audio_pb2.PROCESSING_TYPE_TRANSCRIBE
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("TRANSCRIPTION_START", f"Sending audio file to Whisper service")
+
+            # Send to speech-to-text service
+            response = self.audio_client.ProcessAudioFile(request, timeout=30.0)
+
+            if response.response.success:
+                transcript = response.transcript.strip()
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcription completed: {transcript}")
+                return transcript
+            else:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_ERROR", f"Transcription failed: {response.response.message}")
+                return None
+
+        except grpc.RpcError as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("TRANSCRIPTION_GRPC_ERROR", f"gRPC transcription failed: {e}")
+            return None
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("TRANSCRIPTION_ERROR", f"Transcription failed: {e}")
+            return None
+
+    def record_and_transcribe(self, duration=3.0):
+        """
+        @llm-key Complete voice-to-text pipeline combining recording and transcription
+        @llm-contract Records audio and transcribes in single operation with cleanup
+
+        Complete voice recording and transcription pipeline:
+        Native Audio → arecord → WAV File → gRPC → Whisper Service → Transcript
+
+        Args:
+            duration: Recording duration in seconds
+
+        Returns:
+            Transcription text or None if operation failed
+        """
+        try:
+            # Record audio
+            audio_file = self.record_audio_to_file(duration)
+            if not audio_file:
+                return None
+
+            # Transcribe audio
+            transcript = self.transcribe_audio_file(audio_file)
+
+            # Clean up temporary file
+            try:
+                audio_file.unlink()
+            except:
+                pass  # Ignore cleanup errors
+
+            return transcript
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_PIPELINE_ERROR", f"Voice pipeline failed: {e}")
+            return None
+
+# Import session logging from event framework
+sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
+try:
+    from events import create_gui_session_logger, GUIOutputCapture
+    SESSION_LOGGING_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Session logging not available: {e}")
+    SESSION_LOGGING_AVAILABLE = False
+
+# Simple approach: Use control modules as scripts (academic exercise)
+CONTROL_MODULES_AVAILABLE = True
+print("Control modules available as scripts")
+
+class UnhingedDesktopApp(Adw.Application):
+    """
+    @llm-doc Main Desktop Application Class
+
+    GTK4/Libadwaita application that provides graphical interface
+    for Unhinged platform functionality.
+    """
+
+    def __init__(self):
+        print("Initializing UnhingedDesktopApp...")
+        super().__init__(application_id='com.unhinged.platform')
+        print("GTK Application initialized")
+        self.project_root = Path(__file__).parent.parent
+        self.window = None
+        self.process = None
+        self.running = False
+
+        # Initialize session logging
+        print("Initializing session logging...")
+        self.session_logger = None
+        self.output_capture = None
+        if SESSION_LOGGING_AVAILABLE:
+            try:
+                self.session_logger = create_gui_session_logger(self.project_root)
+                self.output_capture = GUIOutputCapture(
+                    self.session_logger,
+                    self._gui_log_callback
+                )
+                self.session_logger.log_session_event("APP_INIT", "Desktop application initialized")
+            except Exception as e:
+                print(f"Warning: Session logging initialization failed: {e}")
+                self.session_logger = None
+                self.output_capture = None
+
+        # Initialize auto-updater
+        self.auto_updater = None
+        self.update_info = None
+        if AUTO_UPDATE_AVAILABLE:
+            try:
+                self.auto_updater = AutoUpdater(self.project_root)
+                if self.session_logger:
+                    self.session_logger.log_gui_event("AUTO_UPDATE_INIT", "Auto-updater initialized")
+            except Exception as e:
+                print(f"Warning: Auto-updater initialization failed: {e}")
+                if self.session_logger:
+                    self.session_logger.log_gui_event("AUTO_UPDATE_INIT_ERROR", f"Auto-updater failed: {e}")
+
+        # Initialize headless services
+        self.conversation_service = HeadlessConversationService(self.project_root, self.session_logger)
+        self.update_service = HeadlessUpdateService(self.project_root, self.auto_updater, self.session_logger)
+        self.status_service = HeadlessStatusService(self.session_logger)
+        self.logging_service = HeadlessLoggingService(self.session_logger)
+        self.voice_service = VoiceRecordingService(self.project_root, self.session_logger)
+        self.monitoring_service = HeadlessMonitoringService(self.project_root, self.session_logger)
+
+        # Initialize service launcher for health checks
+        self.service_launcher = None
+        if SERVICE_LAUNCHER_AVAILABLE:
+            try:
+                self.service_launcher = ServiceLauncher()
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SERVICE_LAUNCHER_INIT", "Service launcher initialized for health checks")
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("SERVICE_LAUNCHER_INIT_ERROR", f"Service launcher initialization failed: {e}")
+        
+    def do_activate(self):
+        """Application activation - create and show main window"""
+        if not self.window:
+            self.window = self.create_main_window()
+
+        # Log application activation
+        if self.session_logger:
+            self.session_logger.log_gui_event("APP_ACTIVATE", "Main window created and presented")
+
+        self.window.present()
+
+        # Auto-update checking now handled by headless service
+    
+    def create_main_window(self):
+        """
+        @llm-doc Create Main Application Window
+        
+        Creates the main GTK4 window with modern Ubuntu GNOME styling
+        using Libadwaita for native look and feel.
+        """
+        # Create main window
+        window = Adw.ApplicationWindow(application=self)
+        window.set_title("Unhinged - Native Graphics Platform")
+        window.set_default_size(800, 600)
+        window.set_icon_name("applications-graphics")
+
+        # Add actions (AdwApplicationWindow has built-in header bar)
+        self.setup_actions()
+        
+        # Create toast overlay for notifications
+        self.toast_overlay = Adw.ToastOverlay()
+
+        # Create minimal side navigation
+        self.create_minimal_navigation(window)
+
+        # Start periodic voice service status checking
+        GLib.timeout_add_seconds(10, self._periodic_voice_status_check)
+
+        # Start periodic status checking
+        GLib.timeout_add_seconds(15, self._periodic_status_check)
+
+        return window
+
+    def create_minimal_navigation(self, window):
+        """Create minimal side navigation with four tabs"""
+        # Create main horizontal box
+        main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+
+        # Create stack for tab content
+        self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+
+        # Create stack sidebar for navigation
+        sidebar = Gtk.StackSidebar()
+        sidebar.set_stack(self.stack)
+        sidebar.set_size_request(150, -1)
+
+        # Add tabs to stack
+        self.add_minimal_status_tab()  # Only minimal status tab
+
+        # Add sidebar and stack to main box
+        main_box.append(sidebar)
+        main_box.append(self.stack)
+
+        # Set up toast overlay
+        self.toast_overlay.set_child(main_box)
+        window.set_content(self.toast_overlay)
+
+    def add_minimal_status_tab(self):
+        """Minimal status tab with dual-system health check"""
+        status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        status_box.set_margin_top(24)
+        status_box.set_margin_bottom(24)
+        status_box.set_margin_start(24)
+        status_box.set_margin_end(24)
+
+        # Single minimal status row
+        status_group = Adw.PreferencesGroup()
+        self.health_status_row = Adw.ActionRow()
+        self.health_status_row.set_title("Unhealthy")  # Default to unhealthy
+
+        # Add refresh button with design system styling
+        refresh_button = Gtk.Button.new_with_label("Refresh")
+        refresh_button.add_css_class("ds-action-secondary")
+        refresh_button.connect("clicked", self.on_health_refresh_clicked)
+        self.health_status_row.add_suffix(refresh_button)
+
+        status_group.add(self.health_status_row)
+        status_box.append(status_group)
+
+        # Add to stack
+        self.stack.add_titled(status_box, "status", "Status")
+
+        # Load minimal design system CSS
+        self._load_minimal_design_css()
+
+        # Apply initial styling to default "Unhealthy" status
+        GLib.timeout_add(100, self._apply_initial_status_styling)
+
+    def _load_minimal_design_css(self):
+        """Load minimal design system CSS for status styling"""
+        try:
+            css_provider = Gtk.CssProvider()
+
+            # Minimal CSS using design system color values directly (GTK4 compatible)
+            minimal_css = """
+            /* Minimal status styling using design system colors */
+            .ds-status-healthy {
+                color: #217A3C;
+                font-weight: 500;
+            }
+
+            .ds-status-unhealthy {
+                color: #C21E1E;
+                font-weight: 500;
+            }
+
+            .ds-action-secondary {
+                background-color: #666666;
+                color: #FFFFFF;
+                border: 1px solid #666666;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+
+            .ds-action-secondary:hover {
+                background-color: #0066CC;
+                border-color: #0066CC;
+            }
+            """
+
+            css_provider.load_from_data(minimal_css.encode('utf-8'))
+
+            # Apply CSS to display
+            if self.window:
+                Gtk.StyleContext.add_provider_for_display(
+                    self.window.get_display(),
+                    css_provider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("DESIGN_CSS_LOADED", "Minimal design system CSS loaded")
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("DESIGN_CSS_ERROR", f"Failed to load design CSS: {e}")
+
+    def _apply_initial_status_styling(self):
+        """Apply initial styling to the default status"""
+        try:
+            title_widget = self.health_status_row.get_first_child()
+            if title_widget:
+                title_widget.add_css_class("ds-status-unhealthy")
+        except Exception:
+            pass
+        return False  # Don't repeat
+
+    def on_health_refresh_clicked(self, button):
+        """Handle health refresh button click"""
+        try:
+            # Get dual-system health status
+            health_status = self.get_dual_system_health()
+
+            # Update UI with status and styling
+            self.health_status_row.set_title(health_status)
+
+            # Apply design system color coding
+            title_widget = self.health_status_row.get_first_child()
+            if title_widget:
+                # Remove existing status classes
+                title_widget.remove_css_class("ds-status-healthy")
+                title_widget.remove_css_class("ds-status-unhealthy")
+
+                # Add appropriate status class
+                if health_status == "Healthy":
+                    title_widget.add_css_class("ds-status-healthy")
+                else:
+                    title_widget.add_css_class("ds-status-unhealthy")
+
+            # Log the check
+            if self.session_logger:
+                self.session_logger.log_gui_event("HEALTH_CHECK", f"Dual-system status: {health_status}")
+
+        except Exception as e:
+            self.health_status_row.set_title("Unhealthy")
+            # Apply error styling
+            title_widget = self.health_status_row.get_first_child()
+            if title_widget:
+                title_widget.remove_css_class("ds-status-healthy")
+                title_widget.add_css_class("ds-status-unhealthy")
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("HEALTH_CHECK_ERROR", f"Health check failed: {e}")
+
+    def get_dual_system_health(self):
+        """Get overall dual-system architecture health status"""
+        try:
+            # Check host services
+            host_healthy = self.check_host_services()
+
+            # Check VM status
+            vm_healthy = self.check_vm_status()
+
+            # Return single status
+            return "Healthy" if (host_healthy and vm_healthy) else "Unhealthy"
+
+        except Exception:
+            return "Unhealthy"
+
+    def check_host_services(self):
+        """Check if essential host services are running"""
+        try:
+            # Use existing service launcher to check essential services
+            if hasattr(self, 'service_launcher'):
+                status = self.service_launcher.get_service_status()
+
+                # Check if required services are running
+                required_running = 0
+                total_required = 0
+
+                for service_name, service_data in status.items():
+                    # Count LLM service as required for basic functionality
+                    if "LLM" in service_name:
+                        total_required += 1
+                        if service_data.get("running", False):
+                            required_running += 1
+
+                # Host is healthy if at least LLM service is running
+                return required_running > 0
+
+            return False
+
+        except Exception:
+            return False
+
+    def check_vm_status(self):
+        """Check if VM is running"""
+        try:
+            # Simple check for QEMU process
+            import subprocess
+            result = subprocess.run(['pgrep', '-f', 'qemu-system-x86_64'],
+                                  capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+
+        except Exception:
+            return False
+
+
+
+    def _record_voice_background(self, duration):
+        """
+        @llm-key Background voice recording and transcription processing
+        @llm-contract Executes voice pipeline in separate thread to avoid UI blocking
+        """
+        try:
+            # Perform voice recording and transcription
+            transcript = self.voice_service.record_and_transcribe(duration)
+
+            # Update UI on main thread
+            GLib.idle_add(self._handle_transcription_result, transcript)
+
+        except Exception as e:
+            GLib.idle_add(self._handle_transcription_error, str(e))
+
+    def _handle_transcription_result(self, transcript):
+        """
+        @llm-key Handle successful transcription result on main thread
+        @llm-contract Updates UI with transcription text and resets controls
+        """
+        try:
+            if transcript:
+                self._append_transcription(f"TRANSCRIPT: {transcript}")
+
+                # Log successful transcription
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_TRANSCRIPTION_SUCCESS", f"Transcription: {transcript}")
+            else:
+                self._append_transcription("WARNING: No transcription received - check audio input")
+
+                if self.session_logger:
+                    self.session_logger.log_gui_event("VOICE_TRANSCRIPTION_EMPTY", "Empty transcription received")
+
+        except Exception as e:
+            self._append_transcription(f"ERROR: Failed to process transcription: {e}")
+        finally:
+            self._reset_recording_ui()
+
+    def _handle_transcription_error(self, error_message):
+        """
+        @llm-key Handle transcription error on main thread
+        @llm-contract Updates UI with error message and resets controls
+        """
+        self._append_transcription(f"ERROR: Transcription failed: {error_message}")
+
+        if self.session_logger:
+            self.session_logger.log_gui_event("VOICE_TRANSCRIPTION_ERROR", f"Transcription error: {error_message}")
+
+        self._reset_recording_ui()
+
+    def _reset_recording_ui(self):
+        """
+        @llm-key Reset voice recording UI controls to ready state
+        @llm-contract Restores UI controls after recording completion or error
+        """
+        self.record_button.set_sensitive(True)
+        self.record_button.set_label("Record Voice")
+
+    def _append_transcription(self, message):
+        """
+        @llm-key Append message to transcription display
+        @llm-contract Adds timestamped message to transcription text view
+        """
+        try:
+            buffer = self.transcription_textview.get_buffer()
+            end_iter = buffer.get_end_iter()
+            buffer.insert(end_iter, f"{message}\n")
+
+            # Auto-scroll to bottom
+            mark = buffer.get_insert()
+            self.transcription_textview.scroll_mark_onscreen(mark)
+
+        except Exception as e:
+            print(f"Failed to append transcription: {e}")
+
+    def _periodic_voice_status_check(self):
+        """
+        @llm-key Periodic voice service status checking
+        @llm-contract Checks voice service health every 10 seconds and updates UI
+        """
+        try:
+            if hasattr(self, 'voice_service'):
+                # Re-check voice service availability
+                self.voice_service._check_voice_service_availability()
+
+                # Update UI status
+                if hasattr(self, 'voice_status_row'):
+                    self._update_voice_service_status()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("VOICE_STATUS_CHECK_ERROR", f"Periodic status check failed: {e}")
+
+        # Continue periodic checking
+        return True
+
+    def _periodic_status_check(self):
+        """
+        @llm-key Periodic status checking
+        @llm-contract Checks service health every 15 seconds and updates status UI
+        """
+        try:
+            if hasattr(self, 'monitoring_service') and hasattr(self, 'services_listbox'):
+                # Update status display in background thread
+                thread = threading.Thread(target=self._refresh_status_background, daemon=True)
+                thread.start()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_PERIODIC_CHECK_ERROR", f"Periodic status check failed: {e}")
+
+        # Continue periodic checking
+        return True
+
+    def _update_status_display(self):
+        """
+        @llm-key Update status display with current service status
+        @llm-contract Updates UI elements to reflect current service health status
+        """
+        try:
+            if not hasattr(self, 'monitoring_service'):
+                return
+
+            # Get service status summary
+            summary = self.monitoring_service.get_service_status_summary()
+
+            # Update overall status
+            if 'error' in summary:
+                self.overall_status_row.set_subtitle(f"Status monitoring unavailable: {summary['error']}")
+                self.overall_status_icon.set_from_icon_name("dialog-error-symbolic")
+                self.auto_recovery_button.set_sensitive(False)
+            else:
+                health_pct = summary.get('health_percentage', 0)
+                critical_pct = summary.get('critical_health_percentage', 0)
+
+                if health_pct == 100:
+                    self.overall_status_row.set_subtitle(f"All services healthy ({summary['total']} services)")
+                    self.overall_status_icon.set_from_icon_name("emblem-ok-symbolic")
+                elif critical_pct == 100:
+                    self.overall_status_row.set_subtitle(f"Critical services healthy ({health_pct:.1f}% overall)")
+                    self.overall_status_icon.set_from_icon_name("dialog-warning-symbolic")
+                else:
+                    self.overall_status_row.set_subtitle(f"Service issues detected ({health_pct:.1f}% healthy)")
+                    self.overall_status_icon.set_from_icon_name("dialog-error-symbolic")
+
+                self.auto_recovery_button.set_sensitive(True)
+
+            # Update individual service rows
+            self._update_service_rows(summary)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_DISPLAY_ERROR", f"Failed to update status display: {e}")
+
+    def _update_service_rows(self, summary):
+        """Update individual service status rows"""
+        try:
+            # Clear existing rows
+            while True:
+                row = self.services_listbox.get_first_child()
+                if row is None:
+                    break
+                self.services_listbox.remove(row)
+
+            # Add rows for healthy services
+            for service_info in summary.get('healthy', []):
+                self._add_service_row(service_info, True)
+
+            # Add rows for unhealthy services
+            for service_info in summary.get('unhealthy', []):
+                self._add_service_row(service_info, False)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_ROWS_ERROR", f"Failed to update service rows: {e}")
+
+    def _add_service_row(self, service_info, is_healthy):
+        """Add a service status row to the list"""
+        try:
+            service_row = Adw.ActionRow()
+            service_row.set_title(service_info.get('name', 'Unknown Service'))
+            service_row.set_subtitle(service_info.get('status', 'Unknown status'))
+
+            # Status icon
+            if is_healthy:
+                status_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
+            else:
+                status_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+
+            status_icon.set_icon_size(Gtk.IconSize.NORMAL)
+            service_row.add_prefix(status_icon)
+
+            # Critical service indicator
+            if service_info.get('critical', False):
+                critical_label = Gtk.Label(label="Critical")
+                critical_label.add_css_class("caption")
+                service_row.add_suffix(critical_label)
+
+            # Restart button for unhealthy services
+            if not is_healthy:
+                restart_button = Gtk.Button.new_with_label("Restart")
+                restart_button.add_css_class("destructive-action")
+                restart_button.connect("clicked", self.on_service_restart_clicked, service_info.get('id'))
+                service_row.add_suffix(restart_button)
+
+            self.services_listbox.append(service_row)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_ROW_ERROR", f"Failed to add service row: {e}")
+
+    def on_status_refresh_clicked(self, button):
+        """Handle status refresh button click"""
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_REFRESH_CLICKED", "User clicked status refresh")
+
+            # Update display in background thread
+            thread = threading.Thread(target=self._refresh_status_background, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_REFRESH_ERROR", f"Refresh failed: {e}")
+
+    def _refresh_status_background(self):
+        """Refresh status data in background thread"""
+        try:
+            # Force refresh of status data
+            if hasattr(self, 'monitoring_service'):
+                self.monitoring_service.get_service_status_summary()
+
+            # Update UI on main thread
+            GLib.idle_add(self._update_status_display)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_REFRESH_BG_ERROR", f"Background refresh failed: {e}")
+
+    def on_auto_recovery_clicked(self, button):
+        """Handle auto-recovery button click"""
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_CLICKED", "User clicked auto-recovery")
+
+            # Show confirmation dialog
+            dialog = Adw.MessageDialog.new(self.window)
+            dialog.set_heading("Confirm Auto-Recovery")
+            dialog.set_body("This will automatically restart all failed critical services. This may cause temporary service interruptions. Continue?")
+            dialog.add_response("cancel", "Cancel")
+            dialog.add_response("confirm", "Run Auto-Recovery")
+            dialog.set_response_appearance("confirm", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+
+            dialog.connect("response", self._on_auto_recovery_dialog_response, button)
+            dialog.present()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_ERROR", f"Auto-recovery failed: {e}")
+
+    def _on_auto_recovery_dialog_response(self, dialog, response, button):
+        """Handle auto-recovery confirmation dialog response"""
+        if response == "confirm":
+            try:
+                # Disable button during operation
+                button.set_sensitive(False)
+                button.set_label("Running...")
+
+                # Run auto-recovery in background thread
+                thread = threading.Thread(target=self._auto_recovery_background, daemon=True)
+                thread.start()
+
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_START_ERROR", f"Failed to start auto-recovery: {e}")
+                # Re-enable button on error
+                button.set_sensitive(True)
+                button.set_label("Run Auto-Recovery")
+
+    def _auto_recovery_background(self):
+        """Run auto-recovery in background thread"""
+        try:
+            if hasattr(self, 'monitoring_service'):
+                results = self.monitoring_service.monitor_and_recover_all()
+
+                # Update UI on main thread
+                GLib.idle_add(self._auto_recovery_complete, results)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_BG_ERROR", f"Background auto-recovery failed: {e}")
+            GLib.idle_add(self._auto_recovery_complete, {})
+
+    def _auto_recovery_complete(self, results):
+        """Handle auto-recovery completion on main thread"""
+        try:
+            # Re-enable button
+            self.auto_recovery_button.set_sensitive(True)
+            self.auto_recovery_button.set_label("Run Auto-Recovery")
+
+            # Show toast with results
+            if results:
+                recovered_count = sum(1 for r in results.values() if r.get('status') == 'recovered')
+                if recovered_count > 0:
+                    self.show_toast(f"Auto-recovery completed: {recovered_count} services recovered")
+                else:
+                    self.show_toast("Auto-recovery completed: no services needed recovery")
+            else:
+                self.show_toast("Auto-recovery failed")
+
+            # Refresh display
+            self._update_status_display()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_AUTO_RECOVERY_COMPLETE_ERROR", f"Auto-recovery completion failed: {e}")
+
+    def on_service_restart_clicked(self, button, service_id):
+        """Handle individual service restart button click"""
+        try:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_CLICKED", f"User clicked restart for {service_id}")
+
+            # Get service name for dialog
+            service_name = service_id
+            if hasattr(self, 'monitoring_service'):
+                configs = self.monitoring_service.get_service_configs()
+                if service_id in configs:
+                    service_name = configs[service_id].name
+
+            # Show confirmation dialog
+            dialog = Adw.MessageDialog.new(self.window)
+            dialog.set_heading("Confirm Service Restart")
+            dialog.set_body(f"This will restart the {service_name} service. This may cause temporary service interruptions. Continue?")
+            dialog.add_response("cancel", "Cancel")
+            dialog.add_response("confirm", "Restart Service")
+            dialog.set_response_appearance("confirm", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+
+            dialog.connect("response", self._on_service_restart_dialog_response, service_id, button)
+            dialog.present()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_ERROR", f"Service restart failed: {e}")
+
+    def _on_service_restart_dialog_response(self, dialog, response, service_id, button):
+        """Handle service restart confirmation dialog response"""
+        if response == "confirm":
+            try:
+                # Disable button during operation
+                button.set_sensitive(False)
+                button.set_label("Restarting...")
+
+                # Run restart in background thread
+                thread = threading.Thread(target=self._service_restart_background, args=(service_id, button), daemon=True)
+                thread.start()
+
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_START_ERROR", f"Failed to start service restart: {e}")
+                # Re-enable button on error
+                button.set_sensitive(True)
+                button.set_label("Restart")
+
+    def _service_restart_background(self, service_id, button):
+        """Restart service in background thread"""
+        try:
+            if hasattr(self, 'monitoring_service'):
+                success, message = self.monitoring_service.restart_service(service_id)
+
+                # Update UI on main thread
+                GLib.idle_add(self._service_restart_complete, service_id, success, message, button)
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_BG_ERROR", f"Background service restart failed: {e}")
+            GLib.idle_add(self._service_restart_complete, service_id, False, str(e), button)
+
+    def _service_restart_complete(self, service_id, success, message, button):
+        """Handle service restart completion on main thread"""
+        try:
+            # Re-enable button
+            button.set_sensitive(True)
+            button.set_label("Restart")
+
+            # Show toast with result
+            if success:
+                self.show_toast(f"Service {service_id} restarted successfully")
+            else:
+                self.show_toast(f"Service {service_id} restart failed: {message}")
+
+            # Refresh display
+            self._update_status_display()
+
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_gui_event("STATUS_SERVICE_RESTART_COMPLETE_ERROR", f"Service restart completion failed: {e}")
+
+    def setup_actions(self):
+        """Setup application actions for menu"""
+        # About action
+        about_action = Gio.SimpleAction.new("about", None)
+        about_action.connect("activate", self.on_about_action)
+        self.add_action(about_action)
+
+
+
+        # Quit action
+        quit_action = Gio.SimpleAction.new("quit", None)
+        quit_action.connect("activate", self.on_quit_action)
+        self.add_action(quit_action)
+
+        # Keyboard shortcuts
+        self.set_accels_for_action("app.quit", ["<Ctrl>Q"])
+
+        # Create application menu
+        menu = Gio.Menu()
+        menu.append("About Unhinged", "app.about")
+        menu.append("Preferences", "app.preferences")
+        menu.append("Quit", "app.quit")
+        self.set_menubar(menu)
+
+    def on_about_action(self, action, param):
+        """Show about dialog"""
+        about = Adw.AboutWindow(transient_for=self.window)
+        about.set_application_name("Unhinged")
+        about.set_application_icon("applications-graphics")
+        about.set_developer_name("Unhinged Team")
+        about.set_version("1.0.0")
+        about.set_website("https://github.com/unhinged/platform")
+        about.set_issue_url("https://github.com/unhinged/platform/issues")
+        about.set_copyright("© 2025 Unhinged Team")
+        about.set_license_type(Gtk.License.MIT_X11)
+        about.set_comments("Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline.")
+        about.present()
+
+
+
+    def on_quit_action(self, action, param):
+        """Quit application"""
+        if self.running:
+            self.on_stop_clicked(None)
+
+        # Close session logging
+        if self.session_logger:
+            self.session_logger.log_session_event("APP_QUIT", "Application quit requested")
+            self.session_logger.close_session()
+
+        self.quit()
+    
+
+    
+
+
+
+
+
+
+
+    
+
+    
+    def update_status(self, message, progress=None):
+        """Update status using headless service"""
+        self.status_service.update_status(message, progress)
+    
+    def append_log(self, message):
+        """Append message using headless logging service"""
+        self.logging_service.append_log(message)
+
+    def _gui_log_callback(self, message):
+        """Callback for GUI output capture - this is called by the session logger"""
+        # This method is called by the output capture system
+        # The message is already being logged to file, just display in GUI
+        pass
+    
+    def on_start_clicked(self, button=None):
+        """Handle start button click"""
+        if self.running:
+            return
+
+        self.running = True
+
+        # Log GUI events
+        if self.session_logger:
+            self.session_logger.log_gui_event("START_BUTTON_CLICKED", f"User clicked start button")
+
+        # Show toast notification
+        self.show_toast("Starting Unhinged platform...")
+
+        # Start platform in background thread
+        thread = threading.Thread(target=self.start_platform, daemon=True)
+        thread.start()
+    
+    def on_stop_clicked(self, button=None):
+        """Handle stop button click"""
+        if not self.running:
+            return
+
+        self.running = False
+
+        # Log GUI event
+        if self.session_logger:
+            self.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button")
+
+        # Stop platform
+        if self.process:
+            try:
+                self.process.terminate()
+                self.append_log("Platform stop requested")
+            except:
+                pass
+
+        self.update_status("Stopped", 0)
+
+
+
+
+
+
+
+    def start_platform(self):
+        """
+        @llm-doc Start Platform Backend
+
+        Executes the same functionality as 'make start' but with
+        GUI feedback and progress indication.
+        """
+        try:
+            # Use standard make start command
+            command = "start"
+
+            self.update_status("Starting Unhinged Platform...", 0.1)
+            self.append_log("Starting Unhinged Platform")
+            self.append_log(f"Working directory: {self.project_root}")
+
+            # Execute make command
+            self.update_status(f"Executing make {command}...", 0.3)
+            self.append_log(f"Executing: make {command}")
+            self.process = subprocess.Popen(
+                ['make', command],
+                cwd=self.project_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1
+            )
+
+            self.update_status("Platform running...", 0.8)
+            self.append_log("SUCCESS: Platform started successfully")
+
+            # Stream output
+            while self.running and self.process:
+                line = self.process.stdout.readline()
+                if line:
+                    clean_line = line.rstrip()
+                    if clean_line:
+                        # Enhanced output formatting
+                        if "ERROR" in clean_line.upper():
+                            self.append_log(f"ERROR: {clean_line}")
+                        elif "SUCCESS" in clean_line.upper():
+                            self.append_log(f"SUCCESS: {clean_line}")
+                        elif "WARNING" in clean_line.upper():
+                            self.append_log(f"WARNING: {clean_line}")
+                        elif "UNHINGED" in clean_line.upper():
+                            self.append_log(f"SYSTEM: {clean_line}")
+                        else:
+                            self.append_log(clean_line)
+
+                if self.process.poll() is not None:
+                    break
+
+            self.update_status("Platform completed", 1.0)
+            self.append_log("SUCCESS: Platform session completed")
+            self.show_toast("Platform session completed successfully", 5)
+
+        except FileNotFoundError:
+            self.update_status("Error: Makefile not found", 0)
+            self.append_log("ERROR: Makefile not found in project directory")
+            self.append_log("INFO: Make sure you're running from the Unhinged project root")
+            self.show_error_dialog("Makefile Not Found",
+                                 "Could not find Makefile in the project directory.\n\n"
+                                 "Please ensure you're running from the Unhinged project root.")
+        except subprocess.CalledProcessError as e:
+            self.update_status(f"Error: Command failed (exit {e.returncode})", 0)
+            self.append_log(f"ERROR: make {command} failed with exit code {e.returncode}")
+            self.show_error_dialog("Command Failed",
+                                 f"The command 'make {command}' failed.\n\n"
+                                 f"Exit code: {e.returncode}\n"
+                                 f"Check the output log for details.")
+        except Exception as e:
+            self.update_status(f"Error: {e}", 0)
+            self.append_log(f"ERROR: Unexpected error: {e}")
+            self.show_error_dialog("Unexpected Error",
+                                 f"An unexpected error occurred:\n\n{e}\n\n"
+                                 f"Please check the output log for more details.")
+        finally:
+            self.running = False
+
+            self.append_log(f"⚠️ Critical update required: v{self.update_info.latest_version.version}")
+
+            # Show critical update dialog
+            self._show_critical_update_dialog()
+
+
+
+    def start_platform(self):
+        """
+        @llm-doc Start Platform Backend
+
+        Executes the same functionality as 'make start' but with
+        GUI feedback and progress indication.
+        """
+        try:
+            # Use standard make start command
+            command = "start"
+
+            self.update_status("Starting Unhinged Platform...", 0.1)
+            self.append_log("Starting Unhinged Platform")
+            self.append_log(f"Working directory: {self.project_root}")
+
+            # Execute make command
+            self.update_status(f"Executing make {command}...", 0.3)
+            self.append_log(f"Executing: make {command}")
+
+            self.process = subprocess.Popen(
+                ['make', command],
+                cwd=self.project_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1
+            )
+
+            self.update_status("Platform running...", 0.8)
+            self.append_log("SUCCESS: Platform started successfully")
+
+            # Stream output
+            while self.running and self.process:
+                line = self.process.stdout.readline()
+                if line:
+                    clean_line = line.rstrip()
+                    if clean_line:
+                        # Enhanced output formatting
+                        if "ERROR" in clean_line.upper():
+                            self.append_log(f"ERROR: {clean_line}")
+                        elif "SUCCESS" in clean_line.upper():
+                            self.append_log(f"SUCCESS: {clean_line}")
+                        elif "WARNING" in clean_line.upper():
+                            self.append_log(f"WARNING: {clean_line}")
+                        elif "UNHINGED" in clean_line.upper():
+                            self.append_log(f"SYSTEM: {clean_line}")
+                        else:
+                            self.append_log(clean_line)
+
+                if self.process.poll() is not None:
+                    break
+
+            self.update_status("Platform completed", 1.0)
+            self.append_log("SUCCESS: Platform session completed")
+            self.show_toast("Platform session completed successfully", 5)
+
+        except FileNotFoundError:
+            self.update_status("Error: Makefile not found", 0)
+            self.append_log("ERROR: Makefile not found in project directory")
+            self.append_log("INFO: Make sure you're running from the Unhinged project root")
+            self.show_error_dialog("Makefile Not Found",
+                                 "Could not find Makefile in the project directory.\n\n"
+                                 "Please ensure you're running from the Unhinged project root.")
+        except subprocess.CalledProcessError as e:
+            self.update_status(f"Error: Command failed (exit {e.returncode})", 0)
+            self.append_log(f"ERROR: make {command} failed with exit code {e.returncode}")
+            self.show_error_dialog("Command Failed",
+                                 f"The command 'make {command}' failed.\n\n"
+                                 f"Exit code: {e.returncode}\n"
+                                 f"Check the output log for details.")
+        except Exception as e:
+            self.update_status(f"Error: {e}", 0)
+            self.append_log(f"ERROR: Unexpected error: {e}")
+            self.show_error_dialog("Unexpected Error",
+                                 f"An unexpected error occurred:\n\n{e}\n\n"
+                                 f"Please check the output log for more details.")
+        finally:
+            self.running = False
+
+    def show_error_dialog(self, title, message):
+        """Show error dialog to user"""
+        def show_dialog():
+            dialog = Adw.MessageDialog(transient_for=self.window)
+            dialog.set_heading(title)
+            dialog.set_body(message)
+            dialog.add_response("ok", "OK")
+            dialog.set_default_response("ok")
+            dialog.present()
+
+        GLib.idle_add(show_dialog)
+
+    def show_toast(self, message, timeout=3):
+        """Show toast notification"""
+        def show_toast_ui():
+            toast = Adw.Toast.new(message)
+            toast.set_timeout(timeout)
+            self.toast_overlay.add_toast(toast)
+
+        GLib.idle_add(show_toast_ui)
+def main():
+    """Main function"""
+    print("Starting main function...")
+    app = UnhingedDesktopApp()
+    print("App created, starting run...")
+    return app.run(sys.argv)
+
+if __name__ == "__main__":
+    sys.exit(main())

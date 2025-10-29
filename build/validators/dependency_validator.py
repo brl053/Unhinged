@@ -1,10 +1,7 @@
 """
-@llm-type build-validator
-@llm-legend Dependency validation at build time to prevent runtime dependency failures
-@llm-key Statically analyzes service dependencies to ensure proper startup order
-@llm-map Compile-time dependency validation preventing runtime startup failures
-@llm-axiom Dependency issues must be resolved at build time, never at runtime
-@llm-token dependency-validator: Static dependency analyzer preventing runtime startup errors
+@llm-type config.build
+@llm-does dependency validation at build time to prevent
+@llm-rule dependency issues must be resolved at build time, never at runtime
 """
 
 from dataclasses import dataclass

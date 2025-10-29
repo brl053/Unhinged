@@ -1,26 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type service
-@llm-legend Kotlin/Gradle build module with incremental compilation and caching
-@llm-key Provides optimized Gradle builds with parallel execution, incremental compilation, and intelligent caching
-@llm-map Kotlin build module that integrates with Gradle build system and provides enhanced caching
-@llm-axiom Gradle builds must be deterministic and support incremental compilation for fast development
-@llm-contract Returns BuildModuleResult with JAR artifacts and build metrics
-@llm-token kotlin-builder: Gradle-based build module for Kotlin/JVM projects
-
-Kotlin/Gradle Build Module
-
-Provides optimized builds for Kotlin projects using Gradle with:
-- Incremental compilation support
-- Parallel execution
-- Build cache integration
-- Dependency analysis
-- JAR artifact management
-
-Author: Unhinged Team
-Version: 2.0.0
-Date: 2025-10-19
+@llm-type service.api
+@llm-does kotlin/gradle build module with incremental compilation and
+@llm-rule gradle builds must be deterministic and support incremental compilation for f...
 """
 
 import re

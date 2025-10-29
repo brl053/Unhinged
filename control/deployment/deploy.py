@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
 """
-@llm-type control-tool
-@llm-legend Unified deployment orchestrator for Unhinged system runtime control
-@llm-key Central deployment automation with environment-aware orchestration and health validation
-@llm-map Runtime deployment control enabling automated service orchestration and monitoring
-@llm-axiom Deployments must be atomic, reversible, and health-validated for operational safety
-@llm-token deployment-orchestrator: Automated deployment control with environment management
-
-Unified Deployment Orchestrator:
-- Environment-aware deployment (dev, staging, production)
-- Health check validation before and after deployment
-- Rollback capability on deployment failures
-- Service dependency management
-- Integrated monitoring and logging
+@llm-type misc.control-tool
+@llm-does unified deployment orchestrator for unhinged system runtime
+@llm-rule deployments must be atomic, reversible, and health-validated for operational ...
 """
 
 import argparse
@@ -29,13 +19,10 @@ events = create_service_logger("deployment", "1.0.0")
 
 class UnhingedDeploymentOrchestrator:
     """
-    @llm-type control-orchestrator
-    @llm-legend Central deployment orchestrator managing environment-aware service deployment
-    @llm-key Automated deployment with health validation, dependency management, and rollback
-    @llm-map Core operational tool for runtime service orchestration and deployment control
-    @llm-axiom All deployments must be atomic, health-validated, and reversible
-    @llm-token deployment-core: Production deployment orchestration with operational safety
-    """
+@llm-type misc.control-orchestrator
+@llm-does central deployment orchestrator managing environment-awar...
+@llm-rule all deployments must be atomic, health-validated, and reversible
+"""
     
     def __init__(self, project_root: Path, environment: str = "development"):
         self.project_root = project_root

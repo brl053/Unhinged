@@ -1,32 +1,8 @@
 #!/usr/bin/env python3
 
 """
-@llm-type proto-handler
-@llm-legend TypeScript protobuf client generation handler with gRPC-Web support for browser applications
-@llm-key Generates TypeScript protobuf clients with gRPC-Web integration for frontend applications
-@llm-map TypeScript language handler for the polyglot proto engine providing browser-compatible gRPC clients
-@llm-axiom TypeScript proto clients must support both Node.js and browser environments with type safety
-@llm-contract Implements ProtoLanguageHandler interface for TypeScript protobuf and gRPC-Web client generation
-@llm-token typescript-proto-handler: Type-safe TypeScript protobuf client generation for web applications
-
-TypeScript Protocol Buffer Client Handler
-
-Generates type-safe TypeScript protobuf clients for:
-- Browser applications (gRPC-Web)
-- Node.js services (gRPC)
-- Frontend frameworks (React, Vue, Angular)
-- Static HTML interfaces
-
-Features:
-- ts-proto plugin integration
-- gRPC-Web client generation
-- Type-safe interfaces
-- ESModule compatibility
-- Tree-shaking support
-
-Author: Unhinged Team
-Version: 1.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does typescript protobuf client generation handler with grpc-web
 """
 
 import json

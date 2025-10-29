@@ -1,0 +1,151 @@
+# ============================================================================
+# UNHINGED CENTRALIZED PYTHON DEPENDENCIES
+# ============================================================================
+# 
+# This file consolidates ALL Python dependencies for the entire Unhinged
+# monorepo. The centralized Python environment uses this file to ensure
+# consistency across all Python operations.
+#
+# Philosophy: "One Python environment, all dependencies managed here"
+# ============================================================================
+
+# ============================================================================
+# CORE BUILD SYSTEM DEPENDENCIES
+# ============================================================================
+pyyaml>=6.0                    # Configuration parsing
+psutil>=5.9.0                  # System monitoring
+requests>=2.31.0               # HTTP client
+click>=8.1.0                   # CLI framework
+rich>=13.4.0                   # Rich terminal output
+pathlib2>=2.3.7               # Path utilities (if needed)
+
+# ============================================================================
+# PROTOCOL BUFFER AND GRPC DEPENDENCIES
+# ============================================================================
+protobuf>=4.21.0               # Protocol buffers
+grpcio>=1.50.0                 # gRPC runtime
+grpcio-tools>=1.50.0           # gRPC code generation tools
+grpcio-reflection>=1.50.0      # gRPC reflection
+
+# ============================================================================
+# AI/ML SERVICE DEPENDENCIES
+# ============================================================================
+torch>=2.0.0                  # PyTorch ML framework
+transformers>=4.30.0          # Hugging Face transformers
+numpy>=1.24.0                 # Numerical computing
+pillow>=9.5.0                 # Image processing
+librosa>=0.10.0               # Audio processing
+soundfile>=0.12.0             # Audio file I/O
+opencv-python>=4.8.0          # Computer vision
+scikit-learn>=1.3.0           # Machine learning utilities
+
+# ============================================================================
+# AUDIO CAPTURE DEPENDENCIES
+# ============================================================================
+pyaudio>=0.2.11               # Real-time audio capture
+wave>=0.0.2                   # WAV file handling
+
+# ============================================================================
+# COMPUTER VISION DEPENDENCIES
+# ============================================================================
+ultralytics>=8.0.0           # YOLOv8 for object detection
+mss>=9.0.1                   # Fast screen capture
+pyautogui>=0.9.54            # Screen interaction
+
+# ============================================================================
+# INPUT CAPTURE DEPENDENCIES
+# ============================================================================
+pynput>=1.7.6                # Keyboard and mouse capture
+keyboard>=0.13.5             # Alternative keyboard library
+
+# ============================================================================
+# WEB FRAMEWORK DEPENDENCIES
+# ============================================================================
+fastapi>=0.100.0              # Modern web framework
+uvicorn>=0.22.0               # ASGI server
+websockets>=11.0.0            # WebSocket support
+aiofiles>=23.0.0              # Async file operations
+starlette>=0.27.0             # ASGI framework
+
+# ============================================================================
+# DATABASE CLIENT DEPENDENCIES
+# ============================================================================
+asyncpg>=0.28.0               # PostgreSQL async client
+redis>=4.5.0                  # Redis client
+cassandra-driver>=3.28.0      # Cassandra client
+sqlalchemy>=2.0.0             # SQL toolkit
+alembic>=1.11.0               # Database migrations
+
+# ============================================================================
+# DEVELOPMENT AND TESTING DEPENDENCIES
+# ============================================================================
+pytest>=7.4.0                 # Testing framework
+pytest-asyncio>=0.21.0        # Async testing
+pytest-cov>=4.1.0             # Coverage reporting
+black>=23.0.0                 # Code formatting
+flake8>=6.0.0                 # Linting
+mypy>=1.4.0                   # Type checking
+isort>=5.12.0                 # Import sorting
+
+# ============================================================================
+# DOCUMENTATION DEPENDENCIES
+# ============================================================================
+mkdocs>=1.5.0                 # Documentation generator
+mkdocs-material>=9.1.0        # Material theme
+sphinx>=7.0.0                 # Alternative doc generator
+sphinx-rtd-theme>=1.3.0       # ReadTheDocs theme
+
+# ============================================================================
+# UTILITY DEPENDENCIES
+# ============================================================================
+aiohttp>=3.8.0                # Async HTTP client
+httpx>=0.24.0                 # Modern HTTP client
+pydantic>=2.0.0               # Data validation
+python-dotenv>=1.0.0          # Environment variables
+watchdog>=3.0.0               # File system monitoring
+schedule>=1.2.0               # Job scheduling
+
+# ============================================================================
+# JUPYTER AND NOTEBOOK DEPENDENCIES
+# ============================================================================
+jupyter>=1.0.0                # Jupyter notebook
+jupyterlab>=4.0.0             # JupyterLab interface
+ipython>=8.14.0               # Enhanced Python shell
+matplotlib>=3.7.0             # Plotting
+seaborn>=0.12.0               # Statistical plotting
+pandas>=2.0.0                 # Data manipulation
+
+# ============================================================================
+# KAFKA AND STREAMING DEPENDENCIES
+# ============================================================================
+kafka-python>=2.0.2           # Kafka client
+confluent-kafka>=2.1.0        # Confluent Kafka client
+avro-python3>=1.11.0          # Avro serialization
+
+# ============================================================================
+# MONITORING AND OBSERVABILITY
+# ============================================================================
+prometheus-client>=0.17.0     # Prometheus metrics
+opentelemetry-api>=1.18.0     # OpenTelemetry tracing
+opentelemetry-sdk>=1.18.0     # OpenTelemetry SDK
+
+# ============================================================================
+# SECURITY DEPENDENCIES
+# ============================================================================
+cryptography>=41.0.0          # Cryptographic operations
+pyjwt>=2.8.0                  # JWT tokens
+passlib>=1.7.4                # Password hashing
+
+# ============================================================================
+# CONTAINER AND DEPLOYMENT
+# ============================================================================
+docker>=6.1.0                 # Docker client
+kubernetes>=27.2.0            # Kubernetes client
+
+# ============================================================================
+# ADDITIONAL UTILITIES
+# ============================================================================
+tqdm>=4.65.0                  # Progress bars
+colorama>=0.4.6               # Cross-platform colored output
+tabulate>=0.9.0               # Table formatting
+jinja2>=3.1.0                 # Template engine

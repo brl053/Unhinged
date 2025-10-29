@@ -1,33 +1,9 @@
 #!/usr/bin/env python3
 
 """
-@llm-type build-module
-@llm-legend Proto-to-polyglot client library generation module using unified DRY architecture
-@llm-key Generates TypeScript, C, Python, Kotlin client libraries from protobuf definitions using polyglot engine
-@llm-map Integrates with build orchestrator to provide cached, parallel proto client generation with DRY principles
-@llm-axiom Client libraries must be generated before service compilation and provide type-safe APIs across all languages
-@llm-contract Implements BuildModule interface with polyglot engine for consistent multi-language client generation
-@llm-token proto-client-builder: DRY polyglot gRPC client library generation from protobuf schemas
-
-Proto-to-Polyglot Client Library Generation Module (DRY Architecture)
-
-Generates client libraries from Protocol Buffer service definitions for:
-- TypeScript (gRPC-Web for browsers)
-- C/C++ (high-performance native services)
-- Python (backend services and AI/ML)
-- Kotlin (JVM services and persistence platform)
-
-Features:
-- Unified polyglot generation engine (DRY principle)
-- Language-specific handlers for customization
-- Intelligent dependency tracking and caching
-- Parallel generation across languages
-- Cross-language type coordination
-- Pluggable language support
-
-Author: Unhinged Team
-Version: 3.0.0
-Date: 2025-10-20
+@llm-type config.build
+@llm-does proto-to-polyglot client library generation module using ...
+@llm-rule client libraries must be generated before service compilation and provide typ...
 """
 
 import time
@@ -53,14 +29,9 @@ except ImportError:
 
 class ProtoClientBuilder(BuildModule):
     """
-    @llm-type build-module
-    @llm-legend Polyglot protobuf client generation using unified DRY engine architecture
-    @llm-key Orchestrates TypeScript, C, Python, Kotlin proto client generation through pluggable handlers
-    @llm-map Build module that eliminates code duplication in proto generation across multiple languages
-    @llm-axiom All proto client generation must use the unified polyglot engine for consistency
-    @llm-contract Returns BuildModuleResult with generated client artifacts across all specified languages
-    @llm-token polyglot-proto-builder: Unified multi-language protobuf client generation orchestrator
-    """
+@llm-type config.build
+@llm-does polyglot protobuf client generation using unified dry
+"""
     
     def __init__(self, context: BuildContext):
         super().__init__(context)

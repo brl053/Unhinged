@@ -22,14 +22,10 @@ package com.unhinged.persistence.core
 import com.unhinged.persistence.model.*
 import kotlinx.coroutines.flow.Flow
 
-/**
- * @llm-type interface
- * @llm-legend Operation orchestrator that manages complex multi-technology operations and workflows
- * @llm-key Coordinates distributed transactions, async pipelines, and ML workflows across database technologies
- * @llm-map Central orchestration engine for complex operations requiring multiple database interactions
- * @llm-axiom All complex operations must be orchestrated through this interface for consistency and reliability
- * @llm-contract Provides transaction management, workflow orchestration, and error handling for complex operations
- * @llm-token operation-orchestrator: Complex operation coordination and workflow management
+/*
+ * @llm-type misc.interface
+ * @llm-does operation orchestrator that manages complex multi-technol...
+ * @llm-rule all complex operations must be orchestrated through this interface for consis...
  */
 interface OperationOrchestrator {
     
