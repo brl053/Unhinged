@@ -33,6 +33,7 @@ import os
 from pathlib import Path
 import time
 import json
+import requests  # HTTP client for LLM API communication
 
 # Add virtual environment packages to path for gRPC support
 # Calculate project root correctly (control/gtk4_gui/desktop_app.py -> project root)
