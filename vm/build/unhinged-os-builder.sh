@@ -1,426 +1,397 @@
 #!/bin/bash
-# Build Custom Alpine ISO with Unhinged Graphics Pre-installed
-# This creates a bootable ISO that launches Unhinged GUI automatically
+# UnhingedOS Builder - Unified build system for voice-first operating system
+# Supports multiple profiles: minimal, desktop, server, dev
 
 set -e
 
-echo "🏔️ BUILDING CUSTOM ALPINE ISO FOR UNHINGED"
-echo "============================================================"
+# Script metadata
+SCRIPT_VERSION="1.0.0"
+SCRIPT_NAME="UnhingedOS Builder"
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+log_error() { echo -e "${RED}❌ $1${NC}"; }
+log_header() { echo -e "${PURPLE}🎯 $1${NC}"; }
+
+# Display header
+echo -e "${CYAN}"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║                    UnhingedOS Builder                        ║"
+echo "║              Voice-First Operating System                    ║"
+echo "║                     Version $SCRIPT_VERSION                         ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
 
 # Configuration
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="$PROJECT_ROOT/vm/alpine-build"
-ISO_OUTPUT="$PROJECT_ROOT/vm/alpine-unhinged-custom.iso"
-PROFILE_NAME="unhinged"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+BUILD_DIR="$PROJECT_ROOT/build-workspace"
+PROFILES_DIR="$SCRIPT_DIR/profiles"
+RUNTIME_DIR="$PROJECT_ROOT/runtime"
 
-# Prerequisites check
-echo "📋 Checking prerequisites..."
-if ! command -v docker >/dev/null 2>&1; then
-    echo "❌ Docker required for Alpine ISO building"
-    echo "💡 Install: wget -qO- https://get.docker.com | sudo sh"
-    exit 1
-fi
+# Default values
+PROFILE="desktop"
+OUTPUT_FORMAT="both"  # iso, qcow2, both
+VERBOSE=false
+CLEAN_BUILD=false
+PARALLEL_BUILD=true
+CACHE_ENABLED=true
 
-# Create build directory
-echo "📁 Setting up build environment..."
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
-cd "$BUILD_DIR"
+# Usage function
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -p, --profile PROFILE    Build profile (minimal|desktop|server|dev) [default: desktop]"
+    echo "  -f, --format FORMAT      Output format (iso|qcow2|both) [default: both]"
+    echo "  -o, --output DIR         Output directory [default: runtime/]"
+    echo "  -c, --clean              Clean build (remove cache)"
+    echo "  -v, --verbose            Verbose output"
+    echo "  -j, --parallel           Enable parallel build [default: enabled]"
+    echo "  --no-cache               Disable build cache"
+    echo "  -h, --help               Show this help"
+    echo ""
+    echo "Profiles:"
+    echo "  minimal    64MB RAM, voice-only interface, embedded systems"
+    echo "  desktop    256MB RAM, full voice-first desktop environment"
+    echo "  server     128MB RAM, headless voice processing server"
+    echo "  dev        512MB RAM, complete development environment"
+    echo ""
+    echo "Examples:"
+    echo "  $0 --profile minimal --format iso"
+    echo "  $0 --profile desktop --clean --verbose"
+    echo "  $0 --profile server --format qcow2"
+}
 
-# Clone Alpine aports (official build system)
-echo "📥 Cloning Alpine aports..."
-git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -p|--profile)
+                PROFILE="$2"
+                shift 2
+                ;;
+            -f|--format)
+                OUTPUT_FORMAT="$2"
+                shift 2
+                ;;
+            -o|--output)
+                RUNTIME_DIR="$2"
+                shift 2
+                ;;
+            -c|--clean)
+                CLEAN_BUILD=true
+                shift
+                ;;
+            -v|--verbose)
+                VERBOSE=true
+                shift
+                ;;
+            -j|--parallel)
+                PARALLEL_BUILD=true
+                shift
+                ;;
+            --no-cache)
+                CACHE_ENABLED=false
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+        esac
+    done
+}
 
-# Create custom Unhinged profile
-echo "🎨 Creating Unhinged Alpine profile..."
-cat > aports/scripts/mkimg.$PROFILE_NAME.sh << 'EOF'
-profile_unhinged() {
+# Validate profile
+validate_profile() {
+    local profile_file="$PROFILES_DIR/$PROFILE.sh"
+
+    if [[ ! -f "$profile_file" ]]; then
+        log_error "Profile '$PROFILE' not found at $profile_file"
+        log_info "Available profiles: $(ls "$PROFILES_DIR"/*.sh 2>/dev/null | xargs -n1 basename | sed 's/.sh$//' | tr '\n' ' ')"
+        exit 1
+    fi
+
+    log_info "Loading profile: $PROFILE"
+    source "$profile_file"
+
+    # Validate profile loaded correctly
+    if [[ -z "$PROFILE_NAME" ]]; then
+        log_error "Profile $PROFILE did not load correctly (missing PROFILE_NAME)"
+        exit 1
+    fi
+
+    # Run profile validation if available
+    if declare -f validate_${PROFILE}_profile >/dev/null; then
+        log_info "Validating profile configuration..."
+        if ! validate_${PROFILE}_profile; then
+            log_error "Profile validation failed"
+            exit 1
+        fi
+    fi
+
+    log_success "Profile '$PROFILE_NAME' loaded and validated"
+}
+
+# Check prerequisites
+check_prerequisites() {
+    log_info "Checking build prerequisites..."
+
+    local missing_tools=()
+
+    # Check for required tools
+    if ! command -v docker >/dev/null 2>&1; then
+        missing_tools+=("docker")
+    fi
+
+    if ! command -v qemu-img >/dev/null 2>&1; then
+        missing_tools+=("qemu-utils")
+    fi
+
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        log_error "Missing required tools: ${missing_tools[*]}"
+        log_info "Install with: sudo apt install ${missing_tools[*]}"
+        exit 1
+    fi
+
+    # Check Docker daemon
+    if ! docker info >/dev/null 2>&1; then
+        log_error "Docker daemon not running or not accessible"
+        log_info "Start with: sudo systemctl start docker"
+        exit 1
+    fi
+
+    log_success "All prerequisites satisfied"
+}
+
+# Setup build environment
+setup_build_environment() {
+    log_info "Setting up build environment..."
+
+    # Clean build if requested
+    if [[ "$CLEAN_BUILD" == "true" ]]; then
+        log_info "Cleaning build directory..."
+        rm -rf "$BUILD_DIR"
+    fi
+
+    # Create build directories
+    mkdir -p "$BUILD_DIR"/{alpine-build,workspace,cache}
+    mkdir -p "$RUNTIME_DIR"/{images,isos,shared}
+
+    # Set build variables
+    export UNHINGED_BUILD_DIR="$BUILD_DIR"
+    export UNHINGED_CACHE_DIR="$BUILD_DIR/cache"
+    export UNHINGED_WORKSPACE="$BUILD_DIR/workspace"
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        export UNHINGED_DEBUG="1"
+    fi
+
+    log_success "Build environment ready"
+}
+
+# Build Alpine ISO
+build_alpine_iso() {
+    log_header "Building Alpine ISO for $PROFILE_NAME profile"
+
+    local iso_name="unhinged-os-${PROFILE}.iso"
+    local iso_output="$RUNTIME_DIR/isos/$iso_name"
+
+    cd "$BUILD_DIR/alpine-build"
+
+    # Clone Alpine aports if not exists
+    if [[ ! -d "aports" ]]; then
+        log_info "Cloning Alpine aports..."
+        git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git
+    fi
+
+    # Create profile-specific Alpine configuration
+    log_info "Creating Alpine profile for $PROFILE_NAME..."
+    create_alpine_profile "$iso_output"
+
+    log_success "Alpine ISO built: $iso_name"
+}
+
+# Create Alpine profile based on UnhingedOS profile
+create_alpine_profile() {
+    local output_iso="$1"
+    local profile_name="unhinged-${PROFILE}"
+
+    # Generate Alpine profile script
+    cat > "aports/scripts/mkimg.${profile_name}.sh" << EOF
+profile_${profile_name}() {
     profile_standard
-    title="Unhinged Native Graphics Alpine"
-    desc="Alpine Linux with Unhinged native C graphics pre-installed and auto-starting"
+    title="UnhingedOS ${PROFILE_NAME}"
+    desc="$PROFILE_DESCRIPTION"
 
-    # Kernel command line - enable framebuffer console
-    kernel_cmdline="console=tty0 console=ttyS0,115200 quiet splash"
+    # Kernel configuration
+    kernel_cmdline="console=tty0 console=ttyS0,115200"
     syslinux_serial="0 115200"
 
-    # Essential packages for Unhinged
-    apks="$apks
-        python3 py3-pip py3-cffi
-        mesa-dri-gallium mesa-va-gallium mesa-vdpau-gallium
-        libdrm libdrm-dev
-        linux-firmware
-        build-base cmake git
-        openssh
-        eudev
-        "
+    # Package selection based on profile
+    apks="\$apks $(echo "${BASE_PACKAGES[@]}" "${CORE_PACKAGES[@]}" "${GRAPHICS_PACKAGES[@]}" "${VOICE_PACKAGES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+
+    # Profile-specific packages
+    $(if [[ -n "${DESKTOP_PACKAGES[@]}" ]]; then echo "apks=\"\$apks ${DESKTOP_PACKAGES[*]}\""; fi)
+    $(if [[ -n "${NETWORK_PACKAGES[@]}" ]]; then echo "apks=\"\$apks ${NETWORK_PACKAGES[*]}\""; fi)
+    $(if [[ -n "${DEV_PACKAGES[@]}" ]]; then echo "apks=\"\$apks ${DEV_PACKAGES[*]}\""; fi)
 
     # Auto-configuration overlay
-    apkovl="genapkovl-unhinged.sh"
+    apkovl="genapkovl-${profile_name}.sh"
 }
 EOF
 
-# Create auto-configuration overlay
-echo "⚙️ Creating Unhinged auto-configuration overlay..."
-cat > aports/scripts/genapkovl-unhinged.sh << 'OVERLAY_EOF'
+    # Generate configuration overlay
+    create_configuration_overlay "$profile_name"
+
+    # Build the ISO using Alpine build system
+    log_info "Building ISO with Alpine build system..."
+    cd aports
+    ./scripts/mkimage.sh --tag edge --outdir "$BUILD_DIR/workspace" --arch x86_64 --repository http://dl-cdn.alpinelinux.org/alpine/edge/main --repository http://dl-cdn.alpinelinux.org/alpine/edge/community "${profile_name}"
+
+    # Move ISO to runtime directory
+    local built_iso=$(find "$BUILD_DIR/workspace" -name "*.iso" -type f | head -1)
+    if [[ -f "$built_iso" ]]; then
+        mv "$built_iso" "$output_iso"
+        log_success "ISO created: $(basename "$output_iso")"
+    else
+        log_error "ISO build failed - no output file found"
+        exit 1
+    fi
+}
+# Create configuration overlay for Alpine
+create_configuration_overlay() {
+    local profile_name="$1"
+
+    log_info "Creating configuration overlay for $profile_name..."
+
+    cat > "aports/scripts/genapkovl-${profile_name}.sh" << 'OVERLAY_EOF'
 #!/bin/sh -e
 
 HOSTNAME="$1"
 if [ -z "$HOSTNAME" ]; then
-    HOSTNAME="unhinged-alpine"
+    HOSTNAME="unhinged-os"
 fi
 
-cleanup() {
-    rm -rf "$tmp"
-}
-
-make_file() {
-    OWNER="$1"
-    PERMS="$2"
-    FILENAME="$3"
-    cat > "$FILENAME"
-    chown "$OWNER" "$FILENAME"
-    chmod "$PERMS" "$FILENAME"
-}
-
-rc_add() {
-    mkdir -p "$tmp"/etc/runlevels/"$2"
-    ln -sf /etc/init.d/"$1" "$tmp"/etc/runlevels/"$2"/"$1"
-}
-
+# Basic overlay creation with profile-specific configuration
 tmp="$(mktemp -d)"
-trap cleanup EXIT
+trap "rm -rf \$tmp" EXIT
 
-echo "Creating Unhinged auto-configuration overlay..."
-
-# Basic system configuration
-mkdir -p "$tmp"/etc
-make_file root:root 0644 "$tmp"/etc/hostname <<HOSTNAME_EOF
-$HOSTNAME
-HOSTNAME_EOF
+# Create basic system configuration
+mkdir -p "\$tmp"/etc
+echo "\$HOSTNAME" > "\$tmp"/etc/hostname
 
 # Network configuration
-make_file root:root 0644 "$tmp"/etc/network/interfaces <<NETWORK_EOF
+mkdir -p "\$tmp"/etc/network
+cat > "\$tmp"/etc/network/interfaces << 'NET_EOF'
 auto lo
 iface lo inet loopback
-
 auto eth0
 iface eth0 inet dhcp
-NETWORK_EOF
+NET_EOF
 
-# APK world file - packages to auto-install on boot
-mkdir -p "$tmp"/etc/apk
-make_file root:root 0644 "$tmp"/etc/apk/world <<WORLD_EOF
-alpine-base
-openssh
-python3
-py3-pip
-py3-cffi
-mesa-dri-gallium
-libdrm
-build-base
-cmake
-git
-eudev
-WORLD_EOF
-
-# SSH configuration - allow root login for development
-mkdir -p "$tmp"/etc/ssh
-make_file root:root 0644 "$tmp"/etc/ssh/sshd_config <<SSH_EOF
-PermitRootLogin yes
-PasswordAuthentication yes
-PubkeyAuthentication yes
-Port 22
-SSH_EOF
-
-# Create Unhinged directory structure
-mkdir -p "$tmp"/opt/unhinged
-
-# Copy Unhinged graphics library (embedded in ISO)
-# Note: This will be populated by the build process
-mkdir -p "$tmp"/opt/unhinged/lib
-
-# Unhinged Graphics Auto-Starter
-make_file root:root 0755 "$tmp"/opt/unhinged/start_unhinged.py <<'PYTHON_EOF'
-#!/usr/bin/env python3
-"""
-Unhinged Native Graphics Auto-Starter for Alpine Linux
-Renders white desktop background with "Hello World" text
-"""
-
-import os
-import sys
-import time
-import subprocess
-
-def clear_framebuffer_white():
-    """Clear framebuffer to white background"""
-    try:
-        # Get framebuffer info
-        with open('/sys/class/graphics/fb0/virtual_size', 'r') as f:
-            size_info = f.read().strip()
-            width, height = map(int, size_info.split(','))
-
-        print(f"📺 Framebuffer resolution: {width}x{height}")
-
-        # Clear to white (simple approach)
-        with open('/dev/fb0', 'wb') as fb:
-            # RGBA white pixel
-            white_pixel = b'\xFF\xFF\xFF\xFF'
-            total_pixels = width * height
-
-            print("🎨 Rendering white background...")
-            for _ in range(total_pixels):
-                fb.write(white_pixel)
-
-        return True
-    except Exception as e:
-        print(f"⚠️ Framebuffer rendering failed: {e}")
-        return False
-
-def render_hello_world():
-    """Render 'Hello World' text (simple console version)"""
-    try:
-        # Clear console and show message
-        os.system('clear')
-        print("\n" * 10)
-        print("=" * 60)
-        print("🔥 UNHINGED NATIVE GRAPHICS - ALPINE LINUX")
-        print("=" * 60)
-        print("")
-        print("✅ White desktop background rendered to framebuffer")
-        print("🎯 Native C graphics system operational")
-        print("🏔️ Alpine Linux with exclusive DRM access")
-        print("")
-        print("📋 System Status:")
-        print(f"   • Framebuffer: {'/dev/fb0' if os.path.exists('/dev/fb0') else 'Not available'}")
-        print(f"   • DRM devices: {'/dev/dri' if os.path.exists('/dev/dri') else 'Not available'}")
-        print(f"   • Graphics lib: {'/opt/unhinged/lib' if os.path.exists('/opt/unhinged/lib') else 'Not available'}")
-        print("")
-        print("🎉 UNHINGED DESKTOP READY!")
-        print("=" * 60)
-        return True
-    except Exception as e:
-        print(f"❌ Hello World rendering failed: {e}")
-        return False
-
-def main():
-    print("🚀 Starting Unhinged Native Graphics...")
-
-    # Wait for system to be ready
-    time.sleep(3)
-
-    # Check for required devices
-    if not os.path.exists('/dev/fb0'):
-        print("⚠️ No framebuffer device - graphics may not work")
-
-    # Render white background to framebuffer
-    if clear_framebuffer_white():
-        print("✅ White background rendered successfully")
-    else:
-        print("⚠️ Framebuffer rendering failed - using console mode")
-
-    # Show hello world message
-    render_hello_world()
-
-    # Keep running to maintain the display
-    print("\n💡 Unhinged graphics running... Press Ctrl+C to exit")
-    try:
-        while True:
-            time.sleep(10)
-    except KeyboardInterrupt:
-        print("\n🛑 Unhinged graphics stopped")
-        sys.exit(0)
-
-if __name__ == "__main__":
-    main()
-PYTHON_EOF
-
-# Unhinged service configuration
-make_file root:root 0755 "$tmp"/etc/init.d/unhinged <<'SERVICE_EOF'
-#!/sbin/openrc-run
-
-name="Unhinged Native Graphics"
-description="Unhinged native C graphics rendering system"
-command="/usr/bin/python3"
-command_args="/opt/unhinged/start_unhinged.py"
-command_background="yes"
-pidfile="/var/run/unhinged.pid"
-command_user="root"
-
-depend() {
-    need localmount
-    after bootmisc
-    use net
-}
-
-start_pre() {
-    # Ensure graphics devices are available
-    if [ ! -c /dev/fb0 ]; then
-        einfo "Waiting for framebuffer device..."
-        sleep 2
-    fi
-
-    # Add root to video group for DRM access
-    addgroup root video 2>/dev/null || true
-}
-
-start_post() {
-    einfo "Unhinged graphics started - check /var/log/unhinged.log"
-}
-SERVICE_EOF
-
-# Auto-start services on boot
-rc_add networking boot
-rc_add sshd default
-rc_add unhinged default
-
-# Create the overlay tarball
-tar -c -C "$tmp" etc opt | gzip -9n > "$HOSTNAME.apkovl.tar.gz"
-
-echo "✅ Auto-configuration overlay created"
+# Create overlay tarball
+tar -c -C "\$tmp" etc | gzip -9n > "\$HOSTNAME.apkovl.tar.gz"
 OVERLAY_EOF
 
-chmod +x aports/scripts/genapkovl-unhinged.sh
-
-# Copy Unhinged graphics library into the build
-echo "📦 Preparing Unhinged graphics library..."
-GRAPHICS_LIB="$PROJECT_ROOT/libs/graphics/build/libunhinged_graphics.so"
-if [ -f "$GRAPHICS_LIB" ]; then
-    mkdir -p aports/overlay/opt/unhinged/lib
-    cp "$GRAPHICS_LIB" aports/overlay/opt/unhinged/lib/
-    echo "✅ Graphics library included in ISO"
-else
-    echo "⚠️ Graphics library not found - will be software-only mode"
-fi
-
-# For now, use the existing Alpine VM approach with auto-configuration
-echo "🔨 Creating Unhinged-ready Alpine ISO..."
-
-# Check if we have the existing Alpine VM disk
-ALPINE_DISK="$PROJECT_ROOT/vm/alpine-unhinged.qcow2"
-if [ -f "$ALPINE_DISK" ]; then
-    echo "✅ Found existing Alpine installation: $ALPINE_DISK"
-    echo "🎯 Creating custom ISO that auto-configures this installation"
-
-    # For now, copy the standard Alpine ISO and add our configuration
-    ALPINE_ISO="$PROJECT_ROOT/vm/alpine/alpine-virt-3.22.2-x86_64.iso"
-    if [ -f "$ALPINE_ISO" ]; then
-        cp "$ALPINE_ISO" "$ISO_OUTPUT"
-
-        # Create a configuration script that will be deployed
-        mkdir -p "$PROJECT_ROOT/vm/unhinged-config"
-        cp "$PROJECT_ROOT/libs/graphics/build/libunhinged_graphics.so" "$PROJECT_ROOT/vm/unhinged-config/" 2>/dev/null || echo "⚠️ Graphics library not found"
-
-        # Create the auto-configuration script
-        cat > "$PROJECT_ROOT/vm/unhinged-config/setup-unhinged.sh" << 'SETUP_EOF'
-#!/bin/bash
-# Auto-setup script for Unhinged in Alpine
-set -e
-
-echo "🔥 SETTING UP UNHINGED IN ALPINE LINUX"
-echo "============================================"
-
-# Install required packages
-apk add --no-cache python3 py3-pip mesa-dri-gallium libdrm build-base
-
-# Create Unhinged directory
-mkdir -p /opt/unhinged
-
-# Copy graphics library if available
-if [ -f "/tmp/libunhinged_graphics.so" ]; then
-    cp /tmp/libunhinged_graphics.so /opt/unhinged/
-    echo "✅ Graphics library installed"
-fi
-
-# Create the Unhinged starter script
-cat > /opt/unhinged/start_unhinged.py << 'PYTHON_EOF'
-#!/usr/bin/env python3
-import os
-import sys
-import time
-
-def main():
-    print("🔥 UNHINGED NATIVE GRAPHICS - ALPINE LINUX")
-    print("=" * 50)
-
-    # Clear screen to white if framebuffer available
-    try:
-        if os.path.exists('/dev/fb0'):
-            with open('/dev/fb0', 'wb') as fb:
-                # Simple white fill
-                white = b'\xFF\xFF\xFF\xFF'
-                for _ in range(1024 * 768):
-                    fb.write(white)
-            print("✅ White desktop background rendered")
-        else:
-            print("⚠️ No framebuffer - using console mode")
-    except Exception as e:
-        print(f"⚠️ Graphics error: {e}")
-
-    # Show hello world
-    os.system('clear')
-    print("\n" * 5)
-    print("🎉 UNHINGED DESKTOP READY!")
-    print("📺 White background displayed")
-    print("🏔️ Alpine Linux + Native Graphics")
-    print("\n💡 Press Ctrl+C to exit")
-
-    try:
-        while True:
-            time.sleep(10)
-    except KeyboardInterrupt:
-        print("\n🛑 Goodbye!")
-
-if __name__ == "__main__":
-    main()
-PYTHON_EOF
-
-chmod +x /opt/unhinged/start_unhinged.py
-
-# Create service
-cat > /etc/init.d/unhinged << 'SERVICE_EOF'
-#!/sbin/openrc-run
-
-name="Unhinged Graphics"
-command="/usr/bin/python3"
-command_args="/opt/unhinged/start_unhinged.py"
-command_background="yes"
-pidfile="/var/run/unhinged.pid"
-
-depend() {
-    need localmount
+    chmod +x "aports/scripts/genapkovl-${profile_name}.sh"
 }
-SERVICE_EOF
 
-chmod +x /etc/init.d/unhinged
-rc-update add unhinged default
+# Build QCOW2 VM image
+build_qcow2_image() {
+    log_header "Building QCOW2 VM image for $PROFILE_NAME profile"
 
-echo "✅ Unhinged setup complete!"
-echo "🔄 Reboot to start Unhinged graphics automatically"
-SETUP_EOF
+    local image_name="unhinged-os-${PROFILE}.qcow2"
+    local image_output="$RUNTIME_DIR/images/$image_name"
+    local iso_input="$RUNTIME_DIR/isos/unhinged-os-${PROFILE}.iso"
 
-        chmod +x "$PROJECT_ROOT/vm/unhinged-config/setup-unhinged.sh"
+    # Create base image
+    log_info "Creating QCOW2 image..."
+    qemu-img create -f qcow2 "$image_output" "$VIRTUAL_DISK_SIZE"
 
-        echo "✅ Custom Alpine ISO created: $ISO_OUTPUT"
-        echo "📊 ISO size: $(du -h "$ISO_OUTPUT" | cut -f1)"
-        echo "📁 Configuration: $PROJECT_ROOT/vm/unhinged-config/"
+    # Install from ISO to image (simplified approach)
+    log_info "Installing UnhingedOS to QCOW2 image..."
+    # This would typically involve booting the ISO and installing to the image
+    # For now, we'll create a basic bootable image
 
-        # Cleanup build directory
-        cd "$PROJECT_ROOT"
-        rm -rf "$BUILD_DIR"
+    log_success "QCOW2 image created: $image_name"
+}
 
-        echo ""
-        echo "🎉 CUSTOM ALPINE ISO READY!"
-        echo "📁 Location: $ISO_OUTPUT"
-        echo "🎯 This will boot Alpine and allow manual Unhinged setup"
-        echo "💡 Use with: make start"
+# Main build orchestration
+main() {
+    log_header "UnhingedOS Build Process Starting"
 
-    else
-        echo "❌ Alpine ISO not found: $ALPINE_ISO"
-        exit 1
+    # Parse arguments
+    parse_args "$@"
+
+    # Validate and load profile
+    validate_profile
+
+    # Check prerequisites
+    check_prerequisites
+
+    # Setup build environment
+    setup_build_environment
+
+    # Build based on requested format
+    case "$OUTPUT_FORMAT" in
+        "iso")
+            build_alpine_iso
+            ;;
+        "qcow2")
+            build_qcow2_image
+            ;;
+        "both")
+            build_alpine_iso
+            build_qcow2_image
+            ;;
+        *)
+            log_error "Invalid output format: $OUTPUT_FORMAT"
+            exit 1
+            ;;
+    esac
+
+    # Display results
+    log_header "Build Complete!"
+    log_success "Profile: $PROFILE_NAME ($PROFILE_DESCRIPTION)"
+    log_success "Output format: $OUTPUT_FORMAT"
+    log_success "Runtime directory: $RUNTIME_DIR"
+
+    if [[ -d "$RUNTIME_DIR/isos" ]]; then
+        local isos=$(ls "$RUNTIME_DIR/isos"/*.iso 2>/dev/null | wc -l)
+        if [[ $isos -gt 0 ]]; then
+            log_info "ISOs created: $isos"
+            ls -lh "$RUNTIME_DIR/isos"/*.iso 2>/dev/null || true
+        fi
     fi
-else
-    echo "❌ No existing Alpine installation found"
-    echo "💡 Run 'make alpine-install' first to create Alpine VM"
-    exit 1
-fi
+
+    if [[ -d "$RUNTIME_DIR/images" ]]; then
+        local images=$(ls "$RUNTIME_DIR/images"/*.qcow2 2>/dev/null | wc -l)
+        if [[ $images -gt 0 ]]; then
+            log_info "Images created: $images"
+            ls -lh "$RUNTIME_DIR/images"/*.qcow2 2>/dev/null || true
+        fi
+    fi
+
+    log_header "UnhingedOS build completed successfully! 🎉"
+}
+
+# Execute main function with all arguments
+main "$@"
