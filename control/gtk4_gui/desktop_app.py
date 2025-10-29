@@ -1116,8 +1116,6 @@ class UnhingedDesktopApp(Adw.Application):
             import sys
             from pathlib import Path
             import grpc
-            import json
-            import requests  # HTTP client for Ollama API
 
             project_root = Path(__file__).parent.parent.parent
             protobuf_path = project_root / "generated" / "python" / "clients"
