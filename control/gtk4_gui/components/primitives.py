@@ -1324,8 +1324,12 @@ class TextEditor(AdwComponentBase):
 
         # Connect signals
         self._text_buffer.connect('changed', self._on_content_changed)
-        self._text_view.connect('focus-in-event', self._on_focus_in)
-        self._text_view.connect('focus-out-event', self._on_focus_out)
+
+        # Create focus controller for GTK4
+        focus_controller = Gtk.EventControllerFocus()
+        focus_controller.connect('enter', self._on_focus_in)
+        focus_controller.connect('leave', self._on_focus_out)
+        self._text_view.add_controller(focus_controller)
 
         # Apply design system styling
         self._apply_text_editor_styling()
@@ -1358,23 +1362,21 @@ class TextEditor(AdwComponentBase):
         # Emit content changed signal
         self.emit('content-changed', content)
 
-    def _on_focus_in(self, widget, event):
+    def _on_focus_in(self, controller):
         """Handle focus in event."""
         self._is_focused = True
         self.add_css_class("ds-focused")
         if self._placeholder_label:
             self._update_placeholder_visibility()
         self.emit('focus-gained')
-        return False
 
-    def _on_focus_out(self, widget, event):
+    def _on_focus_out(self, controller):
         """Handle focus out event."""
         self._is_focused = False
         self.remove_css_class("ds-focused")
         if self._placeholder_label:
             self._update_placeholder_visibility()
         self.emit('focus-lost')
-        return False
 
     def _update_placeholder_visibility(self):
         """Show/hide placeholder based on content."""
