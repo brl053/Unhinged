@@ -17,6 +17,10 @@ class AudioDeviceType(Enum):
     SPEAKER = "speaker"
     UNKNOWN = "unknown"
 
+    def title(self):
+        """Return title-cased version of the enum value for UI display"""
+        return self.value.title()
+
 class VoiceRecordingStatus(Enum):
     """Voice recording status states."""
     IDLE = "idle"
@@ -36,6 +40,7 @@ class AudioDevice:
     icon: str
     device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
     connection_type: str = "unknown"  # "usb", "hdmi", "bluetooth", "internal", "unknown"
+    driver: str = "ALSA"  # Audio driver name
     is_default: bool = False
     is_active: bool = False
     volume: Optional[float] = None

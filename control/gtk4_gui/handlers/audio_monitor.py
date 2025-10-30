@@ -39,6 +39,7 @@ except ImportError:
             icon: str
             device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
             connection_type: str = "unknown"
+            driver: str = "ALSA"
             is_default: bool = False
             is_active: bool = False
             volume: Optional[float] = None
@@ -211,6 +212,7 @@ class AudioLevelMonitor:
                                 icon="audio-speakers-symbolic",
                                 device_type=AudioDeviceType.SPEAKER,
                                 connection_type="internal",  # Default to internal for ALSA devices
+                                driver="ALSA",  # Audio driver
                                 is_default=False,
                                 is_active=False,
                                 volume=None,
@@ -259,6 +261,7 @@ class AudioLevelMonitor:
                                 icon="audio-input-microphone-symbolic",
                                 device_type=AudioDeviceType.MICROPHONE,
                                 connection_type="internal",  # Default to internal for ALSA devices
+                                driver="ALSA",  # Audio driver
                                 is_default=False,
                                 is_active=False,
                                 volume=None,

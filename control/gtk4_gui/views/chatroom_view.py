@@ -147,14 +147,15 @@ class ChatroomView:
         voice_controls_row.add_css_class("voice-controls-row")
         self._chatroom_input_row = voice_controls_row  # Store reference for timer
 
-        # Create recording status indicator (left side)
-        recording_status = Gtk.Label(label="Ready")
-        recording_status.set_halign(Gtk.Align.START)
-        recording_status.add_css_class("caption")
-        recording_status.add_css_class("dim-label")
-        recording_status.add_css_class("recording-status")
-        self._recording_status_label = recording_status
-        voice_controls_row.append(recording_status)
+        # Create recording timer display (left side) - replaces status dots
+        recording_timer = Gtk.Label(label="00:00")
+        recording_timer.set_halign(Gtk.Align.START)
+        recording_timer.add_css_class("caption")
+        recording_timer.add_css_class("dim-label")
+        recording_timer.add_css_class("recording-timer")
+        recording_timer.set_visible(False)  # Hidden by default
+        self._recording_status_label = recording_timer
+        voice_controls_row.append(recording_timer)
 
         # Create horizontal waveform visualizer (center, expandable)
         if VOICE_VISUALIZER_AVAILABLE:
@@ -289,9 +290,10 @@ class ChatroomView:
             if self._voice_visualizer:
                 self._voice_visualizer.set_recording_state(True)
 
-            # Update status label
+            # Show timer display
             if self._recording_status_label:
-                self._recording_status_label.set_text("Recording...")
+                self._recording_status_label.set_text("00:00")
+                self._recording_status_label.set_visible(True)
                 self._recording_status_label.remove_css_class("dim-label")
                 self._recording_status_label.add_css_class("accent")
 
@@ -338,11 +340,9 @@ class ChatroomView:
                 self._voice_visualizer.set_recording_state(False)
                 self._voice_visualizer.set_processing_state(True)
 
-            # Update status label
+            # Hide timer during processing
             if self._recording_status_label:
-                self._recording_status_label.set_text("Processing...")
-                self._recording_status_label.remove_css_class("accent")
-                self._recording_status_label.add_css_class("warning")
+                self._recording_status_label.set_visible(False)
 
             # Show minimal feedback
             self.app.show_toast("Processing...")
@@ -374,15 +374,19 @@ class ChatroomView:
                     minutes = int(elapsed // 60)
                     seconds = int(elapsed % 60)
 
-                    # Update button tooltip with timer
-                    timer_text = f"Recording {minutes:02d}:{seconds:02d} (click to stop)"
+                    # Update timer display in the UI
+                    timer_display = f"{minutes:02d}:{seconds:02d}"
+                    if self._recording_status_label:
+                        self._recording_status_label.set_text(timer_display)
 
+                    # Update button tooltip (simplified)
+                    tooltip_text = "Click to stop recording"
                     if hasattr(self._chatroom_voice_button, 'set_tooltip_text'):
-                        self._chatroom_voice_button.set_tooltip_text(timer_text)
+                        self._chatroom_voice_button.set_tooltip_text(tooltip_text)
                     elif hasattr(self._chatroom_voice_button, 'get_widget'):
                         widget = self._chatroom_voice_button.get_widget()
                         if hasattr(widget, 'set_tooltip_text'):
-                            widget.set_tooltip_text(timer_text)
+                            widget.set_tooltip_text(tooltip_text)
 
                     return True  # Continue timer
                 return False  # Stop timer
@@ -656,11 +660,9 @@ class ChatroomView:
             if self._voice_visualizer:
                 self._voice_visualizer.set_processing_state(False)
 
-            # Reset status label
+            # Hide timer after completion
             if self._recording_status_label:
-                self._recording_status_label.set_text("Ready")
-                self._recording_status_label.remove_css_class("warning")
-                self._recording_status_label.add_css_class("dim-label")
+                self._recording_status_label.set_visible(False)
 
             # Remove redundant toast - user can see transcript was added
 
