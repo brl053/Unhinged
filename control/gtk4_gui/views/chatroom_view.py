@@ -291,13 +291,31 @@ class ChatroomView:
         # FRAMEWORK ONLY - NO LEGACY CLIENT FACTORY
         import sys
         from pathlib import Path as PathlibPath
+
+        # Add libs/python to path for service framework imports
         project_root = PathlibPath(__file__).parent.parent.parent
         libs_python_path = project_root / "libs" / "python"
         if libs_python_path.exists():
             sys.path.insert(0, str(libs_python_path))
 
+        # Also try relative to current working directory
+        import os
+        cwd_libs_path = PathlibPath(os.getcwd()) / "libs" / "python"
+        if cwd_libs_path.exists():
+            sys.path.insert(0, str(cwd_libs_path))
+
         from gi.repository import GLib
-        from grpc.client_factory import _framework_initialized, call_service_method
+
+        try:
+            from libs.python.grpc.client_factory import _framework_initialized, call_service_method
+        except ImportError as e:
+            print(f"❌ Import error: {e}")
+            print(f"📁 Project root: {project_root}")
+            print(f"📁 Libs path: {libs_python_path}")
+            print(f"📁 CWD libs path: {cwd_libs_path}")
+            print(f"📁 sys.path: {sys.path[:5]}")  # First 5 entries
+            GLib.idle_add(self._on_session_creation_failed, f"Import error: {e}")
+            return
         from unhinged_proto_clients import chat_pb2
 
         # Framework must be available - NO FALLBACK
@@ -367,7 +385,7 @@ class ChatroomView:
             if grpc_lib_path.exists():
                 sys.path.insert(0, str(grpc_lib_path.parent))
 
-            from grpc.client_factory import create_persistence_client
+            from libs.python.grpc.client_factory import create_persistence_client
 
             # Import protobuf messages
             protobuf_path = project_root / "generated" / "python" / "clients"
@@ -901,7 +919,7 @@ class ChatroomView:
         if grpc_lib_path.exists():
             sys.path.insert(0, str(grpc_lib_path.parent))
 
-        from grpc.client_factory import (
+        from libs.python.grpc.client_factory import (
             _framework_initialized,
         )
         from service_framework import ResourceManager
@@ -942,7 +960,7 @@ class ChatroomView:
         try:
             # Import service framework components
             from gi.repository import GLib
-            from grpc.client_factory import stream_service_method
+            from libs.python.grpc.client_factory import stream_service_method
             from unhinged_proto_clients import common_pb2, image_generation_pb2
 
             # Create gRPC request
@@ -1361,7 +1379,7 @@ class ChatroomView:
             import uuid
 
             from google.protobuf import struct_pb2
-            from grpc.client_factory import create_persistence_client
+            from libs.python.grpc.client_factory import create_persistence_client
             from unhinged_proto_clients import persistence_platform_pb2
 
             # Create persistence client
@@ -1418,7 +1436,7 @@ class ChatroomView:
         if grpc_lib_path.exists():
             sys.path.insert(0, str(grpc_lib_path.parent))
 
-        from grpc.client_factory import _framework_initialized
+        from libs.python.grpc.client_factory import _framework_initialized
         from service_framework import ResourceManager
 
         # Framework must be available - NO FALLBACK
