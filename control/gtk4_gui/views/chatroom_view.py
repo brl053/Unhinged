@@ -871,9 +871,13 @@ class ChatroomView:
             if self._current_session_id:
                 self._archive_message(message, "user")
 
-                # Use the existing LLM method but with session logging
-                # In the future, this could use ChatService.SendMessage with conversation_id
-                self._send_to_llm(message)
+                # Check for image generation request
+                image_request = self._detect_image_generation_request(message)
+                if image_request:
+                    self._handle_image_generation_request(image_request, message)
+                else:
+                    # Use the existing LLM method for text responses
+                    self._send_to_llm(message)
             else:
                 # This shouldn't happen due to UI controls, but handle gracefully
                 print("⚠️ Attempting to send message without active session")
@@ -884,6 +888,337 @@ class ChatroomView:
             print(f"❌ Send to LLM with session error: {e}")
             # Fallback to regular LLM method
             self._send_to_llm(message)
+
+    def _detect_image_generation_request(self, message_text):
+        """Detect if message contains image generation request"""
+        import re
+        from typing import Optional, Dict
+
+        try:
+            # Pattern matching for image generation requests
+            patterns = [
+                r"generate image of (.+)",
+                r"create image (.+)",
+                r"draw (.+)",
+                r"/image (.+)",
+                r"make an image of (.+)",
+                r"show me (.+)",
+                r"picture of (.+)",
+                r"generate (.+) image"
+            ]
+
+            for pattern in patterns:
+                match = re.search(pattern, message_text, re.IGNORECASE)
+                if match:
+                    return {
+                        "prompt": match.group(1).strip(),
+                        "type": "image_generation",
+                        "original_message": message_text
+                    }
+            return None
+
+        except Exception as e:
+            print(f"❌ Image generation detection error: {e}")
+            return None
+
+    def _handle_image_generation_request(self, image_request, original_message):
+        """Handle image generation request via gRPC"""
+        try:
+            # Import gRPC client (following existing pattern)
+            import sys
+            from pathlib import Path as PathlibPath
+            project_root = PathlibPath(__file__).parent.parent.parent
+            grpc_lib_path = project_root / "libs" / "python" / "grpc"
+            if grpc_lib_path.exists():
+                sys.path.insert(0, str(grpc_lib_path.parent))
+
+            from grpc.client_factory import create_image_generation_client
+
+            # Import protobuf messages
+            protobuf_path = project_root / "generated" / "python" / "clients"
+            if protobuf_path.exists():
+                sys.path.insert(0, str(protobuf_path))
+
+            from unhinged_proto_clients import image_generation_pb2
+            from unhinged_proto_clients import common_pb2
+
+            # Create gRPC client
+            client = create_image_generation_client("localhost:9094")
+
+            # Add "generating image..." indicator
+            thinking_box = self._add_image_generation_indicator(image_request["prompt"])
+
+            # Start generation in background thread
+            import threading
+            thread = threading.Thread(
+                target=self._image_generation_thread,
+                args=(client, image_request, thinking_box, original_message),
+                daemon=True
+            )
+            thread.start()
+
+        except ImportError as e:
+            self._add_error_message(f"Image generation not available: {e}")
+        except Exception as e:
+            self._add_error_message(f"Image generation failed: {e}")
+
+    def _image_generation_thread(self, client, image_request, thinking_box, original_message):
+        """Handle image generation with real-time progress"""
+        try:
+            # Create gRPC request
+            request = image_generation_pb2.GenerateImageRequest()
+            request.prompt = image_request["prompt"]
+            request.width = 1024
+            request.height = 1024
+            request.num_inference_steps = 25
+            request.guidance_scale = 7.5
+
+            # Stream generation with progress updates
+            final_result = None
+            for chunk in client.GenerateImage(request):
+                if chunk.type == common_pb2.CHUNK_TYPE_PROGRESS:
+                    # Update progress on main thread
+                    progress_data = dict(chunk.structured)
+                    from gi.repository import GLib
+                    GLib.idle_add(self._update_image_progress, thinking_box, progress_data)
+
+                elif chunk.type == common_pb2.CHUNK_TYPE_DATA and chunk.is_final:
+                    # Final result
+                    final_result = dict(chunk.structured)
+                    break
+
+            if final_result:
+                from gi.repository import GLib
+                GLib.idle_add(self._display_generated_images, thinking_box, final_result, original_message)
+            else:
+                from gi.repository import GLib
+                GLib.idle_add(self._show_generation_error, thinking_box, "No result received")
+
+        except Exception as e:
+            from gi.repository import GLib
+            GLib.idle_add(self._show_generation_error, thinking_box, str(e))
+
+    def _add_image_generation_indicator(self, prompt):
+        """Add image generation progress indicator to chat"""
+        try:
+            # Create thinking indicator container
+            thinking_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            thinking_container.add_css_class("message-container")
+            thinking_container.add_css_class("assistant-message")
+            thinking_container.set_margin_top(8)
+            thinking_container.set_margin_bottom(8)
+            thinking_container.set_margin_start(12)
+            thinking_container.set_margin_end(12)
+
+            # Add image generation icon
+            icon = Gtk.Image.new_from_icon_name("image-x-generic-symbolic")
+            icon.set_icon_size(Gtk.IconSize.LARGE)
+            thinking_container.append(icon)
+
+            # Add status label
+            status_label = Gtk.Label()
+            status_label.set_markup(f"<b>Generating image...</b>\nPrompt: {prompt[:50]}...")
+            status_label.set_halign(Gtk.Align.START)
+            status_label.set_valign(Gtk.Align.CENTER)
+            thinking_container.append(status_label)
+
+            # Add progress bar
+            progress_bar = Gtk.ProgressBar()
+            progress_bar.set_pulse_step(0.1)
+            progress_bar.set_show_text(True)
+            progress_bar.set_text("Initializing...")
+            progress_bar.set_hexpand(True)
+            thinking_container.append(progress_bar)
+
+            # Store progress bar reference for updates
+            thinking_container.progress_bar = progress_bar
+            thinking_container.status_label = status_label
+
+            # Add to messages container
+            self._messages_container.append(thinking_container)
+            self._scroll_to_bottom()
+
+            return thinking_container
+
+        except Exception as e:
+            print(f"❌ Add image generation indicator error: {e}")
+            return None
+
+    def _update_image_progress(self, thinking_box, progress_data):
+        """Update image generation progress"""
+        try:
+            if thinking_box and hasattr(thinking_box, 'progress_bar'):
+                progress = progress_data.get('progress', 0)
+                step = progress_data.get('step', 0)
+                total_steps = progress_data.get('total_steps', 25)
+
+                thinking_box.progress_bar.set_fraction(progress)
+                thinking_box.progress_bar.set_text(f"Step {step}/{total_steps} ({int(progress * 100)}%)")
+
+        except Exception as e:
+            print(f"❌ Update image progress error: {e}")
+
+    def _display_generated_images(self, thinking_box, result, original_message):
+        """Display generated images in chat interface"""
+        try:
+            # Remove thinking indicator
+            if thinking_box and thinking_box.get_parent():
+                thinking_box.get_parent().remove(thinking_box)
+
+            # Create image message container
+            image_container = self._create_image_message_container(result, original_message)
+
+            # Add to chat
+            self._messages_container.append(image_container)
+
+            # Scroll to bottom
+            self._scroll_to_bottom()
+
+        except Exception as e:
+            print(f"❌ Display images error: {e}")
+
+    def _create_image_message_container(self, result, original_message):
+        """Create container for generated images"""
+        try:
+            container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            container.add_css_class("message-container")
+            container.add_css_class("assistant-message")
+            container.set_margin_top(8)
+            container.set_margin_bottom(8)
+            container.set_margin_start(12)
+            container.set_margin_end(12)
+
+            # Add generation info
+            info_label = Gtk.Label()
+            info_label.set_markup(f"<b>Generated Images</b> (Prompt: {original_message[:50]}...)")
+            info_label.set_halign(Gtk.Align.START)
+            container.append(info_label)
+
+            # Add images
+            images_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            images_box.set_homogeneous(True)
+
+            for image_path in result.get("images", []):
+                if self._image_path_exists(image_path):
+                    image_widget = self._create_image_widget(image_path)
+                    images_box.append(image_widget)
+
+            container.append(images_box)
+
+            # Add metadata
+            metadata_label = Gtk.Label()
+            generation_time = result.get('generation_time', 0)
+            seed = result.get('seed', 'Unknown')
+            metadata_label.set_markup(f"<small>Generated in {generation_time:.1f}s • Seed: {seed}</small>")
+            metadata_label.add_css_class("dim-label")
+            metadata_label.set_halign(Gtk.Align.START)
+            container.append(metadata_label)
+
+            return container
+
+        except Exception as e:
+            print(f"❌ Create image message container error: {e}")
+            return Gtk.Label(label="Error displaying generated images")
+
+    def _create_image_widget(self, image_path):
+        """Create image widget for display"""
+        try:
+            # Create image widget
+            image = Gtk.Picture()
+            image.set_filename(image_path)
+            image.set_size_request(256, 256)
+            image.set_content_fit(Gtk.ContentFit.COVER)
+            image.add_css_class("generated-image")
+
+            # Make it clickable for full-size view
+            click_controller = Gtk.GestureClick()
+            click_controller.connect("pressed", lambda gesture, n_press, x, y: self._show_full_image(image_path))
+            image.add_controller(click_controller)
+
+            return image
+
+        except Exception as e:
+            print(f"❌ Create image widget error: {e}")
+            return Gtk.Label(label="Error loading image")
+
+    def _image_path_exists(self, image_path):
+        """Check if image path exists"""
+        try:
+            from pathlib import Path
+            return Path(image_path).exists()
+        except:
+            return False
+
+    def _show_full_image(self, image_path):
+        """Show full-size image in dialog"""
+        try:
+            # Create dialog
+            dialog = Gtk.Dialog()
+            dialog.set_title("Generated Image")
+            dialog.set_modal(True)
+            dialog.set_transient_for(self.app.window)
+            dialog.set_default_size(800, 600)
+
+            # Add image
+            image = Gtk.Picture()
+            image.set_filename(image_path)
+            image.set_content_fit(Gtk.ContentFit.CONTAIN)
+
+            scrolled = Gtk.ScrolledWindow()
+            scrolled.set_child(image)
+
+            dialog.get_content_area().append(scrolled)
+
+            # Add close button
+            dialog.add_button("Close", Gtk.ResponseType.CLOSE)
+            dialog.connect("response", lambda d, r: d.destroy())
+
+            dialog.present()
+
+        except Exception as e:
+            print(f"❌ Show full image error: {e}")
+
+    def _show_generation_error(self, thinking_box, error_msg):
+        """Show image generation error"""
+        try:
+            # Remove thinking indicator
+            if thinking_box and thinking_box.get_parent():
+                thinking_box.get_parent().remove(thinking_box)
+
+            # Add error message
+            self._add_error_message(f"Image generation failed: {error_msg}")
+
+        except Exception as e:
+            print(f"❌ Show generation error: {e}")
+
+    def _add_error_message(self, error_msg):
+        """Add error message to chat"""
+        try:
+            error_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            error_container.add_css_class("message-container")
+            error_container.add_css_class("error-message")
+            error_container.set_margin_top(8)
+            error_container.set_margin_bottom(8)
+            error_container.set_margin_start(12)
+            error_container.set_margin_end(12)
+
+            # Add error icon
+            icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+            icon.add_css_class("error")
+            error_container.append(icon)
+
+            # Add error label
+            label = Gtk.Label()
+            label.set_markup(f"<b>Error:</b> {error_msg}")
+            label.set_halign(Gtk.Align.START)
+            label.set_wrap(True)
+            error_container.append(label)
+
+            self._messages_container.append(error_container)
+            self._scroll_to_bottom()
+
+        except Exception as e:
+            print(f"❌ Add error message error: {e}")
 
     def _archive_message(self, message, sender_type):
         """Archive message to persistence platform for historical documentation"""

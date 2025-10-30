@@ -148,7 +148,7 @@ class GrpcClientFactory:
             raise RuntimeError(f"Failed to import Image Generation protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
     
-    def create_chat_client(self, address: str = 'localhost:9094'):
+    def create_chat_client(self, address: str = 'localhost:9095'):
         """Create a Chat service gRPC client."""
         try:
             from unhinged_proto_clients import chat_pb2_grpc
@@ -187,6 +187,27 @@ class GrpcClientFactory:
 
         except ImportError as e:
             raise RuntimeError(f"Failed to import Persistence Platform protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+
+    def create_image_generation_client(self, address: str = 'localhost:9094'):
+        """Create an Image Generation service gRPC client."""
+        try:
+            from unhinged_proto_clients import image_generation_pb2_grpc
+
+            image_gen_address = f"{address}_image_gen"
+            if image_gen_address not in self._clients_cache:
+                channel = grpc.insecure_channel(address)
+                client = image_generation_pb2_grpc.ImageGenerationServiceStub(channel)
+                self._clients_cache[image_gen_address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'image_generation'
+                }
+
+            return self._clients_cache[image_gen_address]['client']
+
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import Image Generation protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
 
     def create_health_client(self, address: str):
@@ -269,13 +290,17 @@ def create_llm_client(address: str = 'localhost:9092'):
     """Create an LLM service gRPC client using default factory."""
     return _get_default_factory().create_llm_client(address)
 
-def create_chat_client(address: str = 'localhost:9094'):
+def create_chat_client(address: str = 'localhost:9095'):
     """Create a Chat service gRPC client using default factory."""
     return _get_default_factory().create_chat_client(address)
 
 def create_persistence_client(address: str = 'localhost:9090'):
     """Create a Persistence Platform gRPC client using default factory."""
     return _get_default_factory().create_persistence_client(address)
+
+def create_image_generation_client(address: str = 'localhost:9094'):
+    """Create an Image Generation service gRPC client using default factory."""
+    return _get_default_factory().create_image_generation_client(address)
 
 def create_vision_client(address: str = 'localhost:9093'):
     """Create a Vision AI service gRPC client using default factory."""
