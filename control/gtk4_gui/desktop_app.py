@@ -46,6 +46,20 @@ if venv_packages.exists():
 if protobuf_clients.exists():
     sys.path.insert(0, str(protobuf_clients))
 
+# Import new architecture components
+try:
+    from .config import service_config, app_config, get_service_endpoint, validate_all_services, log_configuration
+    from .service_connector import service_connector, service_registry
+    from .audio_handler import AudioHandler, RecordingState
+    from .exceptions import (
+        UnhingedError, ServiceUnavailableError, AudioRecordingError,
+        AudioTranscriptionError, get_user_friendly_message
+    )
+    ARCHITECTURE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ New architecture components not available: {e}")
+    ARCHITECTURE_AVAILABLE = False
+
 # Import component library
 try:
     sys.path.append(str(Path(__file__).parent))
@@ -162,6 +176,33 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Control module availability
         self.control_available = CONTROL_MODULES_AVAILABLE
+
+        # Initialize new architecture components
+        self.audio_handler = None
+        if ARCHITECTURE_AVAILABLE:
+            try:
+                # Initialize audio handler
+                self.audio_handler = AudioHandler()
+                self.audio_handler.set_callbacks(
+                    state_callback=self._on_recording_state_changed,
+                    result_callback=self._on_transcription_result,
+                    error_callback=self._on_audio_error
+                )
+
+                # Log configuration for debugging
+                if self.dev_mode:
+                    log_configuration()
+
+                # Validate service configuration
+                if not validate_all_services():
+                    print("⚠️ Some services are not properly configured")
+
+                print("✅ New architecture components initialized")
+            except Exception as e:
+                print(f"⚠️ Failed to initialize new architecture: {e}")
+                self.audio_handler = None
+        else:
+            print("ℹ️ Using legacy audio handling")
 
         # Design system CSS provider (for delayed loading)
         self._pending_css_provider = None
@@ -489,11 +530,11 @@ class UnhingedDesktopApp(Adw.Application):
             self.session_logger.log_gui_event("APP_ACTIVATE", "Main window created and presented")
 
         self.window.present()
-    
+
     def create_main_window(self):
         """
         @llm-doc Create Main Application Window
-        
+
         Creates the main GTK4 window with modern Ubuntu GNOME styling
         using Libadwaita for native look and feel.
         """
@@ -511,7 +552,7 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Add actions (AdwApplicationWindow has built-in header bar)
         self.setup_actions()
-        
+
         # Create toast overlay for notifications
         self.toast_overlay = Adw.ToastOverlay()
 
@@ -2769,7 +2810,7 @@ class UnhingedDesktopApp(Adw.Application):
         group.add(mode_row)
 
         return group
-    
+
     def create_status_section(self):
         """Create status section with progress indication"""
         group = Adw.PreferencesGroup()
@@ -2821,34 +2862,34 @@ class UnhingedDesktopApp(Adw.Application):
             self.operation_loading_dots = None
             self.operation_loading_row = None
         return group
-    
+
     def create_log_section(self):
         """Create log section for output display"""
         group = Adw.PreferencesGroup()
         group.set_title("Output Log")
         group.set_description("Real-time output from platform operations")
-        
+
         # Create text view for logs
         self.log_textview = Gtk.TextView()
         self.log_textview.set_editable(False)
         self.log_textview.set_cursor_visible(False)
         self.log_textview.set_monospace(True)
         self.log_textview.set_wrap_mode(Gtk.WrapMode.WORD)
-        
+
         # Set up text buffer
         buffer = self.log_textview.get_buffer()
         buffer.set_text("Unhinged Desktop Application Ready\n")
-        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) + 
+        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) +
                        f"Project root: {self.project_root}\n")
-        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) + 
+        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) +
                        "Click 'Start Platform' to begin...\n\n")
-        
+
         # Create scrolled window for text view
         scrolled_log = Gtk.ScrolledWindow()
         scrolled_log.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scrolled_log.set_min_content_height(200)
         scrolled_log.set_child(self.log_textview)
-        
+
         group.add(scrolled_log)
         return group
 
@@ -2890,7 +2931,7 @@ class UnhingedDesktopApp(Adw.Application):
     def update_status(self, message, progress=None):
         """Update status label and progress bar"""
         GLib.idle_add(self._update_status_ui, message, progress)
-    
+
     def _update_status_ui(self, message, progress):
         """Update UI elements from main thread"""
         # Get previous status for logging
@@ -2923,7 +2964,7 @@ class UnhingedDesktopApp(Adw.Application):
             else:
                 self.progress_bar.set_text(f"{int(progress * 100)}%")
         return False
-    
+
     def append_log(self, message):
         """Append message to log text view"""
         GLib.idle_add(self._append_log_ui, message)
@@ -2953,7 +2994,7 @@ class UnhingedDesktopApp(Adw.Application):
         # This method is called by the output capture system
         # The message is already being logged to file, just display in GUI
         pass
-    
+
     def on_start_clicked(self, button):
         """Handle start button click"""
         if self.running:
@@ -2979,7 +3020,7 @@ class UnhingedDesktopApp(Adw.Application):
         # Start platform in background thread
         thread = threading.Thread(target=self.start_platform, daemon=True)
         thread.start()
-    
+
     def on_stop_clicked(self, button):
         """Handle stop button click with direct control module calls"""
         if not self.running:
@@ -3008,43 +3049,58 @@ class UnhingedDesktopApp(Adw.Application):
     def on_record_voice_clicked(self, button):
         """Handle voice recording button click"""
         try:
-            # Check if voice service is available
-            if not self.is_voice_service_available():
-                self.show_toast("Voice service not available")
-                return
-
-            # Disable button during recording
-            self.record_button.set_sensitive(False)
-            self.record_button.set_label("Recording...")
-
-            # Change icon to recording indicator
-            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
-                self.record_button.set_icon_name("media-record")
-
-            # Show recording status (no loading animation for OS chatroom)
-            # Loading animation was removed with status tab voice functionality
-
-            # Show recording status
-            self.show_toast("Recording for 10 seconds...")
-
             # Log the event
             if hasattr(self, 'session_logger') and self.session_logger:
                 self.session_logger.log_gui_event("VOICE_RECORD_CLICKED", "User clicked voice record button")
 
-            # Start recording in background thread
-            import threading
-            thread = threading.Thread(target=self.record_and_transcribe_voice, daemon=True)
-            thread.start()
+            # Use new AudioHandler if available
+            if ARCHITECTURE_AVAILABLE and self.audio_handler:
+                # Check if already busy
+                if self.audio_handler.is_busy:
+                    self.show_toast("Audio recording already in progress")
+                    return
+
+                # Start recording with new handler
+                self.audio_handler.start_recording()
+            else:
+                # Fallback to legacy method
+                # Check if voice service is available
+                if not self.is_voice_service_available():
+                    self.show_toast("Voice service not available")
+                    return
+
+                # Disable button during recording
+                self.record_button.set_sensitive(False)
+                self.record_button.set_label("Recording...")
+
+                # Change icon to recording indicator
+                if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
+                    self.record_button.set_icon_name("media-record")
+
+                # Show recording status
+                self.show_toast("Recording for 10 seconds...")
+
+                # Start recording in background thread
+                import threading
+                thread = threading.Thread(target=self.record_and_transcribe_voice, daemon=True)
+                thread.start()
 
         except Exception as e:
             print(f"❌ Voice recording error: {e}")
             if hasattr(self, 'session_logger') and self.session_logger:
                 self.session_logger.log_gui_event("VOICE_RECORD_ERROR", f"Voice recording failed: {e}")
-            # Reset button (simplified for OS chatroom)
+
+            # Reset button state
             if hasattr(self, 'record_button'):
                 self.record_button.set_sensitive(True)
                 self.record_button.set_label("Record Voice")
-            self.show_toast(f"Recording failed: {e}")
+
+            # Show user-friendly error
+            if ARCHITECTURE_AVAILABLE:
+                user_message = get_user_friendly_message(e)
+                self.show_toast(user_message)
+            else:
+                self.show_toast(f"Recording failed: {e}")
 
 
 
@@ -3226,7 +3282,7 @@ class UnhingedDesktopApp(Adw.Application):
                 GLib.timeout_add_seconds(max(timeout, 3), lambda: on_toast_dismissed() or False)
 
         GLib.idle_add(show_toast_ui)
-    
+
     def _reset_buttons(self):
         """Reset button states"""
         self.start_button.set_sensitive(True)
@@ -3235,15 +3291,20 @@ class UnhingedDesktopApp(Adw.Application):
 
     def is_voice_service_available(self):
         """Check if the voice service is available"""
-        try:
-            import socket
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-            result = sock.connect_ex(('localhost', 1191))
-            sock.close()
-            return result == 0
-        except Exception:
-            return False
+        if ARCHITECTURE_AVAILABLE:
+            # Use new service connector
+            return service_connector.check_service_health('speech_to_text')
+        else:
+            # Fallback to old method
+            try:
+                import socket
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(2)
+                result = sock.connect_ex(('localhost', 1191))
+                sock.close()
+                return result == 0
+            except Exception:
+                return False
 
 
 
@@ -3350,60 +3411,124 @@ class UnhingedDesktopApp(Adw.Application):
             print(f"❌ Error resetting voice button: {e}")
 
     def transcribe_audio_file(self, audio_file):
-        """Transcribe audio file using the gRPC speech-to-text service"""
+        """Transcribe audio file using the speech-to-text service"""
+        if ARCHITECTURE_AVAILABLE:
+            # Use new service connector
+            try:
+                return service_connector.transcribe_audio(Path(audio_file))
+            except Exception as e:
+                # Convert to user-friendly message
+                user_message = get_user_friendly_message(e)
+                raise Exception(user_message)
+        else:
+            # Fallback to old method
+            try:
+                # Add protobuf clients to path
+                import sys
+                from pathlib import Path
+                project_root = Path(__file__).parent.parent.parent
+                protobuf_path = project_root / "generated" / "python" / "clients"
+                if protobuf_path.exists():
+                    sys.path.insert(0, str(protobuf_path))
+
+                import grpc
+                from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+
+                # Connect to speech-to-text service with large message support
+                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+                options = [
+                    ('grpc.max_receive_message_length', MAX_MESSAGE_SIZE),
+                    ('grpc.max_send_message_length', MAX_MESSAGE_SIZE),
+                ]
+                channel = grpc.insecure_channel('localhost:1191', options=options)
+                audio_client = audio_pb2_grpc.AudioServiceStub(channel)
+
+                # Read audio file
+                with open(audio_file, 'rb') as f:
+                    audio_data = f.read()
+
+                # Use streaming approach instead of ProcessAudioFile
+                # Create stream chunk with audio data
+                def generate_audio_chunks():
+                    chunk = common_pb2.StreamChunk()
+                    chunk.data = audio_data
+                    chunk.type = common_pb2.CHUNK_TYPE_DATA
+                    chunk.is_final = True
+                    yield chunk
+
+                # Send to speech-to-text service using streaming method
+                response = audio_client.SpeechToText(generate_audio_chunks(), timeout=30.0)
+
+                channel.close()
+
+                if response.response.success:
+                    return response.transcript.strip()
+                else:
+                    raise Exception(f"Transcription failed: {response.response.message}")
+
+            except Exception as e:
+                raise Exception(f"Transcription error: {e}")
+
+
+
+
+
+
+
+    def _on_recording_state_changed(self, state: 'RecordingState') -> None:
+        """Handle recording state changes from AudioHandler"""
         try:
-            # Add protobuf clients to path
-            import sys
-            from pathlib import Path
-            project_root = Path(__file__).parent.parent.parent
-            protobuf_path = project_root / "generated" / "python" / "clients"
-            if protobuf_path.exists():
-                sys.path.insert(0, str(protobuf_path))
+            if not ARCHITECTURE_AVAILABLE:
+                return
 
-            import grpc
-            from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+            # Update UI based on recording state
+            if state == RecordingState.RECORDING:
+                self.show_toast("Recording audio...")
+                if hasattr(self, 'record_button'):
+                    self.record_button.set_sensitive(False)
+                    self.record_button.set_label("Recording...")
 
-            # Connect to speech-to-text service with large message support
-            MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
-            options = [
-                ('grpc.max_receive_message_length', MAX_MESSAGE_SIZE),
-                ('grpc.max_send_message_length', MAX_MESSAGE_SIZE),
-            ]
-            channel = grpc.insecure_channel('localhost:1191', options=options)
-            audio_client = audio_pb2_grpc.AudioServiceStub(channel)
+            elif state == RecordingState.PROCESSING:
+                self.show_toast("Processing audio...")
+                if hasattr(self, 'record_button'):
+                    self.record_button.set_label("Processing...")
 
-            # Read audio file
-            with open(audio_file, 'rb') as f:
-                audio_data = f.read()
+            elif state == RecordingState.IDLE:
+                if hasattr(self, 'record_button'):
+                    self.record_button.set_sensitive(True)
+                    self.record_button.set_label("Record Voice")
 
-            # Use streaming approach instead of ProcessAudioFile
-            # Create stream chunk with audio data
-            def generate_audio_chunks():
-                chunk = common_pb2.StreamChunk()
-                chunk.data = audio_data
-                chunk.type = common_pb2.CHUNK_TYPE_DATA
-                chunk.is_final = True
-                yield chunk
-
-            # Send to speech-to-text service using streaming method
-            response = audio_client.SpeechToText(generate_audio_chunks(), timeout=30.0)
-
-            channel.close()
-
-            if response.response.success:
-                return response.transcript.strip()
-            else:
-                raise Exception(f"Transcription failed: {response.response.message}")
+            elif state == RecordingState.ERROR:
+                if hasattr(self, 'record_button'):
+                    self.record_button.set_sensitive(True)
+                    self.record_button.set_label("Record Voice")
 
         except Exception as e:
-            raise Exception(f"Transcription error: {e}")
+            print(f"❌ Error handling recording state change: {e}")
 
+    def _on_transcription_result(self, transcript: str) -> None:
+        """Handle transcription result from AudioHandler"""
+        try:
+            if transcript and transcript.strip():
+                self._add_voice_transcript_to_chat(transcript.strip())
+                self.show_toast("Voice transcription complete!")
+            else:
+                self.show_toast("No speech detected in recording")
+        except Exception as e:
+            print(f"❌ Error handling transcription result: {e}")
 
+    def _on_audio_error(self, error: Exception) -> None:
+        """Handle audio errors from AudioHandler"""
+        try:
+            if ARCHITECTURE_AVAILABLE:
+                user_message = get_user_friendly_message(error)
+            else:
+                user_message = str(error)
 
-
-
-
-
+            self.show_toast(f"Audio error: {user_message}")
+            print(f"❌ Audio error: {error}")
+        except Exception as e:
+            print(f"❌ Error handling audio error: {e}")
     def _get_input_devices(self):
         """Get list of audio input devices using arecord."""
         devices = []
