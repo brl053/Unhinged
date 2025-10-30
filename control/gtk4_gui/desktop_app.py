@@ -130,7 +130,6 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Loading indicators
         self.llm_loading_dots = None
-        self.voice_loading_dots = None
 
         # Voice recording state
         self.recording_process = None
@@ -796,10 +795,7 @@ class UnhingedDesktopApp(Adw.Application):
         info_group.add(info_row)
         status_box.append(info_group)
 
-        # Voice Transcription Section
-        voice_group = self.create_voice_transcription_section()
-        if voice_group:
-            status_box.append(voice_group)
+
 
         # Create scrolled window
         scrolled = Gtk.ScrolledWindow()
@@ -2624,150 +2620,7 @@ class UnhingedDesktopApp(Adw.Application):
 
         self.quit()
 
-    def create_voice_transcription_section(self):
-        """Create voice transcription section for the status tab."""
-        try:
-            # Import required components
-            if COMPONENTS_AVAILABLE:
-                from components import ActionButton, StatusLabel
 
-            # Create voice transcription group
-            voice_group = Adw.PreferencesGroup()
-            voice_group.set_title("Voice Transcription")
-            voice_group.set_description("Record audio and transcribe using Whisper AI")
-
-            # Voice service status row
-            self.voice_status_row = Adw.ActionRow()
-            self.voice_status_row.set_title("Voice Service")
-            self.voice_status_row.set_subtitle("Checking service health...")
-
-            # Add status indicator
-            if COMPONENTS_AVAILABLE:
-                self.voice_status_label = StatusLabel(text="Checking...", status="info")
-                self.voice_status_row.add_suffix(self.voice_status_label.get_widget())
-            else:
-                self.voice_status_label = Gtk.Label(label="Checking...")
-                self.voice_status_row.add_suffix(self.voice_status_label)
-
-            voice_group.add(self.voice_status_row)
-
-            # Voice recording row
-            record_row = Adw.ActionRow()
-            record_row.set_title("Voice Input")
-            record_row.set_subtitle("Click to start/stop recording (max 10 minutes)")
-
-            # Record button
-            if COMPONENTS_AVAILABLE:
-                self.record_button = ActionButton(
-                    text="Record Voice",
-                    style="secondary",
-                    icon_name="audio-input-microphone-symbolic"
-                )
-                # Connect to click event for toggle recording
-                self.record_button.connect("clicked", self._on_status_voice_toggle)
-                record_row.add_suffix(self.record_button.get_widget())
-                self._is_action_button = True
-            else:
-                self.record_button = Gtk.Button(label="Start Recording")
-                self.record_button.add_css_class("suggested-action")
-                self.record_button.connect("clicked", self._on_status_voice_toggle)
-                record_row.add_suffix(self.record_button)
-                self._is_action_button = False
-
-            voice_group.add(record_row)
-
-            # Add voice loading dots (initially hidden)
-            if COMPONENTS_AVAILABLE:
-                self.voice_loading_dots = LoadingDots(
-                    size="small",
-                    speed="normal",
-                    color="primary"
-                )
-                voice_loading_row = Adw.ActionRow()
-                voice_loading_row.set_title("Recording &amp; Processing")
-
-                # Create container for loading dots and timer
-                loading_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-                loading_container.append(self.voice_loading_dots.get_widget())
-
-                # Add timer label
-                self.voice_timer_label = Gtk.Label(label="00:00")
-                self.voice_timer_label.add_css_class("caption")
-                self.voice_timer_label.set_visible(False)  # Initially hidden
-                loading_container.append(self.voice_timer_label)
-
-                voice_loading_row.add_suffix(loading_container)
-                voice_loading_row.set_visible(False)  # Initially hidden
-                self.voice_loading_row = voice_loading_row
-                voice_group.add(voice_loading_row)
-            else:
-                self.voice_loading_dots = None
-                self.voice_loading_row = None
-
-            # Transcription display row
-            transcription_row = Adw.ActionRow()
-            transcription_row.set_title("Transcription Results")
-
-            # Create transcription text view
-            self.transcription_textview = Gtk.TextView()
-            self.transcription_textview.set_editable(False)
-            self.transcription_textview.set_wrap_mode(Gtk.WrapMode.WORD)
-            self.transcription_textview.set_margin_top(8)
-            self.transcription_textview.set_margin_bottom(8)
-            self.transcription_textview.set_margin_start(8)
-            self.transcription_textview.set_margin_end(8)
-
-            # Set initial placeholder text
-            buffer = self.transcription_textview.get_buffer()
-            buffer.set_text("Transcription results will appear here...")
-
-            # Create scrolled window for text view
-            transcription_scroll = Gtk.ScrolledWindow()
-            transcription_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-            transcription_scroll.set_min_content_height(80)
-            transcription_scroll.set_max_content_height(150)
-            transcription_scroll.set_child(self.transcription_textview)
-
-            voice_group.add(transcription_scroll)
-
-            # Copy button row
-            copy_row = Adw.ActionRow()
-            copy_row.set_title("Copy Transcription")
-            copy_row.set_subtitle("Copy the transcription text to clipboard")
-
-            if COMPONENTS_AVAILABLE:
-                # Use enhanced CopyButton component
-                self.copy_button = CopyButton(
-                    content_source=self._get_transcription_content,
-                    label="Copy to Clipboard",
-                    style="secondary",
-                    icon_name="edit-copy-symbolic",
-                    success_message="Transcription copied to clipboard",
-                    error_message="Failed to copy transcription"
-                )
-                # Connect to success/error events for additional logging
-                self.copy_button.connect("copy-success", self._on_copy_success)
-                self.copy_button.connect("copy-error", self._on_copy_error)
-                copy_row.add_suffix(self.copy_button.get_widget())
-                self._is_copy_action_button = True
-            else:
-                self.copy_button = Gtk.Button(label="Copy to Clipboard")
-                self.copy_button.connect("clicked", self.on_copy_transcription_clicked)
-                copy_row.add_suffix(self.copy_button)
-                self._is_copy_action_button = False
-
-            voice_group.add(copy_row)
-
-            # Initialize voice service status
-            GLib.timeout_add_seconds(1, self.update_voice_service_status)
-
-            return voice_group
-
-        except Exception as e:
-            print(f"⚠️  Failed to create voice transcription section: {e}")
-            if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_gui_event("VOICE_SECTION_ERROR", f"Failed to create voice section: {e}")
-            return None
 
     def create_welcome_section(self):
         """Create welcome section with app info"""
@@ -3168,8 +3021,8 @@ class UnhingedDesktopApp(Adw.Application):
             if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
                 self.record_button.set_icon_name("media-record")
 
-            # Show loading animation
-            self._show_voice_loading("Recording Audio")
+            # Show recording status (no loading animation for OS chatroom)
+            # Loading animation was removed with status tab voice functionality
 
             # Show recording status
             self.show_toast("Recording for 10 seconds...")
@@ -3187,84 +3040,15 @@ class UnhingedDesktopApp(Adw.Application):
             print(f"❌ Voice recording error: {e}")
             if hasattr(self, 'session_logger') and self.session_logger:
                 self.session_logger.log_gui_event("VOICE_RECORD_ERROR", f"Voice recording failed: {e}")
-            self.reset_record_button()
+            # Reset button (simplified for OS chatroom)
+            if hasattr(self, 'record_button'):
+                self.record_button.set_sensitive(True)
+                self.record_button.set_label("Record Voice")
             self.show_toast(f"Recording failed: {e}")
 
-    def on_copy_transcription_clicked(self, button):
-        """Handle copy transcription button click"""
-        try:
-            # Get transcription text
-            buffer = self.transcription_textview.get_buffer()
-            start_iter = buffer.get_start_iter()
-            end_iter = buffer.get_end_iter()
-            text = buffer.get_text(start_iter, end_iter, False)
 
-            if text and text.strip() and text != "Transcription results will appear here...":
-                # Copy to clipboard
-                clipboard = self.window.get_clipboard()
-                clipboard.set(text.strip())
-                self.show_toast("Transcription copied to clipboard")
 
-                # Log the event
-                if hasattr(self, 'session_logger') and self.session_logger:
-                    self.session_logger.log_gui_event("TRANSCRIPTION_COPIED", f"Copied {len(text)} characters")
-            else:
-                self.show_toast("No transcription to copy")
 
-        except Exception as e:
-            print(f"❌ Copy transcription error: {e}")
-            if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {e}")
-            self.show_toast("Failed to copy transcription")
-
-    def _get_transcription_content(self):
-        """Get transcription content for CopyButton component."""
-        if not hasattr(self, 'transcription_textview'):
-            return ""
-
-        buffer = self.transcription_textview.get_buffer()
-        start_iter = buffer.get_start_iter()
-        end_iter = buffer.get_end_iter()
-        text = buffer.get_text(start_iter, end_iter, False)
-
-        # Return empty if placeholder text
-        if text == "Transcription results will appear here...":
-            return ""
-
-        return text.strip()
-
-    def _on_copy_success(self, copy_button, content):
-        """Handle successful copy operation."""
-        if self.session_logger:
-            self.session_logger.log_gui_event("TRANSCRIPTION_COPIED", f"Copied {len(content)} characters")
-
-    def _on_copy_error(self, copy_button, error):
-        """Handle copy operation error."""
-        if self.session_logger:
-            self.session_logger.log_gui_event("COPY_TRANSCRIPTION_ERROR", f"Copy failed: {error}")
-
-    def _show_voice_loading(self, title="Recording &amp; Processing"):
-        """Show loading dots during voice recording and transcription."""
-        if self.voice_loading_dots and self.voice_loading_row:
-            self.voice_loading_row.set_title(title)
-            self.voice_loading_row.set_visible(True)
-            self.voice_loading_dots.start_animation()
-
-            # Show timer if recording
-            if title == "Recording..." and hasattr(self, 'voice_timer_label'):
-                self.voice_timer_label.set_visible(True)
-                self._start_recording_timer()
-
-    def _hide_voice_loading(self):
-        """Hide loading dots after voice operation completes."""
-        if self.voice_loading_dots and self.voice_loading_row:
-            self.voice_loading_dots.stop_animation()
-            self.voice_loading_row.set_visible(False)
-
-            # Hide timer and stop updates
-            if hasattr(self, 'voice_timer_label'):
-                self.voice_timer_label.set_visible(False)
-                self._stop_recording_timer()
 
 
 
@@ -3281,149 +3065,15 @@ class UnhingedDesktopApp(Adw.Application):
             self.operation_loading_dots.stop_animation()
             self.operation_loading_row.set_visible(False)
 
-    def _on_status_voice_toggle(self, button):
-        """Handle Status tab voice button toggle - start or stop recording."""
-        try:
-            # Check if voice service is available
-            if not self.is_recording and not self.is_voice_service_available():
-                self.show_toast("Voice service not available")
-                return
 
-            if self.is_recording:
-                # Stop recording
-                self._stop_status_toggle_recording()
-            else:
-                # Start recording
-                self._start_status_toggle_recording()
 
-        except Exception as e:
-            print(f"❌ Status voice toggle error: {e}")
-            self.show_toast(f"Voice recording failed: {e}")
-            self._cleanup_recording()
-            self._hide_voice_loading()
 
-    def _start_status_toggle_recording(self):
-        """Start toggle recording for Status tab."""
-        try:
-            # Use the same recording start logic
-            self._start_toggle_recording()
 
-            # Update Status tab UI with timer
-            self._show_voice_loading("Recording...")
-            self._update_status_button_for_recording()
 
-        except Exception as e:
-            print(f"❌ Start status toggle recording error: {e}")
-            raise e
 
-    def _stop_status_toggle_recording(self):
-        """Stop toggle recording for Status tab and update transcription display."""
-        import subprocess
-        import time
-        try:
-            if not self.is_recording or not self.recording_process:
-                return
 
-            # Check if process is still running
-            if self.recording_process.poll() is None:
-                # Process is still running, send SIGINT to stop gracefully
-                import signal
-                self.recording_process.send_signal(signal.SIGINT)
-                self.recording_process.wait(timeout=3)  # Wait for graceful shutdown
 
-            self.is_recording = False
 
-            # Critical fix: Wait for file system to flush the WAV file
-            time.sleep(0.5)  # Allow file system buffer to flush
-
-            # Verify file exists and has content before proceeding
-            if self.recording_temp_file and self.recording_temp_file.exists():
-                file_size = self.recording_temp_file.stat().st_size
-                print(f"🔍 Debug: Status toggle WAV file size: {file_size} bytes")
-
-                # Wait a bit more if file is still being written
-                retry_count = 0
-                while file_size < 44 and retry_count < 10:  # WAV header is at least 44 bytes
-                    time.sleep(0.1)
-                    if self.recording_temp_file.exists():
-                        file_size = self.recording_temp_file.stat().st_size
-                        print(f"🔍 Debug: Status toggle retry {retry_count + 1}, WAV file size: {file_size} bytes")
-                    retry_count += 1
-
-            self._show_voice_loading("Processing...")
-            self._update_status_button_for_processing()
-
-            # Start transcription in background thread for Status tab
-            import threading
-            thread = threading.Thread(target=self._transcribe_status_toggle, daemon=True)
-            thread.start()
-
-        except subprocess.TimeoutExpired:
-            # If graceful shutdown fails, force terminate
-            print("⚠️ Graceful recording stop timed out, force terminating")
-            self.recording_process.terminate()
-            self.recording_process.wait(timeout=2)
-            self.is_recording = False
-            self._cleanup_recording()
-            self._hide_voice_loading()
-        except Exception as e:
-            print(f"❌ Stop status toggle recording error: {e}")
-            self._cleanup_recording()
-            self._hide_voice_loading()
-
-    def _transcribe_status_toggle(self):
-        """Transcribe toggle recording for Status tab."""
-        try:
-            if not self.recording_temp_file or not self.recording_temp_file.exists():
-                raise Exception("No recording file found")
-
-            # Transcribe using existing gRPC service
-            transcript = self.transcribe_audio_file(self.recording_temp_file)
-
-            # Update Status tab transcription display on main thread
-            GLib.idle_add(self.update_transcription_display, transcript)
-
-        except Exception as e:
-            print(f"❌ Status transcription error: {e}")
-            GLib.idle_add(self.handle_voice_error, str(e))
-        finally:
-            # Clean up and hide loading
-            self._cleanup_recording()
-            GLib.idle_add(self._hide_voice_loading)
-            GLib.idle_add(self._reset_status_button)
-
-    def _update_status_button_for_recording(self):
-        """Update Status tab button text for recording state."""
-        try:
-            if self._is_action_button:
-                # ActionButton doesn't expose set_label directly
-                pass
-            else:
-                self.record_button.set_label("Stop Recording")
-        except Exception as e:
-            print(f"❌ Update status button error: {e}")
-
-    def _update_status_button_for_processing(self):
-        """Update Status tab button text for processing state."""
-        try:
-            if self._is_action_button:
-                # ActionButton doesn't expose set_label directly
-                pass
-            else:
-                self.record_button.set_label("Processing...")
-        except Exception as e:
-            print(f"❌ Update status button error: {e}")
-
-    def _reset_status_button(self):
-        """Reset Status tab button to initial state."""
-        try:
-            if self._is_action_button:
-                # ActionButton doesn't expose set_label directly
-                pass
-            else:
-                self.record_button.set_label("Start Recording")
-        except Exception as e:
-            print(f"❌ Reset status button error: {e}")
 
     def start_platform(self):
         """
@@ -3595,40 +3245,7 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception:
             return False
 
-    def update_voice_service_status(self):
-        """Update voice service status display"""
-        try:
-            if self.is_voice_service_available():
-                if COMPONENTS_AVAILABLE and hasattr(self, 'voice_status_label'):
-                    self.voice_status_label.set_text("Ready")
-                    self.voice_status_label.set_status("success")
-                else:
-                    self.voice_status_label.set_text("Ready")
 
-                self.voice_status_row.set_subtitle("✅ Whisper AI service available")
-
-                # Enable record button
-                if hasattr(self, 'record_button'):
-                    self.record_button.set_sensitive(True)
-            else:
-                if COMPONENTS_AVAILABLE and hasattr(self, 'voice_status_label'):
-                    self.voice_status_label.set_text("Unavailable")
-                    self.voice_status_label.set_status("error")
-                else:
-                    self.voice_status_label.set_text("Unavailable")
-
-                self.voice_status_row.set_subtitle("❌ Speech-to-text service not running")
-
-                # Disable record button
-                if hasattr(self, 'record_button'):
-                    self.record_button.set_sensitive(False)
-
-        except Exception as e:
-            print(f"❌ Voice status update error: {e}")
-
-        # Schedule next update in 10 seconds
-        GLib.timeout_add_seconds(10, self.update_voice_service_status)
-        return False  # Don't repeat this timeout
 
     def record_and_transcribe_voice(self):
         """Record audio and transcribe it using the speech-to-text service"""
@@ -3673,14 +3290,14 @@ class UnhingedDesktopApp(Adw.Application):
             else:
                 raise Exception("Recording file not found after recording completed")
 
-            # Update loading animation for transcription phase
-            GLib.idle_add(self._show_voice_loading, "Transcribing Audio")
-
             # Transcribe using gRPC service
             transcript = self.transcribe_audio_file(temp_audio_file)
 
-            # Update UI on main thread
-            GLib.idle_add(self.update_transcription_display, transcript)
+            # For OS chatroom, just add the transcript to the chat
+            if transcript and transcript.strip():
+                GLib.idle_add(self._add_voice_transcript_to_chat, transcript.strip())
+            else:
+                GLib.idle_add(self.show_toast, "No speech detected in recording")
 
             # Clean up
             try:
@@ -3690,7 +3307,47 @@ class UnhingedDesktopApp(Adw.Application):
 
         except Exception as e:
             print(f"❌ Voice recording and transcription error: {e}")
-            GLib.idle_add(self.handle_voice_error, str(e))
+            GLib.idle_add(self.show_toast, f"Voice recording failed: {e}")
+        finally:
+            # Reset button state
+            GLib.idle_add(self._reset_voice_button_state)
+
+    def _add_voice_transcript_to_chat(self, transcript):
+        """Add voice transcript to the OS chatroom"""
+        try:
+            # Add the transcript as user input to the chat
+            if hasattr(self, 'chat_input') and self.chat_input:
+                current_text = self.chat_input.get_text()
+                if current_text.strip():
+                    # Append to existing text
+                    self.chat_input.set_text(f"{current_text} {transcript}")
+                else:
+                    # Set as new text
+                    self.chat_input.set_text(transcript)
+
+                # Position cursor at end
+                self.chat_input.set_position(-1)
+
+                self.show_toast("Voice transcript added to chat")
+            else:
+                self.show_toast(f"Transcript: {transcript}")
+
+        except Exception as e:
+            print(f"❌ Error adding transcript to chat: {e}")
+            self.show_toast(f"Transcript: {transcript}")
+
+    def _reset_voice_button_state(self):
+        """Reset voice button to normal state"""
+        try:
+            if hasattr(self, 'record_button'):
+                self.record_button.set_sensitive(True)
+                self.record_button.set_label("Record Voice")
+
+                # Reset icon back to microphone
+                if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
+                    self.record_button.set_icon_name("audio-input-microphone-symbolic")
+        except Exception as e:
+            print(f"❌ Error resetting voice button: {e}")
 
     def transcribe_audio_file(self, audio_file):
         """Transcribe audio file using the gRPC speech-to-text service"""
@@ -3741,89 +3398,11 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             raise Exception(f"Transcription error: {e}")
 
-    def update_transcription_display(self, transcript):
-        """Update transcription display on main thread"""
-        try:
-            if transcript and transcript.strip():
-                buffer = self.transcription_textview.get_buffer()
-                buffer.set_text(transcript)
-                self.show_toast("Transcription complete!")
-            else:
-                buffer = self.transcription_textview.get_buffer()
-                buffer.set_text("No speech detected in recording")
-                self.show_toast("No speech detected")
 
-        except Exception as e:
-            print(f"❌ Transcription display error: {e}")
-        finally:
-            # Hide loading animation
-            self._hide_voice_loading()
-            self.reset_record_button()
 
-    def handle_voice_error(self, error_message):
-        """Handle voice recording/transcription errors on main thread"""
-        try:
-            # Clean up error message to avoid GTK markup parsing issues
-            clean_error = self._clean_error_message(error_message)
 
-            buffer = self.transcription_textview.get_buffer()
-            buffer.set_text(f"Error: {clean_error}")
-            self.show_toast(f"Voice error: {clean_error}")
-        except Exception as e:
-            print(f"❌ Error handling error: {e}")
-        finally:
-            # Hide loading animation
-            self._hide_voice_loading()
-            self.reset_record_button()
 
-    def _clean_error_message(self, error_message):
-        """Clean error message to avoid GTK markup parsing issues"""
-        try:
-            # Extract key information from gRPC errors
-            if "RESOURCE_EXHAUSTED" in error_message and "larger than max" in error_message:
-                # Extract the actual sizes from the error
-                import re
-                match = re.search(r'(\d+) vs\. (\d+)', error_message)
-                if match:
-                    received_size = int(match.group(1))
-                    max_size = int(match.group(2))
-                    received_mb = received_size / (1024 * 1024)
-                    max_mb = max_size / (1024 * 1024)
-                    return f"Audio file too large ({received_mb:.1f}MB exceeds {max_mb:.1f}MB limit). Try recording shorter audio."
 
-            # For other gRPC errors, extract just the status and details
-            if "_InactiveRpcError" in error_message:
-                lines = error_message.split('\n')
-                for line in lines:
-                    if 'details = ' in line:
-                        details = line.split('details = "')[1].split('"')[0]
-                        return f"Service error: {details}"
-                return "gRPC service error occurred"
-
-            # For other errors, just return the first line or truncate if too long
-            first_line = error_message.split('\n')[0]
-            if len(first_line) > 200:
-                return first_line[:200] + "..."
-
-            return first_line
-
-        except Exception:
-            # If cleaning fails, return a generic message
-            return "An error occurred during voice processing"
-
-    def reset_record_button(self):
-        """Reset record button to initial state"""
-        try:
-            self.record_button.set_label("Record Voice")
-
-            # Reset icon back to microphone
-            if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
-                self.record_button.set_icon_name("audio-input-microphone-symbolic")
-
-            if self.is_voice_service_available():
-                self.record_button.set_sensitive(True)
-        except Exception as e:
-            print(f"❌ Reset button error: {e}")
 
     def _get_input_devices(self):
         """Get list of audio input devices using arecord."""
