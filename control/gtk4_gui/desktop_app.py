@@ -1728,29 +1728,49 @@ class UnhingedDesktopApp(Adw.Application):
 
         return performance_group
 
-    def _create_hardware_info_section(self, system_info):
-        """Create hardware information section with detailed hardware data."""
-        hardware_group = Adw.PreferencesGroup()
-        hardware_group.set_title("Hardware Information")
-        hardware_group.set_description("Detailed hardware specifications")
+    def on_about_action(self, action, param):
+        """Show about dialog"""
+        about = Adw.AboutWindow(transient_for=self.window)
+        about.set_application_name("Unhinged")
+        about.set_application_icon("applications-graphics")
+        about.set_developer_name("Unhinged Team")
+        about.set_version("1.0.0")
+        about.set_website("https://github.com/brl053/Unhinged")
+        about.set_copyright("© 2025 Unhinged Team")
+        about.set_license_type(Gtk.License.MIT_X11)
+        about.set_comments("Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline.")
+        about.present()
 
-        # CPU Information
-        cpu_details = {
-            "model": system_info.cpu.model,
-            "cores": system_info.cpu.cores,
-            "threads": system_info.cpu.threads,
-            "frequency_mhz": f"{system_info.cpu.frequency_mhz:.0f} MHz" if system_info.cpu.frequency_mhz > 0 else "Unknown",
-            "features": ", ".join(system_info.cpu.features[:5]) if system_info.cpu.features else "None detected"
-        }
+    def on_preferences_action(self, action, param):
+        """Show preferences dialog"""
+        # Create preferences window
+        prefs = Adw.PreferencesWindow(transient_for=self.window)
+        prefs.set_title("Preferences")
 
-        cpu_row = HardwareInfoRow(
-            title=f"CPU: {system_info.cpu.model}",
-            subtitle=f"{system_info.cpu.cores} cores, {system_info.cpu.threads} threads",
-            hardware_type="cpu",
-            status="normal",
-            details=cpu_details
-        )
-        hardware_group.add(cpu_row.get_widget())
+        # General page
+        general_page = Adw.PreferencesPage()
+        general_page.set_title("General")
+        general_page.set_icon_name("preferences-system-symbolic")
+
+        # Launch settings group
+        launch_group = Adw.PreferencesGroup()
+        launch_group.set_title("Launch Settings")
+        launch_group.set_description("Configure how Unhinged starts")
+
+        # Auto-start row
+        auto_start_row = Adw.ActionRow()
+        auto_start_row.set_title("Auto-start Platform")
+        auto_start_row.set_subtitle("Automatically start the platform when the application opens")
+
+        auto_start_switch = Gtk.Switch()
+        auto_start_switch.set_active(False)  # Default off
+        auto_start_row.add_suffix(auto_start_switch)
+
+        launch_group.add(auto_start_row)
+        general_page.add(launch_group)
+        prefs.add(general_page)
+
+        prefs.present()
 
         # Memory Information
         memory_details = {
