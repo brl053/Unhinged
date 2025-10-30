@@ -2113,69 +2113,7 @@ class UnhingedDesktopApp(Adw.Application):
 
 
 
-    def _get_input_devices(self):
-        """Get list of audio input devices using arecord."""
-        devices = []
 
-        try:
-            import subprocess
-            import re
-
-            # Use arecord -l to list input devices
-            result = subprocess.run(
-                ['arecord', '-l'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-
-            if result.returncode == 0:
-                for line in result.stdout.split('\n'):
-                    line = line.strip()
-
-                    # Parse card line: "card 1: LIGHTSPEED [PRO X 2 LIGHTSPEED], device 0: USB Audio [USB Audio]"
-                    card_match = re.match(r'card (\d+): (\w+) \[([^\]]+)\], device (\d+): ([^[]+) \[([^\]]+)\]', line)
-                    if card_match:
-                        card_id = int(card_match.group(1))
-                        card_name = card_match.group(2)
-                        card_desc = card_match.group(3)
-                        device_id = int(card_match.group(4))
-                        device_name = card_match.group(5).strip()
-                        device_desc = card_match.group(6)
-
-                        # Classify device type for icon
-                        name_lower = card_desc.lower()
-                        if 'usb' in name_lower:
-                            icon = "audio-headphones-symbolic"
-                        elif 'bluetooth' in name_lower:
-                            icon = "bluetooth-symbolic"
-                        elif 'webcam' in name_lower or 'camera' in name_lower:
-                            icon = "camera-web-symbolic"
-                        else:
-                            icon = "audio-input-microphone-symbolic"
-
-                        device = {
-                            'name': card_desc,
-                            'description': f"Card {card_id}, Device {device_id} - {device_desc}",
-                            'card_id': card_id,
-                            'device_id': device_id,
-                            'alsa_device': f"hw:{card_id},{device_id}",
-                            'icon': icon
-                        }
-
-                        devices.append(device)
-
-        except subprocess.TimeoutExpired:
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_DEVICES_TIMEOUT", "arecord -l timeout")
-        except FileNotFoundError:
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_DEVICES_MISSING", "arecord command not found")
-        except Exception as e:
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_DEVICES_ERROR", str(e))
-
-        return devices
 
 
 
