@@ -756,94 +756,33 @@ class UnhingedDesktopApp(Adw.Application):
         return scrolled
 
     def create_status_tab_content(self):
-        """Create the new minimal status tab content using component library."""
-        # Create status content box
-        status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        status_box.set_margin_top(24)
-        status_box.set_margin_bottom(24)
-        status_box.set_margin_start(24)
-        status_box.set_margin_end(24)
+        """Create the status tab content using extracted StatusView."""
+        try:
+            from .views.status_view import StatusView
 
-        # Header section
-        header_group = Adw.PreferencesGroup()
-        header_group.set_title("New Status Tab")
-        header_group.set_description("Minimal academic first step - parallel to existing status")
-        status_box.append(header_group)
+            self.status_view = StatusView(self)
+            return self.status_view.create_content()
 
-        # Use component library if available
-        if COMPONENTS_AVAILABLE:
-            # Status card using component library
-            status_card = StatusCard(
-                title="Platform Status",
-                status="info",
-                subtitle="Component library integration",
-                description="This tab demonstrates the new component library in a minimal way.",
-                icon_name="dialog-information-symbolic"
-            )
-            status_box.append(status_card.get_widget())
+        except ImportError as e:
+            print(f"⚠️ StatusView not available, using fallback: {e}")
+            return self._create_status_fallback()
+        except Exception as e:
+            print(f"❌ Error creating status view: {e}")
+            return self._create_status_fallback()
 
-            # Status labels section
-            labels_group = Adw.PreferencesGroup()
-            labels_group.set_title("Status Examples")
+    def _create_status_fallback(self):
+        """Fallback status implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
 
-            labels_row = Adw.ActionRow()
-            labels_row.set_title("Component Status Labels")
-            labels_row.set_subtitle("Different status types using the component library")
+        label = Gtk.Label(label="Status functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
 
-            # Create a box for status labels
-            labels_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-
-            # Add different status labels
-            for status_type in ["success", "warning", "error", "info"]:
-                status_label = StatusLabel(
-                    text=status_type.title(),
-                    status=status_type
-                )
-                labels_box.append(status_label.get_widget())
-
-            labels_row.add_suffix(labels_box)
-            labels_group.add(labels_row)
-            status_box.append(labels_group)
-
-        else:
-            # Fallback to basic widgets
-            fallback_group = Adw.PreferencesGroup()
-            fallback_group.set_title("Basic Status")
-
-            fallback_row = Adw.ActionRow()
-            fallback_row.set_title("Platform Status")
-            fallback_row.set_subtitle("Component library not available - using basic widgets")
-
-            status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
-            status_icon.set_icon_size(Gtk.IconSize.LARGE)
-            fallback_row.add_prefix(status_icon)
-
-            status_label = Gtk.Label(label="Ready")
-            status_label.add_css_class("title-4")
-            fallback_row.add_suffix(status_label)
-
-            fallback_group.add(fallback_row)
-            status_box.append(fallback_group)
-
-        # Info section
-        info_group = Adw.PreferencesGroup()
-        info_group.set_title("Implementation Notes")
-
-        info_row = Adw.ActionRow()
-        info_row.set_title("Minimal Feature Set")
-        info_row.set_subtitle("No API calls, no extra functionality - just a new tab with static content")
-
-        info_group.add(info_row)
-        status_box.append(info_group)
-
-
-
-        # Create scrolled window
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_child(status_box)
-
-        return scrolled
+        return container
 
     def create_system_info_tab_content(self):
         """Create the system info tab content using extracted SystemInfoView."""
@@ -906,91 +845,35 @@ class UnhingedDesktopApp(Adw.Application):
         return container
 
     def create_input_tab_content(self):
-        """Create the Input tab content using the new React-like InputView architecture."""
+        """Create the Input tab content using InputView."""
         try:
-            # Import the new InputView from the new architecture
             from .views.input_view import InputView
 
-            # Create and render the new InputView
             input_view = InputView()
             widget = input_view.render()
 
-            # Log Input tab creation with new architecture
             if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_TAB_CREATED", "Input tab created using new React-like architecture")
+                self.session_logger.log_gui_event("INPUT_TAB_CREATED", "Input tab created")
 
             return widget
 
         except Exception as e:
-            # Fallback to error display if new architecture fails
-            import traceback
-            error_details = traceback.format_exc()
-            print(f"❌ Failed to load new InputView architecture: {e}")
-            print(f"Full traceback:\n{error_details}")
+            print(f"❌ Error creating input view: {e}")
+            return self._create_input_fallback()
 
-            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            error_box.set_margin_top(24)
-            error_box.set_margin_bottom(24)
-            error_box.set_margin_start(24)
-            error_box.set_margin_end(24)
+    def _create_input_fallback(self):
+        """Fallback input implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
 
-            error_group = Adw.PreferencesGroup()
-            error_group.set_title("Input Tab Error")
-            error_group.set_description("Failed to load new React-like architecture")
+        label = Gtk.Label(label="Input functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
 
-            error_row = Adw.ActionRow()
-            error_row.set_title("New Architecture Failed")
-            error_row.set_subtitle(f"Error: {str(e)[:100]}...")
-
-            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-            error_icon.set_icon_size(Gtk.IconSize.NORMAL)
-            error_row.add_prefix(error_icon)
-
-            error_group.add(error_row)
-
-            # Add detailed error row
-            details_row = Adw.ActionRow()
-            details_row.set_title("Error Details")
-            details_row.set_subtitle("Check console for full traceback")
-            error_group.add(details_row)
-
-            error_box.append(error_group)
-
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_TAB_ERROR", f"Failed to load new architecture: {e}")
-
-            return error_box
-
-        except Exception as e:
-            # Create error fallback
-            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            error_box.set_margin_top(24)
-            error_box.set_margin_bottom(24)
-            error_box.set_margin_start(24)
-            error_box.set_margin_end(24)
-
-            # Error group
-            error_group = Adw.PreferencesGroup()
-            error_group.set_title("Input Tab Error")
-            error_group.set_description("Failed to load audio input interface")
-
-            # Error row
-            error_row = Adw.ActionRow()
-            error_row.set_title("Audio Input Unavailable")
-            error_row.set_subtitle(f"Error: {str(e)}")
-
-            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-            error_icon.set_icon_size(Gtk.IconSize.LARGE)
-            error_row.add_prefix(error_icon)
-
-            error_group.add(error_row)
-            error_box.append(error_group)
-
-            # Log error
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_TAB_ERROR", str(e))
-
-            return error_box
+        return container
 
     def create_chatroom_tab_content(self):
         """Create the OS Chatroom tab content using extracted ChatroomView."""
