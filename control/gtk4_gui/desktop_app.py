@@ -214,7 +214,7 @@ class UnhingedDesktopApp(Adw.Application):
                 print(f"⚠️ Failed to initialize new architecture: {e}")
                 self.audio_handler = None
         else:
-            print("ℹ️ Using legacy audio handling")
+            print("⚠️ New architecture components not available - using fallback implementations")
 
         # Design system CSS provider (for delayed loading)
         self._pending_css_provider = None

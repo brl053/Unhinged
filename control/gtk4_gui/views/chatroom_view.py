@@ -251,14 +251,11 @@ class ChatroomView:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_START", "Started toggle recording in chatroom")
 
-            # Check if AudioHandler is available
-            if ARCHITECTURE_AVAILABLE and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
-                # Use new AudioHandler
+            # Use AudioHandler (always available now)
+            if hasattr(self.app, 'audio_handler') and self.app.audio_handler:
                 self.app.audio_handler.start_recording()
             else:
-                # Fallback: Start legacy recording in background
-                print("🎤 Using legacy recording mode with timer")
-                # Note: Legacy recording will be handled by stop method
+                print("⚠️ AudioHandler not available")
 
         except Exception as e:
             print(f"❌ Start toggle recording error: {e}")
@@ -292,18 +289,12 @@ class ChatroomView:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_STOP", "Stopped toggle recording in chatroom")
 
-            # Check if AudioHandler is available
-            if ARCHITECTURE_AVAILABLE and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
-                # Use new AudioHandler
+            # Use AudioHandler (always available now)
+            if hasattr(self.app, 'audio_handler') and self.app.audio_handler:
                 self.app.audio_handler.stop_recording()
             else:
-                # Fallback: Use legacy recording method
-                print("🎤 Using legacy recording mode - triggering basic recording")
-                if hasattr(self.app, 'on_record_voice_clicked'):
-                    # Trigger the basic recording (which will handle transcription)
-                    self.app.on_record_voice_clicked(self._chatroom_voice_button)
-                else:
-                    self.app.show_toast("Voice recording not available")
+                print("⚠️ AudioHandler not available")
+                self.app.show_toast("Audio recording not available")
 
         except Exception as e:
             print(f"❌ Stop toggle recording error: {e}")
