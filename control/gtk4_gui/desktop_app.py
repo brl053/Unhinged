@@ -876,87 +876,34 @@ class UnhingedDesktopApp(Adw.Application):
         return container
 
     def create_processes_tab_content(self):
-        """Create the processes tab content with live process monitoring."""
+        """Create the processes tab content using extracted ProcessesView."""
         try:
-            # Import ProcessTable component
-            from components.complex import ProcessTable
+            from .views.processes_view import ProcessesView
 
-            # Create main content box
-            processes_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            processes_box.set_margin_top(24)
-            processes_box.set_margin_bottom(24)
-            processes_box.set_margin_start(24)
-            processes_box.set_margin_end(24)
-            processes_box.set_vexpand(True)
-            processes_box.set_hexpand(True)
+            # Create processes view
+            self.processes_view = ProcessesView(self)
+            return self.processes_view.create_content()
 
-            # Create header section
-            header_group = Adw.PreferencesGroup()
-            header_group.set_title("Process Monitor")
-            header_group.set_description("Live process monitoring with aux/top command equivalence")
-
-            # Add header info row
-            info_row = Adw.ActionRow()
-            info_row.set_title("Process Management")
-            info_row.set_subtitle("View, sort, filter, and manage running processes")
-
-            # Add process monitor icon
-            monitor_icon = Gtk.Image.new_from_icon_name("utilities-system-monitor-symbolic")
-            monitor_icon.set_icon_size(Gtk.IconSize.LARGE)
-            monitor_icon.add_css_class("accent")
-            info_row.add_prefix(monitor_icon)
-
-            header_group.add(info_row)
-            processes_box.append(header_group)
-
-            # Create ProcessTable
-            self.process_table = ProcessTable()
-
-            # Create process table group
-            table_group = Adw.PreferencesGroup()
-            table_group.set_title("Running Processes")
-
-            # Add ProcessTable widget to the group
-            table_row = Adw.ActionRow()
-            table_row.set_child(self.process_table.get_widget())
-            table_group.add(table_row)
-
-            processes_box.append(table_group)
-
-            # Log processes tab creation
-            if self.session_logger:
-                self.session_logger.log_gui_event("PROCESSES_TAB_CREATED", "Processes tab with ProcessTable created")
-
-            return processes_box
-
+        except ImportError as e:
+            print(f"⚠️ ProcessesView not available, using fallback: {e}")
+            return self._create_processes_fallback()
         except Exception as e:
-            # Create error fallback
-            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            error_box.set_margin_top(24)
-            error_box.set_margin_bottom(24)
-            error_box.set_margin_start(24)
-            error_box.set_margin_end(24)
+            print(f"❌ Error creating processes view: {e}")
+            return self._create_processes_fallback()
 
-            error_group = Adw.PreferencesGroup()
-            error_group.set_title("Process Monitor Unavailable")
-            error_group.set_description("Process monitoring is not available")
+    def _create_processes_fallback(self):
+        """Fallback processes implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
 
-            error_row = Adw.ActionRow()
-            error_row.set_title("Error Loading Process Monitor")
-            error_row.set_subtitle(f"Error: {str(e)}")
+        label = Gtk.Label(label="Process monitoring functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
 
-            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-            error_icon.add_css_class("error")
-            error_row.add_prefix(error_icon)
-
-            error_group.add(error_row)
-            error_box.append(error_group)
-
-            # Log error
-            if self.session_logger:
-                self.session_logger.log_gui_event("PROCESSES_TAB_ERROR", f"Failed to create processes tab: {e}")
-
-            return error_box
+        return container
 
     def create_input_tab_content(self):
         """Create the Input tab content using the new React-like InputView architecture."""
@@ -1797,94 +1744,34 @@ class UnhingedDesktopApp(Adw.Application):
         return container
 
     def create_output_tab_content(self):
-        """Create the Output tab content with audio device management and connection switching."""
+        """Create the Output tab content using extracted OutputView."""
         try:
-            # Import AudioTable component
-            from components.complex import AudioTable
+            from .views.output_view import OutputView
 
-            # Create main content box
-            output_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            output_box.set_margin_top(24)
-            output_box.set_margin_bottom(24)
-            output_box.set_margin_start(24)
-            output_box.set_margin_end(24)
+            # Create output view
+            self.output_view = OutputView(self)
+            return self.output_view.create_content()
 
-            # Create header section
-            header_group = Adw.PreferencesGroup()
-            header_group.set_title("Audio Output Management")
-            header_group.set_description("Manage audio devices, volume control, and connection switching")
-
-            # Add audio info row
-            info_row = Adw.ActionRow()
-            info_row.set_title("Audio System")
-            info_row.set_subtitle("Control audio output devices and volume settings")
-
-            # Add audio icon
-            audio_icon = Gtk.Image.new_from_icon_name("audio-speakers-symbolic")
-            audio_icon.set_icon_size(Gtk.IconSize.LARGE)
-            info_row.add_prefix(audio_icon)
-
-            header_group.add(info_row)
-            output_box.append(header_group)
-
-            # Create AudioTable
-            self.audio_table = AudioTable()
-
-            # Create audio table group
-            table_group = Adw.PreferencesGroup()
-            table_group.set_title("Audio Devices")
-
-            # Add AudioTable widget directly to the group (no ActionRow wrapper)
-            audio_table_widget = self.audio_table.get_widget()
-            audio_table_widget.set_vexpand(True)
-            audio_table_widget.set_hexpand(True)
-
-            # Create a clamp for better layout
-            clamp = Adw.Clamp()
-            clamp.set_maximum_size(1200)
-            clamp.set_tightening_threshold(600)
-            clamp.set_child(audio_table_widget)
-            clamp.set_vexpand(True)
-
-            table_group.add(clamp)
-            output_box.append(table_group)
-
-            # Log Output tab creation
-            if self.session_logger:
-                self.session_logger.log_gui_event("OUTPUT_TAB_CREATED", "Output tab with AudioTable created")
-
-            return output_box
-
+        except ImportError as e:
+            print(f"⚠️ OutputView not available, using fallback: {e}")
+            return self._create_output_fallback()
         except Exception as e:
-            # Create error fallback
-            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            error_box.set_margin_top(24)
-            error_box.set_margin_bottom(24)
-            error_box.set_margin_start(24)
-            error_box.set_margin_end(24)
+            print(f"❌ Error creating output view: {e}")
+            return self._create_output_fallback()
 
-            # Error group
-            error_group = Adw.PreferencesGroup()
-            error_group.set_title("Output Tab Error")
-            error_group.set_description("Failed to load audio management interface")
+    def _create_output_fallback(self):
+        """Fallback output implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
 
-            # Error row
-            error_row = Adw.ActionRow()
-            error_row.set_title("Audio Management Unavailable")
-            error_row.set_subtitle(f"Error: {str(e)}")
+        label = Gtk.Label(label="Audio output functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
 
-            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-            error_icon.set_icon_size(Gtk.IconSize.LARGE)
-            error_row.add_prefix(error_icon)
-
-            error_group.add(error_row)
-            error_box.append(error_group)
-
-            # Log error
-            if self.session_logger:
-                self.session_logger.log_gui_event("OUTPUT_TAB_ERROR", f"Failed to create Output tab: {e}")
-
-            return error_box
+        return container
 
     def setup_actions(self):
         """Setup application actions for menu"""
