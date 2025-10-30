@@ -1809,17 +1809,14 @@ class UnhingedDesktopApp(Adw.Application):
 
         return hardware_group
 
-    def _create_platform_status_section(self, system_info):
-        """Create platform status section with Unhinged-specific information."""
-        platform_group = Adw.PreferencesGroup()
-        platform_group.set_title("Platform Status")
-        platform_group.set_description("Unhinged platform services and components")
+    def on_quit_action(self, action, param):
+        """Quit application"""
+        if self.running:
+            self.on_stop_clicked(None)
 
-        # Services Status
-        services_row = Adw.ActionRow()
-        services_row.set_title("Platform Services")
+        self.quit()
 
-        running_count = len(system_info.platform.services_running)
+    def create_welcome_section(self):
         failed_count = len(system_info.platform.services_failed)
 
         if running_count > 0 and failed_count == 0:
