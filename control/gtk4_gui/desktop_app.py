@@ -379,6 +379,58 @@ class UnhingedDesktopApp(Adw.Application):
                 """
                 combined_css += toast_stack_css
 
+                # Add recording indicator CSS
+                recording_css = """
+                /* Recording Indicator Styles */
+                .recording-active {
+                    background-color: var(--color-error, #dc3545) !important;
+                    color: var(--color-text-inverse, #ffffff) !important;
+                    animation: recording-pulse 1.5s infinite ease-in-out;
+                }
+
+                @keyframes recording-pulse {
+                    0%, 100% {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                    50% {
+                        opacity: 0.8;
+                        transform: scale(1.05);
+                    }
+                }
+
+                .recording-timer {
+                    font-family: var(--font-family-mono, monospace);
+                    font-size: var(--font-size-sm, 12px);
+                    font-weight: var(--font-weight-medium, 500);
+                    color: var(--color-error, #dc3545);
+                    background-color: var(--color-surface-container, #f8f9fa);
+                    padding: var(--spacing-sp-1, 4px) var(--spacing-sp-2, 8px);
+                    border-radius: var(--radius-sm, 4px);
+                    border: var(--border-thin, 1px) solid var(--color-error, #dc3545);
+                    margin-left: var(--spacing-sp-2, 8px);
+                    animation: timer-blink 1s infinite ease-in-out;
+                }
+
+                @keyframes timer-blink {
+                    0%, 50% { opacity: 1; }
+                    51%, 100% { opacity: 0.7; }
+                }
+
+                /* Reduced motion preferences */
+                @media (prefers-reduced-motion: reduce) {
+                    .recording-active {
+                        animation: none !important;
+                        background-color: var(--color-error, #dc3545) !important;
+                    }
+
+                    .recording-timer {
+                        animation: none !important;
+                    }
+                }
+                """
+                combined_css += recording_css
+
                 try:
                     css_provider.load_from_data(combined_css.encode())
 
@@ -927,77 +979,60 @@ class UnhingedDesktopApp(Adw.Application):
             return error_box
 
     def create_input_tab_content(self):
-        """Create the Input tab content with audio input device listing."""
+        """Create the Input tab content using the new React-like InputView architecture."""
         try:
-            # Create main content box
-            input_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            input_box.set_margin_top(24)
-            input_box.set_margin_bottom(24)
-            input_box.set_margin_start(24)
-            input_box.set_margin_end(24)
+            # Import the new InputView from the new architecture
+            from .views.input_view import InputView
 
-            # Create header section
-            header_group = Adw.PreferencesGroup()
-            header_group.set_title("Audio Input Devices")
-            header_group.set_description("Available microphones and audio input devices")
+            # Create and render the new InputView
+            input_view = InputView()
+            widget = input_view.render()
 
-            # Add audio info row
-            info_row = Adw.ActionRow()
-            info_row.set_title("Input System")
-            info_row.set_subtitle("List of available audio input devices")
-
-            # Add microphone icon
-            mic_icon = Gtk.Image.new_from_icon_name("audio-input-microphone-symbolic")
-            mic_icon.set_icon_size(Gtk.IconSize.LARGE)
-            info_row.add_prefix(mic_icon)
-
-            header_group.add(info_row)
-            input_box.append(header_group)
-
-            # Create input devices list
-            devices_group = Adw.PreferencesGroup()
-            devices_group.set_title("Input Devices")
-
-            # Get input devices and create list
-            input_devices = self._get_input_devices()
-
-            if input_devices:
-                for device in input_devices:
-                    device_row = Adw.ActionRow()
-                    device_row.set_title(device['name'])
-                    device_row.set_subtitle(device['description'])
-
-                    # Add device type icon
-                    device_icon = Gtk.Image.new_from_icon_name(device['icon'])
-                    device_icon.set_icon_size(Gtk.IconSize.NORMAL)
-                    device_row.add_prefix(device_icon)
-
-                    # Add "Set as Default" button
-                    default_button = Gtk.Button(label="Set as Default")
-                    default_button.add_css_class("suggested-action")
-                    default_button.connect("clicked", self._on_set_default_input_device, device)
-                    device_row.add_suffix(default_button)
-
-                    devices_group.add(device_row)
-            else:
-                # No devices found
-                no_devices_row = Adw.ActionRow()
-                no_devices_row.set_title("No Input Devices Found")
-                no_devices_row.set_subtitle("No audio input devices detected")
-
-                warning_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
-                warning_icon.set_icon_size(Gtk.IconSize.NORMAL)
-                no_devices_row.add_prefix(warning_icon)
-
-                devices_group.add(no_devices_row)
-
-            input_box.append(devices_group)
-
-            # Log Input tab creation
+            # Log Input tab creation with new architecture
             if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_TAB_CREATED", f"Input tab created with {len(input_devices)} devices")
+                self.session_logger.log_gui_event("INPUT_TAB_CREATED", "Input tab created using new React-like architecture")
 
-            return input_box
+            return widget
+
+        except Exception as e:
+            # Fallback to error display if new architecture fails
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"❌ Failed to load new InputView architecture: {e}")
+            print(f"Full traceback:\n{error_details}")
+
+            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            error_box.set_margin_top(24)
+            error_box.set_margin_bottom(24)
+            error_box.set_margin_start(24)
+            error_box.set_margin_end(24)
+
+            error_group = Adw.PreferencesGroup()
+            error_group.set_title("Input Tab Error")
+            error_group.set_description("Failed to load new React-like architecture")
+
+            error_row = Adw.ActionRow()
+            error_row.set_title("New Architecture Failed")
+            error_row.set_subtitle(f"Error: {str(e)[:100]}...")
+
+            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+            error_icon.set_icon_size(Gtk.IconSize.NORMAL)
+            error_row.add_prefix(error_icon)
+
+            error_group.add(error_row)
+
+            # Add detailed error row
+            details_row = Adw.ActionRow()
+            details_row.set_title("Error Details")
+            details_row.set_subtitle("Check console for full traceback")
+            error_group.add(details_row)
+
+            error_box.append(error_group)
+
+            if self.session_logger:
+                self.session_logger.log_gui_event("INPUT_TAB_ERROR", f"Failed to load new architecture: {e}")
+
+            return error_box
 
         except Exception as e:
             # Create error fallback
@@ -1089,6 +1124,7 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Create horizontal box for text editor and send button
         input_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
+        self._chatroom_input_row = input_row  # Store reference for timer
 
         # Add text editor to horizontal box (expand to fill space)
         text_editor_widget.set_hexpand(True)
@@ -1191,7 +1227,10 @@ class UnhingedDesktopApp(Adw.Application):
         # Button will be disabled automatically by content_changed handler
 
     def _on_chatroom_voice_toggle(self, button):
-        """Handle voice button toggle - start or stop recording."""
+        """
+        @llm-type component.handler
+        @llm-does handles chatroom voice button toggle for unlimited duration recording
+        """
         try:
             # Check if voice service is available
             if not self.is_recording and not self.is_voice_service_available():
@@ -1211,22 +1250,28 @@ class UnhingedDesktopApp(Adw.Application):
             self._cleanup_recording()
 
     def _start_toggle_recording(self):
-        """Start toggle recording (unlimited duration)."""
+        """
+        @llm-type service.audio
+        @llm-does initiates unlimited duration audio recording with visual feedback and timer
+        """
         try:
             import subprocess
             import tempfile
+            import time
             from pathlib import Path
 
             # Create temporary file for recording
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 self.recording_temp_file = Path(f.name)
 
-            # Use arecord with 10-minute max duration for longer voice messages
+            # Use arecord with Whisper-optimal audio settings (16kHz, mono, 16-bit)
             cmd = [
                 'arecord',
-                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-D', 'pipewire',     # Use PipeWire audio system
+                '-f', 'S16_LE',       # 16-bit signed little-endian (optimal for Whisper)
+                '-r', '16000',        # 16kHz sample rate (optimal for Whisper)
+                '-c', '1',            # Mono (optimal for Whisper)
                 '-t', 'wav',          # WAV format
-                '-d', '600',          # Max 10 minutes (user can stop earlier)
                 str(self.recording_temp_file)
             ]
 
@@ -1240,12 +1285,18 @@ class UnhingedDesktopApp(Adw.Application):
 
             self.is_recording = True
 
-            # Update UI with timer
+            # Initialize recording timer
+            self.recording_start_time = time.time()
+            self.recording_timer_id = None
+
+            # Update UI with visual indicators and timer
+            self._update_chatroom_voice_button_for_recording()
+            self._start_recording_timer()
             self.show_toast("Recording... (click to stop)")
 
             # Log the event
             if self.session_logger:
-                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started toggle recording")
+                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started unlimited toggle recording")
 
         except Exception as e:
             print(f"❌ Start toggle recording error: {e}")
@@ -1254,8 +1305,13 @@ class UnhingedDesktopApp(Adw.Application):
             self.recording_temp_file = None
             raise e
 
+
+
     def _stop_toggle_recording(self):
-        """Stop toggle recording and transcribe."""
+        """
+        @llm-type service.audio
+        @llm-does terminates recording process and initiates transcription workflow
+        """
         import subprocess
         import time
         try:
@@ -1267,9 +1323,21 @@ class UnhingedDesktopApp(Adw.Application):
                 # Process is still running, send SIGINT to stop gracefully
                 import signal
                 self.recording_process.send_signal(signal.SIGINT)
-                self.recording_process.wait(timeout=3)  # Wait for graceful shutdown
+
+                # Wait for graceful shutdown
+                try:
+                    self.recording_process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    # If graceful shutdown fails, force terminate
+                    print("⚠️ Graceful recording stop timed out, force terminating")
+                    self.recording_process.terminate()
+                    self.recording_process.wait(timeout=2)
 
             self.is_recording = False
+
+            # Stop recording timer and reset visual indicators
+            self._stop_recording_timer()
+            self._reset_chatroom_voice_button()
 
             # Critical fix: Wait for file system to flush the WAV file
             # This ensures the file is completely written before transcription
@@ -1349,46 +1417,110 @@ class UnhingedDesktopApp(Adw.Application):
             # Clean up
             self._cleanup_recording()
 
-    def _on_chatroom_voice_clicked(self, button):
-        """Handle voice recording button click in OS Chatroom."""
+    def _update_chatroom_voice_button_for_recording(self):
+        """
+        @llm-type component.ui
+        @llm-does applies recording visual state with CSS animations to voice button
+        """
         try:
-            # Check if voice service is available
-            if not self.is_voice_service_available():
-                self.show_toast("Voice service not available")
-                return
-
-            # Disable voice button during recording
-            if hasattr(self._chatroom_voice_button, 'set_sensitive'):
-                self._chatroom_voice_button.set_sensitive(False)
-            else:
-                self._chatroom_voice_button.set_sensitive(False)
-
-            # Change icon to recording indicator
             if COMPONENTS_AVAILABLE:
-                # ActionButton doesn't expose set_icon_name directly
-                # For now, just disable the button - icon change not critical
-                pass
+                # For ActionButton, we can't directly change icon, but we can add CSS classes
+                widget = self._chatroom_voice_button.get_widget()
+                widget.add_css_class("recording-active")
+                widget.set_tooltip_text("Recording... (click to stop)")
             else:
+                # For regular Gtk.Button, change icon and tooltip
                 self._chatroom_voice_button.set_icon_name("media-record")
+                self._chatroom_voice_button.add_css_class("recording-active")
+                self._chatroom_voice_button.set_tooltip_text("Recording... (click to stop)")
+        except Exception as e:
+            print(f"❌ Update chatroom voice button error: {e}")
 
-            # Show recording status
-            self.show_toast("Recording voice message...")
+    def _reset_chatroom_voice_button(self):
+        """
+        @llm-type component.ui
+        @llm-does restores voice button to idle state removing recording animations
+        """
+        try:
+            if COMPONENTS_AVAILABLE:
+                widget = self._chatroom_voice_button.get_widget()
+                widget.remove_css_class("recording-active")
+                widget.set_tooltip_text("Click to start/stop recording")
+            else:
+                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+                self._chatroom_voice_button.remove_css_class("recording-active")
+                self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
+        except Exception as e:
+            print(f"❌ Reset chatroom voice button error: {e}")
 
-            # Log the event
-            if self.session_logger:
-                self.session_logger.log_gui_event("CHATROOM_VOICE_CLICKED", "User clicked chatroom voice button")
+    def _start_recording_timer(self):
+        """
+        @llm-type component.timer
+        @llm-does creates and displays live MM:SS recording duration timer
+        """
+        try:
+            # Create timer label if it doesn't exist
+            if not hasattr(self, 'recording_timer_label'):
+                self.recording_timer_label = Gtk.Label()
+                self.recording_timer_label.set_text("00:00")
+                self.recording_timer_label.add_css_class("recording-timer")
+                self.recording_timer_label.set_visible(False)
 
-            # Start recording in background thread
-            import threading
-            thread = threading.Thread(target=self._chatroom_record_and_transcribe, daemon=True)
-            thread.start()
+                # Add timer to chatroom interface (next to voice button)
+                if hasattr(self, '_chatroom_input_row'):
+                    self._chatroom_input_row.append(self.recording_timer_label)
+
+            # Show timer and start updating
+            self.recording_timer_label.set_visible(True)
+            self._update_recording_timer()
+
+            # Schedule timer updates every second
+            self.recording_timer_id = GLib.timeout_add_seconds(1, self._update_recording_timer)
 
         except Exception as e:
-            print(f"❌ Chatroom voice recording error: {e}")
-            if self.session_logger:
-                self.session_logger.log_gui_event("CHATROOM_VOICE_ERROR", f"Voice recording failed: {e}")
-            self._reset_chatroom_voice_button()
-            self.show_toast(f"Voice recording failed: {e}")
+            print(f"❌ Start recording timer error: {e}")
+
+    def _update_recording_timer(self):
+        """
+        @llm-type component.timer
+        @llm-does updates timer display every second with current recording duration
+        """
+        try:
+            if hasattr(self, 'recording_start_time') and self.is_recording:
+                elapsed = time.time() - self.recording_start_time
+                minutes = int(elapsed // 60)
+                seconds = int(elapsed % 60)
+                timer_text = f"{minutes:02d}:{seconds:02d}"
+
+                if hasattr(self, 'recording_timer_label'):
+                    self.recording_timer_label.set_text(timer_text)
+
+                return True  # Continue timer
+            else:
+                return False  # Stop timer
+        except Exception as e:
+            print(f"❌ Update recording timer error: {e}")
+            return False
+
+    def _stop_recording_timer(self):
+        """
+        @llm-type component.timer
+        @llm-does stops timer updates and hides recording duration display
+        """
+        try:
+            # Stop timer updates
+            if hasattr(self, 'recording_timer_id') and self.recording_timer_id:
+                GLib.source_remove(self.recording_timer_id)
+                self.recording_timer_id = None
+
+            # Hide timer label
+            if hasattr(self, 'recording_timer_label'):
+                self.recording_timer_label.set_visible(False)
+
+        except Exception as e:
+            print(f"❌ Stop recording timer error: {e}")
+
+
 
     def _start_push_to_talk_recording(self):
         """Start push-to-talk recording (no duration limit)."""
@@ -1401,10 +1533,13 @@ class UnhingedDesktopApp(Adw.Application):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 self.recording_temp_file = Path(f.name)
 
-            # Start unlimited recording (no -d parameter)
+            # Start unlimited recording with Whisper-optimal audio settings
             cmd = [
                 'arecord',
-                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-D', 'pipewire',     # Use PipeWire audio system
+                '-f', 'S16_LE',       # 16-bit signed little-endian (optimal for Whisper)
+                '-r', '16000',        # 16kHz sample rate (optimal for Whisper)
+                '-c', '1',            # Mono (optimal for Whisper)
                 '-t', 'wav',          # WAV format
                 str(self.recording_temp_file)
             ]
@@ -1506,68 +1641,16 @@ class UnhingedDesktopApp(Adw.Application):
         except:
             pass
         finally:
+            # Stop timer and reset visual indicators
+            self._stop_recording_timer()
+            self._reset_chatroom_voice_button()
+
+            # Clean up recording state
             self.recording_process = None
             self.recording_temp_file = None
             self.is_recording = False
 
-    def _chatroom_record_and_transcribe(self):
-        """Record audio and transcribe for chatroom text input."""
-        try:
-            import subprocess
-            import tempfile
-            import time
-            from pathlib import Path
 
-            # Create temporary file for recording
-            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
-                temp_audio_file = Path(f.name)
-
-            # Record 10 seconds of audio
-            cmd = [
-                'arecord',
-                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
-                '-t', 'wav',          # WAV format
-                '-d', '10',           # 10 seconds
-                str(temp_audio_file)
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
-
-            if result.returncode != 0:
-                raise Exception(f"Recording failed: {result.stderr}")
-
-            # Critical fix: Wait for file system to flush the WAV file
-            time.sleep(0.5)  # Allow file system buffer to flush
-
-            # Verify file exists and has content
-            if temp_audio_file.exists():
-                file_size = temp_audio_file.stat().st_size
-                print(f"🔍 Debug: Chatroom WAV file size: {file_size} bytes")
-
-                # Check if file is too small (WAV header is at least 44 bytes)
-                if file_size < 44:
-                    raise Exception(f"WAV file too small ({file_size} bytes) - recording may have failed")
-            else:
-                raise Exception("Recording file not found after recording completed")
-
-            # Update UI to show transcription phase
-            GLib.idle_add(self.show_toast, "Transcribing voice...")
-
-            # Transcribe using gRPC service (reuse existing method)
-            transcript = self.transcribe_audio_file(temp_audio_file)
-
-            # Update chatroom text editor on main thread
-            GLib.idle_add(self._insert_chatroom_transcription, transcript)
-
-            # Clean up
-            try:
-                temp_audio_file.unlink()
-            except:
-                pass
-
-        except Exception as e:
-            print(f"❌ Chatroom voice recording error: {e}")
-            GLib.idle_add(self._handle_chatroom_voice_error, str(e))
 
     def _insert_chatroom_transcription(self, transcript):
         """Insert transcription into chatroom text editor."""
@@ -1606,20 +1689,7 @@ class UnhingedDesktopApp(Adw.Application):
         finally:
             self._reset_chatroom_voice_button()
 
-    def _reset_chatroom_voice_button(self):
-        """Reset chatroom voice button to initial state."""
-        try:
-            # Reset icon back to microphone (ActionButton doesn't expose set_icon_name)
-            # For now, just re-enable the button - icon reset not critical
 
-            # Re-enable button if voice service is available
-            if self.is_voice_service_available():
-                if hasattr(self._chatroom_voice_button, 'set_sensitive'):
-                    self._chatroom_voice_button.set_sensitive(True)
-                else:
-                    self._chatroom_voice_button.set_sensitive(True)
-        except Exception as e:
-            print(f"❌ Reset chatroom voice button error: {e}")
 
     def _send_to_llm(self, message):
         """Send message to LLM service via gRPC and handle response."""
@@ -3196,36 +3266,7 @@ class UnhingedDesktopApp(Adw.Application):
                 self.voice_timer_label.set_visible(False)
                 self._stop_recording_timer()
 
-    def _start_recording_timer(self):
-        """Start the recording timer display."""
-        import time
-        self.recording_start_time = time.time()
-        self.voice_timer_label.set_text("00:00")
 
-        # Start timer updates every second
-        self.recording_timer_id = GLib.timeout_add(1000, self._update_recording_timer)
-
-    def _stop_recording_timer(self):
-        """Stop the recording timer display."""
-        if self.recording_timer_id:
-            GLib.source_remove(self.recording_timer_id)
-            self.recording_timer_id = None
-        self.recording_start_time = None
-
-    def _update_recording_timer(self):
-        """Update the recording timer display."""
-        if not self.is_recording or not self.recording_start_time:
-            return False  # Stop the timer
-
-        import time
-        elapsed = int(time.time() - self.recording_start_time)
-        minutes = elapsed // 60
-        seconds = elapsed % 60
-
-        timer_text = f"{minutes:02d}:{seconds:02d}"
-        self.voice_timer_label.set_text(timer_text)
-
-        return True  # Continue the timer
 
     def _show_operation_loading(self, title="Processing"):
         """Show loading dots for long operations."""
@@ -3548,7 +3589,7 @@ class UnhingedDesktopApp(Adw.Application):
             import socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(2)
-            result = sock.connect_ex(('localhost', 9091))
+            result = sock.connect_ex(('localhost', 1191))
             sock.close()
             return result == 0
         except Exception:
@@ -3601,10 +3642,13 @@ class UnhingedDesktopApp(Adw.Application):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 temp_audio_file = Path(f.name)
 
-            # Record 10 seconds of audio
+            # Record 10 seconds of audio with Whisper-optimal settings
             cmd = [
                 'arecord',
-                '-f', 'cd',           # CD quality (16-bit, 44.1kHz, stereo)
+                '-D', 'pipewire',     # Use PipeWire audio system
+                '-f', 'S16_LE',       # 16-bit signed little-endian (optimal for Whisper)
+                '-r', '16000',        # 16kHz sample rate (optimal for Whisper)
+                '-c', '1',            # Mono (optimal for Whisper)
                 '-t', 'wav',          # WAV format
                 '-d', '10',           # 10 seconds
                 str(temp_audio_file)
@@ -3662,8 +3706,13 @@ class UnhingedDesktopApp(Adw.Application):
             import grpc
             from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
 
-            # Connect to speech-to-text service
-            channel = grpc.insecure_channel('localhost:9091')
+            # Connect to speech-to-text service with large message support
+            MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+            options = [
+                ('grpc.max_receive_message_length', MAX_MESSAGE_SIZE),
+                ('grpc.max_send_message_length', MAX_MESSAGE_SIZE),
+            ]
+            channel = grpc.insecure_channel('localhost:1191', options=options)
             audio_client = audio_pb2_grpc.AudioServiceStub(channel)
 
             # Read audio file
@@ -3714,15 +3763,53 @@ class UnhingedDesktopApp(Adw.Application):
     def handle_voice_error(self, error_message):
         """Handle voice recording/transcription errors on main thread"""
         try:
+            # Clean up error message to avoid GTK markup parsing issues
+            clean_error = self._clean_error_message(error_message)
+
             buffer = self.transcription_textview.get_buffer()
-            buffer.set_text(f"Error: {error_message}")
-            self.show_toast(f"Voice error: {error_message}")
+            buffer.set_text(f"Error: {clean_error}")
+            self.show_toast(f"Voice error: {clean_error}")
         except Exception as e:
             print(f"❌ Error handling error: {e}")
         finally:
             # Hide loading animation
             self._hide_voice_loading()
             self.reset_record_button()
+
+    def _clean_error_message(self, error_message):
+        """Clean error message to avoid GTK markup parsing issues"""
+        try:
+            # Extract key information from gRPC errors
+            if "RESOURCE_EXHAUSTED" in error_message and "larger than max" in error_message:
+                # Extract the actual sizes from the error
+                import re
+                match = re.search(r'(\d+) vs\. (\d+)', error_message)
+                if match:
+                    received_size = int(match.group(1))
+                    max_size = int(match.group(2))
+                    received_mb = received_size / (1024 * 1024)
+                    max_mb = max_size / (1024 * 1024)
+                    return f"Audio file too large ({received_mb:.1f}MB exceeds {max_mb:.1f}MB limit). Try recording shorter audio."
+
+            # For other gRPC errors, extract just the status and details
+            if "_InactiveRpcError" in error_message:
+                lines = error_message.split('\n')
+                for line in lines:
+                    if 'details = ' in line:
+                        details = line.split('details = "')[1].split('"')[0]
+                        return f"Service error: {details}"
+                return "gRPC service error occurred"
+
+            # For other errors, just return the first line or truncate if too long
+            first_line = error_message.split('\n')[0]
+            if len(first_line) > 200:
+                return first_line[:200] + "..."
+
+            return first_line
+
+        except Exception:
+            # If cleaning fails, return a generic message
+            return "An error occurred during voice processing"
 
     def reset_record_button(self):
         """Reset record button to initial state"""
@@ -3802,6 +3889,8 @@ class UnhingedDesktopApp(Adw.Application):
 
         return devices
 
+
+
     def _on_set_default_input_device(self, button, device):
         """Set the selected device as the Ubuntu host OS default input device."""
         try:
@@ -3861,6 +3950,8 @@ ctl.!default {{
                 self.session_logger.log_gui_event("INPUT_DEVICE_SET_DEFAULT_ERROR", str(e))
 
             print(f"❌ Failed to set default input device: {e}")
+
+
 
 def main():
     """Main function"""
