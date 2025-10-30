@@ -146,6 +146,66 @@ class AudioLevelMonitor:
             print(f"Error calculating amplitude: {e}")
             return 0.0
 
+    def get_playback_devices(self):
+        """Get available audio playback devices (for compatibility with complex.py)"""
+        try:
+            # Use aplay to list playback devices
+            result = subprocess.run(['aplay', '-l'], capture_output=True, text=True)
+            devices = []
+
+            if result.returncode == 0:
+                lines = result.stdout.split('\n')
+                for line in lines:
+                    if 'card' in line and ':' in line:
+                        # Parse device info from aplay output
+                        parts = line.split(':')
+                        if len(parts) >= 2:
+                            device_info = {
+                                'name': parts[1].strip(),
+                                'id': parts[0].strip(),
+                                'type': 'playback',
+                                'is_default': False,  # Add missing attribute
+                                'is_enabled': True,   # Add missing attribute
+                                'description': parts[1].strip()  # Add description
+                            }
+                            devices.append(device_info)
+
+            return devices
+
+        except Exception as e:
+            print(f"Error getting playback devices: {e}")
+            return []
+
+    def get_capture_devices(self):
+        """Get available audio capture devices"""
+        try:
+            # Use arecord to list capture devices
+            result = subprocess.run(['arecord', '-l'], capture_output=True, text=True)
+            devices = []
+
+            if result.returncode == 0:
+                lines = result.stdout.split('\n')
+                for line in lines:
+                    if 'card' in line and ':' in line:
+                        # Parse device info from arecord output
+                        parts = line.split(':')
+                        if len(parts) >= 2:
+                            device_info = {
+                                'name': parts[1].strip(),
+                                'id': parts[0].strip(),
+                                'type': 'capture',
+                                'is_default': False,  # Add missing attribute
+                                'is_enabled': True,   # Add missing attribute
+                                'description': parts[1].strip()  # Add description
+                            }
+                            devices.append(device_info)
+
+            return devices
+
+        except Exception as e:
+            print(f"Error getting capture devices: {e}")
+            return []
+
 
 class AudioVisualizationBridge:
     """Bridge between AudioHandler and VoiceVisualizer for real-time feedback"""

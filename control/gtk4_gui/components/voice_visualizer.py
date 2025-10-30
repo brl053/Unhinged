@@ -66,6 +66,11 @@ class VoiceVisualizer(Gtk.DrawingArea):
         # Animation timer
         self.animation_timer_id = None
 
+        # Animation tuning parameters
+        self.animation_speed = 0.02  # Slower animation (was 0.05)
+        self.amplitude_smoothing = 0.7  # Smooth amplitude changes
+        self.previous_amplitude = 0.0  # For smoothing
+
         # Setup drawing for GTK4
         self.set_draw_func(self._on_draw, None)
         
@@ -103,7 +108,11 @@ class VoiceVisualizer(Gtk.DrawingArea):
     
     def set_amplitude(self, amplitude: float) -> None:
         """Set current audio amplitude (0.0 to 1.0) from real audio data"""
-        self.amplitude = max(0.0, min(1.0, amplitude))
+        # Apply smoothing to reduce aggressive animation
+        raw_amplitude = max(0.0, min(1.0, amplitude))
+        self.amplitude = (self.amplitude_smoothing * self.previous_amplitude +
+                         (1 - self.amplitude_smoothing) * raw_amplitude)
+        self.previous_amplitude = self.amplitude
         self.use_real_audio = True  # Mark that we're receiving real audio data
 
         # Update visualization data based on mode
@@ -126,7 +135,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
     def _start_animation(self) -> None:
         """Start animation timer"""
         if self.animation_timer_id is None:
-            self.animation_timer_id = GLib.timeout_add(50, self._animate)  # 20 FPS
+            self.animation_timer_id = GLib.timeout_add(100, self._animate)  # 10 FPS for smoother animation
     
     def _stop_animation(self) -> None:
         """Stop animation timer"""
@@ -136,7 +145,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
     
     def _animate(self) -> bool:
         """Animation callback"""
-        self.animation_time += 0.05  # 50ms increment
+        self.animation_time += self.animation_speed  # Slower animation
 
         # Only use simulated data if we're not receiving real audio data
         if self.is_recording and not self.use_real_audio:
@@ -206,7 +215,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
         cr.set_line_width(2.0)
 
-        # Draw waveform with smooth curves
+        # Draw waveform with smooth curves and enhanced contrast
         step = width / len(self.waveform_data)
         center_y = height / 2
 
@@ -215,8 +224,11 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
         for i, amplitude in enumerate(self.waveform_data):
             x = i * step
-            # Create more realistic waveform with proper amplitude scaling
-            wave_height = (amplitude - 0.5) * height * 0.7
+            # Enhanced amplitude scaling for better visual contrast
+            # Stretch the amplitude range and add more pronounced peaks/dips
+            normalized_amp = (amplitude - 0.5) * 2  # Convert to -1 to 1 range
+            enhanced_amp = normalized_amp * abs(normalized_amp)  # Square for more contrast
+            wave_height = enhanced_amp * height * 0.4  # Reduced height for better fit
             y = center_y + wave_height
 
             if i == 0:

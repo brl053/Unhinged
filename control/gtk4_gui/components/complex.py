@@ -1558,11 +1558,15 @@ class AudioTable(AdwComponentBase):
     def _refresh_device_list(self):
         """Refresh the audio device list."""
         try:
-            # Import audio monitor
-            import sys
-            from pathlib import Path
-            sys.path.append(str(Path(__file__).parent.parent))
-            from audio_monitor import AudioMonitor
+            # Import audio monitor from handlers
+            try:
+                from ..handlers.audio_monitor import AudioLevelMonitor as AudioMonitor
+            except ImportError:
+                # Fallback for direct execution
+                import sys
+                from pathlib import Path
+                sys.path.append(str(Path(__file__).parent.parent / "handlers"))
+                from audio_monitor import AudioLevelMonitor as AudioMonitor
 
             # Show loading state
             self.refresh_button.set_sensitive(False)
