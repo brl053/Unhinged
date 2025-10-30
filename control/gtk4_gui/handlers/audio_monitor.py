@@ -15,6 +15,36 @@ from typing import Optional, Callable
 from pathlib import Path
 
 try:
+    from ..models.audio_types import AudioDevice, AudioDeviceType
+except ImportError:
+    try:
+        from models.audio_types import AudioDevice, AudioDeviceType
+    except ImportError:
+        # Fallback for testing - create minimal device class
+        from dataclasses import dataclass
+        from enum import Enum
+
+        class AudioDeviceType(Enum):
+            MICROPHONE = "microphone"
+            SPEAKER = "speaker"
+            UNKNOWN = "unknown"
+
+        @dataclass
+        class AudioDevice:
+            name: str
+            description: str
+            card_id: int
+            device_id: int
+            alsa_device: str
+            icon: str
+            device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
+            connection_type: str = "unknown"
+            is_default: bool = False
+            is_active: bool = False
+            volume: Optional[float] = None
+            is_muted: bool = False
+
+try:
     from .config import app_config
 except ImportError:
     try:
@@ -160,15 +190,33 @@ class AudioLevelMonitor:
                         # Parse device info from aplay output
                         parts = line.split(':')
                         if len(parts) >= 2:
-                            device_info = {
-                                'name': parts[1].strip(),
-                                'id': parts[0].strip(),
-                                'type': 'playback',
-                                'is_default': False,  # Add missing attribute
-                                'is_enabled': True,   # Add missing attribute
-                                'description': parts[1].strip()  # Add description
-                            }
-                            devices.append(device_info)
+                            device_name = parts[1].strip()
+                            card_info = parts[0].strip()
+
+                            # Parse card and device IDs from "card 0: device 0" format
+                            card_id = 0
+                            device_id = 0
+                            try:
+                                if 'card' in card_info:
+                                    card_id = int(card_info.split('card')[1].split(':')[0].strip())
+                            except:
+                                pass
+
+                            device = AudioDevice(
+                                name=device_name,
+                                description=device_name,
+                                card_id=card_id,
+                                device_id=device_id,
+                                alsa_device=f"hw:{card_id},{device_id}",
+                                icon="audio-speakers-symbolic",
+                                device_type=AudioDeviceType.SPEAKER,
+                                connection_type="internal",  # Default to internal for ALSA devices
+                                is_default=False,
+                                is_active=False,
+                                volume=None,
+                                is_muted=False
+                            )
+                            devices.append(device)
 
             return devices
 
@@ -190,15 +238,33 @@ class AudioLevelMonitor:
                         # Parse device info from arecord output
                         parts = line.split(':')
                         if len(parts) >= 2:
-                            device_info = {
-                                'name': parts[1].strip(),
-                                'id': parts[0].strip(),
-                                'type': 'capture',
-                                'is_default': False,  # Add missing attribute
-                                'is_enabled': True,   # Add missing attribute
-                                'description': parts[1].strip()  # Add description
-                            }
-                            devices.append(device_info)
+                            device_name = parts[1].strip()
+                            card_info = parts[0].strip()
+
+                            # Parse card and device IDs from "card 0: device 0" format
+                            card_id = 0
+                            device_id = 0
+                            try:
+                                if 'card' in card_info:
+                                    card_id = int(card_info.split('card')[1].split(':')[0].strip())
+                            except:
+                                pass
+
+                            device = AudioDevice(
+                                name=device_name,
+                                description=device_name,
+                                card_id=card_id,
+                                device_id=device_id,
+                                alsa_device=f"hw:{card_id},{device_id}",
+                                icon="audio-input-microphone-symbolic",
+                                device_type=AudioDeviceType.MICROPHONE,
+                                connection_type="internal",  # Default to internal for ALSA devices
+                                is_default=False,
+                                is_active=False,
+                                volume=None,
+                                is_muted=False
+                            )
+                            devices.append(device)
 
             return devices
 
