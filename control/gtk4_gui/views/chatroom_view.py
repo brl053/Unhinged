@@ -65,6 +65,13 @@ class ChatroomView:
         # Voice visualization and status
         self._voice_visualizer = None
         self._recording_status_label = None
+
+        # Session management state
+        self._current_session_id = None
+        self._session_status = "no_session"  # no_session, creating, active
+        self._session_button = None
+        self._session_id_label = None
+        self._session_row = None
         
     def create_content(self):
         """Create the OS Chatroom tab content with design system layout utilities."""
@@ -209,17 +216,185 @@ class ChatroomView:
         # Add input container to input area
         input_area.append(input_container)
 
-        # Add input area to main container
+        # Create session management section (before input area)
+        session_section = self._create_session_management_section()
+
+        # Add session section and input area to main container
+        chatroom_container.append(session_section)
         chatroom_container.append(input_area)
 
+        # Initialize UI state based on session status
+        self._update_ui_for_session_state()
+
         return chatroom_container
+
+    def _create_session_management_section(self):
+        """Create session management UI section"""
+        # Session management container
+        session_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        session_container.set_margin_top(16)
+        session_container.set_margin_bottom(8)
+        session_container.set_margin_start(16)
+        session_container.set_margin_end(16)
+
+        # Session management row
+        self._session_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        self._session_row.set_halign(Gtk.Align.FILL)
+
+        # Session ID label (left side, initially hidden)
+        self._session_id_label = Gtk.Label()
+        self._session_id_label.set_halign(Gtk.Align.START)
+        self._session_id_label.set_hexpand(True)
+        self._session_id_label.add_css_class("caption")
+        self._session_id_label.set_visible(False)
+        self._session_row.append(self._session_id_label)
+
+        # Session button (right side)
+        self._session_button = Gtk.Button()
+        self._session_button.set_label("Create Session")
+        self._session_button.add_css_class("suggested-action")
+        self._session_button.connect("clicked", self._on_session_button_clicked)
+        self._session_row.append(self._session_button)
+
+        session_container.append(self._session_row)
+
+        # Add separator
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        separator.set_margin_top(8)
+        separator.set_margin_bottom(8)
+        session_container.append(separator)
+
+        return session_container
+
+    def _on_session_button_clicked(self, button):
+        """Handle session button click (Create Session or New Session)"""
+        try:
+            if self._session_status == "no_session":
+                self._create_new_session()
+            elif self._session_status == "active":
+                self._create_new_session()  # Replace current session
+        except Exception as e:
+            print(f"❌ Session button click error: {e}")
+            if hasattr(self.app, 'show_toast'):
+                self.app.show_toast(f"Session error: {e}")
+
+    def _create_new_session(self):
+        """Create a new chat session"""
+        try:
+            # Update UI to show creating state
+            self._session_status = "creating"
+            self._update_ui_for_session_state()
+
+            # TODO: Implement gRPC call to ChatService.CreateConversation
+            # For now, simulate session creation
+            import uuid
+            import time
+
+            def simulate_session_creation():
+                time.sleep(0.5)  # Simulate network delay
+                session_id = str(uuid.uuid4())[:8]  # Short ID for display
+
+                # Update UI on main thread
+                from gi.repository import GLib
+                GLib.idle_add(self._on_session_created, session_id)
+
+            # Run in background thread
+            import threading
+            thread = threading.Thread(target=simulate_session_creation, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ Create session error: {e}")
+            self._session_status = "no_session"
+            self._update_ui_for_session_state()
+
+    def _on_session_created(self, session_id):
+        """Handle successful session creation"""
+        try:
+            self._current_session_id = session_id
+            self._session_status = "active"
+            self._update_ui_for_session_state()
+
+            # Log session creation
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHAT_SESSION_CREATED", f"Created chat session: {session_id}")
+
+            # Show success toast
+            if hasattr(self.app, 'show_toast'):
+                self.app.show_toast(f"Session {session_id} created successfully")
+
+        except Exception as e:
+            print(f"❌ Session created callback error: {e}")
+
+    def _update_ui_for_session_state(self):
+        """Update UI elements based on current session state"""
+        try:
+            if self._session_status == "no_session":
+                # No session: disable chat, show Create Session button
+                self._session_button.set_label("Create Session")
+                self._session_button.set_sensitive(True)
+                self._session_id_label.set_visible(False)
+                self._disable_chat_functionality()
+
+            elif self._session_status == "creating":
+                # Creating session: disable button, show loading
+                self._session_button.set_label("Creating...")
+                self._session_button.set_sensitive(False)
+                self._session_id_label.set_visible(False)
+                self._disable_chat_functionality()
+
+            elif self._session_status == "active":
+                # Active session: enable chat, show session ID and New Session button
+                self._session_button.set_label("New Session")
+                self._session_button.set_sensitive(True)
+                self._session_id_label.set_text(f"Session: {self._current_session_id}")
+                self._session_id_label.set_visible(True)
+                self._enable_chat_functionality()
+
+        except Exception as e:
+            print(f"❌ Update UI for session state error: {e}")
+
+    def _disable_chat_functionality(self):
+        """Disable chat input and voice controls until session exists"""
+        try:
+            # Disable text input
+            if self._chat_input:
+                self._chat_input.set_sensitive(False)
+
+            # Disable send button
+            if self._chatroom_send_button:
+                self._chatroom_send_button.set_sensitive(False)
+
+            # Disable voice button
+            if self._chatroom_voice_button:
+                self._chatroom_voice_button.set_sensitive(False)
+
+        except Exception as e:
+            print(f"❌ Disable chat functionality error: {e}")
+
+    def _enable_chat_functionality(self):
+        """Enable chat input and voice controls when session exists"""
+        try:
+            # Enable text input
+            if self._chat_input:
+                self._chat_input.set_sensitive(True)
+
+            # Enable voice button
+            if self._chatroom_voice_button:
+                self._chatroom_voice_button.set_sensitive(True)
+
+            # Send button will be enabled by content change handler
+
+        except Exception as e:
+            print(f"❌ Enable chat functionality error: {e}")
 
     def _on_chatroom_content_changed(self, text_editor, content):
         """Handle content changes in chatroom text editor"""
         try:
-            # Enable/disable send button based on content
+            # Enable/disable send button based on content AND session state
             has_content = content and content.strip()
-            self._chatroom_send_button.set_sensitive(has_content)
+            has_session = self._session_status == "active"
+            self._chatroom_send_button.set_sensitive(has_content and has_session)
 
             # Reset typing timer
             if self._typing_timer_id:
