@@ -306,6 +306,62 @@ def create_vision_client(address: str = 'localhost:9093'):
     """Create a Vision AI service gRPC client using default factory."""
     return _get_default_factory().create_vision_client(address)
 
-def create_image_generation_client(address: str = 'localhost:9094'):
-    """Create an Image Generation service gRPC client using default factory."""
-    return _get_default_factory().create_image_generation_client(address)
+# Service Framework Integration
+# Expert recommendation: consolidate gRPC patterns with hardware-aware management
+
+def initialize_service_framework():
+    """Initialize service framework with hardware-aware resource management"""
+    try:
+        import sys
+        from pathlib import Path
+
+        # Add service framework to path
+        service_framework_path = Path(__file__).parent.parent / "service_framework"
+        if service_framework_path.exists():
+            sys.path.insert(0, str(service_framework_path.parent))
+
+        from service_framework import get_global_pool, register_service
+
+        # Register common services with the global connection pool
+        register_service("chat", "localhost:9095")
+        register_service("persistence", "localhost:9090")
+        register_service("image_generation", "localhost:9094")
+        register_service("vision", "localhost:9093")
+
+        print("✅ Service framework initialized with hardware-aware resource management")
+        return True
+
+    except ImportError as e:
+        print(f"⚠️ Service framework not available: {e}")
+        return False
+
+
+def get_service_framework_client(service_name: str):
+    """Get service client using new service framework (hardware-aware)"""
+    try:
+        from service_framework import get_global_pool
+        return get_global_pool().get_client(service_name)
+    except ImportError:
+        raise RuntimeError("Service framework not available. Use legacy create_*_client functions.")
+
+
+def call_service_method(service_name: str, method_name: str, request, timeout: float = 120.0):
+    """Call service method using hardware-aware service framework"""
+    try:
+        from service_framework import call_service
+        return call_service(service_name, method_name, request, timeout)
+    except ImportError:
+        raise RuntimeError("Service framework not available. Use legacy client methods.")
+
+
+def stream_service_method(service_name: str, method_name: str, request, timeout: float = 120.0):
+    """Call streaming service method using hardware-aware service framework"""
+    try:
+        from service_framework import stream_service
+        return stream_service(service_name, method_name, request, timeout)
+    except ImportError:
+        raise RuntimeError("Service framework not available. Use legacy client methods.")
+
+
+# Auto-initialize service framework if available
+_framework_initialized = initialize_service_framework()

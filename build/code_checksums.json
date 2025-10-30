@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761818265.8771484,
-    "updated_iso": "2025-10-30 02:57:45",
+    "updated": 1761820743.2082539,
+    "updated_iso": "2025-10-30 03:39:03",
     "version": "1.0"
   },
   "checksums": {
@@ -28,7 +28,7 @@
       "views/input_view.py": "1f8cfc0b9f0871972f5b608f66932ab140cd75aeccdd0f1e81874b290683fb7a",
       "views/processes_view.py": "ea4596dee14d52e901ed8793759b80e97ff0e3cb3dfd62c61655b6a9642700a0",
       "views/__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "views/chatroom_view.py": "e39e5e137e8228c44ff82927eade45212d020ecd1d2a61f27f018baafec4c58b",
+      "views/chatroom_view.py": "0b32f0bd39615ad13bef0e52ade14c2c33eb75b07108bf5912df05efa3253716",
       "views/bluetooth_view.py": "fa9632546fd33d68d416fcb921bb90bb320534f4f64128726cd117445db94e45",
       "views/system_view.py": "f72fd1aab6f33120ece4969755cbf9c3c1f8029c841529b93734bfdd9a4e5977",
       "views/status_view.py": "b6fb230a2993e32750d4596835d29b9fa3bb5a1465a96cee912c13c8efa77c5c",
@@ -66,7 +66,7 @@
       "input_view.py": "1f8cfc0b9f0871972f5b608f66932ab140cd75aeccdd0f1e81874b290683fb7a",
       "processes_view.py": "ea4596dee14d52e901ed8793759b80e97ff0e3cb3dfd62c61655b6a9642700a0",
       "__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "chatroom_view.py": "e39e5e137e8228c44ff82927eade45212d020ecd1d2a61f27f018baafec4c58b",
+      "chatroom_view.py": "0b32f0bd39615ad13bef0e52ade14c2c33eb75b07108bf5912df05efa3253716",
       "bluetooth_view.py": "fa9632546fd33d68d416fcb921bb90bb320534f4f64128726cd117445db94e45",
       "system_view.py": "f72fd1aab6f33120ece4969755cbf9c3c1f8029c841529b93734bfdd9a4e5977",
       "status_view.py": "b6fb230a2993e32750d4596835d29b9fa3bb5a1465a96cee912c13c8efa77c5c",
@@ -80,7 +80,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "089981b26b2fd09ecbe625576fadf462ce2a2714dddfdca3b0843d9360370cb4",
+      "code_checksums.json": "c92145be682ec737705ab2556feb90f6010e6386ff4da68d6dcc1b6a70f16045",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
       "test_plugin_system.py": "be3dbdf05e945785c5bc7c30c0305cfc00b43604bbb4927d17d6804297722d15",

@@ -890,12 +890,52 @@ class ChatroomView:
             self._send_to_llm(message)
 
     def _detect_image_generation_request(self, message_text):
-        """Detect if message contains image generation request"""
+        """Detect if message contains image generation request using pluggable intent detection"""
+        try:
+            # Try new pluggable intent detection framework first
+            try:
+                import sys
+                from pathlib import Path as PathlibPath
+                project_root = PathlibPath(__file__).parent.parent.parent
+                grpc_lib_path = project_root / "libs" / "python" / "grpc"
+                if grpc_lib_path.exists():
+                    sys.path.insert(0, str(grpc_lib_path.parent))
+
+                from service_framework import detect_intent, IntentType
+
+                # Use pluggable intent detector
+                intent_result = detect_intent(message_text)
+
+                if intent_result.intent_type == IntentType.IMAGE_GENERATION and intent_result.is_confident:
+                    return {
+                        "prompt": intent_result.parameters.get("prompt", message_text),
+                        "type": "image_generation",
+                        "original_message": message_text,
+                        "confidence": intent_result.confidence,
+                        "matched_pattern": intent_result.matched_pattern
+                    }
+
+                # Log intent detection for debugging
+                if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                    self.app.session_logger.log_gui_event("INTENT_DETECTED",
+                        f"Intent: {intent_result.intent_type.value}, Confidence: {intent_result.confidence:.2f}")
+
+                return None
+
+            except ImportError:
+                print("⚠️ Pluggable intent detection not available, using legacy pattern matching")
+                return self._detect_image_generation_legacy(message_text)
+
+        except Exception as e:
+            print(f"❌ Intent detection error: {e}")
+            return self._detect_image_generation_legacy(message_text)
+
+    def _detect_image_generation_legacy(self, message_text):
+        """Legacy image generation detection (fallback)"""
         import re
-        from typing import Optional, Dict
 
         try:
-            # Pattern matching for image generation requests
+            # Pattern matching for image generation requests (legacy)
             patterns = [
                 r"generate image of (.+)",
                 r"create image (.+)",
@@ -913,18 +953,86 @@ class ChatroomView:
                     return {
                         "prompt": match.group(1).strip(),
                         "type": "image_generation",
-                        "original_message": message_text
+                        "original_message": message_text,
+                        "confidence": 0.9,  # Default confidence for legacy
+                        "matched_pattern": pattern
                     }
             return None
 
         except Exception as e:
-            print(f"❌ Image generation detection error: {e}")
+            print(f"❌ Legacy image generation detection error: {e}")
             return None
 
     def _handle_image_generation_request(self, image_request, original_message):
-        """Handle image generation request via gRPC"""
+        """Handle image generation request via gRPC with hardware-aware resource management"""
         try:
-            # Import gRPC client (following existing pattern)
+            # Import service framework for hardware-aware processing
+            import sys
+            from pathlib import Path as PathlibPath
+            project_root = PathlibPath(__file__).parent.parent.parent
+
+            # Try new service framework first (expert recommended)
+            try:
+                grpc_lib_path = project_root / "libs" / "python" / "grpc"
+                if grpc_lib_path.exists():
+                    sys.path.insert(0, str(grpc_lib_path.parent))
+
+                from grpc.client_factory import get_service_framework_client, _framework_initialized
+
+                if _framework_initialized:
+                    # Use hardware-aware service framework
+                    self._handle_image_generation_with_framework(image_request, original_message)
+                    return
+                else:
+                    print("⚠️ Service framework not initialized, falling back to legacy method")
+
+            except ImportError:
+                print("⚠️ Service framework not available, using legacy gRPC client")
+
+            # Fallback to legacy method
+            self._handle_image_generation_legacy(image_request, original_message)
+
+        except Exception as e:
+            self._add_error_message(f"Image generation failed: {e}")
+
+    def _handle_image_generation_with_framework(self, image_request, original_message):
+        """Handle image generation using new service framework (hardware-aware)"""
+        try:
+            # Import service framework components
+            from grpc.client_factory import get_service_framework_client
+            from service_framework import ResourceManager
+
+            # Get hardware-aware resource manager
+            resource_manager = ResourceManager("chatroom_view")
+
+            # Check if we should proceed with image generation
+            resource_stats = resource_manager.get_resource_stats()
+            memory_percent = resource_stats["current"]["memory_percent"]
+
+            if memory_percent > 85.0:
+                self._add_error_message(f"System memory usage too high ({memory_percent:.1f}%). "
+                                      "Please close some applications and try again.")
+                return
+
+            # Add "generating image..." indicator
+            thinking_box = self._add_image_generation_indicator(image_request["prompt"])
+
+            # Submit image generation task to hardware-aware thread pool
+            future = resource_manager.submit_image_task(
+                self._image_generation_with_framework,
+                image_request, thinking_box, original_message
+            )
+
+            # Store future for potential cancellation
+            thinking_box.generation_future = future
+
+        except Exception as e:
+            self._add_error_message(f"Hardware-aware image generation failed: {e}")
+
+    def _handle_image_generation_legacy(self, image_request, original_message):
+        """Legacy image generation method (fallback)"""
+        try:
+            # Import gRPC client (existing pattern)
             import sys
             from pathlib import Path as PathlibPath
             project_root = PathlibPath(__file__).parent.parent.parent
@@ -948,7 +1056,7 @@ class ChatroomView:
             # Add "generating image..." indicator
             thinking_box = self._add_image_generation_indicator(image_request["prompt"])
 
-            # Start generation in background thread
+            # Start generation in background thread (legacy method)
             import threading
             thread = threading.Thread(
                 target=self._image_generation_thread,
@@ -960,7 +1068,7 @@ class ChatroomView:
         except ImportError as e:
             self._add_error_message(f"Image generation not available: {e}")
         except Exception as e:
-            self._add_error_message(f"Image generation failed: {e}")
+            self._add_error_message(f"Legacy image generation failed: {e}")
 
     def _image_generation_thread(self, client, image_request, thinking_box, original_message):
         """Handle image generation with real-time progress"""
@@ -992,6 +1100,44 @@ class ChatroomView:
                 GLib.idle_add(self._display_generated_images, thinking_box, final_result, original_message)
             else:
                 from gi.repository import GLib
+                GLib.idle_add(self._show_generation_error, thinking_box, "No result received")
+
+        except Exception as e:
+            from gi.repository import GLib
+            GLib.idle_add(self._show_generation_error, thinking_box, str(e))
+
+    def _image_generation_with_framework(self, image_request, thinking_box, original_message):
+        """Hardware-aware image generation using service framework"""
+        try:
+            # Import service framework components
+            from grpc.client_factory import stream_service_method
+            from unhinged_proto_clients import image_generation_pb2, common_pb2
+            from gi.repository import GLib
+
+            # Create gRPC request
+            request = image_generation_pb2.GenerateImageRequest()
+            request.prompt = image_request["prompt"]
+            request.width = 1024
+            request.height = 1024
+            request.num_inference_steps = 25
+            request.guidance_scale = 7.5
+
+            # Stream generation with hardware-aware timeout (expert recommended 120s)
+            final_result = None
+            for chunk in stream_service_method("image_generation", "GenerateImage", request, timeout=120.0):
+                if chunk.type == common_pb2.CHUNK_TYPE_PROGRESS:
+                    # Update progress on main thread
+                    progress_data = dict(chunk.structured)
+                    GLib.idle_add(self._update_image_progress, thinking_box, progress_data)
+
+                elif chunk.type == common_pb2.CHUNK_TYPE_DATA and chunk.is_final:
+                    # Final result
+                    final_result = dict(chunk.structured)
+                    break
+
+            if final_result:
+                GLib.idle_add(self._display_generated_images, thinking_box, final_result, original_message)
+            else:
                 GLib.idle_add(self._show_generation_error, thinking_box, "No result received")
 
         except Exception as e:
@@ -1121,7 +1267,29 @@ class ChatroomView:
             return Gtk.Label(label="Error displaying generated images")
 
     def _create_image_widget(self, image_path):
-        """Create image widget for display"""
+        """Create image widget with progressive loading and memory management"""
+        try:
+            # Check memory usage for progressive loading decision
+            memory_threshold = 75.0  # Switch to thumbnails above 75% memory usage
+
+            try:
+                import psutil
+                memory_percent = psutil.virtual_memory().percent
+                use_thumbnail = memory_percent > memory_threshold
+            except ImportError:
+                use_thumbnail = False  # Default to full images if psutil not available
+
+            if use_thumbnail:
+                return self._create_thumbnail_widget(image_path)
+            else:
+                return self._create_full_image_widget(image_path)
+
+        except Exception as e:
+            print(f"❌ Create image widget error: {e}")
+            return Gtk.Label(label="Error loading image")
+
+    def _create_full_image_widget(self, image_path):
+        """Create full-size image widget"""
         try:
             # Create image widget
             image = Gtk.Picture()
@@ -1138,8 +1306,124 @@ class ChatroomView:
             return image
 
         except Exception as e:
-            print(f"❌ Create image widget error: {e}")
-            return Gtk.Label(label="Error loading image")
+            print(f"❌ Create full image widget error: {e}")
+            return Gtk.Label(label="Error loading full image")
+
+    def _create_thumbnail_widget(self, image_path):
+        """Create thumbnail widget for memory-constrained situations"""
+        try:
+            # Create container for thumbnail with load button
+            container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            container.set_size_request(256, 256)
+            container.add_css_class("generated-image-thumbnail")
+
+            # Create thumbnail placeholder
+            thumbnail = Gtk.Image()
+            thumbnail.set_from_icon_name("image-x-generic-symbolic")
+            thumbnail.set_pixel_size(128)
+            thumbnail.add_css_class("thumbnail-placeholder")
+            container.append(thumbnail)
+
+            # Add load button
+            load_button = Gtk.Button()
+            load_button.set_label("Load Image")
+            load_button.add_css_class("suggested-action")
+            load_button.connect("clicked", lambda btn: self._load_full_image(container, image_path))
+            container.append(load_button)
+
+            # Add memory info
+            try:
+                import psutil
+                memory_percent = psutil.virtual_memory().percent
+                info_label = Gtk.Label()
+                info_label.set_markup(f"<small>Thumbnail mode (Memory: {memory_percent:.1f}%)</small>")
+                info_label.add_css_class("dim-label")
+                container.append(info_label)
+            except ImportError:
+                pass
+
+            # Store image path for later loading
+            container.image_path = image_path
+
+            return container
+
+        except Exception as e:
+            print(f"❌ Create thumbnail widget error: {e}")
+            return Gtk.Label(label="Error creating thumbnail")
+
+    def _load_full_image(self, container, image_path):
+        """Load full image replacing thumbnail"""
+        try:
+            # Check memory again before loading
+            try:
+                import psutil
+                memory_percent = psutil.virtual_memory().percent
+                if memory_percent > 85.0:
+                    # Show warning instead of loading
+                    self._show_memory_warning(container, memory_percent)
+                    return
+            except ImportError:
+                pass
+
+            # Create full image widget
+            full_image = self._create_full_image_widget(image_path)
+
+            # Replace container content
+            parent = container.get_parent()
+            if parent:
+                parent.remove(container)
+                parent.append(full_image)
+
+        except Exception as e:
+            print(f"❌ Load full image error: {e}")
+
+    def _show_memory_warning(self, container, memory_percent):
+        """Show memory warning instead of loading image"""
+        try:
+            # Clear container
+            child = container.get_first_child()
+            while child:
+                next_child = child.get_next_sibling()
+                container.remove(child)
+                child = next_child
+
+            # Add warning icon
+            warning_icon = Gtk.Image()
+            warning_icon.set_from_icon_name("dialog-warning-symbolic")
+            warning_icon.set_pixel_size(64)
+            warning_icon.add_css_class("warning")
+            container.append(warning_icon)
+
+            # Add warning message
+            warning_label = Gtk.Label()
+            warning_label.set_markup(f"<b>Memory Usage High</b>\n{memory_percent:.1f}% used\n\nClose some applications\nto load images")
+            warning_label.set_justify(Gtk.Justification.CENTER)
+            warning_label.add_css_class("warning-text")
+            container.append(warning_label)
+
+            # Add view button for external viewer
+            view_button = Gtk.Button()
+            view_button.set_label("Open Externally")
+            view_button.connect("clicked", lambda btn: self._open_image_externally(container.image_path))
+            container.append(view_button)
+
+        except Exception as e:
+            print(f"❌ Show memory warning error: {e}")
+
+    def _open_image_externally(self, image_path):
+        """Open image in external viewer"""
+        try:
+            import subprocess
+            import os
+
+            if os.path.exists(image_path):
+                # Use xdg-open on Linux
+                subprocess.Popen(["xdg-open", image_path])
+            else:
+                print(f"❌ Image file not found: {image_path}")
+
+        except Exception as e:
+            print(f"❌ Open image externally error: {e}")
 
     def _image_path_exists(self, image_path):
         """Check if image path exists"""
