@@ -5,15 +5,15 @@ Simple events logging module for speech-to-text service
 
 import logging
 import sys
-from datetime import datetime
+
 
 class ServiceLogger:
     """Simple service logger"""
-    
+
     def __init__(self, service_name, version):
         self.service_name = service_name
         self.version = version
-        
+
         # Set up logging
         logging.basicConfig(
             level=logging.INFO,
@@ -23,14 +23,14 @@ class ServiceLogger:
             ]
         )
         self.logger = logging.getLogger(service_name)
-    
+
     def info(self, message, metadata=None):
         """Log info message"""
         if metadata:
             self.logger.info(f"{message} - {metadata}")
         else:
             self.logger.info(message)
-    
+
     def error(self, message, exception=None, metadata=None):
         """Log error message"""
         error_msg = message
@@ -39,14 +39,14 @@ class ServiceLogger:
         if metadata:
             error_msg += f" - {metadata}"
         self.logger.error(error_msg)
-    
+
     def warning(self, message, metadata=None):
         """Log warning message"""
         if metadata:
             self.logger.warning(f"{message} - {metadata}")
         else:
             self.logger.warning(message)
-    
+
     def debug(self, message, metadata=None):
         """Log debug message"""
         if metadata:

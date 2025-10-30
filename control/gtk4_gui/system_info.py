@@ -8,15 +8,15 @@ Comprehensive system information gathering using psutil, platform, and system ut
 Provides structured data for the GTK4 system info page with proper error handling and caching.
 """
 
+import json
+import logging
 import os
 import platform
 import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-import json
-import logging
+from typing import Any
 
 # Import psutil with fallback
 try:
@@ -37,9 +37,9 @@ class CPUInfo:
     threads: int = 0
     frequency_mhz: float = 0.0
     architecture: str = "Unknown"
-    features: List[str] = field(default_factory=list)
+    features: list[str] = field(default_factory=list)
     usage_percent: float = 0.0
-    temperature_celsius: Optional[float] = None
+    temperature_celsius: float | None = None
 
 
 @dataclass
@@ -69,7 +69,7 @@ class StorageDevice:
 @dataclass
 class StorageInfo:
     """Storage information structure"""
-    devices: List[StorageDevice] = field(default_factory=list)
+    devices: list[StorageDevice] = field(default_factory=list)
     total_storage_gb: float = 0.0
     total_used_gb: float = 0.0
     total_free_gb: float = 0.0
@@ -81,7 +81,7 @@ class GPUInfo:
     vendor: str = "Unknown"
     model: str = "Unknown"
     driver: str = "Unknown"
-    memory_mb: Optional[int] = None
+    memory_mb: int | None = None
 
 
 @dataclass
@@ -98,7 +98,7 @@ class NetworkInterface:
 @dataclass
 class NetworkInfo:
     """Network information structure"""
-    interfaces: List[NetworkInterface] = field(default_factory=list)
+    interfaces: list[NetworkInterface] = field(default_factory=list)
     hostname: str = "Unknown"
     total_bytes_sent: int = 0
     total_bytes_recv: int = 0
@@ -115,15 +115,15 @@ class SystemStatus:
     username: str = "Unknown"
     uptime_seconds: float = 0.0
     boot_time: float = 0.0
-    load_average: List[float] = field(default_factory=list)
+    load_average: list[float] = field(default_factory=list)
 
 
 @dataclass
 class PlatformStatus:
     """Unhinged platform-specific status"""
-    services_running: List[str] = field(default_factory=list)
-    services_failed: List[str] = field(default_factory=list)
-    vm_status: Dict[str, Any] = field(default_factory=dict)
+    services_running: list[str] = field(default_factory=list)
+    services_failed: list[str] = field(default_factory=list)
+    vm_status: dict[str, Any] = field(default_factory=dict)
     build_system_status: str = "Unknown"
     graphics_platform_status: str = "Unknown"
 
@@ -139,7 +139,7 @@ class SystemInformation:
     system: SystemStatus = field(default_factory=SystemStatus)
     platform: PlatformStatus = field(default_factory=PlatformStatus)
     collection_time: float = field(default_factory=time.time)
-    collection_errors: List[str] = field(default_factory=list)
+    collection_errors: list[str] = field(default_factory=list)
 
 
 class SystemInfoCollector:
@@ -152,13 +152,13 @@ class SystemInfoCollector:
     - System utilities (lscpu, lshw, lsblk, etc.)
     - Existing Unhinged monitoring systems
     """
-    
-    def __init__(self, project_root: Optional[Path] = None):
+
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self._cache = {}
         self._cache_timeout = 5.0  # Cache for 5 seconds
         self._last_collection = 0.0
-        
+
     def collect_all(self, use_cache: bool = True) -> SystemInformation:
         """
         Collect all system information.
@@ -170,65 +170,65 @@ class SystemInfoCollector:
             SystemInformation object with all collected data
         """
         current_time = time.time()
-        
+
         # Check cache
-        if (use_cache and 
-            self._cache and 
+        if (use_cache and
+            self._cache and
             current_time - self._last_collection < self._cache_timeout):
             return self._cache.get('system_info', SystemInformation())
-        
+
         logger.info("🔍 Collecting system information...")
-        
+
         system_info = SystemInformation()
         system_info.collection_time = current_time
-        
+
         # Collect each category with error handling
         try:
             system_info.cpu = self._collect_cpu_info()
         except Exception as e:
             logger.error(f"Failed to collect CPU info: {e}")
             system_info.collection_errors.append(f"CPU: {str(e)}")
-            
+
         try:
             system_info.memory = self._collect_memory_info()
         except Exception as e:
             logger.error(f"Failed to collect memory info: {e}")
             system_info.collection_errors.append(f"Memory: {str(e)}")
-            
+
         try:
             system_info.storage = self._collect_storage_info()
         except Exception as e:
             logger.error(f"Failed to collect storage info: {e}")
             system_info.collection_errors.append(f"Storage: {str(e)}")
-            
+
         try:
             system_info.gpu = self._collect_gpu_info()
         except Exception as e:
             logger.error(f"Failed to collect GPU info: {e}")
             system_info.collection_errors.append(f"GPU: {str(e)}")
-            
+
         try:
             system_info.network = self._collect_network_info()
         except Exception as e:
             logger.error(f"Failed to collect network info: {e}")
             system_info.collection_errors.append(f"Network: {str(e)}")
-            
+
         try:
             system_info.system = self._collect_system_status()
         except Exception as e:
             logger.error(f"Failed to collect system status: {e}")
             system_info.collection_errors.append(f"System: {str(e)}")
-            
+
         try:
             system_info.platform = self._collect_platform_status()
         except Exception as e:
             logger.error(f"Failed to collect platform status: {e}")
             system_info.collection_errors.append(f"Platform: {str(e)}")
-        
+
         # Update cache
         self._cache['system_info'] = system_info
         self._last_collection = current_time
-        
+
         # Log collection summary
         if system_info.collection_errors:
             logger.warning(f"⚠️  System information collected with {len(system_info.collection_errors)} errors")
@@ -238,8 +238,8 @@ class SystemInfoCollector:
             logger.info("✅ System information collected successfully")
 
         return system_info
-    
-    def _run_command(self, command: List[str], timeout: int = 10) -> Tuple[bool, str]:
+
+    def _run_command(self, command: list[str], timeout: int = 10) -> tuple[bool, str]:
         """
         Run a system command safely with timeout.
         
@@ -260,19 +260,19 @@ class SystemInfoCollector:
             return False, f"Command not found: {command[0]}"
         except Exception as e:
             return False, str(e)
-    
+
     def _collect_cpu_info(self) -> CPUInfo:
         """Collect CPU information from multiple sources"""
         cpu_info = CPUInfo()
-        
+
         # Basic info from platform
         cpu_info.architecture = platform.machine()
-        
+
         if PSUTIL_AVAILABLE:
             cpu_info.cores = psutil.cpu_count(logical=False) or 0
             cpu_info.threads = psutil.cpu_count(logical=True) or 0
             cpu_info.usage_percent = psutil.cpu_percent(interval=1)
-            
+
             # CPU frequency
             try:
                 freq = psutil.cpu_freq()
@@ -280,7 +280,7 @@ class SystemInfoCollector:
                     cpu_info.frequency_mhz = freq.current
             except:
                 pass
-        
+
         # Try to get detailed info from lscpu
         success, output = self._run_command(['lscpu'])
         if success:
@@ -309,7 +309,7 @@ class SystemInfoCollector:
                     # Filter for interesting features
                     interesting_features = ['avx', 'avx2', 'sse', 'sse2', 'sse3', 'sse4_1', 'sse4_2', 'aes', 'fma']
                     cpu_info.features = [f for f in flags if any(feat in f.lower() for feat in interesting_features)]
-        
+
         return cpu_info
 
     def _collect_memory_info(self) -> MemoryInfo:
@@ -332,7 +332,7 @@ class SystemInfoCollector:
         else:
             # Fallback to /proc/meminfo
             try:
-                with open('/proc/meminfo', 'r') as f:
+                with open('/proc/meminfo') as f:
                     meminfo = f.read()
 
                 for line in meminfo.split('\n'):
@@ -404,7 +404,7 @@ class SystemInfoCollector:
 
         return storage_info
 
-    def _parse_lsblk_device(self, device: Dict, storage_info: StorageInfo):
+    def _parse_lsblk_device(self, device: dict, storage_info: StorageInfo):
         """Parse lsblk device information recursively"""
         if device.get('mountpoint') and device.get('size'):
             # Try to get usage information
@@ -610,7 +610,7 @@ class SystemInfoCollector:
         else:
             # Fallback to /proc/uptime
             try:
-                with open('/proc/uptime', 'r') as f:
+                with open('/proc/uptime') as f:
                     uptime_line = f.read().strip()
                     system_status.uptime_seconds = float(uptime_line.split()[0])
                     system_status.boot_time = time.time() - system_status.uptime_seconds
@@ -619,7 +619,7 @@ class SystemInfoCollector:
 
             # Fallback to /proc/loadavg
             try:
-                with open('/proc/loadavg', 'r') as f:
+                with open('/proc/loadavg') as f:
                     loadavg_line = f.read().strip()
                     loads = loadavg_line.split()[:3]
                     system_status.load_average = [float(load) for load in loads]
@@ -733,7 +733,7 @@ class SystemInfoCollector:
 
         return platform_status
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get a quick performance summary for dashboard display"""
         try:
             system_info = self.collect_all(use_cache=True)
@@ -771,7 +771,7 @@ class SystemInfoCollector:
 
 
 # Convenience function for quick access
-def get_system_info(project_root: Optional[Path] = None, use_cache: bool = True) -> SystemInformation:
+def get_system_info(project_root: Path | None = None, use_cache: bool = True) -> SystemInformation:
     """
     Convenience function to get system information.
 
@@ -786,7 +786,7 @@ def get_system_info(project_root: Optional[Path] = None, use_cache: bool = True)
     return collector.collect_all(use_cache=use_cache)
 
 
-def get_performance_summary(project_root: Optional[Path] = None) -> Dict[str, Any]:
+def get_performance_summary(project_root: Path | None = None) -> dict[str, Any]:
     """
     Convenience function to get performance summary.
 

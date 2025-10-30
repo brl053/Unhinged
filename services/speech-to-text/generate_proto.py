@@ -4,8 +4,8 @@ Generate protobuf files for speech-to-text service
 """
 import subprocess
 import sys
-import os
 from pathlib import Path
+
 from events import create_service_logger
 
 # Initialize event logger

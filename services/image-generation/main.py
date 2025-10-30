@@ -5,9 +5,8 @@
 """
 
 import os
-import sys
 import signal
-import time
+import sys
 from pathlib import Path
 
 # Add build directory to path for image generation module
@@ -38,12 +37,12 @@ def main():
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     events.info("Starting image generation service", {
         "version": "1.0.0",
         "pid": os.getpid()
     })
-    
+
     # Check environment
     cuda_available = False
     try:
@@ -60,7 +59,7 @@ def main():
             events.warning("No GPU detected, using CPU mode")
     except ImportError:
         events.warning("PyTorch not available")
-    
+
     # Start gRPC server
     run_grpc_server()
 

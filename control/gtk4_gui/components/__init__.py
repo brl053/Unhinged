@@ -27,9 +27,35 @@ Provides reusable, accessible widgets following GNOME HIG patterns.
 
 # Component imports organized by category
 from .base import ComponentBase, ComponentError
-from .primitives import ActionButton, StatusLabel, ProgressIndicator, HardwareInfoRow, ProcessRow, BluetoothRow, AudioDeviceRow, TextEditor, ChatBubble, LoadingDots, CopyButton
-from .containers import StatusCard, ServicePanel, LogContainer, SystemInfoCard, SystemStatusGrid
-from .complex import LogViewer, ServiceRow, SystemStatus, PerformanceIndicator, ProcessTable, BluetoothTable, AudioTable
+from .complex import (
+    AudioTable,
+    BluetoothTable,
+    LogViewer,
+    PerformanceIndicator,
+    ProcessTable,
+    ServiceRow,
+    SystemStatus,
+)
+from .containers import (
+    LogContainer,
+    ServicePanel,
+    StatusCard,
+    SystemInfoCard,
+    SystemStatusGrid,
+)
+from .primitives import (
+    ActionButton,
+    AudioDeviceRow,
+    BluetoothRow,
+    ChatBubble,
+    CopyButton,
+    HardwareInfoRow,
+    LoadingDots,
+    ProcessRow,
+    ProgressIndicator,
+    StatusLabel,
+    TextEditor,
+)
 from .tables import GenericTable, TableColumn
 
 # Version and metadata
@@ -132,7 +158,7 @@ def list_components():
     print(f"🎨 Unhinged GTK4 Component Library v{info['version']}")
     print(f"📦 Total Components: {info['total_components']}")
     print()
-    
+
     for category, components in info['components'].items():
         print(f"📂 {category.title()}:")
         for component in components:

@@ -22,18 +22,15 @@ real-time updates, component library integration, and professional design system
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, Gio, Pango
-import subprocess
-import threading
-import sys
 import os
+import sys
 from pathlib import Path
-import time
-import json
-import requests  # HTTP client for LLM API communication
+
+from gi.repository import Adw, GLib, Gtk
 
 # Add virtual environment packages to path for gRPC support
 # Calculate project root correctly (control/gtk4_gui/desktop_app.py -> project root)
@@ -50,22 +47,40 @@ if protobuf_clients.exists():
 try:
     # Try relative imports first
     try:
-        from .config import service_config, app_config, get_service_endpoint, validate_all_services, log_configuration
-        from .service_connector import service_connector, service_registry
-        from .handlers.audio_handler import AudioHandler, RecordingState
-        from .exceptions import (
-            UnhingedError, ServiceUnavailableError, AudioRecordingError,
-            AudioTranscriptionError, get_user_friendly_message
+        from .config import (
+            app_config,
+            get_service_endpoint,
+            log_configuration,
+            service_config,
+            validate_all_services,
         )
+        from .exceptions import (
+            AudioRecordingError,
+            AudioTranscriptionError,
+            ServiceUnavailableError,
+            UnhingedError,
+            get_user_friendly_message,
+        )
+        from .handlers.audio_handler import AudioHandler, RecordingState
+        from .service_connector import service_connector, service_registry
     except ImportError:
         # Fallback to absolute imports for script execution
-        from config import service_config, app_config, get_service_endpoint, validate_all_services, log_configuration
-        from service_connector import service_connector, service_registry
-        from handlers.audio_handler import AudioHandler, RecordingState
-        from exceptions import (
-            UnhingedError, ServiceUnavailableError, AudioRecordingError,
-            AudioTranscriptionError, get_user_friendly_message
+        from config import (
+            app_config,
+            get_service_endpoint,
+            log_configuration,
+            service_config,
+            validate_all_services,
         )
+        from exceptions import (
+            AudioRecordingError,
+            AudioTranscriptionError,
+            ServiceUnavailableError,
+            UnhingedError,
+            get_user_friendly_message,
+        )
+        from handlers.audio_handler import AudioHandler, RecordingState
+        from service_connector import service_connector, service_registry
     ARCHITECTURE_AVAILABLE = True
     print("✅ New architecture components loaded")
 except ImportError as e:
@@ -76,9 +91,18 @@ except ImportError as e:
 try:
     sys.path.append(str(Path(__file__).parent))
     from components import (
-        StatusCard, StatusLabel, SystemInfoCard, HardwareInfoRow,
-        PerformanceIndicator, SystemStatusGrid, ProcessTable,
-        BluetoothTable, AudioTable, ChatBubble, LoadingDots, CopyButton
+        AudioTable,
+        BluetoothTable,
+        ChatBubble,
+        CopyButton,
+        HardwareInfoRow,
+        LoadingDots,
+        PerformanceIndicator,
+        ProcessTable,
+        StatusCard,
+        StatusLabel,
+        SystemInfoCard,
+        SystemStatusGrid,
     )
     COMPONENTS_AVAILABLE = True
 except ImportError:
@@ -87,8 +111,16 @@ except ImportError:
 
 # Import system information collection
 try:
-    from system_info import SystemInfoCollector, get_system_info, get_performance_summary
-    from realtime_system_info import get_realtime_manager, start_realtime_updates, stop_realtime_updates
+    from realtime_system_info import (
+        get_realtime_manager,
+        start_realtime_updates,
+        stop_realtime_updates,
+    )
+    from system_info import (
+        SystemInfoCollector,
+        get_performance_summary,
+        get_system_info,
+    )
     SYSTEM_INFO_AVAILABLE = True
 except ImportError as e:
     SYSTEM_INFO_AVAILABLE = False
@@ -109,7 +141,7 @@ try:
             sys.path.append(path)
             break
 
-    from events import create_gui_session_logger, GUIOutputCapture
+    from events import GUIOutputCapture, create_gui_session_logger
     SESSION_LOGGING_AVAILABLE = True
     print("✅ Session logging available")
 except ImportError:
@@ -222,10 +254,18 @@ class UnhingedDesktopApp(Adw.Application):
         """Initialize all controllers"""
         try:
             try:
-                from .controllers import UIController, ContentController, ActionController
+                from .controllers import (
+                    ActionController,
+                    ContentController,
+                    UIController,
+                )
             except ImportError:
                 # Fallback for when running as script
-                from controllers import UIController, ContentController, ActionController
+                from controllers import (
+                    ActionController,
+                    ContentController,
+                    UIController,
+                )
 
             self.ui_controller = UIController(self)
             self.content_controller = ContentController(self)
@@ -481,7 +521,7 @@ class UnhingedDesktopApp(Adw.Application):
     def _init_audio_handler(self):
         """Initialize the AudioHandler with callbacks"""
         try:
-            from .handlers.audio_handler import AudioHandler, RecordingState
+            from .handlers.audio_handler import AudioHandler
 
             self.audio_handler = AudioHandler()
             self.audio_handler.set_callbacks(

@@ -4,10 +4,9 @@
 @llm-does speech-to-text service launcher with grpc health.proto im...
 """
 
-import os
-import sys
 import signal
-import time
+import sys
+
 from events import create_service_logger
 
 # Initialize event logger

@@ -6,21 +6,26 @@ embedded in the monolithic desktop_app.py file.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, Gio
+from gi.repository import Adw, GLib, Gtk
 
 # Import system info components
 try:
-    from system_info import get_system_info, start_realtime_updates, stop_realtime_updates
+    from system_info import (
+        get_system_info,
+        start_realtime_updates,
+        stop_realtime_updates,
+    )
     SYSTEM_INFO_AVAILABLE = True
 except ImportError:
     SYSTEM_INFO_AVAILABLE = False
 
 # Import component library
 try:
-    from ..components import InfoCard, StatusIndicator, ActionRow
+    from ..components import ActionRow, InfoCard, StatusIndicator
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
@@ -28,20 +33,20 @@ except ImportError:
 
 class SystemInfoView:
     """Handles the System Information tab functionality"""
-    
+
     def __init__(self, parent_app):
         """Initialize with reference to parent app"""
         self.app = parent_app
         self.project_root = parent_app.project_root
-        
+
         # System info settings
         self.system_info_auto_refresh = getattr(parent_app, 'system_info_auto_refresh', False)
         self.system_info_refresh_interval = getattr(parent_app, 'system_info_refresh_interval', 30)
         self.realtime_updates_enabled = getattr(parent_app, 'realtime_updates_enabled', False)
-        
+
         # Timer references
         self._auto_refresh_timer_id = None
-        
+
     def create_content(self):
         """Create the system info tab content with comprehensive system information."""
         # Create main content box

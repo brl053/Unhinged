@@ -6,11 +6,14 @@ Uses basic device detection without complex hooks for now.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw
-import subprocess
 import re
+import subprocess
+
+from gi.repository import Adw, Gtk
+
 
 class InputView:
     """Input devices view (like a React functional component)."""
@@ -19,7 +22,7 @@ class InputView:
         # Simple initialization without complex hooks for now
         self.devices = self._get_input_devices()
         self.current_device = self._get_current_default_device()
-    
+
     def render(self) -> Gtk.Widget:
         """Render the input view (like React's render method)."""
         container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
@@ -42,32 +45,32 @@ class InputView:
         container.append(devices)
 
         return container
-    
+
     def _render_header(self) -> Gtk.Widget:
         """Render header section."""
         header_group = Adw.PreferencesGroup()
         header_group.set_title("Audio Input Devices")
         header_group.set_description("Available microphones and audio input devices")
-        
+
         # Header row with refresh button
         info_row = Adw.ActionRow()
         info_row.set_title("Input System")
         info_row.set_subtitle("List of available audio input devices")
-        
+
         # Microphone icon
         mic_icon = Gtk.Image.new_from_icon_name("audio-input-microphone-symbolic")
         mic_icon.set_icon_size(Gtk.IconSize.LARGE)
         info_row.add_prefix(mic_icon)
-        
+
         # Refresh button
         refresh_button = Gtk.Button(label="Refresh")
         refresh_button.add_css_class("flat")
         refresh_button.connect("clicked", self._on_refresh_clicked)
         info_row.add_suffix(refresh_button)
-        
+
         header_group.add(info_row)
         return header_group
-    
+
     def _render_current_status(self) -> Gtk.Widget:
         """Render current device status section."""
         status_group = Adw.PreferencesGroup()
@@ -87,9 +90,9 @@ class InputView:
             status_group.add(status_row)
 
         return status_group
-    
 
-    
+
+
     def _render_device_list(self) -> Gtk.Widget:
         """Render the list of audio devices."""
         devices_group = Adw.PreferencesGroup()
@@ -112,7 +115,7 @@ class InputView:
             devices_group.add(no_devices_row)
 
         return devices_group
-    
+
     def _create_device_row(self, device) -> Adw.ActionRow:
         """Create a row for an audio device."""
         device_row = Adw.ActionRow()
@@ -142,7 +145,7 @@ class InputView:
         device_row.add_prefix(device_icon)
 
         return device_row
-    
+
     def _get_input_devices(self):
         """Get list of audio input devices using arecord."""
         devices = []

@@ -5,9 +5,8 @@
 """
 
 import os
-import sys
 import signal
-import time
+import sys
 from pathlib import Path
 
 # Add session library to path
@@ -38,23 +37,23 @@ def main():
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     events.info("Starting chat service with embedded sessions", {
         "version": "1.0.0",
         "pid": os.getpid(),
         "write_through_architecture": True
     })
-    
+
     # Check environment
     redis_host = os.getenv('REDIS_HOST', 'localhost')
     crdb_host = os.getenv('CRDB_HOST', 'localhost')
-    
+
     events.info("Session store configuration", {
         "redis_host": redis_host,
         "crdb_host": crdb_host,
         "architecture": "write_through"
     })
-    
+
     # Start gRPC server
     run_grpc_server()
 

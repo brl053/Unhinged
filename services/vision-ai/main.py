@@ -4,9 +4,9 @@
 @llm-does vision ai service launcher with grpc health.proto
 """
 
-import os
 import signal
 import sys
+
 from events import create_service_logger
 
 # Initialize event logger

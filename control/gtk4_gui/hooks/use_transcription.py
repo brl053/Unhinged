@@ -5,41 +5,43 @@ Provides a clean interface for transcription operations that can be used
 across different views and components.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Optional, Callable, Dict, Any
+from typing import Any
 
 from ..services.transcription_service import TranscriptionService
+
 
 @dataclass
 class TranscriptionHook:
     """Hook return type for transcription operations (like React hook return)."""
-    transcribe: Callable[[str], Dict[str, Any]]
+    transcribe: Callable[[str], dict[str, Any]]
     is_service_available: Callable[[], bool]
-    get_service_info: Callable[[], Dict[str, Any]]
-    test_connection: Callable[[], Dict[str, Any]]
+    get_service_info: Callable[[], dict[str, Any]]
+    test_connection: Callable[[], dict[str, Any]]
 
 class TranscriptionManager:
     """Internal manager for transcription operations."""
-    
+
     def __init__(self):
         self._service = TranscriptionService()
-        self._service_status_cache: Optional[Dict[str, Any]] = None
-    
-    def transcribe_audio_file(self, audio_file_path: str) -> Dict[str, Any]:
+        self._service_status_cache: dict[str, Any] | None = None
+
+    def transcribe_audio_file(self, audio_file_path: str) -> dict[str, Any]:
         """Transcribe an audio file."""
         return self._service.transcribe_audio_file(audio_file_path)
-    
+
     def is_service_available(self) -> bool:
         """Check if the transcription service is available."""
         if self._service_status_cache is None:
             self._service_status_cache = self._service.test_connection()
         return self._service_status_cache.get('available', False)
-    
-    def get_service_info(self) -> Dict[str, Any]:
+
+    def get_service_info(self) -> dict[str, Any]:
         """Get transcription service information."""
         return self._service.get_service_info()
-    
-    def test_connection(self) -> Dict[str, Any]:
+
+    def test_connection(self) -> dict[str, Any]:
         """Test connection to transcription service."""
         # Clear cache and test fresh
         self._service_status_cache = None
@@ -57,23 +59,23 @@ def use_transcription() -> TranscriptionHook:
     Returns:
         TranscriptionHook with transcription functions
     """
-    
-    def transcribe(audio_file_path: str) -> Dict[str, Any]:
+
+    def transcribe(audio_file_path: str) -> dict[str, Any]:
         """Transcribe an audio file."""
         return _transcription_manager.transcribe_audio_file(audio_file_path)
-    
+
     def is_service_available() -> bool:
         """Check if transcription service is available."""
         return _transcription_manager.is_service_available()
-    
-    def get_service_info() -> Dict[str, Any]:
+
+    def get_service_info() -> dict[str, Any]:
         """Get service information."""
         return _transcription_manager.get_service_info()
-    
-    def test_connection() -> Dict[str, Any]:
+
+    def test_connection() -> dict[str, Any]:
         """Test service connection."""
         return _transcription_manager.test_connection()
-    
+
     return TranscriptionHook(
         transcribe=transcribe,
         is_service_available=is_service_available,

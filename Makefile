@@ -179,6 +179,13 @@ help: ## Show this help message
 	@echo "  $(GREEN)make watch TARGET=X$(RESET)     Watch mode with auto-rebuild"
 	@echo "  $(GREEN)make profile TARGET=X$(RESET)   Profile build performance"
 	@echo ""
+	@echo "$(PURPLE)🔍 Code Quality & Static Analysis:$(RESET)"
+	@echo "  $(GREEN)make check-code$(RESET)         Run static analysis on all Python modules"
+	@echo "  $(GREEN)make check-code-fix$(RESET)     Run static analysis with auto-fix"
+	@echo "  $(GREEN)make check-code-changed$(RESET) Run static analysis only on changed modules"
+	@echo "  $(GREEN)make setup-git-hooks$(RESET)    Install Git hooks for automatic analysis"
+	@echo "  $(GREEN)make setup-dev-tools$(RESET)    Setup all development tools"
+	@echo ""
 	@echo "$(PURPLE)🤖 AI-Powered Assistance:$(RESET)"
 	@echo "  $(GREEN)make context$(RESET)            Generate AI context for development"
 	@echo "  $(GREEN)make onboard$(RESET)            Generate developer onboarding guide"
@@ -350,6 +357,36 @@ python-deps: ## Install/update Python dependencies in centralized environment
 	@test -d build/python/venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
 	@cd build/python && python3 setup.py
 	$(call log_success,Python dependencies installed)
+
+# ============================================================================
+# Static Analysis and Code Quality
+# ============================================================================
+
+check-code: ## Run static analysis on all Python modules
+	$(call log_info,🔍 Running static analysis on Python code...)
+	@python3 build/static_analysis_manager.py control/gtk4_gui libs/python services
+	$(call log_success,Static analysis completed)
+
+check-code-fix: ## Run static analysis with auto-fix
+	$(call log_info,🔧 Running static analysis with auto-fix...)
+	@python3 build/static_analysis_manager.py control/gtk4_gui libs/python services --no-fix
+	$(call log_success,Static analysis with auto-fix completed)
+
+check-code-changed: ## Run static analysis only on changed modules
+	$(call log_info,🔍 Running static analysis on changed modules...)
+	@python3 build/static_analysis_manager.py control/gtk4_gui libs/python services --check-changes
+	$(call log_success,Changed modules analysis completed)
+
+setup-git-hooks: ## Install Git hooks for automatic static analysis
+	$(call log_info,🔗 Installing Git hooks for static analysis...)
+	@./scripts/install_git_hooks.sh
+	$(call log_success,Git hooks installed)
+
+setup-dev-tools: ## Setup all development tools (Git hooks, static analysis)
+	$(call log_info,🔧 Setting up development tools...)
+	@$(MAKE) setup-git-hooks
+	@$(MAKE) check-code-changed
+	$(call log_success,Development tools setup complete)
 
 
 

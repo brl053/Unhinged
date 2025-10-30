@@ -60,13 +60,18 @@ class UnifiedVenvManager:
             
             # Step 6: Update gitignore
             self._update_gitignore()
-            
+
+            # Step 7: Setup development tools (Git hooks, static analysis)
+            print("🔧 Setting up development tools...")
+            self._setup_development_tools()
+
             print("✅ Unified Python environment ready!")
             print(f"   Virtual environment: {self.venv_path}")
             print(f"   Unified requirements: {self.unified_requirements}")
             print("\n🎯 To activate: source .venv/bin/activate")
             print("🎯 Or use: ./build/python/run.py <script.py>")
-            
+            print("🔍 Static analysis: Automatic on commits, manual via ./scripts/check_code_quality.sh")
+
             return True
             
         except Exception as e:
@@ -282,6 +287,64 @@ class UnifiedVenvManager:
                     f.write("\n# Unified Python Virtual Environment\n")
                     for entry in new_entries:
                         f.write(f"{entry}\n")
+
+    def _setup_development_tools(self):
+        """Setup development tools like Git hooks and static analysis."""
+        try:
+            # Install Git hooks for static analysis
+            hooks_script = self.project_root / "scripts" / "install_git_hooks.sh"
+            if hooks_script.exists():
+                subprocess.run([
+                    "bash", str(hooks_script)
+                ], cwd=self.project_root, check=True, capture_output=True)
+                print("  ✅ Git hooks installed (static analysis on commits)")
+            else:
+                print("  ⚠️ Git hooks script not found, skipping")
+
+            # Verify ruff is available
+            ruff_path = self.venv_path / "bin" / "ruff"
+            if ruff_path.exists():
+                print("  ✅ Ruff static analyzer available")
+            else:
+                print("  ⚠️ Ruff not found in virtual environment")
+
+            # Create convenience scripts
+            self._create_convenience_scripts()
+
+        except Exception as e:
+            print(f"  ⚠️ Development tools setup failed: {e}")
+
+    def _create_convenience_scripts(self):
+        """Create convenience scripts for development."""
+        try:
+            # Create check_code_quality.sh if it doesn't exist
+            check_script = self.project_root / "scripts" / "check_code_quality.sh"
+            if not check_script.exists():
+                check_script.parent.mkdir(exist_ok=True)
+                with open(check_script, 'w') as f:
+                    f.write('''#!/bin/bash
+
+# Find project root
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+cd "$PROJECT_ROOT"
+
+# Use the unified venv
+PYTHON_CMD="$PROJECT_ROOT/.venv/bin/python"
+
+if [ ! -f "$PYTHON_CMD" ]; then
+    echo "❌ Unified virtual environment not found at $PROJECT_ROOT/.venv"
+    echo "   Run: python build/setup-unified-venv.py"
+    exit 1
+fi
+
+echo "🔍 Running static analysis on all Python modules..."
+$PYTHON_CMD build/static_analysis_manager.py control/gtk4_gui libs/python services
+''')
+                check_script.chmod(0o755)
+                print("  ✅ Created check_code_quality.sh script")
+
+        except Exception as e:
+            print(f"  ⚠️ Failed to create convenience scripts: {e}")
 
 def main():
     """Main setup function."""

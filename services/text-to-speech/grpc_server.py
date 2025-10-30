@@ -4,15 +4,14 @@
 @llm-does text-to-speech grpc server with health.proto implementation
 """
 
-import os
+import time
+from concurrent import futures
+
 import grpc
 from events import create_service_logger
-from concurrent import futures
-import time
 
 # Health proto imports
-from unhinged_proto_clients.health import health_pb2
-from unhinged_proto_clients.health import health_pb2_grpc
+from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
 
 # Initialize event logger
 events = create_service_logger("text-to-speech", "1.0.0")
@@ -22,7 +21,7 @@ class TextToSpeechServicer(health_pb2_grpc.HealthServiceServicer):
     """
     Text-to-Speech gRPC service with health.proto implementation
     """
-    
+
     def __init__(self):
         self.start_time = time.time()
         self.service_ready = True
@@ -54,16 +53,16 @@ class TextToSpeechServicer(health_pb2_grpc.HealthServiceServicer):
         try:
             # Get heartbeat first
             heartbeat = self.Heartbeat(health_pb2.HeartbeatRequest(), context)
-            
+
             response = health_pb2.DiagnosticsResponse()
             response.heartbeat.CopyFrom(heartbeat)
-            
+
             # Add metadata if requested
             if request.include_metrics:
                 response.metadata["service_ready"] = str(self.service_ready)
                 response.metadata["service_type"] = "text-to-speech"
                 response.metadata["capabilities"] = "tts"
-                
+
             response.last_updated.GetCurrentTime()
             return response
         except Exception as e:
@@ -80,13 +79,13 @@ def serve():
     """Start the gRPC server with health.proto implementation"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     servicer = TextToSpeechServicer()
-    
+
     # Register health service
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
-    
+
     listen_addr = '[::]:9092'
     server.add_insecure_port(listen_addr)
-    
+
     server.start()
 
     try:

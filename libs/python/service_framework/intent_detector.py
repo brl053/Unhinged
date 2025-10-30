@@ -5,12 +5,10 @@ Implements expert recommendation for making detection mechanism pluggable.
 Starts with regex, ready for future LLM intent parser evolution.
 """
 
-import re
-import abc
 import logging
-from typing import Dict, List, Optional, Any, Protocol
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Protocol
 
 
 class IntentType(Enum):
@@ -26,10 +24,10 @@ class IntentResult:
     """Result of intent detection"""
     intent_type: IntentType
     confidence: float  # 0.0 to 1.0
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     original_text: str
-    matched_pattern: Optional[str] = None
-    
+    matched_pattern: str | None = None
+
     @property
     def is_confident(self) -> bool:
         """Check if confidence is high enough to act on"""
@@ -38,12 +36,12 @@ class IntentResult:
 
 class IntentDetector(Protocol):
     """Protocol for intent detection implementations"""
-    
+
     def detect(self, text: str) -> IntentResult:
         """Detect intent from text input"""
         ...
-    
-    def get_supported_intents(self) -> List[IntentType]:
+
+    def get_supported_intents(self) -> list[IntentType]:
         """Get list of supported intent types"""
         ...
 
@@ -79,7 +77,7 @@ class ExplicitCommandDetector:
             "!help": IntentType.COMMAND,
             "!status": IntentType.COMMAND
         }
-    
+
     def detect(self, text: str) -> IntentResult:
         """Detect intent using EXPLICIT COMMANDS ONLY - NO REGEX"""
         text = text.strip()
@@ -135,10 +133,10 @@ class ExplicitCommandDetector:
             parameters={"message": text},
             original_text=text
         )
-    
+
     # REGEX PATTERN METHODS REMOVED - EXPLICIT COMMANDS ONLY
-    
-    def get_supported_intents(self) -> List[IntentType]:
+
+    def get_supported_intents(self) -> list[IntentType]:
         """Get supported intent types"""
         return [IntentType.TEXT_CHAT, IntentType.IMAGE_GENERATION, IntentType.COMMAND]
 
@@ -147,7 +145,7 @@ class ExplicitCommandDetector:
         self.commands[command.lower()] = intent_type
         self.logger.info(f"Added command: {command} -> {intent_type.value}")
 
-    def get_available_commands(self) -> Dict[str, str]:
+    def get_available_commands(self) -> dict[str, str]:
         """Get all available commands"""
         return {cmd: intent.value for cmd, intent in self.commands.items()}
 
@@ -159,25 +157,25 @@ class LLMIntentDetector:
     Placeholder for future implementation using LLM for intent analysis.
     Will implement the same IntentDetector protocol.
     """
-    
+
     def __init__(self, llm_service_name: str = "llm"):
         self.llm_service = llm_service_name
         self.logger = logging.getLogger(__name__)
         self.logger.info("LLM intent detector initialized (not yet implemented)")
-    
+
     def detect(self, text: str) -> IntentResult:
         """Detect intent using LLM (future implementation)"""
         # TODO: Implement LLM-based intent detection
         # This would send the text to an LLM service with a prompt like:
         # "Analyze this user message and determine if it's requesting:
         #  1. Text conversation
-        #  2. Image generation  
+        #  2. Image generation
         #  3. A command
         #  Return structured response with intent and parameters."
-        
+
         raise NotImplementedError("LLM intent detection not yet implemented")
-    
-    def get_supported_intents(self) -> List[IntentType]:
+
+    def get_supported_intents(self) -> list[IntentType]:
         """Get supported intent types"""
         return [IntentType.TEXT_CHAT, IntentType.IMAGE_GENERATION, IntentType.COMMAND]
 
@@ -188,21 +186,21 @@ class IntentDetectorManager:
     
     Allows switching between different detection implementations.
     """
-    
-    def __init__(self, default_detector: Optional[IntentDetector] = None):
+
+    def __init__(self, default_detector: IntentDetector | None = None):
         self.logger = logging.getLogger(__name__)
 
         # Use explicit command detector as default - NO REGEX
         self._detector = default_detector or ExplicitCommandDetector()
         self.logger.info(f"Intent detector initialized: {type(self._detector).__name__}")
-    
+
     def set_detector(self, detector: IntentDetector) -> None:
         """Switch to a different intent detector"""
         old_detector = type(self._detector).__name__
         self._detector = detector
         new_detector = type(self._detector).__name__
         self.logger.info(f"Switched intent detector: {old_detector} -> {new_detector}")
-    
+
     def detect_intent(self, text: str) -> IntentResult:
         """Detect intent using current detector"""
         try:
@@ -219,8 +217,8 @@ class IntentDetectorManager:
                 parameters={"message": text},
                 original_text=text
             )
-    
-    def get_detector_info(self) -> Dict[str, Any]:
+
+    def get_detector_info(self) -> dict[str, Any]:
         """Get information about current detector"""
         return {
             "type": type(self._detector).__name__,
@@ -229,16 +227,16 @@ class IntentDetectorManager:
 
 
 # Global intent detector instance
-_global_detector: Optional[IntentDetectorManager] = None
+_global_detector: IntentDetectorManager | None = None
 
 
 def get_global_detector() -> IntentDetectorManager:
     """Get global intent detector instance"""
     global _global_detector
-    
+
     if _global_detector is None:
         _global_detector = IntentDetectorManager()
-    
+
     return _global_detector
 
 

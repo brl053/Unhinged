@@ -6,22 +6,23 @@ embedded in the monolithic desktop_app.py file.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw
+from gi.repository import Adw, Gtk
 
 
 class BluetoothView:
     """Handles the Bluetooth Management tab functionality"""
-    
+
     def __init__(self, parent_app):
         """Initialize with reference to parent app"""
         self.app = parent_app
-        
+
         # Bluetooth table reference
         self.bluetooth_table = None
-        
+
     def create_content(self):
         """Create the Bluetooth tab content with device discovery and management."""
         try:
@@ -114,11 +115,11 @@ class BluetoothView:
         try:
             if self.bluetooth_table and hasattr(self.bluetooth_table, 'cleanup'):
                 self.bluetooth_table.cleanup()
-                
+
             # Log cleanup
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("BLUETOOTH_CLEANUP", "Bluetooth components cleaned up")
-                
+
         except Exception as e:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("BLUETOOTH_CLEANUP_ERROR", str(e))

@@ -8,14 +8,15 @@ Migrated from main tab:
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw
+from gi.repository import Adw, Gtk
 
 # Import component library
 try:
-    from ..components import StatusCard, StatusLabel, LogViewer
+    from ..components import LogViewer, StatusCard, StatusLabel
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
@@ -55,7 +56,7 @@ class StatusView:
                 )
             except Exception as e:
                 print(f"⚠️ Failed to initialize platform handler: {e}")
-        
+
     def create_content(self):
         """Create enhanced status tab with platform controls and monitoring."""
         # Create status content box

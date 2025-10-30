@@ -6,22 +6,23 @@ embedded in the monolithic desktop_app.py file.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw
+from gi.repository import Adw, Gtk
 
 
 class ProcessesView:
     """Handles the Process Monitoring tab functionality"""
-    
+
     def __init__(self, parent_app):
         """Initialize with reference to parent app"""
         self.app = parent_app
-        
+
         # Process table reference
         self.process_table = None
-        
+
     def create_content(self):
         """Create the processes tab content with live process monitoring."""
         try:
@@ -114,11 +115,11 @@ class ProcessesView:
         try:
             if self.process_table and hasattr(self.process_table, 'refresh'):
                 self.process_table.refresh()
-                
+
             # Log refresh
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("PROCESSES_REFRESH", "Process list refreshed")
-                
+
         except Exception as e:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("PROCESSES_REFRESH_ERROR", str(e))
@@ -128,11 +129,11 @@ class ProcessesView:
         try:
             if self.process_table and hasattr(self.process_table, 'cleanup'):
                 self.process_table.cleanup()
-                
+
             # Log cleanup
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("PROCESSES_CLEANUP", "Process monitoring components cleaned up")
-                
+
         except Exception as e:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("PROCESSES_CLEANUP_ERROR", str(e))

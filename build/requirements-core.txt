@@ -36,6 +36,7 @@ opencv-python>=4.8.0
 pytest>=7.4.0
 black>=23.0.0
 flake8>=6.0.0
+ruff>=0.1.6
 
 # Utilities
 aiofiles>=23.0.0

@@ -6,8 +6,6 @@
 """
 
 import os
-from pathlib import Path
-from typing import Optional
 
 
 def get_service_path(subdir: str = "") -> str:
@@ -77,8 +75,8 @@ class ServicePaths:
 @llm-does service path manager providing standardized directory access
 @llm-rule service paths must be consistent, predictable, and environment-agnostic
 """
-    
-    def __init__(self, service_root: Optional[str] = None):
+
+    def __init__(self, service_root: str | None = None):
         """
         Initialize service path manager
         
@@ -86,39 +84,39 @@ class ServicePaths:
             service_root: Optional service root directory (defaults to current working directory)
         """
         self.service_root = service_root or os.getcwd()
-    
+
     def get_path(self, subdir: str = "") -> str:
         """Get path relative to service root"""
         if subdir:
             return os.path.join(self.service_root, subdir)
         return self.service_root
-    
+
     def ensure_directory(self, subdir: str) -> str:
         """Ensure directory exists, create if missing"""
         dir_path = self.get_path(subdir)
         os.makedirs(dir_path, exist_ok=True)
         return dir_path
-    
+
     @property
     def uploads(self) -> str:
         """Upload directory for file uploads"""
         return self.ensure_directory('uploads')
-    
+
     @property
     def models(self) -> str:
         """Models directory for ML model storage"""
         return self.ensure_directory('models')
-    
+
     @property
     def outputs(self) -> str:
         """Outputs directory for generated files"""
         return self.ensure_directory('outputs')
-    
+
     @property
     def cache(self) -> str:
         """Cache directory for service caching"""
         return self.ensure_directory('cache')
-    
+
     @property
     def logs(self) -> str:
         """Logs directory for service logging"""
@@ -158,7 +156,7 @@ def get_service_env_path(env_name: str = ".env") -> str:
 # Convenience exports for common patterns
 __all__ = [
     'get_service_path',
-    'ensure_service_directory', 
+    'ensure_service_directory',
     'get_upload_directory',
     'get_models_directory',
     'get_outputs_directory',

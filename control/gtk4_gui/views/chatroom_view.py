@@ -33,18 +33,18 @@ except ImportError as e:
 
 class ChatroomView:
     """Handles the OS Chatroom tab functionality"""
-    
+
     def __init__(self, parent_app):
         """Initialize with reference to parent app for now"""
         self.app = parent_app
-        
+
         # UI references
         self._chatroom_input_row = None
         self._chatroom_voice_button = None
         self._chatroom_send_button = None
         self._chat_input = None
         self._messages_container = None
-        
+
         # State
         self._typing_timer_id = None
 
@@ -63,7 +63,7 @@ class ChatroomView:
         self._session_button = None
         self._session_id_label = None
         self._session_row = None
-        
+
     def create_content(self):
         """Create the OS Chatroom tab content with design system layout utilities."""
         # Create main chat container using design system layout patterns
@@ -90,7 +90,7 @@ class ChatroomView:
 
         messages_area.set_child(messages_container)
         chatroom_container.append(messages_area)
-        
+
         # Store reference for adding messages
         self._messages_container = messages_container
 
@@ -124,7 +124,7 @@ class ChatroomView:
             text_editor.connect('content-changed', self._on_chatroom_content_changed)
             text_editor.connect('focus-gained', self._on_chatroom_focus_gained)
             text_editor.connect('focus-lost', self._on_chatroom_focus_lost)
-            
+
             # Store reference
             self._chat_input = text_editor
         else:

@@ -10,13 +10,15 @@ Container components for organizing and grouping content:
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, GObject, Pango
-from typing import Optional, List
-from .base import ComponentBase, AdwComponentBase
-from typing import Dict, Any, Optional, List
+from typing import Any
+
+from gi.repository import Adw, Gtk, Pango
+
+from .base import AdwComponentBase, ComponentBase
 
 
 class StatusCard(AdwComponentBase):
@@ -29,13 +31,13 @@ class StatusCard(AdwComponentBase):
     - Action buttons
     - Status-based styling
     """
-    
+
     def __init__(self,
                  title: str,
                  status: str = "neutral",
-                 subtitle: Optional[str] = None,
-                 description: Optional[str] = None,
-                 icon_name: Optional[str] = None,
+                 subtitle: str | None = None,
+                 description: str | None = None,
+                 icon_name: str | None = None,
                  **kwargs):
         self.title = title
         self.status = status
@@ -43,28 +45,28 @@ class StatusCard(AdwComponentBase):
         self.description = description
         self.icon_name = icon_name
         self._action_buttons = []
-        
+
         super().__init__("status-card", **kwargs)
-    
+
     def _init_component(self, **kwargs):
         """Initialize the status card."""
         # Create main card
         self.widget = Adw.PreferencesGroup()
-        
+
         # Create status row
         self._status_row = Adw.ActionRow()
         self._status_row.set_title(self.title)
-        
+
         if self.subtitle:
             self._status_row.set_subtitle(self.subtitle)
-        
+
         # Add icon if provided
         if self.icon_name:
             icon = Gtk.Image.new_from_icon_name(self.icon_name)
             self._status_row.add_prefix(icon)
-        
+
         self.widget.add(self._status_row)
-        
+
         # Add description if provided
         if self.description:
             desc_row = Adw.ActionRow()
@@ -74,48 +76,48 @@ class StatusCard(AdwComponentBase):
             desc_label.add_css_class("caption")
             desc_row.set_child(desc_label)
             self.widget.add(desc_row)
-        
+
         # Apply status styling
         self._apply_status_styling()
-    
+
     def _apply_status_styling(self):
         """Apply styling based on status."""
         # Status-based CSS classes
         status_classes = {
             "success": "success",
-            "warning": "warning", 
+            "warning": "warning",
             "error": "error",
             "info": "accent",
             "neutral": ""
         }
-        
+
         css_class = status_classes.get(self.status, "")
         if css_class:
             self.widget.add_css_class(css_class)
-        
+
         self.add_css_class(f"ds-status-{self.status}")
-    
+
     def add_action_button(self, button: Gtk.Widget):
         """Add an action button to the card."""
         self._action_buttons.append(button)
         self._status_row.add_suffix(button)
-    
+
     def set_title(self, title: str):
         """Update card title."""
         self.title = title
         self._status_row.set_title(title)
-    
-    def set_subtitle(self, subtitle: Optional[str]):
+
+    def set_subtitle(self, subtitle: str | None):
         """Update card subtitle."""
         self.subtitle = subtitle
         self._status_row.set_subtitle(subtitle or "")
-    
+
     def set_status(self, status: str):
         """Update card status."""
         # Remove old status class
         old_class = f"ds-status-{self.status}"
         self.remove_css_class(old_class)
-        
+
         self.status = status
         self._apply_status_styling()
 
@@ -130,12 +132,12 @@ class ServicePanel(AdwComponentBase):
     - Control buttons
     - Expandable details
     """
-    
+
     def __init__(self,
                  service_name: str,
                  service_status: str = "unknown",
-                 port: Optional[int] = None,
-                 health_method: Optional[str] = None,
+                 port: int | None = None,
+                 health_method: str | None = None,
                  **kwargs):
         self.service_name = service_name
         self.service_status = service_status
@@ -143,53 +145,53 @@ class ServicePanel(AdwComponentBase):
         self.health_method = health_method
         self._expandable_row = None
         self._details_group = None
-        
+
         super().__init__("service-panel", **kwargs)
-    
+
     def _init_component(self, **kwargs):
         """Initialize the service panel."""
         # Create expandable row
         self._expandable_row = Adw.ExpanderRow()
         self._expandable_row.set_title(self.service_name)
-        
+
         # Set status subtitle
         self._update_status_display()
-        
+
         # Add status icon
         self._status_icon = Gtk.Image()
         self._update_status_icon()
         self._expandable_row.add_prefix(self._status_icon)
-        
+
         # Create details group for expanded content
         self._details_group = Adw.PreferencesGroup()
-        
+
         # Add port information
         if self.port:
             port_row = Adw.ActionRow()
             port_row.set_title("Port")
             port_row.set_subtitle(str(self.port))
             self._details_group.add(port_row)
-        
+
         # Add health method information
         if self.health_method:
             health_row = Adw.ActionRow()
             health_row.set_title("Health Check")
             health_row.set_subtitle(self.health_method)
             self._details_group.add(health_row)
-        
+
         # Create main container
         self.widget = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.widget.append(self._expandable_row)
         self.widget.append(self._details_group)
-        
+
         # Apply styling
         self.add_css_class("ds-service-panel")
-    
+
     def _update_status_display(self):
         """Update the status display."""
         status_text = self.service_status.replace("-", " ").title()
         self._expandable_row.set_subtitle(status_text)
-    
+
     def _update_status_icon(self):
         """Update the status icon."""
         if self.service_status == "running":
@@ -204,21 +206,21 @@ class ServicePanel(AdwComponentBase):
         else:
             icon_name = "dialog-question-symbolic"
             css_class = "neutral"
-        
+
         self._status_icon.set_from_icon_name(icon_name)
-        
+
         # Remove old status classes
         for status in ["success", "error", "warning", "neutral"]:
             self._status_icon.remove_css_class(status)
-        
+
         self._status_icon.add_css_class(css_class)
-    
+
     def set_service_status(self, status: str):
         """Update service status."""
         self.service_status = status
         self._update_status_display()
         self._update_status_icon()
-    
+
     def add_action_button(self, button: Gtk.Widget):
         """Add an action button to the service panel."""
         self._expandable_row.add_suffix(button)
@@ -234,7 +236,7 @@ class LogContainer(ComponentBase):
     - Copy functionality
     - Monospace font
     """
-    
+
     def __init__(self,
                  auto_scroll: bool = True,
                  max_lines: int = 1000,
@@ -244,9 +246,9 @@ class LogContainer(ComponentBase):
         self._text_buffer = None
         self._text_view = None
         self._scrolled_window = None
-        
+
         super().__init__("log-container", **kwargs)
-    
+
     def _init_component(self, **kwargs):
         """Initialize the log container."""
         # Create scrolled window
@@ -256,23 +258,23 @@ class LogContainer(ComponentBase):
             Gtk.PolicyType.AUTOMATIC
         )
         self._scrolled_window.set_min_content_height(200)
-        
+
         # Create text view
         self._text_view = Gtk.TextView()
         self._text_view.set_editable(False)
         self._text_view.set_cursor_visible(False)
         self._text_view.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._text_view.add_css_class("monospace")
-        
+
         # Get text buffer
         self._text_buffer = self._text_view.get_buffer()
-        
+
         # Add text view to scrolled window
         self._scrolled_window.set_child(self._text_view)
-        
+
         # Set as main widget
         self.widget = self._scrolled_window
-        
+
         # Apply styling
         self.add_css_class("ds-log-container")
 
@@ -291,8 +293,8 @@ class SystemInfoCard(AdwComponentBase):
     def __init__(self,
                  title: str = "",
                  subtitle: str = "",
-                 icon_name: Optional[str] = None,
-                 data: Optional[Dict[str, Any]] = None,
+                 icon_name: str | None = None,
+                 data: dict[str, Any] | None = None,
                  expandable: bool = False,
                  **kwargs):
         self.title = title
@@ -427,7 +429,7 @@ class SystemInfoCard(AdwComponentBase):
         else:
             return str(value)
 
-    def update_data(self, new_data: Dict[str, Any]):
+    def update_data(self, new_data: dict[str, Any]):
         """Update the card data and refresh display."""
         self.data = new_data
 
@@ -462,7 +464,7 @@ class SystemStatusGrid(AdwComponentBase):
     def __init__(self,
                  columns: int = 2,
                  spacing: int = 12,
-                 cards_data: Optional[List[Dict[str, Any]]] = None,
+                 cards_data: list[dict[str, Any]] | None = None,
                  **kwargs):
         self.columns = columns
         self.spacing = spacing
@@ -508,7 +510,7 @@ class SystemStatusGrid(AdwComponentBase):
             if cards_in_row >= self.columns:
                 cards_in_row = 0
 
-    def _create_card(self, card_data: Dict[str, Any]):
+    def _create_card(self, card_data: dict[str, Any]):
         """Create a card based on card data."""
         card_type = card_data.get('type', 'info')
 
@@ -537,7 +539,7 @@ class SystemStatusGrid(AdwComponentBase):
                 data=card_data.get('data', {})
             )
 
-    def update_grid(self, new_cards_data: List[Dict[str, Any]]):
+    def update_grid(self, new_cards_data: list[dict[str, Any]]):
         """Update the grid with new card data."""
         self.cards_data = new_cards_data
 
@@ -559,7 +561,7 @@ class SystemStatusGrid(AdwComponentBase):
         # Clear cards list
         self._cards.clear()
 
-    def update_card_data(self, card_index: int, new_data: Dict[str, Any]):
+    def update_card_data(self, card_index: int, new_data: dict[str, Any]):
         """Update data for a specific card."""
         if 0 <= card_index < len(self._cards):
             card = self._cards[card_index]
@@ -578,22 +580,22 @@ class SystemStatusGrid(AdwComponentBase):
             self.columns = columns
             self._clear_grid()
             self._create_grid_layout()
-    
-    def append_text(self, text: str, tag: Optional[str] = None):
+
+    def append_text(self, text: str, tag: str | None = None):
         """Append text to the log."""
         # Get end iterator
         end_iter = self._text_buffer.get_end_iter()
-        
+
         # Insert text (simplified - no tags for now)
         self._text_buffer.insert(end_iter, text + "\n")
-        
+
         # Limit buffer size
         self._limit_buffer_size()
-        
+
         # Auto-scroll if enabled
         if self.auto_scroll:
             self._scroll_to_bottom()
-    
+
     def _limit_buffer_size(self):
         """Limit buffer to max_lines."""
         line_count = self._text_buffer.get_line_count()
@@ -603,18 +605,18 @@ class SystemStatusGrid(AdwComponentBase):
             start_iter = self._text_buffer.get_start_iter()
             end_iter = self._text_buffer.get_iter_at_line(lines_to_remove)
             self._text_buffer.delete(start_iter, end_iter)
-    
+
     def _scroll_to_bottom(self):
         """Scroll to the bottom of the log."""
         mark = self._text_buffer.get_insert()
         end_iter = self._text_buffer.get_end_iter()
         self._text_buffer.place_cursor(end_iter)
         self._text_view.scroll_mark_onscreen(mark)
-    
+
     def clear(self):
         """Clear all log content."""
         self._text_buffer.set_text("")
-    
+
     def get_text(self) -> str:
         """Get all log text."""
         start_iter = self._text_buffer.get_start_iter()

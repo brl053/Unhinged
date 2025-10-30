@@ -4,15 +4,14 @@
 @llm-does vision ai grpc server with health.proto implementation
 """
 
-import os
+import time
+from concurrent import futures
+
 import grpc
 from events import create_service_logger
-from concurrent import futures
-import time
 
 # Health proto imports
-from unhinged_proto_clients.health import health_pb2
-from unhinged_proto_clients.health import health_pb2_grpc
+from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
 
 # Initialize event logger
 events = create_service_logger("vision-ai", "1.0.0")
@@ -22,7 +21,7 @@ class VisionAIServicer(health_pb2_grpc.HealthServiceServicer):
     """
     Vision AI gRPC service with health.proto implementation
     """
-    
+
     def __init__(self):
         self.start_time = time.time()
         self.vision_model_loaded = False
@@ -69,17 +68,17 @@ class VisionAIServicer(health_pb2_grpc.HealthServiceServicer):
         try:
             # Get heartbeat first
             heartbeat = self.Heartbeat(health_pb2.HeartbeatRequest(), context)
-            
+
             response = health_pb2.DiagnosticsResponse()
             response.heartbeat.CopyFrom(heartbeat)
-            
+
             # Add metadata if requested
             if request.include_metrics:
                 response.metadata["vision_model_loaded"] = str(self.vision_model_loaded)
                 response.metadata["service_ready"] = str(self.service_ready)
                 response.metadata["service_type"] = "vision-ai"
                 response.metadata["capabilities"] = "image-analysis,image-description,object-detection"
-                
+
             response.last_updated.GetCurrentTime()
             return response
         except Exception as e:
@@ -96,13 +95,13 @@ def serve():
     """Start the gRPC server with health.proto implementation"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     servicer = VisionAIServicer()
-    
+
     # Register health service
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
-    
+
     listen_addr = '[::]:9093'
     server.add_insecure_port(listen_addr)
-    
+
     server.start()
 
     try:

@@ -10,19 +10,19 @@ Provides base classes and utilities for creating gRPC services with:
 Based on expert review feedback for local deployment context.
 """
 
-from .service_base import ServiceBase
-from .health_manager import HealthManager, HealthStatus
-from .resource_manager import ResourceManager, HardwareInfo
 from .connection_pool import ConnectionPool, ServiceClient
+from .health_manager import HealthManager, HealthStatus
 from .intent_detector import IntentDetector, IntentResult
+from .resource_manager import HardwareInfo, ResourceManager
+from .service_base import ServiceBase
 
 __version__ = "1.0.0"
 __all__ = [
     "ServiceBase",
-    "HealthManager", 
+    "HealthManager",
     "HealthStatus",
     "ResourceManager",
-    "HardwareInfo", 
+    "HardwareInfo",
     "ConnectionPool",
     "ServiceClient",
     "IntentDetector",

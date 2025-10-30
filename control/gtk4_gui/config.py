@@ -5,9 +5,8 @@ This module provides centralized configuration management with environment varia
 support and validation. It follows the principle of configuration over hardcoding.
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,12 +19,12 @@ class ServiceEndpoint:
     host: str
     port: int
     protocol: str = "grpc"
-    
+
     @property
     def address(self) -> str:
         """Get the full address string for connecting to this service"""
         return f"{self.host}:{self.port}"
-    
+
     @property
     def url(self) -> str:
         """Get the full URL for HTTP services"""
@@ -39,7 +38,7 @@ class ServiceEndpoint:
 
 class ServiceConfig:
     """Centralized service configuration with environment variable support"""
-    
+
     # Default service configurations
     _DEFAULTS = {
         'speech_to_text': ServiceEndpoint(
@@ -78,8 +77,8 @@ class ServiceConfig:
             protocol='postgres'
         )
     }
-    
-    def __init__(self, config_file: Optional[Path] = None):
+
+    def __init__(self, config_file: Path | None = None):
         """Initialize service configuration
         
         Args:
@@ -87,11 +86,11 @@ class ServiceConfig:
         """
         self._endpoints = self._DEFAULTS.copy()
         self._config_file = config_file
-        
+
         # Load from config file if provided
         if config_file and config_file.exists():
             self._load_from_file(config_file)
-    
+
     def get_endpoint(self, service_name: str) -> ServiceEndpoint:
         """Get endpoint configuration for a service
         
@@ -106,9 +105,9 @@ class ServiceConfig:
         """
         if service_name not in self._endpoints:
             raise KeyError(f"Unknown service: {service_name}")
-        
+
         return self._endpoints[service_name]
-    
+
     def set_endpoint(self, service_name: str, endpoint: ServiceEndpoint) -> None:
         """Set endpoint configuration for a service
         
@@ -118,12 +117,12 @@ class ServiceConfig:
         """
         self._endpoints[service_name] = endpoint
         logger.info(f"Updated {service_name} endpoint to {endpoint.address}")
-    
-    def get_all_endpoints(self) -> Dict[str, ServiceEndpoint]:
+
+    def get_all_endpoints(self) -> dict[str, ServiceEndpoint]:
         """Get all configured service endpoints"""
         return self._endpoints.copy()
-    
-    def validate_configuration(self) -> Dict[str, bool]:
+
+    def validate_configuration(self) -> dict[str, bool]:
         """Validate that all required services are configured
         
         Returns:
@@ -131,7 +130,7 @@ class ServiceConfig:
         """
         validation_results = {}
         required_services = ['speech_to_text', 'llm', 'persistence']
-        
+
         for service in required_services:
             try:
                 endpoint = self.get_endpoint(service)
@@ -142,16 +141,16 @@ class ServiceConfig:
                     endpoint.protocol in ['grpc', 'http', 'https', 'redis', 'postgres']
                 )
                 validation_results[service] = is_valid
-                
+
                 if not is_valid:
                     logger.warning(f"Invalid configuration for {service}: {endpoint}")
-                    
+
             except KeyError:
                 validation_results[service] = False
                 logger.error(f"Missing configuration for required service: {service}")
-        
+
         return validation_results
-    
+
     def _load_from_file(self, config_file: Path) -> None:
         """Load configuration from file (placeholder for future implementation)"""
         # TODO: Implement YAML/JSON config file loading
@@ -160,7 +159,7 @@ class ServiceConfig:
 
 class AppConfig:
     """Application-wide configuration settings"""
-    
+
     def __init__(self):
         # Audio recording settings
         self.audio_sample_rate = int(os.environ.get('AUDIO_SAMPLE_RATE', '16000'))
@@ -168,15 +167,15 @@ class AppConfig:
         self.audio_format = os.environ.get('AUDIO_FORMAT', 'S16_LE')
         self.audio_device = os.environ.get('AUDIO_DEVICE', 'pipewire')
         self.recording_duration = int(os.environ.get('RECORDING_DURATION', '10'))
-        
+
         # gRPC settings
         self.grpc_max_message_size = int(os.environ.get('GRPC_MAX_MESSAGE_SIZE', str(1024 * 1024 * 1024)))  # 1GB
         self.grpc_timeout = int(os.environ.get('GRPC_TIMEOUT', '30'))
-        
+
         # UI settings
         self.enable_debug_mode = os.environ.get('DEBUG_MODE', 'false').lower() == 'true'
         self.log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
-        
+
         # Service health check settings
         self.health_check_timeout = int(os.environ.get('HEALTH_CHECK_TIMEOUT', '5'))
         self.health_check_interval = int(os.environ.get('HEALTH_CHECK_INTERVAL', '30'))
@@ -202,11 +201,11 @@ def validate_all_services() -> bool:
     """
     validation_results = service_config.validate_configuration()
     all_valid = all(validation_results.values())
-    
+
     if not all_valid:
         failed_services = [name for name, valid in validation_results.items() if not valid]
         logger.error(f"Configuration validation failed for services: {failed_services}")
-    
+
     return all_valid
 
 
@@ -215,7 +214,7 @@ def log_configuration() -> None:
     logger.info("=== Service Configuration ===")
     for name, endpoint in service_config.get_all_endpoints().items():
         logger.info(f"{name}: {endpoint.protocol}://{endpoint.address}")
-    
+
     logger.info("=== App Configuration ===")
     logger.info(f"Audio: {app_config.audio_sample_rate}Hz, {app_config.audio_channels}ch, {app_config.audio_format}")
     logger.info(f"gRPC: max_message_size={app_config.grpc_max_message_size}, timeout={app_config.grpc_timeout}s")

@@ -43,6 +43,18 @@ except ImportError:
         ERROR_GUIDANCE_AVAILABLE = False
         print("⚠️ Error guidance system not available")
 
+# Import static analysis system
+try:
+    from static_analysis_manager import StaticAnalysisManager
+    STATIC_ANALYSIS_AVAILABLE = True
+except ImportError:
+    try:
+        from .static_analysis_manager import StaticAnalysisManager
+        STATIC_ANALYSIS_AVAILABLE = True
+    except ImportError:
+        STATIC_ANALYSIS_AVAILABLE = False
+        print("⚠️ Static analysis system not available")
+
 # Import monitoring system
 try:
     from monitoring import BuildPerformanceMonitor
@@ -267,6 +279,12 @@ class BuildOrchestrator:
             self.monitor = BuildPerformanceMonitor(self.project_root)
         else:
             self.monitor = None
+
+        # Initialize static analysis
+        if STATIC_ANALYSIS_AVAILABLE:
+            self.static_analyzer = StaticAnalysisManager(self.project_root / "build")
+        else:
+            self.static_analyzer = None
 
         # Load build targets
         self._load_targets()
@@ -621,6 +639,28 @@ class BuildOrchestrator:
                 duration=0.0,
                 error_message=f"Build validation failed: {'; '.join(validation_errors)}"
             )]
+
+        # STATIC ANALYSIS: Check Python code quality before building
+        if self.static_analyzer:
+            logger.info("🔍 Running static analysis on changed Python modules...")
+            python_modules = ["control/gtk4_gui", "libs/python", "services"]
+            analysis_results = self.static_analyzer.run_analysis_on_changed_modules(python_modules, auto_fix=True)
+
+            failed_modules = [module for module, result in analysis_results.items() if not result.passed]
+            if failed_modules:
+                logger.error(f"🚫 Build aborted due to static analysis failures in: {', '.join(failed_modules)}")
+                return [BuildResult(
+                    target="static_analysis",
+                    success=False,
+                    duration=sum(r.execution_time for r in analysis_results.values()),
+                    error_message=f"Static analysis failed for modules: {', '.join(failed_modules)}"
+                )]
+            elif analysis_results:
+                total_fixed = sum(r.fixed_count for r in analysis_results.values())
+                if total_fixed > 0:
+                    logger.info(f"✅ Static analysis passed, auto-fixed {total_fixed} issues")
+                else:
+                    logger.info("✅ Static analysis passed, no issues found")
 
         try:
             execution_groups = self.dependency_graph.get_execution_order(target_names)

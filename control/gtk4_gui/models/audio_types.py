@@ -6,8 +6,8 @@ Similar to TypeScript interfaces in React applications.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
 from enum import Enum
+
 
 class AudioDeviceType(Enum):
     """Audio device types."""
@@ -44,14 +44,14 @@ class AudioDevice:
     subdevices: int = 1  # Number of subdevices available on this audio device
     is_default: bool = False
     is_active: bool = False
-    volume: Optional[float] = None
+    volume: float | None = None
     is_muted: bool = False
-    
+
     @property
     def display_name(self) -> str:
         """Get display-friendly device name."""
         return self.name
-    
+
     @property
     def full_description(self) -> str:
         """Get full device description with status."""
@@ -62,26 +62,26 @@ class AudioDevice:
             status_parts.append("Active")
         if self.is_muted:
             status_parts.append("Muted")
-        
+
         status = f" • {', '.join(status_parts)}" if status_parts else ""
         return f"{self.description}{status}"
 
 @dataclass
 class AudioDeviceState:
     """State container for audio device management (like React state)."""
-    devices: List[AudioDevice]
-    current_device: Optional[AudioDevice]
+    devices: list[AudioDevice]
+    current_device: AudioDevice | None
     is_loading: bool
-    error: Optional[str]
-    last_updated: Optional[float] = None
-    
+    error: str | None
+    last_updated: float | None = None
+
     @property
     def has_devices(self) -> bool:
         """Check if any devices are available."""
         return len(self.devices) > 0
-    
+
     @property
-    def default_device(self) -> Optional[AudioDevice]:
+    def default_device(self) -> AudioDevice | None:
         """Get the default device."""
         return next((d for d in self.devices if d.is_default), None)
 
@@ -91,21 +91,21 @@ class VoiceRecordingState:
     status: VoiceRecordingStatus
     is_recording: bool
     duration: float
-    file_path: Optional[str]
+    file_path: str | None
     file_size: int
-    transcription: Optional[str]
-    error: Optional[str]
-    
+    transcription: str | None
+    error: str | None
+
     @property
     def is_active(self) -> bool:
         """Check if recording is currently active."""
         return self.status == VoiceRecordingStatus.RECORDING
-    
+
     @property
     def has_audio_data(self) -> bool:
         """Check if recording has actual audio data."""
         return self.file_size > 44  # WAV header is 44 bytes
-    
+
     @property
     def duration_display(self) -> str:
         """Get formatted duration string."""
@@ -117,16 +117,16 @@ class VoiceRecordingState:
 class AudioSystemInfo:
     """Information about the audio system."""
     audio_server: str  # "PipeWire", "PulseAudio", "ALSA"
-    default_source: Optional[str]
-    default_sink: Optional[str]
+    default_source: str | None
+    default_sink: str | None
     sample_rate: int
     buffer_size: int
-    
+
     @property
     def is_pipewire(self) -> bool:
         """Check if using PipeWire."""
         return self.audio_server.lower() == "pipewire"
-    
+
     @property
     def is_pulseaudio(self) -> bool:
         """Check if using PulseAudio."""

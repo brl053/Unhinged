@@ -8,13 +8,11 @@ Cross-platform Bluetooth monitoring using D-Bus and bluetoothctl for device disc
 pairing management, connection tracking, and adapter control capabilities.
 """
 
-import json
+import logging
 import subprocess
 import time
-import logging
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, Callable
-from pathlib import Path
+from typing import Any
 
 # Import D-Bus for BlueZ communication
 try:
@@ -39,32 +37,32 @@ class BluetoothDevice:
     connected: bool
     trusted: bool
     blocked: bool
-    rssi: Optional[int]
-    uuids: List[str]
+    rssi: int | None
+    uuids: list[str]
     adapter: str
     last_seen: float
-    
+
     def __post_init__(self):
         """Post-initialization processing"""
         # Ensure name is not empty
         if not self.name:
             self.name = self.alias or "Unknown Device"
-        
+
         # Determine device type from class if not set
         if not self.device_type:
             self.device_type = self._classify_device()
-    
+
     def _classify_device(self) -> str:
         """Classify device type based on device class and UUIDs"""
         if not self.device_class:
             return "unknown"
-        
+
         # Major device class (bits 8-12)
         major_class = (self.device_class >> 8) & 0x1F
-        
+
         device_types = {
             0x01: "computer",
-            0x02: "phone", 
+            0x02: "phone",
             0x03: "network",
             0x04: "audio",
             0x05: "peripheral",
@@ -73,7 +71,7 @@ class BluetoothDevice:
             0x08: "toy",
             0x09: "health"
         }
-        
+
         return device_types.get(major_class, "unknown")
 
 
@@ -87,10 +85,10 @@ class BluetoothAdapter:
     discoverable: bool
     pairable: bool
     discovering: bool
-    uuids: List[str]
+    uuids: list[str]
     manufacturer: int
     version: int
-    
+
     def __post_init__(self):
         """Post-initialization processing"""
         if not self.name:
@@ -108,35 +106,35 @@ class BluetoothMonitor:
     - Real-time device discovery
     - Error handling for permission issues
     """
-    
+
     def __init__(self):
         self.cache_duration = 2.0  # Cache for 2 seconds
         self._device_cache = {}
         self._adapter_cache = {}
         self._last_update = 0
-        
+
         # Performance tracking
         self._collection_count = 0
         self._error_count = 0
-        
+
         # D-Bus setup
         self._bus = None
         self._setup_dbus()
-        
+
     def _setup_dbus(self):
         """Setup D-Bus connection for BlueZ communication"""
         if not DBUS_AVAILABLE:
             logger.warning("D-Bus not available - falling back to bluetoothctl")
             return
-        
+
         try:
             self._bus = dbus.SystemBus()
             logger.debug("D-Bus system bus connected")
         except Exception as e:
             logger.warning(f"Failed to connect to D-Bus: {e}")
             self._bus = None
-    
-    def get_adapters(self) -> List[BluetoothAdapter]:
+
+    def get_adapters(self) -> list[BluetoothAdapter]:
         """Get list of Bluetooth adapters."""
         try:
             if self._bus:
@@ -147,8 +145,8 @@ class BluetoothMonitor:
             logger.error(f"Failed to get adapters: {e}")
             self._error_count += 1
             return []
-    
-    def get_devices(self, include_unpaired: bool = True) -> List[BluetoothDevice]:
+
+    def get_devices(self, include_unpaired: bool = True) -> list[BluetoothDevice]:
         """
         Get list of Bluetooth devices.
 
@@ -184,23 +182,23 @@ class BluetoothMonitor:
             logger.error(f"Failed to get devices: {e}")
             self._error_count += 1
             return []
-    
-    def _get_adapters_dbus(self) -> List[BluetoothAdapter]:
+
+    def _get_adapters_dbus(self) -> list[BluetoothAdapter]:
         """Get adapters using D-Bus"""
         adapters = []
-        
+
         try:
             manager = dbus.Interface(
                 self._bus.get_object("org.bluez", "/"),
                 "org.freedesktop.DBus.ObjectManager"
             )
-            
+
             objects = manager.GetManagedObjects()
-            
+
             for path, interfaces in objects.items():
                 if "org.bluez.Adapter1" in interfaces:
                     props = interfaces["org.bluez.Adapter1"]
-                    
+
                     adapter = BluetoothAdapter(
                         address=str(props.get("Address", "")),
                         name=str(props.get("Name", "")),
@@ -213,18 +211,18 @@ class BluetoothMonitor:
                         manufacturer=int(props.get("Manufacturer", 0)),
                         version=int(props.get("Version", 0))
                     )
-                    
+
                     adapters.append(adapter)
-                    
+
         except Exception as e:
             logger.error(f"D-Bus adapter enumeration failed: {e}")
-            
+
         return adapters
-    
-    def _get_adapters_bluetoothctl(self) -> List[BluetoothAdapter]:
+
+    def _get_adapters_bluetoothctl(self) -> list[BluetoothAdapter]:
         """Get adapters using bluetoothctl fallback"""
         adapters = []
-        
+
         try:
             result = subprocess.run(
                 ['bluetoothctl', 'show'],
@@ -232,35 +230,35 @@ class BluetoothMonitor:
                 text=True,
                 timeout=5
             )
-            
+
             if result.returncode == 0:
                 adapter_data = self._parse_bluetoothctl_show(result.stdout)
                 if adapter_data:
                     adapters.append(adapter_data)
-                    
+
         except subprocess.TimeoutExpired:
             logger.warning("bluetoothctl show timeout")
         except Exception as e:
             logger.error(f"bluetoothctl show failed: {e}")
-            
+
         return adapters
-    
-    def _get_devices_dbus(self) -> List[BluetoothDevice]:
+
+    def _get_devices_dbus(self) -> list[BluetoothDevice]:
         """Get devices using D-Bus"""
         devices = []
-        
+
         try:
             manager = dbus.Interface(
                 self._bus.get_object("org.bluez", "/"),
                 "org.freedesktop.DBus.ObjectManager"
             )
-            
+
             objects = manager.GetManagedObjects()
-            
+
             for path, interfaces in objects.items():
                 if "org.bluez.Device1" in interfaces:
                     props = interfaces["org.bluez.Device1"]
-                    
+
                     device = BluetoothDevice(
                         address=str(props.get("Address", "")),
                         name=str(props.get("Name", "")),
@@ -276,18 +274,18 @@ class BluetoothMonitor:
                         adapter=str(props.get("Adapter", "")),
                         last_seen=time.time()
                     )
-                    
+
                     devices.append(device)
-                    
+
         except Exception as e:
             logger.error(f"D-Bus device enumeration failed: {e}")
-            
+
         return devices
-    
-    def _get_devices_bluetoothctl(self) -> List[BluetoothDevice]:
+
+    def _get_devices_bluetoothctl(self) -> list[BluetoothDevice]:
         """Get devices using bluetoothctl fallback"""
         devices = []
-        
+
         try:
             result = subprocess.run(
                 ['bluetoothctl', 'devices'],
@@ -295,26 +293,26 @@ class BluetoothMonitor:
                 text=True,
                 timeout=5
             )
-            
+
             if result.returncode == 0:
                 for line in result.stdout.strip().split('\n'):
                     if line.startswith('Device '):
                         device = self._parse_bluetoothctl_device(line)
                         if device:
                             devices.append(device)
-                            
+
         except subprocess.TimeoutExpired:
             logger.warning("bluetoothctl devices timeout")
         except Exception as e:
             logger.error(f"bluetoothctl devices failed: {e}")
-            
+
         return devices
-    
-    def _parse_bluetoothctl_show(self, output: str) -> Optional[BluetoothAdapter]:
+
+    def _parse_bluetoothctl_show(self, output: str) -> BluetoothAdapter | None:
         """Parse bluetoothctl show output"""
         lines = output.strip().split('\n')
         adapter_data = {}
-        
+
         for line in lines:
             line = line.strip()
             if line.startswith('Controller '):
@@ -331,7 +329,7 @@ class BluetoothMonitor:
                 adapter_data['pairable'] = line[10:] == 'yes'
             elif line.startswith('Discovering: '):
                 adapter_data['discovering'] = line[13:] == 'yes'
-        
+
         if 'address' in adapter_data:
             return BluetoothAdapter(
                 address=adapter_data.get('address', ''),
@@ -345,16 +343,16 @@ class BluetoothMonitor:
                 manufacturer=0,
                 version=0
             )
-        
+
         return None
-    
-    def _parse_bluetoothctl_device(self, line: str) -> Optional[BluetoothDevice]:
+
+    def _parse_bluetoothctl_device(self, line: str) -> BluetoothDevice | None:
         """Parse bluetoothctl device line"""
         parts = line.split(' ', 2)
         if len(parts) >= 3:
             address = parts[1]
             name = parts[2]
-            
+
             return BluetoothDevice(
                 address=address,
                 name=name,
@@ -370,10 +368,10 @@ class BluetoothMonitor:
                 adapter="",
                 last_seen=time.time()
             )
-        
+
         return None
 
-    def _get_discovered_devices(self) -> List[BluetoothDevice]:
+    def _get_discovered_devices(self) -> list[BluetoothDevice]:
         """Get devices discovered through active scanning with multiple methods."""
         devices = []
 
@@ -432,7 +430,7 @@ class BluetoothMonitor:
 
         return devices
 
-    def _get_discovered_devices_dbus(self) -> List[BluetoothDevice]:
+    def _get_discovered_devices_dbus(self) -> list[BluetoothDevice]:
         """Get discovered devices using D-Bus (more reliable than hcitool)."""
         devices = []
 
@@ -487,7 +485,7 @@ class BluetoothMonitor:
                 # Get the first adapter
                 adapters = self.get_adapters()
                 if adapters:
-                    adapter_path = f"/org/bluez/hci0"  # Assume hci0 for now
+                    adapter_path = "/org/bluez/hci0"  # Assume hci0 for now
                     adapter = dbus.Interface(
                         self._bus.get_object("org.bluez", adapter_path),
                         "org.bluez.Adapter1"
@@ -514,7 +512,7 @@ class BluetoothMonitor:
                 logger.debug(f"bluetoothctl discovery start failed: {e}")
 
         return success
-    
+
     def stop_discovery(self) -> bool:
         """Stop device discovery using multiple methods"""
         success = False
@@ -522,7 +520,7 @@ class BluetoothMonitor:
         # Try D-Bus method first
         if self._bus:
             try:
-                adapter_path = f"/org/bluez/hci0"  # Assume hci0 for now
+                adapter_path = "/org/bluez/hci0"  # Assume hci0 for now
                 adapter = dbus.Interface(
                     self._bus.get_object("org.bluez", adapter_path),
                     "org.bluez.Adapter1"
@@ -549,8 +547,8 @@ class BluetoothMonitor:
                 logger.debug(f"bluetoothctl discovery stop failed: {e}")
 
         return success
-    
-    def get_statistics(self) -> Dict[str, Any]:
+
+    def get_statistics(self) -> dict[str, Any]:
         """Get monitoring statistics."""
         return {
             'dbus_available': DBUS_AVAILABLE,
@@ -562,12 +560,12 @@ class BluetoothMonitor:
 
 
 # Convenience functions for easy access
-def get_bluetooth_adapters() -> List[BluetoothAdapter]:
+def get_bluetooth_adapters() -> list[BluetoothAdapter]:
     """Get list of Bluetooth adapters."""
     monitor = BluetoothMonitor()
     return monitor.get_adapters()
 
-def get_bluetooth_devices(include_unpaired: bool = True) -> List[BluetoothDevice]:
+def get_bluetooth_devices(include_unpaired: bool = True) -> list[BluetoothDevice]:
     """Get list of Bluetooth devices."""
     monitor = BluetoothMonitor()
     return monitor.get_devices(include_unpaired)
@@ -587,33 +585,33 @@ if __name__ == "__main__":
     # Test the Bluetooth monitor
     print("🔵 Testing Bluetooth Monitor")
     print("=" * 40)
-    
+
     monitor = BluetoothMonitor()
-    
+
     # Test adapter list
     print("📡 Getting Bluetooth adapters...")
     adapters = monitor.get_adapters()
     print(f"✅ Found {len(adapters)} adapter(s)")
-    
+
     for adapter in adapters:
         print(f"  📡 {adapter.name} ({adapter.address})")
         print(f"     Powered: {adapter.powered}, Discoverable: {adapter.discoverable}")
-    
+
     # Test device list
     print("\n🔵 Getting Bluetooth devices...")
     devices = monitor.get_devices()
     print(f"✅ Found {len(devices)} device(s)")
-    
+
     for device in devices:
         status = "Connected" if device.connected else "Paired" if device.paired else "Discovered"
         print(f"  🔵 {device.name} ({device.address})")
         print(f"     Type: {device.device_type}, Status: {status}")
-    
+
     # Test statistics
     stats = monitor.get_statistics()
-    print(f"\n📊 Statistics:")
+    print("\n📊 Statistics:")
     print(f"  D-Bus Available: {stats['dbus_available']}")
     print(f"  Collections: {stats['collection_count']}")
     print(f"  Errors: {stats['error_count']}")
-    
+
     print("✅ Bluetooth monitor test completed")

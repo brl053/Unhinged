@@ -5,20 +5,22 @@ Creates gRPC clients using the generated protobuf code from /proto.
 Provides a centralized way to create and configure gRPC connections.
 """
 
-import grpc
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
+
+import grpc
+
 
 class GrpcClientFactory:
     """Factory for creating gRPC clients using generated protobuf code."""
-    
-    def __init__(self, project_root: Optional[Path] = None):
+
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or self._find_project_root()
         self._ensure_protobuf_clients_in_path()
-        self._clients_cache: Dict[str, Any] = {}
-    
+        self._clients_cache: dict[str, Any] = {}
+
     def _find_project_root(self) -> Path:
         """Find the project root directory."""
         current = Path(__file__).parent
@@ -27,15 +29,15 @@ class GrpcClientFactory:
                 return current
             current = current.parent
         raise RuntimeError("Could not find project root with proto/ and generated/ directories")
-    
+
     def _ensure_protobuf_clients_in_path(self):
         """Ensure generated protobuf clients are in Python path."""
         protobuf_clients = self.project_root / "generated" / "python" / "clients"
         if protobuf_clients.exists() and str(protobuf_clients) not in sys.path:
             sys.path.insert(0, str(protobuf_clients))
-    
+
     @contextmanager
-    def create_channel(self, address: str, options: Optional[list] = None):
+    def create_channel(self, address: str, options: list | None = None):
         """Create a gRPC channel with proper cleanup and increased message size limits."""
         # Default options for large message support (256MB for long audio recordings)
         MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
@@ -53,7 +55,7 @@ class GrpcClientFactory:
             yield channel
         finally:
             channel.close()
-    
+
     def create_audio_client(self, address: str = 'localhost:9091'):
         """Create an AudioService gRPC client with large message support."""
         try:
@@ -80,12 +82,12 @@ class GrpcClientFactory:
         except ImportError as e:
             raise RuntimeError(f"Failed to import audio protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
-    
+
     def create_llm_client(self, address: str = 'localhost:9092'):
         """Create an LLM service gRPC client."""
         try:
             from unhinged_proto_clients import llm_pb2_grpc
-            
+
             if address not in self._clients_cache:
                 channel = grpc.insecure_channel(address)
                 client = llm_pb2_grpc.LLMServiceStub(channel)
@@ -94,13 +96,13 @@ class GrpcClientFactory:
                     'channel': channel,
                     'service_type': 'llm'
                 }
-            
+
             return self._clients_cache[address]['client']
-            
+
         except ImportError as e:
             raise RuntimeError(f"Failed to import LLM protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
-    
+
     def create_vision_client(self, address: str = 'localhost:9093'):
         """Create a Vision AI service gRPC client."""
         try:
@@ -147,7 +149,7 @@ class GrpcClientFactory:
         except ImportError as e:
             raise RuntimeError(f"Failed to import Image Generation protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
-    
+
     def create_chat_client(self, address: str = 'localhost:9095'):
         """Create a Chat service gRPC client."""
         try:
@@ -230,14 +232,14 @@ class GrpcClientFactory:
         except ImportError as e:
             raise RuntimeError(f"Failed to import Health protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
-    
+
     def close_all_connections(self):
         """Close all cached gRPC connections."""
         for cached_client in self._clients_cache.values():
             if 'channel' in cached_client:
                 cached_client['channel'].close()
         self._clients_cache.clear()
-    
+
     def get_protobuf_modules(self):
         """Get all available protobuf modules for debugging."""
         try:
@@ -246,28 +248,28 @@ class GrpcClientFactory:
                 'audio_pb2': audio_pb2,
                 'common_pb2': common_pb2
             }
-            
+
             # Try to import optional modules
             try:
                 from unhinged_proto_clients import llm_pb2
                 modules['llm_pb2'] = llm_pb2
             except ImportError:
                 pass
-                
+
             try:
                 from unhinged_proto_clients import vision_pb2
                 modules['vision_pb2'] = vision_pb2
             except ImportError:
                 pass
-                
+
             try:
                 from unhinged_proto_clients.health import health_pb2
                 modules['health_pb2'] = health_pb2
             except ImportError:
                 pass
-            
+
             return modules
-            
+
         except ImportError as e:
             raise RuntimeError(f"No protobuf clients found: {e}")
 

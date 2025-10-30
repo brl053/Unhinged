@@ -9,32 +9,31 @@ Integrates with the build system and provides REST API for image generation.
 @llm-does REST API for sovereign image generation without corporate APIs
 """
 
-import asyncio
 import logging
-import time
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any
 
 try:
-    from fastapi import FastAPI, HTTPException, BackgroundTasks
+    import uvicorn
+    from fastapi import BackgroundTasks, FastAPI, HTTPException
     from fastapi.responses import FileResponse, JSONResponse
     from pydantic import BaseModel
-    import uvicorn
 except ImportError:
     print("⚠️ FastAPI dependencies not available. Install with: pip install fastapi uvicorn")
     exit(1)
 
 # Import our sovereign image generation module
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "build"))
 
 try:
     from modules.image_generation import (
-        SovereignImageGenerator, 
-        ImageGenerationConfig,
         GenerationRequest,
-        GenerationResult
+        GenerationResult,
+        ImageGenerationConfig,
+        SovereignImageGenerator,
     )
 except ImportError as e:
     print(f"⚠️ Image generation module not available: {e}")
@@ -48,19 +47,19 @@ class ImageGenerationAPIRequest(BaseModel):
     height: int = 1024
     num_inference_steps: int = 25
     guidance_scale: float = 7.5
-    seed: Optional[int] = None
+    seed: int | None = None
     batch_size: int = 1
 
 class ImageGenerationAPIResponse(BaseModel):
     success: bool
     message: str
-    images: List[str] = []  # File paths or base64 encoded images
+    images: list[str] = []  # File paths or base64 encoded images
     generation_time: float = 0.0
-    parameters: Dict[str, Any] = {}
-    seed: Optional[int] = None
+    parameters: dict[str, Any] = {}
+    seed: int | None = None
 
 class BatchGenerationRequest(BaseModel):
-    prompts: List[str]
+    prompts: list[str]
     negative_prompt: str = ""
     width: int = 1024
     height: int = 1024
@@ -68,17 +67,17 @@ class BatchGenerationRequest(BaseModel):
     guidance_scale: float = 7.5
 
 # Global generator instance
-generator: Optional[SovereignImageGenerator] = None
+generator: SovereignImageGenerator | None = None
 output_dir = Path("/output/images")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize and cleanup the image generator."""
     global generator
-    
+
     # Startup
     logging.info("🚀 Starting Image Generation Service")
-    
+
     try:
         # Initialize generator with production config
         config = ImageGenerationConfig(
@@ -88,24 +87,24 @@ async def lifespan(app: FastAPI):
             enable_xformers=torch.cuda.is_available(),
             cache_dir=Path.home() / ".cache" / "huggingface"
         )
-        
+
         generator = SovereignImageGenerator(config)
-        
+
         # Pre-load model for faster first generation
         if generator.load_model():
             logging.info("✅ Image generator initialized and model loaded")
         else:
             logging.warning("⚠️ Image generator initialized but model loading failed")
-            
+
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
     except Exception as e:
         logging.error(f"❌ Failed to initialize image generator: {e}")
         generator = None
-    
+
     yield
-    
+
     # Shutdown
     logging.info("🛑 Shutting down Image Generation Service")
     if generator:
@@ -135,7 +134,7 @@ async def health_check():
     """Health check endpoint."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
-    
+
     stats = generator.get_stats()
     return {
         "status": "healthy",
@@ -150,7 +149,7 @@ async def generate_image(request: ImageGenerationAPIRequest, background_tasks: B
     """Generate a single image or batch of images."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
-    
+
     try:
         # Convert API request to internal request
         gen_request = GenerationRequest(
@@ -163,13 +162,13 @@ async def generate_image(request: ImageGenerationAPIRequest, background_tasks: B
             seed=request.seed,
             batch_size=request.batch_size
         )
-        
+
         # Generate image(s)
         result = generator.generate(gen_request)
-        
+
         # Save images to disk
         saved_paths = generator.save_result(result, output_dir, "api_generated")
-        
+
         # Return response
         return ImageGenerationAPIResponse(
             success=True,
@@ -179,7 +178,7 @@ async def generate_image(request: ImageGenerationAPIRequest, background_tasks: B
             parameters=result.parameters,
             seed=result.seed
         )
-        
+
     except Exception as e:
         logging.error(f"❌ Image generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
@@ -189,7 +188,7 @@ async def generate_batch(request: BatchGenerationRequest):
     """Generate multiple images from multiple prompts."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
-    
+
     try:
         # Generate batch
         results = generator.generate_batch(
@@ -200,16 +199,16 @@ async def generate_batch(request: BatchGenerationRequest):
             num_inference_steps=request.num_inference_steps,
             guidance_scale=request.guidance_scale
         )
-        
+
         # Save all results
         all_paths = []
         total_time = 0.0
-        
+
         for i, result in enumerate(results):
             saved_paths = generator.save_result(result, output_dir, f"batch_{i}")
             all_paths.extend(saved_paths)
             total_time += result.generation_time
-        
+
         return {
             "success": True,
             "message": f"Generated {len(all_paths)} images from {len(request.prompts)} prompts",
@@ -217,7 +216,7 @@ async def generate_batch(request: BatchGenerationRequest):
             "total_generation_time": total_time,
             "average_time_per_image": total_time / len(all_paths) if all_paths else 0
         }
-        
+
     except Exception as e:
         logging.error(f"❌ Batch generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Batch generation failed: {str(e)}")
@@ -226,10 +225,10 @@ async def generate_batch(request: BatchGenerationRequest):
 async def get_image(filename: str):
     """Serve generated images."""
     image_path = output_dir / filename
-    
+
     if not image_path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
-    
+
     return FileResponse(image_path)
 
 @app.get("/stats")
@@ -237,7 +236,7 @@ async def get_stats():
     """Get generation statistics."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
-    
+
     return generator.get_stats()
 
 @app.post("/clear-cache")
@@ -245,7 +244,7 @@ async def clear_cache():
     """Clear GPU memory cache."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
-    
+
     generator.clear_cache()
     return {"message": "Cache cleared successfully"}
 
@@ -265,13 +264,13 @@ async def list_models():
 # Development server
 if __name__ == "__main__":
     import torch
-    
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    
+
     # Run server
     uvicorn.run(
         "image_gen_service:app",
