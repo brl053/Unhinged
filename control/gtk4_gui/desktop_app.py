@@ -515,11 +515,11 @@ class UnhingedDesktopApp(Adw.Application):
             if hasattr(self, 'session_logger') and self.session_logger:
                 self.session_logger.log_gui_event("RECORDING_STATE_CHANGED", f"Recording state: {state}")
 
-            # Update UI based on state
+            # Update UI based on state - minimal feedback
             if state.name == "RECORDING":
-                self.show_toast("🎤 Recording...")
+                pass  # Visual feedback handled by button state
             elif state.name == "PROCESSING":
-                self.show_toast("🔄 Processing...")
+                pass  # Visual feedback handled by button state
             elif state.name == "IDLE":
                 pass  # Will be handled by result or error callback
 
@@ -533,26 +533,26 @@ class UnhingedDesktopApp(Adw.Application):
                 # Route to chatroom if it's active
                 if hasattr(self, 'chatroom_view') and self.chatroom_view:
                     self.chatroom_view.add_voice_transcript(transcript)
-                    self.show_toast(f"✅ Transcribed: {transcript[:50]}...")
+                    # No toast needed - user can see transcript was added
                 else:
                     # Fallback: show in toast
-                    self.show_toast(f"📝 Transcript: {transcript}")
+                    self.show_toast(f"Transcript: {transcript}")
 
                 # Log successful transcription
                 if hasattr(self, 'session_logger') and self.session_logger:
                     self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}")
             else:
-                self.show_toast("⚠️ No transcription received")
+                self.show_toast("No transcription received")
 
         except Exception as e:
             print(f"❌ Transcription result error: {e}")
-            self.show_toast(f"❌ Transcription error: {e}")
+            self.show_toast(f"Transcription error: {e}")
 
     def _on_audio_error(self, error):
         """Handle audio errors from AudioHandler"""
         try:
             error_msg = str(error)
-            self.show_toast(f"❌ Audio error: {error_msg}")
+            self.show_toast(f"Audio error: {error_msg}")
 
             if hasattr(self, 'session_logger') and self.session_logger:
                 self.session_logger.log_gui_event("AUDIO_ERROR", error_msg)

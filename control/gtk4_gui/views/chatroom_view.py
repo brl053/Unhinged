@@ -27,6 +27,7 @@ except ImportError:
 # Import component library
 try:
     from ..components import TextEditor, ActionButton
+    from ..components.voice_visualizer import VoiceVisualizerFactory
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
@@ -53,6 +54,9 @@ class ChatroomView:
         self._is_recording = False
         self._recording_timer_id = None
         self._recording_start_time = None
+
+        # Voice visualization
+        self._voice_visualizer = None
         
     def create_content(self):
         """Create the OS Chatroom tab content with design system layout utilities."""
@@ -131,6 +135,15 @@ class ChatroomView:
         text_editor_widget.set_hexpand(True)
         input_row.append(text_editor_widget)
 
+        # Create voice recording section with visualizer
+        voice_section = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        voice_section.set_valign(Gtk.Align.END)
+
+        # Create voice visualizer
+        if COMPONENTS_AVAILABLE:
+            self._voice_visualizer = VoiceVisualizerFactory.create_recording_indicator(compact=True)
+            voice_section.append(self._voice_visualizer)
+
         # Create Voice button for chatroom
         if COMPONENTS_AVAILABLE:
             self._chatroom_voice_button = ActionButton(
@@ -141,16 +154,16 @@ class ChatroomView:
             # Connect to click event for toggle recording
             self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
             voice_widget = self._chatroom_voice_button.get_widget()
-            voice_widget.set_valign(Gtk.Align.END)  # Align to bottom of text editor
             voice_widget.set_tooltip_text("Click to start/stop recording")
-            input_row.append(voice_widget)
+            voice_section.append(voice_widget)
         else:
             self._chatroom_voice_button = Gtk.Button()
             self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
             self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
-            self._chatroom_voice_button.set_valign(Gtk.Align.END)
             self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-            input_row.append(self._chatroom_voice_button)
+            voice_section.append(self._chatroom_voice_button)
+
+        input_row.append(voice_section)
 
         # Create Send button
         self._chatroom_send_button = Gtk.Button(label="Send")
@@ -244,8 +257,12 @@ class ChatroomView:
             # Start recording timer (always show timer regardless of backend)
             self._start_recording_timer()
 
-            # Show feedback
-            self.app.show_toast("🎤 Recording... (click to stop)")
+            # Update voice visualizer
+            if self._voice_visualizer:
+                self._voice_visualizer.set_recording_state(True)
+
+            # Show minimal feedback
+            self.app.show_toast("Recording...")
 
             # Log event
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
@@ -282,8 +299,13 @@ class ChatroomView:
             # Stop timer
             self._stop_recording_timer()
 
-            # Show feedback
-            self.app.show_toast("🔄 Processing recording...")
+            # Update voice visualizer
+            if self._voice_visualizer:
+                self._voice_visualizer.set_recording_state(False)
+                self._voice_visualizer.set_processing_state(True)
+
+            # Show minimal feedback
+            self.app.show_toast("Processing...")
 
             # Log event
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
@@ -313,7 +335,7 @@ class ChatroomView:
                     seconds = int(elapsed % 60)
 
                     # Update button tooltip with timer
-                    timer_text = f"🎤 Recording {minutes:02d}:{seconds:02d} (click to stop)"
+                    timer_text = f"Recording {minutes:02d}:{seconds:02d} (click to stop)"
 
                     if hasattr(self._chatroom_voice_button, 'set_tooltip_text'):
                         self._chatroom_voice_button.set_tooltip_text(timer_text)
@@ -590,8 +612,11 @@ class ChatroomView:
             # Enable send button
             self._chatroom_send_button.set_sensitive(True)
 
-            if hasattr(self.app, 'show_toast'):
-                self.app.show_toast("Voice transcript added to chat")
+            # Reset voice visualizer
+            if self._voice_visualizer:
+                self._voice_visualizer.set_processing_state(False)
+
+            # Remove redundant toast - user can see transcript was added
 
         except Exception as e:
             print(f"❌ Add voice transcript error: {e}")
