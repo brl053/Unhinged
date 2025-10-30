@@ -55,11 +55,19 @@ class UIController:
         self._add_stack_pages()
         
         # Create sidebar navigation
-        sidebar = self.create_sidebar_navigation()
-        
-        # Set up navigation split view
-        self.app.navigation_split_view.set_sidebar(sidebar)
-        self.app.navigation_split_view.set_content(self.app.content_stack)
+        sidebar_content = self.create_sidebar_navigation()
+
+        # Wrap sidebar in NavigationPage (required by NavigationSplitView)
+        sidebar_page = Adw.NavigationPage.new(sidebar_content, "Navigation")
+        sidebar_page.set_title("Navigation")
+
+        # Wrap content stack in NavigationPage
+        content_page = Adw.NavigationPage.new(self.app.content_stack, "Content")
+        content_page.set_title("Content")
+
+        # Set up navigation split view with wrapped pages
+        self.app.navigation_split_view.set_sidebar(sidebar_page)
+        self.app.navigation_split_view.set_content(content_page)
         
         # Set default page
         self.app.content_stack.set_visible_child_name("main")

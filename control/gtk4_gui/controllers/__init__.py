@@ -9,8 +9,14 @@ Controllers handle specific aspects of the application:
 This extraction supports the 75% → 90% reduction targets.
 """
 
-from .ui_controller import UIController
-from .content_controller import ContentController
-from .action_controller import ActionController
+try:
+    from .ui_controller import UIController
+    from .content_controller import ContentController
+    from .action_controller import ActionController
+except ImportError:
+    # Fallback for when running as script
+    from ui_controller import UIController
+    from content_controller import ContentController
+    from action_controller import ActionController
 
 __all__ = ['UIController', 'ContentController', 'ActionController']

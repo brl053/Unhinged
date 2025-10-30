@@ -213,7 +213,11 @@ class UnhingedDesktopApp(Adw.Application):
     def _init_controllers(self):
         """Initialize all controllers"""
         try:
-            from .controllers import UIController, ContentController, ActionController
+            try:
+                from .controllers import UIController, ContentController, ActionController
+            except ImportError:
+                # Fallback for when running as script
+                from controllers import UIController, ContentController, ActionController
 
             self.ui_controller = UIController(self)
             self.content_controller = ContentController(self)
