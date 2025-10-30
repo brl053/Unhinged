@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761827638.5823102,
-    "updated_iso": "2025-10-30 05:33:58",
+    "updated": 1761827839.9085023,
+    "updated_iso": "2025-10-30 05:37:19",
     "version": "1.0"
   },
   "checksums": {
@@ -81,7 +81,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "937abf6e869f3a5e56b541393e8208d65a70ba3bc74e5cfdc9a2b98b042ca4ca",
+      "code_checksums.json": "98ea925b1b8a4cefad1deb9ea45942aebdfc2919271a6c46a336054c39ec3a56",
       "static_analysis_results.json": "b8920775926ff2e354bbf0aa6a4463d4c6e06a49ee5bff444decfc9f1238ff3f",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
@@ -19959,7 +19959,7 @@
       "service_framework/__init__.py": "438529e8abcb28a8b97098c4e7ca08f8b9788c1d7c346b13a38989655145c878",
       "service_framework/intent_detector.py": "fed13711cca8d0404b6b6dc9d9fa429d6d725fceac256a6e4c36cfa8d63623f5",
       "service_framework/resource_manager.py": "42df8f67ffc9374bd8cd8fd9eff4f925342a9472277c4b433dd9735d755dcedd",
-      "service_framework/connection_pool.py": "d062d467f0bbbfabe44adb56604722b8b4ee260a2a3f872c167572703bc87563"
+      "service_framework/connection_pool.py": "aa739c2c87007c90f5174b294f5ea4aeb788b4e37bdb2a93e9bc52e7701f8f83"
     },
     "services": {
       "image_gen_service.py": "24652299a7799c56cd836d246bd65b4d23ffe92eee64427b69c8ed19caced0d6",

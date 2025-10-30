@@ -27,7 +27,7 @@ from .base import BaseComponent
 try:
     from unhinged_proto_clients import chat_pb2
 
-    from libs.python.grpc.client_factory import create_chat_client
+    from libs.python.grpc_clients.client_factory import create_chat_client
     GRPC_AVAILABLE = True
 except ImportError:
     GRPC_AVAILABLE = False
