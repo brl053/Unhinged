@@ -629,8 +629,9 @@ class ChatroomView:
             print(f"❌ Handle LLM error: {e}")
 
     def add_voice_transcript(self, transcript):
-        """Add voice transcript to chat input (called from parent app)"""
+        """Add voice transcript and automatically send it (called from parent app)"""
         try:
+            # Set transcript in input field
             if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
                 current_text = self._chat_input.get_content()
                 if current_text.strip():
@@ -653,9 +654,6 @@ class ChatroomView:
 
                 buffer.set_text(new_text)
 
-            # Enable send button
-            self._chatroom_send_button.set_sensitive(True)
-
             # Reset voice visualizer and status
             if self._voice_visualizer:
                 self._voice_visualizer.set_processing_state(False)
@@ -664,9 +662,22 @@ class ChatroomView:
             if self._recording_status_label:
                 self._recording_status_label.set_visible(False)
 
-            # Remove redundant toast - user can see transcript was added
+            # Automatically send the transcribed message using GLib.idle_add for proper UI thread handling
+            from gi.repository import GLib
+            GLib.idle_add(self._auto_send_transcript)
 
         except Exception as e:
             print(f"❌ Add voice transcript error: {e}")
             if hasattr(self.app, 'show_toast'):
                 self.app.show_toast(f"Transcript: {transcript}")
+
+    def _auto_send_transcript(self):
+        """Automatically send the transcribed message (called via GLib.idle_add)"""
+        try:
+            # Trigger the send button click to properly add message to chat history
+            if self._chatroom_send_button and self._chatroom_send_button.get_sensitive():
+                self._on_chatroom_send_clicked(self._chatroom_send_button)
+            return False  # Don't repeat this idle callback
+        except Exception as e:
+            print(f"❌ Auto send transcript error: {e}")
+            return False

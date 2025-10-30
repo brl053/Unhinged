@@ -1,0 +1,490 @@
+// ============================================================================
+// Image Generation Service Protocol Buffer Definition
+// ============================================================================
+//
+// @file image_generation.proto
+// @version 1.0.0
+// @author Unhinged Team
+// @date 2025-01-30
+// @description gRPC service definition for sovereign image generation
+//
+// This service provides:
+// - Text-to-Image generation with Stable Diffusion models
+// - Batch image generation with queue management
+// - Model management and switching
+// - Generation progress streaming
+// - Image metadata and storage management
+//
+// DRY Benefits:
+// - Uses common.proto for streaming, usage metrics, pagination
+// - Standardized error handling and health checks
+// - Universal attachment support for generated images
+// ============================================================================
+
+syntax = "proto3";
+
+package unhinged.image_generation.v1;
+
+import "common.proto";
+
+option java_package = "unhinged.image_generation";
+option java_multiple_files = true;
+option java_outer_classname = "ImageGenerationProto";
+
+// ============================================================================
+// Image Generation Service Definition
+// ============================================================================
+
+/**
+ * Sovereign image generation service
+ * 
+ * Provides direct metal image generation without corporate APIs
+ * Optimized for RTX 5070 Ti with 16GB VRAM
+ */
+service ImageGenerationService {
+  // Single image generation (streaming progress)
+  rpc GenerateImage(GenerateImageRequest) returns (stream common.v1.StreamChunk);
+  
+  // Batch image generation
+  rpc GenerateBatch(GenerateBatchRequest) returns (stream common.v1.StreamChunk);
+  
+  // Model management
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  rpc GetModel(GetModelRequest) returns (GetModelResponse);
+  rpc LoadModel(LoadModelRequest) returns (LoadModelResponse);
+  rpc UnloadModel(UnloadModelRequest) returns (UnloadModelResponse);
+  
+  // Generation history and management
+  rpc ListGenerations(ListGenerationsRequest) returns (ListGenerationsResponse);
+  rpc GetGeneration(GetGenerationRequest) returns (GetGenerationResponse);
+  rpc DeleteGeneration(DeleteGenerationRequest) returns (DeleteGenerationResponse);
+  
+  // Service management
+  rpc GetServiceStatus(GetServiceStatusRequest) returns (GetServiceStatusResponse);
+  rpc ClearCache(ClearCacheRequest) returns (ClearCacheResponse);
+  
+  // Standard health check
+  rpc HealthCheck(common.v1.HealthCheckRequest) returns (common.v1.HealthCheckResponse);
+}
+
+// ============================================================================
+// Core Message Types
+// ============================================================================
+
+/**
+ * Image generation request
+ */
+message GenerateImageRequest {
+  string prompt = 1;
+  string negative_prompt = 2;
+  
+  // Image dimensions
+  int32 width = 3;                      // Default: 1024
+  int32 height = 4;                     // Default: 1024
+  
+  // Generation parameters
+  int32 num_inference_steps = 5;        // Default: 25
+  float guidance_scale = 6;             // Default: 7.5
+  int64 seed = 7;                       // Optional: random if not set
+  int32 batch_size = 8;                 // Default: 1, Max: 4 for RTX 5070 Ti
+  
+  // Model and quality settings
+  string model_id = 9;                  // Optional: use default if not set
+  ImageQuality quality = 10;            // Quality preset
+  
+  // Output options
+  ImageFormat output_format = 11;       // Default: PNG
+  bool save_to_disk = 12;               // Default: true
+  string output_directory = 13;         // Optional: use default if not set
+  
+  // Advanced options
+  repeated ImageEffect effects = 14;    // Post-processing effects
+  GenerationOptions options = 15;       // Advanced generation options
+}
+
+/**
+ * Batch generation request
+ */
+message GenerateBatchRequest {
+  repeated string prompts = 1;          // Multiple prompts to generate
+  string negative_prompt = 2;           // Applied to all prompts
+  
+  // Shared parameters (applied to all generations)
+  int32 width = 3;
+  int32 height = 4;
+  int32 num_inference_steps = 5;
+  float guidance_scale = 6;
+  string model_id = 7;
+  ImageQuality quality = 8;
+  ImageFormat output_format = 9;
+  
+  // Batch options
+  int32 max_concurrent = 10;            // Max concurrent generations
+  bool randomize_seeds = 11;            // Use different seeds for each
+  repeated int64 seeds = 12;            // Specific seeds (optional)
+}
+
+/**
+ * Image generation response (final result)
+ */
+message GenerateImageResponse {
+  common.v1.StandardResponse response = 1;
+  
+  repeated GeneratedImage images = 2;
+  GenerationMetadata metadata = 3;
+  common.v1.UsageMetrics usage = 4;     // Compute usage metrics
+}
+
+/**
+ * Generated image with metadata
+ */
+message GeneratedImage {
+  common.v1.ResourceMetadata metadata = 1;  // Standard resource metadata
+  
+  string image_id = 2;                  // Unique identifier
+  common.v1.Attachment image_data = 3;  // Image file attachment
+  
+  // Generation parameters used
+  string prompt = 4;
+  string negative_prompt = 5;
+  int32 width = 6;
+  int32 height = 7;
+  int64 seed = 8;
+  string model_used = 9;
+  
+  // Quality metrics
+  float generation_time_seconds = 10;
+  ImageQualityMetrics quality_metrics = 11;
+  
+  // File information
+  string file_path = 12;                // Local file path
+  int64 file_size_bytes = 13;
+  string file_hash = 14;                // SHA256 hash
+}
+
+/**
+ * Image quality levels
+ */
+enum ImageQuality {
+  IMAGE_QUALITY_UNSPECIFIED = 0;
+  IMAGE_QUALITY_DRAFT = 1;              // 10-15 steps, fast
+  IMAGE_QUALITY_STANDARD = 2;           // 20-25 steps, balanced
+  IMAGE_QUALITY_HIGH = 3;               // 30-40 steps, high quality
+  IMAGE_QUALITY_ULTRA = 4;              // 50+ steps, maximum quality
+}
+
+/**
+ * Supported image formats
+ */
+enum ImageFormat {
+  IMAGE_FORMAT_UNSPECIFIED = 0;
+  IMAGE_FORMAT_PNG = 1;                 // Lossless, default
+  IMAGE_FORMAT_JPEG = 2;                // Compressed, smaller files
+  IMAGE_FORMAT_WEBP = 3;                // Modern format, good compression
+  IMAGE_FORMAT_TIFF = 4;                // High quality, large files
+}
+
+/**
+ * Image post-processing effects
+ */
+message ImageEffect {
+  ImageEffectType type = 1;
+  float intensity = 2;                  // 0.0 to 1.0
+  map<string, string> parameters = 3;   // Effect-specific parameters
+}
+
+/**
+ * Available image effects
+ */
+enum ImageEffectType {
+  IMAGE_EFFECT_TYPE_UNSPECIFIED = 0;
+  IMAGE_EFFECT_TYPE_UPSCALE = 1;        // AI upscaling
+  IMAGE_EFFECT_TYPE_SHARPEN = 2;        // Sharpening filter
+  IMAGE_EFFECT_TYPE_DENOISE = 3;        // Noise reduction
+  IMAGE_EFFECT_TYPE_COLOR_ENHANCE = 4;  // Color enhancement
+  IMAGE_EFFECT_TYPE_CONTRAST = 5;       // Contrast adjustment
+}
+
+/**
+ * Advanced generation options
+ */
+message GenerationOptions {
+  bool enable_safety_checker = 1;       // NSFW content filtering
+  bool enable_watermark = 2;            // Add generation watermark
+  float clip_skip = 3;                  // CLIP skip parameter
+  string scheduler = 4;                 // Scheduler type (DPMSolver++, DDIM, etc.)
+  
+  // Memory optimization
+  bool enable_cpu_offload = 5;          // CPU offloading for large models
+  bool enable_attention_slicing = 6;    // Memory efficient attention
+  bool enable_vae_slicing = 7;          // VAE memory optimization
+}
+
+/**
+ * Generation metadata
+ */
+message GenerationMetadata {
+  string generation_id = 1;
+  string model_used = 2;
+  string scheduler_used = 3;
+  
+  // Performance metrics
+  float total_time_seconds = 4;
+  float inference_time_seconds = 5;
+  float vae_decode_time_seconds = 6;
+  
+  // Hardware utilization
+  float gpu_memory_used_gb = 7;
+  float gpu_utilization_percent = 8;
+  int32 gpu_temperature_celsius = 9;
+  
+  // Generation statistics
+  int32 total_images = 10;
+  int32 successful_images = 11;
+  int32 failed_images = 12;
+}
+
+/**
+ * Image quality assessment metrics
+ */
+message ImageQualityMetrics {
+  float aesthetic_score = 1;            // 0.0 to 1.0, AI-assessed aesthetics
+  float technical_quality = 2;          // 0.0 to 1.0, technical quality
+  bool has_artifacts = 3;               // Detected generation artifacts
+  float color_diversity = 4;            // Color palette diversity
+  float detail_level = 5;               // Level of detail in image
+}
+
+// ============================================================================
+// Streaming Payload Types
+// ============================================================================
+
+/**
+ * Generation progress payload
+ * Used with common.v1.StreamChunk for progress updates
+ */
+message GenerationProgressPayload {
+  string generation_id = 1;
+  GenerationStage stage = 2;
+  float progress_percent = 3;           // 0.0 to 100.0
+  string status_message = 4;
+  
+  // Stage-specific information
+  int32 current_step = 5;
+  int32 total_steps = 6;
+  float estimated_time_remaining = 7;   // Seconds
+  
+  // Preview image (optional, low resolution)
+  common.v1.Attachment preview_image = 8;
+}
+
+/**
+ * Generation stages
+ */
+enum GenerationStage {
+  GENERATION_STAGE_UNSPECIFIED = 0;
+  GENERATION_STAGE_INITIALIZING = 1;    // Loading model, preparing
+  GENERATION_STAGE_ENCODING = 2;        // Text encoding (CLIP)
+  GENERATION_STAGE_DENOISING = 3;       // Main diffusion process
+  GENERATION_STAGE_DECODING = 4;        // VAE decoding to image
+  GENERATION_STAGE_POST_PROCESSING = 5; // Effects, upscaling
+  GENERATION_STAGE_SAVING = 6;          // Saving to disk
+  GENERATION_STAGE_COMPLETE = 7;        // Generation finished
+  GENERATION_STAGE_ERROR = 8;           // Generation failed
+}
+
+// ============================================================================
+// Model Management
+// ============================================================================
+
+/**
+ * Available model information
+ */
+message ModelInfo {
+  common.v1.ResourceMetadata metadata = 1;
+  
+  string model_id = 2;
+  string name = 3;
+  string description = 4;
+  string version = 5;
+  
+  // Model specifications
+  ModelType type = 6;
+  repeated int32 supported_resolutions = 7;  // [512, 768, 1024, etc.]
+  string base_model = 8;                     // "SD 1.5", "SDXL", etc.
+  
+  // Resource requirements
+  int64 memory_required_gb = 9;
+  bool supports_fp16 = 10;
+  bool supports_xformers = 11;
+  
+  // Availability
+  bool is_loaded = 12;
+  bool is_available = 13;
+  string download_url = 14;              // For model downloading
+  int64 file_size_bytes = 15;
+}
+
+/**
+ * Model types
+ */
+enum ModelType {
+  MODEL_TYPE_UNSPECIFIED = 0;
+  MODEL_TYPE_STABLE_DIFFUSION_15 = 1;   // SD 1.5 based models
+  MODEL_TYPE_STABLE_DIFFUSION_XL = 2;   // SDXL based models
+  MODEL_TYPE_STABLE_DIFFUSION_TURBO = 3; // Turbo/fast models
+  MODEL_TYPE_CUSTOM = 4;                 // Custom fine-tuned models
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+message ListModelsRequest {
+  ModelType type_filter = 1;            // Filter by model type
+  bool loaded_only = 2;                 // Only show loaded models
+  common.v1.PaginationRequest pagination = 3;
+}
+
+message ListModelsResponse {
+  common.v1.StandardResponse response = 1;
+  repeated ModelInfo models = 2;
+  common.v1.PaginationResponse pagination = 3;
+}
+
+message GetModelRequest {
+  string model_id = 1;
+}
+
+message GetModelResponse {
+  common.v1.StandardResponse response = 1;
+  ModelInfo model = 2;
+}
+
+message LoadModelRequest {
+  string model_id = 1;
+  bool force_reload = 2;                // Reload even if already loaded
+}
+
+message LoadModelResponse {
+  common.v1.StandardResponse response = 1;
+  ModelInfo model = 2;
+  float load_time_seconds = 3;
+}
+
+message UnloadModelRequest {
+  string model_id = 1;
+}
+
+message UnloadModelResponse {
+  common.v1.StandardResponse response = 1;
+  float memory_freed_gb = 2;
+}
+
+message ListGenerationsRequest {
+  string model_id = 1;                  // Filter by model
+  google.protobuf.Timestamp since = 2; // Filter by date
+  common.v1.PaginationRequest pagination = 3;
+}
+
+message ListGenerationsResponse {
+  common.v1.StandardResponse response = 1;
+  repeated GeneratedImage generations = 2;
+  common.v1.PaginationResponse pagination = 3;
+}
+
+message GetGenerationRequest {
+  string generation_id = 1;
+  bool include_image_data = 2;          // Include actual image bytes
+}
+
+message GetGenerationResponse {
+  common.v1.StandardResponse response = 1;
+  GeneratedImage generation = 2;
+}
+
+message DeleteGenerationRequest {
+  string generation_id = 1;
+  bool delete_files = 2;                // Also delete image files from disk
+}
+
+message DeleteGenerationResponse {
+  common.v1.StandardResponse response = 1;
+  int32 files_deleted = 2;
+}
+
+message GetServiceStatusRequest {
+  // Empty - just get current status
+}
+
+message GetServiceStatusResponse {
+  common.v1.StandardResponse response = 1;
+  
+  ServiceStatus status = 2;
+  repeated ModelInfo loaded_models = 3;
+  SystemResources resources = 4;
+  ServiceStatistics statistics = 5;
+}
+
+/**
+ * Service status
+ */
+enum ServiceStatus {
+  SERVICE_STATUS_UNSPECIFIED = 0;
+  SERVICE_STATUS_INITIALIZING = 1;      // Starting up
+  SERVICE_STATUS_READY = 2;             // Ready for requests
+  SERVICE_STATUS_BUSY = 3;              // Processing requests
+  SERVICE_STATUS_OVERLOADED = 4;        // Too many requests
+  SERVICE_STATUS_ERROR = 5;             // Service error
+  SERVICE_STATUS_MAINTENANCE = 6;       // Maintenance mode
+}
+
+/**
+ * System resource information
+ */
+message SystemResources {
+  // GPU information
+  string gpu_name = 1;
+  int64 gpu_memory_total_gb = 2;
+  int64 gpu_memory_used_gb = 3;
+  int64 gpu_memory_free_gb = 4;
+  float gpu_utilization_percent = 5;
+  int32 gpu_temperature_celsius = 6;
+  
+  // System memory
+  int64 system_memory_total_gb = 7;
+  int64 system_memory_used_gb = 8;
+  
+  // Disk space
+  int64 disk_space_total_gb = 9;
+  int64 disk_space_used_gb = 10;
+  int64 disk_space_free_gb = 11;
+}
+
+/**
+ * Service usage statistics
+ */
+message ServiceStatistics {
+  int64 total_generations = 1;
+  int64 successful_generations = 2;
+  int64 failed_generations = 3;
+  
+  float average_generation_time = 4;    // Seconds
+  float total_gpu_hours = 5;
+  int64 total_images_generated = 6;
+  
+  google.protobuf.Timestamp service_start_time = 7;
+  google.protobuf.Duration uptime = 8;
+}
+
+message ClearCacheRequest {
+  bool clear_model_cache = 1;           // Clear loaded models
+  bool clear_image_cache = 2;           // Clear generated images
+  bool clear_gpu_memory = 3;            // Clear GPU memory
+}
+
+message ClearCacheResponse {
+  common.v1.StandardResponse response = 1;
+  float memory_freed_gb = 2;
+  int32 files_cleared = 3;
+}

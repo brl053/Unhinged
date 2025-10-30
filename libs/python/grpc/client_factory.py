@@ -105,7 +105,7 @@ class GrpcClientFactory:
         """Create a Vision AI service gRPC client."""
         try:
             from unhinged_proto_clients import vision_pb2_grpc
-            
+
             if address not in self._clients_cache:
                 channel = grpc.insecure_channel(address)
                 client = vision_pb2_grpc.VisionServiceStub(channel)
@@ -114,11 +114,38 @@ class GrpcClientFactory:
                     'channel': channel,
                     'service_type': 'vision'
                 }
-            
+
             return self._clients_cache[address]['client']
-            
+
         except ImportError as e:
             raise RuntimeError(f"Failed to import Vision protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+
+    def create_image_generation_client(self, address: str = 'localhost:9094'):
+        """Create an Image Generation service gRPC client with large message support."""
+        try:
+            from unhinged_proto_clients import image_generation_pb2_grpc
+
+            if address not in self._clients_cache:
+                # Create channel with large message size support for images
+                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+                options = [
+                    ('grpc.max_receive_message_length', MAX_MESSAGE_SIZE),
+                    ('grpc.max_send_message_length', MAX_MESSAGE_SIZE),
+                ]
+
+                channel = grpc.insecure_channel(address, options=options)
+                client = image_generation_pb2_grpc.ImageGenerationServiceStub(channel)
+                self._clients_cache[address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'image_generation'
+                }
+
+            return self._clients_cache[address]['client']
+
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import Image Generation protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
     
     def create_health_client(self, address: str):
@@ -204,3 +231,7 @@ def create_llm_client(address: str = 'localhost:9092'):
 def create_vision_client(address: str = 'localhost:9093'):
     """Create a Vision AI service gRPC client using default factory."""
     return _get_default_factory().create_vision_client(address)
+
+def create_image_generation_client(address: str = 'localhost:9094'):
+    """Create an Image Generation service gRPC client using default factory."""
+    return _get_default_factory().create_image_generation_client(address)

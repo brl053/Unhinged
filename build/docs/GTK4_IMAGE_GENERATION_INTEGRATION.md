@@ -28,16 +28,16 @@ This document outlines the integration plan for adding sovereign image generatio
 │                Service Connector Layer                      │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │
 │  │ Audio Services  │  │ System Services │  │ Image Gen   │  │
-│  │                 │  │                 │  │  Service    │  │
+│  │   (gRPC)        │  │   (Various)     │  │ (gRPC)      │  │
 │  └─────────────────┘  └─────────────────┘  └─────────────┘  │
 ├─────────────────────────────────────────────────────────────┤
-│                    Network Layer                            │
+│                    gRPC Network Layer                       │
 └─────────────────────────────────────────────────────────────┘
          │                        │                    │
          ▼                        ▼                    ▼
 ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│ Speech Services │  │ System Services │  │ Image Gen API   │
-│   (gRPC)        │  │   (Various)     │  │ (REST:8080)     │
+│ Speech Services │  │ System Services │  │ Image Gen gRPC  │
+│   (gRPC:9091)   │  │   (Various)     │  │   (gRPC:9094)   │
 └─────────────────┘  └─────────────────┘  └─────────────────┘
 ```
 
@@ -152,28 +152,30 @@ from .image_generation_view import ImageGenerationView
 
 ## 🔌 Service Communication
 
-### REST API Integration
+### gRPC Streaming Integration
 ```python
-# Example API call
-POST /generate
-{
-    "prompt": "a rubber duck in a bathtub",
-    "negative_prompt": "blurry, low quality",
-    "width": 1024,
-    "height": 1024,
-    "num_inference_steps": 25,
-    "guidance_scale": 7.5,
-    "seed": null
-}
+# Example gRPC call with streaming progress
+from libs.python.grpc.client_factory import create_image_generation_client
+from unhinged_proto_clients import image_generation_pb2
 
-# Response
-{
-    "success": true,
-    "images": ["/output/images/generated_1234567890_42_00.png"],
-    "generation_time": 15.3,
-    "seed": 42,
-    "parameters": {...}
-}
+client = create_image_generation_client("localhost:9094")
+
+request = image_generation_pb2.GenerateImageRequest()
+request.prompt = "a rubber duck in a bathtub"
+request.negative_prompt = "blurry, low quality"
+request.width = 1024
+request.height = 1024
+request.num_inference_steps = 25
+request.guidance_scale = 7.5
+
+# Stream with real-time progress updates
+for chunk in client.GenerateImage(request):
+    if chunk.type == common_pb2.CHUNK_TYPE_PROGRESS:
+        progress = dict(chunk.structured)
+        print(f"Progress: {progress['progress_percent']:.1f}% - {progress['status_message']}")
+    elif chunk.type == common_pb2.CHUNK_TYPE_DATA and chunk.is_final:
+        result = dict(chunk.structured)
+        print(f"Generated {result['image_count']} images in {result['generation_time']:.1f}s")
 ```
 
 ### Error Handling

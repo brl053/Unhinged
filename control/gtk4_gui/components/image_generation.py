@@ -16,13 +16,23 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GObject, Gio, GdkPixbuf, GLib
 import asyncio
 import json
-import requests
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable
 import logging
 
 from .base import BaseComponent
 from ..config import get_service_config
+
+# gRPC client imports
+try:
+    from libs.python.grpc.client_factory import create_image_generation_client
+    from unhinged_proto_clients import image_generation_pb2
+    from unhinged_proto_clients import common_pb2
+    GRPC_AVAILABLE = True
+except ImportError:
+    GRPC_AVAILABLE = False
+    print("⚠️ gRPC clients not available for image generation")
 
 class ImageGenerationRequest(GObject.Object):
     """Data model for image generation requests."""
@@ -54,14 +64,31 @@ class ImageGenerationPanel(BaseComponent):
         
         # Service configuration
         self.service_config = get_service_config()
-        self.api_base_url = f"http://localhost:8080"  # Image generation service
-        
+        self.grpc_address = "localhost:9094"  # Image generation gRPC service
+        self.grpc_client = None
+
         # Generation state
         self.is_generating = False
         self.current_request = None
+
+        # Initialize gRPC client
+        self._initialize_grpc_client()
         
         self._build_ui()
         self._connect_signals()
+
+    def _initialize_grpc_client(self):
+        """Initialize gRPC client for image generation service."""
+        if not GRPC_AVAILABLE:
+            self.logger.warning("gRPC not available, image generation will be disabled")
+            return
+
+        try:
+            self.grpc_client = create_image_generation_client(self.grpc_address)
+            self.logger.info(f"gRPC client initialized for {self.grpc_address}")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize gRPC client: {e}")
+            self.grpc_client = None
     
     def _build_ui(self):
         """Build the image generation UI."""
@@ -237,57 +264,79 @@ class ImageGenerationPanel(BaseComponent):
         return False  # Stop pulsing
     
     def _generate_image_async(self, request: ImageGenerationRequest):
-        """Generate image asynchronously."""
-        try:
-            # Prepare API request
-            api_request = {
-                "prompt": request.prompt,
-                "negative_prompt": request.negative_prompt,
-                "width": request.width,
-                "height": request.height,
-                "num_inference_steps": request.steps,
-                "guidance_scale": request.guidance,
-                "seed": request.seed,
-                "batch_size": 1
-            }
-            
-            self.status_label.set_text("Generating image... This may take a few minutes")
-            
-            # Make API call (this would be real in production)
-            # For now, simulate the response
-            response = self._simulate_generation_response(api_request)
-            
-            if response.get("success"):
-                self._on_generation_success(response)
-            else:
-                self._on_generation_error(response.get("message", "Unknown error"))
-                
-        except Exception as e:
-            self._on_generation_error(str(e))
-        
+        """Generate image asynchronously using gRPC streaming."""
+        if not self.grpc_client:
+            self._on_generation_error("gRPC client not available")
+            return False
+
+        def grpc_generation_thread():
+            """Run gRPC generation in separate thread."""
+            try:
+                # Create gRPC request
+                grpc_request = image_generation_pb2.GenerateImageRequest()
+                grpc_request.prompt = request.prompt
+                grpc_request.negative_prompt = request.negative_prompt
+                grpc_request.width = request.width
+                grpc_request.height = request.height
+                grpc_request.num_inference_steps = request.steps
+                grpc_request.guidance_scale = request.guidance
+                if request.seed:
+                    grpc_request.seed = request.seed
+                grpc_request.batch_size = 1
+
+                # Start streaming generation
+                stream = self.grpc_client.GenerateImage(grpc_request)
+
+                final_result = None
+                for chunk in stream:
+                    if chunk.type == common_pb2.CHUNK_TYPE_PROGRESS:
+                        # Update progress on main thread
+                        progress_data = dict(chunk.structured)
+                        GLib.idle_add(self._update_generation_progress, progress_data)
+
+                    elif chunk.type == common_pb2.CHUNK_TYPE_DATA and chunk.is_final:
+                        # Final result
+                        final_result = dict(chunk.structured)
+                        break
+
+                if final_result:
+                    GLib.idle_add(self._on_generation_success, final_result)
+                else:
+                    GLib.idle_add(self._on_generation_error, "No result received")
+
+            except Exception as e:
+                GLib.idle_add(self._on_generation_error, str(e))
+
+        # Start generation in background thread
+        thread = threading.Thread(target=grpc_generation_thread)
+        thread.daemon = True
+        thread.start()
+
         return False  # Don't repeat
     
-    def _simulate_generation_response(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Simulate generation response for testing."""
-        # In production, this would make a real API call
-        return {
-            "success": True,
-            "message": "Image generated successfully",
-            "images": ["/output/images/generated_1234567890_42_00.png"],
-            "generation_time": 15.3,
-            "seed": 42,
-            "parameters": request
-        }
+    def _update_generation_progress(self, progress_data: Dict[str, Any]):
+        """Update generation progress from gRPC stream."""
+        progress_percent = progress_data.get("progress_percent", 0.0)
+        status_message = progress_data.get("status_message", "Generating...")
+
+        # Update progress bar
+        self.progress_bar.set_fraction(progress_percent / 100.0)
+        self.progress_bar.set_text(f"{progress_percent:.0f}%")
+
+        # Update status
+        self.status_label.set_text(status_message)
     
     def _on_generation_success(self, response: Dict[str, Any]):
         """Handle successful generation."""
         self.is_generating = False
-        
+
         # Update UI
         self.generate_button.set_sensitive(True)
         self.progress_bar.set_visible(False)
-        self.status_label.set_text(f"✅ Generated in {response.get('generation_time', 0):.1f}s")
-        
+
+        generation_time = response.get('total_time', response.get('generation_time', 0))
+        self.status_label.set_text(f"✅ Generated in {generation_time:.1f}s")
+
         # Show results
         self._display_results(response)
     
