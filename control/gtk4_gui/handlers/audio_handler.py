@@ -145,10 +145,10 @@ class AudioHandler:
         
         try:
             if self._recording_process and self._recording_process.poll() is None:
-                # Send SIGINT for graceful shutdown
+                # Send SIGTERM for graceful shutdown (better than SIGINT for arecord)
                 import signal
-                self._recording_process.send_signal(signal.SIGINT)
-                
+                self._recording_process.send_signal(signal.SIGTERM)
+
                 # Wait for process to finish
                 try:
                     self._recording_process.wait(timeout=3)
@@ -167,7 +167,8 @@ class AudioHandler:
     def _record_audio_continuous(self) -> None:
         """Record audio continuously until stopped (NO DURATION LIMIT)"""
         try:
-            # Build arecord command WITHOUT duration limit
+            # Build arecord command with very long duration (24 hours)
+            # This prevents SIGINT from being treated as an abort
             cmd = [
                 'arecord',
                 '-D', app_config.audio_device,
@@ -175,7 +176,7 @@ class AudioHandler:
                 '-r', str(app_config.audio_sample_rate),
                 '-c', str(app_config.audio_channels),
                 '-t', 'wav',
-                # NO -d parameter - record until stopped!
+                '-d', '86400',  # 24 hours - effectively unlimited
                 str(self._temp_file)
             ]
 
@@ -192,10 +193,15 @@ class AudioHandler:
             
             # Wait for recording to complete
             stdout, stderr = self._recording_process.communicate()
-            
+
+            # Check if recording failed (but allow SIGTERM/SIGINT exits with valid files)
             if self._recording_process.returncode != 0:
-                raise AudioRecordingError(f"Recording failed: {stderr}")
-            
+                # If we have a valid file despite non-zero exit, it's probably a signal stop
+                if self._temp_file and self._temp_file.exists() and self._temp_file.stat().st_size > 44:
+                    logger.info(f"Recording stopped by signal (exit code {self._recording_process.returncode}) but file is valid")
+                else:
+                    raise AudioRecordingError(f"Recording failed: {stderr}")
+
             # Validate recorded file
             self._validate_recorded_file()
             
