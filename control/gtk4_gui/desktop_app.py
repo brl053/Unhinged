@@ -1103,188 +1103,38 @@ class UnhingedDesktopApp(Adw.Application):
             return error_box
 
     def create_chatroom_tab_content(self):
-        """Create the OS Chatroom tab content with design system layout utilities."""
-        # Create main chat container using design system layout patterns
-        chatroom_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        chatroom_container.set_vexpand(True)
-        chatroom_container.set_hexpand(True)
-
-        # Apply design system styling
-        chatroom_container.add_css_class("ds-chatroom-container")
-
-        # Chat messages area (expandable, will contain chat history)
-        # Using design system spacing: sp_4 (16px) for major component margins
-        messages_area = Gtk.ScrolledWindow()
-        messages_area.set_vexpand(True)
-        messages_area.set_hexpand(True)
-        messages_area.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-
-        # Messages container with design system padding
-        messages_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)  # sp_2 (8px) for element spacing
-        messages_container.set_margin_top(16)     # sp_4 - major component margins
-        messages_container.set_margin_bottom(16)  # sp_4 - major component margins
-        messages_container.set_margin_start(16)   # sp_4 - major component margins
-        messages_container.set_margin_end(16)     # sp_4 - major component margins
-
-        messages_area.set_child(messages_container)
-        chatroom_container.append(messages_area)
-
-        # Input area container (fixed at bottom, will contain text editor)
-        # Using design system spacing: sp_6 (24px) for section breaks
-        input_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        input_area.set_margin_top(24)     # sp_6 - section breaks, modal internal spacing
-        input_area.set_margin_bottom(16)  # sp_4 - major component margins
-        input_area.set_margin_start(16)   # sp_4 - major component margins
-        input_area.set_margin_end(16)     # sp_4 - major component margins
-
-        # Import and create TextEditor component
-        from .components import TextEditor
-
-        # Create proper text editor component following design system specification
-        text_editor = TextEditor(
-            placeholder="Type your message here...",
-            word_wrap=True,
-            min_height=120
-        )
-
-        # Apply design system margins (already handled by TextEditor component)
-        text_editor_widget = text_editor.get_widget()
-        text_editor_widget.set_margin_top(8)     # sp_2 - form field padding
-        text_editor_widget.set_margin_bottom(8)  # sp_2 - form field padding
-        text_editor_widget.set_margin_start(8)   # sp_2 - form field padding
-        text_editor_widget.set_margin_end(8)     # sp_2 - form field padding
-
-        # Connect text editor events
-        text_editor.connect('content-changed', self._on_chatroom_content_changed)
-        text_editor.connect('focus-gained', self._on_chatroom_focus_gained)
-        text_editor.connect('focus-lost', self._on_chatroom_focus_lost)
-
-        # Create horizontal box for text editor and send button
-        input_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
-        self._chatroom_input_row = input_row  # Store reference for timer
-
-        # Add text editor to horizontal box (expand to fill space)
-        text_editor_widget.set_hexpand(True)
-        input_row.append(text_editor_widget)
-
-        # Create Voice button for chatroom
-        if COMPONENTS_AVAILABLE:
-            from components import ActionButton
-            self._chatroom_voice_button = ActionButton(
-                text="",
-                style="secondary",
-                icon_name="audio-input-microphone-symbolic"
-            )
-            # Connect to click event for toggle recording
-            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
-            voice_widget = self._chatroom_voice_button.get_widget()
-            voice_widget.set_valign(Gtk.Align.END)  # Align to bottom of text editor
-            voice_widget.set_tooltip_text("Click to start/stop recording")
-            input_row.append(voice_widget)
-        else:
-            self._chatroom_voice_button = Gtk.Button()
-            self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
-            self._chatroom_voice_button.set_valign(Gtk.Align.END)
-            self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-            input_row.append(self._chatroom_voice_button)
-
-        # Create Send button
-        self._chatroom_send_button = Gtk.Button(label="Send")
-        self._chatroom_send_button.add_css_class("suggested-action")
-        self._chatroom_send_button.set_valign(Gtk.Align.END)  # Align to bottom of text editor
-        self._chatroom_send_button.set_sensitive(False)  # Initially disabled
-
-        # Connect send button handler
-        self._chatroom_send_button.connect("clicked", self._on_chatroom_send_clicked)
-
-        # Add send button to horizontal box
-        input_row.append(self._chatroom_send_button)
-
-        # Add horizontal box to input area
-        input_area.append(input_row)
-        chatroom_container.append(input_area)
-
-        # Store references for future integration
-        self._chatroom_messages_container = messages_container
-        self._chatroom_input_area = input_area
-        self._chatroom_text_editor = text_editor
-
-        return chatroom_container
-
-    def _on_chatroom_content_changed(self, text_editor, content):
-        """Handle text editor content changes in OS Chatroom."""
-        # Log content changes for debugging
-        if self.session_logger:
-            self.session_logger.log_gui_event("CHATROOM_CONTENT_CHANGED", f"Content length: {len(content)}")
-
-        # Enable/disable send button based on content
-        has_content = bool(content.strip())
-        if hasattr(self, '_chatroom_send_button'):
-            self._chatroom_send_button.set_sensitive(has_content)
-
-        # Future: Add real-time features like typing indicators
-        # Future: Add auto-save functionality
-        # Future: Add content validation
-
-    def _on_chatroom_focus_gained(self, text_editor):
-        """Handle text editor focus gained in OS Chatroom."""
-        if self.session_logger:
-            self.session_logger.log_gui_event("CHATROOM_FOCUS_GAINED", "Text editor focused")
-
-        # Future: Add focus-related UI changes
-        # Future: Add keyboard shortcuts activation
-
-    def _on_chatroom_focus_lost(self, text_editor):
-        """Handle text editor focus lost in OS Chatroom."""
-        if self.session_logger:
-            self.session_logger.log_gui_event("CHATROOM_FOCUS_LOST", "Text editor unfocused")
-
-        # Future: Add auto-save on focus loss
-        # Future: Add content validation on blur
-
-    def _on_chatroom_send_clicked(self, button):
-        """Handle send button click in OS Chatroom."""
-        # Get current text content
-        content = self._chatroom_text_editor.get_content()
-
-        if not content.strip():
-            return  # Nothing to send
-
-        # Log send action
-        if self.session_logger:
-            self.session_logger.log_gui_event("CHATROOM_SEND_CLICKED", f"Sending message: {len(content)} characters")
-
-        # Send message to LLM service
-        self._send_to_llm(content)
-
-        # Clear text editor after sending
-        self._chatroom_text_editor.clear()
-
-        # Button will be disabled automatically by content_changed handler
-
-    def _on_chatroom_voice_toggle(self, button):
-        """
-        @llm-type component.handler
-        @llm-does handles chatroom voice button toggle for unlimited duration recording
-        """
+        """Create the OS Chatroom tab content using extracted ChatroomView."""
         try:
-            # Check if voice service is available
-            if not self.is_recording and not self.is_voice_service_available():
-                self.show_toast("Voice service not available")
-                return
+            from .views.chatroom_view import ChatroomView
 
-            if self.is_recording:
-                # Stop recording
-                self._stop_toggle_recording()
-            else:
-                # Start recording
-                self._start_toggle_recording()
+            # Create chatroom view
+            self.chatroom_view = ChatroomView(self)
+            return self.chatroom_view.create_content()
 
+        except ImportError as e:
+            print(f"⚠️ ChatroomView not available, using fallback: {e}")
+            return self._create_chatroom_fallback()
         except Exception as e:
-            print(f"❌ Voice toggle error: {e}")
-            self.show_toast(f"Voice recording failed: {e}")
-            self._cleanup_recording()
+            print(f"❌ Error creating chatroom view: {e}")
+            return self._create_chatroom_fallback()
+
+    def _create_chatroom_fallback(self):
+        """Fallback chatroom implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
+
+        label = Gtk.Label(label="Chatroom functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
+
+        return container
+
+
+
+
 
     def _start_toggle_recording(self):
         """
@@ -3376,22 +3226,26 @@ class UnhingedDesktopApp(Adw.Application):
     def _add_voice_transcript_to_chat(self, transcript):
         """Add voice transcript to the OS chatroom"""
         try:
-            # Add the transcript as user input to the chat
-            if hasattr(self, 'chat_input') and self.chat_input:
-                current_text = self.chat_input.get_text()
-                if current_text.strip():
-                    # Append to existing text
-                    self.chat_input.set_text(f"{current_text} {transcript}")
-                else:
-                    # Set as new text
-                    self.chat_input.set_text(transcript)
-
-                # Position cursor at end
-                self.chat_input.set_position(-1)
-
-                self.show_toast("Voice transcript added to chat")
+            # Use the new ChatroomView if available
+            if hasattr(self, 'chatroom_view') and self.chatroom_view:
+                self.chatroom_view.add_voice_transcript(transcript)
             else:
-                self.show_toast(f"Transcript: {transcript}")
+                # Fallback for legacy implementation
+                if hasattr(self, 'chat_input') and self.chat_input:
+                    current_text = self.chat_input.get_text()
+                    if current_text.strip():
+                        # Append to existing text
+                        self.chat_input.set_text(f"{current_text} {transcript}")
+                    else:
+                        # Set as new text
+                        self.chat_input.set_text(transcript)
+
+                    # Position cursor at end
+                    self.chat_input.set_position(-1)
+
+                    self.show_toast("Voice transcript added to chat")
+                else:
+                    self.show_toast(f"Transcript: {transcript}")
 
         except Exception as e:
             print(f"❌ Error adding transcript to chat: {e}")
