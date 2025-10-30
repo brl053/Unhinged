@@ -9,7 +9,7 @@ import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk, GObject
 import math
 import time
 from typing import Optional, Callable
@@ -24,7 +24,7 @@ class VisualizationMode(Enum):
     MINIMAL = "minimal"
 
 
-class VoiceVisualizer(Gtk.Widget):
+class VoiceVisualizer(Gtk.DrawingArea):
     """Voice visualization component with multiple display modes"""
     
     def __init__(self, 
@@ -61,12 +61,12 @@ class VoiceVisualizer(Gtk.Widget):
         # Setup widget
         self.set_size_request(width, height)
         self.set_can_focus(False)
-        
+
         # Animation timer
         self.animation_timer_id = None
-        
-        # Setup drawing
-        self.set_draw_func(self._on_draw)
+
+        # Setup drawing for GTK4
+        self.set_draw_func(self._on_draw, None)
         
     def set_recording_state(self, recording: bool) -> None:
         """Set recording state and update visualization"""
@@ -159,7 +159,7 @@ class VoiceVisualizer(Gtk.Widget):
             frequency_factor = 1.0 - (i / len(self.bars_data))
             self.bars_data[i] = self.amplitude * frequency_factor * (0.8 + 0.4 * math.sin(self.animation_time * (i + 1)))
     
-    def _on_draw(self, widget, cr, width, height, user_data=None) -> None:
+    def _on_draw(self, area, cr, width, height, user_data) -> None:
         """Draw the visualization"""
         # Clear background
         cr.set_source_rgba(0, 0, 0, 0.1)

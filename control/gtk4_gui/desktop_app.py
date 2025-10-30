@@ -457,6 +457,31 @@ class UnhingedDesktopApp(Adw.Application):
         """Fallback chatroom implementation"""
         return self._create_fallback("Chatroom")
 
+    def _create_fallback(self, tab_name: str):
+        """Create a fallback content widget for failed tab creation"""
+        fallback_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        fallback_box.set_margin_top(40)
+        fallback_box.set_margin_bottom(40)
+        fallback_box.set_margin_start(40)
+        fallback_box.set_margin_end(40)
+        fallback_box.set_halign(Gtk.Align.CENTER)
+        fallback_box.set_valign(Gtk.Align.CENTER)
+
+        # Error message
+        error_label = Gtk.Label()
+        error_label.set_markup(f"<span size='large'><b>{tab_name} content not available</b></span>")
+        error_label.set_halign(Gtk.Align.CENTER)
+        fallback_box.append(error_label)
+
+        # Helpful message
+        help_label = Gtk.Label()
+        help_label.set_text("This feature is temporarily unavailable. Please try again later.")
+        help_label.set_halign(Gtk.Align.CENTER)
+        help_label.add_css_class("dim-label")
+        fallback_box.append(help_label)
+
+        return fallback_box
+
 
 
 

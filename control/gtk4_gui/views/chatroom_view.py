@@ -27,10 +27,17 @@ except ImportError:
 # Import component library
 try:
     from ..components import TextEditor, ActionButton
-    from ..components.voice_visualizer import VoiceVisualizerFactory
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
+
+# Import voice visualizer separately
+try:
+    from ..components.voice_visualizer import VoiceVisualizerFactory
+    VOICE_VISUALIZER_AVAILABLE = True
+except ImportError as e:
+    print(f"Voice visualizer not available: {e}")
+    VOICE_VISUALIZER_AVAILABLE = False
 
 
 class ChatroomView:
@@ -140,9 +147,13 @@ class ChatroomView:
         voice_section.set_valign(Gtk.Align.END)
 
         # Create voice visualizer
-        if COMPONENTS_AVAILABLE:
-            self._voice_visualizer = VoiceVisualizerFactory.create_recording_indicator(compact=True)
-            voice_section.append(self._voice_visualizer)
+        if VOICE_VISUALIZER_AVAILABLE:
+            try:
+                self._voice_visualizer = VoiceVisualizerFactory.create_recording_indicator(compact=True)
+                voice_section.append(self._voice_visualizer)
+            except Exception as e:
+                print(f"Failed to create voice visualizer: {e}")
+                self._voice_visualizer = None
 
         # Create Voice button for chatroom
         if COMPONENTS_AVAILABLE:
