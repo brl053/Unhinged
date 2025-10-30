@@ -1,0 +1,206 @@
+"""
+gRPC Client Factory
+
+Creates gRPC clients using the generated protobuf code from /proto.
+Provides a centralized way to create and configure gRPC connections.
+"""
+
+import grpc
+import sys
+from pathlib import Path
+from typing import Optional, Dict, Any
+from contextlib import contextmanager
+
+class GrpcClientFactory:
+    """Factory for creating gRPC clients using generated protobuf code."""
+    
+    def __init__(self, project_root: Optional[Path] = None):
+        self.project_root = project_root or self._find_project_root()
+        self._ensure_protobuf_clients_in_path()
+        self._clients_cache: Dict[str, Any] = {}
+    
+    def _find_project_root(self) -> Path:
+        """Find the project root directory."""
+        current = Path(__file__).parent
+        while current.parent != current:
+            if (current / "proto").exists() and (current / "generated").exists():
+                return current
+            current = current.parent
+        raise RuntimeError("Could not find project root with proto/ and generated/ directories")
+    
+    def _ensure_protobuf_clients_in_path(self):
+        """Ensure generated protobuf clients are in Python path."""
+        protobuf_clients = self.project_root / "generated" / "python" / "clients"
+        if protobuf_clients.exists() and str(protobuf_clients) not in sys.path:
+            sys.path.insert(0, str(protobuf_clients))
+    
+    @contextmanager
+    def create_channel(self, address: str, options: Optional[list] = None):
+        """Create a gRPC channel with proper cleanup and increased message size limits."""
+        # Default options for large message support (256MB for long audio recordings)
+        MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+        default_options = [
+            ('grpc.max_receive_message_length', MAX_MESSAGE_SIZE),
+            ('grpc.max_send_message_length', MAX_MESSAGE_SIZE),
+        ]
+
+        # Merge with provided options
+        if options:
+            default_options.extend(options)
+
+        channel = grpc.insecure_channel(address, options=default_options)
+        try:
+            yield channel
+        finally:
+            channel.close()
+    
+    def create_audio_client(self, address: str = 'localhost:9091'):
+        """Create an AudioService gRPC client with large message support."""
+        try:
+            from unhinged_proto_clients import audio_pb2_grpc
+
+            if address not in self._clients_cache:
+                # Create channel with large message size support
+                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+                options = [
+                    ('grpc.max_receive_message_length', MAX_MESSAGE_SIZE),
+                    ('grpc.max_send_message_length', MAX_MESSAGE_SIZE),
+                ]
+
+                channel = grpc.insecure_channel(address, options=options)
+                client = audio_pb2_grpc.AudioServiceStub(channel)
+                self._clients_cache[address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'audio'
+                }
+
+            return self._clients_cache[address]['client']
+
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import audio protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+    
+    def create_llm_client(self, address: str = 'localhost:9092'):
+        """Create an LLM service gRPC client."""
+        try:
+            from unhinged_proto_clients import llm_pb2_grpc
+            
+            if address not in self._clients_cache:
+                channel = grpc.insecure_channel(address)
+                client = llm_pb2_grpc.LLMServiceStub(channel)
+                self._clients_cache[address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'llm'
+                }
+            
+            return self._clients_cache[address]['client']
+            
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import LLM protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+    
+    def create_vision_client(self, address: str = 'localhost:9093'):
+        """Create a Vision AI service gRPC client."""
+        try:
+            from unhinged_proto_clients import vision_pb2_grpc
+            
+            if address not in self._clients_cache:
+                channel = grpc.insecure_channel(address)
+                client = vision_pb2_grpc.VisionServiceStub(channel)
+                self._clients_cache[address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'vision'
+                }
+            
+            return self._clients_cache[address]['client']
+            
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import Vision protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+    
+    def create_health_client(self, address: str):
+        """Create a Health check gRPC client."""
+        try:
+            from unhinged_proto_clients.health import health_pb2_grpc
+            
+            health_address = f"{address}_health"
+            if health_address not in self._clients_cache:
+                channel = grpc.insecure_channel(address)
+                client = health_pb2_grpc.HealthStub(channel)
+                self._clients_cache[health_address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'health'
+                }
+            
+            return self._clients_cache[health_address]['client']
+            
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import Health protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+    
+    def close_all_connections(self):
+        """Close all cached gRPC connections."""
+        for cached_client in self._clients_cache.values():
+            if 'channel' in cached_client:
+                cached_client['channel'].close()
+        self._clients_cache.clear()
+    
+    def get_protobuf_modules(self):
+        """Get all available protobuf modules for debugging."""
+        try:
+            from unhinged_proto_clients import audio_pb2, common_pb2
+            modules = {
+                'audio_pb2': audio_pb2,
+                'common_pb2': common_pb2
+            }
+            
+            # Try to import optional modules
+            try:
+                from unhinged_proto_clients import llm_pb2
+                modules['llm_pb2'] = llm_pb2
+            except ImportError:
+                pass
+                
+            try:
+                from unhinged_proto_clients import vision_pb2
+                modules['vision_pb2'] = vision_pb2
+            except ImportError:
+                pass
+                
+            try:
+                from unhinged_proto_clients.health import health_pb2
+                modules['health_pb2'] = health_pb2
+            except ImportError:
+                pass
+            
+            return modules
+            
+        except ImportError as e:
+            raise RuntimeError(f"No protobuf clients found: {e}")
+
+
+# Convenience functions for quick client creation
+_default_factory = None
+
+def _get_default_factory() -> GrpcClientFactory:
+    """Get or create the default client factory."""
+    global _default_factory
+    if _default_factory is None:
+        _default_factory = GrpcClientFactory()
+    return _default_factory
+
+def create_audio_client(address: str = 'localhost:1191'):
+    """Create an AudioService gRPC client using default factory."""
+    return _get_default_factory().create_audio_client(address)
+
+def create_llm_client(address: str = 'localhost:9092'):
+    """Create an LLM service gRPC client using default factory."""
+    return _get_default_factory().create_llm_client(address)
+
+def create_vision_client(address: str = 'localhost:9093'):
+    """Create a Vision AI service gRPC client using default factory."""
+    return _get_default_factory().create_vision_client(address)
