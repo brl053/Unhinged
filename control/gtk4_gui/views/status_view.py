@@ -1,5 +1,10 @@
 """
-StatusView - Status tab extracted from desktop_app.py
+StatusView - Enhanced Status tab with platform controls and monitoring
+
+Migrated from main tab:
+- Platform control (Start/Stop buttons)
+- Platform status display (icon, label, progress bar)
+- Log viewing functionality
 """
 
 import gi
@@ -10,21 +15,49 @@ from gi.repository import Gtk, Adw
 
 # Import component library
 try:
-    from ..components import StatusCard, StatusLabel
+    from ..components import StatusCard, StatusLabel, LogViewer
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
 
+# Import platform handler
+try:
+    from ..handlers.platform_handler import PlatformHandler
+    PLATFORM_HANDLER_AVAILABLE = True
+except ImportError:
+    PLATFORM_HANDLER_AVAILABLE = False
+
 
 class StatusView:
-    """Handles the Status tab functionality"""
-    
+    """Enhanced Status tab with platform controls and monitoring"""
+
     def __init__(self, parent_app):
         """Initialize with reference to parent app"""
         self.app = parent_app
+
+        # Platform control references (migrated from main tab)
+        self.start_button = None
+        self.stop_button = None
+        self.status_icon = None
+        self.status_label = None
+        self.progress_bar = None
+        self.log_viewer = None
+
+        # Initialize platform handler
+        self.platform_handler = None
+        if PLATFORM_HANDLER_AVAILABLE:
+            try:
+                self.platform_handler = PlatformHandler(parent_app.project_root)
+                self.platform_handler.set_callbacks(
+                    status_callback=self._update_platform_status,
+                    log_callback=self._append_platform_log,
+                    error_callback=self._show_platform_error
+                )
+            except Exception as e:
+                print(f"⚠️ Failed to initialize platform handler: {e}")
         
     def create_content(self):
-        """Create the new minimal status tab content using component library."""
+        """Create enhanced status tab with platform controls and monitoring."""
         # Create status content box
         status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         status_box.set_margin_top(24)
@@ -32,77 +65,17 @@ class StatusView:
         status_box.set_margin_start(24)
         status_box.set_margin_end(24)
 
-        # Header section
-        header_group = Adw.PreferencesGroup()
-        header_group.set_title("New Status Tab")
-        header_group.set_description("Minimal academic first step - parallel to existing status")
-        status_box.append(header_group)
+        # Add platform control section
+        platform_control = self._create_platform_control_section()
+        status_box.append(platform_control)
 
-        # Use component library if available
-        if COMPONENTS_AVAILABLE:
-            # Status card using component library
-            status_card = StatusCard(
-                title="Platform Status",
-                status="info",
-                subtitle="Component library integration",
-                description="This tab demonstrates the new component library in a minimal way.",
-                icon_name="dialog-information-symbolic"
-            )
-            status_box.append(status_card.get_widget())
+        # Add platform status section
+        platform_status = self._create_platform_status_section()
+        status_box.append(platform_status)
 
-            # Status labels section
-            labels_group = Adw.PreferencesGroup()
-            labels_group.set_title("Status Examples")
-
-            labels_row = Adw.ActionRow()
-            labels_row.set_title("Component Status Labels")
-            labels_row.set_subtitle("Different status types using the component library")
-
-            # Create a box for status labels
-            labels_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-
-            # Add different status labels
-            for status_type in ["success", "warning", "error", "info"]:
-                status_label = StatusLabel(
-                    text=status_type.title(),
-                    status=status_type
-                )
-                labels_box.append(status_label.get_widget())
-
-            labels_row.add_suffix(labels_box)
-            labels_group.add(labels_row)
-            status_box.append(labels_group)
-
-        else:
-            # Fallback to basic widgets
-            fallback_group = Adw.PreferencesGroup()
-            fallback_group.set_title("Basic Status")
-
-            fallback_row = Adw.ActionRow()
-            fallback_row.set_title("Platform Status")
-            fallback_row.set_subtitle("Component library not available - using basic widgets")
-
-            status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
-            status_icon.set_icon_size(Gtk.IconSize.LARGE)
-            fallback_row.add_prefix(status_icon)
-
-            status_label = Gtk.Label(label="Ready")
-            status_label.add_css_class("title-4")
-            fallback_row.add_suffix(status_label)
-
-            fallback_group.add(fallback_row)
-            status_box.append(fallback_group)
-
-        # Info section
-        info_group = Adw.PreferencesGroup()
-        info_group.set_title("Implementation Notes")
-
-        info_row = Adw.ActionRow()
-        info_row.set_title("Minimal Feature Set")
-        info_row.set_subtitle("No API calls, no extra functionality - just a new tab with static content")
-
-        info_group.add(info_row)
-        status_box.append(info_group)
+        # Add platform logs section
+        platform_logs = self._create_platform_logs_section()
+        status_box.append(platform_logs)
 
         # Create scrolled window
         scrolled = Gtk.ScrolledWindow()
@@ -111,6 +84,209 @@ class StatusView:
 
         return scrolled
 
+    def _create_platform_control_section(self):
+        """Create platform control section with Start/Stop buttons"""
+        group = Adw.PreferencesGroup()
+        group.set_title("Platform Control")
+        group.set_description("Launch and manage the Unhinged platform")
+
+        # Control row
+        control_row = Adw.ActionRow()
+        control_row.set_title("Platform Launcher")
+        control_row.set_subtitle("Start or stop the platform backend")
+
+        # Button box
+        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        # Start button (migrated from main tab)
+        self.start_button = Gtk.Button.new_with_label("Start Platform")
+        self.start_button.add_css_class("suggested-action")
+        self.start_button.connect("clicked", self._on_start_clicked)
+        button_box.append(self.start_button)
+
+        # Stop button (migrated from main tab)
+        self.stop_button = Gtk.Button.new_with_label("Stop")
+        self.stop_button.add_css_class("destructive-action")
+        self.stop_button.set_sensitive(False)
+        self.stop_button.connect("clicked", self._on_stop_clicked)
+        button_box.append(self.stop_button)
+
+        control_row.add_suffix(button_box)
+        group.add(control_row)
+
+        return group
+
+    def _create_platform_status_section(self):
+        """Create platform status section with icon, label, and progress bar"""
+        group = Adw.PreferencesGroup()
+        group.set_title("Platform Status")
+
+        # Status row with icon (migrated from main tab)
+        status_row = Adw.ActionRow()
+        status_row.set_title("Current Status")
+
+        # Status icon (migrated from main tab)
+        self.status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
+        self.status_icon.set_icon_size(Gtk.IconSize.LARGE)
+        status_row.add_prefix(self.status_icon)
+
+        # Status label (migrated from main tab)
+        self.status_label = Gtk.Label()
+        self.status_label.set_text("Ready to start")
+        self.status_label.set_halign(Gtk.Align.START)
+        self.status_label.add_css_class("title-4")
+        status_row.add_suffix(self.status_label)
+
+        group.add(status_row)
+
+        # Progress bar (migrated from main tab)
+        self.progress_bar = Gtk.ProgressBar()
+        self.progress_bar.set_show_text(True)
+        self.progress_bar.set_text("Idle")
+        self.progress_bar.set_margin_top(6)
+        self.progress_bar.set_margin_bottom(6)
+        self.progress_bar.set_margin_start(12)
+        self.progress_bar.set_margin_end(12)
+
+        group.add(self.progress_bar)
+
+        return group
+
+    def _create_platform_logs_section(self):
+        """Create platform logs section with LogViewer component"""
+        group = Adw.PreferencesGroup()
+        group.set_title("Platform Logs")
+        group.set_description("Real-time output from platform operations")
+
+        if COMPONENTS_AVAILABLE:
+            # Use sophisticated LogViewer component
+            self.log_viewer = LogViewer()
+            group.add(self.log_viewer.get_widget())
+        else:
+            # Fallback to basic TextView (like main tab had)
+            self.log_textview = Gtk.TextView()
+            self.log_textview.set_editable(False)
+            self.log_textview.set_cursor_visible(False)
+            self.log_textview.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+            self.log_textview.add_css_class("monospace")
+            self.log_textview.set_size_request(-1, 200)
+
+            # Create scrolled window for log
+            scrolled_log = Gtk.ScrolledWindow()
+            scrolled_log.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+            scrolled_log.set_size_request(-1, 200)
+            scrolled_log.set_child(self.log_textview)
+
+            group.add(scrolled_log)
+
+        return group
+
+    def _on_start_clicked(self, button):
+        """Handle start button click (migrated from ActionController)"""
+        if hasattr(self.app, 'running') and self.app.running:
+            return
+
+        # Update button states
+        self.start_button.set_sensitive(False)
+        self.stop_button.set_sensitive(True)
+
+        # Log GUI event
+        if hasattr(self.app, 'session_logger') and self.app.session_logger:
+            self.app.session_logger.log_gui_event("START_BUTTON_CLICKED", "User clicked start button from Status tab")
+
+        # Show toast notification
+        if hasattr(self.app, 'show_toast'):
+            self.app.show_toast("Starting Unhinged platform...")
+
+        # Start platform using handler
+        if self.platform_handler:
+            import threading
+            thread = threading.Thread(target=self.platform_handler.start_platform, daemon=True)
+            thread.start()
+        else:
+            self._show_platform_error("Platform Error", "Platform handler not available")
+
+    def _on_stop_clicked(self, button):
+        """Handle stop button click (migrated from ActionController)"""
+        if hasattr(self.app, 'running') and not self.app.running:
+            return
+
+        # Update button states
+        self.start_button.set_sensitive(True)
+        self.stop_button.set_sensitive(False)
+
+        # Log GUI event
+        if hasattr(self.app, 'session_logger') and self.app.session_logger:
+            self.app.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button from Status tab")
+
+        # Stop platform using handler
+        if self.platform_handler:
+            self.platform_handler.stop_platform()
+        else:
+            self._append_platform_log("⚠️ Platform handler not available")
+            self._update_platform_status("Stopped", 0)
+
+    def _update_platform_status(self, message, progress=None):
+        """Update platform status display (migrated from desktop_app.py)"""
+        from gi.repository import GLib
+
+        def update_ui():
+            if self.status_label:
+                self.status_label.set_text(message)
+
+            # Update status icon based on message
+            if self.status_icon:
+                if "Error" in message or "Failed" in message:
+                    self.status_icon.set_from_icon_name("dialog-error-symbolic")
+                elif "Complete" in message or "Success" in message or "running" in message.lower():
+                    self.status_icon.set_from_icon_name("emblem-ok-symbolic")
+                elif "Starting" in message or "Running" in message:
+                    self.status_icon.set_from_icon_name("media-playback-start-symbolic")
+                elif "Stopped" in message:
+                    self.status_icon.set_from_icon_name("media-playback-stop-symbolic")
+                else:
+                    self.status_icon.set_from_icon_name("emblem-default-symbolic")
+
+            if progress is not None and self.progress_bar:
+                self.progress_bar.set_fraction(progress)
+                if progress == 0:
+                    self.progress_bar.set_text("Starting...")
+                elif progress == 1:
+                    self.progress_bar.set_text("Complete")
+                else:
+                    self.progress_bar.set_text(f"{int(progress * 100)}%")
+            return False
+
+        GLib.idle_add(update_ui)
+
+    def _append_platform_log(self, message):
+        """Append message to platform log (migrated from desktop_app.py)"""
+        from gi.repository import GLib
+
+        def update_log():
+            if self.log_viewer:
+                # Use sophisticated LogViewer
+                self.log_viewer.append_log(message)
+            elif hasattr(self, 'log_textview'):
+                # Fallback to basic TextView
+                buffer = self.log_textview.get_buffer()
+                end_iter = buffer.get_end_iter()
+                buffer.insert(end_iter, f"{message}\n")
+
+                # Auto-scroll to bottom
+                mark = buffer.get_insert()
+                self.log_textview.scroll_mark_onscreen(mark)
+            return False
+
+        GLib.idle_add(update_log)
+
+    def _show_platform_error(self, title, message):
+        """Show platform error dialog"""
+        if hasattr(self.app, 'show_error_dialog'):
+            self.app.show_error_dialog(title, message)
+        else:
+            print(f"❌ {title}: {message}")
+
     def refresh_status(self):
         """Refresh status information"""
         # Log refresh if logger available
@@ -118,12 +294,16 @@ class StatusView:
             self.app.session_logger.log_gui_event("STATUS_REFRESH", "Status view refreshed")
 
     def cleanup(self):
-        """Clean up status components"""
+        """Clean up status components and platform handler"""
         try:
+            # Clean up platform handler
+            if self.platform_handler:
+                self.platform_handler.cleanup()
+
             # Log cleanup
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("STATUS_CLEANUP", "Status components cleaned up")
-                
+                self.app.session_logger.log_gui_event("STATUS_CLEANUP", "Enhanced status components cleaned up")
+
         except Exception as e:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("STATUS_CLEANUP_ERROR", str(e))

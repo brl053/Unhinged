@@ -1,0 +1,110 @@
+# Image Generation Configuration
+# Optimized for RTX 5070 Ti with 16GB VRAM
+
+image_generation:
+  # Model Configuration
+  models:
+    sdxl:
+      name: "stabilityai/stable-diffusion-xl-base-1.0"
+      path: "/models/image-gen/sdxl"  # Local path if downloaded
+      dtype: "float16"
+      variant: "fp16"
+      steps: 25  # Good quality/speed tradeoff
+      scheduler: "DPMSolver++"  # 2-3x faster than DDIM
+      
+    sd15:
+      name: "runwayml/stable-diffusion-v1-5"
+      path: "/models/image-gen/sd15"
+      dtype: "float16"
+      steps: 20
+      scheduler: "DPMSolver++"
+      
+    # Add more models as needed
+    # sdxl_turbo:
+    #   name: "stabilityai/sdxl-turbo"
+    #   steps: 4  # Ultra-fast generation
+    
+  # Hardware Optimization (RTX 5070 Ti - 16GB VRAM)
+  optimization:
+    xformers: true              # Essential for 16GB VRAM
+    cpu_offload: false          # You have enough VRAM
+    sequential_cpu_offload: false
+    vae_slicing: false          # Not needed with 16GB
+    attention_slicing: false
+    
+  # Generation Defaults
+  defaults:
+    width: 1024
+    height: 1024
+    steps: 25
+    guidance_scale: 7.5
+    batch_size: 1
+    
+  # Performance Settings
+  performance:
+    max_batch_size: 3           # RTX 5070 Ti can handle 2-3 images at once
+    enable_compile: true        # PyTorch 2.0 compilation for speed
+    memory_efficient: true
+    
+  # Cache Configuration
+  cache:
+    max_size_gb: 50             # Adjust based on disk space
+    cleanup_days: 30
+    models_dir: "/models/image-gen"
+    outputs_dir: "/output/images"
+    
+  # Quality Presets
+  presets:
+    fast:
+      steps: 15
+      guidance_scale: 6.0
+      scheduler: "DPMSolver++"
+      
+    balanced:
+      steps: 25
+      guidance_scale: 7.5
+      scheduler: "DPMSolver++"
+      
+    quality:
+      steps: 40
+      guidance_scale: 8.0
+      scheduler: "DDIM"
+      
+    ultra_fast:
+      steps: 4
+      guidance_scale: 1.0
+      model: "sdxl_turbo"
+
+# Integration Settings
+integration:
+  # GTK4 GUI Integration
+  gui:
+    preview_size: [512, 512]    # Preview image size in GUI
+    thumbnail_size: [256, 256]  # Thumbnail size
+    auto_save: true
+    show_progress: true
+    
+  # Build System Integration
+  build:
+    plugin_name: "image_generation"
+    auto_register: true
+    capabilities:
+      - "batch_processing"
+      - "gpu_acceleration"
+      - "caching"
+      
+  # Service Integration
+  service:
+    port: 8080
+    host: "localhost"
+    max_concurrent: 2           # Limit concurrent generations
+    queue_size: 10
+    timeout: 300                # 5 minutes per generation
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/image_generation.log"
+  max_size_mb: 100
+  backup_count: 5
