@@ -77,6 +77,22 @@
     "grpc_port": 9093,
     "implements_health_proto": true
   },
+  "chat": {
+    "name": "Chat Service with Sessions",
+    "host": "localhost",
+    "port": 9095,
+    "protocol": "grpc",
+    "health_url": "/health",
+    "description": "Chat service with embedded session management",
+    "required": true,
+    "tags": [
+      "chat",
+      "sessions",
+      "grpc"
+    ],
+    "grpc_port": 9095,
+    "implements_health_proto": true
+  },
   "database": {
     "name": "Database",
     "host": "localhost",

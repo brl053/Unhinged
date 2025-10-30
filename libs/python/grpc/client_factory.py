@@ -123,6 +123,26 @@ class GrpcClientFactory:
             raise RuntimeError(f"Failed to import Vision protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
 
+    def create_chat_client(self, address: str = 'localhost:9095'):
+        """Create a Chat service gRPC client."""
+        try:
+            from unhinged_proto_clients import chat_pb2_grpc
+
+            if address not in self._clients_cache:
+                channel = grpc.insecure_channel(address)
+                client = chat_pb2_grpc.ChatServiceStub(channel)
+                self._clients_cache[address] = {
+                    'client': client,
+                    'channel': channel,
+                    'service_type': 'chat'
+                }
+
+            return self._clients_cache[address]['client']
+
+        except ImportError as e:
+            raise RuntimeError(f"Failed to import Chat protobuf clients: {e}. "
+                             f"Make sure protobuf clients are generated.")
+
     def create_image_generation_client(self, address: str = 'localhost:9094'):
         """Create an Image Generation service gRPC client with large message support."""
         try:
@@ -307,6 +327,10 @@ def create_image_generation_client(address: str = 'localhost:9094'):
 def create_vision_client(address: str = 'localhost:9093'):
     """Create a Vision AI service gRPC client using default factory."""
     return _get_default_factory().create_vision_client(address)
+
+def create_chat_client(address: str = 'localhost:9095'):
+    """Create a Chat service gRPC client using default factory."""
+    return _get_default_factory().create_chat_client(address)
 
 # Service Framework Integration
 # Expert recommendation: consolidate gRPC patterns with hardware-aware management

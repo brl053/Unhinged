@@ -61,6 +61,11 @@ class ServiceConfig:
             port=int(os.environ.get('LLM_HTTP_PORT', '1500')),
             protocol='http'
         ),
+        'chat': ServiceEndpoint(
+            host=os.environ.get('CHAT_HOST', 'localhost'),
+            port=int(os.environ.get('CHAT_GRPC_PORT', '9095')),
+            protocol='grpc'
+        ),
         'persistence': ServiceEndpoint(
             host=os.environ.get('PERSISTENCE_HOST', 'localhost'),
             port=int(os.environ.get('PERSISTENCE_HTTP_PORT', '1300')),
