@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761828531.3092241,
-    "updated_iso": "2025-10-30 05:48:51",
+    "updated": 1761828844.7564485,
+    "updated_iso": "2025-10-30 05:54:04",
     "version": "1.0"
   },
   "checksums": {
@@ -81,7 +81,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "a611ae697f2fcbed548146c18a3c78f028099b3ca03862cd3154aa8a63d473f2",
+      "code_checksums.json": "7b99992e37195ccc041054cc8f33a6547528f571817235ae92ed4503091a3270",
       "static_analysis_results.json": "b8920775926ff2e354bbf0aa6a4463d4c6e06a49ee5bff444decfc9f1238ff3f",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
@@ -19978,7 +19978,7 @@
       "chat-with-sessions/dashboard.py": "c708e08cdd1aa8cd3d659653043fc4f259a22077a0860031b5ac40561e4b70fd",
       "chat-with-sessions/simple_server.py": "4c1526b5dfc7ac3ded664f62f272038321ceb69f0c39a2b9a92f94960f0af0a4",
       "chat-with-sessions/main.py": "38e6c480c7c5b52fab892f4df2e0ac46c55350711780ed41f62cb890a34a502d",
-      "chat-with-sessions/minimal_grpc_server.py": "3ee359759d4919f0a7afaae1a9fe369e4d9a73de5425cab3ce4705709713f2a7",
+      "chat-with-sessions/minimal_grpc_server.py": "467de04548b482d22fac3c5b796b149603bb0f0208652b610d077f688981292b",
       "chat-with-sessions/grpc_server.py": "7e832ae134890a2803efebcff0d2c13fa822c9f1e5e6f4a9074298fed27859f0",
       "chat-with-sessions/events.py": "3c169902bb5e44c0f7e7532a6a8524208794762e0eeaba448d6ab2c87fa87b1e",
       "chat-with-sessions/stability_test.py": "d556697ed7bee14166a2a3ee9ce4290316880743039ee6aca2efa907591d35fe",

@@ -347,7 +347,7 @@ class ChatroomView:
 
             # Check response
             if response and response.response.success:
-                conversation_id = response.conversation.metadata.id
+                conversation_id = response.conversation.metadata.resource_id
                 GLib.idle_add(self._on_session_created, conversation_id)
             else:
                 error_msg = response.response.message if response else "Service unavailable"
