@@ -1767,87 +1767,34 @@ class UnhingedDesktopApp(Adw.Application):
                 GLib.idle_add(lambda: vadj.set_value(vadj.get_upper() - vadj.get_page_size()))
 
     def create_bluetooth_tab_content(self):
-        """Create the Bluetooth tab content with device discovery and management."""
+        """Create the Bluetooth tab content using extracted BluetoothView."""
         try:
-            # Import BluetoothTable component
-            from components.complex import BluetoothTable
+            from .views.bluetooth_view import BluetoothView
 
-            # Create main content box
-            bluetooth_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            bluetooth_box.set_margin_top(24)
-            bluetooth_box.set_margin_bottom(24)
-            bluetooth_box.set_margin_start(24)
-            bluetooth_box.set_margin_end(24)
-            bluetooth_box.set_vexpand(True)
-            bluetooth_box.set_hexpand(True)
+            # Create bluetooth view
+            self.bluetooth_view = BluetoothView(self)
+            return self.bluetooth_view.create_content()
 
-            # Create header section
-            header_group = Adw.PreferencesGroup()
-            header_group.set_title("Bluetooth Manager")
-            header_group.set_description("Discover, pair, and manage Bluetooth devices")
-
-            # Add header info row
-            info_row = Adw.ActionRow()
-            info_row.set_title("Device Management")
-            info_row.set_subtitle("Scan for devices, manage connections, and configure pairing")
-
-            # Add Bluetooth icon
-            bluetooth_icon = Gtk.Image.new_from_icon_name("bluetooth-symbolic")
-            bluetooth_icon.set_icon_size(Gtk.IconSize.LARGE)
-            bluetooth_icon.add_css_class("accent")
-            info_row.add_prefix(bluetooth_icon)
-
-            header_group.add(info_row)
-            bluetooth_box.append(header_group)
-
-            # Create BluetoothTable
-            self.bluetooth_table = BluetoothTable()
-
-            # Create Bluetooth table group
-            table_group = Adw.PreferencesGroup()
-            table_group.set_title("Bluetooth Devices")
-
-            # Add BluetoothTable widget to the group
-            table_row = Adw.ActionRow()
-            table_row.set_child(self.bluetooth_table.get_widget())
-            table_group.add(table_row)
-
-            bluetooth_box.append(table_group)
-
-            # Log Bluetooth tab creation
-            if self.session_logger:
-                self.session_logger.log_gui_event("BLUETOOTH_TAB_CREATED", "Bluetooth tab with BluetoothTable created")
-
-            return bluetooth_box
-
+        except ImportError as e:
+            print(f"⚠️ BluetoothView not available, using fallback: {e}")
+            return self._create_bluetooth_fallback()
         except Exception as e:
-            # Create error fallback
-            error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-            error_box.set_margin_top(24)
-            error_box.set_margin_bottom(24)
-            error_box.set_margin_start(24)
-            error_box.set_margin_end(24)
+            print(f"❌ Error creating bluetooth view: {e}")
+            return self._create_bluetooth_fallback()
 
-            error_group = Adw.PreferencesGroup()
-            error_group.set_title("Bluetooth Manager Unavailable")
-            error_group.set_description("Bluetooth management is not available")
+    def _create_bluetooth_fallback(self):
+        """Fallback bluetooth implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
 
-            error_row = Adw.ActionRow()
-            error_row.set_title("Error Loading Bluetooth Manager")
-            error_row.set_subtitle(f"Error: {str(e)}")
+        label = Gtk.Label(label="Bluetooth functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
 
-            error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-            error_icon.add_css_class("error")
-            error_row.add_prefix(error_icon)
-
-            error_group.add(error_row)
-            error_box.append(error_group)
-
-            # Log error
-            if self.session_logger:
-                self.session_logger.log_gui_event("BLUETOOTH_TAB_ERROR", f"Failed to create Bluetooth tab: {e}")
-
-            return error_box
+        return container
 
     def create_output_tab_content(self):
         """Create the Output tab content with audio device management and connection switching."""
