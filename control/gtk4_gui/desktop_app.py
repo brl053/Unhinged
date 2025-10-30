@@ -207,6 +207,25 @@ class UnhingedDesktopApp(Adw.Application):
         # Design system CSS provider (for delayed loading)
         self._pending_css_provider = None
 
+        # Initialize controllers
+        self._init_controllers()
+
+    def _init_controllers(self):
+        """Initialize all controllers"""
+        try:
+            from .controllers import UIController, ContentController, ActionController
+
+            self.ui_controller = UIController(self)
+            self.content_controller = ContentController(self)
+            self.action_controller = ActionController(self)
+
+            print("✅ Controllers initialized")
+        except Exception as e:
+            print(f"⚠️ Failed to initialize controllers: {e}")
+            self.ui_controller = None
+            self.content_controller = None
+            self.action_controller = None
+
     def _load_design_system_css(self):
         """
         Load the generated design system CSS files.
@@ -532,228 +551,51 @@ class UnhingedDesktopApp(Adw.Application):
         self.window.present()
 
     def create_main_window(self):
-        """
-        @llm-doc Create Main Application Window
+        """Create main application window using UIController"""
+        if hasattr(self, 'ui_controller') and self.ui_controller:
+            # Set title based on mode
+            if self.dev_mode:
+                title = "Unhinged - Development Mode"
+            else:
+                title = "Unhinged - Native Graphics Platform"
 
-        Creates the main GTK4 window with modern Ubuntu GNOME styling
-        using Libadwaita for native look and feel.
-        """
-        # Create main window
-        window = Adw.ApplicationWindow(application=self)
+            # Toast stack management
+            self.toast_stack = []
+            self.max_toast_stack = 3
 
-        # Set title based on mode
-        if self.dev_mode:
-            window.set_title("Unhinged - Development Mode")
+            # Setup actions
+            if hasattr(self, 'action_controller') and self.action_controller:
+                self.action_controller.setup_actions()
+
+            return self.ui_controller.create_main_window()
         else:
-            window.set_title("Unhinged - Native Graphics Platform")
-
-        window.set_default_size(800, 600)
-        window.set_icon_name("applications-graphics")
-
-        # Add actions (AdwApplicationWindow has built-in header bar)
-        self.setup_actions()
-
-        # Create toast overlay for notifications
-        self.toast_overlay = Adw.ToastOverlay()
-
-        # Toast stack management
-        self.toast_stack = []
-        self.max_toast_stack = 3
-
-        # Create tab navigation
-        self.create_tab_navigation()
-
-        # Set up toast overlay with tab content
-        window.set_content(self.toast_overlay)
-        return window
+            # Fallback implementation
+            window = Adw.ApplicationWindow(application=self)
+            window.set_title("Unhinged Platform")
+            window.set_default_size(800, 600)
+            return window
 
     def create_tab_navigation(self):
-        """Create sidebar navigation with NavigationSplitView."""
-        # Create navigation split view
-        self.navigation_split_view = Adw.NavigationSplitView()
+        """Create sidebar navigation using UIController"""
+        if hasattr(self, 'ui_controller') and self.ui_controller:
+            self.ui_controller.create_tab_navigation()
+        else:
+            # Fallback: create basic navigation
+            self.content_stack = Gtk.Stack()
+            self.toast_overlay.set_child(self.content_stack)
 
-        # Create content area with stack for different pages
-        self.content_stack = Gtk.Stack()
-        self.content_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
 
-        # Create navigation pages and add to stack
-        self.navigation_pages = {}
-
-        # Main page
-        main_content = self.create_main_tab_content()
-        self.content_stack.add_named(main_content, "main")
-        self.navigation_pages["main"] = main_content
-
-        # Status page
-        status_content = self.create_status_tab_content()
-        self.content_stack.add_named(status_content, "status")
-        self.navigation_pages["status"] = status_content
-
-        # System Info page
-        system_info_content = self.create_system_info_tab_content()
-        self.content_stack.add_named(system_info_content, "system_info")
-        self.navigation_pages["system_info"] = system_info_content
-
-        # Processes page
-        processes_content = self.create_processes_tab_content()
-        self.content_stack.add_named(processes_content, "processes")
-        self.navigation_pages["processes"] = processes_content
-
-        # Bluetooth page
-        bluetooth_content = self.create_bluetooth_tab_content()
-        self.content_stack.add_named(bluetooth_content, "bluetooth")
-        self.navigation_pages["bluetooth"] = bluetooth_content
-
-        # Output page
-        output_content = self.create_output_tab_content()
-        self.content_stack.add_named(output_content, "output")
-        self.navigation_pages["output"] = output_content
-
-        # Input page
-        input_content = self.create_input_tab_content()
-        self.content_stack.add_named(input_content, "input")
-        self.navigation_pages["input"] = input_content
-
-        # OS Chatroom page
-        chatroom_content = self.create_chatroom_tab_content()
-        self.content_stack.add_named(chatroom_content, "chatroom")
-        self.navigation_pages["chatroom"] = chatroom_content
-
-        # Create sidebar navigation page
-        sidebar_content = self.create_sidebar_navigation()
-        sidebar_page = Adw.NavigationPage.new(sidebar_content, "Navigation")
-        sidebar_page.set_title("Navigation")
-
-        # Create content navigation page
-        content_page = Adw.NavigationPage.new(self.content_stack, "Content")
-        content_page.set_title("Content")
-
-        # Set sidebar and content
-        self.navigation_split_view.set_sidebar(sidebar_page)
-        self.navigation_split_view.set_content(content_page)
-
-        # Set initial page
-        self.content_stack.set_visible_child_name("main")
-
-        # Set up toast overlay
-        self.toast_overlay.set_child(self.navigation_split_view)
-
-    def create_sidebar_navigation(self):
-        """Create sidebar navigation with design system styling."""
-        # Create sidebar list box
-        sidebar_list = Gtk.ListBox()
-        sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        sidebar_list.add_css_class("navigation-sidebar")
-
-        # Define navigation items (1:1 mapping from tabs)
-        nav_items = [
-            {"id": "main", "title": "Main", "icon": "applications-graphics"},
-            {"id": "status", "title": "Status", "icon": "dialog-information-symbolic"},
-            {"id": "system_info", "title": "System Info", "icon": "computer-symbolic"},
-            {"id": "processes", "title": "Processes", "icon": "utilities-system-monitor-symbolic"},
-            {"id": "bluetooth", "title": "Bluetooth", "icon": "bluetooth-symbolic"},
-            {"id": "output", "title": "Output", "icon": "audio-speakers-symbolic"},
-            {"id": "input", "title": "Input", "icon": "audio-input-microphone-symbolic"},
-            {"id": "chatroom", "title": "OS Chatroom", "icon": "user-available-symbolic"},
-        ]
-
-        # Create sidebar rows
-        for item in nav_items:
-            row = Adw.ActionRow()
-            row.set_title(item["title"])
-
-            # Add icon
-            icon = Gtk.Image.new_from_icon_name(item["icon"])
-            icon.set_icon_size(Gtk.IconSize.NORMAL)
-            row.add_prefix(icon)
-
-            # Store item ID for navigation
-            row.item_id = item["id"]
-
-            # Apply design system styling
-            row.add_css_class("sidebar-nav-item")
-
-            sidebar_list.append(row)
-
-        # Connect selection handler
-        sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
-
-        # Select first item by default
-        first_row = sidebar_list.get_row_at_index(0)
-        if first_row:
-            sidebar_list.select_row(first_row)
-
-        # Create scrolled window for sidebar
-        sidebar_scrolled = Gtk.ScrolledWindow()
-        sidebar_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        sidebar_scrolled.set_child(sidebar_list)
-
-        # Apply design system width
-        sidebar_scrolled.set_size_request(240, -1)  # Design system: collapsed width
-
-        return sidebar_scrolled
-
-    def _on_sidebar_selection_changed(self, list_box, row):
-        """Handle sidebar navigation selection."""
-        if row and hasattr(row, 'item_id'):
-            # Switch to selected page
-            self.content_stack.set_visible_child_name(row.item_id)
-
-            # Update active styling
-            self._update_sidebar_active_state(row)
-
-    def _update_sidebar_active_state(self, active_row):
-        """Update sidebar active state styling."""
-        # Remove active class from all rows
-        parent = active_row.get_parent()
-        if parent:
-            row_index = 0
-            while True:
-                row = parent.get_row_at_index(row_index)
-                if not row:
-                    break
-                row.remove_css_class("sidebar-nav-active")
-                row_index += 1
-
-        # Add active class to selected row
-        active_row.add_css_class("sidebar-nav-active")
 
     def create_main_tab_content(self):
-        """Create the main tab content (existing functionality)."""
-        # Create main content
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        main_box.set_margin_top(24)
-        main_box.set_margin_bottom(24)
-        main_box.set_margin_start(24)
-        main_box.set_margin_end(24)
-
-        # Welcome section
-        welcome_group = self.create_welcome_section()
-        main_box.append(welcome_group)
-
-        # Control section
-        control_group = self.create_control_section()
-        main_box.append(control_group)
-
-        # Status section
-        status_group = self.create_status_section()
-        main_box.append(status_group)
-
-        # Development section (only in dev mode)
-        if self.dev_mode:
-            dev_group = self.create_development_section()
-            main_box.append(dev_group)
-
-        # Log section
-        log_group = self.create_log_section()
-        main_box.append(log_group)
-
-        # Create scrolled window for content
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_child(main_box)
-
-        return scrolled
+        """Create main tab content using ContentController"""
+        if hasattr(self, 'content_controller') and self.content_controller:
+            return self.content_controller.create_main_tab_content()
+        else:
+            # Fallback implementation
+            container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+            label = Gtk.Label(label="Main content not available")
+            container.append(label)
+            return container
 
     def create_status_tab_content(self):
         """Create the status tab content using extracted StatusView."""
@@ -1284,136 +1126,15 @@ class UnhingedDesktopApp(Adw.Application):
 
 
 
-    def create_welcome_section(self):
-        """Create welcome section with app info"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Unhinged Native Graphics Platform")
-        group.set_description("Independent graphics rendering with VM communication")
-
-        # Status row
-        status_row = Adw.ActionRow()
-        status_row.set_title("Platform Status")
-        status_row.set_subtitle("Ready to launch")
-
-        # Status icon
-        status_icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
-        status_icon.set_icon_size(Gtk.IconSize.LARGE)
-        status_row.add_prefix(status_icon)
-
-        group.add(status_row)
-
-        # Features row
-        features_row = Adw.ActionRow()
-        features_row.set_title("Features")
-        features_row.set_subtitle("VM Communication • Native Graphics • Independence")
-
-        features_icon = Gtk.Image.new_from_icon_name("applications-graphics-symbolic")
-        features_icon.set_icon_size(Gtk.IconSize.LARGE)
-        features_row.add_prefix(features_icon)
-
-        group.add(features_row)
-
-        return group
-
-    def create_development_section(self):
-        """Create development section with power user tools (dev mode only)."""
-        group = Adw.PreferencesGroup()
-        group.set_title("Development Tools")
-        group.set_description("Power user interface for system development and debugging")
-
-        # Build system row
-        build_row = Adw.ActionRow()
-        build_row.set_title("Build System")
-        build_row.set_subtitle("Generate artifacts and build components")
-
-        # Build buttons
-        build_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-
-        generate_btn = Gtk.Button.new_with_label("Generate")
-        generate_btn.add_css_class("suggested-action")
-        generate_btn.connect("clicked", lambda btn: self._run_command("generate"))
-        build_box.append(generate_btn)
-
-        clean_btn = Gtk.Button.new_with_label("Clean")
-        clean_btn.connect("clicked", lambda btn: self._run_command("clean"))
-        build_box.append(clean_btn)
-
-        build_row.add_suffix(build_box)
-        group.add(build_row)
-
-        # Service monitoring row
-        services_row = Adw.ActionRow()
-        services_row.set_title("Service Monitoring")
-        services_row.set_subtitle("Monitor and manage system services")
-
-        # Service buttons
-        service_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-
-        health_btn = Gtk.Button.new_with_label("Health Check")
-        health_btn.connect("clicked", lambda btn: self._run_command("health"))
-        service_box.append(health_btn)
-
-        status_btn = Gtk.Button.new_with_label("Service Status")
-        status_btn.connect("clicked", lambda btn: self._run_command("service-status"))
-        service_box.append(status_btn)
-
-        services_row.add_suffix(service_box)
-        group.add(services_row)
-
-        # Graphics development row
-        graphics_row = Adw.ActionRow()
-        graphics_row.set_title("Graphics Development")
-        graphics_row.set_subtitle("Build and test graphics subsystem")
-
-        # Graphics buttons
-        graphics_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-
-        graphics_build_btn = Gtk.Button.new_with_label("Build Graphics")
-        graphics_build_btn.connect("clicked", lambda btn: self._run_command("graphics-build"))
-        graphics_box.append(graphics_build_btn)
-
-        graphics_test_btn = Gtk.Button.new_with_label("Test Graphics")
-        graphics_test_btn.connect("clicked", lambda btn: self._run_command("graphics-hello-world"))
-        graphics_box.append(graphics_test_btn)
-
-        graphics_row.add_suffix(graphics_box)
-        group.add(graphics_row)
-
-        return group
 
 
 
 
 
-    def create_log_section(self):
-        """Create log section for output display"""
-        group = Adw.PreferencesGroup()
-        group.set_title("Output Log")
-        group.set_description("Real-time output from platform operations")
 
-        # Create text view for logs
-        self.log_textview = Gtk.TextView()
-        self.log_textview.set_editable(False)
-        self.log_textview.set_cursor_visible(False)
-        self.log_textview.set_monospace(True)
-        self.log_textview.set_wrap_mode(Gtk.WrapMode.WORD)
 
-        # Set up text buffer
-        buffer = self.log_textview.get_buffer()
-        buffer.set_text("Unhinged Desktop Application Ready\n")
-        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) +
-                       f"Project root: {self.project_root}\n")
-        buffer.set_text(buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False) +
-                       "Click 'Start Platform' to begin...\n\n")
 
-        # Create scrolled window for text view
-        scrolled_log = Gtk.ScrolledWindow()
-        scrolled_log.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_log.set_min_content_height(200)
-        scrolled_log.set_child(self.log_textview)
 
-        group.add(scrolled_log)
-        return group
 
     def _run_command(self, command):
         """Run a command using the unified entry point."""
@@ -1518,110 +1239,25 @@ class UnhingedDesktopApp(Adw.Application):
         pass
 
     def on_start_clicked(self, button):
-        """Handle start button click using PlatformHandler"""
-        if self.running:
-            return
-
-        self.running = True
-        self.start_button.set_sensitive(False)
-        self.stop_button.set_sensitive(True)
-
-        # Get selected mode
-        mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
-        selected_mode = self.mode_dropdown.get_selected()
-        mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
-
-        # Log GUI events
-        if self.session_logger:
-            self.session_logger.log_gui_event("START_BUTTON_CLICKED", f"User clicked start button")
-            self.session_logger.log_mode_selection(mode_name)
-
-        # Show toast notification
-        self.show_toast(f"Starting Unhinged in {mode_name} mode...")
-
-        # Start platform using handler
-        if hasattr(self, 'platform_handler') and self.platform_handler:
-            import threading
-            thread = threading.Thread(target=self.platform_handler.start_platform, daemon=True)
-            thread.start()
+        """Handle start button click using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_start_clicked(button)
         else:
-            self.show_error_dialog("Platform Error", "Platform handler not available")
+            self.show_toast("Action controller not available")
 
     def on_stop_clicked(self, button):
-        """Handle stop button click using PlatformHandler"""
-        if not self.running:
-            return
-
-        self.running = False
-        self.start_button.set_sensitive(True)
-        self.stop_button.set_sensitive(False)
-
-        # Log GUI event
-        if self.session_logger:
-            self.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button")
-
-        # Stop platform using handler
-        if hasattr(self, 'platform_handler') and self.platform_handler:
-            self.platform_handler.stop_platform()
+        """Handle stop button click using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_stop_clicked(button)
         else:
-            self.append_log("⚠️ Platform handler not available")
-            self.update_status("Stopped", 0)
+            self.show_toast("Action controller not available")
 
     def on_record_voice_clicked(self, button):
-        """Handle voice recording button click"""
-        try:
-            # Log the event
-            if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_gui_event("VOICE_RECORD_CLICKED", "User clicked voice record button")
-
-            # Use new AudioHandler if available
-            if ARCHITECTURE_AVAILABLE and self.audio_handler:
-                # Check if already busy
-                if self.audio_handler.is_busy:
-                    self.show_toast("Audio recording already in progress")
-                    return
-
-                # Start recording with new handler
-                self.audio_handler.start_recording()
-            else:
-                # Fallback to legacy method
-                # Check if voice service is available
-                if not self.is_voice_service_available():
-                    self.show_toast("Voice service not available")
-                    return
-
-                # Disable button during recording
-                self.record_button.set_sensitive(False)
-                self.record_button.set_label("Recording...")
-
-                # Change icon to recording indicator
-                if COMPONENTS_AVAILABLE and hasattr(self.record_button, 'set_icon_name'):
-                    self.record_button.set_icon_name("media-record")
-
-                # Show recording status
-                self.show_toast("Recording for 10 seconds...")
-
-                # Start recording in background thread
-                import threading
-                thread = threading.Thread(target=self.record_and_transcribe_voice, daemon=True)
-                thread.start()
-
-        except Exception as e:
-            print(f"❌ Voice recording error: {e}")
-            if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_gui_event("VOICE_RECORD_ERROR", f"Voice recording failed: {e}")
-
-            # Reset button state
-            if hasattr(self, 'record_button'):
-                self.record_button.set_sensitive(True)
-                self.record_button.set_label("Record Voice")
-
-            # Show user-friendly error
-            if ARCHITECTURE_AVAILABLE:
-                user_message = get_user_friendly_message(e)
-                self.show_toast(user_message)
-            else:
-                self.show_toast(f"Recording failed: {e}")
+        """Handle voice recording button click using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_record_voice_clicked(button)
+        else:
+            self.show_toast("Action controller not available")
 
 
 
