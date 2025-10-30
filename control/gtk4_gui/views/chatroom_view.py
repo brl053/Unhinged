@@ -228,76 +228,89 @@ class ChatroomView:
     def _start_toggle_recording(self):
         """Start toggle recording with timer and visual feedback"""
         try:
+            # Always start recording state and timer (works with both new and legacy)
+            self._is_recording = True
+            self._recording_start_time = time.time()
+
+            # Update button appearance
+            self._chatroom_voice_button.add_css_class("recording-active")
+            if hasattr(self._chatroom_voice_button, 'set_icon_name'):
+                self._chatroom_voice_button.set_icon_name("media-playback-stop-symbolic")
+            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+                widget = self._chatroom_voice_button.get_widget()
+                if hasattr(widget, 'set_icon_name'):
+                    widget.set_icon_name("media-playback-stop-symbolic")
+
+            # Start recording timer (always show timer regardless of backend)
+            self._start_recording_timer()
+
+            # Show feedback
+            self.app.show_toast("🎤 Recording... (click to stop)")
+
+            # Log event
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_START", "Started toggle recording in chatroom")
+
             # Check if AudioHandler is available
             if ARCHITECTURE_AVAILABLE and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
                 # Use new AudioHandler
                 self.app.audio_handler.start_recording()
-                self._is_recording = True
-
-                # Update button appearance
-                self._chatroom_voice_button.add_css_class("recording-active")
-                if hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                    self._chatroom_voice_button.set_icon_name("media-playback-stop-symbolic")
-                elif hasattr(self._chatroom_voice_button, 'get_widget'):
-                    widget = self._chatroom_voice_button.get_widget()
-                    if hasattr(widget, 'set_icon_name'):
-                        widget.set_icon_name("media-playback-stop-symbolic")
-
-                # Start recording timer
-                self._recording_start_time = time.time()
-                self._start_recording_timer()
-
-                # Show feedback
-                self.app.show_toast("🎤 Recording... (click to stop)")
-
-                # Log event
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_START", "Started toggle recording in chatroom")
-
             else:
-                # Fallback to basic recording
+                # Fallback: Start legacy recording in background
+                print("🎤 Using legacy recording mode with timer")
+                # Note: Legacy recording will be handled by stop method
+
+        except Exception as e:
+            print(f"❌ Start toggle recording error: {e}")
+            self.app.show_toast(f"Recording failed: {e}")
+            # Reset state on error
+            self._is_recording = False
+            self._stop_recording_timer()
+
+    def _stop_toggle_recording(self):
+        """Stop toggle recording and process transcript"""
+        try:
+            # Always stop recording state and timer
+            self._is_recording = False
+
+            # Reset button appearance
+            self._chatroom_voice_button.remove_css_class("recording-active")
+            if hasattr(self._chatroom_voice_button, 'set_icon_name'):
+                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+                widget = self._chatroom_voice_button.get_widget()
+                if hasattr(widget, 'set_icon_name'):
+                    widget.set_icon_name("audio-input-microphone-symbolic")
+
+            # Stop timer
+            self._stop_recording_timer()
+
+            # Show feedback
+            self.app.show_toast("🔄 Processing recording...")
+
+            # Log event
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_STOP", "Stopped toggle recording in chatroom")
+
+            # Check if AudioHandler is available
+            if ARCHITECTURE_AVAILABLE and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
+                # Use new AudioHandler
+                self.app.audio_handler.stop_recording()
+            else:
+                # Fallback: Use legacy recording method
+                print("🎤 Using legacy recording mode - triggering basic recording")
                 if hasattr(self.app, 'on_record_voice_clicked'):
+                    # Trigger the basic recording (which will handle transcription)
                     self.app.on_record_voice_clicked(self._chatroom_voice_button)
                 else:
                     self.app.show_toast("Voice recording not available")
 
         except Exception as e:
-            print(f"❌ Start toggle recording error: {e}")
-            self.app.show_toast(f"Recording failed: {e}")
-
-    def _stop_toggle_recording(self):
-        """Stop toggle recording and process transcript"""
-        try:
-            if ARCHITECTURE_AVAILABLE and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
-                # Stop recording
-                self.app.audio_handler.stop_recording()
-                self._is_recording = False
-
-                # Reset button appearance
-                self._chatroom_voice_button.remove_css_class("recording-active")
-                if hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                    self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-                elif hasattr(self._chatroom_voice_button, 'get_widget'):
-                    widget = self._chatroom_voice_button.get_widget()
-                    if hasattr(widget, 'set_icon_name'):
-                        widget.set_icon_name("audio-input-microphone-symbolic")
-
-                # Stop timer
-                self._stop_recording_timer()
-
-                # Show feedback
-                self.app.show_toast("🔄 Processing recording...")
-
-                # Log event
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_STOP", "Stopped toggle recording in chatroom")
-
-            else:
-                print("⚠️ AudioHandler not available for toggle recording")
-
-        except Exception as e:
             print(f"❌ Stop toggle recording error: {e}")
             self.app.show_toast(f"Stop recording failed: {e}")
+            # Reset state on error
+            self._is_recording = False
+            self._stop_recording_timer()
 
     def _start_recording_timer(self):
         """Start the recording timer display"""
