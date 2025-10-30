@@ -133,18 +133,26 @@ class VoiceVisualizer(Gtk.DrawingArea):
     def _animate(self) -> bool:
         """Animation callback"""
         self.animation_time += 0.05  # 50ms increment
-        
-        # Generate simulated audio data if recording
+
+        # Generate realistic audio simulation if recording
         if self.is_recording:
-            # Simulate varying amplitude
-            base_amplitude = 0.3 + 0.4 * math.sin(self.animation_time * 2)
-            noise = 0.1 * math.sin(self.animation_time * 15)
-            self.set_amplitude(base_amplitude + noise)
+            # Create realistic voice-like waveform using multiple frequencies
+            fundamental = 0.4 * math.sin(self.animation_time * 4)  # Base voice frequency
+            harmonic1 = 0.2 * math.sin(self.animation_time * 8)    # First harmonic
+            harmonic2 = 0.1 * math.sin(self.animation_time * 12)   # Second harmonic
+            noise = 0.05 * math.sin(self.animation_time * 25)      # High frequency detail
+
+            # Combine for realistic voice pattern
+            voice_amplitude = fundamental + harmonic1 + harmonic2 + noise
+            # Normalize to 0.0-1.0 range with some variation
+            normalized_amplitude = 0.5 + 0.4 * voice_amplitude
+            self.set_amplitude(max(0.0, min(1.0, normalized_amplitude)))
+
         elif self.is_processing:
-            # Gentle pulsing for processing
-            self.amplitude = 0.2 + 0.1 * math.sin(self.animation_time * 3)
+            # Gentle pulsing for processing state
+            self.amplitude = 0.3 + 0.2 * math.sin(self.animation_time * 3)
             self.queue_draw()
-        
+
         return True  # Continue animation
     
     def _update_waveform_data(self) -> None:
@@ -185,24 +193,47 @@ class VoiceVisualizer(Gtk.DrawingArea):
             self._draw_minimal(cr, width, height)
     
     def _draw_waveform(self, cr, width: int, height: int) -> None:
-        """Draw waveform visualization"""
+        """Draw realistic waveform visualization"""
         if not self.waveform_data:
             return
-            
-        cr.set_line_width(2)
-        
-        # Draw waveform
+
+        cr.set_line_width(2.0)
+
+        # Draw waveform with smooth curves
         step = width / len(self.waveform_data)
         center_y = height / 2
-        
+
+        # Create smooth waveform path
         cr.move_to(0, center_y)
-        
+
         for i, amplitude in enumerate(self.waveform_data):
             x = i * step
-            y = center_y + (amplitude - 0.5) * height * 0.8
-            cr.line_to(x, y)
-        
+            # Create more realistic waveform with proper amplitude scaling
+            wave_height = (amplitude - 0.5) * height * 0.7
+            y = center_y + wave_height
+
+            if i == 0:
+                cr.move_to(x, y)
+            else:
+                # Use curve_to for smoother waveform
+                prev_x = (i - 1) * step
+                control_x = prev_x + step / 2
+                cr.curve_to(control_x, cr.get_current_point()[1],
+                           control_x, y, x, y)
+
         cr.stroke()
+
+        # Add subtle fill under the waveform
+        cr.set_source_rgba(0.2, 0.7, 0.9, 0.2)  # Semi-transparent blue
+        cr.move_to(0, center_y)
+        for i, amplitude in enumerate(self.waveform_data):
+            x = i * step
+            wave_height = (amplitude - 0.5) * height * 0.7
+            y = center_y + wave_height
+            cr.line_to(x, y)
+        cr.line_to(width, center_y)
+        cr.close_path()
+        cr.fill()
     
     def _draw_pulse(self, cr, width: int, height: int) -> None:
         """Draw pulse visualization"""
@@ -267,12 +298,12 @@ class VoiceVisualizerFactory:
             )
     
     @staticmethod
-    def create_waveform_display(width: int = 200) -> VoiceVisualizer:
-        """Create a waveform display visualizer"""
+    def create_waveform_display(width: int = 300) -> VoiceVisualizer:
+        """Create a horizontal waveform display visualizer for voice recording"""
         return VoiceVisualizer(
             mode=VisualizationMode.WAVEFORM,
             width=width,
-            height=40
+            height=50  # Slightly taller for better visibility
         )
     
     @staticmethod

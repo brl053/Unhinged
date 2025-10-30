@@ -62,8 +62,9 @@ class ChatroomView:
         self._recording_timer_id = None
         self._recording_start_time = None
 
-        # Voice visualization
+        # Voice visualization and status
         self._voice_visualizer = None
+        self._recording_status_label = None
         
     def create_content(self):
         """Create the OS Chatroom tab content with design system layout utilities."""
@@ -134,28 +135,39 @@ class ChatroomView:
             text_editor_widget.set_wrap_mode(Gtk.WrapMode.WORD)
             self._chat_input = text_editor_widget
 
-        # Create horizontal box for text editor and send button
-        input_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
-        self._chatroom_input_row = input_row  # Store reference for timer
+        # Create vertical container for text editor and voice controls
+        input_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)  # sp_3 spacing
 
-        # Add text editor to horizontal box (expand to fill space)
+        # Add text editor at the top (expand to fill space)
         text_editor_widget.set_hexpand(True)
-        input_row.append(text_editor_widget)
+        input_container.append(text_editor_widget)
 
-        # Create voice recording section with visualizer
-        voice_section = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        voice_section.set_valign(Gtk.Align.END)
+        # Create horizontal row for voice controls (below text editor)
+        voice_controls_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
+        voice_controls_row.add_css_class("voice-controls-row")
+        self._chatroom_input_row = voice_controls_row  # Store reference for timer
 
-        # Create voice visualizer
+        # Create recording status indicator (left side)
+        recording_status = Gtk.Label(label="Ready")
+        recording_status.set_halign(Gtk.Align.START)
+        recording_status.add_css_class("caption")
+        recording_status.add_css_class("dim-label")
+        recording_status.add_css_class("recording-status")
+        self._recording_status_label = recording_status
+        voice_controls_row.append(recording_status)
+
+        # Create horizontal waveform visualizer (center, expandable)
         if VOICE_VISUALIZER_AVAILABLE:
             try:
-                self._voice_visualizer = VoiceVisualizerFactory.create_recording_indicator(compact=True)
-                voice_section.append(self._voice_visualizer)
+                self._voice_visualizer = VoiceVisualizerFactory.create_waveform_display(width=250)
+                self._voice_visualizer.set_hexpand(True)  # Expand to fill available space
+                self._voice_visualizer.add_css_class("voice-visualizer")
+                voice_controls_row.append(self._voice_visualizer)
             except Exception as e:
                 print(f"Failed to create voice visualizer: {e}")
                 self._voice_visualizer = None
 
-        # Create Voice button for chatroom
+        # Create Voice button (right side)
         if COMPONENTS_AVAILABLE:
             self._chatroom_voice_button = ActionButton(
                 text="",
@@ -166,30 +178,30 @@ class ChatroomView:
             self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
             voice_widget = self._chatroom_voice_button.get_widget()
             voice_widget.set_tooltip_text("Click to start/stop recording")
-            voice_section.append(voice_widget)
+            voice_controls_row.append(voice_widget)
         else:
             self._chatroom_voice_button = Gtk.Button()
             self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
             self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
             self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-            voice_section.append(self._chatroom_voice_button)
+            voice_controls_row.append(self._chatroom_voice_button)
 
-        input_row.append(voice_section)
-
-        # Create Send button
+        # Create Send button (far right)
         self._chatroom_send_button = Gtk.Button(label="Send")
         self._chatroom_send_button.add_css_class("suggested-action")
-        self._chatroom_send_button.set_valign(Gtk.Align.END)  # Align to bottom of text editor
         self._chatroom_send_button.set_sensitive(False)  # Initially disabled
 
         # Connect send button handler
         self._chatroom_send_button.connect("clicked", self._on_chatroom_send_clicked)
 
-        # Add send button to input row
-        input_row.append(self._chatroom_send_button)
+        # Add send button to voice controls row
+        voice_controls_row.append(self._chatroom_send_button)
 
-        # Add input row to input area
-        input_area.append(input_row)
+        # Add voice controls row to input container
+        input_container.append(voice_controls_row)
+
+        # Add input container to input area
+        input_area.append(input_container)
 
         # Add input area to main container
         chatroom_container.append(input_area)
@@ -268,9 +280,15 @@ class ChatroomView:
             # Start recording timer (always show timer regardless of backend)
             self._start_recording_timer()
 
-            # Update voice visualizer
+            # Update voice visualizer and status
             if self._voice_visualizer:
                 self._voice_visualizer.set_recording_state(True)
+
+            # Update status label
+            if self._recording_status_label:
+                self._recording_status_label.set_text("Recording...")
+                self._recording_status_label.remove_css_class("dim-label")
+                self._recording_status_label.add_css_class("accent")
 
             # Show minimal feedback
             self.app.show_toast("Recording...")
@@ -310,10 +328,16 @@ class ChatroomView:
             # Stop timer
             self._stop_recording_timer()
 
-            # Update voice visualizer
+            # Update voice visualizer and status
             if self._voice_visualizer:
                 self._voice_visualizer.set_recording_state(False)
                 self._voice_visualizer.set_processing_state(True)
+
+            # Update status label
+            if self._recording_status_label:
+                self._recording_status_label.set_text("Processing...")
+                self._recording_status_label.remove_css_class("accent")
+                self._recording_status_label.add_css_class("warning")
 
             # Show minimal feedback
             self.app.show_toast("Processing...")
@@ -623,9 +647,15 @@ class ChatroomView:
             # Enable send button
             self._chatroom_send_button.set_sensitive(True)
 
-            # Reset voice visualizer
+            # Reset voice visualizer and status
             if self._voice_visualizer:
                 self._voice_visualizer.set_processing_state(False)
+
+            # Reset status label
+            if self._recording_status_label:
+                self._recording_status_label.set_text("Ready")
+                self._recording_status_label.remove_css_class("warning")
+                self._recording_status_label.add_css_class("dim-label")
 
             # Remove redundant toast - user can see transcript was added
 

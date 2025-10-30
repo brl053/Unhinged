@@ -269,6 +269,25 @@ class UnhingedDesktopApp(Adw.Application):
                 .navigation-sidebar { background-color: var(--color-surface-default, #ffffff); }
                 .sidebar-nav-active { background-color: var(--color-action-primary, #0969da); }
                 .recording-active { background-color: var(--color-error, #dc3545) !important; }
+
+                /* Voice Recording UI Styles */
+                .voice-controls-row {
+                    padding: 8px 0;
+                    border-top: 1px solid var(--color-border-muted, #e1e4e8);
+                }
+                .recording-status.accent {
+                    color: var(--color-accent-fg, #0969da);
+                    font-weight: 500;
+                }
+                .recording-status.warning {
+                    color: var(--color-attention-fg, #9a6700);
+                    font-weight: 500;
+                }
+                .voice-visualizer {
+                    border: 1px solid var(--color-border-default, #d1d9e0);
+                    border-radius: 6px;
+                    background-color: var(--color-canvas-subtle, #f6f8fa);
+                }
                 """
 
                 css_provider.load_from_data(combined_css.encode())
