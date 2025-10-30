@@ -111,21 +111,20 @@ class AudioHandler:
         if not service_connector.check_service_health('speech_to_text'):
             raise ServiceUnavailableError('speech_to_text', 'unknown')
         
-        duration = duration or app_config.recording_duration
-        
+        # IGNORE duration - record continuously until stopped
+
         try:
             # Create temporary file
             temp_fd, temp_path = tempfile.mkstemp(suffix='.wav')
             self._temp_file = Path(temp_path)
-            
+
             # Close the file descriptor since arecord will write to it
             import os
             os.close(temp_fd)
-            
-            # Start recording in background thread
+
+            # Start recording in background thread (NO DURATION LIMIT)
             self._recording_thread = threading.Thread(
-                target=self._record_audio,
-                args=(duration,),
+                target=self._record_audio_continuous,
                 daemon=True
             )
             
@@ -165,10 +164,10 @@ class AudioHandler:
             logger.error(f"Error stopping recording: {e}")
             self._handle_error(AudioRecordingError(f"Failed to stop recording: {e}"))
     
-    def _record_audio(self, duration: int) -> None:
-        """Record audio in background thread"""
+    def _record_audio_continuous(self) -> None:
+        """Record audio continuously until stopped (NO DURATION LIMIT)"""
         try:
-            # Build arecord command
+            # Build arecord command WITHOUT duration limit
             cmd = [
                 'arecord',
                 '-D', app_config.audio_device,
@@ -176,10 +175,10 @@ class AudioHandler:
                 '-r', str(app_config.audio_sample_rate),
                 '-c', str(app_config.audio_channels),
                 '-t', 'wav',
-                '-d', str(duration),
+                # NO -d parameter - record until stopped!
                 str(self._temp_file)
             ]
-            
+
             # Start recording process
             self._recording_process = subprocess.Popen(
                 cmd,
@@ -187,9 +186,9 @@ class AudioHandler:
                 stderr=subprocess.PIPE,
                 text=True
             )
-            
-            # Monitor progress
-            self._monitor_recording_progress(duration)
+
+            # Monitor progress continuously
+            self._monitor_recording_progress_continuous()
             
             # Wait for recording to complete
             stdout, stderr = self._recording_process.communicate()
@@ -207,17 +206,16 @@ class AudioHandler:
         except Exception as e:
             self._handle_error(e)
     
-    def _monitor_recording_progress(self, duration: int) -> None:
-        """Monitor recording progress and update UI"""
-        start_time = time.time()
-        
+    def _monitor_recording_progress_continuous(self) -> None:
+        """Monitor continuous recording progress (no duration limit)"""
         while self._recording_process and self._recording_process.poll() is None:
-            elapsed = time.time() - start_time
-            progress = min(elapsed / duration, 1.0)
-            
+            # For continuous recording, we don't have a progress percentage
+            # Just keep the UI updated that recording is active
             if self._progress_callback:
-                self._progress_callback(progress)
-            
+                # Send elapsed time instead of progress percentage
+                elapsed = time.time() - self._start_time if self._start_time else 0
+                self._progress_callback(elapsed)
+
             time.sleep(0.1)  # Update every 100ms
     
     def _validate_recorded_file(self) -> None:
