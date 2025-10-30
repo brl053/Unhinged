@@ -34,35 +34,49 @@ Ubuntu Host (GTK4 Control Plane) → manages → Alpine VM (Native C Graphics)
 
 ## Critical Architecture Principles - Compliance Required
 
-### 1. Voice-First Independence
+### 1. Modular Architecture (Proven in GUI Refactoring)
+- **HANDLER PATTERN** - Separate business logic into focused handlers (audio_handler.py, platform_handler.py)
+- **VIEW PATTERN** - Extract UI components into single-responsibility views
+- **COMPONENT PATTERN** - Build reusable primitives for consistent interfaces
+- **ORCHESTRATOR PATTERN** - Main files become clean orchestrators, not monoliths
+- **50% RULE** - If a file exceeds reasonable size, extract components immediately
+
+### 2. Callback-Driven Design
+- **LOOSE COUPLING** - Components communicate through well-defined callback interfaces
+- **EVENT-DRIVEN** - State changes propagate through callback mechanisms, not direct calls
+- **TESTABLE ISOLATION** - Each component can be tested independently
+- **MODERN PATTERNS** - Avoid tight coupling and monolithic method chains
+
+### 3. Voice-First Independence
 - **NATIVE AUDIO OVER LIBRARIES** - Utilize OS capabilities rather than PyAudio/sounddevice
 - **IMMEDIATE FUNCTIONALITY** - Voice functionality must be available immediately upon system startup
 - **SERVICE INTEGRATION** - Auto-starting services via service_launcher.py
 - **CLEAN STARTUP** - Zero theme errors, minimal console output
 
-### 2. Native GUI Architecture
+### 4. Native GUI Architecture
 - **NATIVE C GRAPHICS RENDERING** - Avoid web browsers, Electron, and GTK dependencies
 - **MOBILE-RESPONSIVE DESIGN** - Touch-friendly native interface design
 - **SYSTEM INTEGRATION** - Leverage native OS capabilities over abstractions
 - **PROFESSIONAL UX** - Maintain clean startup and clear user feedback
 
-### 3. Centralized Build Philosophy
+### 5. Centralized Build Philosophy
 - **UNIFIED BUILD SYSTEM** - All build operations utilize `/build/` directory
 - **CENTRALIZED PYTHON ENVIRONMENT** - Use `build/python/venv/` for all Python operations
 - **CONSOLIDATED TOOLING** - Avoid scattered build tools (gradle wrappers, npm in arbitrary locations)
 - **ORGANIZED GENERATED CONTENT** - All generated artifacts stored in `/generated/`
 
-### 4. Documentation Standards
+### 6. Documentation Standards
 - **LLM-DOCS COMPLIANCE** - All files utilize @llm-type, @llm-legend, @llm-key patterns
 - **VOICE ARCHITECTURE CONTEXT** - Document voice pipeline positioning and integration
 - **SERVICE INTEGRATION DOCUMENTATION** - Provide clear service startup and health monitoring procedures
 - **USER EXPERIENCE FOCUS** - Document immediate voice functionality requirements
 
-### 5. Voice-First Validation Requirements
+### 7. Code Quality Validation
 - **VOICE PIPELINE TESTING** - Conduct comprehensive end-to-end voice functionality testing
 - **SERVICE AUTO-START** - Verify services initialize properly with `make start`
 - **CLEAN STARTUP** - Ensure zero theme errors and professional user experience
 - **IMMEDIATE INTERACTION** - Voice functionality must operate without additional setup
+- **ARCHITECTURAL DEBT PREVENTION** - Refactor before files become unmaintainable monoliths
 
 ## Directory Structure - Architectural Boundaries
 
@@ -91,7 +105,13 @@ Ubuntu Host (GTK4 Control Plane) → manages → Alpine VM (Native C Graphics)
 ├── control/            # SYSTEM CONTROL & GUI
 │   ├── native_c_launcher.py  # Native C graphics launcher
 │   ├── conversation_cli.py   # Voice-first CLI interface
-│   ├── gtk4_gui/            # GTK4 desktop application components
+│   ├── gtk4_gui/            # MODULAR GTK4 desktop application
+│   │   ├── handlers/        # Business logic layer (audio, platform)
+│   │   ├── views/           # UI component layer (7 modular views)
+│   │   ├── components/      # Reusable UI primitives
+│   │   ├── services/        # Service abstractions
+│   │   ├── models/          # Data models and types
+│   │   └── desktop_app.py   # Clean orchestrator (1,818 lines ← 3,666)
 │   ├── qemu_vm_launcher.py   # VM management and communication
 │   ├── service_launcher.py   # Service orchestration
 │   ├── static_html/    # HTML interfaces (for native rendering)
@@ -174,6 +194,13 @@ cd frontend && npm run build
 - ❌ Creating services without proper proto definitions
 - ❌ Bypassing the centralized Python environment
 
+### Architecture Anti-Patterns (Learned from GUI Refactoring)
+- ❌ **MONOLITHIC FILES** - Files exceeding 2,000 lines without extraction
+- ❌ **TIGHT COUPLING** - Direct method calls instead of callback interfaces
+- ❌ **MIXED CONCERNS** - Business logic embedded in UI components
+- ❌ **DUPLICATE CODE** - Copy-paste instead of extracting reusable components
+- ❌ **PROCEDURAL PATTERNS** - Long method chains instead of event-driven design
+
 ## Required Patterns
 
 ### Before Making Changes
@@ -181,6 +208,8 @@ cd frontend && npm run build
 2. **Use centralized tools** - All Python through `build/python/`
 3. **Generate properly** - All generated content to `/generated/`
 4. **Test build** - Run `make build` to verify changes
+5. **Assess file size** - If file >1,500 lines, plan extraction strategy
+6. **Design callbacks** - Plan loose coupling through callback interfaces
 
 ### File Creation Rules
 1. **Generated content** → `/generated/`
@@ -188,12 +217,69 @@ cd frontend && npm run build
 3. **Documentation** → `/docs/`
 4. **Services** → `/services/` or `/platforms/`
 5. **Control logic** → `/control/`
+6. **Business logic** → `/control/*/handlers/`
+7. **UI components** → `/control/*/views/`
+8. **Reusable components** → `/control/*/components/`
 
 ### Build Integration
 1. **Add to build-config.yml** if creating new build targets
 2. **Update .gitignore** for new generated content
 3. **Use build modules** for language-specific operations
 4. **Cache appropriately** using build system caching
+
+### Modular Architecture Rules (Critical)
+1. **Extract handlers** - Business logic goes into focused handler classes
+2. **Extract views** - UI components become single-responsibility views
+3. **Use callbacks** - Components communicate through callback interfaces
+4. **Test isolation** - Each component must be testable independently
+5. **Prevent monoliths** - Refactor before files exceed 2,000 lines
+
+## 🏗️ ARCHITECTURAL TRANSFORMATION GUIDE
+
+### Proven Refactoring Strategy (From GUI Success)
+**Problem**: 3,666-line monolithic file becoming unmaintainable
+**Solution**: Systematic extraction achieving 50.4% reduction (1,818 lines)
+
+#### Phase 1: Handler Extraction
+```bash
+# Extract business logic into focused handlers
+mkdir control/component/handlers/
+# Move audio logic → audio_handler.py
+# Move platform logic → platform_handler.py
+# Implement callback interfaces for loose coupling
+```
+
+#### Phase 2: View Extraction
+```bash
+# Extract UI components into single-responsibility views
+mkdir control/component/views/
+# Move bluetooth UI → bluetooth_view.py
+# Move chatroom UI → chatroom_view.py
+# Move system info → system_view.py
+```
+
+#### Phase 3: Aggressive Cleanup
+```bash
+# Remove duplicate methods
+# Eliminate old implementations
+# Clean up dead code
+# Consolidate similar functionality
+```
+
+#### Phase 4: Modern Patterns
+```bash
+# Implement callback-driven design
+# Replace tight coupling with event interfaces
+# Add proper error handling
+# Ensure testable isolation
+```
+
+### Refactoring Success Metrics
+- **50%+ size reduction** while maintaining functionality
+- **Handler pattern** for business logic separation
+- **View pattern** for UI component organization
+- **Callback interfaces** for loose coupling
+- **Zero breaking changes** during transformation
 
 ## 🔧 COMMON OPERATIONS
 
