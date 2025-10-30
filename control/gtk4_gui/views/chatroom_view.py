@@ -321,20 +321,22 @@ class ChatroomView:
             )
         )
 
-        # Use framework service call - NO LEGACY CLIENT
-        response = call_service_method("chat", "CreateConversation", request, timeout=10.0)
 
-        # Check response
-        if response and response.response.success:
-            conversation_id = response.conversation.metadata.id
-            GLib.idle_add(self._on_session_created, conversation_id)
-        else:
-            error_msg = response.response.message if response else "Service unavailable"
-            GLib.idle_add(self._on_session_creation_failed, f"Framework error: {error_msg}")
+
+        try:
+            # Use framework service call - NO LEGACY CLIENT
+            response = call_service_method("chat", "CreateConversation", request, timeout=10.0)
+
+            # Check response
+            if response and response.response.success:
+                conversation_id = response.conversation.metadata.id
+                GLib.idle_add(self._on_session_created, conversation_id)
+            else:
+                error_msg = response.response.message if response else "Service unavailable"
+                GLib.idle_add(self._on_session_creation_failed, f"Framework error: {error_msg}")
 
         except Exception as e:
             print(f"❌ gRPC session creation error: {e}")
-            from gi.repository import GLib
             GLib.idle_add(self._on_session_creation_failed, f"Service framework required: {e}")
 
     # SIMULATION REMOVED - FRAMEWORK ONLY
