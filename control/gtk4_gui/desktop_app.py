@@ -497,6 +497,57 @@ class UnhingedDesktopApp(Adw.Application):
             print(f"⚠️ Failed to initialize PlatformHandler: {e}")
             self.platform_handler = None
 
+    def _on_recording_state_changed(self, state):
+        """Handle recording state changes from AudioHandler"""
+        try:
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_gui_event("RECORDING_STATE_CHANGED", f"Recording state: {state}")
+
+            # Update UI based on state
+            if state.name == "RECORDING":
+                self.show_toast("🎤 Recording...")
+            elif state.name == "PROCESSING":
+                self.show_toast("🔄 Processing...")
+            elif state.name == "IDLE":
+                pass  # Will be handled by result or error callback
+
+        except Exception as e:
+            print(f"❌ Recording state change error: {e}")
+
+    def _on_transcription_result(self, transcript):
+        """Handle transcription results from AudioHandler"""
+        try:
+            if transcript:
+                # Route to chatroom if it's active
+                if hasattr(self, 'chatroom_view') and self.chatroom_view:
+                    self.chatroom_view.add_voice_transcript(transcript)
+                    self.show_toast(f"✅ Transcribed: {transcript[:50]}...")
+                else:
+                    # Fallback: show in toast
+                    self.show_toast(f"📝 Transcript: {transcript}")
+
+                # Log successful transcription
+                if hasattr(self, 'session_logger') and self.session_logger:
+                    self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}")
+            else:
+                self.show_toast("⚠️ No transcription received")
+
+        except Exception as e:
+            print(f"❌ Transcription result error: {e}")
+            self.show_toast(f"❌ Transcription error: {e}")
+
+    def _on_audio_error(self, error):
+        """Handle audio errors from AudioHandler"""
+        try:
+            error_msg = str(error)
+            self.show_toast(f"❌ Audio error: {error_msg}")
+
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_gui_event("AUDIO_ERROR", error_msg)
+
+        except Exception as e:
+            print(f"❌ Audio error handler error: {e}")
+
 
 
     def _stop_toggle_recording(self):
