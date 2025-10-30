@@ -56,17 +56,24 @@ class MinimalChatServicer(
             # Generate a simple conversation ID
             conversation_id = str(uuid.uuid4())
 
+            # Create timestamps
+            from google.protobuf.timestamp_pb2 import Timestamp
+            now = Timestamp()
+            now.GetCurrentTime()
+
             # Create response
             conversation = chat_pb2.Conversation(
-                metadata=chat_pb2.ConversationMetadata(
-                    id=conversation_id,
+                metadata=common_pb2.ResourceMetadata(
+                    resource_id=conversation_id,
                     team_id=request.team_id,
                     namespace_id=request.namespace_id,
-                    title=request.title,
-                    description=request.description,
-                    created_at=int(time.time()),
-                    updated_at=int(time.time())
+                    created_by="system",  # TODO: Get from auth context
+                    created_at=now,
+                    updated_at=now,
+                    version=1
                 ),
+                title=request.title,
+                description=request.description,
                 settings=request.settings,
                 status=chat_pb2.ConversationStatus.ACTIVE
             )
