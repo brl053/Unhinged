@@ -6,5 +6,6 @@ domains like audio, platform control, and chat operations.
 """
 
 from .audio_handler import AudioHandler, RecordingState
+from .platform_handler import PlatformHandler
 
-__all__ = ['AudioHandler', 'RecordingState']
+__all__ = ['AudioHandler', 'RecordingState', 'PlatformHandler']

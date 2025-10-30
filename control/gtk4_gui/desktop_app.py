@@ -941,6 +941,22 @@ class UnhingedDesktopApp(Adw.Application):
             print(f"⚠️ Failed to initialize AudioHandler: {e}")
             self.audio_handler = None
 
+    def _init_platform_handler(self):
+        """Initialize the PlatformHandler with callbacks"""
+        try:
+            from .handlers.platform_handler import PlatformHandler
+
+            self.platform_handler = PlatformHandler(self.project_root)
+            self.platform_handler.set_callbacks(
+                status_callback=self.update_status,
+                log_callback=self.append_log,
+                error_callback=self.show_error_dialog
+            )
+
+        except Exception as e:
+            print(f"⚠️ Failed to initialize PlatformHandler: {e}")
+            self.platform_handler = None
+
 
 
     def _stop_toggle_recording(self):
@@ -2505,7 +2521,7 @@ class UnhingedDesktopApp(Adw.Application):
         pass
 
     def on_start_clicked(self, button):
-        """Handle start button click"""
+        """Handle start button click using PlatformHandler"""
         if self.running:
             return
 
@@ -2526,12 +2542,16 @@ class UnhingedDesktopApp(Adw.Application):
         # Show toast notification
         self.show_toast(f"Starting Unhinged in {mode_name} mode...")
 
-        # Start platform in background thread
-        thread = threading.Thread(target=self.start_platform, daemon=True)
-        thread.start()
+        # Start platform using handler
+        if hasattr(self, 'platform_handler') and self.platform_handler:
+            import threading
+            thread = threading.Thread(target=self.platform_handler.start_platform, daemon=True)
+            thread.start()
+        else:
+            self.show_error_dialog("Platform Error", "Platform handler not available")
 
     def on_stop_clicked(self, button):
-        """Handle stop button click with direct control module calls"""
+        """Handle stop button click using PlatformHandler"""
         if not self.running:
             return
 
@@ -2543,17 +2563,12 @@ class UnhingedDesktopApp(Adw.Application):
         if self.session_logger:
             self.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button")
 
-        # Stop platform using direct control calls
-        self.append_log("🛑 Platform stop requested (Direct Control)")
-
-        if self.control_available:
-            try:
-                # Simple approach: just terminate any running processes
-                self.append_log("SUCCESS: Platform stopped (simple termination)")
-            except Exception as e:
-                self.append_log(f"ERROR: Error stopping platform: {e}")
-
-        self.update_status("Stopped", 0)
+        # Stop platform using handler
+        if hasattr(self, 'platform_handler') and self.platform_handler:
+            self.platform_handler.stop_platform()
+        else:
+            self.append_log("⚠️ Platform handler not available")
+            self.update_status("Stopped", 0)
 
     def on_record_voice_clicked(self, button):
         """Handle voice recording button click"""
@@ -2640,104 +2655,7 @@ class UnhingedDesktopApp(Adw.Application):
 
 
 
-    def start_platform(self):
-        """
-        @llm-doc Start Platform Backend
 
-        Executes the same functionality as 'make start' but with
-        GUI feedback and progress indication.
-        """
-        try:
-            # Get selected mode
-            selected_mode = self.mode_dropdown.get_selected()
-            mode_commands = {
-                0: "start",           # Enhanced (Recommended)
-                1: "start-simple",    # Simple Communication
-                2: "start-qol",       # Quality of Life
-                3: "start-custom-iso" # Custom ISO
-            }
-
-            command = mode_commands.get(selected_mode, "start")
-            mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
-            mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
-
-            self.update_status("Starting Unhinged Platform...", 0.1)
-            self.append_log("🚀 Starting Unhinged Platform")
-            self.append_log(f"📁 Working directory: {self.project_root}")
-            self.append_log(f"🎯 Launch mode: {mode_name}")
-
-            # Show loading animation
-            self._show_operation_loading("Starting Platform")
-
-            # Execute make command
-            self.update_status(f"Executing make {command}...", 0.3)
-            self.append_log(f"⚙️ Executing: make {command}")
-
-            self.process = subprocess.Popen(
-                ['make', command],
-                cwd=self.project_root,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1
-            )
-
-            self.update_status("Platform running...", 0.8)
-            self.append_log("SUCCESS: Platform started successfully")
-
-            # Stream output
-            while self.running and self.process:
-                line = self.process.stdout.readline()
-                if line:
-                    clean_line = line.rstrip()
-                    if clean_line:
-                        # Enhanced output formatting
-                        if "ERROR" in clean_line.upper():
-                            self.append_log(f"ERROR: {clean_line}")
-                        elif "SUCCESS" in clean_line.upper():
-                            self.append_log(f"SUCCESS: {clean_line}")
-                        elif "WARNING" in clean_line.upper():
-                            self.append_log(f"WARNING: {clean_line}")
-                        elif "UNHINGED" in clean_line.upper():
-                            self.append_log(f"SYSTEM: {clean_line}")
-                        else:
-                            self.append_log(f"OUT: {clean_line}")
-
-                if self.process.poll() is not None:
-                    break
-
-            self.update_status("Platform completed", 1.0)
-            self.append_log("SUCCESS: Platform session completed")
-            self.show_toast("Platform session completed successfully", 5)
-
-            # Hide loading animation
-            self._hide_operation_loading()
-
-        except FileNotFoundError:
-            self.update_status("Error: Makefile not found", 0)
-            self.append_log("ERROR: Makefile not found in project directory")
-            self.append_log("INFO: Make sure you're running from the Unhinged project root")
-            self.show_error_dialog("Makefile Not Found",
-                                 "Could not find Makefile in the project directory.\n\n"
-                                 "Please ensure you're running from the Unhinged project root.")
-        except subprocess.CalledProcessError as e:
-            self.update_status(f"Error: Command failed (exit {e.returncode})", 0)
-            self.append_log(f"ERROR: make {command} failed with exit code {e.returncode}")
-            self.show_error_dialog("Command Failed",
-                                 f"The command 'make {command}' failed.\n\n"
-                                 f"Exit code: {e.returncode}\n"
-                                 f"Check the output log for details.")
-        except Exception as e:
-            self.update_status(f"Error: {e}", 0)
-            self.append_log(f"ERROR: Unexpected error: {e}")
-            self.show_error_dialog("Unexpected Error",
-                                 f"An unexpected error occurred:\n\n{e}\n\n"
-                                 f"Please check the output log for more details.")
-        finally:
-            self.running = False
-            # Hide loading animation in all cases
-            self._hide_operation_loading()
-            GLib.idle_add(self._reset_buttons)
 
     def show_error_dialog(self, title, message):
         """Show error dialog to user"""
