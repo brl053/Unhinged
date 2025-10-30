@@ -16,7 +16,8 @@ import json
 
 # Import architecture components - FRAMEWORK ONLY
 from ..config import app_config
-from ..audio_handler import AudioHandler, RecordingState
+from ..handlers.audio_handler import AudioHandler
+from ..models.audio_types import RecordingState
 from ..exceptions import get_user_friendly_message
 
 # Import component library - FRAMEWORK ONLY
