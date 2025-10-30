@@ -1831,7 +1831,26 @@ class TextEditor(AdwComponentBase):
         """Clear all content."""
         self.set_content("")
 
+    def clear_content(self):
+        """Clear all content (alias for clear)."""
+        self.clear()
+
     def focus(self):
         """Focus the text editor."""
         if self._text_view:
             self._text_view.grab_focus()
+
+    def grab_focus(self):
+        """Grab focus (alias for focus)."""
+        self.focus()
+
+    def queue_draw(self):
+        """Queue a redraw of the widget (GTK4 compatibility)."""
+        if self._text_view:
+            self._text_view.queue_draw()
+        if self.widget:
+            self.widget.queue_draw()
+
+    def get_buffer(self):
+        """Get the underlying text buffer (for compatibility)."""
+        return self._text_buffer

@@ -395,7 +395,12 @@ class ChatroomView:
             import datetime
 
             from google.protobuf import struct_pb2
-            from unhinged_proto_clients import persistence_platform_pb2
+            try:
+                from unhinged_proto_clients import persistence_platform_pb2
+            except ImportError:
+                # Persistence platform protobuf not generated yet
+                print("⚠️ Persistence platform protobuf not available, skipping session metadata storage")
+                return
 
             # Create persistence client
             client = create_persistence_client()
@@ -1380,7 +1385,12 @@ class ChatroomView:
 
             from google.protobuf import struct_pb2
             from libs.python.grpc_clients.client_factory import create_persistence_client
-            from unhinged_proto_clients import persistence_platform_pb2
+            try:
+                from unhinged_proto_clients import persistence_platform_pb2
+            except ImportError:
+                # Persistence platform protobuf not generated yet
+                print("⚠️ Persistence platform protobuf not available, skipping message archival")
+                return
 
             # Create persistence client
             client = create_persistence_client()
