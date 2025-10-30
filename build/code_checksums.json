@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761825581.1320307,
-    "updated_iso": "2025-10-30 04:59:41",
+    "updated": 1761826422.0246642,
+    "updated_iso": "2025-10-30 05:13:42",
     "version": "1.0"
   },
   "checksums": {
@@ -16,9 +16,9 @@
       "bluetooth_monitor.py": "3f3062d2abda7e880d96a2a06736841ebe36803b6318ff3eb6b8577ae4f45e4f",
       "config.py": "6cc4aa7cb7dcdf4cc2cd09bdcaeaa330916cf687743161e56de40fbd022de0ad",
       "exceptions.py": "a07b0efba5a6aef2935810facad218a8757fbabd1f4845a406e4d024ba0ac207",
-      "desktop_app.py": "e6d76d6a4970ee5f49c9877c3cdbc49320108377a1d3349c6325cfd346af7175",
+      "desktop_app.py": "c582f892858e06da0fd326d97884eb56e91e18087fa14b8f66cd4cd228ee2dd0",
       "launch.py": "e3c496333d5f114ce015f5e47ac195d5abd16c675e06701353c6c65072a20582",
-      "tests/__init__.py": "76b060706afd192dc4cce31491a3770308072683d6ce20580e19e1d909707762",
+      "tests/__init__.py": "27ee31dc6643cb3e81f47a0201a2b8ad51a1dd56296e387c8c651504f5cd771d",
       "tests/test_monitors.py": "e1e9a7cfe8a577a2c1fab7625a82cb8b5f447e8382c67184a615391f5bf7ad5d",
       "tests/test_integration.py": "47e47cb9739b16c0462c0a319deb9ab13b54536b4848b66cecbf47dc71188c11",
       "tests/test_components.py": "7405bb6015619a398223142d01fcb4350ad23a4d18bf60c8fcdd4b58a84a6d88",
@@ -30,7 +30,7 @@
       "views/__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
       "views/chatroom_view.py": "3116d6dd1c21b9935c20238b553708e66102c6112fb35c43ac918fb740a88abd",
       "views/bluetooth_view.py": "0673636d855c373e91980b183d7fe0ca22e7e05a7e57aab5db6ad2b5bd69a8eb",
-      "views/system_view.py": "1a14a65430af72da6be012cd9eb2cdfb66622b2b3c08f8bd78c763a5a77ca5a9",
+      "views/system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
       "views/status_view.py": "6d9b34c25c83feee15b9e2baafa7f8f087b5b361f7323ca51373e54d0bdb3413",
       "views/output_view.py": "e547444af9a9e2d4395b072d07f477f2366bdf230ee3b50e00f08515885ba5fe",
       "services/transcription_service.py": "2130c3d8ef8f8974cb9d29b2769518f35133d5584c283d21d5bcdb0ac4b68748",
@@ -49,7 +49,7 @@
       "components/containers.py": "51a6ac07dbcbd0fdc07150ac03cc4cdc255e0ac64ba9dbc1f53f70070972707d",
       "components/__init__.py": "ec0244a6a6ee62b586b6976e8cce29bccc19901bc8f635a7a8d6aee869844c09",
       "components/complex.py": "d67eb5835b97c47b0a8fd543e230a3164b2d347163f0b60b6d5a65b8769e113c",
-      "components/primitives.py": "da40195574ca34e0c21ea0e4751235c9c731be1a67291396b71b5ed4183820be",
+      "components/primitives.py": "a496c85852ed09b913342b6b0b81276a03927cc2553a70a43fbca8d19a952433",
       "components/integration_example.py": "97aa694b0dc96b6d0a9053d48762ebe229bb05ca21db9a6635a1cf66ba44cc52",
       "components/image_generation.py": "fb07771bbb364f5eb143f959752b4337e9d9c1069f612e01b7338a6b0af102df",
       "handlers/audio_handler.py": "f324d8423a8d98410a6c116bec84c35a7d67eb918ebeddc0dbb298039b064a62",
@@ -58,39 +58,41 @@
       "handlers/audio_monitor.py": "05a95c4393cbe6c2df355d286ac83b45687184fad96376697e81cbbd4b408aff"
     },
     "control/gtk4_gui/controllers": {
-      "ui_controller.py": "4c2c2ec0be22764cfda11e82ab5317072ab96a086198de14730373720a8e2457",
-      "__init__.py": "f4061cac89c27637cfe0f9f434102e8f840cbbefa313a89712edfc36b3d1d36d",
-      "action_controller.py": "2c3d29212c9a68a74aa48ddd422e9c4be6100e557eb2852213531f3376f093ac",
-      "content_controller.py": "eafcacd8267c9f6fb5b2692c01ac5f5897b5a0f2511b0adcf798a43d4586932a"
+      "ui_controller.py": "7af6c23b2a7800d40ebc918ec5cb2372c12a0b92a3ab2299f0a9048c5b61c6aa",
+      "__init__.py": "785a9a4e073b44d5de751729bcdec609365b8a6df1aa51e095dcca07467d9ab3",
+      "action_controller.py": "abb7f5cf1d0132c10c94aaafcc1dfe0d2617d93f8d38ec12d6fabeb8d99ba00e",
+      "content_controller.py": "567549a0e649949eb6b09aff0c46d0d1da89cee57510019be4b5daf412afbc93"
     },
     "control/gtk4_gui/views": {
-      "input_view.py": "1f8cfc0b9f0871972f5b608f66932ab140cd75aeccdd0f1e81874b290683fb7a",
-      "processes_view.py": "ea4596dee14d52e901ed8793759b80e97ff0e3cb3dfd62c61655b6a9642700a0",
+      "input_view.py": "709a3f3d74e94794ac7e0c8ef26f3cbd68255accc9ed285c3b87fe02840a0606",
+      "processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "chatroom_view.py": "d2c4d371005c100aaa484facc8298cbb90c662cbb0ddf0a8369bff08aa0318c1",
-      "bluetooth_view.py": "fa9632546fd33d68d416fcb921bb90bb320534f4f64128726cd117445db94e45",
-      "system_view.py": "f72fd1aab6f33120ece4969755cbf9c3c1f8029c841529b93734bfdd9a4e5977",
-      "status_view.py": "b6fb230a2993e32750d4596835d29b9fa3bb5a1465a96cee912c13c8efa77c5c",
-      "output_view.py": "c75e22917567c3b77c69ef9d42e1748fb2f0fba7046d76039d40ef44ffe65156"
+      "chatroom_view.py": "3116d6dd1c21b9935c20238b553708e66102c6112fb35c43ac918fb740a88abd",
+      "bluetooth_view.py": "0673636d855c373e91980b183d7fe0ca22e7e05a7e57aab5db6ad2b5bd69a8eb",
+      "system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
+      "status_view.py": "6d9b34c25c83feee15b9e2baafa7f8f087b5b361f7323ca51373e54d0bdb3413",
+      "output_view.py": "e547444af9a9e2d4395b072d07f477f2366bdf230ee3b50e00f08515885ba5fe"
     },
     "control/gtk4_gui/handlers": {
-      "audio_handler.py": "85ac9e1cefc487ede0693724a795e7c37312e4efa9439ccc0930f1faa98e519c",
+      "audio_handler.py": "f324d8423a8d98410a6c116bec84c35a7d67eb918ebeddc0dbb298039b064a62",
       "__init__.py": "11f9119a4f034655224759d02cf0a8a18fa8a715475ec6e1d8d15bc6fcd17e45",
-      "platform_handler.py": "24b2bda53c176761bdaa4c160239488f76c38d20b33a4b670c1c0cd006784003",
-      "audio_monitor.py": "75336fc2b016a845a70c3e83194b58db3c58d4d0045853fd8d6055c9514a78e0"
+      "platform_handler.py": "298d309cdcdd36d778d2119396437251d5ac25d21ca289eaf1fe971be0e6a3d2",
+      "audio_monitor.py": "05a95c4393cbe6c2df355d286ac83b45687184fad96376697e81cbbd4b408aff"
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "d3e8c34a4a4276eb3b3d608c2b055bb35b93d93e9ac3586e91f9f6fd31709153",
+      "code_checksums.json": "72d7e8b51b070c1172886bf47157b32818492ae0112c507fe0ea9ce695bf7945",
+      "static_analysis_results.json": "64b62ff0a6eee9900771c94e8c5e1be5bd41d14c335b4368231ced8c1b77815a",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
       "test_plugin_system.py": "be3dbdf05e945785c5bc7c30c0305cfc00b43604bbb4927d17d6804297722d15",
-      "orchestrator.py": "4be1342fb85c0594d0eb1244a1eace7ef75f0d5d4296deecc83d55fed9a801bc",
+      "static_analysis_manager.py": "1513b7234d2b035bc6322d321794400027d4b3294dea1dbedb39962a28d88d55",
+      "orchestrator.py": "3660efc4da1bf3d4ab7f33fba84f2e66fed519a77324f126765cfc8d8d406635",
       "checksum_manager.py": "380bf86e739cc618e49d56167f7fed00d48066dabd4985aaab48ae3110b7207e",
       "test_image_gen_final.py": "920e5e987065ddc8502c41944370bb6a9dc132c6d37da90f9c5ddab2529a4a76",
       "monitoring.py": "1087be109a5a15beebd146a1f156992d9a2e0269d1cbaeac46af59e3e5c7b041",
       "test_image_gen_simple.py": "5cf3f7e27ddc09dc0b58758a7d86884744e1e86b73c2af1e1b1ad567eb7b36c8",
-      "setup-unified-venv.py": "8cdeef86bc7149057c61799177341b9954ca371770c6c9f523bd20307d598bc6",
+      "setup-unified-venv.py": "0bdfdf5f79bddf07655df167d7f29fcf0717de42bd5325fbe63f7082708360c2",
       "test_image_generation.py": "6cdbc8567e5cd840ed7e24aa2c69cb163856875937840d5fb7b99997bc499e65",
       "developer_experience.py": "9637be6a3a4e9466228110ee68173a76f54e26aad5d982b0ec4737395efc1781",
       "build.py": "fb371555f0d5e7fa6259ead4b5ea6cbc0f9bb9d5c9a11e67661fb67b39d9a8b5",
@@ -19973,6 +19975,7 @@
       "image-generation/grpc_server.py": "a2a1a0456c20735874285183808abd3205619aec52fa18c1114dfce83ece12a1",
       "text-to-speech/main.py": "51d6d47de94cde5775c4c82104f96eca89763d7b69e527412d9ce68c663af184",
       "text-to-speech/grpc_server.py": "2fa57b43408c9084f969b9a4d9611f5d460411b98c1fb6cdb5d496dd1b2c329f",
+      "chat-with-sessions/dashboard.py": "c708e08cdd1aa8cd3d659653043fc4f259a22077a0860031b5ac40561e4b70fd",
       "chat-with-sessions/simple_server.py": "4c1526b5dfc7ac3ded664f62f272038321ceb69f0c39a2b9a92f94960f0af0a4",
       "chat-with-sessions/main.py": "38e6c480c7c5b52fab892f4df2e0ac46c55350711780ed41f62cb890a34a502d",
       "chat-with-sessions/grpc_server.py": "7e832ae134890a2803efebcff0d2c13fa822c9f1e5e6f4a9074298fed27859f0",
