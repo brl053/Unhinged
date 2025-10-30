@@ -683,50 +683,8 @@ class UnhingedDesktopApp(Adw.Application):
             self.action_controller.setup_actions()
         else:
             print("⚠️ Action controller not available")
-        """Create performance metrics section with real-time indicators."""
-        performance_group = Adw.PreferencesGroup()
-        performance_group.set_title("Performance Metrics")
-        performance_group.set_description("Real-time system performance indicators")
 
-        # CPU Performance
-        cpu_indicator = PerformanceIndicator(
-            metric_type="cpu",
-            title="CPU Usage",
-            current_value=system_info.cpu.usage_percent,
-            max_value=100.0,
-            unit="%"
-        )
-        performance_group.add(cpu_indicator.get_widget())
-        self.performance_indicators['cpu'] = cpu_indicator
 
-        # Memory Performance
-        memory_indicator = PerformanceIndicator(
-            metric_type="memory",
-            title="Memory Usage",
-            current_value=system_info.memory.usage_percent,
-            max_value=100.0,
-            unit="%"
-        )
-        performance_group.add(memory_indicator.get_widget())
-        self.performance_indicators['memory'] = memory_indicator
-
-        # Storage Performance
-        if system_info.storage.total_storage_gb > 0:
-            storage_usage = (system_info.storage.total_used_gb / system_info.storage.total_storage_gb) * 100
-            storage_indicator = PerformanceIndicator(
-                metric_type="disk",
-                title="Storage Usage",
-                current_value=storage_usage,
-                max_value=100.0,
-                unit="%"
-            )
-            performance_group.add(storage_indicator.get_widget())
-            self.performance_indicators['disk'] = storage_indicator
-
-        # Start real-time updates for performance indicators
-        self._setup_realtime_updates()
-
-        return performance_group
 
     def on_about_action(self, action, param):
         """Show about dialog using ActionController"""
@@ -738,42 +696,7 @@ class UnhingedDesktopApp(Adw.Application):
         if hasattr(self, 'action_controller') and self.action_controller:
             self.action_controller.on_preferences_action(action, param)
 
-        # Memory Information
-        memory_details = {
-            "total_gb": f"{system_info.memory.total_gb:.1f} GB",
-            "available_gb": f"{system_info.memory.available_gb:.1f} GB",
-            "used_gb": f"{system_info.memory.used_gb:.1f} GB",
-            "swap_total_gb": f"{system_info.memory.swap_total_gb:.1f} GB",
-            "swap_used_gb": f"{system_info.memory.swap_used_gb:.1f} GB"
-        }
 
-        memory_row = HardwareInfoRow(
-            title=f"Memory: {system_info.memory.total_gb:.1f} GB Total",
-            subtitle=f"{system_info.memory.usage_percent:.1f}% used ({system_info.memory.available_gb:.1f} GB available)",
-            hardware_type="memory",
-            status="normal",
-            details=memory_details
-        )
-        hardware_group.add(memory_row.get_widget())
-
-        # GPU Information
-        if system_info.gpu.vendor != "Unknown":
-            gpu_details = {
-                "vendor": system_info.gpu.vendor,
-                "model": system_info.gpu.model,
-                "driver": system_info.gpu.driver or "Unknown"
-            }
-
-            gpu_row = HardwareInfoRow(
-                title=f"GPU: {system_info.gpu.vendor}",
-                subtitle=system_info.gpu.model,
-                hardware_type="gpu",
-                status="normal",
-                details=gpu_details
-            )
-            hardware_group.add(gpu_row.get_widget())
-
-        return hardware_group
 
     def on_quit_action(self, action, param):
         """Quit application using ActionController"""

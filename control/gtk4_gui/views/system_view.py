@@ -326,8 +326,8 @@ class SystemInfoView:
             display_row.set_subtitle(system_info.platform.display_info)
 
             graphics_icon = Gtk.Image.new_from_icon_name("video-display-symbolic")
-            graphics_row.add_prefix(graphics_icon)
-            platform_group.add(graphics_row)
+            display_row.add_prefix(graphics_icon)
+            platform_group.add(display_row)
 
         return platform_group
 

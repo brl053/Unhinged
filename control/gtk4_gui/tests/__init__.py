@@ -8,38 +8,25 @@ Consolidated test suite for the GTK4 GUI components and modules.
 Provides comprehensive testing for all components, monitors, and integrations.
 """
 
-# Test suite imports
+# Test suite imports - explicit imports only
 try:
-    from .test_components import *
-    from .test_integration import *
-    from .test_monitors import *
+    from .test_components import TestApp
+    from .test_monitors import SystemInfoProductionTester
+    # test_integration has no test classes currently
 except ImportError:
     # Fallback for direct execution
     import test_components
-    import test_integration
     import test_monitors
 
 __all__ = [
-    # Monitor tests
-    'TestSystemInfo',
-    'TestProcessMonitor',
-    'TestAudioMonitor',
-    'TestBluetoothMonitor',
-
-    # Component tests
-    'TestPrimitiveComponents',
-    'TestComplexComponents',
-    'TestTableComponents',
-
-    # Integration tests
-    'TestDesktopAppIntegration',
-    'TestComponentLibraryIntegration',
+    # Available test classes
+    'SystemInfoProductionTester',
+    'TestApp',
 
     # Test utilities
     'run_all_tests',
     'run_monitor_tests',
     'run_component_tests',
-    'run_integration_tests'
 ]
 
 def run_all_tests():
