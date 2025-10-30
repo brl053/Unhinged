@@ -349,10 +349,30 @@ def initialize_service_framework():
         from service_framework import get_global_pool, register_service
 
         # Register common services with the global connection pool
-        register_service("chat", "localhost:9095")
-        register_service("persistence", "localhost:9090")
-        register_service("image_generation", "localhost:9094")
-        register_service("vision", "localhost:9093")
+        # Import stub classes for proper gRPC service registration
+        try:
+            from unhinged_proto_clients import chat_pb2_grpc
+            register_service("chat", "localhost:9095", stub_class=chat_pb2_grpc.ChatServiceStub)
+        except ImportError:
+            register_service("chat", "localhost:9095")  # Fallback without stub
+
+        try:
+            from unhinged_proto_clients import persistence_pb2_grpc
+            register_service("persistence", "localhost:9090", stub_class=persistence_pb2_grpc.PersistenceServiceStub)
+        except ImportError:
+            register_service("persistence", "localhost:9090")  # Fallback without stub
+
+        try:
+            from unhinged_proto_clients import image_generation_pb2_grpc
+            register_service("image_generation", "localhost:9094", stub_class=image_generation_pb2_grpc.ImageGenerationServiceStub)
+        except ImportError:
+            register_service("image_generation", "localhost:9094")  # Fallback without stub
+
+        try:
+            from unhinged_proto_clients import vision_pb2_grpc
+            register_service("vision", "localhost:9093", stub_class=vision_pb2_grpc.VisionServiceStub)
+        except ImportError:
+            register_service("vision", "localhost:9093")  # Fallback without stub
 
         print("✅ Service framework initialized with hardware-aware resource management")
         return True
