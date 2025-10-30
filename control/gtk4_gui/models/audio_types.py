@@ -41,6 +41,7 @@ class AudioDevice:
     device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
     connection_type: str = "unknown"  # "usb", "hdmi", "bluetooth", "internal", "unknown"
     driver: str = "ALSA"  # Audio driver name
+    subdevices: int = 1  # Number of subdevices available on this audio device
     is_default: bool = False
     is_active: bool = False
     volume: Optional[float] = None

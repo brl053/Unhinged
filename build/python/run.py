@@ -28,6 +28,8 @@ class UnhingedPythonRunner:
     
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent
+        # Use unified virtual environment
+        self.venv_path = self.project_root / ".venv"
         self.build_python_dir = self.project_root / "build" / "python"
         self.venv_path = self.build_python_dir / "venv"
         self.python_executable = self.venv_path / "bin" / "python3"

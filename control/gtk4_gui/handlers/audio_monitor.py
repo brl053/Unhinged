@@ -40,6 +40,7 @@ except ImportError:
             device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
             connection_type: str = "unknown"
             driver: str = "ALSA"
+            subdevices: int = 1
             is_default: bool = False
             is_active: bool = False
             volume: Optional[float] = None
@@ -213,6 +214,7 @@ class AudioLevelMonitor:
                                 device_type=AudioDeviceType.SPEAKER,
                                 connection_type="internal",  # Default to internal for ALSA devices
                                 driver="ALSA",  # Audio driver
+                                subdevices=1,  # Default single subdevice
                                 is_default=False,
                                 is_active=False,
                                 volume=None,
@@ -262,6 +264,7 @@ class AudioLevelMonitor:
                                 device_type=AudioDeviceType.MICROPHONE,
                                 connection_type="internal",  # Default to internal for ALSA devices
                                 driver="ALSA",  # Audio driver
+                                subdevices=1,  # Default single subdevice
                                 is_default=False,
                                 is_active=False,
                                 volume=None,
