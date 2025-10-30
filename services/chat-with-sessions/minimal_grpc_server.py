@@ -72,7 +72,7 @@ class MinimalChatServicer(
             )
 
             response = chat_pb2.CreateConversationResponse(
-                response=common_pb2.Response(
+                response=common_pb2.StandardResponse(
                     success=True,
                     message="Conversation created successfully"
                 ),
@@ -85,7 +85,7 @@ class MinimalChatServicer(
         except Exception as e:
             events.error("Failed to create conversation", exception=e)
             return chat_pb2.CreateConversationResponse(
-                response=common_pb2.Response(
+                response=common_pb2.StandardResponse(
                     success=False,
                     message=f"Failed to create conversation: {e}"
                 )

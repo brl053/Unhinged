@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761828129.9697351,
-    "updated_iso": "2025-10-30 05:42:09",
+    "updated": 1761828259.273799,
+    "updated_iso": "2025-10-30 05:44:19",
     "version": "1.0"
   },
   "checksums": {
@@ -81,7 +81,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "6c84ad94c6e2d0a42a4c160b9262d66738a02d191d5f4fbcf6deddddc01349ec",
+      "code_checksums.json": "da25a64b7a85814bd43fa08875b91bb2f0cc801a1a4b4882cd9e093089a86a24",
       "static_analysis_results.json": "b8920775926ff2e354bbf0aa6a4463d4c6e06a49ee5bff444decfc9f1238ff3f",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
@@ -19953,7 +19953,7 @@
       "session/test_session_store_mock.py": "8c07b25d48ea4eb59520810ad2c7872e832321fe03c8aef66aaf953021ee7bb8",
       "session/test_session_store.py": "0e9fe83d322a64702f7e25e2fcf8fcf08f2a83bc726c4d997723629be6bf3652",
       "grpc_clients/__init__.py": "a8766c29e2833c5dbb8e3983b6e4fa4c89a410e942b06d7339b81ee361231521",
-      "grpc_clients/client_factory.py": "fd305387ff93ce2c408be7f527d1ac53ccc1c312b8c5c246c7789b6a105b88bc",
+      "grpc_clients/client_factory.py": "caacc3c785bcae4a7945dd94b98a488c53a36853879c05796979322328365cdc",
       "service_framework/health_manager.py": "0c685508bf01f63d5e2052d25cb72baad4bc41f457e43f20c2e31fa169dce356",
       "service_framework/service_base.py": "7d9a4692f0cb5ee4ce00e07800b46ef6027b55fde26a45b1f60b8c0c359a9245",
       "service_framework/__init__.py": "438529e8abcb28a8b97098c4e7ca08f8b9788c1d7c346b13a38989655145c878",
