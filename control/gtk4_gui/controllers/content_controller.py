@@ -11,7 +11,6 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Adw, GLib, Pango
 from pathlib import Path
-import subprocess
 
 
 class ContentController:
@@ -46,33 +45,22 @@ class ContentController:
         return scrolled
         
     def create_welcome_section(self):
-        """Create welcome section with app info"""
+        """Create deprecation notice for main tab"""
         group = Adw.PreferencesGroup()
-        group.set_title("Unhinged Native Graphics Platform")
-        group.set_description("Independent graphics rendering with VM communication")
-        
-        # Version row
-        version_row = Adw.ActionRow()
-        version_row.set_title("Version")
-        version_row.set_subtitle("1.0.0 Development")
-        
-        version_icon = Gtk.Image.new_from_icon_name("applications-graphics-symbolic")
-        version_icon.add_css_class("accent")
-        version_row.add_prefix(version_icon)
-        
-        group.add(version_row)
-        
-        # Features row
-        features_row = Adw.ActionRow()
-        features_row.set_title("Features")
-        features_row.set_subtitle("Voice-first interface • Native graphics • AI integration")
-        
-        features_icon = Gtk.Image.new_from_icon_name("starred-symbolic")
-        features_icon.add_css_class("success")
-        features_row.add_prefix(features_icon)
-        
-        group.add(features_row)
-        
+        group.set_title("Main Tab Deprecation Notice")
+        group.set_description("This tab is being phased out - functionality moved to Status tab")
+
+        # Deprecation notice row
+        notice_row = Adw.ActionRow()
+        notice_row.set_title("Functionality Moved")
+        notice_row.set_subtitle("Platform controls and status moved to Status tab")
+
+        notice_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+        notice_icon.add_css_class("warning")
+        notice_row.add_prefix(notice_icon)
+
+        group.add(notice_row)
+
         return group
         
     def create_control_section(self):
@@ -104,24 +92,7 @@ class ContentController:
         
         control_row.add_suffix(button_box)
         group.add(control_row)
-        
-        # Launch mode row
-        mode_row = Adw.ActionRow()
-        mode_row.set_title("Launch Mode")
-        mode_row.set_subtitle("Choose how to start the platform")
-        
-        # Mode dropdown
-        self.app.mode_dropdown = Gtk.DropDown.new_from_strings([
-            "Enhanced (Recommended)",
-            "Simple Communication", 
-            "Quality of Life",
-            "Custom ISO"
-        ])
-        self.app.mode_dropdown.set_selected(0)  # Default to Enhanced
-        mode_row.add_suffix(self.app.mode_dropdown)
-        
-        group.add(mode_row)
-        
+
         return group
         
     def create_status_section(self):
@@ -161,47 +132,23 @@ class ContentController:
         return group
         
     def create_development_section(self):
-        """Create development section with power user tools"""
+        """Create minimal development section (most functionality moved to appropriate tabs)"""
         group = Adw.PreferencesGroup()
-        group.set_title("Development Tools")
-        group.set_description("Power user interface for system development and debugging")
-        
-        # Voice recording row
-        voice_row = Adw.ActionRow()
-        voice_row.set_title("Voice Recording")
-        voice_row.set_subtitle("Test voice-to-text functionality")
-        
-        # Voice button
-        voice_button = Gtk.Button.new_with_label("Record Voice")
-        voice_button.add_css_class("pill")
-        voice_button.connect("clicked", self.app.on_record_voice_clicked)
-        voice_row.add_suffix(voice_button)
-        
-        group.add(voice_row)
-        
-        # Build commands row
-        build_row = Adw.ActionRow()
-        build_row.set_title("Build Commands")
-        build_row.set_subtitle("Execute build system operations")
-        
-        # Build button box
-        build_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        
-        # Generate button
-        generate_button = Gtk.Button.new_with_label("Generate")
-        generate_button.add_css_class("pill")
-        generate_button.connect("clicked", lambda b: self._run_command("generate"))
-        build_box.append(generate_button)
-        
-        # Build button
-        build_button = Gtk.Button.new_with_label("Build")
-        build_button.add_css_class("pill")
-        build_button.connect("clicked", lambda b: self._run_command("build"))
-        build_box.append(build_button)
-        
-        build_row.add_suffix(build_box)
-        group.add(build_row)
-        
+        group.set_title("Development Notes")
+        group.set_description("Development tools have been moved to appropriate tabs")
+
+        # Info row about moved functionality
+        info_row = Adw.ActionRow()
+        info_row.set_title("Voice Recording")
+        info_row.set_subtitle("Available in OS Chatroom tab with full interface")
+
+        # Add info icon
+        info_icon = Gtk.Image.new_from_icon_name("dialog-information-symbolic")
+        info_icon.add_css_class("accent")
+        info_row.add_prefix(info_icon)
+
+        group.add(info_row)
+
         return group
         
     def create_log_section(self):
@@ -226,23 +173,3 @@ class ContentController:
         
         group.add(scrolled_log)
         return group
-        
-    def _run_command(self, command):
-        """Run a command using the unified entry point"""
-        try:
-            # Use the unified entry point for consistency
-            if command == "generate":
-                subprocess.run([str(self.project_root / "unhinged"), "build", "generate"],
-                             cwd=self.project_root, check=True)
-                self.app.append_log("SUCCESS: Generate command completed")
-            elif command == "build":
-                subprocess.run([str(self.project_root / "unhinged"), "build"],
-                             cwd=self.project_root, check=True)
-                self.app.append_log("SUCCESS: Build command completed")
-                
-        except subprocess.CalledProcessError as e:
-            self.app.append_log(f"ERROR: Command '{command}' failed with exit code {e.returncode}")
-        except FileNotFoundError:
-            self.app.append_log(f"ERROR: Command '{command}' not found")
-        except Exception as e:
-            self.app.append_log(f"ERROR: Unexpected error running '{command}': {e}")
