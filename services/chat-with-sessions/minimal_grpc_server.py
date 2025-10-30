@@ -75,7 +75,7 @@ class MinimalChatServicer(
                 title=request.title,
                 description=request.description,
                 settings=request.settings,
-                status=chat_pb2.ConversationStatus.ACTIVE
+                status=chat_pb2.ConversationStatus.CONVERSATION_STATUS_ACTIVE
             )
 
             response = chat_pb2.CreateConversationResponse(
