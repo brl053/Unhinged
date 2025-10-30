@@ -360,47 +360,21 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _create_status_fallback(self):
         """Fallback status implementation"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label="Status functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
+        return self._create_fallback("Status")
 
     def create_system_info_tab_content(self):
-        """Create the system info tab content using extracted SystemInfoView."""
+        """Create the system info tab content using extracted SystemInfoView"""
         try:
             from .views.system_view import SystemInfoView
-
-            # Create system info view
             self.system_info_view = SystemInfoView(self)
             return self.system_info_view.create_content()
-
-        except ImportError as e:
-            print(f"⚠️ SystemInfoView not available, using fallback: {e}")
-            return self._create_system_info_fallback()
         except Exception as e:
             print(f"❌ Error creating system info view: {e}")
-            return self._create_system_info_fallback()
+            return self._create_fallback("System info")
 
     def _create_system_info_fallback(self):
         """Fallback system info implementation"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label="System information functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
+        return self._create_fallback("System info")
 
     def create_processes_tab_content(self):
         """Create the processes tab content using extracted ProcessesView."""
@@ -451,47 +425,21 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _create_input_fallback(self):
         """Fallback input implementation"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label="Input functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
+        return self._create_fallback("Input")
 
     def create_chatroom_tab_content(self):
-        """Create the OS Chatroom tab content using extracted ChatroomView."""
+        """Create the OS Chatroom tab content using extracted ChatroomView"""
         try:
             from .views.chatroom_view import ChatroomView
-
-            # Create chatroom view
             self.chatroom_view = ChatroomView(self)
             return self.chatroom_view.create_content()
-
-        except ImportError as e:
-            print(f"⚠️ ChatroomView not available, using fallback: {e}")
-            return self._create_chatroom_fallback()
         except Exception as e:
             print(f"❌ Error creating chatroom view: {e}")
-            return self._create_chatroom_fallback()
+            return self._create_fallback("Chatroom")
 
     def _create_chatroom_fallback(self):
         """Fallback chatroom implementation"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label="Chatroom functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
+        return self._create_fallback("Chatroom")
 
 
 
@@ -605,47 +553,21 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _create_bluetooth_fallback(self):
         """Fallback bluetooth implementation"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label="Bluetooth functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
+        return self._create_fallback("Bluetooth")
 
     def create_output_tab_content(self):
-        """Create the Output tab content using extracted OutputView."""
+        """Create the Output tab content using extracted OutputView"""
         try:
             from .views.output_view import OutputView
-
-            # Create output view
             self.output_view = OutputView(self)
             return self.output_view.create_content()
-
-        except ImportError as e:
-            print(f"⚠️ OutputView not available, using fallback: {e}")
-            return self._create_output_fallback()
         except Exception as e:
             print(f"❌ Error creating output view: {e}")
-            return self._create_output_fallback()
+            return self._create_fallback("Audio output")
 
     def _create_output_fallback(self):
         """Fallback output implementation"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label="Audio output functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
+        return self._create_fallback("Audio output")
 
     def setup_actions(self):
         """Setup application actions using ActionController"""
