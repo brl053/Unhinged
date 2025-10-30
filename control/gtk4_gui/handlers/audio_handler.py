@@ -167,8 +167,7 @@ class AudioHandler:
     def _record_audio_continuous(self) -> None:
         """Record audio continuously until stopped (NO DURATION LIMIT)"""
         try:
-            # Build arecord command with very long duration (24 hours)
-            # This prevents SIGINT from being treated as an abort
+            # Use arecord without duration - will be stopped by signal
             cmd = [
                 'arecord',
                 '-D', app_config.audio_device,
@@ -176,7 +175,7 @@ class AudioHandler:
                 '-r', str(app_config.audio_sample_rate),
                 '-c', str(app_config.audio_channels),
                 '-t', 'wav',
-                '-d', '86400',  # 24 hours - effectively unlimited
+                # NO duration - record until stopped
                 str(self._temp_file)
             ]
 
@@ -194,11 +193,18 @@ class AudioHandler:
             # Wait for recording to complete
             stdout, stderr = self._recording_process.communicate()
 
-            # Check if recording failed (but allow SIGTERM/SIGINT exits with valid files)
+            # Handle recording completion - arecord exits with non-zero when stopped by signal
             if self._recording_process.returncode != 0:
-                # If we have a valid file despite non-zero exit, it's probably a signal stop
-                if self._temp_file and self._temp_file.exists() and self._temp_file.stat().st_size > 44:
-                    logger.info(f"Recording stopped by signal (exit code {self._recording_process.returncode}) but file is valid")
+                # Check if this is a signal exit with valid file
+                signal_messages = ["Aborted by signal", "Interrupted by signal", "Terminated"]
+                is_signal_exit = any(msg in stderr for msg in signal_messages)
+
+                if is_signal_exit and self._temp_file and self._temp_file.exists():
+                    file_size = self._temp_file.stat().st_size
+                    if file_size > 44:  # Valid WAV file
+                        logger.info(f"Recording stopped by signal - file saved successfully ({file_size} bytes)")
+                    else:
+                        raise AudioRecordingError(f"Recording stopped by signal but file is too small: {file_size} bytes")
                 else:
                     raise AudioRecordingError(f"Recording failed: {stderr}")
 
