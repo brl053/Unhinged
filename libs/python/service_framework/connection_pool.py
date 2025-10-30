@@ -57,7 +57,28 @@ class ServiceClient:
             self.logger.info(f"Connecting to {self.config.name} at {self.config.address}")
 
             # For local deployment, use insecure channel
-            self._channel = grpc.insecure_channel(self.config.address)
+            # Handle different gRPC versions and imports
+            try:
+                # Debug: check what grpc module we have
+                print(f"🔍 grpc module: {grpc}")
+                print(f"🔍 grpc dir: {dir(grpc)[:10]}")
+                print(f"🔍 has insecure_channel: {'insecure_channel' in dir(grpc)}")
+
+                self._channel = grpc.insecure_channel(self.config.address)
+                print(f"✅ Created channel: {self._channel}")
+            except AttributeError as e:
+                print(f"❌ AttributeError: {e}")
+                # Try alternative import path
+                try:
+                    from grpc import insecure_channel
+                    self._channel = insecure_channel(self.config.address)
+                    print(f"✅ Created channel with direct import: {self._channel}")
+                except ImportError as e2:
+                    print(f"❌ ImportError: {e2}")
+                    raise RuntimeError(f"Failed to create gRPC channel: {e}")
+            except Exception as e:
+                print(f"❌ Unexpected error: {e}")
+                raise
 
             # Create stub if class provided
             if self.config.stub_class:
