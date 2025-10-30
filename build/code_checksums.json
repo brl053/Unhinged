@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761829238.9381971,
-    "updated_iso": "2025-10-30 06:00:38",
+    "updated": 1761829413.1005654,
+    "updated_iso": "2025-10-30 06:03:33",
     "version": "1.0"
   },
   "checksums": {
@@ -81,7 +81,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "675a257e5c4d7628f7e8f04ff8f8110eb181e70e619abcb1f92d7d1fdffc5934",
+      "code_checksums.json": "da67772197178e1f39461a75cf6e3ba7858cca0064dae1a34bbec43c24507655",
       "static_analysis_results.json": "b8920775926ff2e354bbf0aa6a4463d4c6e06a49ee5bff444decfc9f1238ff3f",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
@@ -19956,7 +19956,7 @@
       "grpc_clients/client_factory.py": "caacc3c785bcae4a7945dd94b98a488c53a36853879c05796979322328365cdc",
       "service_framework/health_manager.py": "0c685508bf01f63d5e2052d25cb72baad4bc41f457e43f20c2e31fa169dce356",
       "service_framework/service_base.py": "7d9a4692f0cb5ee4ce00e07800b46ef6027b55fde26a45b1f60b8c0c359a9245",
-      "service_framework/__init__.py": "438529e8abcb28a8b97098c4e7ca08f8b9788c1d7c346b13a38989655145c878",
+      "service_framework/__init__.py": "5fea5875149817cb3ca7993ec26aae32215c352fdaa37082f9d29c0c6651d760",
       "service_framework/intent_detector.py": "fed13711cca8d0404b6b6dc9d9fa429d6d725fceac256a6e4c36cfa8d63623f5",
       "service_framework/resource_manager.py": "42df8f67ffc9374bd8cd8fd9eff4f925342a9472277c4b433dd9735d755dcedd",
       "service_framework/connection_pool.py": "683beeb9526a0efb333bd0921171a5b05ec716f2d04679657333d494797ba90c"
