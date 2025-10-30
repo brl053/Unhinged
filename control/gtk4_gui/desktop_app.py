@@ -910,60 +910,36 @@ class UnhingedDesktopApp(Adw.Application):
 
 
     def _start_toggle_recording(self):
-        """
-        @llm-type service.audio
-        @llm-does initiates unlimited duration audio recording with visual feedback and timer
-        """
+        """Start toggle recording using AudioHandler"""
         try:
-            import subprocess
-            import tempfile
-            import time
-            from pathlib import Path
+            if not hasattr(self, 'audio_handler'):
+                self._init_audio_handler()
 
-            # Create temporary file for recording
-            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
-                self.recording_temp_file = Path(f.name)
-
-            # Use arecord with Whisper-optimal audio settings (16kHz, mono, 16-bit)
-            cmd = [
-                'arecord',
-                '-D', 'pipewire',     # Use PipeWire audio system
-                '-f', 'S16_LE',       # 16-bit signed little-endian (optimal for Whisper)
-                '-r', '16000',        # 16kHz sample rate (optimal for Whisper)
-                '-c', '1',            # Mono (optimal for Whisper)
-                '-t', 'wav',          # WAV format
-                str(self.recording_temp_file)
-            ]
-
-            # Start recording process (non-blocking)
-            self.recording_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-
-            self.is_recording = True
-
-            # Initialize recording timer
-            self.recording_start_time = time.time()
-            self.recording_timer_id = None
-
-            # Update UI with visual indicators and timer
-            self._update_chatroom_voice_button_for_recording()
-            self._start_recording_timer()
+            self.audio_handler.start_recording()
             self.show_toast("Recording... (click to stop)")
 
-            # Log the event
             if self.session_logger:
-                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started unlimited toggle recording")
+                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started toggle recording")
 
         except Exception as e:
             print(f"❌ Start toggle recording error: {e}")
-            self.is_recording = False
-            self.recording_process = None
-            self.recording_temp_file = None
-            raise e
+            self.show_toast(f"Recording failed: {e}")
+
+    def _init_audio_handler(self):
+        """Initialize the AudioHandler with callbacks"""
+        try:
+            from .handlers.audio_handler import AudioHandler, RecordingState
+
+            self.audio_handler = AudioHandler()
+            self.audio_handler.set_callbacks(
+                state_callback=self._on_recording_state_changed,
+                result_callback=self._on_transcription_result,
+                error_callback=self._on_audio_error
+            )
+
+        except Exception as e:
+            print(f"⚠️ Failed to initialize AudioHandler: {e}")
+            self.audio_handler = None
 
 
 
