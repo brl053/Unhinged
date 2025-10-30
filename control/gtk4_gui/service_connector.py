@@ -146,43 +146,47 @@ class ServiceConnector:
                 sys.path.insert(0, str(protobuf_path))
             
             import grpc
-            import audio_pb2
-            import audio_pb2_grpc
-            
+            from unhinged_proto_clients import audio_pb2
+            from unhinged_proto_clients import audio_pb2_grpc
+            from unhinged_proto_clients import common_pb2
+
             # Get service endpoint
             endpoint = service_config.get_endpoint('speech_to_text')
-            
+
             # Configure gRPC options
             options = [
                 ('grpc.max_receive_message_length', app_config.grpc_max_message_size),
                 ('grpc.max_send_message_length', app_config.grpc_max_message_size),
             ]
-            
+
             # Create gRPC channel and client
             with grpc.insecure_channel(endpoint.address, options=options) as channel:
                 client = audio_pb2_grpc.AudioServiceStub(channel)
-                
+
                 # Read audio file
                 with open(audio_file_path, 'rb') as f:
                     audio_data = f.read()
-                
-                # Create request
-                request = audio_pb2.TranscribeRequest(
-                    audio_data=audio_data,
-                    format="wav"
-                )
-                
-                # Make gRPC call with timeout
-                response = client.Transcribe(request, timeout=app_config.grpc_timeout)
-                
-                # Check response
-                if not response.success:
-                    raise ServiceResponseError(
-                        'speech_to_text',
-                        response_message=response.response.message
-                    )
-                
-                return response.response.text
+
+                # Create streaming chunks (the service expects StreamChunk iterator)
+                def generate_chunks():
+                    # Send audio data as chunks
+                    chunk_size = 8192  # 8KB chunks
+                    for i in range(0, len(audio_data), chunk_size):
+                        chunk_data = audio_data[i:i + chunk_size]
+                        chunk = common_pb2.StreamChunk(
+                            type=common_pb2.CHUNK_TYPE_DATA,
+                            data=chunk_data
+                        )
+                        yield chunk
+
+                # Make streaming gRPC call with timeout
+                response = client.SpeechToText(generate_chunks(), timeout=app_config.grpc_timeout)
+
+                # Check response and extract transcript
+                if response and hasattr(response, 'transcript'):
+                    return response.transcript.strip()
+                else:
+                    raise AudioTranscriptionError(f"Invalid response from transcription service", file_path=str(audio_file_path))
                 
         except ImportError as e:
             raise AudioTranscriptionError(f"gRPC client not available: {e}")
