@@ -8,13 +8,14 @@ services:
   # =============================================================================
   
   llm:
-    build: llm
+    build:
+      context: .
+      dockerfile: Dockerfile.llm
     container_name: ollama-service-dev
     ports:
       - "1500:11434"  # External 1500 → Internal 11434
     volumes:
       - llm-models:/models
-      - ./llm:/app/src:ro  # Hot-reload source
     environment:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_DEBUG=1

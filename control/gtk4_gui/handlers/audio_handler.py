@@ -21,6 +21,7 @@ try:
         AudioRecordingError, AudioTranscriptionError, AudioFileSizeError,
         ServiceUnavailableError
     )
+    from .audio_monitor import AudioVisualizationBridge
 except ImportError:
     # Fallback for direct execution
     from config import app_config
@@ -29,6 +30,7 @@ except ImportError:
         AudioRecordingError, AudioTranscriptionError, AudioFileSizeError,
         ServiceUnavailableError
     )
+    from .audio_monitor import AudioVisualizationBridge
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,9 @@ class AudioHandler:
         self._progress_callback: Optional[Callable[[float], None]] = None
         self._result_callback: Optional[Callable[[str], None]] = None
         self._error_callback: Optional[Callable[[Exception], None]] = None
+
+        # Real-time audio visualization
+        self._visualization_bridge = AudioVisualizationBridge()
     
     @property
     def state(self) -> RecordingState:
@@ -94,6 +99,10 @@ class AudioHandler:
         self._progress_callback = progress_callback
         self._result_callback = result_callback
         self._error_callback = error_callback
+
+    def set_voice_visualizer(self, visualizer) -> None:
+        """Connect voice visualizer for real-time feedback"""
+        self._visualization_bridge.set_voice_visualizer(visualizer)
     
     def start_recording(self, duration: Optional[int] = None) -> None:
         """Start audio recording
@@ -131,7 +140,10 @@ class AudioHandler:
             self._set_state(RecordingState.RECORDING)
             self._start_time = time.time()
             self._recording_thread.start()
-            
+
+            # Start real-time audio visualization
+            self._visualization_bridge.start_recording_visualization()
+
             logger.info(f"Started recording for {duration} seconds")
             
         except Exception as e:
@@ -211,6 +223,9 @@ class AudioHandler:
             # Validate recorded file
             self._validate_recorded_file()
             
+            # Stop real-time audio visualization
+            self._visualization_bridge.stop_recording_visualization()
+
             # Start transcription
             self._set_state(RecordingState.PROCESSING)
             self._transcribe_audio()

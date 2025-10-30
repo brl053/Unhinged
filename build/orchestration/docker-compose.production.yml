@@ -9,8 +9,8 @@ services:
   
   llm:
     build:
-      context: ../..
-      dockerfile: llm/Dockerfile
+      context: .
+      dockerfile: Dockerfile.llm
     container_name: ollama-service
     ports:
       - "1500:11434"  # External 1500 → Internal 11434

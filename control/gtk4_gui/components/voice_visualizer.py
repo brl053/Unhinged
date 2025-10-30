@@ -50,6 +50,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         self.is_processing = False
         self.amplitude = 0.0
         self.animation_time = 0.0
+        self.use_real_audio = False  # Flag to indicate real audio data is available
         
         # Animation data
         self.waveform_data = [0.0] * 50  # 50 sample points
@@ -72,14 +73,16 @@ class VoiceVisualizer(Gtk.DrawingArea):
         """Set recording state and update visualization"""
         if self.is_recording != recording:
             self.is_recording = recording
-            
+
             if recording:
+                self.use_real_audio = False  # Reset real audio flag when starting
                 self._start_animation()
             else:
+                self.use_real_audio = False  # Reset when stopping
                 self._stop_animation()
-                
+
             self.queue_draw()
-            
+
             if self.state_callback:
                 self.state_callback("recording" if recording else "idle")
     
@@ -99,15 +102,16 @@ class VoiceVisualizer(Gtk.DrawingArea):
                 self.state_callback("processing" if processing else "idle")
     
     def set_amplitude(self, amplitude: float) -> None:
-        """Set current audio amplitude (0.0 to 1.0)"""
+        """Set current audio amplitude (0.0 to 1.0) from real audio data"""
         self.amplitude = max(0.0, min(1.0, amplitude))
-        
+        self.use_real_audio = True  # Mark that we're receiving real audio data
+
         # Update visualization data based on mode
         if self.mode == VisualizationMode.WAVEFORM:
             self._update_waveform_data()
         elif self.mode == VisualizationMode.BARS:
             self._update_bars_data()
-            
+
         self.queue_draw()
     
     def set_mode(self, mode: VisualizationMode) -> None:
@@ -134,8 +138,8 @@ class VoiceVisualizer(Gtk.DrawingArea):
         """Animation callback"""
         self.animation_time += 0.05  # 50ms increment
 
-        # Generate realistic audio simulation if recording
-        if self.is_recording:
+        # Only use simulated data if we're not receiving real audio data
+        if self.is_recording and not self.use_real_audio:
             # Create realistic voice-like waveform using multiple frequencies
             fundamental = 0.4 * math.sin(self.animation_time * 4)  # Base voice frequency
             harmonic1 = 0.2 * math.sin(self.animation_time * 8)    # First harmonic
@@ -146,7 +150,10 @@ class VoiceVisualizer(Gtk.DrawingArea):
             voice_amplitude = fundamental + harmonic1 + harmonic2 + noise
             # Normalize to 0.0-1.0 range with some variation
             normalized_amplitude = 0.5 + 0.4 * voice_amplitude
-            self.set_amplitude(max(0.0, min(1.0, normalized_amplitude)))
+            # Use internal amplitude setting to avoid triggering real audio flag
+            self.amplitude = max(0.0, min(1.0, normalized_amplitude))
+            self._update_waveform_data()
+            self.queue_draw()
 
         elif self.is_processing:
             # Gentle pulsing for processing state

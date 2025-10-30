@@ -163,6 +163,11 @@ class ChatroomView:
                 self._voice_visualizer.set_hexpand(True)  # Expand to fill available space
                 self._voice_visualizer.add_css_class("voice-visualizer")
                 voice_controls_row.append(self._voice_visualizer)
+
+                # Connect visualizer to audio handler for real-time feedback
+                if hasattr(self.app, 'audio_handler') and self.app.audio_handler:
+                    self.app.audio_handler.set_voice_visualizer(self._voice_visualizer)
+
             except Exception as e:
                 print(f"Failed to create voice visualizer: {e}")
                 self._voice_visualizer = None
