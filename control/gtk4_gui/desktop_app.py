@@ -48,14 +48,26 @@ if protobuf_clients.exists():
 
 # Import new architecture components
 try:
-    from .config import service_config, app_config, get_service_endpoint, validate_all_services, log_configuration
-    from .service_connector import service_connector, service_registry
-    from .audio_handler import AudioHandler, RecordingState
-    from .exceptions import (
-        UnhingedError, ServiceUnavailableError, AudioRecordingError,
-        AudioTranscriptionError, get_user_friendly_message
-    )
+    # Try relative imports first
+    try:
+        from .config import service_config, app_config, get_service_endpoint, validate_all_services, log_configuration
+        from .service_connector import service_connector, service_registry
+        from .handlers.audio_handler import AudioHandler, RecordingState
+        from .exceptions import (
+            UnhingedError, ServiceUnavailableError, AudioRecordingError,
+            AudioTranscriptionError, get_user_friendly_message
+        )
+    except ImportError:
+        # Fallback to absolute imports for script execution
+        from config import service_config, app_config, get_service_endpoint, validate_all_services, log_configuration
+        from service_connector import service_connector, service_registry
+        from handlers.audio_handler import AudioHandler, RecordingState
+        from exceptions import (
+            UnhingedError, ServiceUnavailableError, AudioRecordingError,
+            AudioTranscriptionError, get_user_friendly_message
+        )
     ARCHITECTURE_AVAILABLE = True
+    print("✅ New architecture components loaded")
 except ImportError as e:
     print(f"⚠️ New architecture components not available: {e}")
     ARCHITECTURE_AVAILABLE = False
