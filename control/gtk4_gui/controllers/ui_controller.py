@@ -69,16 +69,15 @@ class UIController:
         self.app.navigation_split_view.set_sidebar(sidebar_page)
         self.app.navigation_split_view.set_content(content_page)
         
-        # Set default page
-        self.app.content_stack.set_visible_child_name("main")
+        # Set default page to Status (main tab removed)
+        self.app.content_stack.set_visible_child_name("status")
         
         # Set up toast overlay
         self.app.toast_overlay.set_child(self.app.navigation_split_view)
         
     def _add_stack_pages(self):
-        """Add all pages to the content stack"""
+        """Add all pages to the content stack (main tab removed)"""
         pages = [
-            ("main", "Main", self.app.create_main_tab_content),
             ("status", "Status", self.app.create_status_tab_content),
             ("system", "System Info", self.app.create_system_info_tab_content),
             ("processes", "Processes", self.app.create_processes_tab_content),
@@ -102,10 +101,9 @@ class UIController:
                 raise Exception(f"Page creation failed for {title}: {e}")
                 
     def _get_page_icon(self, page_id):
-        """Get icon name for page"""
+        """Get icon name for page (main tab removed)"""
         icons = {
-            "main": "applications-system-symbolic",
-            "status": "dialog-information-symbolic", 
+            "status": "dialog-information-symbolic",
             "system": "computer-symbolic",
             "processes": "system-run-symbolic",
             "input": "audio-input-microphone-symbolic",
@@ -113,7 +111,7 @@ class UIController:
             "bluetooth": "bluetooth-symbolic",
             "output": "audio-speakers-symbolic",
         }
-        return icons.get(page_id, "applications-system-symbolic")
+        return icons.get(page_id, "dialog-information-symbolic")
         
 
         
@@ -124,9 +122,8 @@ class UIController:
         sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         sidebar_list.add_css_class("navigation-sidebar")
         
-        # Navigation items
+        # Navigation items (main tab removed)
         nav_items = [
-            ("main", "Main", "applications-system-symbolic"),
             ("status", "Status", "dialog-information-symbolic"),
             ("system", "System Info", "computer-symbolic"),
             ("processes", "Processes", "system-run-symbolic"),

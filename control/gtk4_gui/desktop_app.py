@@ -137,11 +137,7 @@ class UnhingedDesktopApp(Adw.Application):
         super().__init__(application_id='com.unhinged.platform.gtk4')
         self.project_root = Path(__file__).parent.parent.parent  # Updated path
         self.window = None
-        self.status_label = None
-        self.progress_bar = None
-        self.log_textview = None
-        self.start_button = None
-        self.stop_button = None
+        # UI elements moved to StatusView
         self.process = None
         self.running = False
 
@@ -367,16 +363,7 @@ class UnhingedDesktopApp(Adw.Application):
 
 
 
-    def create_main_tab_content(self):
-        """Create main tab content using ContentController"""
-        if hasattr(self, 'content_controller') and self.content_controller:
-            return self.content_controller.create_main_tab_content()
-        else:
-            # Fallback implementation
-            container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-            label = Gtk.Label(label="Main content not available")
-            container.append(label)
-            return container
+    # Main tab removed - functionality migrated to enhanced Status tab
 
     def create_status_tab_content(self):
         """Create the status tab content using extracted StatusView."""
@@ -782,51 +769,26 @@ class UnhingedDesktopApp(Adw.Application):
         GLib.idle_add(self._update_status_ui, message, progress)
 
     def _update_status_ui(self, message, progress):
-        """Update UI elements from main thread"""
-        # Get previous status for logging
-        old_status = self.status_label.get_text() if hasattr(self, 'status_label') and self.status_label else "Unknown"
-
-        self.status_label.set_text(message)
+        """Update UI elements from main thread (now delegates to StatusView)"""
+        # Delegate to StatusView if available
+        if hasattr(self, 'status_view') and self.status_view:
+            self.status_view._update_platform_status(message, progress)
 
         # Log status change
-        if self.session_logger and old_status != message:
-            self.session_logger.log_status_change(old_status, message)
+        if self.session_logger:
+            self.session_logger.log_status_change("Previous", message)
 
-        # Update status icon based on message
-        if "Error" in message or "Failed" in message:
-            self.status_icon.set_from_icon_name("dialog-error-symbolic")
-        elif "Complete" in message or "Success" in message:
-            self.status_icon.set_from_icon_name("emblem-ok-symbolic")
-        elif "Starting" in message or "Running" in message:
-            self.status_icon.set_from_icon_name("media-playback-start-symbolic")
-        elif "Stopped" in message:
-            self.status_icon.set_from_icon_name("media-playback-stop-symbolic")
-        else:
-            self.status_icon.set_from_icon_name("emblem-default-symbolic")
-
-        if progress is not None:
-            self.progress_bar.set_fraction(progress)
-            if progress == 0:
-                self.progress_bar.set_text("Starting...")
-            elif progress == 1:
-                self.progress_bar.set_text("Complete")
-            else:
-                self.progress_bar.set_text(f"{int(progress * 100)}%")
         return False
 
     def append_log(self, message):
-        """Append message to log text view"""
+        """Append message to log (now delegates to StatusView)"""
         GLib.idle_add(self._append_log_ui, message)
 
     def _append_log_ui(self, message):
-        """Append to log from main thread with enhanced session logging"""
-        buffer = self.log_textview.get_buffer()
-        end_iter = buffer.get_end_iter()
-        buffer.insert(end_iter, f"{message}\n")
-
-        # Auto-scroll to bottom
-        mark = buffer.get_insert()
-        self.log_textview.scroll_mark_onscreen(mark)
+        """Append to log from main thread (now delegates to StatusView)"""
+        # Delegate to StatusView if available
+        if hasattr(self, 'status_view') and self.status_view:
+            self.status_view._append_platform_log(message)
 
         # Log to session file with noise reduction
         if self.session_logger:
@@ -950,9 +912,13 @@ class UnhingedDesktopApp(Adw.Application):
         GLib.idle_add(show_toast_ui)
 
     def _reset_buttons(self):
-        """Reset button states"""
-        self.start_button.set_sensitive(True)
-        self.stop_button.set_sensitive(False)
+        """Reset button states (now handled by StatusView)"""
+        # Button state management now handled by StatusView
+        if hasattr(self, 'status_view') and self.status_view:
+            if hasattr(self.status_view, 'start_button') and self.status_view.start_button:
+                self.status_view.start_button.set_sensitive(True)
+            if hasattr(self.status_view, 'stop_button') and self.status_view.stop_button:
+                self.status_view.stop_button.set_sensitive(False)
         return False
 
     def is_voice_service_available(self):
