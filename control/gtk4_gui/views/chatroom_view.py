@@ -6,22 +6,21 @@ embedded in the monolithic desktop_app.py file.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, Pango
-import threading
 import time
-import json
 
-# Import architecture components - FRAMEWORK ONLY
-from ..config import app_config
-from ..handlers.audio_handler import AudioHandler
-from ..models.audio_types import RecordingState
-from ..exceptions import get_user_friendly_message
+from gi.repository import GLib, Gtk, Pango
 
 # Import component library - FRAMEWORK ONLY
-from ..components import TextEditor, ActionButton
+from ..components import ActionButton
+
+# Framework availability - NO FALLBACK
+COMPONENTS_AVAILABLE = True
+
+# Import architecture components - FRAMEWORK ONLY
 
 # Import voice visualizer separately
 try:
@@ -297,9 +296,9 @@ class ChatroomView:
         if grpc_lib_path.exists():
             sys.path.insert(0, str(grpc_lib_path.parent))
 
-        from grpc.client_factory import call_service_method, _framework_initialized
-        from unhinged_proto_clients import chat_pb2
         from gi.repository import GLib
+        from grpc.client_factory import _framework_initialized, call_service_method
+        from unhinged_proto_clients import chat_pb2
 
         # Framework must be available - NO FALLBACK
         if not _framework_initialized:
@@ -375,9 +374,10 @@ class ChatroomView:
             if protobuf_path.exists():
                 sys.path.insert(0, str(protobuf_path))
 
-            from unhinged_proto_clients import persistence_platform_pb2
-            from google.protobuf import struct_pb2
             import datetime
+
+            from google.protobuf import struct_pb2
+            from unhinged_proto_clients import persistence_platform_pb2
 
             # Create persistence client
             client = create_persistence_client()
@@ -870,7 +870,7 @@ class ChatroomView:
         if grpc_lib_path.exists():
             sys.path.insert(0, str(grpc_lib_path.parent))
 
-        from service_framework import detect_intent, IntentType
+        from service_framework import IntentType, detect_intent
 
         # Use framework intent detector - NO FALLBACK
         intent_result = detect_intent(message_text)
@@ -901,7 +901,9 @@ class ChatroomView:
         if grpc_lib_path.exists():
             sys.path.insert(0, str(grpc_lib_path.parent))
 
-        from grpc.client_factory import get_service_framework_client, _framework_initialized
+        from grpc.client_factory import (
+            _framework_initialized,
+        )
         from service_framework import ResourceManager
 
         # Framework must be initialized - NO FALLBACK
@@ -939,9 +941,9 @@ class ChatroomView:
         """Hardware-aware image generation using service framework"""
         try:
             # Import service framework components
-            from grpc.client_factory import stream_service_method
-            from unhinged_proto_clients import image_generation_pb2, common_pb2
             from gi.repository import GLib
+            from grpc.client_factory import stream_service_method
+            from unhinged_proto_clients import common_pb2, image_generation_pb2
 
             # Create gRPC request
             request = image_generation_pb2.GenerateImageRequest()
@@ -1242,8 +1244,8 @@ class ChatroomView:
     def _open_image_externally(self, image_path):
         """Open image in external viewer"""
         try:
-            import subprocess
             import os
+            import subprocess
 
             if os.path.exists(image_path):
                 # Use xdg-open on Linux
@@ -1355,11 +1357,12 @@ class ChatroomView:
             if grpc_lib_path.exists():
                 sys.path.insert(0, str(grpc_lib_path.parent))
 
-            from grpc.client_factory import create_persistence_client
-            from unhinged_proto_clients import persistence_platform_pb2
-            from google.protobuf import struct_pb2
             import datetime
             import uuid
+
+            from google.protobuf import struct_pb2
+            from grpc.client_factory import create_persistence_client
+            from unhinged_proto_clients import persistence_platform_pb2
 
             # Create persistence client
             client = create_persistence_client()
@@ -1471,12 +1474,11 @@ class ChatroomView:
         """Handle text chat using FRAMEWORK ONLY - NO LEGACY"""
         try:
             # FRAMEWORK ONLY - Use service framework for LLM communication
-            from grpc.client_factory import call_service_method
-            from gi.repository import GLib
-
             # For now, simulate text response since LLM service integration is pending
             # This will be replaced with actual gRPC LLM service call
             import time
+
+            from gi.repository import GLib
             time.sleep(1.0)  # Simulate processing time
 
             # Simulate response (will be replaced with actual service call)
