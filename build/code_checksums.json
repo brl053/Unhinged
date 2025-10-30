@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761826424.7697752,
-    "updated_iso": "2025-10-30 05:13:44",
+    "updated": 1761827125.2895024,
+    "updated_iso": "2025-10-30 05:25:25",
     "version": "1.0"
   },
   "checksums": {
@@ -14,7 +14,7 @@
       "test_voice_fixes.py": "b179b596b6afe9dc1086d3e7ae6ccd0eb9b0e57ea0a1cccc53832e5d524f38fc",
       "test_architecture.py": "c14561dcc94f1d0f0c87f6e7db350b1802c8a4bf1856074eae69502d7a38a1ec",
       "bluetooth_monitor.py": "3f3062d2abda7e880d96a2a06736841ebe36803b6318ff3eb6b8577ae4f45e4f",
-      "config.py": "6cc4aa7cb7dcdf4cc2cd09bdcaeaa330916cf687743161e56de40fbd022de0ad",
+      "config.py": "0e62c1999f0c9da9c4f653d4595f53f67648c55c70e76065c4d89a674c109511",
       "exceptions.py": "a07b0efba5a6aef2935810facad218a8757fbabd1f4845a406e4d024ba0ac207",
       "desktop_app.py": "c582f892858e06da0fd326d97884eb56e91e18087fa14b8f66cd4cd228ee2dd0",
       "launch.py": "e3c496333d5f114ce015f5e47ac195d5abd16c675e06701353c6c65072a20582",
@@ -81,8 +81,8 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "72d7e8b51b070c1172886bf47157b32818492ae0112c507fe0ea9ce695bf7945",
-      "static_analysis_results.json": "64b62ff0a6eee9900771c94e8c5e1be5bd41d14c335b4368231ced8c1b77815a",
+      "code_checksums.json": "0d2cfda80273b3cd2e3baf0b6d4909f4d00c9285135d0acc8a5b295e29106891",
+      "static_analysis_results.json": "b8920775926ff2e354bbf0aa6a4463d4c6e06a49ee5bff444decfc9f1238ff3f",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
       "test_plugin_system.py": "be3dbdf05e945785c5bc7c30c0305cfc00b43604bbb4927d17d6804297722d15",
@@ -19953,10 +19953,10 @@
       "session/test_session_store_mock.py": "8c07b25d48ea4eb59520810ad2c7872e832321fe03c8aef66aaf953021ee7bb8",
       "session/test_session_store.py": "0e9fe83d322a64702f7e25e2fcf8fcf08f2a83bc726c4d997723629be6bf3652",
       "grpc/__init__.py": "a8766c29e2833c5dbb8e3983b6e4fa4c89a410e942b06d7339b81ee361231521",
-      "grpc/client_factory.py": "06d057c4301a3dc15f349cb09374efa6afa2ee70d6cc96c3e165b537788ec4ca",
+      "grpc/client_factory.py": "fd305387ff93ce2c408be7f527d1ac53ccc1c312b8c5c246c7789b6a105b88bc",
       "service_framework/health_manager.py": "0c685508bf01f63d5e2052d25cb72baad4bc41f457e43f20c2e31fa169dce356",
       "service_framework/service_base.py": "7d9a4692f0cb5ee4ce00e07800b46ef6027b55fde26a45b1f60b8c0c359a9245",
-      "service_framework/__init__.py": "7f2665badaf53e95ce0b2522ed46cf2c5bf481ca7957550b98c8aae3b0310a68",
+      "service_framework/__init__.py": "438529e8abcb28a8b97098c4e7ca08f8b9788c1d7c346b13a38989655145c878",
       "service_framework/intent_detector.py": "fed13711cca8d0404b6b6dc9d9fa429d6d725fceac256a6e4c36cfa8d63623f5",
       "service_framework/resource_manager.py": "42df8f67ffc9374bd8cd8fd9eff4f925342a9472277c4b433dd9735d755dcedd",
       "service_framework/connection_pool.py": "d062d467f0bbbfabe44adb56604722b8b4ee260a2a3f872c167572703bc87563"
@@ -19978,6 +19978,7 @@
       "chat-with-sessions/dashboard.py": "c708e08cdd1aa8cd3d659653043fc4f259a22077a0860031b5ac40561e4b70fd",
       "chat-with-sessions/simple_server.py": "4c1526b5dfc7ac3ded664f62f272038321ceb69f0c39a2b9a92f94960f0af0a4",
       "chat-with-sessions/main.py": "38e6c480c7c5b52fab892f4df2e0ac46c55350711780ed41f62cb890a34a502d",
+      "chat-with-sessions/minimal_grpc_server.py": "690fe2b14179387fb2e3eea93ba446c46e3edc29ba1278b94026456c4e447f99",
       "chat-with-sessions/grpc_server.py": "7e832ae134890a2803efebcff0d2c13fa822c9f1e5e6f4a9074298fed27859f0",
       "chat-with-sessions/events.py": "3c169902bb5e44c0f7e7532a6a8524208794762e0eeaba448d6ab2c87fa87b1e",
       "chat-with-sessions/stability_test.py": "d556697ed7bee14166a2a3ee9ce4290316880743039ee6aca2efa907591d35fe",

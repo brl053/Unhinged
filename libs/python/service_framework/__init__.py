@@ -10,7 +10,14 @@ Provides base classes and utilities for creating gRPC services with:
 Based on expert review feedback for local deployment context.
 """
 
-from .connection_pool import ConnectionPool, ServiceClient, get_global_pool, call_service, stream_service, register_service
+from .connection_pool import (
+    ConnectionPool,
+    ServiceClient,
+    call_service,
+    get_global_pool,
+    register_service,
+    stream_service,
+)
 from .health_manager import HealthManager, HealthStatus
 from .intent_detector import IntentDetector, IntentResult
 from .resource_manager import HardwareInfo, ResourceManager

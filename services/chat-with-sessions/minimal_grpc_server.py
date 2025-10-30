@@ -3,7 +3,6 @@
 Minimal Chat Service for Testing Session Creation
 """
 
-import os
 import sys
 import time
 import uuid
@@ -56,7 +55,7 @@ class MinimalChatServicer(
 
             # Generate a simple conversation ID
             conversation_id = str(uuid.uuid4())
-            
+
             # Create response
             conversation = chat_pb2.Conversation(
                 metadata=chat_pb2.ConversationMetadata(

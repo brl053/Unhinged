@@ -292,9 +292,9 @@ class ChatroomView:
         import sys
         from pathlib import Path as PathlibPath
         project_root = PathlibPath(__file__).parent.parent.parent
-        grpc_lib_path = project_root / "libs" / "python" / "grpc"
-        if grpc_lib_path.exists():
-            sys.path.insert(0, str(grpc_lib_path.parent))
+        libs_python_path = project_root / "libs" / "python"
+        if libs_python_path.exists():
+            sys.path.insert(0, str(libs_python_path))
 
         from gi.repository import GLib
         from grpc.client_factory import _framework_initialized, call_service_method
