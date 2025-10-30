@@ -40,6 +40,41 @@ log_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Pre-flight check system
+run_preflight_checks() {
+    log_info "Running pre-flight checks..."
+
+    # Check if Python is available
+    if ! command -v python3 &> /dev/null; then
+        log_error "Python 3 not found - required for pre-flight checks"
+        return 1
+    fi
+
+    # Run preflight checker
+    if python3 "$PROJECT_ROOT/build/preflight_check.py" check; then
+        log_success "Pre-flight checks passed"
+        return 0
+    else
+        log_warning "Pre-flight checks suggest restart for optimal experience"
+
+        # Ask user if they want to force clean restart
+        if [[ "${UNHINGED_AUTO_RESTART:-}" == "true" ]]; then
+            log_info "Auto-restart enabled, forcing clean restart..."
+            python3 "$PROJECT_ROOT/build/preflight_check.py" force-clean
+            log_success "Clean restart preparation complete"
+        else
+            echo
+            log_warning "Code changes detected. For optimal experience:"
+            echo "  1. Kill any running desktop_app processes"
+            echo "  2. Clear Python cache with: ./unhinged preflight clean"
+            echo "  3. Or set UNHINGED_AUTO_RESTART=true for automatic handling"
+            echo
+        fi
+
+        return 0  # Allow launch but with warning
+    fi
+}
+
 # Help system
 show_help() {
     cat << EOF
@@ -86,6 +121,13 @@ ${YELLOW}DEBUG COMMANDS:${NC}
   debug trace [component]     Enable debug tracing
   debug logs [component]      Show component-specific logs
 
+${YELLOW}PREFLIGHT COMMANDS:${NC}
+  preflight check             Run pre-flight checks for code changes
+  preflight status            Show detailed preflight status
+  preflight clean             Clean Python cache
+  preflight force-clean       Force clean restart preparation
+  preflight checksums         Manage code change detection
+
 ${YELLOW}EXAMPLES:${NC}
   unhinged                    # Normal user: just start the system
   unhinged dev                # Power user: development mode
@@ -104,6 +146,13 @@ EOF
 cmd_start() {
     log_info "Starting Unhinged dual-system architecture..."
     cd "$PROJECT_ROOT"
+
+    # Phase 0: Pre-flight checks (unless disabled)
+    if [[ "${UNHINGED_SKIP_PREFLIGHT:-}" != "true" ]]; then
+        run_preflight_checks
+    else
+        log_info "Pre-flight checks skipped (UNHINGED_SKIP_PREFLIGHT=true)"
+    fi
 
     # Phase 1: Essential services via service launcher
     log_info "🚀 Launching services..."
@@ -384,6 +433,69 @@ cmd_debug() {
     esac
 }
 
+# Preflight command handler
+cmd_preflight() {
+    local subcommand="${1:-check}"
+    shift || true
+
+    case "$subcommand" in
+        check)
+            log_info "Running preflight checks..."
+            python3 "$PROJECT_ROOT/build/preflight_check.py" check
+            ;;
+        status)
+            log_info "Showing preflight status..."
+            python3 "$PROJECT_ROOT/build/preflight_check.py" status
+            ;;
+        clean)
+            log_info "Cleaning Python cache..."
+            python3 "$PROJECT_ROOT/build/preflight_check.py" clean
+            ;;
+        force-clean)
+            log_info "Force cleaning and restarting..."
+            python3 "$PROJECT_ROOT/build/preflight_check.py" force-clean
+            ;;
+        checksums)
+            log_info "Managing checksums..."
+            case "${1:-status}" in
+                update)
+                    shift
+                    python3 "$PROJECT_ROOT/build/checksum_manager.py" update "$@"
+                    ;;
+                check)
+                    shift
+                    python3 "$PROJECT_ROOT/build/checksum_manager.py" check "$@"
+                    ;;
+                status)
+                    shift
+                    modules=("control/gtk4_gui" "control/gtk4_gui/controllers" "control/gtk4_gui/views" "build")
+                    python3 "$PROJECT_ROOT/build/checksum_manager.py" status "${modules[@]}"
+                    ;;
+                force-update)
+                    shift
+                    modules=("control/gtk4_gui" "control/gtk4_gui/controllers" "control/gtk4_gui/views" "build")
+                    python3 "$PROJECT_ROOT/build/checksum_manager.py" force-update "${modules[@]}"
+                    ;;
+                *)
+                    echo "Checksum commands:"
+                    echo "  unhinged preflight checksums status       Show checksum status"
+                    echo "  unhinged preflight checksums check <mod>  Check module for changes"
+                    echo "  unhinged preflight checksums update <mod> Update module checksums"
+                    echo "  unhinged preflight checksums force-update Force update all"
+                    ;;
+            esac
+            ;;
+        help|*)
+            echo "Preflight commands:"
+            echo "  unhinged preflight check         Run preflight checks"
+            echo "  unhinged preflight status        Show detailed status"
+            echo "  unhinged preflight clean         Clean Python cache"
+            echo "  unhinged preflight force-clean   Force clean restart"
+            echo "  unhinged preflight checksums     Manage code checksums"
+            ;;
+    esac
+}
+
 # Main command dispatcher
 main() {
     local command="${1:-start}"
@@ -414,7 +526,10 @@ main() {
         
         # Debug commands
         debug)          cmd_debug "$@" ;;
-        
+
+        # Preflight commands
+        preflight)      cmd_preflight "$@" ;;
+
         # Help and unknown commands
         help|--help|-h) show_help ;;
         *)
