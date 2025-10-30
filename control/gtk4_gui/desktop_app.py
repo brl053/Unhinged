@@ -1034,168 +1034,19 @@ class UnhingedDesktopApp(Adw.Application):
 
 
 
-    def _update_chatroom_voice_button_for_recording(self):
-        """
-        @llm-type component.ui
-        @llm-does applies recording visual state with CSS animations to voice button
-        """
-        try:
-            if COMPONENTS_AVAILABLE:
-                # For ActionButton, we can't directly change icon, but we can add CSS classes
-                widget = self._chatroom_voice_button.get_widget()
-                widget.add_css_class("recording-active")
-                widget.set_tooltip_text("Recording... (click to stop)")
-            else:
-                # For regular Gtk.Button, change icon and tooltip
-                self._chatroom_voice_button.set_icon_name("media-record")
-                self._chatroom_voice_button.add_css_class("recording-active")
-                self._chatroom_voice_button.set_tooltip_text("Recording... (click to stop)")
-        except Exception as e:
-            print(f"❌ Update chatroom voice button error: {e}")
-
-    def _reset_chatroom_voice_button(self):
-        """
-        @llm-type component.ui
-        @llm-does restores voice button to idle state removing recording animations
-        """
-        try:
-            if COMPONENTS_AVAILABLE:
-                widget = self._chatroom_voice_button.get_widget()
-                widget.remove_css_class("recording-active")
-                widget.set_tooltip_text("Click to start/stop recording")
-            else:
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-                self._chatroom_voice_button.remove_css_class("recording-active")
-                self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-        except Exception as e:
-            print(f"❌ Reset chatroom voice button error: {e}")
-
-    def _start_recording_timer(self):
-        """
-        @llm-type component.timer
-        @llm-does creates and displays live MM:SS recording duration timer
-        """
-        try:
-            # Create timer label if it doesn't exist
-            if not hasattr(self, 'recording_timer_label'):
-                self.recording_timer_label = Gtk.Label()
-                self.recording_timer_label.set_text("00:00")
-                self.recording_timer_label.add_css_class("recording-timer")
-                self.recording_timer_label.set_visible(False)
-
-                # Add timer to chatroom interface (next to voice button)
-                if hasattr(self, '_chatroom_input_row'):
-                    self._chatroom_input_row.append(self.recording_timer_label)
-
-            # Show timer and start updating
-            self.recording_timer_label.set_visible(True)
-            self._update_recording_timer()
-
-            # Schedule timer updates every second
-            self.recording_timer_id = GLib.timeout_add_seconds(1, self._update_recording_timer)
-
-        except Exception as e:
-            print(f"❌ Start recording timer error: {e}")
-
-    def _update_recording_timer(self):
-        """
-        @llm-type component.timer
-        @llm-does updates timer display every second with current recording duration
-        """
-        try:
-            if hasattr(self, 'recording_start_time') and self.is_recording:
-                elapsed = time.time() - self.recording_start_time
-                minutes = int(elapsed // 60)
-                seconds = int(elapsed % 60)
-                timer_text = f"{minutes:02d}:{seconds:02d}"
-
-                if hasattr(self, 'recording_timer_label'):
-                    self.recording_timer_label.set_text(timer_text)
-
-                return True  # Continue timer
-            else:
-                return False  # Stop timer
-        except Exception as e:
-            print(f"❌ Update recording timer error: {e}")
-            return False
-
-    def _stop_recording_timer(self):
-        """
-        @llm-type component.timer
-        @llm-does stops timer updates and hides recording duration display
-        """
-        try:
-            # Stop timer updates
-            if hasattr(self, 'recording_timer_id') and self.recording_timer_id:
-                GLib.source_remove(self.recording_timer_id)
-                self.recording_timer_id = None
-
-            # Hide timer label
-            if hasattr(self, 'recording_timer_label'):
-                self.recording_timer_label.set_visible(False)
-
-        except Exception as e:
-            print(f"❌ Stop recording timer error: {e}")
 
 
 
 
 
-    def _cleanup_recording(self):
-        """Clean up recording resources."""
-        try:
-            if self.recording_temp_file and self.recording_temp_file.exists():
-                self.recording_temp_file.unlink()
-        except:
-            pass
-        finally:
-            # Stop timer and reset visual indicators
-            self._stop_recording_timer()
-            self._reset_chatroom_voice_button()
-
-            # Clean up recording state
-            self.recording_process = None
-            self.recording_temp_file = None
-            self.is_recording = False
 
 
 
-    def _insert_chatroom_transcription(self, transcript):
-        """Insert transcription into chatroom text editor."""
-        try:
-            if transcript and transcript.strip():
-                # Get current content
-                current_content = self._chatroom_text_editor.get_content()
 
-                # Add transcription to current content (append with space if content exists)
-                if current_content.strip():
-                    new_content = current_content + " " + transcript.strip()
-                else:
-                    new_content = transcript.strip()
 
-                # Set new content
-                self._chatroom_text_editor.set_content(new_content)
 
-                # Focus the text editor for user to continue editing
-                self._chatroom_text_editor.focus()
 
-                self.show_toast("Voice transcription added!")
-            else:
-                self.show_toast("No speech detected in recording")
 
-        except Exception as e:
-            print(f"❌ Chatroom transcription insert error: {e}")
-        finally:
-            self._reset_chatroom_voice_button()
-
-    def _handle_chatroom_voice_error(self, error_message):
-        """Handle voice recording/transcription errors in chatroom."""
-        try:
-            self.show_toast(f"Voice error: {error_message}")
-        except Exception as e:
-            print(f"❌ Error handling chatroom voice error: {e}")
-        finally:
-            self._reset_chatroom_voice_button()
 
 
 
