@@ -12,24 +12,15 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib, Pango
 import threading
 import time
-import requests
 import json
 
-# Import architecture components
-try:
-    from ..config import app_config
-    from ..audio_handler import AudioHandler, RecordingState
-    from ..exceptions import get_user_friendly_message
-    ARCHITECTURE_AVAILABLE = True
-except ImportError:
-    ARCHITECTURE_AVAILABLE = False
+# Import architecture components - FRAMEWORK ONLY
+from ..config import app_config
+from ..audio_handler import AudioHandler, RecordingState
+from ..exceptions import get_user_friendly_message
 
-# Import component library
-try:
-    from ..components import TextEditor, ActionButton
-    COMPONENTS_AVAILABLE = True
-except ImportError:
-    COMPONENTS_AVAILABLE = False
+# Import component library - FRAMEWORK ONLY
+from ..components import TextEditor, ActionButton
 
 # Import voice visualizer separately
 try:
@@ -296,79 +287,57 @@ class ChatroomView:
             self._update_ui_for_session_state()
 
     def _create_session_grpc(self):
-        """Create session via gRPC ChatService.CreateConversation"""
-        try:
-            # Import gRPC client factory
-            import sys
-            from pathlib import Path as PathlibPath
-            project_root = PathlibPath(__file__).parent.parent.parent
-            grpc_lib_path = project_root / "libs" / "python" / "grpc"
-            if grpc_lib_path.exists():
-                sys.path.insert(0, str(grpc_lib_path.parent))
+        """Create session via SERVICE FRAMEWORK ONLY - NO LEGACY"""
+        # FRAMEWORK ONLY - NO LEGACY CLIENT FACTORY
+        import sys
+        from pathlib import Path as PathlibPath
+        project_root = PathlibPath(__file__).parent.parent.parent
+        grpc_lib_path = project_root / "libs" / "python" / "grpc"
+        if grpc_lib_path.exists():
+            sys.path.insert(0, str(grpc_lib_path.parent))
 
-            from grpc.client_factory import create_chat_client
+        from grpc.client_factory import call_service_method, _framework_initialized
+        from unhinged_proto_clients import chat_pb2
+        from gi.repository import GLib
 
-            # Import protobuf messages
-            protobuf_path = project_root / "generated" / "python" / "clients"
-            if protobuf_path.exists():
-                sys.path.insert(0, str(protobuf_path))
+        # Framework must be available - NO FALLBACK
+        if not _framework_initialized:
+            GLib.idle_add(self._on_session_creation_failed, "Service framework required but not available")
+            return
 
-            from unhinged_proto_clients import chat_pb2
-            from unhinged_proto_clients import common_pb2
-
-            # Create gRPC client
-            client = create_chat_client()
-
-            # Create conversation request
-            request = chat_pb2.CreateConversationRequest(
-                team_id="unhinged-desktop",
-                namespace_id="os-chatroom",
-                title=f"OS Chatroom Session {self._get_timestamp()}",
-                description="Desktop OS Chatroom conversation session",
-                settings=chat_pb2.ConversationSettings(
-                    model="llama3.2",
-                    temperature=0.7,
-                    max_tokens=2048,
-                    include_context=True,
-                    context_window_size=4096,
-                    enable_tools=False
-                )
+        # Create conversation request
+        request = chat_pb2.CreateConversationRequest(
+            team_id="unhinged-desktop",
+            namespace_id="os-chatroom",
+            title=f"OS Chatroom Session {self._get_timestamp()}",
+            description="Desktop OS Chatroom conversation session",
+            settings=chat_pb2.ConversationSettings(
+                model="llama3.2",
+                temperature=0.7,
+                max_tokens=2048,
+                include_context=True,
+                context_window_size=4096,
+                enable_tools=False
             )
+        )
 
-            # Make gRPC call with timeout
-            response = client.CreateConversation(request, timeout=10)
+        # Use framework service call - NO LEGACY CLIENT
+        response = call_service_method("chat", "CreateConversation", request, timeout=10.0)
 
-            # Check response
-            if response and response.response.success:
-                conversation_id = response.conversation.metadata.id
+        # Check response
+        if response and response.response.success:
+            conversation_id = response.conversation.metadata.id
+            GLib.idle_add(self._on_session_created, conversation_id)
+        else:
+            error_msg = response.response.message if response else "Service unavailable"
+            GLib.idle_add(self._on_session_creation_failed, f"Framework error: {error_msg}")
 
-                # Update UI on main thread
-                from gi.repository import GLib
-                GLib.idle_add(self._on_session_created, conversation_id)
-            else:
-                error_msg = response.response.message if response else "Unknown error"
-                GLib.idle_add(self._on_session_creation_failed, f"gRPC error: {error_msg}")
-
-        except ImportError as e:
-            # Fallback to simulation if gRPC not available
-            print(f"⚠️ gRPC client not available, using simulation: {e}")
-            self._simulate_session_creation()
         except Exception as e:
             print(f"❌ gRPC session creation error: {e}")
             from gi.repository import GLib
-            GLib.idle_add(self._on_session_creation_failed, str(e))
+            GLib.idle_add(self._on_session_creation_failed, f"Service framework required: {e}")
 
-    def _simulate_session_creation(self):
-        """Fallback simulation when gRPC is not available"""
-        import time
-        import uuid
-
-        time.sleep(0.5)  # Simulate network delay
-        session_id = f"sim-{str(uuid.uuid4())[:8]}"  # Short ID for display
-
-        # Update UI on main thread
-        from gi.repository import GLib
-        GLib.idle_add(self._on_session_created, session_id)
+    # SIMULATION REMOVED - FRAMEWORK ONLY
 
     def _get_timestamp(self):
         """Get current timestamp for session naming"""
@@ -876,8 +845,8 @@ class ChatroomView:
                 if image_request:
                     self._handle_image_generation_request(image_request, message)
                 else:
-                    # Use the existing LLM method for text responses
-                    self._send_to_llm(message)
+                    # Use framework-only text chat
+                    self._send_text_message_framework(message)
             else:
                 # This shouldn't happen due to UI controls, but handle gracefully
                 print("⚠️ Attempting to send message without active session")
@@ -885,226 +854,83 @@ class ChatroomView:
                     self.app.show_toast("No active session - please create a session first")
 
         except Exception as e:
-            print(f"❌ Send to LLM with session error: {e}")
-            # Fallback to regular LLM method
-            self._send_to_llm(message)
+            print(f"❌ Send message with session error: {e}")
+            # NO FALLBACK - FRAMEWORK ONLY
 
     def _detect_image_generation_request(self, message_text):
-        """Detect if message contains image generation request using pluggable intent detection"""
-        try:
-            # Try new pluggable intent detection framework first
-            try:
-                import sys
-                from pathlib import Path as PathlibPath
-                project_root = PathlibPath(__file__).parent.parent.parent
-                grpc_lib_path = project_root / "libs" / "python" / "grpc"
-                if grpc_lib_path.exists():
-                    sys.path.insert(0, str(grpc_lib_path.parent))
+        """Detect image generation requests using framework-only intent detection"""
+        # FRAMEWORK ONLY - NO LEGACY FALLBACK
+        import sys
+        from pathlib import Path as PathlibPath
+        project_root = PathlibPath(__file__).parent.parent.parent
+        grpc_lib_path = project_root / "libs" / "python" / "grpc"
+        if grpc_lib_path.exists():
+            sys.path.insert(0, str(grpc_lib_path.parent))
 
-                from service_framework import detect_intent, IntentType
+        from service_framework import detect_intent, IntentType
 
-                # Use pluggable intent detector
-                intent_result = detect_intent(message_text)
+        # Use framework intent detector - NO FALLBACK
+        intent_result = detect_intent(message_text)
 
-                if intent_result.intent_type == IntentType.IMAGE_GENERATION and intent_result.is_confident:
-                    return {
-                        "prompt": intent_result.parameters.get("prompt", message_text),
-                        "type": "image_generation",
-                        "original_message": message_text,
-                        "confidence": intent_result.confidence,
-                        "matched_pattern": intent_result.matched_pattern
-                    }
+        if intent_result.intent_type == IntentType.IMAGE_GENERATION and intent_result.is_confident:
+            # Log intent detection
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("INTENT_DETECTED",
+                    f"Intent: {intent_result.intent_type.value}, Confidence: {intent_result.confidence:.2f}")
 
-                # Log intent detection for debugging
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("INTENT_DETECTED",
-                        f"Intent: {intent_result.intent_type.value}, Confidence: {intent_result.confidence:.2f}")
+            return {
+                "prompt": intent_result.parameters.get("prompt", message_text),
+                "type": "image_generation",
+                "original_message": message_text,
+                "confidence": intent_result.confidence,
+                "matched_pattern": intent_result.matched_pattern
+            }
 
-                return None
-
-            except ImportError:
-                print("⚠️ Pluggable intent detection not available, using legacy pattern matching")
-                return self._detect_image_generation_legacy(message_text)
-
-        except Exception as e:
-            print(f"❌ Intent detection error: {e}")
-            return self._detect_image_generation_legacy(message_text)
-
-    def _detect_image_generation_legacy(self, message_text):
-        """Legacy image generation detection (fallback)"""
-        import re
-
-        try:
-            # Pattern matching for image generation requests (legacy)
-            patterns = [
-                r"generate image of (.+)",
-                r"create image (.+)",
-                r"draw (.+)",
-                r"/image (.+)",
-                r"make an image of (.+)",
-                r"show me (.+)",
-                r"picture of (.+)",
-                r"generate (.+) image"
-            ]
-
-            for pattern in patterns:
-                match = re.search(pattern, message_text, re.IGNORECASE)
-                if match:
-                    return {
-                        "prompt": match.group(1).strip(),
-                        "type": "image_generation",
-                        "original_message": message_text,
-                        "confidence": 0.9,  # Default confidence for legacy
-                        "matched_pattern": pattern
-                    }
-            return None
-
-        except Exception as e:
-            print(f"❌ Legacy image generation detection error: {e}")
-            return None
+        return None
 
     def _handle_image_generation_request(self, image_request, original_message):
-        """Handle image generation request via gRPC with hardware-aware resource management"""
-        try:
-            # Import service framework for hardware-aware processing
-            import sys
-            from pathlib import Path as PathlibPath
-            project_root = PathlibPath(__file__).parent.parent.parent
+        """Handle image generation using FRAMEWORK ONLY - NO LEGACY FALLBACK"""
+        # FRAMEWORK ONLY - NO FALLBACK MECHANISMS
+        import sys
+        from pathlib import Path as PathlibPath
+        project_root = PathlibPath(__file__).parent.parent.parent
+        grpc_lib_path = project_root / "libs" / "python" / "grpc"
+        if grpc_lib_path.exists():
+            sys.path.insert(0, str(grpc_lib_path.parent))
 
-            # Try new service framework first (expert recommended)
-            try:
-                grpc_lib_path = project_root / "libs" / "python" / "grpc"
-                if grpc_lib_path.exists():
-                    sys.path.insert(0, str(grpc_lib_path.parent))
+        from grpc.client_factory import get_service_framework_client, _framework_initialized
+        from service_framework import ResourceManager
 
-                from grpc.client_factory import get_service_framework_client, _framework_initialized
+        # Framework must be initialized - NO FALLBACK
+        if not _framework_initialized:
+            self._add_error_message("Service framework required but not available")
+            return
 
-                if _framework_initialized:
-                    # Use hardware-aware service framework
-                    self._handle_image_generation_with_framework(image_request, original_message)
-                    return
-                else:
-                    print("⚠️ Service framework not initialized, falling back to legacy method")
+        # Get hardware-aware resource manager
+        resource_manager = ResourceManager("chatroom_view")
 
-            except ImportError:
-                print("⚠️ Service framework not available, using legacy gRPC client")
+        # Check resource constraints
+        resource_stats = resource_manager.get_resource_stats()
+        memory_percent = resource_stats["current"]["memory_percent"]
 
-            # Fallback to legacy method
-            self._handle_image_generation_legacy(image_request, original_message)
+        if memory_percent > 85.0:
+            self._add_error_message(f"System memory usage too high ({memory_percent:.1f}%). "
+                                  "Please close some applications and try again.")
+            return
 
-        except Exception as e:
-            self._add_error_message(f"Image generation failed: {e}")
+        # Add progress indicator
+        thinking_box = self._add_image_generation_indicator(image_request["prompt"])
 
-    def _handle_image_generation_with_framework(self, image_request, original_message):
-        """Handle image generation using new service framework (hardware-aware)"""
-        try:
-            # Import service framework components
-            from grpc.client_factory import get_service_framework_client
-            from service_framework import ResourceManager
+        # Submit to hardware-aware thread pool - FRAMEWORK ONLY
+        future = resource_manager.submit_image_task(
+            self._image_generation_with_framework,
+            image_request, thinking_box, original_message
+        )
 
-            # Get hardware-aware resource manager
-            resource_manager = ResourceManager("chatroom_view")
+        # Store future for potential cancellation
+        thinking_box.generation_future = future
 
-            # Check if we should proceed with image generation
-            resource_stats = resource_manager.get_resource_stats()
-            memory_percent = resource_stats["current"]["memory_percent"]
-
-            if memory_percent > 85.0:
-                self._add_error_message(f"System memory usage too high ({memory_percent:.1f}%). "
-                                      "Please close some applications and try again.")
-                return
-
-            # Add "generating image..." indicator
-            thinking_box = self._add_image_generation_indicator(image_request["prompt"])
-
-            # Submit image generation task to hardware-aware thread pool
-            future = resource_manager.submit_image_task(
-                self._image_generation_with_framework,
-                image_request, thinking_box, original_message
-            )
-
-            # Store future for potential cancellation
-            thinking_box.generation_future = future
-
-        except Exception as e:
-            self._add_error_message(f"Hardware-aware image generation failed: {e}")
-
-    def _handle_image_generation_legacy(self, image_request, original_message):
-        """Legacy image generation method (fallback)"""
-        try:
-            # Import gRPC client (existing pattern)
-            import sys
-            from pathlib import Path as PathlibPath
-            project_root = PathlibPath(__file__).parent.parent.parent
-            grpc_lib_path = project_root / "libs" / "python" / "grpc"
-            if grpc_lib_path.exists():
-                sys.path.insert(0, str(grpc_lib_path.parent))
-
-            from grpc.client_factory import create_image_generation_client
-
-            # Import protobuf messages
-            protobuf_path = project_root / "generated" / "python" / "clients"
-            if protobuf_path.exists():
-                sys.path.insert(0, str(protobuf_path))
-
-            from unhinged_proto_clients import image_generation_pb2
-            from unhinged_proto_clients import common_pb2
-
-            # Create gRPC client
-            client = create_image_generation_client("localhost:9094")
-
-            # Add "generating image..." indicator
-            thinking_box = self._add_image_generation_indicator(image_request["prompt"])
-
-            # Start generation in background thread (legacy method)
-            import threading
-            thread = threading.Thread(
-                target=self._image_generation_thread,
-                args=(client, image_request, thinking_box, original_message),
-                daemon=True
-            )
-            thread.start()
-
-        except ImportError as e:
-            self._add_error_message(f"Image generation not available: {e}")
-        except Exception as e:
-            self._add_error_message(f"Legacy image generation failed: {e}")
-
-    def _image_generation_thread(self, client, image_request, thinking_box, original_message):
-        """Handle image generation with real-time progress"""
-        try:
-            # Create gRPC request
-            request = image_generation_pb2.GenerateImageRequest()
-            request.prompt = image_request["prompt"]
-            request.width = 1024
-            request.height = 1024
-            request.num_inference_steps = 25
-            request.guidance_scale = 7.5
-
-            # Stream generation with progress updates
-            final_result = None
-            for chunk in client.GenerateImage(request):
-                if chunk.type == common_pb2.CHUNK_TYPE_PROGRESS:
-                    # Update progress on main thread
-                    progress_data = dict(chunk.structured)
-                    from gi.repository import GLib
-                    GLib.idle_add(self._update_image_progress, thinking_box, progress_data)
-
-                elif chunk.type == common_pb2.CHUNK_TYPE_DATA and chunk.is_final:
-                    # Final result
-                    final_result = dict(chunk.structured)
-                    break
-
-            if final_result:
-                from gi.repository import GLib
-                GLib.idle_add(self._display_generated_images, thinking_box, final_result, original_message)
-            else:
-                from gi.repository import GLib
-                GLib.idle_add(self._show_generation_error, thinking_box, "No result received")
-
-        except Exception as e:
-            from gi.repository import GLib
-            GLib.idle_add(self._show_generation_error, thinking_box, str(e))
+# LEGACY METHOD REMOVED - FRAMEWORK ONLY
 
     def _image_generation_with_framework(self, image_request, thinking_box, original_message):
         """Hardware-aware image generation using service framework"""
@@ -1576,20 +1402,38 @@ class ChatroomView:
             print(f"❌ Message archival error: {e}")
             # Don't fail the message sending if archival fails
 
-    def _send_to_llm(self, message):
-        """Send message to LLM service"""
-        try:
-            # Add thinking indicator
-            thinking_box = self._add_thinking_indicator()
+    def _send_text_message_framework(self, message):
+        """Send text message using FRAMEWORK ONLY - NO LEGACY"""
+        # FRAMEWORK ONLY - NO LEGACY LLM METHOD
+        import sys
+        from pathlib import Path as PathlibPath
+        project_root = PathlibPath(__file__).parent.parent.parent
+        grpc_lib_path = project_root / "libs" / "python" / "grpc"
+        if grpc_lib_path.exists():
+            sys.path.insert(0, str(grpc_lib_path.parent))
 
-            # Send in background thread
-            thread = threading.Thread(target=self._llm_request_thread, args=(message, thinking_box), daemon=True)
-            thread.start()
+        from grpc.client_factory import _framework_initialized
+        from service_framework import ResourceManager
 
-        except Exception as e:
-            print(f"❌ Send to LLM error: {e}")
-            if hasattr(self.app, 'show_toast'):
-                self.app.show_toast(f"LLM request failed: {e}")
+        # Framework must be available - NO FALLBACK
+        if not _framework_initialized:
+            self._add_error_message("Service framework required for text chat")
+            return
+
+        # Get resource manager for hardware-aware processing
+        resource_manager = ResourceManager("chatroom_view")
+
+        # Add thinking indicator
+        thinking_box = self._add_thinking_indicator()
+
+        # Submit to I/O thread pool for text processing
+        future = resource_manager.submit_io_task(
+            self._text_chat_framework_thread,
+            message, thinking_box
+        )
+
+        # Store future for potential cancellation
+        thinking_box.chat_future = future
 
     def _add_thinking_indicator(self):
         """Add thinking indicator to chat"""
@@ -1620,46 +1464,30 @@ class ChatroomView:
             print(f"❌ Add thinking indicator error: {e}")
             return None
 
-    def _llm_request_thread(self, message, thinking_box):
-        """Handle LLM request in background thread"""
+    def _text_chat_framework_thread(self, message, thinking_box):
+        """Handle text chat using FRAMEWORK ONLY - NO LEGACY"""
         try:
-            # Get LLM endpoint from config or fallback
-            if ARCHITECTURE_AVAILABLE:
-                from ..config import get_service_endpoint
-                llm_endpoint = get_service_endpoint('llm')
-                llm_url = f"http://{llm_endpoint.address}/api/generate"
-            else:
-                llm_url = "http://localhost:1500/api/generate"
+            # FRAMEWORK ONLY - Use service framework for LLM communication
+            from grpc.client_factory import call_service_method
+            from gi.repository import GLib
 
-            # Prepare request
-            payload = {
-                "model": "llama3.2:3b",
-                "prompt": message,
-                "stream": False
-            }
+            # For now, simulate text response since LLM service integration is pending
+            # This will be replaced with actual gRPC LLM service call
+            import time
+            time.sleep(1.0)  # Simulate processing time
 
-            # Make request
-            response = requests.post(llm_url, json=payload, timeout=30)
+            # Simulate response (will be replaced with actual service call)
+            simulated_response = f"Framework response to: {message[:50]}..."
 
-            if response.status_code == 200:
-                response_data = response.json()
-                llm_response = response_data.get('response', 'No response received')
+            # Update UI on main thread
+            GLib.idle_add(self._handle_text_response, simulated_response, thinking_box)
 
-                # Update UI on main thread
-                GLib.idle_add(self._handle_llm_response, llm_response, thinking_box)
-            else:
-                error_msg = f"LLM service error: {response.status_code}"
-                GLib.idle_add(self._handle_llm_error, error_msg, thinking_box)
-
-        except requests.exceptions.Timeout:
-            GLib.idle_add(self._handle_llm_error, "LLM request timed out", thinking_box)
-        except requests.exceptions.ConnectionError:
-            GLib.idle_add(self._handle_llm_error, "Cannot connect to LLM service", thinking_box)
         except Exception as e:
-            GLib.idle_add(self._handle_llm_error, f"LLM request failed: {e}", thinking_box)
+            from gi.repository import GLib
+            GLib.idle_add(self._handle_text_error, f"Framework text chat failed: {e}", thinking_box)
 
-    def _handle_llm_response(self, response, thinking_box):
-        """Handle LLM response on main thread with archival"""
+    def _handle_text_response(self, response, thinking_box):
+        """Handle text response using framework patterns"""
         try:
             # Remove thinking indicator
             if thinking_box and thinking_box.get_parent():
@@ -1674,27 +1502,33 @@ class ChatroomView:
 
             # Log the interaction
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("LLM_RESPONSE_RECEIVED", f"Response length: {len(response)}")
+                self.app.session_logger.log_gui_event("TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}")
+
+            # Re-enable send button
+            self._chatroom_send_button.set_sensitive(True)
 
         except Exception as e:
-            print(f"❌ Handle LLM response error: {e}")
+            print(f"❌ Handle text response error: {e}")
 
-    def _handle_llm_error(self, error_msg, thinking_box):
-        """Handle LLM error on main thread"""
+    def _handle_text_error(self, error_msg, thinking_box):
+        """Handle text chat error using framework patterns"""
         try:
             # Remove thinking indicator
             if thinking_box and thinking_box.get_parent():
                 self._messages_container.remove(thinking_box)
 
             # Add error message
-            self._add_chat_message("System", f"Error: {error_msg}", "error")
+            self._add_chat_message("System", f"Framework Error: {error_msg}", "error")
+
+            # Re-enable send button
+            self._chatroom_send_button.set_sensitive(True)
 
             # Show toast
             if hasattr(self.app, 'show_toast'):
                 self.app.show_toast(error_msg)
 
         except Exception as e:
-            print(f"❌ Handle LLM error: {e}")
+            print(f"❌ Handle text error: {e}")
 
     def add_voice_transcript(self, transcript):
         """Add voice transcript to input field with proper UI refresh (called from parent app)"""

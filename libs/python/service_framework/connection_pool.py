@@ -144,10 +144,13 @@ class ServiceClient:
         try:
             # Try a simple call if health check method exists
             if hasattr(self._stub, 'Check'):
-                from grpc_health.v1 import health_pb2
-                request = health_pb2.HealthCheckRequest()
-                response = self._stub.Check(request, timeout=5.0)
-                return response.status == health_pb2.HealthCheckResponse.SERVING
+                try:
+                    from grpc_health.v1 import health_pb2
+                    request = health_pb2.HealthCheckRequest()
+                    response = self._stub.Check(request, timeout=5.0)
+                    return response.status == health_pb2.HealthCheckResponse.SERVING
+                except ImportError:
+                    pass  # Health check not available
         except:
             pass
         

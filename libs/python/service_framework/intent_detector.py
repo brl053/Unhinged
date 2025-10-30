@@ -48,52 +48,42 @@ class IntentDetector(Protocol):
         ...
 
 
-class RegexIntentDetector:
+class ExplicitCommandDetector:
     """
-    Regex-based intent detector
-    
-    Current implementation using pattern matching.
-    Designed to be replaced by LLM intent parser in the future.
+    Explicit command-based intent detector
+
+    Primary interface using explicit commands as recommended by expert.
+    NO REGEX PATTERNS - Commands only.
     """
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        
-        # Image generation patterns (from existing implementation)
-        self.image_patterns = [
-            (r"generate image of (.+)", 0.95),
-            (r"create image (.+)", 0.95),
-            (r"draw (.+)", 0.90),
-            (r"/image (.+)", 1.0),  # Explicit command
-            (r"make an image of (.+)", 0.95),
-            (r"show me (.+)", 0.70),  # Lower confidence - could be text request
-            (r"picture of (.+)", 0.85),
-            (r"generate (.+) image", 0.90),
-            (r"can you draw (.+)", 0.85),
-            (r"create a picture of (.+)", 0.95)
-        ]
-        
-        # Command patterns
-        self.command_patterns = [
-            (r"^/(\w+)(?:\s+(.*))?", 1.0),  # Explicit commands like /help, /status
-            (r"^!(\w+)(?:\s+(.*))?", 1.0),  # Alternative command syntax
-        ]
-        
-        # Compile patterns for efficiency
-        self._compiled_image_patterns = [
-            (re.compile(pattern, re.IGNORECASE), confidence)
-            for pattern, confidence in self.image_patterns
-        ]
-        
-        self._compiled_command_patterns = [
-            (re.compile(pattern, re.IGNORECASE), confidence)
-            for pattern, confidence in self.command_patterns
-        ]
+
+        # Explicit commands only - NO REGEX PATTERNS
+        self.commands = {
+            # Image generation commands
+            "/image": IntentType.IMAGE_GENERATION,
+            "/generate": IntentType.IMAGE_GENERATION,
+            "/draw": IntentType.IMAGE_GENERATION,
+            "/create": IntentType.IMAGE_GENERATION,
+
+            # System commands
+            "/help": IntentType.COMMAND,
+            "/status": IntentType.COMMAND,
+            "/clear": IntentType.COMMAND,
+            "/session": IntentType.COMMAND,
+
+            # Alternative syntax
+            "!image": IntentType.IMAGE_GENERATION,
+            "!generate": IntentType.IMAGE_GENERATION,
+            "!help": IntentType.COMMAND,
+            "!status": IntentType.COMMAND
+        }
     
     def detect(self, text: str) -> IntentResult:
-        """Detect intent from text using regex patterns"""
+        """Detect intent using EXPLICIT COMMANDS ONLY - NO REGEX"""
         text = text.strip()
-        
+
         if not text:
             return IntentResult(
                 intent_type=IntentType.UNKNOWN,
@@ -101,112 +91,65 @@ class RegexIntentDetector:
                 parameters={},
                 original_text=text
             )
-        
-        # Check for explicit commands first (highest priority)
-        command_result = self._detect_command(text)
-        if command_result.confidence > 0.8:
-            return command_result
-        
-        # Check for image generation
-        image_result = self._detect_image_generation(text)
-        if image_result.confidence > 0.7:
-            return image_result
-        
-        # Default to text chat
+
+        # Check for explicit commands - PRIMARY INTERFACE
+        words = text.split()
+        if words:
+            command = words[0].lower()
+
+            if command in self.commands:
+                intent_type = self.commands[command]
+                args = " ".join(words[1:]) if len(words) > 1 else ""
+
+                if intent_type == IntentType.IMAGE_GENERATION:
+                    if not args:
+                        # Command without prompt
+                        return IntentResult(
+                            intent_type=IntentType.UNKNOWN,
+                            confidence=0.0,
+                            parameters={"error": f"Command {command} requires a prompt"},
+                            original_text=text
+                        )
+
+                    return IntentResult(
+                        intent_type=IntentType.IMAGE_GENERATION,
+                        confidence=1.0,  # Perfect confidence for explicit commands
+                        parameters={"prompt": args},
+                        original_text=text,
+                        matched_pattern=command
+                    )
+
+                elif intent_type == IntentType.COMMAND:
+                    return IntentResult(
+                        intent_type=IntentType.COMMAND,
+                        confidence=1.0,
+                        parameters={"command": command[1:], "args": args},  # Remove / or !
+                        original_text=text,
+                        matched_pattern=command
+                    )
+
+        # Default to text chat for non-commands
         return IntentResult(
             intent_type=IntentType.TEXT_CHAT,
-            confidence=0.9,  # High confidence for text chat as fallback
+            confidence=0.9,
             parameters={"message": text},
             original_text=text
         )
     
-    def _detect_command(self, text: str) -> IntentResult:
-        """Detect explicit commands"""
-        for pattern, confidence in self._compiled_command_patterns:
-            match = pattern.match(text)
-            if match:
-                command = match.group(1).lower()
-                args = match.group(2) if match.lastindex > 1 else ""
-                
-                return IntentResult(
-                    intent_type=IntentType.COMMAND,
-                    confidence=confidence,
-                    parameters={
-                        "command": command,
-                        "args": args.strip() if args else ""
-                    },
-                    original_text=text,
-                    matched_pattern=pattern.pattern
-                )
-        
-        return IntentResult(
-            intent_type=IntentType.UNKNOWN,
-            confidence=0.0,
-            parameters={},
-            original_text=text
-        )
-    
-    def _detect_image_generation(self, text: str) -> IntentResult:
-        """Detect image generation requests"""
-        for pattern, confidence in self._compiled_image_patterns:
-            match = pattern.search(text)
-            if match:
-                prompt = match.group(1).strip()
-                
-                # Adjust confidence based on prompt quality
-                adjusted_confidence = self._adjust_image_confidence(prompt, confidence)
-                
-                return IntentResult(
-                    intent_type=IntentType.IMAGE_GENERATION,
-                    confidence=adjusted_confidence,
-                    parameters={
-                        "prompt": prompt,
-                        "type": "image_generation"
-                    },
-                    original_text=text,
-                    matched_pattern=pattern.pattern
-                )
-        
-        return IntentResult(
-            intent_type=IntentType.UNKNOWN,
-            confidence=0.0,
-            parameters={},
-            original_text=text
-        )
-    
-    def _adjust_image_confidence(self, prompt: str, base_confidence: float) -> float:
-        """Adjust confidence based on prompt characteristics"""
-        # Very short prompts are less likely to be image requests
-        if len(prompt.strip()) < 3:
-            return base_confidence * 0.5
-        
-        # Prompts with question words might be text questions
-        question_words = ["what", "how", "why", "when", "where", "who"]
-        if any(word in prompt.lower() for word in question_words):
-            return base_confidence * 0.7
-        
-        # Prompts with visual descriptors are more likely to be image requests
-        visual_words = ["color", "bright", "dark", "beautiful", "style", "realistic", "artistic"]
-        if any(word in prompt.lower() for word in visual_words):
-            return min(1.0, base_confidence * 1.1)
-        
-        return base_confidence
+    # REGEX PATTERN METHODS REMOVED - EXPLICIT COMMANDS ONLY
     
     def get_supported_intents(self) -> List[IntentType]:
         """Get supported intent types"""
         return [IntentType.TEXT_CHAT, IntentType.IMAGE_GENERATION, IntentType.COMMAND]
-    
-    def add_image_pattern(self, pattern: str, confidence: float = 0.9) -> None:
-        """Add custom image generation pattern"""
-        self.image_patterns.append((pattern, confidence))
-        self._compiled_image_patterns.append((re.compile(pattern, re.IGNORECASE), confidence))
-        self.logger.info(f"Added image pattern: {pattern}")
-    
-    def add_command_pattern(self, pattern: str, confidence: float = 1.0) -> None:
-        """Add custom command pattern"""
-        self.command_patterns.append((pattern, confidence))
-        self._compiled_command_patterns.append((re.compile(pattern, re.IGNORECASE), confidence))
-        self.logger.info(f"Added command pattern: {pattern}")
+
+    def add_command(self, command: str, intent_type: IntentType) -> None:
+        """Add custom explicit command"""
+        self.commands[command.lower()] = intent_type
+        self.logger.info(f"Added command: {command} -> {intent_type.value}")
+
+    def get_available_commands(self) -> Dict[str, str]:
+        """Get all available commands"""
+        return {cmd: intent.value for cmd, intent in self.commands.items()}
 
 
 class LLMIntentDetector:
@@ -248,9 +191,9 @@ class IntentDetectorManager:
     
     def __init__(self, default_detector: Optional[IntentDetector] = None):
         self.logger = logging.getLogger(__name__)
-        
-        # Use regex detector as default
-        self._detector = default_detector or RegexIntentDetector()
+
+        # Use explicit command detector as default - NO REGEX
+        self._detector = default_detector or ExplicitCommandDetector()
         self.logger.info(f"Intent detector initialized: {type(self._detector).__name__}")
     
     def set_detector(self, detector: IntentDetector) -> None:

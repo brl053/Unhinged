@@ -272,10 +272,13 @@ class GrpcService(ServiceBase):
             # Register services
             self.register_grpc_services(server)
             
-            # Add health service
-            from grpc_health.v1 import health, health_pb2_grpc
-            health_servicer = health.HealthServicer()
-            health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+            # Add health service if available
+            try:
+                from grpc_health.v1 import health, health_pb2_grpc
+                health_servicer = health.HealthServicer()
+                health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+            except ImportError:
+                self.logger.warning("gRPC health service not available")
             
             # Start server
             listen_addr = f'[::]:{self.port}'
