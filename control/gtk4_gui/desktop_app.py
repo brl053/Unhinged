@@ -846,91 +846,34 @@ class UnhingedDesktopApp(Adw.Application):
         return scrolled
 
     def create_system_info_tab_content(self):
-        """Create the system info tab content with comprehensive system information."""
-        # Create main content box
-        system_info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        system_info_box.set_margin_top(24)
-        system_info_box.set_margin_bottom(24)
-        system_info_box.set_margin_start(24)
-        system_info_box.set_margin_end(24)
-        system_info_box.set_vexpand(True)
-        system_info_box.set_hexpand(True)
+        """Create the system info tab content using extracted SystemInfoView."""
+        try:
+            from .views.system_view import SystemInfoView
 
-        # Header section
-        header_group = Adw.PreferencesGroup()
-        header_group.set_title("System Information")
-        header_group.set_description("Comprehensive system hardware and performance information")
-        system_info_box.append(header_group)
+            # Create system info view
+            self.system_info_view = SystemInfoView(self)
+            return self.system_info_view.create_content()
 
-        if SYSTEM_INFO_AVAILABLE and COMPONENTS_AVAILABLE:
-            # Collect system information
-            try:
-                system_info = get_system_info(self.project_root, use_cache=True)
+        except ImportError as e:
+            print(f"⚠️ SystemInfoView not available, using fallback: {e}")
+            return self._create_system_info_fallback()
+        except Exception as e:
+            print(f"❌ Error creating system info view: {e}")
+            return self._create_system_info_fallback()
 
-                # Create system overview section
-                overview_section = self._create_system_overview_section(system_info)
-                system_info_box.append(overview_section)
+    def _create_system_info_fallback(self):
+        """Fallback system info implementation"""
+        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        container.set_margin_top(16)
+        container.set_margin_bottom(16)
+        container.set_margin_start(16)
+        container.set_margin_end(16)
 
-                # Create performance metrics section
-                performance_section = self._create_performance_metrics_section(system_info)
-                system_info_box.append(performance_section)
+        label = Gtk.Label(label="System information functionality temporarily unavailable")
+        label.add_css_class("dim-label")
+        container.append(label)
 
-                # Create hardware information section
-                hardware_section = self._create_hardware_info_section(system_info)
-                system_info_box.append(hardware_section)
-
-                # Create platform status section
-                platform_section = self._create_platform_status_section(system_info)
-                system_info_box.append(platform_section)
-
-                # Add refresh button
-                refresh_section = self._create_refresh_section()
-                system_info_box.append(refresh_section)
-
-            except Exception as e:
-                # Error handling
-                error_group = Adw.PreferencesGroup()
-                error_group.set_title("Error")
-
-                error_row = Adw.ActionRow()
-                error_row.set_title("Failed to collect system information")
-                error_row.set_subtitle(str(e))
-
-                error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-                error_icon.add_css_class("error")
-                error_row.add_prefix(error_icon)
-
-                error_group.add(error_row)
-                system_info_box.append(error_group)
-        else:
-            # Fallback when system info or components not available
-            fallback_group = Adw.PreferencesGroup()
-            fallback_group.set_title("System Information Unavailable")
-
-            fallback_row = Adw.ActionRow()
-            if not SYSTEM_INFO_AVAILABLE:
-                fallback_row.set_title("System information collection not available")
-                fallback_row.set_subtitle("Missing system_info module or dependencies")
-            elif not COMPONENTS_AVAILABLE:
-                fallback_row.set_title("Component library not available")
-                fallback_row.set_subtitle("Missing component library for display")
-
-            fallback_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
-            fallback_icon.add_css_class("warning")
-            fallback_row.add_prefix(fallback_icon)
-
-            fallback_group.add(fallback_row)
-            system_info_box.append(fallback_group)
-
-        # Create scrolled window with proper sizing
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_vexpand(True)
-        scrolled.set_hexpand(True)
-        scrolled.set_min_content_height(400)
-        scrolled.set_child(system_info_box)
-
-        return scrolled
+        return container
 
     def create_processes_tab_content(self):
         """Create the processes tab content with live process monitoring."""
@@ -1996,27 +1939,33 @@ class UnhingedDesktopApp(Adw.Application):
 
             return error_box
 
-    def _create_system_overview_section(self, system_info):
-        """Create system overview section with basic system information."""
-        overview_data = {
-            "os_name": f"{system_info.system.os_name} {system_info.system.os_version}",
-            "kernel_version": system_info.system.kernel_version,
-            "hostname": system_info.system.hostname,
-            "username": system_info.system.username,
-            "uptime_hours": f"{system_info.system.uptime_seconds / 3600:.1f} hours",
-            "architecture": system_info.system.architecture
-        }
+    def setup_actions(self):
+        """Setup application actions for menu"""
+        # About action
+        about_action = Gio.SimpleAction.new("about", None)
+        about_action.connect("activate", self.on_about_action)
+        self.add_action(about_action)
 
-        overview_card = SystemInfoCard(
-            title="System Overview",
-            subtitle="Basic system information",
-            icon_name="computer-symbolic",
-            data=overview_data
-        )
+        # Preferences action
+        preferences_action = Gio.SimpleAction.new("preferences", None)
+        preferences_action.connect("activate", self.on_preferences_action)
+        self.add_action(preferences_action)
 
-        return overview_card.get_widget()
+        # Quit action
+        quit_action = Gio.SimpleAction.new("quit", None)
+        quit_action.connect("activate", self.on_quit_action)
+        self.add_action(quit_action)
 
-    def _create_performance_metrics_section(self, system_info):
+        # Keyboard shortcuts
+        self.set_accels_for_action("app.quit", ["<primary>q"])
+        self.set_accels_for_action("app.preferences", ["<primary>comma"])
+
+        # Create menu
+        menu = Gio.Menu()
+        menu.append("About Unhinged", "app.about")
+        menu.append("Preferences", "app.preferences")
+        menu.append("Quit", "app.quit")
+        self.set_menubar(menu)
         """Create performance metrics section with real-time indicators."""
         performance_group = Adw.PreferencesGroup()
         performance_group.set_title("Performance Metrics")
