@@ -279,34 +279,101 @@ class ChatroomView:
                 self.app.show_toast(f"Session error: {e}")
 
     def _create_new_session(self):
-        """Create a new chat session"""
+        """Create a new chat session using gRPC ChatService"""
         try:
             # Update UI to show creating state
             self._session_status = "creating"
             self._update_ui_for_session_state()
 
-            # TODO: Implement gRPC call to ChatService.CreateConversation
-            # For now, simulate session creation
-            import uuid
-            import time
-
-            def simulate_session_creation():
-                time.sleep(0.5)  # Simulate network delay
-                session_id = str(uuid.uuid4())[:8]  # Short ID for display
-
-                # Update UI on main thread
-                from gi.repository import GLib
-                GLib.idle_add(self._on_session_created, session_id)
-
-            # Run in background thread
+            # Create session in background thread
             import threading
-            thread = threading.Thread(target=simulate_session_creation, daemon=True)
+            thread = threading.Thread(target=self._create_session_grpc, daemon=True)
             thread.start()
 
         except Exception as e:
             print(f"❌ Create session error: {e}")
             self._session_status = "no_session"
             self._update_ui_for_session_state()
+
+    def _create_session_grpc(self):
+        """Create session via gRPC ChatService.CreateConversation"""
+        try:
+            # Import gRPC client factory
+            import sys
+            from pathlib import Path as PathlibPath
+            project_root = PathlibPath(__file__).parent.parent.parent
+            grpc_lib_path = project_root / "libs" / "python" / "grpc"
+            if grpc_lib_path.exists():
+                sys.path.insert(0, str(grpc_lib_path.parent))
+
+            from grpc.client_factory import create_chat_client
+
+            # Import protobuf messages
+            protobuf_path = project_root / "generated" / "python" / "clients"
+            if protobuf_path.exists():
+                sys.path.insert(0, str(protobuf_path))
+
+            from unhinged_proto_clients import chat_pb2
+            from unhinged_proto_clients import common_pb2
+
+            # Create gRPC client
+            client = create_chat_client()
+
+            # Create conversation request
+            request = chat_pb2.CreateConversationRequest(
+                team_id="unhinged-desktop",
+                namespace_id="os-chatroom",
+                title=f"OS Chatroom Session {self._get_timestamp()}",
+                description="Desktop OS Chatroom conversation session",
+                settings=chat_pb2.ConversationSettings(
+                    model="llama3.2",
+                    temperature=0.7,
+                    max_tokens=2048,
+                    include_context=True,
+                    context_window_size=4096,
+                    enable_tools=False
+                )
+            )
+
+            # Make gRPC call with timeout
+            response = client.CreateConversation(request, timeout=10)
+
+            # Check response
+            if response and response.response.success:
+                conversation_id = response.conversation.metadata.id
+
+                # Update UI on main thread
+                from gi.repository import GLib
+                GLib.idle_add(self._on_session_created, conversation_id)
+            else:
+                error_msg = response.response.message if response else "Unknown error"
+                GLib.idle_add(self._on_session_creation_failed, f"gRPC error: {error_msg}")
+
+        except ImportError as e:
+            # Fallback to simulation if gRPC not available
+            print(f"⚠️ gRPC client not available, using simulation: {e}")
+            self._simulate_session_creation()
+        except Exception as e:
+            print(f"❌ gRPC session creation error: {e}")
+            from gi.repository import GLib
+            GLib.idle_add(self._on_session_creation_failed, str(e))
+
+    def _simulate_session_creation(self):
+        """Fallback simulation when gRPC is not available"""
+        import time
+        import uuid
+
+        time.sleep(0.5)  # Simulate network delay
+        session_id = f"sim-{str(uuid.uuid4())[:8]}"  # Short ID for display
+
+        # Update UI on main thread
+        from gi.repository import GLib
+        GLib.idle_add(self._on_session_created, session_id)
+
+    def _get_timestamp(self):
+        """Get current timestamp for session naming"""
+        import datetime
+        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def _on_session_created(self, session_id):
         """Handle successful session creation"""
@@ -321,10 +388,27 @@ class ChatroomView:
 
             # Show success toast
             if hasattr(self.app, 'show_toast'):
-                self.app.show_toast(f"Session {session_id} created successfully")
+                self.app.show_toast(f"Session {session_id[:8]} created successfully")
 
         except Exception as e:
             print(f"❌ Session created callback error: {e}")
+
+    def _on_session_creation_failed(self, error_message):
+        """Handle failed session creation"""
+        try:
+            self._session_status = "no_session"
+            self._update_ui_for_session_state()
+
+            # Log session creation failure
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHAT_SESSION_FAILED", f"Session creation failed: {error_message}")
+
+            # Show error toast
+            if hasattr(self.app, 'show_toast'):
+                self.app.show_toast(f"Session creation failed: {error_message}")
+
+        except Exception as e:
+            print(f"❌ Session creation failed callback error: {e}")
 
     def _update_ui_for_session_state(self):
         """Update UI elements based on current session state"""
@@ -606,7 +690,7 @@ class ChatroomView:
             if not message or not message.strip():
                 return
 
-            # Add user message to chat
+            # Add user message to chat with session context
             self._add_chat_message("You", message.strip(), "user")
 
             # Clear input
@@ -619,8 +703,8 @@ class ChatroomView:
             # Disable send button
             self._chatroom_send_button.set_sensitive(False)
 
-            # Send to LLM
-            self._send_to_llm(message.strip())
+            # Send to LLM with session context
+            self._send_to_llm_with_session(message.strip())
 
         except Exception as e:
             print(f"❌ Chatroom send error: {e}")
@@ -686,6 +770,30 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Scroll to bottom error: {e}")
+
+    def _send_to_llm_with_session(self, message):
+        """Send message to LLM with session context"""
+        try:
+            # Log message with session context
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHAT_MESSAGE_SENT",
+                    f"Session {self._current_session_id}: {message[:50]}...")
+
+            # Add session context to message if available
+            if self._current_session_id:
+                # For now, use the existing LLM method but with session logging
+                # In the future, this could use ChatService.SendMessage with conversation_id
+                self._send_to_llm(message)
+            else:
+                # This shouldn't happen due to UI controls, but handle gracefully
+                print("⚠️ Attempting to send message without active session")
+                if hasattr(self.app, 'show_toast'):
+                    self.app.show_toast("No active session - please create a session first")
+
+        except Exception as e:
+            print(f"❌ Send to LLM with session error: {e}")
+            # Fallback to regular LLM method
+            self._send_to_llm(message)
 
     def _send_to_llm(self, message):
         """Send message to LLM service"""
