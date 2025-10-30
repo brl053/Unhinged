@@ -1,0 +1,41 @@
+# Image Generation Stack (Sovereign, No BS)
+# Based on expert recommendations for RTX 5070 Ti with 16GB VRAM
+
+# Core PyTorch (already in unified requirements but ensuring latest)
+torch>=2.1.0                    # Core tensor operations and GPU compute
+torchvision>=0.16.0            # Image processing utilities
+
+# Efficient Model Loading and Storage
+safetensors>=0.4.0             # Efficient weight loading, faster than pickle
+huggingface-hub>=0.19.0        # Model downloading and caching
+
+# Diffusion Pipeline Core
+diffusers>=0.24.0              # Core diffusion implementation (HuggingFace)
+transformers>=4.35.0           # Text encoders (CLIP, T5)
+
+# Memory and Performance Optimization
+accelerate>=0.24.0             # Memory management and multi-GPU support
+xformers>=0.0.22               # Efficient attention (critical for 16GB VRAM)
+
+# Configuration Management
+omegaconf>=2.3.0               # Hierarchical configuration management
+
+# Image Processing and Utilities
+pillow>=10.0.0                 # Image manipulation and saving
+numpy>=1.24.0,<2.0.0          # Numerical operations (already in core)
+
+# Optional but Useful
+scipy>=1.11.0                  # Scientific computing utilities
+matplotlib>=3.7.0             # Plotting and visualization
+tqdm>=4.66.0                   # Progress bars for long operations
+
+# Model Format Support
+onnx>=1.15.0                   # ONNX model format support (optional)
+onnxruntime-gpu>=1.16.0        # GPU-accelerated ONNX runtime (optional)
+
+# Advanced Sampling and Schedulers
+k-diffusion>=0.0.15            # Advanced sampling methods (optional)
+
+# Development and Debugging
+tensorboard>=2.15.0            # Training visualization (if needed)
+wandb>=0.16.0                  # Experiment tracking (optional)

@@ -59,6 +59,10 @@ yarn-error.log*
 /build/*/__pycache__/
 /build/python/venv/
 
+# Unified Python Virtual Environment
+.venv/
+build/requirements-unified.txt
+
 # C/C++ build artifacts (but preserve our main /build system)
 /libs/**/build/
 **/CMakeFiles/

@@ -1,0 +1,18 @@
+# Core Image Generation Stack (Essential packages only)
+# Install these first, then handle xformers separately
+
+# Core PyTorch (already installed)
+torchvision>=0.16.0            # Image processing utilities
+
+# Efficient Model Loading and Storage
+diffusers>=0.24.0              # Core diffusion implementation (HuggingFace)
+accelerate>=0.24.0             # Memory management and multi-GPU support
+
+# Configuration Management
+omegaconf>=2.3.0               # Hierarchical configuration management
+
+# Image Processing and Utilities
+matplotlib>=3.7.0             # Plotting and visualization
+
+# Advanced Sampling and Schedulers
+k-diffusion>=0.0.15            # Advanced sampling methods

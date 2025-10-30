@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761813365.6748278,
-    "updated_iso": "2025-10-30 01:36:05",
+    "updated": 1761814095.4427843,
+    "updated_iso": "2025-10-30 01:48:15",
     "version": "1.0"
   },
   "checksums": {
@@ -79,7 +79,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "7325b2340a1cd044b1d4099ceb8ceec1fceb2348569121715cda564daac66d06",
+      "code_checksums.json": "b0af5d3eeb2faa33e808e43cc426881c8912ef4970b1fc83d7e5c57eec9d74ea",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
       "orchestrator.py": "4be1342fb85c0594d0eb1244a1eace7ef75f0d5d4296deecc83d55fed9a801bc",
@@ -88,7 +88,7 @@
       "setup-unified-venv.py": "8cdeef86bc7149057c61799177341b9954ca371770c6c9f523bd20307d598bc6",
       "developer_experience.py": "9637be6a3a4e9466228110ee68173a76f54e26aad5d982b0ec4737395efc1781",
       "build.py": "fb371555f0d5e7fa6259ead4b5ea6cbc0f9bb9d5c9a11e67661fb67b39d9a8b5",
-      "python/run.py": "991a06ebbf1b8022643c740079b6898cf9d1adda9cd91004ae1055da78d53343",
+      "python/run.py": "f4bce7dea90c4fbfb74b3e959f2ecf55b1b91a35e14e2c05c218458446a3aec0",
       "python/setup.py": "70193c458fd4958dff52b03b632f7df99ea2d56cdc996c74b4cab51ed5eeedf3",
       "archive/migrate-dev-tools.py": "389a4548ea3994e5773ce87b90d51f04c60d20baacf3637e91e522f09d269b3b",
       "archive/llmdocs-evolution-engine.py": "1488594cd0d2f8733308c34326a4a973517826571179ac2f123fa609480fcfbd",

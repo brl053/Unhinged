@@ -31,7 +31,6 @@ class UnhingedPythonRunner:
         # Use unified virtual environment
         self.venv_path = self.project_root / ".venv"
         self.build_python_dir = self.project_root / "build" / "python"
-        self.venv_path = self.build_python_dir / "venv"
         self.python_executable = self.venv_path / "bin" / "python3"
         
         # Ensure venv exists
