@@ -19,7 +19,7 @@ from .connection_pool import (
     stream_service,
 )
 from .health_manager import HealthManager, HealthStatus
-from .intent_detector import IntentDetector, IntentResult
+from .intent_detector import IntentDetector, IntentResult, IntentType, detect_intent
 from .resource_manager import HardwareInfo, ResourceManager
 from .service_base import ServiceBase
 
@@ -34,6 +34,8 @@ __all__ = [
     "ServiceClient",
     "IntentDetector",
     "IntentResult",
+    "IntentType",
+    "detect_intent",
     "get_global_pool",
     "call_service",
     "stream_service",
