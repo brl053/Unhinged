@@ -363,34 +363,29 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the status tab content using extracted StatusView."""
         try:
             from .views.status_view import StatusView
-
             self.status_view = StatusView(self)
-            return self.status_view.create_content()
-
-        except ImportError as e:
-            print(f"⚠️ StatusView not available, using fallback: {e}")
-            return self._create_status_fallback()
+            content = self.status_view.create_content()
+            print("✅ Status page created successfully")
+            return content
         except Exception as e:
-            print(f"❌ Error creating status view: {e}")
-            return self._create_status_fallback()
-
-    def _create_status_fallback(self):
-        """Fallback status implementation"""
-        return self._create_fallback("Status")
+            print(f"❌ CRITICAL: Status creation failed: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
     def create_system_info_tab_content(self):
         """Create the system info tab content using extracted SystemInfoView"""
         try:
             from .views.system_view import SystemInfoView
             self.system_info_view = SystemInfoView(self)
-            return self.system_info_view.create_content()
+            content = self.system_info_view.create_content()
+            print("✅ System Info page created successfully")
+            return content
         except Exception as e:
-            print(f"❌ Error creating system info view: {e}")
-            return self._create_fallback("System info")
-
-    def _create_system_info_fallback(self):
-        """Fallback system info implementation"""
-        return self._create_fallback("System info")
+            print(f"❌ CRITICAL: System Info creation failed: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
     def create_processes_tab_content(self):
         """Create the processes tab content using extracted ProcessesView."""
@@ -448,39 +443,14 @@ class UnhingedDesktopApp(Adw.Application):
         try:
             from .views.chatroom_view import ChatroomView
             self.chatroom_view = ChatroomView(self)
-            return self.chatroom_view.create_content()
+            content = self.chatroom_view.create_content()
+            print("✅ OS Chatroom page created successfully")
+            return content
         except Exception as e:
-            print(f"❌ Error creating chatroom view: {e}")
-            return self._create_fallback("Chatroom")
-
-    def _create_chatroom_fallback(self):
-        """Fallback chatroom implementation"""
-        return self._create_fallback("Chatroom")
-
-    def _create_fallback(self, tab_name: str):
-        """Create a fallback content widget for failed tab creation"""
-        fallback_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        fallback_box.set_margin_top(40)
-        fallback_box.set_margin_bottom(40)
-        fallback_box.set_margin_start(40)
-        fallback_box.set_margin_end(40)
-        fallback_box.set_halign(Gtk.Align.CENTER)
-        fallback_box.set_valign(Gtk.Align.CENTER)
-
-        # Error message
-        error_label = Gtk.Label()
-        error_label.set_markup(f"<span size='large'><b>{tab_name} content not available</b></span>")
-        error_label.set_halign(Gtk.Align.CENTER)
-        fallback_box.append(error_label)
-
-        # Helpful message
-        help_label = Gtk.Label()
-        help_label.set_text("This feature is temporarily unavailable. Please try again later.")
-        help_label.set_halign(Gtk.Align.CENTER)
-        help_label.add_css_class("dim-label")
-        fallback_box.append(help_label)
-
-        return fallback_box
+            print(f"❌ CRITICAL: OS Chatroom creation failed: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
 
 

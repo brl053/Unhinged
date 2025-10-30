@@ -93,11 +93,13 @@ class UIController:
                 content = create_func()
                 page = self.app.content_stack.add_titled(content, page_id, title)
                 page.set_icon_name(self._get_page_icon(page_id))
+                print(f"✅ Created {title} page successfully")
             except Exception as e:
-                print(f"❌ Error creating {title} page: {e}")
-                # Add fallback content
-                fallback = self._create_fallback_content(title)
-                self.app.content_stack.add_titled(fallback, page_id, title)
+                print(f"❌ CRITICAL: {title} page creation failed: {e}")
+                # NO FALLBACKS - Let it fail and fix the root cause
+                import traceback
+                traceback.print_exc()
+                raise Exception(f"Page creation failed for {title}: {e}")
                 
     def _get_page_icon(self, page_id):
         """Get icon name for page"""
@@ -113,19 +115,7 @@ class UIController:
         }
         return icons.get(page_id, "applications-system-symbolic")
         
-    def _create_fallback_content(self, title):
-        """Create fallback content for failed pages"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-        
-        label = Gtk.Label(label=f"{title} content not available")
-        label.add_css_class("dim-label")
-        container.append(label)
-        
-        return container
+
         
     def create_sidebar_navigation(self):
         """Create sidebar navigation with design system styling"""

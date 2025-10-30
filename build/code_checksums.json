@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1761809174.3943176,
-    "updated_iso": "2025-10-30 00:26:14",
+    "updated": 1761809644.9129176,
+    "updated_iso": "2025-10-30 00:34:04",
     "version": "1.0"
   },
   "checksums": {
@@ -17,7 +17,7 @@
       "audio_monitor.py": "2f0f219d312c435cc5cd702ad6c04098dfbca872f7da9fc7b803d8e96f1911b3",
       "config.py": "079f80e2ae0b208735b11e4fed26bea700a8a24fb2678205c40e1d377017163b",
       "exceptions.py": "c99c387074bb39e8c838da454c09cafbff82ed178ee891804b43f8ff6d335d45",
-      "desktop_app.py": "eee3f3c66aa0974dabdf5bd6fcfed593a9480f36a29219d5fedfdc721e73a415",
+      "desktop_app.py": "628dd7b67768395066ee16dde67dbbf4fdfda0490831ecf302354de5b7c41174",
       "launch.py": "1b9f844c8659c7d01bec4735d571f837d6cb4a904311e53798bd9b621510518b",
       "tests/__init__.py": "860f0fc0cb462a2bdce7f77a89cf76e46149cfac2aeb548c35f4794bbb1ed6f8",
       "tests/test_monitors.py": "e1e9a7cfe8a577a2c1fab7625a82cb8b5f447e8382c67184a615391f5bf7ad5d",
@@ -38,7 +38,7 @@
       "services/__init__.py": "4547bdd6d707e44fd3fb2b7f524a694244b5b776b682590498178735bb9bc750",
       "models/__init__.py": "32ae1bc01eb416aea3071868d0b5c117168cf1a9a86fe47cf0932d3a957757e8",
       "models/audio_types.py": "a39c09c247e03e67246cb503757b0aa6f9357f1891d520efe92d2b33bcaa9ded",
-      "controllers/ui_controller.py": "7338e8ffb0718fdcc9557ab2e632dcebbd8453e0189914138e8c114dc0489f51",
+      "controllers/ui_controller.py": "3890b9afe0895469a0db843da75ad1ac91a9a30f87411828e0eeb6513f1774e2",
       "controllers/__init__.py": "f4061cac89c27637cfe0f9f434102e8f840cbbefa313a89712edfc36b3d1d36d",
       "controllers/action_controller.py": "2c3d29212c9a68a74aa48ddd422e9c4be6100e557eb2852213531f3376f093ac",
       "controllers/content_controller.py": "0e2912cf95428d8b35ee20b559849cff22ff3eab5e923ffb8a325fc9f77d1abf",
@@ -56,7 +56,7 @@
       "handlers/platform_handler.py": "24b2bda53c176761bdaa4c160239488f76c38d20b33a4b670c1c0cd006784003"
     },
     "control/gtk4_gui/controllers": {
-      "ui_controller.py": "7338e8ffb0718fdcc9557ab2e632dcebbd8453e0189914138e8c114dc0489f51",
+      "ui_controller.py": "3890b9afe0895469a0db843da75ad1ac91a9a30f87411828e0eeb6513f1774e2",
       "__init__.py": "f4061cac89c27637cfe0f9f434102e8f840cbbefa313a89712edfc36b3d1d36d",
       "action_controller.py": "2c3d29212c9a68a74aa48ddd422e9c4be6100e557eb2852213531f3376f093ac",
       "content_controller.py": "0e2912cf95428d8b35ee20b559849cff22ff3eab5e923ffb8a325fc9f77d1abf"
@@ -78,7 +78,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "6bffffb7b1a7f3dbe40148e1441f8a602001b61d8b288cba4bf6afa19421841a",
+      "code_checksums.json": "b40e321c405f15b2a2c954ff235be8c7698bf6302c0f7abce4112ca7139df306",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
       "orchestrator.py": "4be1342fb85c0594d0eb1244a1eace7ef75f0d5d4296deecc83d55fed9a801bc",
