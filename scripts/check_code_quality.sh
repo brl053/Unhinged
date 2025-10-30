@@ -4,14 +4,12 @@
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$PROJECT_ROOT"
 
-# Find Python executable
-PYTHON_CMD=""
-if [ -f "venv-production/bin/python" ]; then
-    PYTHON_CMD="./venv-production/bin/python"
-elif command -v python3 &> /dev/null; then
-    PYTHON_CMD="python3"
-else
-    echo "❌ Python executable not found"
+# Use venv-production (the working environment)
+PYTHON_CMD="./venv-production/bin/python"
+
+if [ ! -f "$PYTHON_CMD" ]; then
+    echo "❌ venv-production not found"
+    echo "   Run: make setup-python"
     exit 1
 fi
 

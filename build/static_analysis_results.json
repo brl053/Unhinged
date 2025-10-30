@@ -5327,8 +5327,8 @@
     "warnings": [],
     "fixed_count": 0,
     "total_issues": 5320,
-    "execution_time": 0.03873038291931152,
-    "timestamp": 1761825555.5275881
+    "execution_time": 0.0396733283996582,
+    "timestamp": 1761825571.2814865
   },
   "libs/python": {
     "passed": false,
@@ -6177,13 +6177,14 @@
       "239 |     if not ui_component_path.exists():",
       "240 |         print(\"\u274c Session management UI component not found\")",
       "    |",
+      "Found 84 errors.",
       "No fixes available (27 hidden fixes can be enabled with the `--unsafe-fixes` option)."
     ],
     "warnings": [],
     "fixed_count": 0,
     "total_issues": 845,
-    "execution_time": 0.025983333587646484,
-    "timestamp": 1761825555.562732
+    "execution_time": 0.023115158081054688,
+    "timestamp": 1761825571.307106
   },
   "services": {
     "passed": false,
@@ -7552,12 +7553,13 @@
       "89 |             response.metadata[\"error\"] = str(e)",
       "90 |             response.last_updated.GetCurrentTime()",
       "   |",
+      "Found 138 errors.",
       "No fixes available (25 hidden fixes can be enabled with the `--unsafe-fixes` option)."
     ],
     "warnings": [],
     "fixed_count": 0,
     "total_issues": 1365,
-    "execution_time": 0.028410673141479492,
-    "timestamp": 1761825555.6008444
+    "execution_time": 0.025104761123657227,
+    "timestamp": 1761825571.3346574
   }
 }

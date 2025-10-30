@@ -29,16 +29,12 @@ if [ ! -f "build/static_analysis_manager.py" ]; then
     exit 0
 fi
 
-# Find Python executable
+# Find Python executable - prioritize venv-production
 PYTHON_CMD=""
 if [ -f "venv-production/bin/python" ]; then
     PYTHON_CMD="./venv-production/bin/python"
-elif command -v python3 &> /dev/null; then
-    PYTHON_CMD="python3"
-elif command -v python &> /dev/null; then
-    PYTHON_CMD="python"
 else
-    echo "❌ Python executable not found"
+    echo "❌ venv-production not found - run 'make setup-python' first"
     exit 1
 fi
 
@@ -100,12 +96,10 @@ if [ ! -f "build/checksum_manager.py" ]; then
     exit 0
 fi
 
-# Find Python executable
+# Find Python executable - use venv-production
 PYTHON_CMD=""
 if [ -f "venv-production/bin/python" ]; then
     PYTHON_CMD="./venv-production/bin/python"
-elif command -v python3 &> /dev/null; then
-    PYTHON_CMD="python3"
 else
     exit 0
 fi

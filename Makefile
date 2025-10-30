@@ -41,8 +41,8 @@ DOCKER_DB := postgres-db
 DB_NAME := unhinged_db
 DB_USER := postgres
 
-# Universal Python Runner
-PYTHON_RUN := python3 build/python/run.py
+# Universal Python Runner - Use working venv-production
+PYTHON_RUN := ./venv-production/bin/python
 
 # Native GUI
 NATIVE_GUI := python3 control/gui/native_app.py
@@ -347,15 +347,24 @@ generate-clients: ## Generate client libraries from protos [use FORCE=1 to bypas
 	@python3 build/build.py build proto-clients-all $(CACHE_OPTION)
 	$(call log_success,Client libraries generated)
 
-setup-python: ## Setup centralized Python virtual environment and install dependencies
-	$(call log_info,🐍 Setting up centralized Python virtual environment...)
-	@cd build/python && python3 setup.py
-	$(call log_success,Centralized Python environment setup complete)
+setup-python: ## Setup Python virtual environment with static analysis
+	$(call log_info,🐍 Setting up Python virtual environment with static analysis...)
+	@if [ ! -d "venv-production" ]; then \
+		echo "$(YELLOW)📦 Creating venv-production...$(RESET)"; \
+		python3 -m venv venv-production; \
+		./venv-production/bin/pip install --upgrade pip; \
+		./venv-production/bin/pip install -r build/requirements-core.txt; \
+		echo "$(GREEN)✅ venv-production created$(RESET)"; \
+	else \
+		echo "$(GREEN)✅ venv-production already exists$(RESET)"; \
+	fi
+	@$(MAKE) setup-git-hooks
+	$(call log_success,Python environment with static analysis ready)
 
-python-deps: ## Install/update Python dependencies in centralized environment
+python-deps: ## Install/update Python dependencies
 	$(call log_info,📦 Installing Python dependencies...)
-	@test -d build/python/venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
-	@cd build/python && python3 setup.py
+	@test -d venv-production || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
+	@./venv-production/bin/pip install -r build/requirements-core.txt
 	$(call log_success,Python dependencies installed)
 
 # ============================================================================
@@ -364,17 +373,17 @@ python-deps: ## Install/update Python dependencies in centralized environment
 
 check-code: ## Run static analysis on all Python modules
 	$(call log_info,🔍 Running static analysis on Python code...)
-	@python3 build/static_analysis_manager.py control/gtk4_gui libs/python services
+	@./venv-production/bin/python build/static_analysis_manager.py control/gtk4_gui libs/python services
 	$(call log_success,Static analysis completed)
 
 check-code-fix: ## Run static analysis with auto-fix
 	$(call log_info,🔧 Running static analysis with auto-fix...)
-	@python3 build/static_analysis_manager.py control/gtk4_gui libs/python services --no-fix
+	@./venv-production/bin/python build/static_analysis_manager.py control/gtk4_gui libs/python services
 	$(call log_success,Static analysis with auto-fix completed)
 
 check-code-changed: ## Run static analysis only on changed modules
 	$(call log_info,🔍 Running static analysis on changed modules...)
-	@python3 build/static_analysis_manager.py control/gtk4_gui libs/python services --check-changes
+	@./venv-production/bin/python build/static_analysis_manager.py control/gtk4_gui libs/python services --check-changes
 	$(call log_success,Changed modules analysis completed)
 
 setup-git-hooks: ## Install Git hooks for automatic static analysis
