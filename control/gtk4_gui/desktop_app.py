@@ -227,30 +227,17 @@ class UnhingedDesktopApp(Adw.Application):
             self.action_controller = None
 
     def _load_design_system_css(self):
-        """
-        Load the generated design system CSS files.
-
-        Loads semantic tokens and theme CSS from the design system
-        to provide consistent styling across the application.
-        """
-        # Skip design system CSS if requested (for debugging)
+        """Load design system CSS files"""
         if os.environ.get('SKIP_DESIGN_SYSTEM', '0') == '1':
-            print("ℹ️  Skipping design system CSS loading (SKIP_DESIGN_SYSTEM=1)")
+            print("ℹ️ Skipping design system CSS loading")
             return
 
         try:
             css_provider = Gtk.CssProvider()
-
-            # Path to generated CSS files
             css_dir = self.project_root / "generated" / "design_system" / "gtk4"
 
-            # Load CSS files in correct order
-            css_files = [
-                "design-tokens.css",    # Base semantic tokens
-                "theme-light.css",      # Light theme (default)
-                "components.css"        # Component patterns
-            ]
-
+            # Load CSS files
+            css_files = ["design-tokens.css", "theme-light.css", "components.css"]
             combined_css = ""
             loaded_files = []
 
@@ -259,271 +246,30 @@ class UnhingedDesktopApp(Adw.Application):
                 if css_path.exists():
                     combined_css += css_path.read_text() + "\n"
                     loaded_files.append(css_file)
-                    print(f"✅ Loaded design system CSS: {css_file}")
-                else:
-                    print(f"⚠️  Design system CSS not found: {css_file}")
 
             if combined_css:
-                # Add minimal semantic token test class
-                test_css = """
-                /* Design system integration test */
-                .ds-semantic-primary {
-                    background-color: var(--color-action-primary);
-                    color: var(--color-text-inverse);
-                }
+                # Add basic design system styles
+                combined_css += """
+                .navigation-sidebar { background-color: var(--color-surface-default, #ffffff); }
+                .sidebar-nav-active { background-color: var(--color-action-primary, #0969da); }
+                .recording-active { background-color: var(--color-error, #dc3545) !important; }
                 """
-                combined_css += test_css
 
-                # Add OS Chatroom design system styles
-                chatroom_css = """
-                /* OS Chatroom Design System Styles */
-                .ds-chatroom-container {
-                    background-color: var(--color-surface-default, #ffffff);
-                    border: var(--border-thin, 1px) solid var(--color-border-subtle, #e0e0e0);
-                    border-radius: var(--radius-md, 8px);
-                }
+                css_provider.load_from_data(combined_css.encode())
 
-                .ds-text-input {
-                    background-color: var(--color-surface-elevated, #f8f9fa);
-                    border: var(--border-thin, 1px) solid var(--color-border-default, #d0d7de);
-                    border-radius: var(--radius-sm, 4px);
-                    font-family: var(--font-family-prose, system-ui);
-                    font-size: var(--font-size-body, 14px);
-                    line-height: var(--line-height-body, 1.5);
-                    color: var(--color-text-primary, #24292f);
-                    min-height: 120px;
-                }
+                if self.window:
+                    display = self.window.get_display()
+                    Gtk.StyleContext.add_provider_for_display(
+                        display, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                else:
+                    self._pending_css_provider = css_provider
 
-                .ds-text-input:focus {
-                    border-color: var(--color-action-primary, #0969da);
-                    box-shadow: 0 0 0 2px var(--color-action-primary, #0969da) at 20% opacity;
-                }
-
-                /* TextEditor Component Styles */
-                .ds-text-editor {
-                    background-color: transparent;
-                }
-
-                .ds-placeholder {
-                    color: var(--color-text-tertiary, #656d76);
-                    font-style: italic;
-                    opacity: 0.8;
-                }
-
-                .ds-focused .ds-text-input {
-                    border-color: var(--color-action-primary, #0969da);
-                    box-shadow: 0 0 0 1px var(--color-action-primary, #0969da);
-                }
-
-                .ds-typography-body {
-                    font-family: var(--font-family-prose, system-ui);
-                    font-size: var(--font-size-body, 14px);
-                    line-height: var(--line-height-body, 1.5);
-                }
-                """
-                combined_css += chatroom_css
-
-                # Add sidebar navigation design system styles
-                sidebar_css = """
-                /* Sidebar Navigation Design System Styles */
-                .navigation-sidebar {
-                    background-color: var(--color-surface-default, #ffffff);
-                    border-right: var(--border-thin, 1px) solid var(--color-border-subtle, #e0e0e0);
-                }
-
-                .sidebar-nav-item {
-                    padding: 8px 12px; /* sp_2 vertical, sp_3 horizontal */
-                    border-radius: var(--radius-sm, 4px);
-                    margin: 2px 8px; /* sp_0_5 vertical, sp_2 horizontal */
-                }
-
-                .sidebar-nav-item:hover {
-                    background-color: var(--color-surface-elevated, #f8f9fa);
-                }
-
-                .sidebar-nav-active {
-                    background-color: var(--color-action-primary, #0969da);
-                    color: var(--color-text-inverse, #ffffff);
-                    border-left: 4px solid var(--color-action-primary, #0969da); /* Design system: thick border */
-                }
-
-                .sidebar-nav-active:hover {
-                    background-color: var(--color-action-primary, #0969da);
-                }
-                """
-                combined_css += sidebar_css
-
-                # Add chat message design system styles
-                chat_css = """
-                /* Chat Message Design System Styles */
-                .chat-message-user {
-                    background-color: var(--color-surface-elevated, #f8f9fa);
-                    border-left: 4px solid var(--color-action-primary, #0969da);
-                    border-radius: var(--radius-sm, 4px);
-                }
-
-                .chat-message-assistant {
-                    background-color: var(--color-surface-default, #ffffff);
-                    border-left: 4px solid var(--color-success-default, #1a7f37);
-                    border-radius: var(--radius-sm, 4px);
-                }
-
-                .chat-message-error {
-                    background-color: var(--color-danger-subtle, #ffebe9);
-                    border-left: 4px solid var(--color-danger-default, #cf222e);
-                    border-radius: var(--radius-sm, 4px);
-                }
-
-                .chat-sender {
-                    font-weight: var(--font-weight-semibold, 600);
-                    font-size: var(--font-size-small, 12px);
-                    color: var(--color-text-secondary, #656d76);
-                }
-
-                .chat-timestamp {
-                    font-size: var(--font-size-small, 12px);
-                    color: var(--color-text-tertiary, #8c959f);
-                    font-family: var(--font-family-mono, monospace);
-                }
-
-                .chat-content {
-                    font-family: var(--font-family-prose, system-ui);
-                    font-size: var(--font-size-body, 14px);
-                    line-height: var(--line-height-body, 1.5);
-                    color: var(--color-text-primary, #24292f);
-                }
-                """
-                combined_css += chat_css
-
-                # Add toast stack visual hierarchy styles
-                toast_stack_css = """
-                /* Toast Stack Visual Hierarchy */
-                .toast-top-fade {
-                    opacity: 0.5;
-                    background: linear-gradient(135deg,
-                        var(--color-surface-overlay, rgba(0,0,0,0.8)) 0%,
-                        var(--color-surface-overlay, rgba(0,0,0,0.6)) 100%);
-                    transition: opacity 0.3s ease-in-out;
-                }
-
-                .toast-second {
-                    opacity: 0.8;
-                    transform: translateY(4px);
-                    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
-                }
-
-                .toast-standard {
-                    opacity: 1.0;
-                    transform: translateY(8px);
-                    transition: transform 0.2s ease-out;
-                }
-
-                /* Toast stack container improvements */
-                toast {
-                    margin-bottom: 2px;
-                    box-shadow: var(--elevation-2, 0 2px 8px rgba(0,0,0,0.15));
-                }
-
-                toast.toast-top-fade {
-                    z-index: 1003;
-                }
-
-                toast.toast-second {
-                    z-index: 1002;
-                }
-
-                toast.toast-standard {
-                    z-index: 1001;
-                }
-                """
-                combined_css += toast_stack_css
-
-                # Add recording indicator CSS
-                recording_css = """
-                /* Recording Indicator Styles */
-                .recording-active {
-                    background-color: var(--color-error, #dc3545) !important;
-                    color: var(--color-text-inverse, #ffffff) !important;
-                    animation: recording-pulse 1.5s infinite ease-in-out;
-                }
-
-                @keyframes recording-pulse {
-                    0%, 100% {
-                        opacity: 1;
-                        transform: scale(1);
-                    }
-                    50% {
-                        opacity: 0.8;
-                        transform: scale(1.05);
-                    }
-                }
-
-                .recording-timer {
-                    font-family: var(--font-family-mono, monospace);
-                    font-size: var(--font-size-sm, 12px);
-                    font-weight: var(--font-weight-medium, 500);
-                    color: var(--color-error, #dc3545);
-                    background-color: var(--color-surface-container, #f8f9fa);
-                    padding: var(--spacing-sp-1, 4px) var(--spacing-sp-2, 8px);
-                    border-radius: var(--radius-sm, 4px);
-                    border: var(--border-thin, 1px) solid var(--color-error, #dc3545);
-                    margin-left: var(--spacing-sp-2, 8px);
-                    animation: timer-blink 1s infinite ease-in-out;
-                }
-
-                @keyframes timer-blink {
-                    0%, 50% { opacity: 1; }
-                    51%, 100% { opacity: 0.7; }
-                }
-
-                /* Reduced motion preferences */
-                @media (prefers-reduced-motion: reduce) {
-                    .recording-active {
-                        animation: none !important;
-                        background-color: var(--color-error, #dc3545) !important;
-                    }
-
-                    .recording-timer {
-                        animation: none !important;
-                    }
-                }
-                """
-                combined_css += recording_css
-
-                try:
-                    css_provider.load_from_data(combined_css.encode())
-
-                    # Apply CSS to display (requires window to be created)
-                    if self.window:
-                        display = self.window.get_display()
-                        Gtk.StyleContext.add_provider_for_display(
-                            display,
-                            css_provider,
-                            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-                        )
-                    else:
-                        # Store CSS provider for later application
-                        self._pending_css_provider = css_provider
-
-                except Exception as css_error:
-                    print(f"⚠️  CSS parsing error (using Libadwaita defaults): {css_error}")
-                    # Continue without design system CSS - app will use Libadwaita defaults
-                    self._pending_css_provider = None
-
-                print(f"✅ Design system CSS loaded successfully ({len(loaded_files)} files)")
-
-                # Log to session if available
-                if self.session_logger:
-                    self.session_logger.log_gui_event("DESIGN_SYSTEM_LOADED",
-                                                    f"Loaded {len(loaded_files)} CSS files: {', '.join(loaded_files)}")
+                print(f"✅ Design system CSS loaded ({len(loaded_files)} files)")
             else:
-                print("ℹ️  No design system CSS files found - using Libadwaita defaults")
+                print("ℹ️ No design system CSS files found")
 
         except Exception as e:
             print(f"❌ Failed to load design system CSS: {e}")
-            # App continues with Libadwaita defaults
-            if self.session_logger:
-                self.session_logger.log_gui_event("DESIGN_SYSTEM_ERROR", f"CSS loading failed: {e}")
 
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -802,77 +548,20 @@ class UnhingedDesktopApp(Adw.Application):
 
 
     def _stop_toggle_recording(self):
-        """
-        @llm-type service.audio
-        @llm-does terminates recording process and initiates transcription workflow
-        """
-        import subprocess
-        import time
+        """Stop toggle recording using AudioHandler"""
         try:
-            if not self.is_recording or not self.recording_process:
-                return
+            if hasattr(self, 'audio_handler') and self.audio_handler:
+                self.audio_handler.stop_recording()
+                self.show_toast("Processing recording...")
 
-            # Check if process is still running
-            if self.recording_process.poll() is None:
-                # Process is still running, send SIGINT to stop gracefully
-                import signal
-                self.recording_process.send_signal(signal.SIGINT)
+                if self.session_logger:
+                    self.session_logger.log_gui_event("TOGGLE_RECORDING_STOP", "Stopped toggle recording")
+            else:
+                print("⚠️ AudioHandler not available")
 
-                # Wait for graceful shutdown
-                try:
-                    self.recording_process.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    # If graceful shutdown fails, force terminate
-                    print("⚠️ Graceful recording stop timed out, force terminating")
-                    self.recording_process.terminate()
-                    self.recording_process.wait(timeout=2)
-
-            self.is_recording = False
-
-            # Stop recording timer and reset visual indicators
-            self._stop_recording_timer()
-            self._reset_chatroom_voice_button()
-
-            # Critical fix: Wait for file system to flush the WAV file
-            # This ensures the file is completely written before transcription
-            time.sleep(0.5)  # Allow file system buffer to flush
-
-            # Verify file exists and has content before proceeding
-            if self.recording_temp_file and self.recording_temp_file.exists():
-                file_size = self.recording_temp_file.stat().st_size
-                print(f"🔍 Debug: WAV file size after recording: {file_size} bytes")
-
-                # Wait a bit more if file is still being written (size is 0 or very small)
-                retry_count = 0
-                while file_size < 44 and retry_count < 10:  # WAV header is at least 44 bytes
-                    time.sleep(0.1)
-                    if self.recording_temp_file.exists():
-                        file_size = self.recording_temp_file.stat().st_size
-                        print(f"🔍 Debug: Retry {retry_count + 1}, WAV file size: {file_size} bytes")
-                    retry_count += 1
-
-            # Update UI
-            self.show_toast("Processing voice...")
-
-            # Log the event
-            if self.session_logger:
-                self.session_logger.log_gui_event("TOGGLE_RECORDING_STOP", "Stopped toggle recording")
-
-            # Start transcription in background thread
-            import threading
-            thread = threading.Thread(target=self._transcribe_toggle_recording, daemon=True)
-            thread.start()
-
-        except subprocess.TimeoutExpired:
-            # If graceful shutdown fails, force terminate
-            print("⚠️ Graceful recording stop timed out, force terminating")
-            self.recording_process.terminate()
-            self.recording_process.wait(timeout=2)
-            self.is_recording = False
-            self._cleanup_recording()
         except Exception as e:
             print(f"❌ Stop toggle recording error: {e}")
-            self._cleanup_recording()
+            self.show_toast(f"Stop recording failed: {e}")
 
 
 
@@ -959,32 +648,11 @@ class UnhingedDesktopApp(Adw.Application):
         return container
 
     def setup_actions(self):
-        """Setup application actions for menu"""
-        # About action
-        about_action = Gio.SimpleAction.new("about", None)
-        about_action.connect("activate", self.on_about_action)
-        self.add_action(about_action)
-
-        # Preferences action
-        preferences_action = Gio.SimpleAction.new("preferences", None)
-        preferences_action.connect("activate", self.on_preferences_action)
-        self.add_action(preferences_action)
-
-        # Quit action
-        quit_action = Gio.SimpleAction.new("quit", None)
-        quit_action.connect("activate", self.on_quit_action)
-        self.add_action(quit_action)
-
-        # Keyboard shortcuts
-        self.set_accels_for_action("app.quit", ["<primary>q"])
-        self.set_accels_for_action("app.preferences", ["<primary>comma"])
-
-        # Create menu
-        menu = Gio.Menu()
-        menu.append("About Unhinged", "app.about")
-        menu.append("Preferences", "app.preferences")
-        menu.append("Quit", "app.quit")
-        self.set_menubar(menu)
+        """Setup application actions using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.setup_actions()
+        else:
+            print("⚠️ Action controller not available")
         """Create performance metrics section with real-time indicators."""
         performance_group = Adw.PreferencesGroup()
         performance_group.set_title("Performance Metrics")
@@ -1031,48 +699,14 @@ class UnhingedDesktopApp(Adw.Application):
         return performance_group
 
     def on_about_action(self, action, param):
-        """Show about dialog"""
-        about = Adw.AboutWindow(transient_for=self.window)
-        about.set_application_name("Unhinged")
-        about.set_application_icon("applications-graphics")
-        about.set_developer_name("Unhinged Team")
-        about.set_version("1.0.0")
-        about.set_website("https://github.com/brl053/Unhinged")
-        about.set_copyright("© 2025 Unhinged Team")
-        about.set_license_type(Gtk.License.MIT_X11)
-        about.set_comments("Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline.")
-        about.present()
+        """Show about dialog using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_about_action(action, param)
 
     def on_preferences_action(self, action, param):
-        """Show preferences dialog"""
-        # Create preferences window
-        prefs = Adw.PreferencesWindow(transient_for=self.window)
-        prefs.set_title("Preferences")
-
-        # General page
-        general_page = Adw.PreferencesPage()
-        general_page.set_title("General")
-        general_page.set_icon_name("preferences-system-symbolic")
-
-        # Launch settings group
-        launch_group = Adw.PreferencesGroup()
-        launch_group.set_title("Launch Settings")
-        launch_group.set_description("Configure how Unhinged starts")
-
-        # Auto-start row
-        auto_start_row = Adw.ActionRow()
-        auto_start_row.set_title("Auto-start Platform")
-        auto_start_row.set_subtitle("Automatically start the platform when the application opens")
-
-        auto_start_switch = Gtk.Switch()
-        auto_start_switch.set_active(False)  # Default off
-        auto_start_row.add_suffix(auto_start_switch)
-
-        launch_group.add(auto_start_row)
-        general_page.add(launch_group)
-        prefs.add(general_page)
-
-        prefs.present()
+        """Show preferences dialog using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_preferences_action(action, param)
 
         # Memory Information
         memory_details = {
@@ -1112,13 +746,11 @@ class UnhingedDesktopApp(Adw.Application):
         return hardware_group
 
     def on_quit_action(self, action, param):
-        """Quit application"""
-        if self.running:
-            self.on_stop_clicked(None)
-
-        self.quit()
-
-
+        """Quit application using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_quit_action(action, param)
+        else:
+            self.quit()
 
 
 
@@ -1136,38 +768,9 @@ class UnhingedDesktopApp(Adw.Application):
 
 
 
-    def _run_command(self, command):
-        """Run a command using the unified entry point."""
-        try:
-            # Use the unified entry point for consistency
-            if command == "generate":
-                subprocess.run([str(self.project_root / "unhinged"), "build", "generate"],
-                             cwd=self.project_root, check=True)
-            elif command == "clean":
-                subprocess.run([str(self.project_root / "unhinged"), "build", "clean"],
-                             cwd=self.project_root, check=True)
-            elif command == "health":
-                subprocess.run([str(self.project_root / "unhinged"), "admin", "services", "check"],
-                             cwd=self.project_root, check=True)
-            elif command == "service-status":
-                subprocess.run([str(self.project_root / "unhinged"), "admin", "services", "list"],
-                             cwd=self.project_root, check=True)
-            elif command == "graphics-build":
-                subprocess.run([str(self.project_root / "unhinged"), "graphics", "build"],
-                             cwd=self.project_root, check=True)
-            elif command == "graphics-hello-world":
-                subprocess.run([str(self.project_root / "unhinged"), "graphics", "test"],
-                             cwd=self.project_root, check=True)
-            else:
-                # Fallback to make command
-                subprocess.run(["make", command], cwd=self.project_root, check=True)
 
-            self.show_toast(f"Command '{command}' completed successfully")
 
-        except subprocess.CalledProcessError as e:
-            self.show_toast(f"Command '{command}' failed: {e}")
-        except Exception as e:
-            self.show_toast(f"Error running command: {e}")
+
 
 
 
@@ -1350,21 +953,10 @@ class UnhingedDesktopApp(Adw.Application):
         return False
 
     def is_voice_service_available(self):
-        """Check if the voice service is available"""
-        if ARCHITECTURE_AVAILABLE:
-            # Use new service connector
-            return service_connector.check_service_health('speech_to_text')
-        else:
-            # Fallback to old method
-            try:
-                import socket
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(2)
-                result = sock.connect_ex(('localhost', 1191))
-                sock.close()
-                return result == 0
-            except Exception:
-                return False
+        """Check if voice service is available using AudioHandler"""
+        if hasattr(self, 'audio_handler') and self.audio_handler:
+            return True  # AudioHandler handles service availability
+        return False
 
 
 
@@ -1384,64 +976,11 @@ class UnhingedDesktopApp(Adw.Application):
 
 
     def _on_set_default_input_device(self, button, device):
-        """Set the selected device as the Ubuntu host OS default input device."""
-        try:
-            import os
-            from pathlib import Path
-
-            # Create ALSA configuration for default input device
-            asoundrc_content = f"""# ALSA configuration - Default input device set by Unhinged
-# Device: {device['name']} ({device['alsa_device']})
-
-pcm.!default {{
-    type plug
-    slave {{
-        pcm "hw:{device['card_id']},{device['device_id']}"
-    }}
-}}
-
-ctl.!default {{
-    type hw
-    card {device['card_id']}
-}}
-"""
-
-            # Write to ~/.asoundrc
-            asoundrc_path = Path.home() / ".asoundrc"
-            with open(asoundrc_path, 'w') as f:
-                f.write(asoundrc_content)
-
-            # Update button to show success (if button exists)
-            if button:
-                button.set_label("✓ Set as Default")
-                button.set_sensitive(False)
-                button.remove_css_class("suggested-action")
-                button.add_css_class("success")
-
-            # Reset other buttons (simple approach - disable all others)
-            # In a more complex implementation, we'd track and reset other buttons
-
-            # Log the change
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_DEVICE_SET_DEFAULT",
-                    f"Set {device['name']} ({device['alsa_device']}) as system default input device")
-
-            print(f"✅ Set {device['name']} as Ubuntu system default input device")
-            print(f"   ALSA device: {device['alsa_device']}")
-            print(f"   Configuration written to: {asoundrc_path}")
-
-        except Exception as e:
-            # Handle errors gracefully
-            if button:
-                button.set_label("❌ Error")
-                button.set_sensitive(False)
-                button.remove_css_class("suggested-action")
-                button.add_css_class("destructive")
-
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_DEVICE_SET_DEFAULT_ERROR", str(e))
-
-            print(f"❌ Failed to set default input device: {e}")
+        """Set default input device using ActionController"""
+        if hasattr(self, 'action_controller') and self.action_controller:
+            self.action_controller.on_set_default_input_device(button, device)
+        else:
+            print("⚠️ Action controller not available")
 
 
 
