@@ -957,7 +957,7 @@ start-gui: ## Launch enhanced GTK4 desktop application with dual-system architec
 	@echo "🎙️ Voice Transcription Integrated in Status Tab"
 	@echo "🏔️ Native C Graphics + Session Logging Active"
 	@echo "📊 System Information Page Integrated"
-	@python3 control/gtk4_gui/launch.py
+	@/usr/bin/python3 control/gtk4_gui/launch.py
 
 start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
 	$(call log_info,📺 Launching VM with direct console output...)

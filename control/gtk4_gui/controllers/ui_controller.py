@@ -22,14 +22,26 @@ class UIController:
         self.project_root = app.project_root
 
     def create_main_window(self):
-        """Create the main application window"""
-        window = Adw.ApplicationWindow(application=self.app)
-        window.set_title("Unhinged Platform")
-        window.set_default_size(1200, 800)
-        window.set_size_request(800, 600)
+        """Create the main application window using AbstractWindow component"""
+        # Import AbstractWindow component (lazy import to avoid circular dependencies)
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from components import AbstractWindow
 
-        # Enable window controls
-        window.set_show_menubar(False)
+        # Create AbstractWindow with proper configuration
+        abstract_window = AbstractWindow(
+            title="Unhinged Platform",
+            width=1200,
+            height=800,
+            min_width=800,
+            min_height=600,
+            resizable=True,
+            decorated=True,  # Use platform decorations
+            modal=False,
+            always_on_top=False,
+            application=self.app
+        )
 
         # Create toast overlay for notifications
         self.app.toast_overlay = Adw.ToastOverlay()
@@ -37,9 +49,14 @@ class UIController:
         # Create tab navigation
         self.create_tab_navigation()
 
-        # Set up toast overlay with tab content
-        window.set_content(self.app.toast_overlay)
-        return window
+        # Set toast overlay as window content
+        abstract_window.set_content(self.app.toast_overlay)
+
+        # Store reference to AbstractWindow component
+        self.app.abstract_window = abstract_window
+
+        # Return the underlying GTK widget for compatibility
+        return abstract_window.widget
 
     def create_tab_navigation(self):
         """Create sidebar navigation with NavigationSplitView"""

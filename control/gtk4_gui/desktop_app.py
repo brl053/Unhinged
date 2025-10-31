@@ -91,6 +91,7 @@ except ImportError as e:
 try:
     sys.path.append(str(Path(__file__).parent))
     from components import (
+        AbstractWindow,
         AudioTable,
         BluetoothTable,
         ChatBubble,
