@@ -1,0 +1,257 @@
+📋 Validated 6 component specifications
+❌ Errors: 83
+⚠️  Warnings: 0
+
+📦 Component: modal
+  ❌ Invalid token reference: 'surface.inverse'
+     Field: component.styling.backdrop.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'z.modal'
+     Field: component.styling.backdrop.z_index
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'surface.elevated'
+     Field: component.styling.container.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'radius.lg'
+     Field: component.styling.container.border_radius
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'elevation.4'
+     Field: component.styling.container.box_shadow
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'calc(z.modal + 1)'
+     Field: component.styling.container.z_index
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.6'
+     Field: component.styling.header.padding
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.header.border_bottom[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.subtle'
+     Field: component.styling.header.border_bottom[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'type.heading'
+     Field: component.styling.title.font_size
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.primary'
+     Field: component.styling.title.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.secondary'
+     Field: component.styling.close_button.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.2'
+     Field: component.styling.close_button.padding
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'radius.sm'
+     Field: component.styling.close_button.border_radius
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.6'
+     Field: component.styling.body.padding
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.4 sp.6'
+     Field: component.styling.footer.padding
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.footer.border_top[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.subtle'
+     Field: component.styling.footer.border_top[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.3'
+     Field: component.styling.footer.gap
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'modal-enter 0.2s ease-out'
+     Field: component.styling.state_transitions.opening.animation
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'backdrop-enter 0.2s ease-out'
+     Field: component.styling.state_transitions.opening.backdrop_animation
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'modal-exit 0.15s ease-in'
+     Field: component.styling.state_transitions.closing.animation
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'backdrop-exit 0.15s ease-in'
+     Field: component.styling.state_transitions.closing.backdrop_animation
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Missing required 'default' state
+     Field: component.interface.states.default
+
+📦 Component: input
+  ❌ Invalid token reference: 'surface.default'
+     Field: component.styling.default_state.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.primary'
+     Field: component.styling.default_state.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.default_state.border[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.default'
+     Field: component.styling.default_state.border[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'radius.sm'
+     Field: component.styling.default_state.border_radius
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.2'
+     Field: component.styling.default_state.padding_vertical
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.3'
+     Field: component.styling.default_state.padding_horizontal
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'type.body'
+     Field: component.styling.default_state.font_size
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border-color 0.2s ease'
+     Field: component.styling.default_state.transition
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.tertiary'
+     Field: component.styling.placeholder_styling.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.primary'
+     Field: component.styling.label_styling.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'type.caption'
+     Field: component.styling.label_styling.font_size
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.1'
+     Field: component.styling.label_styling.margin_bottom
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'feedback.error'
+     Field: component.styling.error_message_styling.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'type.caption'
+     Field: component.styling.error_message_styling.font_size
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.1'
+     Field: component.styling.error_message_styling.margin_top
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.medium'
+     Field: component.styling.state_overrides.focused.border[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'interactive.focus'
+     Field: component.styling.state_overrides.focused.border[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.state_overrides.focused.ring[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'interactive.focus'
+     Field: component.styling.state_overrides.focused.ring[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.medium'
+     Field: component.styling.state_overrides.error.border[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'feedback.error'
+     Field: component.styling.state_overrides.error.border[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'feedback.error'
+     Field: component.styling.state_overrides.error.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'surface.subtle'
+     Field: component.styling.state_overrides.disabled.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.disabled'
+     Field: component.styling.state_overrides.disabled.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.subtle'
+     Field: component.styling.state_overrides.disabled.border_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'surface.subtle'
+     Field: component.styling.state_overrides.read_only.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.subtle'
+     Field: component.styling.state_overrides.read_only.border_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'radius.full'
+     Field: component.styling.input_type_variants.search.border_radius
+     Suggestion: Check design tokens in libs/design_system/tokens/
+
+📦 Component: text-editor
+  ❌ Invalid token reference: 'surface.default'
+     Field: component.styling.default_state.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.primary'
+     Field: component.styling.default_state.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.default_state.border[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.default'
+     Field: component.styling.default_state.border[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'radius.sm'
+     Field: component.styling.default_state.border_radius
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.3'
+     Field: component.styling.default_state.padding
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'type.code'
+     Field: component.styling.default_state.font
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: '1.5'
+     Field: component.styling.default_state.line_height
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'surface.subtle'
+     Field: component.styling.gutter_styling.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.tertiary'
+     Field: component.styling.gutter_styling.text_color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.gutter_styling.border_right[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.subtle'
+     Field: component.styling.gutter_styling.border_right[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.1'
+     Field: component.styling.gutter_styling.padding[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'sp.2'
+     Field: component.styling.gutter_styling.padding[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'text.primary'
+     Field: component.styling.cursor_styling.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'interactive.selection'
+     Field: component.styling.selection_styling.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'syntax.keyword'
+     Field: component.styling.syntax_highlighting.keyword.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'syntax.string'
+     Field: component.styling.syntax_highlighting.string.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'syntax.comment'
+     Field: component.styling.syntax_highlighting.comment.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'syntax.number'
+     Field: component.styling.syntax_highlighting.number.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'syntax.operator'
+     Field: component.styling.syntax_highlighting.operator.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'syntax.function'
+     Field: component.styling.syntax_highlighting.function.color
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.medium'
+     Field: component.styling.state_overrides.focused.border[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'interactive.focus'
+     Field: component.styling.state_overrides.focused.border[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.thin'
+     Field: component.styling.state_overrides.focused.ring[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'interactive.focus'
+     Field: component.styling.state_overrides.focused.ring[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'border.medium'
+     Field: component.styling.state_overrides.error.border[0]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'feedback.error'
+     Field: component.styling.state_overrides.error.border[1]
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'feedback.error'
+     Field: component.styling.state_overrides.error.background
+     Suggestion: Check design tokens in libs/design_system/tokens/
+  ❌ Invalid token reference: 'surface.subtle'
+     Field: component.styling.state_overrides.read_only.background
+     Suggestion: Check design tokens in libs/design_system/tokens/

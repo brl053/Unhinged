@@ -8,7 +8,6 @@ import os
 import sys
 import time
 import uuid
-from collections.abc import Iterator
 from concurrent import futures
 from pathlib import Path
 from typing import Any
@@ -20,8 +19,8 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root / "libs" / "python"))
 sys.path.insert(0, str(project_root / "generated" / "python" / "clients"))
 
-# Health proto imports
-from unhinged_proto_clients.health import health_pb2, health_pb2_grpc
+# Standard gRPC health checking
+from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 
 # Chat proto imports
 try:
@@ -45,18 +44,14 @@ from events import create_service_logger
 # Initialize event logger
 events = create_service_logger("chat-with-sessions", "1.0.0")
 
-class ChatWithSessionsServicer(
-    chat_pb2_grpc.ChatServiceServicer,
-    health_pb2_grpc.HealthServiceServicer
-):
+class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
     """
     Chat service with embedded session management using write-through architecture
-    
+
     Implements:
     - Standard chat service operations
     - Session management with Redis/CRDB write-through
     - Progressive disclosure UI support
-    - Health checks for both chat and session storage
     """
 
     def __init__(self):
@@ -82,10 +77,12 @@ class ChatWithSessionsServicer(
                 redis_host=os.getenv('REDIS_HOST', 'localhost'),
                 redis_port=int(os.getenv('REDIS_PORT', '6379')),
                 redis_db=int(os.getenv('REDIS_DB', '0')),
+                redis_password=os.getenv('REDIS_PASSWORD'),
                 crdb_host=os.getenv('CRDB_HOST', 'localhost'),
                 crdb_port=int(os.getenv('CRDB_PORT', '26257')),
                 crdb_database=os.getenv('CRDB_DATABASE', 'unhinged'),
-                crdb_user=os.getenv('CRDB_USER', 'root')
+                crdb_user=os.getenv('CRDB_USER', 'root'),
+                crdb_password=os.getenv('CRDB_PASSWORD')
             )
 
             self.session_store = SessionStore(config)
@@ -201,11 +198,13 @@ class ChatWithSessionsServicer(
 
             # Create conversation object
             conversation = chat_pb2.Conversation()
-            conversation.metadata.id = conversation_id
+            conversation.metadata.resource_id = conversation_id
             conversation.metadata.team_id = request.team_id
             conversation.metadata.namespace_id = request.namespace_id
+            conversation.metadata.created_by = "system"  # TODO: Get from auth context
             conversation.metadata.created_at.GetCurrentTime()
             conversation.metadata.updated_at.GetCurrentTime()
+            conversation.metadata.version = 1
 
             conversation.title = request.title
             conversation.description = request.description
@@ -282,7 +281,7 @@ class ChatWithSessionsServicer(
 
             # Create message
             message = chat_pb2.ChatMessage()
-            message.metadata.id = str(uuid.uuid4())
+            message.metadata.resource_id = str(uuid.uuid4())
             message.metadata.created_at.GetCurrentTime()
             message.conversation_id = conversation_id
             message.role = request.role
@@ -293,7 +292,7 @@ class ChatWithSessionsServicer(
             context_key = f"session:{conversation_id}:context"
             context_data = self.session_store.read(context_key) or {"messages": []}
             context_data["messages"].append({
-                "id": message.metadata.id,
+                "id": message.metadata.resource_id,
                 "role": request.role,
                 "content": request.content,
                 "timestamp": time.time()
@@ -313,7 +312,7 @@ class ChatWithSessionsServicer(
 
             events.info("Message sent", {
                 "conversation_id": conversation_id,
-                "message_id": message.metadata.id,
+                "message_id": message.metadata.resource_id,
                 "role": request.role
             })
 
@@ -328,7 +327,7 @@ class ChatWithSessionsServicer(
     def _reconstruct_conversation(self, conversation_id: str, session_data: dict[str, Any]) -> chat_pb2.Conversation:
         """Reconstruct conversation from session data"""
         conversation = chat_pb2.Conversation()
-        conversation.metadata.id = conversation_id
+        conversation.metadata.resource_id = conversation_id
         conversation.metadata.team_id = session_data.get("team_id", "")
         conversation.metadata.namespace_id = session_data.get("namespace_id", "")
         conversation.title = session_data.get("title", "")
@@ -343,42 +342,37 @@ class ChatWithSessionsServicer(
         return conversation
 
     # ========================================================================
-    # Health Check Implementation
+    # Health Check Helper
     # ========================================================================
 
-    def Check(self, request: health_pb2.HealthCheckRequest, context) -> health_pb2.HealthCheckResponse:
-        """Health check including session store status"""
-        response = health_pb2.HealthCheckResponse()
+    def is_healthy(self) -> bool:
+        """Check if service and session store are healthy"""
+        if not self.service_ready or not self.session_store:
+            return False
 
-        if self.service_ready and self.session_store:
-            # Check session store health
-            health = self.session_store.health_check()
-            redis_healthy = health["redis"]["status"] == "healthy"
-            crdb_healthy = health["crdb"]["status"] == "healthy"
+        health_status = self.session_store.health_check()
+        redis_healthy = health_status["redis"]["status"] == "healthy"
+        crdb_healthy = health_status["crdb"]["status"] == "healthy"
 
-            if redis_healthy and crdb_healthy:
-                response.status = health_pb2.HealthCheckResponse.SERVING
-            else:
-                response.status = health_pb2.HealthCheckResponse.NOT_SERVING
-        else:
-            response.status = health_pb2.HealthCheckResponse.NOT_SERVING
-
-        return response
-
-    def Watch(self, request: health_pb2.HealthCheckRequest, context) -> Iterator[health_pb2.HealthCheckResponse]:
-        """Health check watch implementation"""
-        while True:
-            yield self.Check(request, context)
-            time.sleep(5)
+        return redis_healthy and crdb_healthy
 
 def serve():
     """Start the gRPC server with embedded session management"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     servicer = ChatWithSessionsServicer()
 
-    # Register services
+    # Register chat service
     chat_pb2_grpc.add_ChatServiceServicer_to_server(servicer, server)
-    health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
+
+    # Register standard gRPC health checking
+    health_servicer = health.HealthServicer()
+    health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+
+    # Set initial health status
+    health_servicer.set(
+        "chat.ChatService",
+        health_pb2.HealthCheckResponse.SERVING if servicer.service_ready else health_pb2.HealthCheckResponse.NOT_SERVING
+    )
 
     listen_addr = '[::]:9095'  # Chat service with sessions
     server.add_insecure_port(listen_addr)

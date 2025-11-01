@@ -678,6 +678,24 @@ class UnhingedDesktopApp(Adw.Application):
         """Fallback output implementation"""
         return self._create_fallback("Audio output")
 
+    def create_graph_tab_content(self):
+        """Create the Graph Editor tab content using GraphWorkspaceView"""
+        try:
+            from .views.graph_workspace_view import GraphWorkspaceView
+            self.graph_workspace_view = GraphWorkspaceView(self)
+            content = self.graph_workspace_view.create_content()
+
+            # Load sample graph for demonstration
+            self.graph_workspace_view.load_sample_graph()
+
+            print("✅ Graph Editor page created successfully")
+            return content
+        except Exception as e:
+            print(f"❌ Error creating graph editor view: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._create_fallback("Graph Editor")
+
     def setup_actions(self):
         """Setup application actions using ActionController"""
         if hasattr(self, 'action_controller') and self.action_controller:

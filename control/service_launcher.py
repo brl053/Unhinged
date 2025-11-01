@@ -72,39 +72,48 @@ class ServiceLauncher:
     """
     
     # Essential services for GUI functionality
+    # ALL SERVICES ARE ESSENTIAL - the system requires complete service availability
     ESSENTIAL_SERVICES = [
         {
-            "name": "LLM Service (Ollama)",
-            "compose_service": "llm",
-            "health_url": "http://localhost:1500/api/tags",
-            "port": 1500,
+            "name": "Database",
+            "compose_service": "database",
+            "health_url": None,  # No HTTP health check
+            "port": 1200,
             "required": True,
-            "description": "Local LLM service for chat functionality"
+            "description": "PostgreSQL database - foundation for all persistence"
+        },
+        {
+            "name": "Redis Cache",
+            "compose_service": "redis",
+            "health_url": None,  # Redis uses PING command
+            "port": 1201,
+            "required": True,
+            "description": "Redis cache for session management and write-through architecture"
         },
         {
             "name": "Persistence Platform",
             "compose_service": "persistence-platform",
             "health_url": "http://localhost:1300/api/v1/health",
             "port": 1300,
-            "required": False,
-            "description": "Independent Kotlin persistence platform (NO SPRING BOOT - pure independence)"
+            "required": True,
+            "description": "Kotlin persistence platform for data storage and retrieval"
         },
         {
-            "name": "Database",
-            "compose_service": "database",
-            "health_url": None,  # No HTTP health check
-            "port": 1200,
-            "required": False,
-            "description": "PostgreSQL database"
+            "name": "LLM Service (Ollama)",
+            "compose_service": "llm",
+            "health_url": "http://localhost:1500/api/tags",
+            "port": 1500,
+            "required": True,
+            "description": "Local LLM service for chat and conversation functionality"
         },
         {
             "name": "Speech-to-Text Service",
-            "compose_service": "speech-to-text-direct",  # Docker service name
+            "compose_service": "speech-to-text",
             "health_url": "http://localhost:1101/health",
             "port": 1101,
-            "grpc_port": 9091,  # Corrected gRPC port from Docker output
+            "grpc_port": 9091,
             "implements_health_proto": True,
-            "required": False,  # Make it optional to prevent startup failures
+            "required": True,
             "description": "Whisper-based speech transcription service for voice input"
         },
         {
@@ -114,8 +123,8 @@ class ServiceLauncher:
             "port": 1102,
             "grpc_port": 9092,
             "implements_health_proto": True,
-            "required": False,
-            "description": "Neural voice synthesis service"
+            "required": True,
+            "description": "Neural voice synthesis service for audio output"
         },
         {
             "name": "Vision AI Service",
@@ -124,8 +133,18 @@ class ServiceLauncher:
             "port": 1103,
             "grpc_port": 9093,
             "implements_health_proto": True,
-            "required": False,
-            "description": "BLIP-based image analysis service"
+            "required": True,
+            "description": "BLIP-based image analysis service for vision capabilities"
+        },
+        {
+            "name": "Chat Service with Sessions",
+            "compose_service": "chat-with-sessions",
+            "health_url": None,  # gRPC service, uses health proto
+            "port": 9095,
+            "grpc_port": 9095,
+            "implements_health_proto": True,
+            "required": True,
+            "description": "Chat service with embedded session management and write-through persistence"
         }
     ]
     
@@ -222,12 +241,12 @@ class ServiceLauncher:
             return []
     
     def _should_start_service(self, service: Dict) -> bool:
-        """Ask user if they want to start optional service"""
+        """Determine if a service should be started"""
+        # All services marked as required MUST be started
         if service["required"]:
             return True
-        
-        
-        # Skip interactive prompts - run in offline mode
+
+        # Optional services are skipped in non-interactive mode
         return False
     
     def _start_service(self, service: Dict, timeout: int) -> bool:

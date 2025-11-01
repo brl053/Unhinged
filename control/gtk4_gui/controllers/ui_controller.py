@@ -102,6 +102,7 @@ class UIController:
             ("chatroom", "OS Chatroom", self.app.create_chatroom_tab_content),
             ("bluetooth", "Bluetooth", self.app.create_bluetooth_tab_content),
             ("output", "Output", self.app.create_output_tab_content),
+            ("graphs", "Graphs", self.app.create_graph_tab_content),
         ]
 
         for page_id, title, create_func in pages:
@@ -127,6 +128,7 @@ class UIController:
             "chatroom": "user-available-symbolic",
             "bluetooth": "bluetooth-symbolic",
             "output": "audio-speakers-symbolic",
+            "graphs": "network-workgroup-symbolic",
         }
         return icons.get(page_id, "dialog-information-symbolic")
 
@@ -148,6 +150,7 @@ class UIController:
             ("chatroom", "OS Chatroom", "user-available-symbolic"),
             ("bluetooth", "Bluetooth", "bluetooth-symbolic"),
             ("output", "Output", "audio-speakers-symbolic"),
+            ("graphs", "Graphs", "network-workgroup-symbolic"),
         ]
 
         for item_id, title, icon_name in nav_items:

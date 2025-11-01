@@ -63,9 +63,24 @@ class LogViewer(AdwComponentBase):
         toolbar = self._create_toolbar()
         self.widget.append(toolbar)
 
-        # Create log container
-        self._log_container = LogContainer()
-        self.widget.append(self._log_container.get_widget())
+        # Create log container with error handling
+        try:
+            self._log_container = LogContainer()
+            if hasattr(self._log_container, 'get_widget'):
+                self.widget.append(self._log_container.get_widget())
+            elif hasattr(self._log_container, 'widget'):
+                self.widget.append(self._log_container.widget)
+            else:
+                print("⚠️ LogContainer missing widget accessor")
+        except Exception as e:
+            print(f"❌ Failed to create LogContainer: {e}")
+            # Create fallback text view
+            fallback_view = Gtk.TextView()
+            fallback_view.set_editable(False)
+            scrolled = Gtk.ScrolledWindow()
+            scrolled.set_child(fallback_view)
+            self.widget.append(scrolled)
+            self._log_container = None
 
         # Apply styling
         self.add_css_class("ds-log-viewer")
@@ -140,8 +155,16 @@ class LogViewer(AdwComponentBase):
         else:
             formatted_message = f"{level}: {message}"
 
-        # Add to log container
-        self._log_container.append_text(formatted_message)
+        # Add to log container - with error handling
+        try:
+            if self._log_container and hasattr(self._log_container, 'append_text'):
+                self._log_container.append_text(formatted_message)
+            else:
+                print(f"⚠️ LogContainer not properly initialized: {self._log_container}")
+                print(f"   Log message: {formatted_message}")
+        except Exception as e:
+            print(f"❌ Error appending to log container: {e}")
+            print(f"   Log message: {formatted_message}")
 
     def clear_logs(self):
         """Clear all log messages."""

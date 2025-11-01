@@ -1,0 +1,226 @@
+# @llm-type component.spec
+# @llm-does Input/output connection point on a graph node
+# @llm-key Enables connections between nodes
+# @llm-axiom Ports are the interface between nodes; type determines compatibility
+
+component:
+  id: "graph-port"
+  name: "Graph Port"
+  category: "primitive"
+  
+  description: |
+    A connection point (input or output) on a graph node. Ports define where
+    edges can connect to nodes and what data types flow through connections.
+    
+    Ports have:
+    - Direction: input or output
+    - Data type: text, audio, image, etc.
+    - Label: human-readable name
+    - Connection state: idle, connecting, connected
+    
+    Ports are typically rendered as small circles or squares on node edges.
+    Users drag from output ports to input ports to create connections.
+
+  interface:
+    properties:
+      id:
+        type: "string"
+        required: true
+        description: "Unique port identifier within the node"
+      
+      name:
+        type: "string"
+        required: true
+        description: "Port name (e.g., 'transcript', 'response_text')"
+      
+      direction:
+        type: "enum"
+        values: ["input", "output"]
+        required: true
+        description: "Whether this is an input or output port"
+      
+      data_type:
+        type: "string"
+        required: true
+        description: |
+          Data type flowing through this port:
+          - "text": Text data
+          - "audio": Audio stream
+          - "image": Image data
+          - "any": Any data type (no validation)
+      
+      label:
+        type: "string"
+        default: ""
+        description: "Display label for the port (optional)"
+      
+      connected:
+        type: "boolean"
+        default: false
+        description: "Whether this port has an active connection"
+      
+      multiple:
+        type: "boolean"
+        default: false
+        description: "Whether multiple connections allowed (for inputs)"
+      
+      required:
+        type: "boolean"
+        default: false
+        description: "Whether connection is required for node execution"
+    
+    states:
+      default:
+        description: "Port is ready, no active interaction"
+
+      hovering:
+        description: "Mouse is over the port"
+
+      connecting:
+        description: "User is dragging from this port to create connection"
+
+      connected:
+        description: "Port has an active connection"
+
+      error:
+        description: "Connection validation failed"
+    
+    events:
+      hover_enter:
+        description: "Mouse entered port area"
+        payload:
+          port_id: "string"
+          port_name: "string"
+      
+      hover_exit:
+        description: "Mouse left port area"
+        payload:
+          port_id: "string"
+      
+      drag_start:
+        description: "User started dragging from port"
+        payload:
+          port_id: "string"
+          direction: "input|output"
+          data_type: "string"
+      
+      drag_end:
+        description: "User finished dragging"
+        payload:
+          port_id: "string"
+          target_port_id: "string"
+          success: "boolean"
+      
+      connection_created:
+        description: "Connection successfully created"
+        payload:
+          port_id: "string"
+          edge_id: "string"
+      
+      connection_removed:
+        description: "Connection was removed"
+        payload:
+          port_id: "string"
+          edge_id: "string"
+
+  styling:
+    default_state:
+      width: "12px"
+      height: "12px"
+      border_radius: "50%"
+      background: "colors.surface.elevated"
+      border: "2px solid"
+      border_color: "colors.border.default"
+      cursor: "crosshair"
+
+    state_overrides:
+      default:
+        background: "colors.surface.elevated"
+
+      hovering:
+        background: "colors.action.primary"
+        border_color: "colors.action.primary"
+        width: "16px"
+        height: "16px"
+
+      connecting:
+        background: "colors.action.primary"
+        animation: "pulse"
+
+      connected:
+        background: "colors.feedback.success"
+        border_color: "colors.feedback.success"
+
+      error:
+        background: "colors.feedback.error"
+        border_color: "colors.feedback.error"
+
+  composition:
+    is_leaf: true
+    can_contain: []
+    layout_type: "inline"
+    description: |
+      Ports are positioned on node edges (typically bottom for outputs,
+      top/sides for inputs). Exact positioning is determined by parent node.
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+
+    keyboard_interactions:
+      - key: "Enter"
+        action: "initiate_connection"
+      - key: "Escape"
+        action: "cancel_connection"
+      - key: "Tab"
+        action: "focus_next_port"
+    
+    aria_attributes:
+      - "aria-label: Port name and direction"
+      - "aria-describedby: data type and connection status"
+      - "role: button (for keyboard interaction)"
+
+  examples:
+    - name: "Output port (text)"
+      description: "Text output from STT node"
+      properties:
+        id: "stt-output-transcript"
+        name: "transcript"
+        direction: "output"
+        data_type: "text"
+        label: "Transcript"
+        connected: false
+    
+    - name: "Input port (text)"
+      description: "Text input to LLM node"
+      properties:
+        id: "llm-input-text"
+        name: "text"
+        direction: "input"
+        data_type: "text"
+        label: "Input Text"
+        connected: true
+        required: true
+    
+    - name: "Audio output port"
+      description: "Audio output from TTS node"
+      properties:
+        id: "tts-output-audio"
+        name: "audio"
+        direction: "output"
+        data_type: "audio"
+        connected: true
+        multiple: false
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-10-31"
+  design_review: "pending"
+  implementation_status:
+    gtk4: "not_started"
+    react: "not_started"
+  notes: |
+    Port positioning and connection validation are handled by parent node
+    and canvas components. This spec defines the port interface and appearance.
+

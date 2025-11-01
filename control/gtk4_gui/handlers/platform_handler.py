@@ -47,8 +47,8 @@ class PlatformHandler:
             self._update_status("Starting platform...", 0.1)
             self._log("Starting Unhinged platform...")
 
-            # Execute platform start command
-            cmd = [str(self.project_root / "unhinged"), "start"]
+            # Execute comprehensive service startup (avoid recursive GUI launch)
+            cmd = ["python3", "control/start_unhinged_services.py", "--timeout", "60"]
 
             self._update_status("Launching backend services...", 0.3)
             self._log(f"Executing: {' '.join(cmd)}")
@@ -110,17 +110,20 @@ class PlatformHandler:
             self._log(f"Running command: {command}")
 
             if command == "generate":
-                subprocess.run([str(self.project_root / "unhinged"), "build", "generate"],
-                             cwd=self.project_root, check=True)
+                subprocess.run(["make", "generate"], cwd=self.project_root, check=True)
             elif command == "clean":
-                subprocess.run([str(self.project_root / "unhinged"), "build", "clean"],
-                             cwd=self.project_root, check=True)
+                subprocess.run(["make", "clean"], cwd=self.project_root, check=True)
             elif command == "test":
-                subprocess.run([str(self.project_root / "unhinged"), "test"],
-                             cwd=self.project_root, check=True)
+                subprocess.run(["make", "test"], cwd=self.project_root, check=True)
+            elif command == "start-services":
+                subprocess.run(["python3", "control/service_launcher.py"], cwd=self.project_root, check=True)
+            elif command == "stop-services":
+                subprocess.run(["python3", "control/service_launcher.py", "--stop"], cwd=self.project_root, check=True)
+            elif command == "status":
+                subprocess.run(["python3", "control/service_launcher.py", "--status"], cwd=self.project_root, check=True)
             else:
-                subprocess.run([str(self.project_root / "unhinged"), command],
-                             cwd=self.project_root, check=True)
+                # Use make for other commands to avoid recursive issues
+                subprocess.run(["make", command], cwd=self.project_root, check=True)
 
             self._log(f"Command '{command}' completed successfully")
 

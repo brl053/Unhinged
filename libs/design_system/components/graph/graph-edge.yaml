@@ -1,0 +1,220 @@
+# @llm-type component.spec
+# @llm-does Connection line between two graph nodes
+# @llm-key Represents data flow between nodes
+# @llm-axiom Edges are visual representations of node dependencies
+
+component:
+  id: "graph-edge"
+  name: "Graph Edge"
+  category: "primitive"
+  
+  description: |
+    A connection line between two nodes in a graph. Edges represent data flow
+    or dependencies between operations.
+    
+    Edges have:
+    - Source and target nodes
+    - Visual style (straight, curved, animated)
+    - Status indicators (valid, invalid, active)
+    - Labels (optional, for port names or data type)
+    
+    Edges are rendered as lines (typically Bezier curves) connecting output
+    ports of source nodes to input ports of target nodes.
+
+  interface:
+    properties:
+      id:
+        type: "string"
+        required: true
+        description: "Unique edge identifier"
+      
+      source:
+        type: "string"
+        required: true
+        description: "Source node ID"
+      
+      target:
+        type: "string"
+        required: true
+        description: "Target node ID"
+      
+      source_handle:
+        type: "string"
+        default: ""
+        description: "Source port name (optional, for multi-port nodes)"
+      
+      target_handle:
+        type: "string"
+        default: ""
+        description: "Target port name (optional, for multi-port nodes)"
+      
+      selected:
+        type: "boolean"
+        default: false
+        description: "Whether edge is currently selected"
+      
+      animated:
+        type: "boolean"
+        default: false
+        description: "Whether to animate data flow along edge"
+      
+      status:
+        type: "enum"
+        values: ["valid", "invalid", "active"]
+        default: "valid"
+        description: |
+          - valid: Connection is properly configured
+          - invalid: Connection has validation error
+          - active: Data is flowing through this edge
+      
+      error_message:
+        type: "string"
+        default: ""
+        description: "Error message if status is 'invalid'"
+    
+    states:
+      default:
+        description: "Edge is static, no interaction"
+
+      hovered:
+        description: "Mouse is over the edge"
+
+      selected:
+        description: "Edge is selected by user"
+
+      active:
+        description: "Data is flowing through edge (during execution)"
+
+      error:
+        description: "Connection validation failed"
+    
+    events:
+      clicked:
+        description: "Edge clicked by user"
+        payload:
+          edge_id: "string"
+          multi_select: "boolean"
+      
+      hover_enter:
+        description: "Mouse entered edge area"
+        payload:
+          edge_id: "string"
+      
+      hover_exit:
+        description: "Mouse left edge area"
+        payload:
+          edge_id: "string"
+      
+      deleted:
+        description: "Edge was deleted"
+        payload:
+          edge_id: "string"
+          source_id: "string"
+          target_id: "string"
+
+  styling:
+    default_state:
+      stroke: "colors.border.default"
+      stroke_width: "2px"
+      fill: "none"
+      cursor: "pointer"
+
+    state_overrides:
+      default:
+        stroke: "colors.border.default"
+
+      hovered:
+        stroke: "colors.action.primary"
+        stroke_width: "3px"
+
+      selected:
+        stroke: "colors.action.primary"
+        stroke_width: "3px"
+        stroke_dasharray: "5,5"
+
+      active:
+        stroke: "colors.feedback.success"
+        stroke_width: "3px"
+        animation: "flow"
+
+      error:
+        stroke: "colors.feedback.error"
+        stroke_width: "2px"
+        stroke_dasharray: "3,3"
+
+  composition:
+    is_leaf: true
+    can_contain: []
+    layout_type: "custom"
+    description: |
+      Edges are rendered as lines connecting ports. Positioning is computed
+      from source and target node positions and port locations.
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+
+    keyboard_interactions:
+      - key: "Delete"
+        action: "delete_edge"
+      - key: "Enter"
+        action: "show_edge_details"
+    
+    aria_attributes:
+      - "aria-label: Connection from source to target"
+      - "aria-describedby: port names and data type"
+
+  examples:
+    - name: "Simple connection"
+      description: "Direct connection between two nodes"
+      properties:
+        id: "edge-1"
+        source: "stt-1"
+        target: "llm-1"
+        status: "valid"
+    
+    - name: "Named ports"
+      description: "Connection with specific port names"
+      properties:
+        id: "edge-2"
+        source: "stt-1"
+        target: "llm-1"
+        source_handle: "transcript"
+        target_handle: "text"
+        status: "valid"
+    
+    - name: "Active connection"
+      description: "Connection with data flowing"
+      properties:
+        id: "edge-3"
+        source: "llm-1"
+        target: "tts-1"
+        animated: true
+        status: "active"
+    
+    - name: "Invalid connection"
+      description: "Connection with validation error"
+      properties:
+        id: "edge-4"
+        source: "node-1"
+        target: "node-2"
+        status: "invalid"
+        error_message: "Type mismatch: audio cannot connect to text input"
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-10-31"
+  design_review: "pending"
+  implementation_status:
+    gtk4: "not_started"
+    react: "not_started"
+  notes: |
+    Edge rendering requires:
+    1. Source and target node positions
+    2. Port positions within nodes
+    3. Bezier curve calculation for smooth connections
+    4. Hit detection for mouse interactions
+    
+    These are implementation details handled by the canvas component.
+

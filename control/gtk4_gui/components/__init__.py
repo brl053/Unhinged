@@ -36,7 +36,10 @@ from .complex import (
     ServiceRow,
     SystemStatus,
 )
+# GraphCanvasWidget is imported lazily to avoid GType registration issues
+# from .graph_canvas import GraphCanvasWidget
 from .containers import (
+    AbstractWindow,
     LogContainer,
     ServicePanel,
     StatusCard,
@@ -62,6 +65,14 @@ from .tables import GenericTable, TableColumn
 __version__ = "1.0.0"
 __author__ = "Unhinged Team"
 
+# Lazy loader for GraphCanvasWidget to avoid GType registration issues
+def __getattr__(name):
+    """Lazy load GraphCanvasWidget to avoid GType registration conflicts."""
+    if name == "GraphCanvasWidget":
+        from .graph_canvas import GraphCanvasWidget
+        return GraphCanvasWidget
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 # Public API - components that should be imported by applications
 __all__ = [
     # Base classes
@@ -82,6 +93,7 @@ __all__ = [
     "CopyButton",
 
     # Container components
+    "AbstractWindow",
     "StatusCard",
     "ServicePanel",
     "LogContainer",
@@ -96,6 +108,9 @@ __all__ = [
     "ProcessTable",
     "BluetoothTable",
     "AudioTable",
+
+    # Graph components
+    "GraphCanvasWidget",
 
     # Table components
     "GenericTable",
@@ -118,6 +133,7 @@ COMPONENT_REGISTRY = {
         "CopyButton",
     ],
     "containers": [
+        "AbstractWindow",
         "StatusCard",
         "ServicePanel",
         "LogContainer",
@@ -136,13 +152,16 @@ COMPONENT_REGISTRY = {
     "tables": [
         "GenericTable",
         "TableColumn",
+    ],
+    "graph": [
+        "GraphCanvasWidget",
     ]
 }
 
 def get_component_info():
     """
     Get information about available components.
-    
+
     Returns:
         dict: Component registry with categories and component lists
     """
@@ -164,3 +183,11 @@ def list_components():
         for component in components:
             print(f"  • {component}")
         print()
+
+
+def __getattr__(name):
+    """Lazy load GraphCanvasWidget to avoid GType registration conflicts."""
+    if name == "GraphCanvasWidget":
+        from .graph_canvas import GraphCanvasWidget
+        return GraphCanvasWidget
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

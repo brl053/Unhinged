@@ -194,12 +194,16 @@ class AbstractWindow(AdwComponentBase):
             if surface:
                 device = gesture.get_device()
                 if device:
-                    surface.begin_move_drag(
-                        device,
-                        Gdk.BUTTON_PRIMARY,
-                        x, y,
-                        gesture.get_current_event_time()
-                    )
+                    try:
+                        surface.begin_move_drag(
+                            device,
+                            Gdk.BUTTON_PRIMARY,
+                            x, y,
+                            gesture.get_current_event_time()
+                        )
+                    except AttributeError:
+                        # Wayland surfaces don't support begin_move_drag
+                        pass
 
     def _on_drag_update(self, gesture, offset_x, offset_y):
         """Handle drag update event for window movement."""
