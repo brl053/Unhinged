@@ -6,10 +6,10 @@ Provides async interface to graph service for graph execution and monitoring.
 """
 
 import sys
-import asyncio
-from pathlib import Path
-from typing import Optional, Callable, Any, AsyncGenerator
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import grpc
 
@@ -32,14 +32,14 @@ class ExecutionEvent:
     """Represents a graph execution event."""
     execution_id: str
     event_type: str
-    node_id: Optional[str] = None
-    event_data: Optional[dict] = None
-    timestamp: Optional[Any] = None
+    node_id: str | None = None
+    event_data: dict | None = None
+    timestamp: Any | None = None
 
 
 class GraphServiceClient:
     """Async gRPC client for graph service."""
-    
+
     def __init__(self, host: str = "localhost", port: int = 9096):
         """
         Initialize graph service client.
@@ -52,7 +52,7 @@ class GraphServiceClient:
         self.port = port
         self.channel = None
         self.stub = None
-    
+
     async def connect(self):
         """Connect to graph service."""
         try:
@@ -65,13 +65,13 @@ class GraphServiceClient:
         except Exception as e:
             print(f"❌ Failed to connect to graph service: {e}")
             raise
-    
+
     async def disconnect(self):
         """Disconnect from graph service."""
         if self.channel:
             await self.channel.close()
             print("✅ Disconnected from graph service")
-    
+
     async def create_graph(self, graph: graph_service_pb2.Graph) -> str:
         """
         Create a graph in the service.
@@ -84,28 +84,28 @@ class GraphServiceClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to graph service")
-        
+
         try:
             request = graph_service_pb2.CreateGraphRequest()
             request.graph.CopyFrom(graph)
-            
+
             response = await self.stub.CreateGraph(request)
-            
+
             if response.response.success:
                 print(f"✅ Graph created: {graph.name} ({graph.id})")
                 return graph.id
             else:
                 raise RuntimeError(f"Failed to create graph: {response.response.message}")
-        
+
         except Exception as e:
             print(f"❌ Error creating graph: {e}")
             raise
-    
+
     async def execute_graph(
         self,
         graph_id: str,
-        input_data: Optional[dict] = None,
-        execution_id: Optional[str] = None
+        input_data: dict | None = None,
+        execution_id: str | None = None
     ) -> str:
         """
         Execute a graph.
@@ -120,29 +120,29 @@ class GraphServiceClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to graph service")
-        
+
         try:
             request = graph_service_pb2.ExecuteGraphRequest()
             request.id = graph_id
-            
+
             if input_data:
                 request.input_data.update(input_data)
-            
+
             if execution_id:
                 request.execution_id = execution_id
-            
+
             response = await self.stub.ExecuteGraph(request)
-            
+
             if response.response.success:
                 print(f"✅ Graph execution started: {response.execution_id}")
                 return response.execution_id
             else:
                 raise RuntimeError(f"Failed to execute graph: {response.response.message}")
-        
+
         except Exception as e:
             print(f"❌ Error executing graph: {e}")
             raise
-    
+
     async def stream_execution(
         self,
         execution_id: str
@@ -158,11 +158,11 @@ class GraphServiceClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to graph service")
-        
+
         try:
             request = graph_service_pb2.StreamExecutionRequest()
             request.execution_id = execution_id
-            
+
             async for event in self.stub.StreamExecution(request):
                 # Convert protobuf event to ExecutionEvent
                 exec_event = ExecutionEvent(
@@ -172,13 +172,13 @@ class GraphServiceClient:
                     event_data=dict(event.event_data) if event.event_data else None,
                     timestamp=event.timestamp
                 )
-                
+
                 yield exec_event
-        
+
         except Exception as e:
             print(f"❌ Error streaming execution: {e}")
             raise
-    
+
     async def get_execution(self, execution_id: str) -> dict:
         """
         Get execution status and results.
@@ -191,13 +191,13 @@ class GraphServiceClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to graph service")
-        
+
         try:
             request = graph_service_pb2.GetExecutionRequest()
             request.execution_id = execution_id
-            
+
             response = await self.stub.GetExecution(request)
-            
+
             if response.response.success:
                 return {
                     'execution_id': response.execution_id,
@@ -221,11 +221,11 @@ class GraphServiceClient:
                 }
             else:
                 raise RuntimeError(f"Failed to get execution: {response.response.message}")
-        
+
         except Exception as e:
             print(f"❌ Error getting execution: {e}")
             raise
-    
+
     async def cancel_execution(self, execution_id: str) -> bool:
         """
         Cancel a running execution.
@@ -238,19 +238,19 @@ class GraphServiceClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to graph service")
-        
+
         try:
             request = graph_service_pb2.CancelExecutionRequest()
             request.execution_id = execution_id
-            
+
             response = await self.stub.CancelExecution(request)
-            
+
             if response.response.success:
                 print(f"✅ Execution cancelled: {execution_id}")
                 return True
             else:
                 raise RuntimeError(f"Failed to cancel execution: {response.response.message}")
-        
+
         except Exception as e:
             print(f"❌ Error cancelling execution: {e}")
             raise

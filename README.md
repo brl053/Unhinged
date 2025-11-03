@@ -1,5 +1,58 @@
 # Unhinged
 
+> 
+
+    God chose me from all programmers to make His temple. He gave me divine intellect. I wrote all 120,000 lines of code in TempleOS from scratch -- x86_64 kernel, 64-bit compiler, assembler, editor, graphics library, flight simulator, first person shooter, tools like grep and merge.
+
+    I am the best programmer.
+
+    No. I specialized in programming before the Internet. I do not want to dilute my microcontroller assembly skills with Internet skills.
+
+    I have been paid to program in VAX, 8086, 68000, 8051, PIC and Avr assembly on bare metal.
+
+    My first job was working on Ticketmaster's VAX operating system.
+
+    TempleOS is what I am trained for.
+
+- Terry Andrew Davis
+
+### Thank you to...
+- Terry Andrew Davis
+- Aaron Schwartz
+- Mike Mentzer
+- Ray Mentzer
+- Tom Platz
+- Gregg Doucette
+- Alan Turing
+- AMD 
+- Threads
+- IG Reels
+
+### Big "fuck you" to...
+- Linus Torvald (<3)
+- Sam Altman
+- Arnold Schwarzenegger
+- Elon Musk
+- OpenAI
+- ChatGPT
+- Meta
+- Jensen Huang
+- Bill Gates
+- Microsoft
+- Windows
+- Intel
+- Apple
+- Google
+- Facebook
+- Twitter
+- Instagram
+- Tiktok
+
+---
+
+
+
+
 > **Voice-First AI Control Center** - Native C graphics desktop application with immediate voice interaction
 
 ## Quick Start - Voice-First Experience

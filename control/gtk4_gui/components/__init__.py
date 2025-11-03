@@ -36,6 +36,7 @@ from .complex import (
     ServiceRow,
     SystemStatus,
 )
+
 # GraphCanvasWidget is imported lazily to avoid GType registration issues
 # from .graph_canvas import GraphCanvasWidget
 from .containers import (
@@ -60,6 +61,8 @@ from .primitives import (
     TextEditor,
 )
 from .tables import GenericTable, TableColumn
+from .graph_workspace_tabs import GraphWorkspaceTabs
+from .registry_ui import RegistryUI
 
 # Version and metadata
 __version__ = "1.0.0"
@@ -111,6 +114,8 @@ __all__ = [
 
     # Graph components
     "GraphCanvasWidget",
+    "GraphWorkspaceTabs",
+    "RegistryUI",
 
     # Table components
     "GenericTable",
@@ -155,6 +160,8 @@ COMPONENT_REGISTRY = {
     ],
     "graph": [
         "GraphCanvasWidget",
+        "GraphWorkspaceTabs",
+        "RegistryUI",
     ]
 }
 

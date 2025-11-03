@@ -349,30 +349,50 @@ def initialize_service_framework():
         from service_framework import get_global_pool, register_service
 
         # Register common services with the global connection pool
+        # Service timeouts are configurable via environment variables: {SERVICE_NAME}_TIMEOUT
         # Import stub classes for proper gRPC service registration
+
+        # Chat service - standard timeout
         try:
             from unhinged_proto_clients import chat_pb2_grpc
-            register_service("chat", "localhost:9095", stub_class=chat_pb2_grpc.ChatServiceStub)
+            register_service("chat", "localhost:9095", stub_class=chat_pb2_grpc.ChatServiceStub, timeout=60.0)
         except ImportError:
-            register_service("chat", "localhost:9095")  # Fallback without stub
+            register_service("chat", "localhost:9095", timeout=60.0)  # Fallback without stub
 
+        # Persistence service - standard timeout
         try:
             from unhinged_proto_clients import persistence_pb2_grpc
-            register_service("persistence", "localhost:9090", stub_class=persistence_pb2_grpc.PersistenceServiceStub)
+            register_service("persistence", "localhost:9090", stub_class=persistence_pb2_grpc.PersistenceServiceStub, timeout=60.0)
         except ImportError:
-            register_service("persistence", "localhost:9090")  # Fallback without stub
+            register_service("persistence", "localhost:9090", timeout=60.0)  # Fallback without stub
 
+        # Image generation service - longer timeout for image processing
         try:
             from unhinged_proto_clients import image_generation_pb2_grpc
-            register_service("image_generation", "localhost:9094", stub_class=image_generation_pb2_grpc.ImageGenerationServiceStub)
+            register_service("image_generation", "localhost:9094", stub_class=image_generation_pb2_grpc.ImageGenerationServiceStub, timeout=180.0)
         except ImportError:
-            register_service("image_generation", "localhost:9094")  # Fallback without stub
+            register_service("image_generation", "localhost:9094", timeout=180.0)  # Fallback without stub
 
+        # Vision service - standard timeout
         try:
             from unhinged_proto_clients import vision_pb2_grpc
-            register_service("vision", "localhost:9093", stub_class=vision_pb2_grpc.VisionServiceStub)
+            register_service("vision", "localhost:9093", stub_class=vision_pb2_grpc.VisionServiceStub, timeout=60.0)
         except ImportError:
-            register_service("vision", "localhost:9093")  # Fallback without stub
+            register_service("vision", "localhost:9093", timeout=60.0)  # Fallback without stub
+
+        # Speech-to-text service - longer timeout for audio transcription
+        try:
+            from unhinged_proto_clients import audio_pb2_grpc
+            register_service("speech_to_text", "localhost:1191", stub_class=audio_pb2_grpc.AudioServiceStub, timeout=600.0)
+        except ImportError:
+            register_service("speech_to_text", "localhost:1191", timeout=600.0)  # Fallback without stub
+
+        # Text-to-speech service - standard timeout
+        try:
+            from unhinged_proto_clients import audio_pb2_grpc
+            register_service("text_to_speech", "localhost:9092", stub_class=audio_pb2_grpc.AudioServiceStub, timeout=120.0)
+        except ImportError:
+            register_service("text_to_speech", "localhost:9092", timeout=120.0)  # Fallback without stub
 
         print("✅ Service framework initialized with hardware-aware resource management")
         return True

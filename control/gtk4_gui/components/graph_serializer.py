@@ -6,11 +6,9 @@ Converts between GraphCanvasWidget state and graph_service_pb2.Graph protobuf me
 """
 
 import sys
-import json
 import uuid
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
-from datetime import datetime
+from typing import Any
 
 # Add generated proto clients to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"))
@@ -28,7 +26,7 @@ except ImportError as e:
 
 class GraphSerializer:
     """Serialize/deserialize graphs between canvas state and protobuf."""
-    
+
     # Map canvas node types to protobuf NodeType enum
     NODE_TYPE_MAP = {
         'speech_to_text': graph_service_pb2.SPEECH_TO_TEXT,
@@ -45,10 +43,10 @@ class GraphSerializer:
         'http_request': graph_service_pb2.HTTP_REQUEST,
         'custom_service': graph_service_pb2.CUSTOM_SERVICE,
     }
-    
+
     # Reverse map for deserialization
     REVERSE_NODE_TYPE_MAP = {v: k for k, v in NODE_TYPE_MAP.items()}
-    
+
     # Map canvas graph types to protobuf GraphType enum
     GRAPH_TYPE_MAP = {
         'dag': graph_service_pb2.DAG,
@@ -57,14 +55,14 @@ class GraphSerializer:
         'tree': graph_service_pb2.TREE,
         'unrestricted': graph_service_pb2.UNRESTRICTED,
     }
-    
+
     # Reverse map for deserialization
     REVERSE_GRAPH_TYPE_MAP = {v: k for k, v in GRAPH_TYPE_MAP.items()}
-    
+
     @staticmethod
     def serialize_graph(
-        nodes: List[Dict[str, Any]],
-        edges: List[Dict[str, Any]],
+        nodes: list[dict[str, Any]],
+        edges: list[dict[str, Any]],
         graph_id: str = None,
         graph_name: str = "Untitled Graph",
         graph_type: str = "dag",
@@ -86,28 +84,28 @@ class GraphSerializer:
         """
         if not graph_id:
             graph_id = str(uuid.uuid4())
-        
+
         # Create protobuf nodes
         proto_nodes = []
         for node in nodes:
             proto_node = graph_service_pb2.Node()
             proto_node.id = node.get('id', str(uuid.uuid4()))
             proto_node.name = node.get('label', 'Unnamed Node')
-            
+
             # Map node type
             node_type_str = node.get('type', 'custom_service').lower()
             proto_node.type = GraphSerializer.NODE_TYPE_MAP.get(
                 node_type_str,
                 graph_service_pb2.CUSTOM_SERVICE
             )
-            
+
             # Convert node data to protobuf Struct
             node_data = node.get('data', {})
             if node_data:
                 proto_node.config.update(node_data)
-            
+
             proto_nodes.append(proto_node)
-        
+
         # Create protobuf edges
         proto_edges = []
         for edge in edges:
@@ -117,30 +115,30 @@ class GraphSerializer:
             proto_edge.target_node_id = edge.get('target', '')
             proto_edge.source_output = edge.get('source_handle', '')
             proto_edge.target_input = edge.get('target_handle', '')
-            
+
             proto_edges.append(proto_edge)
-        
+
         # Create graph message
         graph = graph_service_pb2.Graph()
         graph.id = graph_id
         graph.name = graph_name
         graph.description = description
-        
+
         # Map graph type
         graph_type_str = graph_type.lower()
         graph.type = GraphSerializer.GRAPH_TYPE_MAP.get(
             graph_type_str,
             graph_service_pb2.DAG
         )
-        
+
         # Add nodes and edges
         graph.nodes.extend(proto_nodes)
         graph.edges.extend(proto_edges)
-        
+
         return graph
-    
+
     @staticmethod
-    def deserialize_graph(graph: graph_service_pb2.Graph) -> Tuple[List[Dict], List[Dict], Dict]:
+    def deserialize_graph(graph: graph_service_pb2.Graph) -> tuple[list[dict], list[dict], dict]:
         """
         Deserialize protobuf Graph message to canvas state.
         
@@ -152,7 +150,7 @@ class GraphSerializer:
         """
         nodes = []
         edges = []
-        
+
         # Deserialize nodes
         for proto_node in graph.nodes:
             node = {
@@ -167,7 +165,7 @@ class GraphSerializer:
                 'status': 'idle'
             }
             nodes.append(node)
-        
+
         # Deserialize edges
         for proto_edge in graph.edges:
             edge = {
@@ -179,7 +177,7 @@ class GraphSerializer:
                 'status': 'idle'
             }
             edges.append(edge)
-        
+
         # Extract metadata
         metadata = {
             'graph_id': graph.id,
@@ -190,19 +188,19 @@ class GraphSerializer:
             ),
             'description': graph.description,
         }
-        
+
         return nodes, edges, metadata
-    
+
     @staticmethod
-    def json_to_struct(data: Dict[str, Any]) -> 'google.protobuf.Struct':
+    def json_to_struct(data: dict[str, Any]) -> 'google.protobuf.Struct':
         """Convert Python dict to protobuf Struct."""
         struct = common_pb2.Struct()
         if data:
             struct.update(data)
         return struct
-    
+
     @staticmethod
-    def struct_to_json(struct: 'google.protobuf.Struct') -> Dict[str, Any]:
+    def struct_to_json(struct: 'google.protobuf.Struct') -> dict[str, Any]:
         """Convert protobuf Struct to Python dict."""
         return dict(struct) if struct else {}
 

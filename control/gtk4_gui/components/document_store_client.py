@@ -5,11 +5,10 @@ Document store gRPC client for saving and loading graphs.
 Provides async interface to document store service for graph persistence.
 """
 
-import sys
 import json
-import asyncio
+import sys
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any
 
 import grpc
 
@@ -36,7 +35,7 @@ except ImportError:
 
 class DocumentStoreClient:
     """Async gRPC client for document store service."""
-    
+
     def __init__(self, host: str = "localhost", port: int = 9097):
         """
         Initialize document store client.
@@ -49,7 +48,7 @@ class DocumentStoreClient:
         self.port = port
         self.channel = None
         self.stub = None
-    
+
     async def connect(self):
         """Connect to document store service."""
         if not document_store_pb2_grpc:
@@ -65,18 +64,18 @@ class DocumentStoreClient:
         except Exception as e:
             print(f"❌ Failed to connect to document store: {e}")
             raise
-    
+
     async def disconnect(self):
         """Disconnect from document store service."""
         if self.channel:
             await self.channel.close()
             print("✅ Disconnected from document store")
-    
+
     async def save_graph(
         self,
         graph: graph_service_pb2.Graph,
         namespace: str = "graphs",
-        tags: List[str] = None,
+        tags: list[str] = None,
         session_id: str = None
     ) -> str:
         """
@@ -93,7 +92,7 @@ class DocumentStoreClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to document store")
-        
+
         try:
             # Serialize graph to JSON
             graph_json = json.dumps({
@@ -121,7 +120,7 @@ class DocumentStoreClient:
                     for edge in graph.edges
                 ]
             })
-            
+
             # Create document
             document = document_store_pb2.Document()
             document.document_uuid = graph.id
@@ -130,31 +129,31 @@ class DocumentStoreClient:
             document.namespace = namespace
             document.body_json = graph_json
             document.session_id = session_id or ""
-            
+
             if tags:
                 document.tags.extend(tags)
-            
+
             # Save to document store
             request = document_store_pb2.PutDocumentRequest()
             request.document.CopyFrom(document)
-            
+
             response = await self.stub.PutDocument(request)
-            
+
             if response.success:
                 print(f"✅ Graph saved: {graph.name} ({graph.id})")
                 return graph.id
             else:
                 raise RuntimeError(f"Failed to save graph: {response.message}")
-        
+
         except Exception as e:
             print(f"❌ Error saving graph: {e}")
             raise
-    
+
     async def load_graph(
         self,
         graph_id: str,
-        version: Optional[int] = None,
-        tag: Optional[str] = None
+        version: int | None = None,
+        tag: str | None = None
     ) -> graph_service_pb2.Graph:
         """
         Load graph from document store.
@@ -169,44 +168,44 @@ class DocumentStoreClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to document store")
-        
+
         try:
             # Request document
             request = document_store_pb2.GetDocumentRequest()
             request.document_uuid = graph_id
             request.include_body = True
-            
+
             if version:
                 request.version = version
             if tag:
                 request.tag = tag
-            
+
             response = await self.stub.GetDocument(request)
-            
+
             if not response.success:
                 raise RuntimeError(f"Failed to load graph: {response.message}")
-            
+
             # Deserialize graph from JSON
             graph_data = json.loads(response.document.body_json)
-            
+
             graph = graph_service_pb2.Graph()
             graph.id = graph_data['id']
             graph.name = graph_data['name']
             graph.description = graph_data.get('description', '')
             graph.type = graph_service_pb2.GraphType.Value(graph_data['type'])
-            
+
             # Reconstruct nodes
             for node_data in graph_data.get('nodes', []):
                 node = graph_service_pb2.Node()
                 node.id = node_data['id']
                 node.name = node_data['name']
                 node.type = graph_service_pb2.NodeType.Value(node_data['type'])
-                
+
                 if node_data.get('config'):
                     node.config.update(node_data['config'])
-                
+
                 graph.nodes.append(node)
-            
+
             # Reconstruct edges
             for edge_data in graph_data.get('edges', []):
                 edge = graph_service_pb2.Edge()
@@ -215,22 +214,22 @@ class DocumentStoreClient:
                 edge.target_node_id = edge_data['target_node_id']
                 edge.source_output = edge_data.get('source_output', '')
                 edge.target_input = edge_data.get('target_input', '')
-                
+
                 graph.edges.append(edge)
-            
+
             print(f"✅ Graph loaded: {graph.name} ({graph.id})")
             return graph
-        
+
         except Exception as e:
             print(f"❌ Error loading graph: {e}")
             raise
-    
+
     async def list_graphs(
         self,
         namespace: str = "graphs",
-        tag: Optional[str] = None,
-        session_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        tag: str | None = None,
+        session_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         List graphs in document store.
         
@@ -244,21 +243,21 @@ class DocumentStoreClient:
         """
         if not self.stub:
             raise RuntimeError("Not connected to document store")
-        
+
         try:
             request = document_store_pb2.ListDocumentsRequest()
             request.namespace = namespace
             request.type = "graph"
             request.include_body = False
             request.latest_versions_only = True
-            
+
             if tag:
                 request.tag = tag
             if session_id:
                 request.session_id = session_id
-            
+
             response = await self.stub.ListDocuments(request)
-            
+
             graphs = []
             for doc in response.documents:
                 graphs.append({
@@ -268,11 +267,49 @@ class DocumentStoreClient:
                     'tags': list(doc.tags),
                     'created_at': doc.created_at,
                 })
-            
+
             print(f"✅ Listed {len(graphs)} graphs")
             return graphs
-        
+
         except Exception as e:
             print(f"❌ Error listing graphs: {e}")
+            raise
+
+    async def delete_graph(
+        self,
+        graph_id: str,
+        deleted_by: str = "user",
+        deleted_by_type: str = "person"
+    ) -> bool:
+        """
+        Delete graph from document store.
+
+        Args:
+            graph_id: Graph ID to delete
+            deleted_by: User who deleted the graph
+            deleted_by_type: Type of user (person, admin, system)
+
+        Returns:
+            True if deletion was successful
+        """
+        if not self.stub:
+            raise RuntimeError("Not connected to document store")
+
+        try:
+            request = document_store_pb2.DeleteDocumentRequest()
+            request.document_uuid = graph_id
+            request.deleted_by = deleted_by
+            request.deleted_by_type = deleted_by_type
+
+            response = await self.stub.DeleteDocument(request)
+
+            if response.success:
+                print(f"✅ Graph deleted: {graph_id}")
+                return True
+            else:
+                raise RuntimeError(f"Failed to delete graph: {response.message}")
+
+        except Exception as e:
+            print(f"❌ Error deleting graph: {e}")
             raise
 

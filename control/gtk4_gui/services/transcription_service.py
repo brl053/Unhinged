@@ -46,14 +46,14 @@ class TranscriptionService:
             self._client = create_audio_client(self.address)
         return self._client
 
-    def transcribe_audio_file(self, audio_file_path: str, timeout: float = 30.0) -> dict[str, Any]:
+    def transcribe_audio_file(self, audio_file_path: str, timeout: float = 30) -> dict[str, Any]:
         """
         Transcribe an audio file using the speech-to-text service.
-        
+
         Args:
             audio_file_path: Path to the WAV audio file
             timeout: Request timeout in seconds
-            
+
         Returns:
             Dict with transcription results:
             {

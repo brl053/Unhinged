@@ -23,6 +23,22 @@ class ServiceConfig:
     max_retries: int = 3
     stub_class: type | None = None
 
+    def __post_init__(self):
+        """Allow timeout to be overridden by environment variable"""
+        import os
+        env_timeout_key = f"{self.name.upper()}_TIMEOUT"
+        env_timeout = os.environ.get(env_timeout_key)
+        if env_timeout:
+            try:
+                self.timeout = float(env_timeout)
+                logging.getLogger(__name__).info(
+                    f"Service {self.name} timeout overridden by {env_timeout_key}={self.timeout}s"
+                )
+            except ValueError:
+                logging.getLogger(__name__).warning(
+                    f"Invalid timeout value for {env_timeout_key}: {env_timeout}"
+                )
+
 
 class ServiceClient:
     """
@@ -296,7 +312,12 @@ def get_global_pool() -> ConnectionPool:
 
 def register_service(name: str, address: str, stub_class: type | None = None,
                     timeout: float = 120.0) -> None:
-    """Register a service with the global pool"""
+    """
+    Register a service with the global pool.
+
+    Timeout can be overridden by environment variable: {SERVICE_NAME}_TIMEOUT
+    Example: SPEECH_TO_TEXT_TIMEOUT=600 for 10-minute timeout
+    """
     config = ServiceConfig(
         name=name,
         address=address,

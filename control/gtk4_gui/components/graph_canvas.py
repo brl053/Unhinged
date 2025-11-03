@@ -21,14 +21,16 @@ This component serves as the foundation for visual graph editing with support fo
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Gdk, GObject, GLib, cairo as gi_cairo
-import cairo
-from typing import Dict, Any, Optional, List, Tuple
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
+from typing import Any
+
+import cairo
+from gi.repository import GObject, Gtk
 
 
 @dataclass
@@ -37,17 +39,17 @@ class Viewport:
     x: float = 0.0
     y: float = 0.0
     zoom: float = 1.0
-    
+
     def pan(self, dx: float, dy: float):
         """Pan the viewport."""
         self.x += dx
         self.y += dy
-    
+
     def zoom_at(self, factor: float, cx: float, cy: float):
         """Zoom at a specific point."""
         # Clamp zoom level
         new_zoom = max(0.1, min(4.0, self.zoom * factor))
-        
+
         # Adjust pan to zoom at cursor position
         if new_zoom != self.zoom:
             self.x = cx - (cx - self.x) * (new_zoom / self.zoom)
@@ -66,9 +68,9 @@ class GraphCanvasWidget(Gtk.DrawingArea):
     - Selection and interaction
     - Real-time viewport state management
     """
-    
+
     __gtype_name__ = 'GraphCanvasWidget'
-    
+
     # GObject signals
     __gsignals__ = {
         'node-moved': (GObject.SignalFlags.RUN_FIRST, None, (str, float, float)),
@@ -78,51 +80,51 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         'viewport-changed': (GObject.SignalFlags.RUN_FIRST, None, (float, float, float)),
         'canvas-clicked': (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
-    
+
     # GObject properties
     nodes = GObject.Property(
         type=object,
         nick="Nodes",
         blurb="Array of node objects"
     )
-    
+
     edges = GObject.Property(
         type=object,
         nick="Edges",
         blurb="Array of edge objects"
     )
-    
+
     grid_size = GObject.Property(
         type=int,
         default=20,
         nick="Grid Size",
         blurb="Grid cell size in pixels"
     )
-    
+
     snap_to_grid = GObject.Property(
         type=bool,
         default=True,
         nick="Snap to Grid",
         blurb="Whether to snap node positions to grid"
     )
-    
+
     show_grid = GObject.Property(
         type=bool,
         default=True,
         nick="Show Grid",
         blurb="Whether to display grid background"
     )
-    
+
     readonly = GObject.Property(
         type=bool,
         default=False,
         nick="Read Only",
         blurb="When true, disables all editing interactions"
     )
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        
+
         # Initialize properties
         self.nodes = []
         self.edges = []
@@ -130,74 +132,74 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         self.snap_to_grid = True
         self.show_grid = True
         self.readonly = False
-        
+
         # Viewport state
         self.viewport = Viewport()
-        
+
         # Interaction state
         self._selected_node = None
         self._dragging_node = None
         self._drag_start = None
         self._pan_start = None
         self._is_panning = False
-        
+
         # Set up drawing area
         self.set_draw_func(self._on_draw)
-        
+
         # Set up event handlers
         self._setup_event_handlers()
-        
+
         # Set minimum size
         self.set_size_request(400, 300)
-        
+
         # Add CSS class
         self.add_css_class("graph-canvas")
-    
+
     def _setup_event_handlers(self):
         """Set up mouse and keyboard event handlers."""
         # Mouse events
         motion_controller = Gtk.EventControllerMotion.new()
         motion_controller.connect('motion', self._on_motion)
         self.add_controller(motion_controller)
-        
+
         # Click events
         click_controller = Gtk.GestureClick.new()
         click_controller.connect('pressed', self._on_click_pressed)
         click_controller.connect('released', self._on_click_released)
         self.add_controller(click_controller)
-        
+
         # Scroll events
         scroll_controller = Gtk.EventControllerScroll.new(
             Gtk.EventControllerScrollFlags.VERTICAL
         )
         scroll_controller.connect('scroll', self._on_scroll)
         self.add_controller(scroll_controller)
-        
+
         # Drag events
         drag_controller = Gtk.GestureDrag.new()
         drag_controller.connect('drag-begin', self._on_drag_begin)
         drag_controller.connect('drag-update', self._on_drag_update)
         drag_controller.connect('drag-end', self._on_drag_end)
         self.add_controller(drag_controller)
-    
+
     def _on_draw(self, area, context: cairo.Context, width: int, height: int):
         """Draw the canvas."""
         # Clear background
         context.set_source_rgb(0.95, 0.95, 0.95)
         context.paint()
-        
+
         # Draw grid if enabled
         if self.show_grid:
             self._draw_grid(context, width, height)
-        
+
         # Draw edges
         self._draw_edges(context, width, height)
-        
+
         # Draw nodes
         self._draw_nodes(context, width, height)
-    
+
     def _draw_arrow_head(self, context: cairo.Context, x: float, y: float,
-                         prev_x: float, prev_y: float, color: Tuple[float, float, float]):
+                         prev_x: float, prev_y: float, color: tuple[float, float, float]):
         """Draw an arrow head at the end of an edge."""
         # Calculate angle
         angle = math.atan2(y - prev_y, x - prev_x)
@@ -224,27 +226,27 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         """Draw grid background."""
         context.set_source_rgb(0.9, 0.9, 0.9)
         context.set_line_width(0.5)
-        
+
         # Calculate grid start positions
         grid_x = (self.viewport.x % self.grid_size) * self.viewport.zoom
         grid_y = (self.viewport.y % self.grid_size) * self.viewport.zoom
-        
+
         # Draw vertical lines
         x = grid_x
         while x < width:
             context.move_to(x, 0)
             context.line_to(x, height)
             x += self.grid_size * self.viewport.zoom
-        
+
         # Draw horizontal lines
         y = grid_y
         while y < height:
             context.move_to(0, y)
             context.line_to(width, y)
             y += self.grid_size * self.viewport.zoom
-        
+
         context.stroke()
-    
+
     def _draw_edges(self, context: cairo.Context, width: int, height: int):
         """Draw edges between nodes with enhanced visuals."""
         if not self.edges:
@@ -288,16 +290,16 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
                 # Draw arrow head
                 self._draw_arrow_head(context, x2, y2, x1, y1, color)
-    
+
     def _draw_nodes(self, context: cairo.Context, width: int, height: int):
         """Draw nodes on the canvas."""
         if not self.nodes:
             return
-        
+
         for node in self.nodes:
             self._draw_node(context, node, width, height)
-    
-    def _draw_node(self, context: cairo.Context, node: Dict[str, Any], width: int, height: int):
+
+    def _draw_node(self, context: cairo.Context, node: dict[str, Any], width: int, height: int):
         """Draw a single node with enhanced visuals."""
         x = (node.get('position', {}).get('x', 0) - self.viewport.x) * self.viewport.zoom
         y = (node.get('position', {}).get('y', 0) - self.viewport.y) * self.viewport.zoom
@@ -370,16 +372,16 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
         context.arc(indicator_x, indicator_y, indicator_size, 0, 2*math.pi)
         context.fill()
-    
+
     def _on_motion(self, controller, x: float, y: float):
         """Handle mouse motion."""
         pass
-    
+
     def _on_click_pressed(self, controller, n_press: int, x: float, y: float):
         """Handle mouse click pressed."""
         if self.readonly:
             return
-        
+
         # Check if clicked on a node
         for node in self.nodes:
             if self._point_in_node(x, y, node):
@@ -387,32 +389,32 @@ class GraphCanvasWidget(Gtk.DrawingArea):
                 self.emit('node-selected', self._selected_node)
                 self.queue_draw()
                 return
-        
+
         # Clicked on canvas background
         self._selected_node = None
         self.emit('canvas-clicked')
         self.queue_draw()
-    
+
     def _on_click_released(self, controller, n_press: int, x: float, y: float):
         """Handle mouse click released."""
         pass
-    
+
     def _on_scroll(self, controller, dx: float, dy: float) -> bool:
         """Handle scroll wheel for zooming."""
         if self.readonly:
             return False
-        
+
         # Get cursor position
         x, y = controller.get_widget().get_pointer()
-        
+
         # Zoom in/out
         factor = 1.1 if dy < 0 else 0.9
         self.viewport.zoom_at(factor, x, y)
-        
+
         self.emit('viewport-changed', self.viewport.x, self.viewport.y, self.viewport.zoom)
         self.queue_draw()
         return True
-    
+
     def _on_drag_begin(self, controller, x: float, y: float):
         """Handle drag begin."""
         if self.readonly:
@@ -469,27 +471,27 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         self._drag_start = None
         self._is_panning = False
         self._pan_start = None
-    
-    def _point_in_node(self, x: float, y: float, node: Dict[str, Any]) -> bool:
+
+    def _point_in_node(self, x: float, y: float, node: dict[str, Any]) -> bool:
         """Check if a point is inside a node."""
         node_x = (node.get('position', {}).get('x', 0) - self.viewport.x) * self.viewport.zoom
         node_y = (node.get('position', {}).get('y', 0) - self.viewport.y) * self.viewport.zoom
         node_width = 100
         node_height = 60
-        
+
         return (node_x <= x <= node_x + node_width and
                 node_y <= y <= node_y + node_height)
-    
-    def set_nodes(self, nodes: List[Dict[str, Any]]):
+
+    def set_nodes(self, nodes: list[dict[str, Any]]):
         """Set the nodes to display."""
         self.nodes = nodes
         self.queue_draw()
-    
-    def set_edges(self, edges: List[Dict[str, Any]]):
+
+    def set_edges(self, edges: list[dict[str, Any]]):
         """Set the edges to display."""
         self.edges = edges
         self.queue_draw()
-    
+
     def reset_viewport(self):
         """Reset viewport to default position and zoom."""
         self.viewport = Viewport()
