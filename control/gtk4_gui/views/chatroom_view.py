@@ -696,8 +696,26 @@ class ChatroomView:
             if not message or not message.strip():
                 return
 
+            # Check for slash commands
+            message_stripped = message.strip()
+            if message_stripped.startswith("/image "):
+                # Handle /image command
+                prompt = message_stripped[7:].strip()  # Remove "/image " prefix
+                self._handle_slash_image_command(prompt)
+
+                # Clear input
+                if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
+                    self._chat_input.clear_content()
+                else:
+                    buffer = self._chat_input.get_buffer()
+                    buffer.set_text("")
+
+                # Disable send button
+                self._chatroom_send_button.set_sensitive(False)
+                return
+
             # Add user message to chat with session context
-            self._add_chat_message("You", message.strip(), "user")
+            self._add_chat_message("You", message_stripped, "user")
 
             # Clear input
             if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
@@ -710,7 +728,7 @@ class ChatroomView:
             self._chatroom_send_button.set_sensitive(False)
 
             # Send to LLM with session context
-            self._send_to_llm_with_session(message.strip())
+            self._send_to_llm_with_session(message_stripped)
 
         except Exception as e:
             print(f"❌ Chatroom send error: {e}")
@@ -776,6 +794,98 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Scroll to bottom error: {e}")
+
+    def _handle_slash_image_command(self, prompt: str):
+        """Handle /image command for GPU-accelerated image generation"""
+        try:
+            # Add user command to chat
+            self._add_chat_message("You", f"/image {prompt}", "user")
+
+            # Add thinking indicator
+            thinking_box = self._add_thinking_indicator(f"Generating image: {prompt[:50]}...")
+
+            # Submit to thread pool for image generation
+            import sys
+            from pathlib import Path as PathlibPath
+            project_root = PathlibPath(__file__).parent.parent.parent
+
+            # Add libs to path
+            sys.path.insert(0, str(project_root / "libs" / "services"))
+
+            from image_generation_service import ImageGenerationService
+
+            # Run image generation in background thread
+            def generate_image_thread():
+                try:
+                    service = ImageGenerationService()
+                    result = service.generate_image(
+                        prompt=prompt,
+                        num_inference_steps=20,  # Fast generation
+                        guidance_scale=7.5,
+                        height=512,
+                        width=512
+                    )
+
+                    # Update UI on main thread
+                    GLib.idle_add(self._display_generated_image, thinking_box, result, prompt)
+
+                except Exception as e:
+                    print(f"❌ Image generation error: {e}")
+                    GLib.idle_add(self._add_error_message, f"Image generation failed: {e}")
+
+            # Submit to thread pool
+            import threading
+            thread = threading.Thread(target=generate_image_thread, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ /image command error: {e}")
+            self._add_error_message(f"Command failed: {e}")
+
+    def _display_generated_image(self, thinking_box, result, prompt):
+        """Display generated image in chat using GeneratedArtifactWidget"""
+        try:
+            # Remove thinking indicator
+            if thinking_box and thinking_box.get_parent():
+                thinking_box.get_parent().remove(thinking_box)
+
+            # Import the widget
+            from ..components import GeneratedArtifactWidget
+
+            # Create artifact widget
+            image_path = result.get("image_path", "")
+            generation_time = result.get("generation_time", 0)
+
+            artifact_widget = GeneratedArtifactWidget(
+                artifact_type="image",
+                artifact_path=image_path,
+                artifact_title=f"Generated Image ({generation_time:.1f}s)",
+                artifact_metadata={
+                    "prompt": prompt,
+                    "generation_time": generation_time,
+                    "model": result.get("model", "unknown"),
+                    "device": result.get("device", "unknown"),
+                    "steps": result.get("num_inference_steps", 20)
+                }
+            )
+
+            # Add widget to chat
+            if self._messages_container:
+                self._messages_container.append(artifact_widget.get_widget())
+                self._scroll_to_bottom()
+
+            # Log generation
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("IMAGE_GENERATED",
+                    f"Prompt: {prompt[:50]}... | Time: {generation_time:.1f}s | Path: {image_path}")
+
+            # Show toast
+            if hasattr(self.app, 'show_toast'):
+                self.app.show_toast(f"✅ Image generated in {generation_time:.1f}s")
+
+        except Exception as e:
+            print(f"❌ Display generated image error: {e}")
+            self._add_error_message(f"Failed to display image: {e}")
 
     def _send_to_llm_with_session(self, message):
         """Send message to LLM with session context and archival"""
