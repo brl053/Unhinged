@@ -15,7 +15,8 @@ transformers>=4.35.0           # Text encoders (CLIP, T5)
 
 # Memory and Performance Optimization
 accelerate>=0.24.0             # Memory management and multi-GPU support
-xformers>=0.0.22               # Efficient attention (critical for 16GB VRAM)
+# NOTE: xformers removed - incompatible with PyTorch 2.9.0+cu128
+# Diffusers works fine without it (just slower). Can be added back when compatible version available.
 
 # Configuration Management
 omegaconf>=2.3.0               # Hierarchical configuration management
@@ -29,13 +30,9 @@ scipy>=1.11.0                  # Scientific computing utilities
 matplotlib>=3.7.0             # Plotting and visualization
 tqdm>=4.66.0                   # Progress bars for long operations
 
-# Model Format Support
-onnx>=1.15.0                   # ONNX model format support (optional)
-onnxruntime-gpu>=1.16.0        # GPU-accelerated ONNX runtime (optional)
-
-# Advanced Sampling and Schedulers
-k-diffusion>=0.0.15            # Advanced sampling methods (optional)
-
-# Development and Debugging
-tensorboard>=2.15.0            # Training visualization (if needed)
-wandb>=0.16.0                  # Experiment tracking (optional)
+# Optional packages (commented out - add as needed)
+# onnx>=1.15.0                   # ONNX model format support
+# onnxruntime-gpu>=1.16.0        # GPU-accelerated ONNX runtime
+# k-diffusion>=0.0.15            # Advanced sampling methods
+# tensorboard>=2.15.0            # Training visualization
+# wandb>=0.16.0                  # Experiment tracking
