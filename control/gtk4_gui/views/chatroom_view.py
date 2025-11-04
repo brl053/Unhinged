@@ -60,7 +60,6 @@ class ChatroomView:
         # Session management state
         self._current_session_id = None
         self._session_status = "no_session"  # no_session, creating, active
-        self._session_button = None
         self._session_id_label = None
         self._session_row = None
 
@@ -228,25 +227,17 @@ class ChatroomView:
         session_container.set_margin_start(16)
         session_container.set_margin_end(16)
 
-        # Session management row
+        # Session management row - displays session ID when active
         self._session_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         self._session_row.set_halign(Gtk.Align.FILL)
 
-        # Session ID label (left side, initially hidden)
+        # Session ID label (displays active session ID)
         self._session_id_label = Gtk.Label()
         self._session_id_label.set_halign(Gtk.Align.START)
         self._session_id_label.set_hexpand(True)
         self._session_id_label.add_css_class("caption")
         self._session_id_label.set_visible(False)
         self._session_row.append(self._session_id_label)
-
-        # Session button (right side) - HIDDEN by default (sessions are auto-created)
-        self._session_button = Gtk.Button()
-        self._session_button.set_label("Create Session")
-        self._session_button.add_css_class("suggested-action")
-        self._session_button.connect("clicked", self._on_session_button_clicked)
-        self._session_button.set_visible(False)  # Hidden - sessions auto-created on app launch
-        self._session_row.append(self._session_button)
 
         session_container.append(self._session_row)
 
@@ -257,18 +248,6 @@ class ChatroomView:
         session_container.append(separator)
 
         return session_container
-
-    def _on_session_button_clicked(self, button):
-        """Handle session button click (Create Session or New Session)"""
-        try:
-            if self._session_status == "no_session":
-                self._create_new_session()
-            elif self._session_status == "active":
-                self._create_new_session()  # Replace current session
-        except Exception as e:
-            print(f"❌ Session button click error: {e}")
-            if hasattr(self.app, 'show_toast'):
-                self.app.show_toast(f"Session error: {e}")
 
     def _create_new_session(self):
         """Create a new chat session using gRPC ChatService"""
@@ -503,20 +482,17 @@ class ChatroomView:
         """Update UI elements based on current session state"""
         try:
             if self._session_status == "no_session":
-                # No session: disable chat, hide button (auto-created on app launch)
-                self._session_button.set_visible(False)  # Hidden - sessions auto-created
+                # No session: disable chat, hide session ID
                 self._session_id_label.set_visible(False)
                 self._disable_chat_functionality()
 
             elif self._session_status == "creating":
-                # Creating session: hide button, disable chat
-                self._session_button.set_visible(False)  # Hidden - sessions auto-created
+                # Creating session: disable chat, hide session ID
                 self._session_id_label.set_visible(False)
                 self._disable_chat_functionality()
 
             elif self._session_status == "active":
-                # Active session: enable chat, show session ID, hide button
-                self._session_button.set_visible(False)  # Hidden - sessions auto-created
+                # Active session: enable chat, display session ID
                 self._session_id_label.set_text(f"Session: {self._current_session_id}")
                 self._session_id_label.set_visible(True)
                 self._enable_chat_functionality()

@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1762217935.1258852,
-    "updated_iso": "2025-11-03 16:58:55",
+    "updated": 1762218958.2778256,
+    "updated_iso": "2025-11-03 17:15:58",
     "version": "1.0"
   },
   "checksums": {
@@ -16,7 +16,7 @@
       "bluetooth_monitor.py": "cfaf34cad542d5e2ab6a4588ce028ade104dd84ab0590f287df0346b2e78967a",
       "config.py": "0e62c1999f0c9da9c4f653d4595f53f67648c55c70e76065c4d89a674c109511",
       "exceptions.py": "a07b0efba5a6aef2935810facad218a8757fbabd1f4845a406e4d024ba0ac207",
-      "desktop_app.py": "5fda7ca9bbf38d1df0343ccfcea92069afbb8090e5289e0f4a55e13cdfcebfd4",
+      "desktop_app.py": "943075bb5c2dba20170241b723fc355801aa6bb637900166b6e693539e5d6f1f",
       "launch.py": "e3c496333d5f114ce015f5e47ac195d5abd16c675e06701353c6c65072a20582",
       "tests/test_bluetooth_implementation.py": "215f0a161238b378a0fd7dc6fc6e16a7c4049d464abf31898a679b883083be66",
       "tests/__init__.py": "27ee31dc6643cb3e81f47a0201a2b8ad51a1dd56296e387c8c651504f5cd771d",
@@ -32,7 +32,7 @@
       "views/base.py": "5f80369672d43c30f04a9d9918768c5a182985e1b327bded0ba983e88391d8cd",
       "views/processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "views/__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "views/chatroom_view.py": "30d0d7a79fd91be4c2eb62a164caef0c506c24c040a6b2811ac0bf54d898003c",
+      "views/chatroom_view.py": "35c5d85a8bbddf414af095c0d259dd631d9073c8af7a58d0aae31ae0cb830260",
       "views/bluetooth_view.py": "ffc35d0521b1f95f3ca44a7b121fcc7ab2537686653ebd5faaa3fafc94625100",
       "views/system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
       "views/status_view.py": "6d9b34c25c83feee15b9e2baafa7f8f087b5b361f7323ca51373e54d0bdb3413",
@@ -81,7 +81,7 @@
       "base.py": "5f80369672d43c30f04a9d9918768c5a182985e1b327bded0ba983e88391d8cd",
       "processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "chatroom_view.py": "30d0d7a79fd91be4c2eb62a164caef0c506c24c040a6b2811ac0bf54d898003c",
+      "chatroom_view.py": "35c5d85a8bbddf414af095c0d259dd631d9073c8af7a58d0aae31ae0cb830260",
       "bluetooth_view.py": "ffc35d0521b1f95f3ca44a7b121fcc7ab2537686653ebd5faaa3fafc94625100",
       "system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
       "status_view.py": "6d9b34c25c83feee15b9e2baafa7f8f087b5b361f7323ca51373e54d0bdb3413",
@@ -96,8 +96,8 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "e7ea7d740b4326cfa5d29e7500d5ecf917e5a32651c8c0344b823641bd7a13b6",
-      "static_analysis_results.json": "25704fd2a0886b0bbb3f3696a9312e7f481e29e9197f078455ab3d8fb1bf1b0b",
+      "code_checksums.json": "872b731946aa3a76b280cf8cac00f55b3e77362ba0260ac6eb025dba962264b6",
+      "static_analysis_results.json": "7f54ed80703a9501d52a1eb2f89d5492a9178c6c219c9b133557b44ba1db88d2",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
       "test_plugin_system.py": "be3dbdf05e945785c5bc7c30c0305cfc00b43604bbb4927d17d6804297722d15",
