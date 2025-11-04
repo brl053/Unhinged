@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1762224179.3604007,
-    "updated_iso": "2025-11-03 18:42:59",
+    "updated": 1762224844.2730384,
+    "updated_iso": "2025-11-03 18:54:04",
     "version": "1.0"
   },
   "checksums": {
@@ -9,6 +9,7 @@
       "realtime_system_info.py": "83654d2cb5adbb43834dff80838e9a7bbf97f2bb51a7d45bbe948ca7cb39ef87",
       "__init__.py": "b99c829c492a10dbcea8d2d55cb7dd5ba145c714f13b2ab61b78d83c4bcc00ec",
       "system_info.py": "5c63a4dae24a331a03e23b30d5ac0a0ce89ea7e5b7fcc887d67c20af059f9a0f",
+      "gpu_driver_detector.py": "dcde2059796e01e6511ffce8d0374f263bf33b099e1c7d49147d827e4b5cd35d",
       "process_monitor.py": "c9b6e1468ff019f4435d60c56f8fa63c3af2142bd06afb93054972521e6b0641",
       "service_connector.py": "aaae2021efebc16fd407f1e76ecd5acfce1e976473f0dd6ce5f477e3787513bc",
       "test_voice_fixes.py": "b179b596b6afe9dc1086d3e7ae6ccd0eb9b0e57ea0a1cccc53832e5d524f38fc",
@@ -16,7 +17,7 @@
       "bluetooth_monitor.py": "cfaf34cad542d5e2ab6a4588ce028ade104dd84ab0590f287df0346b2e78967a",
       "config.py": "0e62c1999f0c9da9c4f653d4595f53f67648c55c70e76065c4d89a674c109511",
       "exceptions.py": "a07b0efba5a6aef2935810facad218a8757fbabd1f4845a406e4d024ba0ac207",
-      "desktop_app.py": "943075bb5c2dba20170241b723fc355801aa6bb637900166b6e693539e5d6f1f",
+      "desktop_app.py": "d5081860d07c727f77ac4fada9335845fa34b28bff450294d54b6fe379d893d1",
       "launch.py": "e3c496333d5f114ce015f5e47ac195d5abd16c675e06701353c6c65072a20582",
       "tests/test_bluetooth_implementation.py": "215f0a161238b378a0fd7dc6fc6e16a7c4049d464abf31898a679b883083be66",
       "tests/__init__.py": "27ee31dc6643cb3e81f47a0201a2b8ad51a1dd56296e387c8c651504f5cd771d",
@@ -29,6 +30,7 @@
       "hooks/use_audio_devices.py": "c41d451b16ba656fd41d6b9a7ae61f6e3839297915acd8328fef6eef29003af5",
       "hooks/__init__.py": "6314159beecdfdf4e25e9592f682cbf6e52bb8855785d96577bc15535dba2e0b",
       "views/input_view.py": "709a3f3d74e94794ac7e0c8ef26f3cbd68255accc9ed285c3b87fe02840a0606",
+      "views/gpu_drivers_view.py": "167cfd8bd16881226241e8df3dafbcd7eba01a779bd9f5eead838947919326cf",
       "views/base.py": "5f80369672d43c30f04a9d9918768c5a182985e1b327bded0ba983e88391d8cd",
       "views/processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "views/__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
@@ -42,7 +44,7 @@
       "services/__init__.py": "4547bdd6d707e44fd3fb2b7f524a694244b5b776b682590498178735bb9bc750",
       "models/__init__.py": "32ae1bc01eb416aea3071868d0b5c117168cf1a9a86fe47cf0932d3a957757e8",
       "models/audio_types.py": "5f6924c36afbe0bfc1a4a08bbc5031cb20ab1b1726d553a1eeab7dcfc1d37ca2",
-      "controllers/ui_controller.py": "bd35746eab867187d24563914b27262de47f47d0cfd6e37143532dede220c160",
+      "controllers/ui_controller.py": "dd46023764d322c0e56501ea943304d6dc4514d770d627f7a5b17d1b4441298e",
       "controllers/__init__.py": "785a9a4e073b44d5de751729bcdec609365b8a6df1aa51e095dcca07467d9ab3",
       "controllers/action_controller.py": "abb7f5cf1d0132c10c94aaafcc1dfe0d2617d93f8d38ec12d6fabeb8d99ba00e",
       "controllers/content_controller.py": "567549a0e649949eb6b09aff0c46d0d1da89cee57510019be4b5daf412afbc93",
@@ -71,13 +73,14 @@
       "handlers/audio_monitor.py": "05a95c4393cbe6c2df355d286ac83b45687184fad96376697e81cbbd4b408aff"
     },
     "control/gtk4_gui/controllers": {
-      "ui_controller.py": "bd35746eab867187d24563914b27262de47f47d0cfd6e37143532dede220c160",
+      "ui_controller.py": "dd46023764d322c0e56501ea943304d6dc4514d770d627f7a5b17d1b4441298e",
       "__init__.py": "785a9a4e073b44d5de751729bcdec609365b8a6df1aa51e095dcca07467d9ab3",
       "action_controller.py": "abb7f5cf1d0132c10c94aaafcc1dfe0d2617d93f8d38ec12d6fabeb8d99ba00e",
       "content_controller.py": "567549a0e649949eb6b09aff0c46d0d1da89cee57510019be4b5daf412afbc93"
     },
     "control/gtk4_gui/views": {
       "input_view.py": "709a3f3d74e94794ac7e0c8ef26f3cbd68255accc9ed285c3b87fe02840a0606",
+      "gpu_drivers_view.py": "167cfd8bd16881226241e8df3dafbcd7eba01a779bd9f5eead838947919326cf",
       "base.py": "5f80369672d43c30f04a9d9918768c5a182985e1b327bded0ba983e88391d8cd",
       "processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
@@ -96,7 +99,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "9b7949babf06e5438501de336d140daf3c0c54e394228b99815a72226b50fa70",
+      "code_checksums.json": "f7c6d070e43f1ef232ebe2ee1c7d7ea9ddf2f55567201bc4b410dcc05626d3ba",
       "static_analysis_results.json": "7f54ed80703a9501d52a1eb2f89d5492a9178c6c219c9b133557b44ba1db88d2",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",

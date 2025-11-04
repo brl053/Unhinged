@@ -47,6 +47,7 @@ from .containers import (
     SystemInfoCard,
     SystemStatusGrid,
 )
+from .generated_artifact_widget import GeneratedArtifactWidget
 from .graph_workspace_tabs import GraphWorkspaceTabs
 from .primitives import (
     ActionButton,
