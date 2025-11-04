@@ -26,7 +26,6 @@ Provides lifecycle management hooks (on_ready, on_cleanup) and session integrati
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +50,7 @@ class ViewBase(ABC):
         self.view_name = view_name
         self.is_active = False
         self.session_logger = getattr(parent_app, 'session_logger', None)
-        
+
         logger.info(f"Initializing view: {view_name}")
         self._log_event("VIEW_INIT", f"View {view_name} initialized")
 
@@ -123,7 +122,7 @@ class ViewBase(ABC):
             status_type: Type of status ("info", "success", "warning", "error")
         """
         self._log_event(f"STATUS_{status_type.upper()}", message)
-        
+
         # Delegate to app if it has a show_toast method
         if hasattr(self.app, 'show_toast'):
             try:

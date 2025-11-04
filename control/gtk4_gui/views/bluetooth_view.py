@@ -19,17 +19,17 @@ and force grab functionality.
 @llm-culture Honest device state representation
 """
 
-import gi
 import logging
+
+import gi
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Adw, Gtk
-
-from views.base import ViewBase
 from components.bluetooth_workspace import BluetoothWorkspace
 from components.status_stack import StatusStack
+from gi.repository import Adw, Gtk
+from views.base import ViewBase
 
 logger = logging.getLogger(__name__)
 

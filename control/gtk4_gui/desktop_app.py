@@ -492,12 +492,34 @@ class UnhingedDesktopApp(Adw.Application):
             self.chatroom_view = ChatroomView(self)
             content = self.chatroom_view.create_content()
             print("✅ OS Chatroom page created successfully")
+
+            # Automatically create a session on app launch (headless)
+            # Schedule session creation after UI is ready
+            GLib.idle_add(self._auto_create_session)
+
             return content
         except Exception as e:
             print(f"❌ CRITICAL: OS Chatroom creation failed: {e}")
             import traceback
             traceback.print_exc()
             raise
+
+    def _auto_create_session(self):
+        """Automatically create a session on app launch (headless)"""
+        try:
+            if hasattr(self, 'chatroom_view') and self.chatroom_view:
+                # Check if session already exists
+                if self.chatroom_view._session_status == "no_session":
+                    print("🔄 Auto-creating session on app launch...")
+                    self.chatroom_view._create_new_session()
+                    if self.session_logger:
+                        self.session_logger.log_gui_event(
+                            "AUTO_SESSION_CREATED",
+                            "Session automatically created on app launch (headless)"
+                        )
+        except Exception as e:
+            print(f"⚠️ Auto-session creation failed: {e}")
+        return False  # Don't repeat
 
 
 

@@ -5,8 +5,9 @@ This module contains all the audio output management functionality that was prev
 embedded in the monolithic desktop_app.py file.
 """
 
-import gi
 import logging
+
+import gi
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')

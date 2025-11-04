@@ -13,8 +13,9 @@ Basic building block components with design system integration:
 - AudioDeviceRow: Audio device display with volume controls
 """
 
-import gi
 import logging
+
+import gi
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')

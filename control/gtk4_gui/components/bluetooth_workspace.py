@@ -26,14 +26,14 @@ Advanced Bluetooth management workspace with two separate tables:
 @llm-culture Honest device state representation
 """
 
-import gi
 import logging
-from typing import Optional, List
+
+import gi
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib
+from gi.repository import GLib, Gtk
 
 logger = logging.getLogger(__name__)
 
@@ -62,17 +62,17 @@ class BluetoothWorkspace:
         self.is_active = False
         self.discovery_timeout_id = None
         self.discovery_active = False
-        
+
         # Device lists
         self.registered_devices = []
         self.discovering_devices = []
-        
+
         # UI Components
         self.registered_table = None
         self.discovering_table = None
         self.discovery_status_label = None
         self.registered_status_label = None
-        
+
         logger.info("Bluetooth workspace initialized")
         self._log_event("WORKSPACE_INIT", "Bluetooth workspace created")
 
@@ -88,29 +88,29 @@ class BluetoothWorkspace:
             workspace_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
             workspace_box.set_vexpand(True)
             workspace_box.set_hexpand(True)
-            
+
             # Create notebook for tabs
             notebook = Gtk.Notebook()
             notebook.set_vexpand(True)
             notebook.set_hexpand(True)
-            
+
             # Tab 1: Registered Devices
             registered_page = self._create_registered_devices_page()
             notebook.append_page(registered_page, Gtk.Label(label="Registered Devices"))
-            
+
             # Tab 2: Discovering Devices
             discovering_page = self._create_discovering_devices_page()
             notebook.append_page(discovering_page, Gtk.Label(label="Discovering"))
-            
+
             workspace_box.append(notebook)
-            
+
             self._log_event("WORKSPACE_CREATED", "Bluetooth workspace UI created")
             return workspace_box
-            
+
         except Exception as e:
             logger.error(f"Failed to create workspace content: {e}")
             self._log_event("WORKSPACE_ERROR", f"Failed to create content: {e}")
-            
+
             # Return error widget
             error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
             error_label = Gtk.Label(label=f"Error: {str(e)}")
@@ -213,10 +213,10 @@ class BluetoothWorkspace:
         """Start continuous Bluetooth device discovery."""
         if self.discovery_timeout_id:
             GLib.source_remove(self.discovery_timeout_id)
-        
+
         self.discovery_active = True
         self._log_event("DISCOVERY_STARTED", "Continuous discovery loop started")
-        
+
         # Start discovery immediately, then repeat every 3 seconds
         self._perform_discovery()
         self.discovery_timeout_id = GLib.timeout_add_seconds(3, self._perform_discovery)
@@ -226,7 +226,7 @@ class BluetoothWorkspace:
         if self.discovery_timeout_id:
             GLib.source_remove(self.discovery_timeout_id)
             self.discovery_timeout_id = None
-        
+
         self.discovery_active = False
         self._log_event("DISCOVERY_STOPPED", "Continuous discovery loop stopped")
 

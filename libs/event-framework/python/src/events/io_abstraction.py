@@ -47,6 +47,16 @@ class IOLevel(Enum):
     ERROR = "error"
 
 
+class SystemCallType(Enum):
+    """Types of system calls made by the GUI on behalf of the user"""
+    KERNEL_CALL = "kernel_call"  # Direct kernel interaction
+    D_BUS_CALL = "dbus_call"  # D-Bus IPC (e.g., BlueZ)
+    SUBPROCESS_CALL = "subprocess_call"  # External process execution
+    FILE_IO = "file_io"  # File system operations
+    NETWORK_CALL = "network_call"  # Network operations
+    AUDIO_CALL = "audio_call"  # Audio device operations
+
+
 @dataclass
 class IOEvent:
     """Structured representation of a stdout/stderr message"""
@@ -54,7 +64,9 @@ class IOEvent:
     level: IOLevel
     source: str  # 'startup', 'discovery', 'ui', 'bluetooth', etc
     timestamp: datetime = field(default_factory=datetime.now)
-    
+    system_call_type: Optional[SystemCallType] = None  # Type of system call if applicable
+    system_call_target: Optional[str] = None  # Target of system call (e.g., 'org.bluez', 'arecord')
+
     def __str__(self) -> str:
         """Format event as string"""
         level_emoji = {
@@ -65,7 +77,23 @@ class IOEvent:
             IOLevel.ERROR: "❌",
         }
         emoji = level_emoji.get(self.level, "•")
-        return f"{emoji} [{self.source}] {self.message}"
+
+        # Add system call information if present
+        system_call_info = ""
+        if self.system_call_type:
+            call_emoji = {
+                SystemCallType.KERNEL_CALL: "🔴",
+                SystemCallType.D_BUS_CALL: "🔵",
+                SystemCallType.SUBPROCESS_CALL: "⚙️",
+                SystemCallType.FILE_IO: "📁",
+                SystemCallType.NETWORK_CALL: "🌐",
+                SystemCallType.AUDIO_CALL: "🎤",
+            }
+            call_icon = call_emoji.get(self.system_call_type, "•")
+            target_info = f" → {self.system_call_target}" if self.system_call_target else ""
+            system_call_info = f" {call_icon}[{self.system_call_type.value}]{target_info}"
+
+        return f"{emoji} [{self.source}] {self.message}{system_call_info}"
 
 
 class IOHandler:
@@ -76,15 +104,43 @@ class IOHandler:
         raise NotImplementedError
 
 
+class EscapeCharacterProcessor:
+    """Processes escape sequences in messages"""
+
+    @staticmethod
+    def process(text: str) -> str:
+        """
+        Process escape sequences in text.
+        Converts \\n to actual newlines, \\t to tabs, etc.
+        """
+        # Replace escape sequences
+        text = text.replace("\\n", "\n")
+        text = text.replace("\\t", "\t")
+        text = text.replace("\\r", "\r")
+        text = text.replace("\\\\", "\\")
+        return text
+
+    @staticmethod
+    def emit_blank_line() -> None:
+        """Emit a blank line to stdout"""
+        print()
+
+
 class CLIHandler(IOHandler):
     """Handler that prints to stdout with formatting"""
-    
-    def __init__(self, include_timestamp: bool = False):
+
+    def __init__(self, include_timestamp: bool = False, process_escapes: bool = True):
         self.include_timestamp = include_timestamp
-    
+        self.process_escapes = process_escapes
+
     def handle(self, event: IOEvent) -> None:
         """Print event to stdout"""
         output = str(event)
+
+        # Process escape sequences if enabled
+        if self.process_escapes:
+            output = EscapeCharacterProcessor.process(output)
+
         if self.include_timestamp:
             time_str = event.timestamp.strftime("%H:%M:%S")
             output = f"[{time_str}] {output}"
@@ -157,16 +213,20 @@ class DelimiterHandler(IOHandler):
         self.wrapped_handler.handle(event)
 
     def _emit_delimiter(self, source: str) -> None:
-        """Emit a section delimiter"""
+        """Emit a section delimiter with blank lines"""
         delimiter_line = self.delimiter_char * self.delimiter_width
+        # Use escape sequences for formatting
         print(f"\n{delimiter_line}")
         print(f"[{source.upper()}]")
         print(f"{delimiter_line}")
+        # Emit blank line using escape processor
+        EscapeCharacterProcessor.emit_blank_line()
 
     def emit_footer(self) -> None:
         """Emit a footer delimiter"""
-        delimiter_line = self.delimiter_char * self.delimiter_width
-        print(f"{'-' * self.delimiter_width}\n")
+        footer_line = "-" * self.delimiter_width
+        print(f"{footer_line}")
+        EscapeCharacterProcessor.emit_blank_line()
 
 
 class StatusStackHandler(IOHandler):
@@ -441,6 +501,31 @@ class IORouter:
     def emit_debug(self, message: str, source: str) -> None:
         """Emit a debug event"""
         self.emit(IOEvent(message, IOLevel.DEBUG, source))
+
+    def emit_system_call(self, message: str, source: str, call_type: SystemCallType,
+                        target: Optional[str] = None, level: IOLevel = IOLevel.INFO) -> None:
+        """
+        Emit a system call event with kernel interaction documentation.
+
+        Args:
+            message: Description of the system call
+            source: Source of the event (e.g., 'bluetooth', 'audio')
+            call_type: Type of system call (KERNEL_CALL, D_BUS_CALL, etc.)
+            target: Target of the system call (e.g., 'org.bluez', 'arecord')
+            level: Event level (default INFO)
+        """
+        event = IOEvent(
+            message=message,
+            level=level,
+            source=source,
+            system_call_type=call_type,
+            system_call_target=target
+        )
+        self.emit(event)
+
+    def emit_blank_line(self) -> None:
+        """Emit a blank line to stdout"""
+        EscapeCharacterProcessor.emit_blank_line()
 
 
 # Global IO router instance

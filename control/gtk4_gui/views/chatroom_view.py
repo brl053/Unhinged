@@ -240,11 +240,12 @@ class ChatroomView:
         self._session_id_label.set_visible(False)
         self._session_row.append(self._session_id_label)
 
-        # Session button (right side)
+        # Session button (right side) - HIDDEN by default (sessions are auto-created)
         self._session_button = Gtk.Button()
         self._session_button.set_label("Create Session")
         self._session_button.add_css_class("suggested-action")
         self._session_button.connect("clicked", self._on_session_button_clicked)
+        self._session_button.set_visible(False)  # Hidden - sessions auto-created on app launch
         self._session_row.append(self._session_button)
 
         session_container.append(self._session_row)
@@ -502,23 +503,20 @@ class ChatroomView:
         """Update UI elements based on current session state"""
         try:
             if self._session_status == "no_session":
-                # No session: disable chat, show Create Session button
-                self._session_button.set_label("Create Session")
-                self._session_button.set_sensitive(True)
+                # No session: disable chat, hide button (auto-created on app launch)
+                self._session_button.set_visible(False)  # Hidden - sessions auto-created
                 self._session_id_label.set_visible(False)
                 self._disable_chat_functionality()
 
             elif self._session_status == "creating":
-                # Creating session: disable button, show loading
-                self._session_button.set_label("Creating...")
-                self._session_button.set_sensitive(False)
+                # Creating session: hide button, disable chat
+                self._session_button.set_visible(False)  # Hidden - sessions auto-created
                 self._session_id_label.set_visible(False)
                 self._disable_chat_functionality()
 
             elif self._session_status == "active":
-                # Active session: enable chat, show session ID and New Session button
-                self._session_button.set_label("New Session")
-                self._session_button.set_sensitive(True)
+                # Active session: enable chat, show session ID, hide button
+                self._session_button.set_visible(False)  # Hidden - sessions auto-created
                 self._session_id_label.set_text(f"Session: {self._current_session_id}")
                 self._session_id_label.set_visible(True)
                 self._enable_chat_functionality()
