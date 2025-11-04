@@ -9,10 +9,10 @@ Philosophy: GPUs first, then each vendor extends the GPU abstraction with their 
 We don't care about proprietary vs open-source - we care about what works.
 """
 
-import subprocess
 import re
+import subprocess
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
+from typing import Any
 
 
 @dataclass
@@ -20,18 +20,18 @@ class GPUInfo:
     """GPU information container"""
     name: str
     driver_version: str
-    cuda_version: Optional[str]
+    cuda_version: str | None
     memory_mb: int
-    compute_capability: Optional[str]
+    compute_capability: str | None
     status: str  # "OK", "WARNING", "ERROR"
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 class GPUDriverDetector:
     """Detects GPU drivers and specifications"""
 
     def __init__(self):
-        self.gpus: List[GPUInfo] = []
+        self.gpus: list[GPUInfo] = []
         self.nvidia_available = False
         self.driver_version = None
         self.cuda_version = None
@@ -138,11 +138,11 @@ class GPUDriverDetector:
         else:
             return "Proprietary"
 
-    def get_gpu_list(self) -> List[GPUInfo]:
+    def get_gpu_list(self) -> list[GPUInfo]:
         """Get list of detected GPUs"""
         return self.gpus
 
-    def get_driver_info(self) -> Dict[str, Any]:
+    def get_driver_info(self) -> dict[str, Any]:
         """Get overall driver information"""
         return {
             "nvidia_available": self.nvidia_available,

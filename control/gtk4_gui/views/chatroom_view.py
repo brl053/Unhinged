@@ -802,7 +802,7 @@ class ChatroomView:
             self._add_chat_message("You", f"/image {prompt}", "user")
 
             # Add thinking indicator
-            thinking_box = self._add_thinking_indicator(f"Generating image: {prompt[:50]}...")
+            thinking_box = self._add_thinking_indicator()
 
             # Submit to thread pool for image generation
             import sys

@@ -10,13 +10,14 @@ Designed as an iframe-like container for generated content.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib, GObject
-from pathlib import Path
-from typing import Optional, Callable
 import subprocess
+from pathlib import Path
+
+from gi.repository import GObject, Gtk
 
 from .base import AdwComponentBase
 
@@ -41,7 +42,7 @@ class GeneratedArtifactWidget(AdwComponentBase):
                  artifact_type: str = "image",
                  artifact_path: str = "",
                  artifact_title: str = "Generated Artifact",
-                 artifact_metadata: Optional[dict] = None,
+                 artifact_metadata: dict | None = None,
                  **kwargs):
         """
         Initialize generated artifact widget.
@@ -56,11 +57,11 @@ class GeneratedArtifactWidget(AdwComponentBase):
         self.artifact_path = artifact_path
         self.artifact_title = artifact_title
         self.artifact_metadata = artifact_metadata or {}
-        
+
         self._header_bar = None
         self._content_area = None
         self._action_buttons = {}
-        
+
         super().__init__("generated-artifact-widget", **kwargs)
 
     def _init_component(self, **kwargs):
@@ -71,14 +72,14 @@ class GeneratedArtifactWidget(AdwComponentBase):
         self.widget.set_margin_bottom(8)
         self.widget.set_margin_start(8)
         self.widget.set_margin_end(8)
-        
+
         # Add CSS class for styling
         self.widget.add_css_class("generated-artifact-widget")
-        
+
         # Create header bar (mini window title bar)
         self._create_header_bar()
         self.widget.append(self._header_bar)
-        
+
         # Create content area based on artifact type
         self._content_area = self._create_content_area()
         self.widget.append(self._content_area)
@@ -91,7 +92,7 @@ class GeneratedArtifactWidget(AdwComponentBase):
         header_box.set_margin_start(12)
         header_box.set_margin_end(12)
         header_box.add_css_class("generated-artifact-header")
-        
+
         # Title label
         title_label = Gtk.Label()
         title_label.set_text(self.artifact_title)
@@ -99,11 +100,11 @@ class GeneratedArtifactWidget(AdwComponentBase):
         title_label.set_hexpand(True)
         title_label.add_css_class("title-3")
         header_box.append(title_label)
-        
+
         # Action buttons container (right-aligned)
         buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         buttons_box.set_halign(Gtk.Align.END)
-        
+
         # Folder icon button (open in file manager)
         folder_button = Gtk.Button()
         folder_button.set_icon_name("folder-open-symbolic")
@@ -112,17 +113,17 @@ class GeneratedArtifactWidget(AdwComponentBase):
         folder_button.connect("clicked", self._on_open_folder_clicked)
         self._action_buttons["open_folder"] = folder_button
         buttons_box.append(folder_button)
-        
+
         header_box.append(buttons_box)
         self._header_bar = header_box
-        
+
         return header_box
 
     def _create_content_area(self) -> Gtk.Widget:
         """Create content area based on artifact type"""
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content_box.add_css_class("generated-artifact-content")
-        
+
         if self.artifact_type == "image":
             content_box.append(self._create_image_content())
         elif self.artifact_type == "email":
@@ -131,7 +132,7 @@ class GeneratedArtifactWidget(AdwComponentBase):
             content_box.append(self._create_movie_content())
         else:
             content_box.append(self._create_generic_content())
-        
+
         return content_box
 
     def _create_image_content(self) -> Gtk.Widget:
@@ -142,16 +143,16 @@ class GeneratedArtifactWidget(AdwComponentBase):
             image.set_from_file(self.artifact_path)
             image.set_pixel_size(400)  # Max size
             image.add_css_class("generated-artifact-image")
-            
+
             # Wrap in scrolled window for large images
             scrolled = Gtk.ScrolledWindow()
             scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
             scrolled.set_child(image)
             scrolled.set_max_content_height(400)
             scrolled.set_max_content_width(400)
-            
+
             return scrolled
-            
+
         except Exception as e:
             return self._create_error_content(f"Failed to load image: {e}")
 
@@ -162,12 +163,12 @@ class GeneratedArtifactWidget(AdwComponentBase):
         box.set_margin_bottom(12)
         box.set_margin_start(12)
         box.set_margin_end(12)
-        
+
         label = Gtk.Label()
         label.set_text("Email artifact")
         label.set_wrap(True)
         box.append(label)
-        
+
         return box
 
     def _create_movie_content(self) -> Gtk.Widget:
@@ -177,12 +178,12 @@ class GeneratedArtifactWidget(AdwComponentBase):
         box.set_margin_bottom(12)
         box.set_margin_start(12)
         box.set_margin_end(12)
-        
+
         label = Gtk.Label()
         label.set_text("Movie artifact")
         label.set_wrap(True)
         box.append(label)
-        
+
         return box
 
     def _create_generic_content(self) -> Gtk.Widget:
@@ -192,12 +193,12 @@ class GeneratedArtifactWidget(AdwComponentBase):
         box.set_margin_bottom(12)
         box.set_margin_start(12)
         box.set_margin_end(12)
-        
+
         label = Gtk.Label()
         label.set_text(f"Generated {self.artifact_type} artifact")
         label.set_wrap(True)
         box.append(label)
-        
+
         return box
 
     def _create_error_content(self, error_msg: str) -> Gtk.Widget:
@@ -207,13 +208,13 @@ class GeneratedArtifactWidget(AdwComponentBase):
         box.set_margin_bottom(12)
         box.set_margin_start(12)
         box.set_margin_end(12)
-        
+
         label = Gtk.Label()
         label.set_text(error_msg)
         label.set_wrap(True)
         label.add_css_class("error")
         box.append(label)
-        
+
         return box
 
     def _on_open_folder_clicked(self, button):

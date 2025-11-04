@@ -9,12 +9,14 @@ Philosophy: GPUs first, then each vendor extends the GPU abstraction.
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from gi.repository import Adw, Gtk
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
