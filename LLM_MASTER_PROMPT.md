@@ -344,6 +344,78 @@ python3 build/build.py build new-target
 3. **Check dependencies** - Ensure centralized Python env is intact
 4. **Consult documentation** - Check `/build/README.md`
 
+## Autonomous Development Loop - LLM Agent Framework
+
+### Purpose
+Enable LLM agents (like Augment) to autonomously develop, test, and iterate on the Unhinged system through a structured, feedback-driven development loop.
+
+### Core Components
+
+#### 1. Development Loop Orchestrator (`build/development_loop.py`)
+- Manages task lifecycle (create → start → complete/fail)
+- Executes shell commands with full logging
+- Provides structured feedback to LLM agents
+- All tasks logged to `/build/tmp/development_loop.log`
+
+#### 2. GUI Automation Layer (`build/gui_automation.py`)
+- Interacts with GTK4 desktop application
+- Uses xdotool + AT-SPI2 for reliable automation
+- Supports: click, type, wait, find_window, focus_window
+- All actions logged to `/build/tmp/gui_automation.log`
+
+#### 3. Task Protocol (JSON-based)
+- Structured format for defining development tasks
+- Supports: code_change, test, gui_test, verification
+- Each task has: id, name, description, instructions, status, result
+
+### Task Execution Workflow
+
+```python
+from build.development_loop import DevelopmentLoop
+
+loop = DevelopmentLoop()
+
+# Create task
+task = loop.create_task(
+    task_id="test_001",
+    name="Test image generation",
+    description="Verify /image command works",
+    task_type="test",
+    instructions={"command": "python3 test_image_command.py"}
+)
+
+# Execute
+loop.start_task(task)
+result = loop.execute_shell_command("python3 test_image_command.py")
+loop.complete_task(task, result)
+```
+
+### Logging & Feedback
+
+**Development Loop Log**: `/build/tmp/development_loop.log`
+- Each line is a JSON object with task state and timestamps
+- LLM agents read this to understand task results
+
+**GUI Automation Log**: `/build/tmp/gui_automation.log`
+- Each line is a JSON object with action result
+- Useful for debugging GUI interactions
+
+### Best Practices for LLM Agents
+
+1. **Always check logs first** - Read `/build/tmp/development_loop.log` before creating new tasks
+2. **Use structured tasks** - Don't execute arbitrary commands, use the task protocol
+3. **Log everything** - All actions should be logged for debugging
+4. **Fail fast** - If a task fails, analyze the error and create a fix task
+5. **Iterate systematically** - Don't make multiple changes at once
+6. **Verify after changes** - Always create a verification task after code changes
+
+### Documentation
+
+- `docs/AUTONOMOUS_LOOP_GUIDE.md` - Complete guide for autonomous development loop
+- `build/development_loop.py` - Task orchestrator implementation
+- `build/gui_automation.py` - GUI automation layer implementation
+- `build/test_autonomous_loop.py` - Example test demonstrating the loop
+
 ## Reference Documentation
 
 - `/build/README.md` - Build system overview
@@ -351,6 +423,7 @@ python3 build/build.py build new-target
 - `Makefile` - Available commands and patterns
 - `build-config.yml` - Build targets and configuration
 - `.gitignore` - Repository inclusion and exclusion patterns
+- `docs/AUTONOMOUS_LOOP_GUIDE.md` - Autonomous development loop guide
 
 ---
 

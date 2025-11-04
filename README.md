@@ -148,6 +148,25 @@
 
 - **For Developers**: See `/docs/` for comprehensive LlmDocs-annotated documentation
 - **For LLM Agents**: Start with `/LLM_MASTER_PROMPT.md` before making any changes
+- **For Autonomous Development**: See `docs/AUTONOMOUS_LOOP_GUIDE.md` for the LLM agent development loop
+
+## Autonomous Development Loop
+
+LLM agents (like Augment) can autonomously develop and test the system using the structured development loop:
+
+```python
+from build.development_loop import DevelopmentLoop
+
+loop = DevelopmentLoop()
+task = loop.create_task(...)
+loop.start_task(task)
+result = loop.execute_shell_command(...)
+loop.complete_task(task, result)
+```
+
+All tasks and results are logged to `/build/tmp/` for feedback and iteration.
+
+See `docs/AUTONOMOUS_LOOP_GUIDE.md` for complete documentation.
 
 ## System Status
 

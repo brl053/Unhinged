@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1762227353.0786047,
-    "updated_iso": "2025-11-03 19:35:53",
+    "updated": 1762227404.5553396,
+    "updated_iso": "2025-11-03 19:36:44",
     "version": "1.0"
   },
   "checksums": {
@@ -100,7 +100,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "65c86243b33d9847746e902e17b1d181d5dc4a8ad038ae070306800f99f15b13",
+      "code_checksums.json": "c7ebb378583b1abdad7f54b37b778c1d507561e837d3d09a79baa4492bc9c5a7",
       "static_analysis_results.json": "26290add0e97daf4215c2e5c50c6556ab786670e519804dd6e0d1fa737acdfa3",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",
