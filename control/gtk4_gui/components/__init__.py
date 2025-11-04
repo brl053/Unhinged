@@ -47,6 +47,7 @@ from .containers import (
     SystemInfoCard,
     SystemStatusGrid,
 )
+from .graph_workspace_tabs import GraphWorkspaceTabs
 from .primitives import (
     ActionButton,
     AudioDeviceRow,
@@ -60,9 +61,8 @@ from .primitives import (
     StatusLabel,
     TextEditor,
 )
-from .tables import GenericTable, TableColumn
-from .graph_workspace_tabs import GraphWorkspaceTabs
 from .registry_ui import RegistryUI
+from .tables import GenericTable, TableColumn
 
 # Version and metadata
 __version__ = "1.0.0"

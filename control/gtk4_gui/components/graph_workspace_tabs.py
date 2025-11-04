@@ -12,8 +12,10 @@ import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw
-from typing import Callable, Optional, Dict, Any
+from collections.abc import Callable
+from typing import Any
+
+from gi.repository import Adw, Gtk
 
 # Import registry UI
 try:
@@ -55,7 +57,7 @@ class GraphWorkspaceTabs:
         self.metrics_content = None
 
         # Callbacks
-        self.on_tab_changed: Optional[Callable[[str], None]] = None
+        self.on_tab_changed: Callable[[str], None] | None = None
 
         self._create_tabs()
 
@@ -257,7 +259,7 @@ class GraphWorkspaceTabs:
                 self.notebook.set_selected_page(page)
                 break
 
-    def update_metrics(self, metrics: Dict[str, Any]):
+    def update_metrics(self, metrics: dict[str, Any]):
         """Update metrics display"""
         # This will be implemented to update the metrics tab
         pass

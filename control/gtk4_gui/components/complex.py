@@ -1412,7 +1412,6 @@ class AudioTable(AdwComponentBase):
         self.device_count_label = None
         self.refresh_button = None
         self.volume_master_scale = None
-        self.bluetooth_connect_button = None
 
         # Auto-refresh
         self.auto_refresh = True
@@ -1483,15 +1482,6 @@ class AudioTable(AdwComponentBase):
         self.master_volume_label = master_volume_label
 
         header_box.append(volume_box)
-
-        # Bluetooth connection button
-        self.bluetooth_connect_button = Gtk.Button()
-        self.bluetooth_connect_button.set_label("Pull from Phone")
-        self.bluetooth_connect_button.set_icon_name("bluetooth-symbolic")
-        self.bluetooth_connect_button.set_tooltip_text("Connect Bluetooth audio device from phone")
-        self.bluetooth_connect_button.add_css_class("suggested-action")
-        self.bluetooth_connect_button.connect("clicked", self._on_bluetooth_connect_clicked)
-        header_box.append(self.bluetooth_connect_button)
 
         # Refresh button
         self.refresh_button = Gtk.Button()
@@ -1720,35 +1710,6 @@ class AudioTable(AdwComponentBase):
 
         print(f"🔊 Master volume changed: {new_volume}%")
         # TODO: Implement actual master volume control via AudioMonitor
-
-    def _on_bluetooth_connect_clicked(self, button):
-        """Handle Bluetooth connect button click."""
-        print("🔊 Attempting to pull Bluetooth audio from phone...")
-
-        # Disable button temporarily
-        button.set_sensitive(False)
-        button.set_label("Connecting...")
-
-        try:
-            # TODO: Implement Bluetooth audio connection pulling
-            # This would:
-            # 1. Scan for Bluetooth devices
-            # 2. Find audio devices (like PRO X 2)
-            # 3. Connect them to this computer
-            # 4. Set as default audio device
-
-            # For now, show a placeholder message
-            self.status_label.set_text("Bluetooth connection not yet implemented")
-
-            # Simulate connection attempt
-            import time
-            time.sleep(1)
-
-        except Exception as e:
-            self.status_label.set_text(f"Bluetooth connection failed: {e}")
-        finally:
-            button.set_sensitive(True)
-            button.set_label("Pull from Phone")
 
     def _on_refresh_clicked(self, button):
         """Handle refresh button click."""

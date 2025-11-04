@@ -9,13 +9,15 @@ Provides UI for:
 """
 
 import gi
+
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Adw, GLib
-from typing import Callable, Optional, List, Dict, Any
 import asyncio
-import uuid
+from collections.abc import Callable
+from typing import Any
+
+from gi.repository import Adw, GLib, Gtk
 
 
 class RegistryUI:
@@ -24,13 +26,13 @@ class RegistryUI:
     def __init__(self, doc_store_client=None):
         """Initialize registry UI"""
         self.doc_store_client = doc_store_client
-        self.graphs: List[Dict[str, Any]] = []
-        
+        self.graphs: list[dict[str, Any]] = []
+
         # Callbacks
-        self.on_create_graph: Optional[Callable[[str, str, str], None]] = None
-        self.on_edit_graph: Optional[Callable[[str], None]] = None
-        self.on_delete_graph: Optional[Callable[[str], None]] = None
-        
+        self.on_create_graph: Callable[[str, str, str], None] | None = None
+        self.on_edit_graph: Callable[[str], None] | None = None
+        self.on_delete_graph: Callable[[str], None] | None = None
+
         # UI components
         self.graphs_list_box = None
         self.status_label = None
@@ -104,7 +106,7 @@ class RegistryUI:
     def _create_graph_dialog(self) -> Adw.Dialog:
         """Create a dialog for creating new graphs"""
         dialog = Adw.Dialog()
-        
+
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         content_box.set_margin_top(12)
         content_box.set_margin_bottom(12)
@@ -120,7 +122,7 @@ class RegistryUI:
         name_label = Gtk.Label(label="Graph Name")
         name_label.set_halign(Gtk.Align.START)
         content_box.append(name_label)
-        
+
         name_entry = Gtk.Entry()
         name_entry.set_placeholder_text("e.g., My Workflow")
         content_box.append(name_entry)
@@ -129,7 +131,7 @@ class RegistryUI:
         desc_label = Gtk.Label(label="Description (optional)")
         desc_label.set_halign(Gtk.Align.START)
         content_box.append(desc_label)
-        
+
         desc_entry = Gtk.Entry()
         desc_entry.set_placeholder_text("e.g., A workflow for processing audio")
         content_box.append(desc_entry)
@@ -186,12 +188,17 @@ class RegistryUI:
             self.on_create_graph(name, description, graph_type)
 
         # Reload graphs
-        asyncio.create_task(self._load_graphs())
+        try:
+            asyncio.ensure_future(self._load_graphs())
+        except RuntimeError:
+            # No event loop yet, schedule for later
+            GLib.idle_add(self._load_graphs_idle)
 
     def _load_graphs_idle(self):
         """Idle callback to load graphs when event loop is ready"""
         try:
-            asyncio.create_task(self._load_graphs())
+            # Use ensure_future instead of create_task for better compatibility
+            asyncio.ensure_future(self._load_graphs())
         except RuntimeError:
             # No event loop yet, try again later
             GLib.idle_add(self._load_graphs_idle)
@@ -219,9 +226,9 @@ class RegistryUI:
             return
 
         try:
-            self._update_status(f"Deleting graph...")
+            self._update_status("Deleting graph...")
             await self.doc_store_client.delete_graph(graph_id)
-            self._update_status(f"✅ Graph deleted")
+            self._update_status("✅ Graph deleted")
             await self._load_graphs()
         except Exception as e:
             self._update_status(f"❌ Error deleting graph: {e}")
@@ -249,7 +256,7 @@ class RegistryUI:
             row = self._create_graph_row(graph)
             self.graphs_list_box.append(row)
 
-    def _create_graph_row(self, graph: Dict[str, Any]) -> Gtk.Widget:
+    def _create_graph_row(self, graph: dict[str, Any]) -> Gtk.Widget:
         """Create a row for a graph in the list"""
         row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         row_box.set_margin_top(8)

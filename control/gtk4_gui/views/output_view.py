@@ -6,11 +6,14 @@ embedded in the monolithic desktop_app.py file.
 """
 
 import gi
+import logging
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Adw, Gtk
+
+logger = logging.getLogger(__name__)
 
 
 class OutputView:
@@ -144,6 +147,8 @@ class OutputView:
         except Exception as e:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("AUDIO_DEFAULT_DEVICE_ERROR", str(e))
+
+
 
     def cleanup(self):
         """Clean up audio output components"""

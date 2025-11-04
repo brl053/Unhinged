@@ -548,6 +548,244 @@ class BluetoothMonitor:
 
         return success
 
+    def _find_device_path(self, address: str) -> str | None:
+        """Find the D-Bus path for a device by its address."""
+        if not self._bus:
+            return None
+
+        try:
+            manager = dbus.Interface(
+                self._bus.get_object("org.bluez", "/"),
+                "org.freedesktop.DBus.ObjectManager"
+            )
+
+            objects = manager.GetManagedObjects()
+
+            for path, interfaces in objects.items():
+                if "org.bluez.Device1" in interfaces:
+                    props = interfaces["org.bluez.Device1"]
+                    if str(props.get("Address", "")).upper() == address.upper():
+                        return path
+
+        except Exception as e:
+            logger.error(f"Failed to find device path for {address}: {e}")
+
+        return None
+
+    def connect_device(self, address: str) -> bool:
+        """
+        Connect to a Bluetooth device.
+
+        Args:
+            address: Device MAC address (e.g., "AA:BB:CC:DD:EE:FF")
+
+        Returns:
+            True if connection was successful, False otherwise
+        """
+        if not self._bus:
+            logger.warning("D-Bus not available - trying bluetoothctl fallback")
+            return self._connect_device_bluetoothctl(address)
+
+        try:
+            device_path = self._find_device_path(address)
+            if not device_path:
+                logger.error(f"Device not found: {address}")
+                return False
+
+            device = dbus.Interface(
+                self._bus.get_object("org.bluez", device_path),
+                "org.bluez.Device1"
+            )
+
+            device.Connect()
+            logger.info(f"Connected to device: {address}")
+            return True
+
+        except dbus.exceptions.DBusException as e:
+            logger.error(f"D-Bus error connecting to {address}: {e}")
+            # Try bluetoothctl fallback
+            return self._connect_device_bluetoothctl(address)
+        except Exception as e:
+            logger.error(f"Failed to connect to device {address}: {e}")
+            return False
+
+    def disconnect_device(self, address: str) -> bool:
+        """
+        Disconnect from a Bluetooth device.
+
+        Args:
+            address: Device MAC address (e.g., "AA:BB:CC:DD:EE:FF")
+
+        Returns:
+            True if disconnection was successful, False otherwise
+        """
+        if not self._bus:
+            logger.warning("D-Bus not available - trying bluetoothctl fallback")
+            return self._disconnect_device_bluetoothctl(address)
+
+        try:
+            device_path = self._find_device_path(address)
+            if not device_path:
+                logger.error(f"Device not found: {address}")
+                return False
+
+            device = dbus.Interface(
+                self._bus.get_object("org.bluez", device_path),
+                "org.bluez.Device1"
+            )
+
+            device.Disconnect()
+            logger.info(f"Disconnected from device: {address}")
+            return True
+
+        except dbus.exceptions.DBusException as e:
+            logger.error(f"D-Bus error disconnecting from {address}: {e}")
+            # Try bluetoothctl fallback
+            return self._disconnect_device_bluetoothctl(address)
+        except Exception as e:
+            logger.error(f"Failed to disconnect from device {address}: {e}")
+            return False
+
+    def pair_device(self, address: str) -> bool:
+        """
+        Pair with a Bluetooth device.
+
+        Args:
+            address: Device MAC address (e.g., "AA:BB:CC:DD:EE:FF")
+
+        Returns:
+            True if pairing was successful, False otherwise
+        """
+        if not self._bus:
+            logger.warning("D-Bus not available - trying bluetoothctl fallback")
+            return self._pair_device_bluetoothctl(address)
+
+        try:
+            device_path = self._find_device_path(address)
+            if not device_path:
+                logger.error(f"Device not found: {address}")
+                return False
+
+            device = dbus.Interface(
+                self._bus.get_object("org.bluez", device_path),
+                "org.bluez.Device1"
+            )
+
+            device.Pair()
+            logger.info(f"Paired with device: {address}")
+            return True
+
+        except dbus.exceptions.DBusException as e:
+            logger.error(f"D-Bus error pairing with {address}: {e}")
+            # Try bluetoothctl fallback
+            return self._pair_device_bluetoothctl(address)
+        except Exception as e:
+            logger.error(f"Failed to pair with device {address}: {e}")
+            return False
+
+    def set_trusted(self, address: str, trusted: bool) -> bool:
+        """
+        Set the Trusted property of a device (enables auto-connect).
+
+        Args:
+            address: Device MAC address (e.g., "AA:BB:CC:DD:EE:FF")
+            trusted: Whether to trust the device
+
+        Returns:
+            True if property was set successfully, False otherwise
+        """
+        if not self._bus:
+            logger.warning("D-Bus not available - cannot set trusted property")
+            return False
+
+        try:
+            device_path = self._find_device_path(address)
+            if not device_path:
+                logger.error(f"Device not found: {address}")
+                return False
+
+            device = dbus.Interface(
+                self._bus.get_object("org.bluez", device_path),
+                "org.freedesktop.DBus.Properties"
+            )
+
+            device.Set("org.bluez.Device1", "Trusted", dbus.Boolean(trusted))
+            logger.info(f"Set Trusted={trusted} for device: {address}")
+            return True
+
+        except dbus.exceptions.DBusException as e:
+            logger.error(f"D-Bus error setting Trusted property for {address}: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to set Trusted property for device {address}: {e}")
+            return False
+
+    def _connect_device_bluetoothctl(self, address: str) -> bool:
+        """Connect to device using bluetoothctl fallback."""
+        try:
+            result = subprocess.run(
+                ['bluetoothctl', 'connect', address],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            success = result.returncode == 0
+            if success:
+                logger.info(f"Connected to device via bluetoothctl: {address}")
+            else:
+                logger.error(f"bluetoothctl connect failed: {result.stderr}")
+            return success
+        except subprocess.TimeoutExpired:
+            logger.error("bluetoothctl connect timeout")
+            return False
+        except Exception as e:
+            logger.error(f"bluetoothctl connect failed: {e}")
+            return False
+
+    def _disconnect_device_bluetoothctl(self, address: str) -> bool:
+        """Disconnect from device using bluetoothctl fallback."""
+        try:
+            result = subprocess.run(
+                ['bluetoothctl', 'disconnect', address],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            success = result.returncode == 0
+            if success:
+                logger.info(f"Disconnected from device via bluetoothctl: {address}")
+            else:
+                logger.error(f"bluetoothctl disconnect failed: {result.stderr}")
+            return success
+        except subprocess.TimeoutExpired:
+            logger.error("bluetoothctl disconnect timeout")
+            return False
+        except Exception as e:
+            logger.error(f"bluetoothctl disconnect failed: {e}")
+            return False
+
+    def _pair_device_bluetoothctl(self, address: str) -> bool:
+        """Pair with device using bluetoothctl fallback."""
+        try:
+            result = subprocess.run(
+                ['bluetoothctl', 'pair', address],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            success = result.returncode == 0
+            if success:
+                logger.info(f"Paired with device via bluetoothctl: {address}")
+            else:
+                logger.error(f"bluetoothctl pair failed: {result.stderr}")
+            return success
+        except subprocess.TimeoutExpired:
+            logger.error("bluetoothctl pair timeout")
+            return False
+        except Exception as e:
+            logger.error(f"bluetoothctl pair failed: {e}")
+            return False
+
     def get_statistics(self) -> dict[str, Any]:
         """Get monitoring statistics."""
         return {

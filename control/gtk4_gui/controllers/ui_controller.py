@@ -203,10 +203,44 @@ class UIController:
         return row
 
     def _on_sidebar_selection_changed(self, list_box, row):
-        """Handle sidebar navigation selection"""
+        """Handle sidebar navigation selection with lifecycle management"""
         if row and hasattr(row, 'item_id'):
+            # Cleanup previous view if it has lifecycle hooks
+            if hasattr(self.app, 'current_view') and self.app.current_view:
+                if hasattr(self.app.current_view, 'on_cleanup'):
+                    try:
+                        self.app.current_view.on_cleanup()
+                    except Exception as e:
+                        print(f"⚠️ Error during view cleanup: {e}")
+
             # Switch to selected page
             self.app.content_stack.set_visible_child_name(row.item_id)
+
+            # Call on_ready for new view if it has lifecycle hooks
+            view_name = row.item_id
+            if view_name == "bluetooth" and hasattr(self.app, 'bluetooth_view'):
+                self.app.current_view = self.app.bluetooth_view
+                if hasattr(self.app.bluetooth_view, 'on_ready'):
+                    try:
+                        self.app.bluetooth_view.on_ready()
+                    except Exception as e:
+                        print(f"⚠️ Error during view ready: {e}")
+            elif view_name == "processes" and hasattr(self.app, 'processes_view'):
+                self.app.current_view = self.app.processes_view
+                if hasattr(self.app.processes_view, 'on_ready'):
+                    try:
+                        self.app.processes_view.on_ready()
+                    except Exception as e:
+                        print(f"⚠️ Error during view ready: {e}")
+            elif view_name == "chatroom" and hasattr(self.app, 'chatroom_view'):
+                self.app.current_view = self.app.chatroom_view
+                if hasattr(self.app.chatroom_view, 'on_ready'):
+                    try:
+                        self.app.chatroom_view.on_ready()
+                    except Exception as e:
+                        print(f"⚠️ Error during view ready: {e}")
+            else:
+                self.app.current_view = None
 
             # Update active styling
             self._update_sidebar_active_state(row)

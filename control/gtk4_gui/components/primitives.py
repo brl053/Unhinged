@@ -14,6 +14,7 @@ Basic building block components with design system integration:
 """
 
 import gi
+import logging
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -24,6 +25,8 @@ from typing import Any
 from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
 
 from .base import AdwComponentBase, ComponentBase
+
+logger = logging.getLogger(__name__)
 
 
 class ActionButton(AdwComponentBase):
@@ -911,6 +914,16 @@ class BluetoothRow(HardwareInfoRow):
 
         action_box.append(self.connection_button)
 
+        # Force Grab button (only for paired/connected devices)
+        if self.device_info.paired or self.device_info.connected:
+            force_grab_button = Gtk.Button()
+            force_grab_button.set_label("Force Grab")
+            force_grab_button.set_icon_name("go-jump-symbolic")
+            force_grab_button.set_tooltip_text("Disconnect from other devices and connect here")
+            force_grab_button.add_css_class("accent")
+            force_grab_button.connect("clicked", self._on_force_grab_clicked)
+            action_box.append(force_grab_button)
+
         # Action menu button
         self.action_menu = Gtk.MenuButton()
         self.action_menu.set_icon_name("view-more-symbolic")
@@ -943,18 +956,153 @@ class BluetoothRow(HardwareInfoRow):
 
     def _on_connect_clicked(self, button):
         """Handle connect button click."""
-        print(f"🔵 Connecting to {self.device_info.name} ({self.device_info.address})")
-        # TODO: Implement actual connection logic
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent.parent))
+
+        from bluetooth_monitor import BluetoothMonitor
+
+        logger.info(f"🔵 Connecting to {self.device_info.name} ({self.device_info.address})")
+
+        # Disable button during operation
+        button.set_sensitive(False)
+        button.set_label("Connecting...")
+
+        try:
+            monitor = BluetoothMonitor()
+            success = monitor.connect_device(self.device_info.address)
+
+            if success:
+                logger.info(f"✅ Successfully connected to {self.device_info.name}")
+                # Update device info to reflect connected state
+                self.device_info.connected = True
+                self.update_device_data(self.device_info)
+            else:
+                logger.error(f"❌ Failed to connect to {self.device_info.name}")
+                button.set_label("Connect")
+                button.set_sensitive(True)
+
+        except Exception as e:
+            logger.error(f"❌ Connection error: {e}")
+            button.set_label("Connect")
+            button.set_sensitive(True)
 
     def _on_disconnect_clicked(self, button):
         """Handle disconnect button click."""
-        print(f"🔵 Disconnecting from {self.device_info.name} ({self.device_info.address})")
-        # TODO: Implement actual disconnection logic
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent.parent))
+
+        from bluetooth_monitor import BluetoothMonitor
+
+        logger.info(f"🔵 Disconnecting from {self.device_info.name} ({self.device_info.address})")
+
+        # Disable button during operation
+        button.set_sensitive(False)
+        button.set_label("Disconnecting...")
+
+        try:
+            monitor = BluetoothMonitor()
+            success = monitor.disconnect_device(self.device_info.address)
+
+            if success:
+                logger.info(f"✅ Successfully disconnected from {self.device_info.name}")
+                # Update device info to reflect disconnected state
+                self.device_info.connected = False
+                self.update_device_data(self.device_info)
+            else:
+                logger.error(f"❌ Failed to disconnect from {self.device_info.name}")
+                button.set_label("Disconnect")
+                button.set_sensitive(True)
+
+        except Exception as e:
+            logger.error(f"❌ Disconnection error: {e}")
+            button.set_label("Disconnect")
+            button.set_sensitive(True)
 
     def _on_pair_clicked(self, button):
         """Handle pair button click."""
-        print(f"🔵 Pairing with {self.device_info.name} ({self.device_info.address})")
-        # TODO: Implement actual pairing logic
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent.parent))
+
+        from bluetooth_monitor import BluetoothMonitor
+
+        logger.info(f"🔵 Pairing with {self.device_info.name} ({self.device_info.address})")
+
+        # Disable button during operation
+        button.set_sensitive(False)
+        button.set_label("Pairing...")
+
+        try:
+            monitor = BluetoothMonitor()
+            success = monitor.pair_device(self.device_info.address)
+
+            if success:
+                logger.info(f"✅ Successfully paired with {self.device_info.name}")
+                # Set device as trusted to enable auto-connect
+                monitor.set_trusted(self.device_info.address, True)
+                # Update device info to reflect paired state
+                self.device_info.paired = True
+                self.device_info.trusted = True
+                self.update_device_data(self.device_info)
+            else:
+                logger.error(f"❌ Failed to pair with {self.device_info.name}")
+                button.set_label("Pair")
+                button.set_sensitive(True)
+
+        except Exception as e:
+            logger.error(f"❌ Pairing error: {e}")
+            button.set_label("Pair")
+            button.set_sensitive(True)
+
+    def _on_force_grab_clicked(self, button):
+        """Handle force grab button click - disconnect from other devices and connect here."""
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent.parent))
+
+        from bluetooth_monitor import BluetoothMonitor
+
+        logger.info(f"🎯 Force grabbing {self.device_info.name} ({self.device_info.address})")
+
+        # Disable button during operation
+        button.set_sensitive(False)
+        button.set_label("Grabbing...")
+
+        try:
+            monitor = BluetoothMonitor()
+
+            # Get all connected devices
+            all_devices = monitor.get_devices(include_unpaired=False)
+
+            # Disconnect from all other devices
+            disconnected_count = 0
+            for device in all_devices:
+                if device.address != self.device_info.address and device.connected:
+                    logger.info(f"Disconnecting {device.name} to free up {self.device_info.name}")
+                    monitor.disconnect_device(device.address)
+                    disconnected_count += 1
+
+            # Connect to this device
+            success = monitor.connect_device(self.device_info.address)
+
+            if success:
+                logger.info(f"✅ Successfully grabbed {self.device_info.name}")
+                button.set_label("Force Grab")
+                button.set_sensitive(True)
+                # Update device info to reflect connected state
+                self.device_info.connected = True
+                self.update_device_data(self.device_info)
+            else:
+                logger.error(f"❌ Failed to grab {self.device_info.name}")
+                button.set_label("Force Grab")
+                button.set_sensitive(True)
+
+        except Exception as e:
+            logger.error(f"❌ Force grab error: {e}")
+            button.set_label("Force Grab")
+            button.set_sensitive(True)
 
     def update_device_data(self, new_device_info):
         """Update device data and refresh display."""
