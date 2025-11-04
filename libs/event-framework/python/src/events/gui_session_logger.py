@@ -315,6 +315,26 @@ class GUISessionLogger:
         else:
             self.log_output(claimed_status, "SYSTEM")
 
+    def update_session_id(self, new_session_id: str):
+        """
+        Update the session ID after chat session is created.
+        This allows the log file to use the persisted chat session ID instead of the random desktop app UUID.
+
+        Args:
+            new_session_id: The persisted chat session ID from the persistence platform
+        """
+        try:
+            old_session_id = self.session_id
+            self.session_id = new_session_id
+
+            # Log the session ID update
+            self.log_gui_event("SESSION_ID_UPDATED",
+                f"Session ID updated from desktop app UUID to persisted chat session: {new_session_id}")
+
+            print(f"✅ Session logger updated: {old_session_id[:8]}... → {new_session_id[:8]}...")
+        except Exception as e:
+            print(f"❌ Failed to update session ID: {e}")
+
     def get_session_info(self) -> dict:
         """Get current session information with component status"""
         return {

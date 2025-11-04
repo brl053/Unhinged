@@ -405,6 +405,11 @@ class ChatroomView:
             self._current_session_id = session_id
             self._session_status = "active"
 
+            # Update session logger with persisted chat session ID
+            # This replaces the random desktop app UUID with the real persisted session ID
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.update_session_id(session_id)
+
             # Update session ID display in Status tab
             if hasattr(self.app, 'status_view') and self.app.status_view:
                 self.app.status_view.update_session_id(session_id)
