@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "updated": 1762225469.4495747,
-    "updated_iso": "2025-11-03 19:04:29",
+    "updated": 1762227226.4829416,
+    "updated_iso": "2025-11-03 19:33:46",
     "version": "1.0"
   },
   "checksums": {
@@ -34,7 +34,7 @@
       "views/base.py": "5f80369672d43c30f04a9d9918768c5a182985e1b327bded0ba983e88391d8cd",
       "views/processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "views/__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "views/chatroom_view.py": "3d439275458223e4027433a5c59b19b43314bcdf971f3be28495b862f9baf552",
+      "views/chatroom_view.py": "0c7574e36abf5de4859ecfe2ec392b4dff79e0902ebe720ee0a208594f566541",
       "views/bluetooth_view.py": "ffc35d0521b1f95f3ca44a7b121fcc7ab2537686653ebd5faaa3fafc94625100",
       "views/system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
       "views/status_view.py": "eb51d15ffde2e6aa16b86a40c63700fcb77d94edd70e9c34826370212032de1c",
@@ -85,7 +85,7 @@
       "base.py": "5f80369672d43c30f04a9d9918768c5a182985e1b327bded0ba983e88391d8cd",
       "processes_view.py": "7bb763d733438b0f92f0d2422ef9dddc44c6b89f1b51299bff9c83273deab419",
       "__init__.py": "c98f7bd2d6072801871ab8473706724c262d4300c57385228c0bc179ef0207ac",
-      "chatroom_view.py": "3d439275458223e4027433a5c59b19b43314bcdf971f3be28495b862f9baf552",
+      "chatroom_view.py": "0c7574e36abf5de4859ecfe2ec392b4dff79e0902ebe720ee0a208594f566541",
       "bluetooth_view.py": "ffc35d0521b1f95f3ca44a7b121fcc7ab2537686653ebd5faaa3fafc94625100",
       "system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
       "status_view.py": "eb51d15ffde2e6aa16b86a40c63700fcb77d94edd70e9c34826370212032de1c",
@@ -100,7 +100,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "f7c6d070e43f1ef232ebe2ee1c7d7ea9ddf2f55567201bc4b410dcc05626d3ba",
+      "code_checksums.json": "46d02b16516271b628f71a45d531207c476ee0e6b915d256f90e29203d9abc78",
       "static_analysis_results.json": "7f54ed80703a9501d52a1eb2f89d5492a9178c6c219c9b133557b44ba1db88d2",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "16025f649f93af6c93fbe49f8d94af8ab54eaa005379a278a076d80535b50a1e",

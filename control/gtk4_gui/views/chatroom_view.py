@@ -918,120 +918,28 @@ class ChatroomView:
 
     def _detect_image_generation_request(self, message_text):
         """Detect image generation requests using framework-only intent detection"""
-        # FRAMEWORK ONLY - NO LEGACY FALLBACK
-        import sys
-        from pathlib import Path as PathlibPath
-        project_root = PathlibPath(__file__).parent.parent.parent
-        grpc_lib_path = project_root / "libs" / "python" / "grpc"
-        if grpc_lib_path.exists():
-            sys.path.insert(0, str(grpc_lib_path.parent))
-
-        from service_framework import IntentType, detect_intent
-
-        # Use framework intent detector - NO FALLBACK
-        intent_result = detect_intent(message_text)
-
-        if intent_result.intent_type == IntentType.IMAGE_GENERATION and intent_result.is_confident:
-            # Log intent detection
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("INTENT_DETECTED",
-                    f"Intent: {intent_result.intent_type.value}, Confidence: {intent_result.confidence:.2f}")
-
-            return {
-                "prompt": intent_result.parameters.get("prompt", message_text),
-                "type": "image_generation",
-                "original_message": message_text,
-                "confidence": intent_result.confidence,
-                "matched_pattern": intent_result.matched_pattern
-            }
-
+        # DISABLED - Use /image command instead
+        # The gRPC image generation service is not running
+        # Users should use: /image <prompt>
         return None
 
     def _handle_image_generation_request(self, image_request, original_message):
-        """Handle image generation using FRAMEWORK ONLY - NO LEGACY FALLBACK"""
-        # FRAMEWORK ONLY - NO FALLBACK MECHANISMS
-        import sys
-        from pathlib import Path as PathlibPath
-        project_root = PathlibPath(__file__).parent.parent.parent
-        grpc_lib_path = project_root / "libs" / "python" / "grpc"
-        if grpc_lib_path.exists():
-            sys.path.insert(0, str(grpc_lib_path.parent))
+        """Handle image generation using FRAMEWORK ONLY - DISABLED
 
-        from service_framework import ResourceManager
-
-        from libs.python.grpc_clients.client_factory import (
-            _framework_initialized,
-        )
-
-        # Framework must be initialized - NO FALLBACK
-        if not _framework_initialized:
-            self._add_error_message("Service framework required but not available")
-            return
-
-        # Get hardware-aware resource manager
-        resource_manager = ResourceManager("chatroom_view")
-
-        # Check resource constraints
-        resource_stats = resource_manager.get_resource_stats()
-        memory_percent = resource_stats["current"]["memory_percent"]
-
-        if memory_percent > 85.0:
-            self._add_error_message(f"System memory usage too high ({memory_percent:.1f}%). "
-                                  "Please close some applications and try again.")
-            return
-
-        # Add progress indicator
-        thinking_box = self._add_image_generation_indicator(image_request["prompt"])
-
-        # Submit to hardware-aware thread pool - FRAMEWORK ONLY
-        future = resource_manager.submit_image_task(
-            self._image_generation_with_framework,
-            image_request, thinking_box, original_message
-        )
-
-        # Store future for potential cancellation
-        thinking_box.generation_future = future
-
-# LEGACY METHOD REMOVED - FRAMEWORK ONLY
+        The gRPC image generation service is not running.
+        Use /image command instead for local GPU-accelerated generation.
+        """
+        # This method is disabled - use /image command instead
+        pass
 
     def _image_generation_with_framework(self, image_request, thinking_box, original_message):
-        """Hardware-aware image generation using service framework"""
-        try:
-            # Import service framework components
-            from gi.repository import GLib
-            from unhinged_proto_clients import common_pb2, image_generation_pb2
+        """Hardware-aware image generation using service framework - DISABLED
 
-            from libs.python.grpc_clients.client_factory import stream_service_method
-
-            # Create gRPC request
-            request = image_generation_pb2.GenerateImageRequest()
-            request.prompt = image_request["prompt"]
-            request.width = 1024
-            request.height = 1024
-            request.num_inference_steps = 25
-            request.guidance_scale = 7.5
-
-            # Stream generation with hardware-aware timeout (expert recommended 120s)
-            final_result = None
-            for chunk in stream_service_method("image_generation", "GenerateImage", request, timeout=120.0):
-                if chunk.type == common_pb2.CHUNK_TYPE_PROGRESS:
-                    # Update progress on main thread
-                    progress_data = dict(chunk.structured)
-                    GLib.idle_add(self._update_image_progress, thinking_box, progress_data)
-
-                elif chunk.type == common_pb2.CHUNK_TYPE_DATA and chunk.is_final:
-                    # Final result
-                    final_result = dict(chunk.structured)
-                    break
-
-            if final_result:
-                GLib.idle_add(self._display_generated_images, thinking_box, final_result, original_message)
-            else:
-                GLib.idle_add(self._show_generation_error, thinking_box, "No result received")
-
-        except Exception as e:
-            from gi.repository import GLib
-            GLib.idle_add(self._show_generation_error, thinking_box, str(e))
+        The gRPC image generation service is not running.
+        Use /image command instead for local GPU-accelerated generation.
+        """
+        # This method is disabled - use /image command instead
+        pass
 
     def _add_image_generation_indicator(self, prompt):
         """Add image generation progress indicator to chat"""

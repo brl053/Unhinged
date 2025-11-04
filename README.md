@@ -19,6 +19,9 @@
 ### Thank you to...
 - Terry Andrew Davis
 - Aaron Schwartz
+- Fredrik Neij
+- Peter Sunde
+- Gottfrid Svartholm
 - Mike Mentzer
 - Ray Mentzer
 - Tom Platz
@@ -27,6 +30,7 @@
 - AMD 
 - Threads
 - IG Reels
+- PewDiePie
 
 ### Big "fuck you" to...
 - Linus Torvald (<3)
