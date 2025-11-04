@@ -43,7 +43,9 @@ class GUISessionLogger:
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path.cwd()
         self.log_dir = self.project_root / "build" / "tmp"
-        self.session_id = str(uuid.uuid4())
+        # TBD: Session ID will be updated when chat session is persisted to persistence platform
+        # At app startup, we use TBD as placeholder since the real session ID doesn't exist yet
+        self.session_id = "TBD"
         self.session_start = datetime.now(timezone.utc)
         self.log_file_path = None
         self.log_file = None
@@ -84,17 +86,18 @@ class GUISessionLogger:
     def _initialize_session_file(self):
         """Initialize the session log file with proper naming convention"""
         # Format: unhinged-session-{timestamp}-{session_id}.log
+        # Note: session_id is TBD until chat session is persisted
         timestamp = self.session_start.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
         filename = f"unhinged-session-{timestamp}-{self.session_id}.log"
         self.log_file_path = self.log_dir / filename
-        
+
         try:
             self.log_file = open(self.log_file_path, 'w', encoding='utf-8', buffering=1)
             self.active = True
-            
+
             # Write session header
             self._write_session_header()
-            
+
         except Exception as e:
             print(f"❌ Failed to create session log file: {e}", file=sys.stderr)
             self.active = False
@@ -103,13 +106,16 @@ class GUISessionLogger:
         """Write session information header to log file"""
         if not self.active:
             return
-        
+
+        # Note: Session ID is TBD until chat session is persisted to persistence platform
+        # Once session is created, update_session_id() will replace TBD with the real persisted session ID
         header = f"""# Unhinged Desktop Application Session Log
 # Session ID: {self.session_id}
 # Start Time: {self.session_start.isoformat()}
 # Project Root: {self.project_root}
 # Log File: {self.log_file_path}
 # Format: Each line represents output that appeared in the GTK4 application
+# Note: Session ID is TBD until chat session is persisted. Will be updated when session is created.
 #
 # === SESSION START ===
 
@@ -318,7 +324,8 @@ class GUISessionLogger:
     def update_session_id(self, new_session_id: str):
         """
         Update the session ID after chat session is created.
-        This allows the log file to use the persisted chat session ID instead of the random desktop app UUID.
+        This replaces the TBD placeholder with the persisted chat session ID.
+        Updates both the log file header AND renames the log file to use the real session ID.
 
         Args:
             new_session_id: The persisted chat session ID from the persistence platform
@@ -327,11 +334,53 @@ class GUISessionLogger:
             old_session_id = self.session_id
             self.session_id = new_session_id
 
+            # Update the log file header and rename the file
+            if self.log_file and self.active:
+                with self.lock:
+                    try:
+                        # Close current file
+                        self.log_file.flush()
+                        self.log_file.close()
+
+                        # Read current file content
+                        with open(self.log_file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+
+                        # Replace old session ID with new one in the header
+                        updated_content = content.replace(
+                            f"# Session ID: {old_session_id}",
+                            f"# Session ID: {new_session_id}"
+                        )
+
+                        # Generate new filename with real session ID
+                        old_filename = self.log_file_path.name
+                        new_filename = old_filename.replace(f"-{old_session_id}.log", f"-{new_session_id}.log")
+                        new_log_file_path = self.log_dir / new_filename
+
+                        # Write updated content to new file
+                        with open(new_log_file_path, 'w', encoding='utf-8') as f:
+                            f.write(updated_content)
+
+                        # Remove old file
+                        try:
+                            self.log_file_path.unlink()
+                        except Exception as e:
+                            print(f"⚠️ Failed to remove old log file: {e}")
+
+                        # Update path and reopen for appending
+                        self.log_file_path = new_log_file_path
+                        self.log_file = open(self.log_file_path, 'a', encoding='utf-8', buffering=1)
+
+                        print(f"✅ Log file renamed: {old_filename} → {new_filename}")
+
+                    except Exception as e:
+                        print(f"⚠️ Failed to update log file: {e}")
+
             # Log the session ID update
             self.log_gui_event("SESSION_ID_UPDATED",
-                f"Session ID updated from desktop app UUID to persisted chat session: {new_session_id}")
+                f"Session ID updated from TBD to persisted chat session: {new_session_id}")
 
-            print(f"✅ Session logger updated: {old_session_id[:8]}... → {new_session_id[:8]}...")
+            print(f"✅ Session logger updated: {old_session_id} → {new_session_id[:8]}...")
         except Exception as e:
             print(f"❌ Failed to update session ID: {e}")
 
