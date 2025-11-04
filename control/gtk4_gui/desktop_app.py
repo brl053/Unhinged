@@ -718,6 +718,20 @@ class UnhingedDesktopApp(Adw.Application):
             traceback.print_exc()
             return self._create_fallback("Graph Editor")
 
+    def create_gpu_drivers_tab_content(self):
+        """Create the GPU Drivers tab content using GPUDriversView"""
+        try:
+            from .views.gpu_drivers_view import GPUDriversView
+            self.gpu_drivers_view = GPUDriversView(self)
+            content = self.gpu_drivers_view.create_content()
+            print("✅ GPU Drivers page created successfully")
+            return content
+        except Exception as e:
+            print(f"❌ Error creating GPU drivers view: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._create_fallback("GPU Drivers")
+
     def setup_actions(self):
         """Setup application actions using ActionController"""
         if hasattr(self, 'action_controller') and self.action_controller:
