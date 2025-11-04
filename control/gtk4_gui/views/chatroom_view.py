@@ -60,8 +60,6 @@ class ChatroomView:
         # Session management state
         self._current_session_id = None
         self._session_status = "no_session"  # no_session, creating, active
-        self._session_id_label = None
-        self._session_row = None
 
     def create_content(self):
         """Create the OS Chatroom tab content with design system layout utilities."""
@@ -206,55 +204,17 @@ class ChatroomView:
         # Add input container to input area
         input_area.append(input_container)
 
-        # Create session management section (before input area)
-        session_section = self._create_session_management_section()
-
-        # Add session section and input area to main container
-        chatroom_container.append(session_section)
+        # Add input area to main container
+        # NOTE: Session management is now handled in Status tab only
         chatroom_container.append(input_area)
 
-        # Initialize UI state based on session status
-        self._update_ui_for_session_state()
-
         return chatroom_container
-
-    def _create_session_management_section(self):
-        """Create session management UI section"""
-        # Session management container
-        session_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        session_container.set_margin_top(16)
-        session_container.set_margin_bottom(8)
-        session_container.set_margin_start(16)
-        session_container.set_margin_end(16)
-
-        # Session management row - displays session ID when active
-        self._session_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        self._session_row.set_halign(Gtk.Align.FILL)
-
-        # Session ID label (displays active session ID)
-        self._session_id_label = Gtk.Label()
-        self._session_id_label.set_halign(Gtk.Align.START)
-        self._session_id_label.set_hexpand(True)
-        self._session_id_label.add_css_class("caption")
-        self._session_id_label.set_visible(False)
-        self._session_row.append(self._session_id_label)
-
-        session_container.append(self._session_row)
-
-        # Add separator
-        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        separator.set_margin_top(8)
-        separator.set_margin_bottom(8)
-        session_container.append(separator)
-
-        return session_container
 
     def _create_new_session(self):
         """Create a new chat session using gRPC ChatService"""
         try:
-            # Update UI to show creating state
+            # Update session status to creating
             self._session_status = "creating"
-            self._update_ui_for_session_state()
 
             # Create session in background thread
             import threading
@@ -264,7 +224,6 @@ class ChatroomView:
         except Exception as e:
             print(f"❌ Create session error: {e}")
             self._session_status = "no_session"
-            self._update_ui_for_session_state()
 
     def _create_session_grpc(self):
         """Create session via SERVICE FRAMEWORK ONLY - NO LEGACY"""
@@ -445,7 +404,10 @@ class ChatroomView:
         try:
             self._current_session_id = session_id
             self._session_status = "active"
-            self._update_ui_for_session_state()
+
+            # Update session ID display in Status tab
+            if hasattr(self.app, 'status_view') and self.app.status_view:
+                self.app.status_view.update_session_id(session_id)
 
             # Store session metadata in persistence platform
             self._store_session_metadata(session_id)
@@ -465,7 +427,6 @@ class ChatroomView:
         """Handle failed session creation"""
         try:
             self._session_status = "no_session"
-            self._update_ui_for_session_state()
 
             # Log session creation failure
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
@@ -477,28 +438,6 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Session creation failed callback error: {e}")
-
-    def _update_ui_for_session_state(self):
-        """Update UI elements based on current session state"""
-        try:
-            if self._session_status == "no_session":
-                # No session: disable chat, hide session ID
-                self._session_id_label.set_visible(False)
-                self._disable_chat_functionality()
-
-            elif self._session_status == "creating":
-                # Creating session: disable chat, hide session ID
-                self._session_id_label.set_visible(False)
-                self._disable_chat_functionality()
-
-            elif self._session_status == "active":
-                # Active session: enable chat, display session ID
-                self._session_id_label.set_text(f"Session: {self._current_session_id}")
-                self._session_id_label.set_visible(True)
-                self._enable_chat_functionality()
-
-        except Exception as e:
-            print(f"❌ Update UI for session state error: {e}")
 
     def _disable_chat_functionality(self):
         """Disable chat input and voice controls until session exists"""

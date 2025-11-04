@@ -44,6 +44,9 @@ class StatusView:
         self.progress_bar = None
         self.log_viewer = None
 
+        # Session management references
+        self.session_id_label = None
+
         # Initialize platform handler
         self.platform_handler = None
         if PLATFORM_HANDLER_AVAILABLE:
@@ -66,6 +69,10 @@ class StatusView:
         status_box.set_margin_start(24)
         status_box.set_margin_end(24)
 
+        # Add session management section
+        session_section = self._create_session_management_section()
+        status_box.append(session_section)
+
         # Add platform control section
         platform_control = self._create_platform_control_section()
         status_box.append(platform_control)
@@ -84,6 +91,28 @@ class StatusView:
         scrolled.set_child(status_box)
 
         return scrolled
+
+    def _create_session_management_section(self):
+        """Create session management section displaying active session ID"""
+        group = Adw.PreferencesGroup()
+        group.set_title("Chat Session")
+        group.set_description("Active session from OS Chatroom")
+
+        # Session ID row
+        session_row = Adw.ActionRow()
+        session_row.set_title("Session ID")
+
+        # Session ID label (displays active session ID from chatroom)
+        self.session_id_label = Gtk.Label()
+        self.session_id_label.set_text("No active session")
+        self.session_id_label.set_halign(Gtk.Align.END)
+        self.session_id_label.add_css_class("monospace")
+        self.session_id_label.add_css_class("caption")
+        session_row.add_suffix(self.session_id_label)
+
+        group.add(session_row)
+
+        return group
 
     def _create_platform_control_section(self):
         """Create platform control section with Start/Stop buttons"""
@@ -287,6 +316,20 @@ class StatusView:
             self.app.show_error_dialog(title, message)
         else:
             print(f"❌ {title}: {message}")
+
+    def update_session_id(self, session_id):
+        """Update the displayed session ID from chatroom"""
+        from gi.repository import GLib
+
+        def update_ui():
+            if self.session_id_label:
+                if session_id:
+                    self.session_id_label.set_text(session_id)
+                else:
+                    self.session_id_label.set_text("No active session")
+            return False
+
+        GLib.idle_add(update_ui)
 
     def refresh_status(self):
         """Refresh status information"""
