@@ -733,6 +733,8 @@ class ChatroomView:
                 sender_label.add_css_class("accent")
             elif message_type == "assistant":
                 sender_label.add_css_class("success")
+            elif message_type == "error":
+                sender_label.add_css_class("error")
 
             message_box.append(sender_label)
 
