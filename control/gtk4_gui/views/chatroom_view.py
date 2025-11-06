@@ -1468,7 +1468,7 @@ class ChatroomView:
             # Create SendMessage request
             request = chat_pb2.SendMessageRequest()
             request.conversation_id = self._current_session_id
-            request.role = chat_pb2.USER
+            request.role = chat_pb2.MESSAGE_ROLE_USER
             request.content = message
 
             # Call chat service
