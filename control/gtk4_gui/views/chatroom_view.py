@@ -812,6 +812,7 @@ class ChatroomView:
 
     def _handle_slash_image_command(self, prompt: str):
         """Handle /image command for GPU-accelerated image generation"""
+        thinking_box = None
         try:
             # Add user command to chat
             self._add_chat_message("You", f"/image {prompt}", "user")
@@ -855,6 +856,9 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ /image command error: {e}")
+            # Remove thinking indicator if it was created
+            if thinking_box and thinking_box.get_parent():
+                self._messages_container.remove(thinking_box)
             self._add_error_message(f"Command failed: {e}")
 
     def _display_generated_image(self, thinking_box, result, prompt):
