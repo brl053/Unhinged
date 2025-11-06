@@ -581,6 +581,17 @@ class ChatroomView:
             # Reset state on error
             self._is_recording = False
             self._stop_recording_timer()
+            # Reset button appearance
+            self._chatroom_voice_button.remove_css_class("recording-active")
+            if hasattr(self._chatroom_voice_button, 'set_icon_name'):
+                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
+            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+                widget = self._chatroom_voice_button.get_widget()
+                if hasattr(widget, 'set_icon_name'):
+                    widget.set_icon_name("audio-input-microphone-symbolic")
+            # Reset timer display
+            if self._recording_status_label:
+                self._recording_status_label.set_visible(False)
 
     def _stop_toggle_recording(self):
         """Stop toggle recording and process transcript"""
