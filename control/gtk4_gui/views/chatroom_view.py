@@ -1479,29 +1479,62 @@ class ChatroomView:
             return None
 
     def _text_chat_framework_thread(self, message, thinking_box):
-        """Handle text chat using gRPC chat service"""
+        """Handle text chat using gRPC chat service + Ollama LLM"""
         try:
             from gi.repository import GLib
             from libs.python.grpc_clients.client_factory import call_service_method
             from unhinged_proto_clients import chat_pb2
+            import requests
+            import json
 
-            # Create SendMessage request
+            # Step 1: Send user message to chat service (store it)
             request = chat_pb2.SendMessageRequest()
             request.conversation_id = self._current_session_id
             request.role = chat_pb2.MESSAGE_ROLE_USER
             request.content = message
 
-            # Call chat service
             response = call_service_method("chat", "SendMessage", request, timeout=60.0)
+            if not response or not response.response.success:
+                error_msg = response.response.message if response else "Failed to store user message"
+                GLib.idle_add(self._handle_text_error, f"Chat service error: {error_msg}", thinking_box)
+                return
 
-            # Extract assistant response
-            if response and response.response.success and response.message:
-                assistant_response = response.message.content
-            else:
-                error_msg = response.response.message if response else "Service unavailable"
-                assistant_response = f"Error: {error_msg}"
+            # Step 2: Call Ollama LLM to generate response
+            try:
+                ollama_response = requests.post(
+                    "http://localhost:1500/api/generate",
+                    json={
+                        "model": "llama2",  # Default model
+                        "prompt": message,
+                        "stream": False,
+                        "temperature": 0.7
+                    },
+                    timeout=120.0
+                )
+                ollama_response.raise_for_status()
 
-            # Update UI on main thread
+                response_data = ollama_response.json()
+                assistant_response = response_data.get("response", "No response from LLM")
+            except requests.exceptions.ConnectionError:
+                assistant_response = "Error: LLM service not available at localhost:1500"
+            except requests.exceptions.Timeout:
+                assistant_response = "Error: LLM service timeout (took longer than 120 seconds)"
+            except Exception as e:
+                assistant_response = f"Error: LLM generation failed: {str(e)}"
+
+            # Step 3: Send assistant response to chat service (store it)
+            if not assistant_response.startswith("Error:"):
+                try:
+                    response_request = chat_pb2.SendMessageRequest()
+                    response_request.conversation_id = self._current_session_id
+                    response_request.role = chat_pb2.MESSAGE_ROLE_ASSISTANT
+                    response_request.content = assistant_response
+
+                    call_service_method("chat", "SendMessage", response_request, timeout=60.0)
+                except Exception as e:
+                    print(f"⚠️ Failed to store assistant response: {e}")
+
+            # Step 4: Update UI on main thread
             GLib.idle_add(self._handle_text_response, assistant_response, thinking_box)
 
         except Exception as e:
