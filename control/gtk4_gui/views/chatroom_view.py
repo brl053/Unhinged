@@ -1582,15 +1582,21 @@ class ChatroomView:
                 # Update button on main thread
                 GLib.idle_add(lambda: self._update_tts_button(button, "✅ Done"))
                 GLib.idle_add(lambda: button.set_sensitive(True))
+                # Reset button label after 2 seconds
+                GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
             else:
                 GLib.idle_add(lambda: self._update_tts_button(button, "❌ Failed"))
                 GLib.idle_add(lambda: button.set_sensitive(True))
+                # Reset button label after 2 seconds
+                GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
 
         except Exception as e:
             print(f"❌ TTS thread error: {e}")
             from gi.repository import GLib
-            GLib.idle_add(lambda: self._update_tts_button(button, "🎤 Hear"))
+            GLib.idle_add(lambda: self._update_tts_button(button, "❌ Error"))
             GLib.idle_add(lambda: button.set_sensitive(True))
+            # Reset button label after 2 seconds
+            GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
 
     def _update_tts_button(self, button, label):
         """Update TTS button label"""
