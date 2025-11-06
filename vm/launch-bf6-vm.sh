@@ -55,15 +55,16 @@ if [ -f "$ISO_PATH" ]; then
         -cpu EPYC-v4,+invtsc,+tsc \
         -smp cores=8,threads=1,sockets=1 \
         -m 16G \
-        -device qxl-vga,vram_size_mb=256 \
+        -device VGA \
         -drive file="$VM_DISK",if=virtio,format=qcow2,cache=writeback \
-        -drive file="$ISO_PATH",media=cdrom,index=0 \
+        -drive file="$ISO_PATH",media=cdrom,if=ide,index=0,cache=none \
         -netdev user,id=net0 -device e1000,netdev=net0 \
+        -boot order=d,menu=off \
         -bios /usr/share/ovmf/OVMF.fd \
         -enable-kvm \
         -display gtk,gl=on \
-        -boot d \
-        -monitor stdio
+        -serial stdio \
+        -monitor vc
 else
     # Boot from existing disk
     # Using EPYC CPU model for better Windows 11 compatibility on AMD
@@ -73,12 +74,13 @@ else
         -cpu EPYC-v4,+invtsc,+tsc \
         -smp cores=8,threads=1,sockets=1 \
         -m 16G \
-        -device qxl-vga,vram_size_mb=256 \
+        -device VGA \
         -drive file="$VM_DISK",if=virtio,format=qcow2,cache=writeback \
         -netdev user,id=net0 -device e1000,netdev=net0 \
         -bios /usr/share/ovmf/OVMF.fd \
         -enable-kvm \
         -display gtk,gl=on \
-        -monitor stdio
+        -serial stdio \
+        -monitor vc
 fi
 

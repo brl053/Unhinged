@@ -100,7 +100,7 @@ class UIController:
             ("processes", "Processes", self.app.create_processes_tab_content),
             ("input", "Input", self.app.create_input_tab_content),
             ("chatroom", "OS Chatroom", self.app.create_chatroom_tab_content),
-            ("gpu_drivers", "GPU Drivers", self.app.create_gpu_drivers_tab_content),
+            ("gpu_drivers", "GPU", self.app.create_gpu_drivers_tab_content),
             ("bluetooth", "Bluetooth", self.app.create_bluetooth_tab_content),
             ("output", "Output", self.app.create_output_tab_content),
             ("usb", "USB", self.app.create_usb_tab_content),
@@ -157,7 +157,7 @@ class UIController:
             ("processes", "Processes", "system-run-symbolic"),
             ("input", "Input", "audio-input-microphone-symbolic"),
             ("chatroom", "OS Chatroom", "user-available-symbolic"),
-            ("gpu_drivers", "GPU Drivers", "video-card-symbolic"),
+            ("gpu_drivers", "GPU", "video-card-symbolic"),
             ("bluetooth", "Bluetooth", "bluetooth-symbolic"),
             ("output", "Output", "audio-speakers-symbolic"),
             ("usb", "USB", "drive-removable-media-symbolic"),
@@ -255,6 +255,13 @@ class UIController:
                 if hasattr(self.app.usb_view, 'on_ready'):
                     try:
                         self.app.usb_view.on_ready()
+                    except Exception as e:
+                        print(f"⚠️ Error during view ready: {e}")
+            elif view_name == "gpu_drivers" and hasattr(self.app, 'gpu_view'):
+                self.app.current_view = self.app.gpu_view
+                if hasattr(self.app.gpu_view, 'on_ready'):
+                    try:
+                        self.app.gpu_view.on_ready()
                     except Exception as e:
                         print(f"⚠️ Error during view ready: {e}")
             else:

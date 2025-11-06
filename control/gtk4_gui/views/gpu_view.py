@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-USB Devices View
+GPU Devices View
 
-Displays raw lsusb output with auto-refresh when tab is active.
+Displays raw nvidia-smi output with auto-refresh when tab is active.
 """
 
 import gi
@@ -15,11 +15,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class USBView:
-    """View for displaying USB devices using raw lsusb output"""
+class GPUView:
+    """View for displaying GPU devices using raw nvidia-smi output"""
 
     def __init__(self, app):
-        """Initialize USB view"""
+        """Initialize GPU view"""
         self.app = app
         self.widget = None
         self.text_view = None
@@ -31,16 +31,16 @@ class USBView:
         self.refresh_timeout_id = None
         self.refresh_interval = 3000  # milliseconds
         
-        # Import USB monitor
+        # Import GPU monitor
         try:
-            from ..handlers.usb_monitor import USBMonitor
+            from ..handlers.gpu_monitor import GPUMonitor
         except ImportError:
-            from handlers.usb_monitor import USBMonitor
+            from handlers.gpu_monitor import GPUMonitor
         
-        self.usb_monitor = USBMonitor()
+        self.gpu_monitor = GPUMonitor()
 
     def create_content(self) -> Gtk.Widget:
-        """Create the USB view content"""
+        """Create the GPU view content"""
         try:
             # Main container
             main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
@@ -51,17 +51,17 @@ class USBView:
 
             # Header section
             header_group = Adw.PreferencesGroup()
-            header_group.set_title("USB Devices")
-            header_group.set_description("Real-time USB device enumeration")
+            header_group.set_title("GPU Devices")
+            header_group.set_description("Real-time GPU device enumeration")
 
             # Add header row
             info_row = Adw.ActionRow()
-            info_row.set_title("USB Device List")
-            info_row.set_subtitle("Raw lsusb output, auto-refreshing")
+            info_row.set_title("GPU Device List")
+            info_row.set_subtitle("Raw nvidia-smi output, auto-refreshing")
 
-            usb_icon = Gtk.Image.new_from_icon_name("drive-removable-media-symbolic")
-            usb_icon.set_icon_size(Gtk.IconSize.LARGE)
-            info_row.add_prefix(usb_icon)
+            gpu_icon = Gtk.Image.new_from_icon_name("video-card-symbolic")
+            gpu_icon.set_icon_size(Gtk.IconSize.LARGE)
+            info_row.add_prefix(gpu_icon)
 
             header_group.add(info_row)
             main_box.append(header_group)
@@ -91,7 +91,7 @@ class USBView:
 
             main_box.append(control_box)
 
-            # Text view for lsusb output
+            # Text view for nvidia-smi output
             scrolled = Gtk.ScrolledWindow()
             scrolled.set_vexpand(True)
             scrolled.set_hexpand(True)
@@ -114,15 +114,15 @@ class USBView:
 
             # Log creation
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("USB_VIEW_CREATED", "USB view created")
+                self.app.session_logger.log_gui_event("GPU_VIEW_CREATED", "GPU view created")
 
             # Load initial data immediately
-            GLib.idle_add(self.refresh_usb_list)
+            GLib.idle_add(self.refresh_gpu_list)
 
             return self.widget
 
         except Exception as e:
-            logger.error(f"Error creating USB view: {e}")
+            logger.error(f"Error creating GPU view: {e}")
             # Fallback error display
             error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
             error_label = Gtk.Label(label=f"Error: {str(e)}")
@@ -131,7 +131,7 @@ class USBView:
 
     def _on_refresh_clicked(self, button):
         """Handle refresh button click"""
-        self.refresh_usb_list()
+        self.refresh_gpu_list()
 
     def _on_auto_refresh_toggled(self, toggle):
         """Handle auto-refresh toggle"""
@@ -142,14 +142,14 @@ class USBView:
         else:
             self._stop_auto_refresh()
 
-    def refresh_usb_list(self):
-        """Refresh the USB device list"""
+    def refresh_gpu_list(self):
+        """Refresh the GPU device list"""
         try:
             self.status_label.set_text("Refreshing...")
             self.refresh_button.set_sensitive(False)
 
-            # Get USB devices
-            basic, verbose = self.usb_monitor.refresh()
+            # Get GPU devices
+            basic, detailed = self.gpu_monitor.refresh()
 
             # Display basic output
             self.text_buffer.set_text(basic)
@@ -157,10 +157,10 @@ class USBView:
             self.status_label.set_text("Updated")
             
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("USB_LIST_REFRESHED", "USB device list refreshed")
+                self.app.session_logger.log_gui_event("GPU_LIST_REFRESHED", "GPU device list refreshed")
 
         except Exception as e:
-            logger.error(f"Error refreshing USB list: {e}")
+            logger.error(f"Error refreshing GPU list: {e}")
             self.status_label.set_text(f"Error: {str(e)}")
         finally:
             self.refresh_button.set_sensitive(True)
@@ -183,19 +183,19 @@ class USBView:
 
     def _auto_refresh_callback(self):
         """Auto-refresh callback"""
-        self.refresh_usb_list()
+        self.refresh_gpu_list()
         return True  # Continue timer
 
     def on_ready(self):
         """Called when view is displayed"""
-        logger.info("USB view ready - starting auto-refresh")
+        logger.info("GPU view ready - starting auto-refresh")
         if self.auto_refresh_enabled:
             self._start_auto_refresh()
-            self.refresh_usb_list()
+            self.refresh_gpu_list()
 
     def cleanup(self):
         """Clean up resources"""
         self._stop_auto_refresh()
         if hasattr(self.app, 'session_logger') and self.app.session_logger:
-            self.app.session_logger.log_gui_event("USB_VIEW_CLEANUP", "USB view cleaned up")
+            self.app.session_logger.log_gui_event("GPU_VIEW_CLEANUP", "GPU view cleaned up")
 
