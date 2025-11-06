@@ -442,42 +442,70 @@ cmd_vm() {
     case "$vm_type" in
         win10)
             log_info "Launching Windows 10 gaming VM (350GB)..."
+            log_info "Modeling host: AMD Ryzen 9 9950X, RTX 4090, 60GB RAM"
+            log_info "Secure Boot: ENABLED (spoofed)"
             killall -9 qemu-system-x86_64 2>/dev/null || true
             sleep 2
 
+            # Initialize OVMF firmware for Secure Boot support
+            cp /usr/share/OVMF/OVMF_VARS_4M.fd /tmp/OVMF_VARS_win10.fd 2>/dev/null || log_warning "OVMF_VARS_4M.fd not found"
+
             qemu-system-x86_64 \
                 -name "Windows-10" \
-                -machine type=pc,accel=kvm \
-                -cpu host \
+                -machine type=q35,accel=kvm,kernel-irqchip=on \
+                -cpu host,+invtsc,+tsc,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_crash,hv_reset,hv_vpindex,hv_runtime \
                 -smp cores=8,threads=1,sockets=1 \
                 -m 16G \
-                -device VGA \
-                -drive file="$PROJECT_ROOT/build/tmp/Win10_22H2_English_x64v1.iso",media=cdrom,if=ide,index=0 \
-                -drive file="$PROJECT_ROOT/vm/bf6-w11-gaming.qcow2",if=ide,index=1,format=qcow2,cache=writeback \
-                -netdev user,id=net0 -device e1000,netdev=net0 \
+                -device qemu-xhci,id=xhci \
+                -device usb-tablet \
+                -device VGA,vram=256 \
+                -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd \
+                -drive if=pflash,format=raw,file=/tmp/OVMF_VARS_win10.fd \
+                -drive file="$PROJECT_ROOT/vm/bf6-w11-gaming.qcow2",if=virtio,format=qcow2,cache=writeback,discard=unmap \
+                -drive file="$PROJECT_ROOT/build/tmp/Win10_22H2_English_x64v1.iso",media=cdrom,if=ide \
+                -netdev user,id=net0,hostfwd=tcp::3389-:3389 -device virtio-net-pci,netdev=net0 \
                 -enable-kvm \
                 -display gtk \
-                -boot order=d,menu=off &
+                -boot order=c,menu=off &
 
-            log_success "Windows 10 VM launched"
+            log_success "Windows 10 VM launched with Secure Boot enabled"
             ;;
         templeos)
             log_info "Launching TempleOS VM..."
             killall -9 qemu-system-x86_64 2>/dev/null || true
             sleep 2
 
-            qemu-system-x86_64 \
-                -name TempleOS \
-                -machine type=pc,accel=kvm \
-                -cpu host \
-                -smp cores=4,threads=1,sockets=1 \
-                -m 2G \
-                -device VGA \
-                -drive file="$PROJECT_ROOT/build/tmp/TempleOS.ISO",media=cdrom,if=ide,index=0 \
-                -netdev user,id=net0 -device e1000,netdev=net0 \
-                -enable-kvm \
-                -display gtk \
-                -boot order=d,menu=off &
+            # Check if TempleOS disk exists, if so boot from it, otherwise boot from ISO
+            if [ -f "$PROJECT_ROOT/vm/templeos.qcow2" ]; then
+                log_info "Booting from existing TempleOS disk..."
+                qemu-system-x86_64 \
+                    -name TempleOS \
+                    -machine type=pc,accel=kvm \
+                    -cpu host \
+                    -smp cores=4,threads=1,sockets=1 \
+                    -m 2G \
+                    -device VGA \
+                    -drive file="$PROJECT_ROOT/vm/templeos.qcow2",if=ide,index=0,format=qcow2,cache=writeback \
+                    -drive file="$PROJECT_ROOT/build/tmp/TempleOS.ISO",media=cdrom,if=ide,index=1 \
+                    -netdev user,id=net0 -device e1000,netdev=net0 \
+                    -enable-kvm \
+                    -display gtk \
+                    -boot order=c,menu=off &
+            else
+                log_info "No existing TempleOS disk found, booting from ISO..."
+                qemu-system-x86_64 \
+                    -name TempleOS \
+                    -machine type=pc,accel=kvm \
+                    -cpu host \
+                    -smp cores=4,threads=1,sockets=1 \
+                    -m 2G \
+                    -device VGA \
+                    -drive file="$PROJECT_ROOT/build/tmp/TempleOS.ISO",media=cdrom,if=ide,index=0 \
+                    -netdev user,id=net0 -device e1000,netdev=net0 \
+                    -enable-kvm \
+                    -display gtk \
+                    -boot order=d,menu=off &
+            fi
 
             log_success "TempleOS VM launched"
             ;;

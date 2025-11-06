@@ -94,7 +94,7 @@ class TextToSpeechExecutor(NodeExecutor):
                 # Prepare request
                 request = audio_pb2.TTSRequest()
                 request.text = input_data.get('text', '')
-                request.voice = config.get('voice', 'nova')
+                request.voice_id = config.get('voice', 'nova')
 
                 # Call service (streaming response)
                 audio_chunks = []

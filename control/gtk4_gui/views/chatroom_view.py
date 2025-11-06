@@ -1593,7 +1593,7 @@ class ChatroomView:
             # Create TTS request
             request = audio_pb2.TTSRequest()
             request.text = text
-            request.voice = "default"
+            request.voice_id = "default"
 
             # Call TTS service
             response = call_service_method("audio", "TextToSpeech", request, timeout=30.0)
