@@ -35,6 +35,9 @@ from gi.repository import Adw, GLib, Gtk
 # Add virtual environment packages to path for gRPC support
 # Calculate project root correctly (control/gtk4_gui/desktop_app.py -> project root)
 project_root = Path(__file__).parent.parent.parent
+
+# Use build/python/venv as single source of truth for all dependencies
+# See: build/requirements-unified.txt and LLM_MASTER_PROMPT.md
 venv_packages = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
 protobuf_clients = project_root / "generated" / "python" / "clients"
 
@@ -82,9 +85,7 @@ try:
         from handlers.audio_handler import AudioHandler, RecordingState
         from service_connector import service_connector, service_registry
     ARCHITECTURE_AVAILABLE = True
-    print("✅ New architecture components loaded")
 except ImportError as e:
-    print(f"⚠️ New architecture components not available: {e}")
     ARCHITECTURE_AVAILABLE = False
 
 # Import component library
@@ -108,7 +109,6 @@ try:
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
-    print("⚠️  Component library not available - using basic widgets")
 
 # Import system information collection
 try:
@@ -125,7 +125,6 @@ try:
     SYSTEM_INFO_AVAILABLE = True
 except ImportError as e:
     SYSTEM_INFO_AVAILABLE = False
-    print(f"⚠️  System info collection not available: {e}")
 
 # Import session logging from event framework (optional)
 SESSION_LOGGING_AVAILABLE = False
@@ -144,14 +143,12 @@ try:
 
     from events import GUIOutputCapture, create_gui_session_logger
     SESSION_LOGGING_AVAILABLE = True
-    print("✅ Session logging available")
 except ImportError:
     # Session logging is optional - continue without it
     SESSION_LOGGING_AVAILABLE = False
 
 # Simple approach: Use control modules as scripts (academic exercise)
 CONTROL_MODULES_AVAILABLE = True
-print("✅ Control modules available as scripts")
 
 class UnhingedDesktopApp(Adw.Application):
     """
@@ -207,13 +204,9 @@ class UnhingedDesktopApp(Adw.Application):
                     self._gui_log_callback
                 )
                 self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with system info integration")
-                print("✅ Session logging initialized")
             except Exception as e:
-                print(f"⚠️  Session logging initialization failed: {e}")
                 self.session_logger = None
                 self.output_capture = None
-        else:
-            print("ℹ️  Session logging not available (optional feature)")
 
         # Control module availability
         self.control_available = CONTROL_MODULES_AVAILABLE
@@ -236,14 +229,9 @@ class UnhingedDesktopApp(Adw.Application):
 
                 # Validate service configuration
                 if not validate_all_services():
-                    print("⚠️ Some services are not properly configured")
-
-                print("✅ New architecture components initialized")
+                    pass  # Services not properly configured, continue anyway
             except Exception as e:
-                print(f"⚠️ Failed to initialize new architecture: {e}")
                 self.audio_handler = None
-        else:
-            print("⚠️ New architecture components not available - using fallback implementations")
 
         # Design system CSS provider (for delayed loading)
         self._pending_css_provider = None
@@ -271,10 +259,7 @@ class UnhingedDesktopApp(Adw.Application):
             self.ui_controller = UIController(self)
             self.content_controller = ContentController(self)
             self.action_controller = ActionController(self)
-
-            print("✅ Controllers initialized")
         except Exception as e:
-            print(f"⚠️ Failed to initialize controllers: {e}")
             self.ui_controller = None
             self.content_controller = None
             self.action_controller = None
@@ -336,12 +321,8 @@ class UnhingedDesktopApp(Adw.Application):
                 else:
                     self._pending_css_provider = css_provider
 
-                print(f"✅ Design system CSS loaded ({len(loaded_files)} files)")
-            else:
-                print("ℹ️ No design system CSS files found")
-
         except Exception as e:
-            print(f"❌ Failed to load design system CSS: {e}")
+            pass  # CSS loading is optional
 
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -360,7 +341,6 @@ class UnhingedDesktopApp(Adw.Application):
                     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
                 )
                 self._pending_css_provider = None
-                print("✅ Applied pending design system CSS to display")
 
         # Log application activation
         if self.session_logger:
@@ -412,7 +392,6 @@ class UnhingedDesktopApp(Adw.Application):
             from .views.status_view import StatusView
             self.status_view = StatusView(self)
             content = self.status_view.create_content()
-            print("✅ Status page created successfully")
             return content
         except Exception as e:
             print(f"❌ CRITICAL: Status creation failed: {e}")
@@ -426,7 +405,6 @@ class UnhingedDesktopApp(Adw.Application):
             from .views.system_view import SystemInfoView
             self.system_info_view = SystemInfoView(self)
             content = self.system_info_view.create_content()
-            print("✅ System Info page created successfully")
             return content
         except Exception as e:
             print(f"❌ CRITICAL: System Info creation failed: {e}")
@@ -491,7 +469,6 @@ class UnhingedDesktopApp(Adw.Application):
             from .views.chatroom_view import ChatroomView
             self.chatroom_view = ChatroomView(self)
             content = self.chatroom_view.create_content()
-            print("✅ OS Chatroom page created successfully")
 
             # Automatically create a session on app launch (headless)
             # Schedule session creation after UI is ready
@@ -510,7 +487,6 @@ class UnhingedDesktopApp(Adw.Application):
             if hasattr(self, 'chatroom_view') and self.chatroom_view:
                 # Check if session already exists
                 if self.chatroom_view._session_status == "no_session":
-                    print("🔄 Auto-creating session on app launch...")
                     self.chatroom_view._create_new_session()
                     if self.session_logger:
                         self.session_logger.log_gui_event(
@@ -518,7 +494,7 @@ class UnhingedDesktopApp(Adw.Application):
                             "Session automatically created on app launch (headless)"
                         )
         except Exception as e:
-            print(f"⚠️ Auto-session creation failed: {e}")
+            pass  # Auto-session creation failed, continue
         return False  # Don't repeat
 
 
@@ -700,6 +676,18 @@ class UnhingedDesktopApp(Adw.Application):
         """Fallback output implementation"""
         return self._create_fallback("Audio output")
 
+    def create_usb_tab_content(self):
+        """Create the USB tab content using extracted USBView"""
+        try:
+            from .views.usb_view import USBView
+            self.usb_view = USBView(self)
+            return self.usb_view.create_content()
+        except Exception as e:
+            print(f"❌ Error creating USB view: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._create_fallback("USB Devices")
+
     def create_graph_tab_content(self):
         """Create the Graph Editor tab content using GraphWorkspaceView"""
         try:
@@ -710,7 +698,6 @@ class UnhingedDesktopApp(Adw.Application):
             # Load sample graph for demonstration
             self.graph_workspace_view.load_sample_graph()
 
-            print("✅ Graph Editor page created successfully")
             return content
         except Exception as e:
             print(f"❌ Error creating graph editor view: {e}")
@@ -724,7 +711,6 @@ class UnhingedDesktopApp(Adw.Application):
             from .views.gpu_drivers_view import GPUDriversView
             self.gpu_drivers_view = GPUDriversView(self)
             content = self.gpu_drivers_view.create_content()
-            print("✅ GPU Drivers page created successfully")
             return content
         except Exception as e:
             print(f"❌ Error creating GPU drivers view: {e}")

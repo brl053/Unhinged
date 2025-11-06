@@ -128,8 +128,9 @@ class BluetoothMonitor:
             return
 
         try:
-            self._bus = dbus.SystemBus()
-            logger.debug("D-Bus system bus connected")
+            # Set a timeout for D-Bus operations to prevent freezing
+            self._bus = dbus.SystemBus(timeout=5000)  # 5 second timeout
+            logger.debug("D-Bus system bus connected with 5s timeout")
         except Exception as e:
             logger.warning(f"Failed to connect to D-Bus: {e}")
             self._bus = None
@@ -188,32 +189,8 @@ class BluetoothMonitor:
         adapters = []
 
         try:
-            manager = dbus.Interface(
-                self._bus.get_object("org.bluez", "/"),
-                "org.freedesktop.DBus.ObjectManager"
-            )
-
-            objects = manager.GetManagedObjects()
-
-            for path, interfaces in objects.items():
-                if "org.bluez.Adapter1" in interfaces:
-                    props = interfaces["org.bluez.Adapter1"]
-
-                    adapter = BluetoothAdapter(
-                        address=str(props.get("Address", "")),
-                        name=str(props.get("Name", "")),
-                        alias=str(props.get("Alias", "")),
-                        powered=bool(props.get("Powered", False)),
-                        discoverable=bool(props.get("Discoverable", False)),
-                        pairable=bool(props.get("Pairable", False)),
-                        discovering=bool(props.get("Discovering", False)),
-                        uuids=[str(uuid) for uuid in props.get("UUIDs", [])],
-                        manufacturer=int(props.get("Manufacturer", 0)),
-                        version=int(props.get("Version", 0))
-                    )
-
-                    adapters.append(adapter)
-
+            # Use bluetoothctl fallback if D-Bus is slow
+            return self._get_adapters_bluetoothctl()
         except Exception as e:
             logger.error(f"D-Bus adapter enumeration failed: {e}")
 
@@ -248,35 +225,8 @@ class BluetoothMonitor:
         devices = []
 
         try:
-            manager = dbus.Interface(
-                self._bus.get_object("org.bluez", "/"),
-                "org.freedesktop.DBus.ObjectManager"
-            )
-
-            objects = manager.GetManagedObjects()
-
-            for path, interfaces in objects.items():
-                if "org.bluez.Device1" in interfaces:
-                    props = interfaces["org.bluez.Device1"]
-
-                    device = BluetoothDevice(
-                        address=str(props.get("Address", "")),
-                        name=str(props.get("Name", "")),
-                        alias=str(props.get("Alias", "")),
-                        device_class=int(props.get("Class", 0)),
-                        device_type="",  # Will be classified in __post_init__
-                        paired=bool(props.get("Paired", False)),
-                        connected=bool(props.get("Connected", False)),
-                        trusted=bool(props.get("Trusted", False)),
-                        blocked=bool(props.get("Blocked", False)),
-                        rssi=props.get("RSSI"),
-                        uuids=[str(uuid) for uuid in props.get("UUIDs", [])],
-                        adapter=str(props.get("Adapter", "")),
-                        last_seen=time.time()
-                    )
-
-                    devices.append(device)
-
+            # Use bluetoothctl fallback to avoid D-Bus timeout issues
+            return self._get_devices_bluetoothctl()
         except Exception as e:
             logger.error(f"D-Bus device enumeration failed: {e}")
 
@@ -375,58 +325,52 @@ class BluetoothMonitor:
         """Get devices discovered through active scanning with multiple methods."""
         devices = []
 
-        # Try D-Bus discovery first (more reliable)
+        # Skip D-Bus discovery to avoid timeouts - use bluetoothctl only
+        # Try hcitool with shorter timeout
         try:
-            devices.extend(self._get_discovered_devices_dbus())
+            # Use hcitool scan with very short timeout
+            result = subprocess.run(
+                ['hcitool', 'scan', '--flush'],
+                capture_output=True,
+                text=True,
+                timeout=3  # Very short timeout
+            )
+
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    line = line.strip()
+                    if line and not line.startswith('Scanning'):
+                        # Parse line format: "ADDRESS\tNAME"
+                        parts = line.split('\t', 1)
+                        if len(parts) >= 2:
+                            address = parts[0].strip()
+                            name = parts[1].strip()
+
+                            # Create discovered device
+                            device = BluetoothDevice(
+                                address=address,
+                                name=name,
+                                alias=name,
+                                device_class=0,
+                                device_type="unknown",  # Will be classified
+                                paired=False,  # Discovered devices are not paired
+                                connected=False,
+                                trusted=False,
+                                blocked=False,
+                                rssi=None,  # hcitool scan doesn't provide RSSI
+                                uuids=[],
+                                adapter="",
+                                last_seen=time.time()
+                            )
+
+                            devices.append(device)
+
+        except subprocess.TimeoutExpired:
+            logger.debug("hcitool scan timeout (expected)")
+        except FileNotFoundError:
+            logger.debug("hcitool not available")
         except Exception as e:
-            logger.debug(f"D-Bus discovery failed: {e}")
-
-        # If D-Bus didn't find anything, try hcitool with shorter timeout
-        if not devices:
-            try:
-                # Use hcitool scan with very short timeout
-                result = subprocess.run(
-                    ['hcitool', 'scan', '--flush'],
-                    capture_output=True,
-                    text=True,
-                    timeout=3  # Very short timeout
-                )
-
-                if result.returncode == 0:
-                    for line in result.stdout.strip().split('\n'):
-                        line = line.strip()
-                        if line and not line.startswith('Scanning'):
-                            # Parse line format: "ADDRESS\tNAME"
-                            parts = line.split('\t', 1)
-                            if len(parts) >= 2:
-                                address = parts[0].strip()
-                                name = parts[1].strip()
-
-                                # Create discovered device
-                                device = BluetoothDevice(
-                                    address=address,
-                                    name=name,
-                                    alias=name,
-                                    device_class=0,
-                                    device_type="unknown",  # Will be classified
-                                    paired=False,  # Discovered devices are not paired
-                                    connected=False,
-                                    trusted=False,
-                                    blocked=False,
-                                    rssi=None,  # hcitool scan doesn't provide RSSI
-                                    uuids=[],
-                                    adapter="",
-                                    last_seen=time.time()
-                                )
-
-                                devices.append(device)
-
-            except subprocess.TimeoutExpired:
-                logger.debug("hcitool scan timeout (expected)")
-            except FileNotFoundError:
-                logger.debug("hcitool not available")
-            except Exception as e:
-                logger.debug(f"hcitool scan failed: {e}")
+            logger.debug(f"hcitool scan failed: {e}")
 
         return devices
 

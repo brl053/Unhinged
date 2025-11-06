@@ -371,16 +371,12 @@ class GUISessionLogger:
                         self.log_file_path = new_log_file_path
                         self.log_file = open(self.log_file_path, 'a', encoding='utf-8', buffering=1)
 
-                        print(f"✅ Log file renamed: {old_filename} → {new_filename}")
-
                     except Exception as e:
-                        print(f"⚠️ Failed to update log file: {e}")
+                        pass  # Log file update failed, continue with current file
 
             # Log the session ID update
             self.log_gui_event("SESSION_ID_UPDATED",
                 f"Session ID updated from TBD to persisted chat session: {new_session_id}")
-
-            print(f"✅ Session logger updated: {old_session_id} → {new_session_id[:8]}...")
         except Exception as e:
             print(f"❌ Failed to update session ID: {e}")
 

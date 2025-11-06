@@ -61,7 +61,11 @@ Ubuntu Host (GTK4 Control Plane) → manages → Alpine VM (Native C Graphics)
 
 ### 5. Centralized Build Philosophy
 - **UNIFIED BUILD SYSTEM** - All build operations utilize `/build/` directory
-- **CENTRALIZED PYTHON ENVIRONMENT** - Use `build/python/venv/` for all Python operations
+- **SINGLE PYTHON ENVIRONMENT (SOT)** - `build/python/venv/` is the ONLY Python environment
+  - All dependencies consolidated in `build/requirements-unified.txt`
+  - Used by: GTK4 desktop app, all services, build tools, development
+  - NO other venvs (.venv, venv-production, etc.) - they are purged
+  - See: `build/requirements-unified.txt` for complete dependency list
 - **CONSOLIDATED TOOLING** - Avoid scattered build tools (gradle wrappers, npm in arbitrary locations)
 - **ORGANIZED GENERATED CONTENT** - All generated artifacts stored in `/generated/`
 

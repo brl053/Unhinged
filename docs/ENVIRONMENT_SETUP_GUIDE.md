@@ -117,9 +117,9 @@ GPU: NVIDIA GeForce RTX 5070 Ti
 python3 << 'EOF'
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path.cwd() / "libs" / "services"))
+sys.path.insert(0, str(Path.cwd()))
 
-from image_generation_service import ImageGenerationService
+from libs.services import ImageGenerationService
 
 service = ImageGenerationService()
 result = service.generate_image(

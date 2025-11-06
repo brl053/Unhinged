@@ -42,17 +42,14 @@ log_error() {
 
 # Pre-flight check system
 run_preflight_checks() {
-    log_info "Running pre-flight checks..."
-
     # Check if Python is available
     if ! command -v python3 &> /dev/null; then
         log_error "Python 3 not found - required for pre-flight checks"
         return 1
     fi
 
-    # Run preflight checker
+    # Run preflight checker (logs its own messages)
     if python3 "$PROJECT_ROOT/build/preflight_check.py" check; then
-        log_success "Pre-flight checks passed"
         return 0
     else
         log_warning "Pre-flight checks suggest restart for optimal experience"

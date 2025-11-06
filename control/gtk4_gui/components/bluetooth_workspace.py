@@ -319,52 +319,7 @@ class BluetoothWorkspace:
         except Exception as e:
             logger.error(f"Failed to update device tables: {e}")
 
-    def force_grab_device(self, device_address: str, device_name: str) -> bool:
-        """
-        Force grab a Bluetooth device - disconnect from all other devices and connect to desktop.
 
-        Args:
-            device_address: MAC address of device to grab
-            device_name: Name of device for logging
-
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        try:
-            import sys
-            from pathlib import Path
-            sys.path.append(str(Path(__file__).parent.parent))
-            from bluetooth_monitor import BluetoothMonitor
-
-            self._log_event("FORCE_GRAB_STARTED", f"Force grabbing {device_name} ({device_address})")
-
-            monitor = BluetoothMonitor()
-
-            # Get all connected devices to find what this device is connected to
-            all_devices = monitor.get_devices(include_unpaired=False)
-
-            # Disconnect from all other devices (simulate disconnecting from phone, tablet, etc.)
-            for device in all_devices:
-                if device.address != device_address and device.connected:
-                    logger.info(f"Disconnecting {device.name} to free up {device_name}")
-                    monitor.disconnect_device(device.address)
-
-            # Connect to desktop
-            success = monitor.connect_device(device_address)
-
-            if success:
-                self._log_event("FORCE_GRAB_SUCCESS", f"Successfully connected to {device_name}")
-                logger.info(f"Force grab successful: {device_name}")
-            else:
-                self._log_event("FORCE_GRAB_FAILED", f"Failed to connect to {device_name}")
-                logger.error(f"Force grab failed: {device_name}")
-
-            return success
-
-        except Exception as e:
-            logger.error(f"Force grab error: {e}")
-            self._log_event("FORCE_GRAB_ERROR", str(e))
-            return False
 
     def _log_event(self, event_type: str, details: str = ""):
         """Log an event through the session logger."""

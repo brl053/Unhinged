@@ -915,16 +915,6 @@ class BluetoothRow(HardwareInfoRow):
 
         action_box.append(self.connection_button)
 
-        # Force Grab button (only for paired/connected devices)
-        if self.device_info.paired or self.device_info.connected:
-            force_grab_button = Gtk.Button()
-            force_grab_button.set_label("Force Grab")
-            force_grab_button.set_icon_name("go-jump-symbolic")
-            force_grab_button.set_tooltip_text("Disconnect from other devices and connect here")
-            force_grab_button.add_css_class("accent")
-            force_grab_button.connect("clicked", self._on_force_grab_clicked)
-            action_box.append(force_grab_button)
-
         # Action menu button
         self.action_menu = Gtk.MenuButton()
         self.action_menu.set_icon_name("view-more-symbolic")
@@ -1057,53 +1047,7 @@ class BluetoothRow(HardwareInfoRow):
             button.set_label("Pair")
             button.set_sensitive(True)
 
-    def _on_force_grab_clicked(self, button):
-        """Handle force grab button click - disconnect from other devices and connect here."""
-        import sys
-        from pathlib import Path
-        sys.path.append(str(Path(__file__).parent.parent))
 
-        from bluetooth_monitor import BluetoothMonitor
-
-        logger.info(f"🎯 Force grabbing {self.device_info.name} ({self.device_info.address})")
-
-        # Disable button during operation
-        button.set_sensitive(False)
-        button.set_label("Grabbing...")
-
-        try:
-            monitor = BluetoothMonitor()
-
-            # Get all connected devices
-            all_devices = monitor.get_devices(include_unpaired=False)
-
-            # Disconnect from all other devices
-            disconnected_count = 0
-            for device in all_devices:
-                if device.address != self.device_info.address and device.connected:
-                    logger.info(f"Disconnecting {device.name} to free up {self.device_info.name}")
-                    monitor.disconnect_device(device.address)
-                    disconnected_count += 1
-
-            # Connect to this device
-            success = monitor.connect_device(self.device_info.address)
-
-            if success:
-                logger.info(f"✅ Successfully grabbed {self.device_info.name}")
-                button.set_label("Force Grab")
-                button.set_sensitive(True)
-                # Update device info to reflect connected state
-                self.device_info.connected = True
-                self.update_device_data(self.device_info)
-            else:
-                logger.error(f"❌ Failed to grab {self.device_info.name}")
-                button.set_label("Force Grab")
-                button.set_sensitive(True)
-
-        except Exception as e:
-            logger.error(f"❌ Force grab error: {e}")
-            button.set_label("Force Grab")
-            button.set_sensitive(True)
 
     def update_device_data(self, new_device_info):
         """Update device data and refresh display."""

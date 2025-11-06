@@ -766,6 +766,19 @@ class ChatroomView:
 
             message_box.append(message_label)
 
+            # Add microphone button for assistant messages
+            if message_type == "assistant":
+                button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+                button_box.set_halign(Gtk.Align.START)
+                button_box.set_margin_top(8)
+
+                mic_button = Gtk.Button(label="🎤 Hear")
+                mic_button.set_tooltip_text("Play text-to-speech audio")
+                mic_button.connect("clicked", self._on_tts_button_clicked, message)
+
+                button_box.append(mic_button)
+                message_box.append(button_box)
+
             # Add to messages container
             self._messages_container.append(message_box)
 
@@ -809,10 +822,10 @@ class ChatroomView:
             from pathlib import Path as PathlibPath
             project_root = PathlibPath(__file__).parent.parent.parent
 
-            # Add libs to path
-            sys.path.insert(0, str(project_root / "libs" / "services"))
+            # Add project root to path for proper imports
+            sys.path.insert(0, str(project_root))
 
-            from image_generation_service import ImageGenerationService
+            from libs.services import ImageGenerationService
 
             # Run image generation in background thread
             def generate_image_thread():
@@ -1446,25 +1459,34 @@ class ChatroomView:
             return None
 
     def _text_chat_framework_thread(self, message, thinking_box):
-        """Handle text chat using FRAMEWORK ONLY - NO LEGACY"""
+        """Handle text chat using gRPC chat service"""
         try:
-            # FRAMEWORK ONLY - Use service framework for LLM communication
-            # For now, simulate text response since LLM service integration is pending
-            # This will be replaced with actual gRPC LLM service call
-            import time
-
             from gi.repository import GLib
-            time.sleep(1.0)  # Simulate processing time
+            from libs.python.grpc_clients.client_factory import call_service_method
+            from unhinged_proto_clients import chat_pb2
 
-            # Simulate response (will be replaced with actual service call)
-            simulated_response = f"Framework response to: {message[:50]}..."
+            # Create SendMessage request
+            request = chat_pb2.SendMessageRequest()
+            request.conversation_id = self._current_session_id
+            request.role = chat_pb2.USER
+            request.content = message
+
+            # Call chat service
+            response = call_service_method("chat", "SendMessage", request, timeout=60.0)
+
+            # Extract assistant response
+            if response and response.response.success and response.message:
+                assistant_response = response.message.content
+            else:
+                error_msg = response.response.message if response else "Service unavailable"
+                assistant_response = f"Error: {error_msg}"
 
             # Update UI on main thread
-            GLib.idle_add(self._handle_text_response, simulated_response, thinking_box)
+            GLib.idle_add(self._handle_text_response, assistant_response, thinking_box)
 
         except Exception as e:
             from gi.repository import GLib
-            GLib.idle_add(self._handle_text_error, f"Framework text chat failed: {e}", thinking_box)
+            GLib.idle_add(self._handle_text_error, f"Text chat failed: {e}", thinking_box)
 
     def _handle_text_response(self, response, thinking_box):
         """Handle text response using framework patterns"""
@@ -1509,6 +1531,76 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Handle text error: {e}")
+
+    def _on_tts_button_clicked(self, button, text):
+        """Handle TTS button click - generate and play audio"""
+        try:
+            button.set_sensitive(False)
+            button.set_label("🎤 Playing...")
+
+            # Run TTS in background thread
+            import threading
+            thread = threading.Thread(target=self._tts_thread, args=(text, button), daemon=True)
+            thread.start()
+
+        except Exception as e:
+            print(f"❌ TTS button click error: {e}")
+            button.set_sensitive(True)
+            button.set_label("🎤 Hear")
+
+    def _tts_thread(self, text, button):
+        """Generate and play TTS audio in background thread"""
+        try:
+            from gi.repository import GLib
+            from libs.python.grpc_clients.client_factory import call_service_method
+            from unhinged_proto_clients import audio_pb2
+            import subprocess
+            from pathlib import Path
+            import tempfile
+
+            # Create TTS request
+            request = audio_pb2.TTSRequest()
+            request.text = text
+            request.voice = "default"
+
+            # Call TTS service
+            response = call_service_method("audio", "TextToSpeech", request, timeout=30.0)
+
+            if response and hasattr(response, 'audio_data') and response.audio_data:
+                # Save audio to temporary file
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                    f.write(response.audio_data)
+                    audio_file = f.name
+
+                # Play audio using system player
+                try:
+                    subprocess.run(['aplay', audio_file], check=True, timeout=60)
+                except FileNotFoundError:
+                    # Fallback to paplay if aplay not available
+                    subprocess.run(['paplay', audio_file], check=True, timeout=60)
+                finally:
+                    # Clean up temp file
+                    Path(audio_file).unlink(missing_ok=True)
+
+                # Update button on main thread
+                GLib.idle_add(lambda: self._update_tts_button(button, "✅ Done"))
+                GLib.idle_add(lambda: button.set_sensitive(True))
+            else:
+                GLib.idle_add(lambda: self._update_tts_button(button, "❌ Failed"))
+                GLib.idle_add(lambda: button.set_sensitive(True))
+
+        except Exception as e:
+            print(f"❌ TTS thread error: {e}")
+            from gi.repository import GLib
+            GLib.idle_add(lambda: self._update_tts_button(button, "🎤 Hear"))
+            GLib.idle_add(lambda: button.set_sensitive(True))
+
+    def _update_tts_button(self, button, label):
+        """Update TTS button label"""
+        try:
+            button.set_label(label)
+        except Exception as e:
+            print(f"❌ Update TTS button error: {e}")
 
     def add_voice_transcript(self, transcript):
         """Add voice transcript to input field with proper UI refresh (called from parent app)"""

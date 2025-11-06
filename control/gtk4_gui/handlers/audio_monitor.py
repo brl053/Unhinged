@@ -211,7 +211,6 @@ class AudioLevelMonitor:
                                 alsa_device=f"hw:{card_id},{device_id}",
                                 icon="audio-speakers-symbolic",
                                 device_type=AudioDeviceType.SPEAKER,
-                                connection_type="internal",  # Default to internal for ALSA devices
                                 driver="ALSA",  # Audio driver
                                 subdevices=1,  # Default single subdevice
                                 is_default=False,
@@ -261,7 +260,6 @@ class AudioLevelMonitor:
                                 alsa_device=f"hw:{card_id},{device_id}",
                                 icon="audio-input-microphone-symbolic",
                                 device_type=AudioDeviceType.MICROPHONE,
-                                connection_type="internal",  # Default to internal for ALSA devices
                                 driver="ALSA",  # Audio driver
                                 subdevices=1,  # Default single subdevice
                                 is_default=False,

@@ -41,8 +41,9 @@ DOCKER_DB := postgres-db
 DB_NAME := unhinged_db
 DB_USER := postgres
 
-# Universal Python Runner - Use working venv-production
-PYTHON_RUN := ./venv-production/bin/python
+# Universal Python Runner - Use unified build/python/venv (single source of truth)
+# See: build/requirements-unified.txt and LLM_MASTER_PROMPT.md
+PYTHON_RUN := ./build/python/venv/bin/python3
 
 # Native GUI
 NATIVE_GUI := python3 control/gui/native_app.py
@@ -348,23 +349,23 @@ generate-clients: ## Generate client libraries from protos [use FORCE=1 to bypas
 	$(call log_success,Client libraries generated)
 
 setup-python: ## Setup Python virtual environment with static analysis
-	$(call log_info,🐍 Setting up Python virtual environment with static analysis...)
-	@if [ ! -d "venv-production" ]; then \
-		echo "$(YELLOW)📦 Creating venv-production...$(RESET)"; \
-		python3 -m venv venv-production; \
-		./venv-production/bin/pip install --upgrade pip; \
-		./venv-production/bin/pip install -r build/requirements-core.txt; \
-		echo "$(GREEN)✅ venv-production created$(RESET)"; \
+	$(call log_info,🐍 Setting up unified Python virtual environment (build/python/venv)...)
+	@if [ ! -d "build/python/venv" ]; then \
+		echo "$(YELLOW)📦 Creating build/python/venv (unified environment)...$(RESET)"; \
+		python3 -m venv build/python/venv; \
+		./build/python/venv/bin/pip install --upgrade pip; \
+		./build/python/venv/bin/pip install -r build/requirements-unified.txt; \
+		echo "$(GREEN)✅ build/python/venv created with unified dependencies$(RESET)"; \
 	else \
-		echo "$(GREEN)✅ venv-production already exists$(RESET)"; \
+		echo "$(GREEN)✅ build/python/venv already exists$(RESET)"; \
 	fi
 	@$(MAKE) setup-git-hooks
-	$(call log_success,Python environment with static analysis ready)
+	$(call log_success,Unified Python environment ready)
 
 python-deps: ## Install/update Python dependencies
-	$(call log_info,📦 Installing Python dependencies...)
-	@test -d venv-production || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
-	@./venv-production/bin/pip install -r build/requirements-core.txt
+	$(call log_info,📦 Installing Python dependencies from build/requirements-unified.txt...)
+	@test -d build/python/venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
+	@./build/python/venv/bin/pip install -r build/requirements-unified.txt
 	$(call log_success,Python dependencies installed)
 
 # ============================================================================
@@ -373,17 +374,17 @@ python-deps: ## Install/update Python dependencies
 
 check-code: ## Run static analysis on all Python modules
 	$(call log_info,🔍 Running static analysis on Python code...)
-	@./venv-production/bin/python build/static_analysis_manager.py control/gtk4_gui libs/python services
+	@./build/python/venv/bin/python3 build/static_analysis_manager.py control/gtk4_gui libs/python services
 	$(call log_success,Static analysis completed)
 
 check-code-fix: ## Run static analysis with auto-fix
 	$(call log_info,🔧 Running static analysis with auto-fix...)
-	@./venv-production/bin/python build/static_analysis_manager.py control/gtk4_gui libs/python services
+	@./build/python/venv/bin/python3 build/static_analysis_manager.py control/gtk4_gui libs/python services
 	$(call log_success,Static analysis with auto-fix completed)
 
 check-code-changed: ## Run static analysis only on changed modules
 	$(call log_info,🔍 Running static analysis on changed modules...)
-	@./venv-production/bin/python build/static_analysis_manager.py control/gtk4_gui libs/python services --check-changes
+	@./build/python/venv/bin/python3 build/static_analysis_manager.py control/gtk4_gui libs/python services --check-changes
 	$(call log_success,Changed modules analysis completed)
 
 setup-git-hooks: ## Install Git hooks for automatic static analysis
@@ -957,7 +958,7 @@ start-gui: ## Launch enhanced GTK4 desktop application with dual-system architec
 	@echo "🎙️ Voice Transcription Integrated in Status Tab"
 	@echo "🏔️ Native C Graphics + Session Logging Active"
 	@echo "📊 System Information Page Integrated"
-	@/usr/bin/python3 control/gtk4_gui/launch.py
+	@build/python/venv/bin/python3 control/gtk4_gui/launch.py
 
 start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
 	$(call log_info,📺 Launching VM with direct console output...)

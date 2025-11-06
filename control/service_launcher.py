@@ -166,10 +166,8 @@ class ServiceLauncher:
             log_warning("Docker not available - GUI will run in offline mode")
             return False
 
-        print("📋 Checking currently running services...")
         # Check which services are already running
         running = self._check_running_services()
-        print(f"   Running services: {running}")
 
         # Determine which services to start
         to_start = []
@@ -178,39 +176,31 @@ class ServiceLauncher:
                 # Direct service - check if it's running via health check
                 if not self._is_service_healthy(service):
                     to_start.append(service)
-                    print(f"   📌 {service['name']} needs to be started (direct service)")
             elif service["compose_service"] not in running:
                 to_start.append(service)
-                print(f"   📌 {service['name']} needs to be started (Docker service)")
-            else:
-                print(f"   ✅ {service['name']} already running")
 
         if not to_start:
-            print("🎉 All essential services are already running!")
+            print("✅ Services initialized (all running)")
             return True
 
-        print(f"🚀 Starting {len(to_start)} services...")
         # Start missing services
         failed_required = []
+        started_count = 0
         for service in to_start:
             if service["required"] or self._should_start_service(service):
-                print(f"   🔄 Starting {service['name']}...")
                 success = self._start_service(service, min(timeout, 30))  # Cap individual service timeout
                 if service["required"] and not success:
                     failed_required.append(service['name'])
                     events.error("Required service failed to start", {"service": service['name']})
                 elif success:
-                    print(f"   ✅ {service['name']} started successfully")
-                else:
-                    print(f"   ⚠️  {service['name']} failed to start (optional)")
+                    started_count += 1
 
         if failed_required:
-            print(f"❌ Required services failed to start: {failed_required}")
-            print("   Continuing anyway - GUI may have limited functionality")
-            # Don't fail completely - let the GUI start with limited functionality
+            print(f"⚠️  Some services failed to start: {', '.join(failed_required)}")
+            print("   Continuing with available services")
             return True
 
-        print("✅ Service startup completed!")
+        print(f"✅ Services initialized ({len(running) + started_count}/{len(self.ESSENTIAL_SERVICES)} running)")
         return True
     
     def _check_docker(self) -> bool:

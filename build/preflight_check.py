@@ -68,31 +68,35 @@ class PreflightChecker:
         """Check and clear Python cache if needed"""
         try:
             cache_dirs = []
-            
+
             # Find __pycache__ directories
             for module in self.critical_modules:
                 module_path = self.project_root / module
                 if module_path.exists():
                     cache_dirs.extend(module_path.rglob("__pycache__"))
-                    
+
             if cache_dirs:
-                print(f"🧹 Found {len(cache_dirs)} Python cache directories")
-                
-                # Clear cache directories
+                cleared = 0
+                failed = 0
+
+                # Clear cache directories (silently)
                 for cache_dir in cache_dirs:
                     try:
                         import shutil
                         shutil.rmtree(cache_dir)
-                        print(f"   🗑️ Cleared {cache_dir}")
-                    except Exception as e:
-                        print(f"   ⚠️ Failed to clear {cache_dir}: {e}")
-                        
-                print("✅ Python cache cleared")
+                        cleared += 1
+                    except Exception:
+                        failed += 1
+
+                # Aggregate output
+                print(f"✅ Python cache cleared ({cleared} directories)")
+                if failed > 0:
+                    print(f"⚠️  Failed to clear {failed} directories (may be in use)")
                 return True
             else:
                 print("✅ No Python cache to clear")
                 return False
-                
+
         except Exception as e:
             print(f"❌ Error checking Python cache: {e}")
             return False
@@ -174,42 +178,39 @@ class PreflightChecker:
             
     def run_preflight_checks(self, auto_update: bool = True) -> bool:
         """Run complete preflight check sequence
-        
+
         Args:
             auto_update: Whether to automatically update checksums
-            
+
         Returns:
             True if safe to launch, False if restart/update needed
         """
         print("🚀 Running pre-flight checks...")
         print(f"📁 Project root: {self.project_root}")
-        
+
         # Step 1: Check for code changes
         changes = self.check_module_changes()
-        
+
         # Step 2: Check running processes
         running_pids = self.check_running_processes()
-        
+
         # Step 3: Check Python cache
         cache_cleared = self.check_python_cache()
-        
-        # Step 4: Get restart strategy
-        strategy = self.suggest_restart_strategy(running_pids, changes)
-        print(f"📋 Strategy: {strategy}")
-        
-        # Step 5: Update checksums if auto-update enabled
+
+        # Step 4: Update checksums if auto-update enabled (before strategy check)
         if auto_update:
             self.update_checksums_for_changed_modules(changes)
-            
+
+        # Step 5: Get restart strategy
+        strategy = self.suggest_restart_strategy(running_pids, changes)
+
         # Step 6: Determine if safe to launch
-        any_changes = any(changes.values())
-        
         if strategy.startswith("✅"):
             print("🎯 Pre-flight checks PASSED - Safe to launch")
             return True
         elif strategy.startswith("🔄"):
-            print("🔄 Pre-flight checks suggest restart for optimal experience")
-            return True  # Allow launch but recommend restart
+            # Changes detected but no conflicts - update checksums and launch
+            return True
         else:  # ⚠️ RESTART_REQUIRED
             print("⚠️ Pre-flight checks FAILED - Restart required")
             print("   Reason: Code changes detected with running processes")

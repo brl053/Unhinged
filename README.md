@@ -59,6 +59,17 @@
 
 > **Voice-First AI Control Center** - Native C graphics desktop application with immediate voice interaction
 
+## Python Environment
+
+**Single Source of Truth**: `build/python/venv/`
+
+All Python dependencies are consolidated in one unified virtual environment located at `build/python/venv/`. This is the only Python environment used by:
+- GTK4 desktop application
+- All backend services
+- Build and development tools
+
+See `build/requirements-unified.txt` for the complete dependency list.
+
 ## Quick Start - Voice-First Experience
 
 ```bash

@@ -103,21 +103,27 @@ class UIController:
             ("gpu_drivers", "GPU Drivers", self.app.create_gpu_drivers_tab_content),
             ("bluetooth", "Bluetooth", self.app.create_bluetooth_tab_content),
             ("output", "Output", self.app.create_output_tab_content),
+            ("usb", "USB", self.app.create_usb_tab_content),
             ("graphs", "Graphs", self.app.create_graph_tab_content),
         ]
 
+        created = 0
+        failed = []
         for page_id, title, create_func in pages:
             try:
                 content = create_func()
                 page = self.app.content_stack.add_titled(content, page_id, title)
                 page.set_icon_name(self._get_page_icon(page_id))
-                print(f"✅ Created {title} page successfully")
+                created += 1
             except Exception as e:
-                print(f"❌ CRITICAL: {title} page creation failed: {e}")
+                failed.append(f"{title}: {e}")
                 # NO FALLBACKS - Let it fail and fix the root cause
                 import traceback
                 traceback.print_exc()
                 raise Exception(f"Page creation failed for {title}: {e}")
+
+        # Aggregate output
+        print(f"✅ UI pages initialized ({created}/{len(pages)} pages)")
 
     def _get_page_icon(self, page_id):
         """Get icon name for page (main tab removed)"""
@@ -130,6 +136,7 @@ class UIController:
             "gpu_drivers": "video-card-symbolic",
             "bluetooth": "bluetooth-symbolic",
             "output": "audio-speakers-symbolic",
+            "usb": "drive-removable-media-symbolic",
             "graphs": "network-workgroup-symbolic",
         }
         return icons.get(page_id, "dialog-information-symbolic")
@@ -153,6 +160,7 @@ class UIController:
             ("gpu_drivers", "GPU Drivers", "video-card-symbolic"),
             ("bluetooth", "Bluetooth", "bluetooth-symbolic"),
             ("output", "Output", "audio-speakers-symbolic"),
+            ("usb", "USB", "drive-removable-media-symbolic"),
             ("graphs", "Graphs", "network-workgroup-symbolic"),
         ]
 
@@ -240,6 +248,13 @@ class UIController:
                 if hasattr(self.app.chatroom_view, 'on_ready'):
                     try:
                         self.app.chatroom_view.on_ready()
+                    except Exception as e:
+                        print(f"⚠️ Error during view ready: {e}")
+            elif view_name == "usb" and hasattr(self.app, 'usb_view'):
+                self.app.current_view = self.app.usb_view
+                if hasattr(self.app.usb_view, 'on_ready'):
+                    try:
+                        self.app.usb_view.on_ready()
                     except Exception as e:
                         print(f"⚠️ Error during view ready: {e}")
             else:

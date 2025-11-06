@@ -39,7 +39,7 @@ class AudioDevice:
     alsa_device: str
     icon: str
     device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
-    connection_type: str = "unknown"  # "usb", "hdmi", "bluetooth", "internal", "unknown"
+    connection_type: str = "internal"  # Connection type: "internal", "usb", "hdmi", "bluetooth"
     driver: str = "ALSA"  # Audio driver name
     subdevices: int = 1  # Number of subdevices available on this audio device
     is_default: bool = False
@@ -47,10 +47,33 @@ class AudioDevice:
     volume: float | None = None
     is_muted: bool = False
 
+    # USB-specific metadata (None if not a USB device)
+    usb_vendor_id: str | None = None  # e.g., "046d"
+    usb_product_id: str | None = None  # e.g., "0af7"
+    usb_vendor_name: str | None = None  # e.g., "Logitech, Inc."
+    usb_product_name: str | None = None  # e.g., "PRO X 2 LIGHTSPEED"
+    usb_bus: int | None = None  # e.g., 1
+    usb_device: int | None = None  # e.g., 4
+    usb_class: str | None = None  # e.g., "Audio"
+    usb_subclass: str | None = None  # e.g., "Audio Control"
+    usb_interfaces: list[dict] | None = None  # List of interface descriptors
+
     @property
     def display_name(self) -> str:
         """Get display-friendly device name."""
         return self.name
+
+    @property
+    def is_usb(self) -> bool:
+        """Check if this is a USB device."""
+        return self.usb_vendor_id is not None
+
+    @property
+    def usb_address(self) -> str | None:
+        """Get USB bus:device address."""
+        if self.usb_bus is not None and self.usb_device is not None:
+            return f"{self.usb_bus:03d}:{self.usb_device:03d}"
+        return None
 
     @property
     def full_description(self) -> str:
