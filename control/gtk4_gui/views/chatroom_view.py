@@ -218,6 +218,9 @@ class ChatroomView:
                 print(f"⚠️ Session creation already in progress or session exists (status: {self._session_status})")
                 return
 
+            # Clear old messages from previous session
+            self._clear_message_container()
+
             # Update session status to creating
             self._session_status = "creating"
 
@@ -801,6 +804,22 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Scroll to bottom error: {e}")
+
+    def _clear_message_container(self):
+        """Clear all messages from the chat display"""
+        try:
+            if not self._messages_container:
+                return
+
+            # Remove all child widgets
+            while True:
+                child = self._messages_container.get_first_child()
+                if not child:
+                    break
+                self._messages_container.remove(child)
+
+        except Exception as e:
+            print(f"❌ Clear message container error: {e}")
 
     def _handle_slash_image_command(self, prompt: str):
         """Handle /image command for GPU-accelerated image generation"""
