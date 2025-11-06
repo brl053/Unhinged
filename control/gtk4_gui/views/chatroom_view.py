@@ -213,6 +213,11 @@ class ChatroomView:
     def _create_new_session(self):
         """Create a new chat session using gRPC ChatService"""
         try:
+            # Prevent multiple session creation requests
+            if self._session_status != "no_session":
+                print(f"⚠️ Session creation already in progress or session exists (status: {self._session_status})")
+                return
+
             # Update session status to creating
             self._session_status = "creating"
 
