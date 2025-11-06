@@ -1512,8 +1512,14 @@ class ChatroomView:
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
                 self.app.session_logger.log_gui_event("TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}")
 
-            # Re-enable send button
-            self._chatroom_send_button.set_sensitive(True)
+            # Re-enable send button only if there's content AND active session
+            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
+            else:
+                buffer = self._chat_input.get_buffer()
+                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
+            has_session = self._session_status == "active"
+            self._chatroom_send_button.set_sensitive(has_content and has_session)
 
         except Exception as e:
             print(f"❌ Handle text response error: {e}")
@@ -1528,8 +1534,14 @@ class ChatroomView:
             # Add error message
             self._add_chat_message("System", f"Framework Error: {error_msg}", "error")
 
-            # Re-enable send button
-            self._chatroom_send_button.set_sensitive(True)
+            # Re-enable send button only if there's content AND active session
+            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
+            else:
+                buffer = self._chat_input.get_buffer()
+                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
+            has_session = self._session_status == "active"
+            self._chatroom_send_button.set_sensitive(has_content and has_session)
 
             # Show toast
             if hasattr(self.app, 'show_toast'):
