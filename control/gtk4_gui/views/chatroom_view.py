@@ -732,6 +732,8 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Chatroom send error: {e}")
+            # Re-enable send button so user can retry
+            self._chatroom_send_button.set_sensitive(True)
             if hasattr(self.app, 'show_toast'):
                 self.app.show_toast(f"Send failed: {e}")
 
