@@ -852,7 +852,7 @@ class ChatroomView:
         try:
             # Remove thinking indicator
             if thinking_box and thinking_box.get_parent():
-                thinking_box.get_parent().remove(thinking_box)
+                self._messages_container.remove(thinking_box)
 
             # Import the widget
             from ..components import GeneratedArtifactWidget
@@ -1011,7 +1011,7 @@ class ChatroomView:
         try:
             # Remove thinking indicator
             if thinking_box and thinking_box.get_parent():
-                thinking_box.get_parent().remove(thinking_box)
+                self._messages_container.remove(thinking_box)
 
             # Create image message container
             image_container = self._create_image_message_container(result, original_message)
@@ -1269,7 +1269,7 @@ class ChatroomView:
         try:
             # Remove thinking indicator
             if thinking_box and thinking_box.get_parent():
-                thinking_box.get_parent().remove(thinking_box)
+                self._messages_container.remove(thinking_box)
 
             # Add error message
             self._add_error_message(f"Image generation failed: {error_msg}")

@@ -118,6 +118,11 @@ ${YELLOW}DEBUG COMMANDS:${NC}
   debug trace [component]     Enable debug tracing
   debug logs [component]      Show component-specific logs
 
+${YELLOW}VM COMMANDS:${NC}
+  vm win10                    Launch Windows 10 gaming VM (350GB)
+  vm templeos                 Launch TempleOS VM
+  vm stop                     Stop running VM
+
 ${YELLOW}PREFLIGHT COMMANDS:${NC}
   preflight check             Run pre-flight checks for code changes
   preflight status            Show detailed preflight status
@@ -430,6 +435,81 @@ cmd_debug() {
     esac
 }
 
+# VM command handler
+cmd_vm() {
+    local vm_type="${1:-help}"
+
+    case "$vm_type" in
+        win10)
+            log_info "Launching Windows 10 gaming VM (350GB)..."
+            killall -9 qemu-system-x86_64 2>/dev/null || true
+            sleep 2
+
+            # Create launch script if it doesn't exist
+            if [ ! -f "$PROJECT_ROOT/vm/launch-win10.sh" ]; then
+                cat > "$PROJECT_ROOT/vm/launch-win10.sh" << 'VMSCRIPT'
+#!/bin/bash
+qemu-system-x86_64 \
+    -name "Windows-10" \
+    -machine type=pc,accel=kvm \
+    -cpu host \
+    -smp cores=8,threads=1,sockets=1 \
+    -m 16G \
+    -device VGA \
+    -drive file="$PROJECT_ROOT/build/tmp/Win10_22H2_English_x64v1.iso",media=cdrom,if=ide,index=0 \
+    -drive file="$PROJECT_ROOT/vm/bf6-w11-gaming.qcow2",if=ide,index=1,format=qcow2,cache=writeback \
+    -netdev user,id=net0 -device e1000,netdev=net0 \
+    -enable-kvm \
+    -display gtk \
+    -boot order=d,menu=off
+VMSCRIPT
+                chmod +x "$PROJECT_ROOT/vm/launch-win10.sh"
+            fi
+
+            "$PROJECT_ROOT/vm/launch-win10.sh" &
+            log_success "Windows 10 VM launched"
+            ;;
+        templeos)
+            log_info "Launching TempleOS VM..."
+            killall -9 qemu-system-x86_64 2>/dev/null || true
+            sleep 2
+
+            # Create launch script if it doesn't exist
+            if [ ! -f "$PROJECT_ROOT/vm/launch-templeos.sh" ]; then
+                cat > "$PROJECT_ROOT/vm/launch-templeos.sh" << 'VMSCRIPT'
+#!/bin/bash
+qemu-system-x86_64 \
+    -name TempleOS \
+    -machine type=pc,accel=kvm \
+    -cpu host \
+    -smp cores=4,threads=1,sockets=1 \
+    -m 2G \
+    -device VGA \
+    -drive file="$PROJECT_ROOT/build/tmp/TempleOS.ISO",media=cdrom,if=ide,index=0 \
+    -netdev user,id=net0 -device e1000,netdev=net0 \
+    -enable-kvm \
+    -display gtk \
+    -boot order=d,menu=off
+VMSCRIPT
+                chmod +x "$PROJECT_ROOT/vm/launch-templeos.sh"
+            fi
+
+            "$PROJECT_ROOT/vm/launch-templeos.sh" &
+            log_success "TempleOS VM launched"
+            ;;
+        stop)
+            log_info "Stopping VM..."
+            killall -9 qemu-system-x86_64 2>/dev/null && log_success "VM stopped" || log_warning "No VM running"
+            ;;
+        help|*)
+            echo "VM commands:"
+            echo "  unhinged vm win10       Launch Windows 10 gaming VM (350GB)"
+            echo "  unhinged vm templeos    Launch TempleOS VM"
+            echo "  unhinged vm stop        Stop running VM"
+            ;;
+    esac
+}
+
 # Preflight command handler
 cmd_preflight() {
     local subcommand="${1:-check}"
@@ -523,6 +603,9 @@ main() {
         
         # Debug commands
         debug)          cmd_debug "$@" ;;
+
+        # VM commands
+        vm)             cmd_vm "$@" ;;
 
         # Preflight commands
         preflight)      cmd_preflight "$@" ;;
