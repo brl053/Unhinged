@@ -444,40 +444,6 @@ class ChatroomView:
         except Exception as e:
             print(f"❌ Session creation failed callback error: {e}")
 
-    def _disable_chat_functionality(self):
-        """Disable chat input and voice controls until session exists"""
-        try:
-            # Disable text input
-            if self._chat_input:
-                self._chat_input.set_sensitive(False)
-
-            # Disable send button
-            if self._chatroom_send_button:
-                self._chatroom_send_button.set_sensitive(False)
-
-            # Disable voice button
-            if self._chatroom_voice_button:
-                self._chatroom_voice_button.set_sensitive(False)
-
-        except Exception as e:
-            print(f"❌ Disable chat functionality error: {e}")
-
-    def _enable_chat_functionality(self):
-        """Enable chat input and voice controls when session exists"""
-        try:
-            # Enable text input
-            if self._chat_input:
-                self._chat_input.set_sensitive(True)
-
-            # Enable voice button
-            if self._chatroom_voice_button:
-                self._chatroom_voice_button.set_sensitive(True)
-
-            # Send button will be enabled by content change handler
-
-        except Exception as e:
-            print(f"❌ Enable chat functionality error: {e}")
-
     def _on_chatroom_content_changed(self, text_editor, content):
         """Handle content changes in chatroom text editor"""
         try:
