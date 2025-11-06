@@ -466,27 +466,19 @@ cmd_vm() {
             killall -9 qemu-system-x86_64 2>/dev/null || true
             sleep 2
 
-            # Create launch script if it doesn't exist
-            if [ ! -f "$PROJECT_ROOT/vm/launch-templeos.sh" ]; then
-                cat > "$PROJECT_ROOT/vm/launch-templeos.sh" << VMSCRIPT
-#!/bin/bash
-qemu-system-x86_64 \
-    -name TempleOS \
-    -machine type=pc,accel=kvm \
-    -cpu host \
-    -smp cores=4,threads=1,sockets=1 \
-    -m 2G \
-    -device VGA \
-    -drive file="$PROJECT_ROOT/build/tmp/TempleOS.ISO",media=cdrom,if=ide,index=0 \
-    -netdev user,id=net0 -device e1000,netdev=net0 \
-    -enable-kvm \
-    -display gtk \
-    -boot order=d,menu=off
-VMSCRIPT
-                chmod +x "$PROJECT_ROOT/vm/launch-templeos.sh"
-            fi
+            qemu-system-x86_64 \
+                -name TempleOS \
+                -machine type=pc,accel=kvm \
+                -cpu host \
+                -smp cores=4,threads=1,sockets=1 \
+                -m 2G \
+                -device VGA \
+                -drive file="$PROJECT_ROOT/build/tmp/TempleOS.ISO",media=cdrom,if=ide,index=0 \
+                -netdev user,id=net0 -device e1000,netdev=net0 \
+                -enable-kvm \
+                -display gtk \
+                -boot order=d,menu=off &
 
-            "$PROJECT_ROOT/vm/launch-templeos.sh" &
             log_success "TempleOS VM launched"
             ;;
         stop)

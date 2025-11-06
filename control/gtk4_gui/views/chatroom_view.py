@@ -753,6 +753,7 @@ class ChatroomView:
             message_label.set_wrap(True)
             message_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
             message_label.set_selectable(True)
+            message_label.set_max_width_chars(80)  # Prevent very long messages from stretching window
 
             message_box.append(message_label)
 
