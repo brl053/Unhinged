@@ -1595,8 +1595,8 @@ class ChatroomView:
             request.text = text
             request.voice_id = "default"
 
-            # Call TTS service
-            response = call_service_method("audio", "TextToSpeech", request, timeout=30.0)
+            # Call TTS service (registered as "text_to_speech" in service framework)
+            response = call_service_method("text_to_speech", "TextToSpeech", request, timeout=30.0)
 
             if response and hasattr(response, 'audio_data') and response.audio_data:
                 # Save audio to temporary file
