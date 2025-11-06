@@ -706,6 +706,9 @@ class ChatroomView:
                 buffer = self._chat_input.get_buffer()
                 buffer.set_text("")
 
+            # Focus input field for next message
+            self._chat_input.grab_focus()
+
             # Disable send button
             self._chatroom_send_button.set_sensitive(False)
 
