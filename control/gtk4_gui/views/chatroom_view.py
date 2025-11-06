@@ -1634,8 +1634,10 @@ class ChatroomView:
 
                 buffer.set_text(new_text)
 
-            # Enable send button
-            self._chatroom_send_button.set_sensitive(True)
+            # Enable send button only if there's content AND active session
+            has_content = new_text and new_text.strip()
+            has_session = self._session_status == "active"
+            self._chatroom_send_button.set_sensitive(has_content and has_session)
 
             # Reset voice visualizer and status
             if self._voice_visualizer:
