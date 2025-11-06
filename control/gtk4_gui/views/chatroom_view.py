@@ -742,6 +742,8 @@ class ChatroomView:
                 sender_label.add_css_class("error")
             elif message_type == "system":
                 sender_label.add_css_class("dim-label")
+            elif message_type == "tool":
+                sender_label.add_css_class("warning")
 
             message_box.append(sender_label)
 
