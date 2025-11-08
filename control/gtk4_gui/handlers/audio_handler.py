@@ -6,6 +6,9 @@ providing a clean interface for the UI layer.
 """
 
 import logging
+import math
+import os
+import struct
 import subprocess
 import tempfile
 import threading
@@ -56,6 +59,8 @@ class AudioHandler:
         self._recording_process: subprocess.Popen | None = None
         self._temp_file: Path | None = None
         self._recording_thread: threading.Thread | None = None
+        self._amplitude_thread: threading.Thread | None = None
+        self._temp_pipe: Path | None = None
         self._start_time: float | None = None
 
         # Callbacks for UI updates
@@ -146,11 +151,6 @@ class AudioHandler:
             self._start_time = time.time()
             self._recording_thread.start()
 
-            # NOTE: Disabled separate audio monitor to avoid device access conflicts
-            # The visualizer will use simulated animation instead of real audio data
-            # This prevents the "two processes accessing same device" issue
-            # self._visualization_bridge.start_recording_visualization()
-
             logger.info(f"Started recording (continuous, no duration limit)")
 
         except Exception as e:
@@ -184,43 +184,86 @@ class AudioHandler:
             self._handle_error(AudioRecordingError(f"Failed to stop recording: {e}"))
 
     def _record_audio_continuous(self) -> None:
-        """Record audio continuously until stopped (NO DURATION LIMIT)"""
+        """Record audio continuously until stopped using pipe-based architecture.
+
+        Uses a named pipe to split the audio stream:
+        - One copy goes to the WAV file for transcription
+        - One copy goes to amplitude extraction for visualization
+        This ensures only ONE arecord process accesses the device.
+        """
         try:
-            # Use arecord without duration - will be stopped by signal
-            cmd = [
+            # Create named pipe for amplitude extraction
+            import tempfile as tf
+            pipe_dir = Path(tf.gettempdir())
+            self._temp_pipe = pipe_dir / f"audio_pipe_{os.getpid()}_{int(time.time() * 1000)}"
+
+            try:
+                os.mkfifo(str(self._temp_pipe))
+                logger.debug(f"Created named pipe: {self._temp_pipe}")
+            except FileExistsError:
+                self._temp_pipe.unlink()
+                os.mkfifo(str(self._temp_pipe))
+
+            # Start amplitude extraction thread (reads from pipe)
+            self._amplitude_thread = threading.Thread(
+                target=self._extract_amplitude_from_pipe,
+                daemon=False
+            )
+            self._amplitude_thread.start()
+
+            # Use arecord with tee to split stream: one to file, one to pipe
+            # arecord outputs WAV to stdout, tee splits it
+            arecord_cmd = [
                 'arecord',
                 '-D', app_config.audio_device,
                 '-f', app_config.audio_format,
                 '-r', str(app_config.audio_sample_rate),
                 '-c', str(app_config.audio_channels),
                 '-t', 'wav',
-                # NO duration - record until stopped
-                str(self._temp_file)
+                '-'  # Output to stdout
             ]
 
-            # Start recording process
-            self._recording_process = subprocess.Popen(
-                cmd,
+            tee_cmd = [
+                'tee',
+                str(self._temp_pipe)  # First copy to pipe for amplitude extraction
+            ]
+
+            # Start arecord process
+            arecord_process = subprocess.Popen(
+                arecord_cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+                stderr=subprocess.PIPE
             )
+
+            # Start tee process to split the stream
+            self._recording_process = subprocess.Popen(
+                tee_cmd,
+                stdin=arecord_process.stdout,
+                stdout=open(str(self._temp_file), 'wb'),
+                stderr=subprocess.PIPE
+            )
+
+            # Close the reference in parent so pipe closes when arecord exits
+            arecord_process.stdout.close()
 
             # Monitor progress continuously
             self._monitor_recording_progress_continuous()
 
-            # Wait for recording to complete
+            # Wait for tee process to complete
             stdout, stderr = self._recording_process.communicate()
 
-            # Handle recording completion - arecord exits with non-zero when stopped by signal
+            # Wait for amplitude thread to finish
+            if self._amplitude_thread and self._amplitude_thread.is_alive():
+                self._amplitude_thread.join(timeout=5)
+
+            # Handle recording completion
             if self._recording_process.returncode != 0:
-                # Check if this is a signal exit with valid file
                 signal_messages = ["Aborted by signal", "Interrupted by signal", "Terminated"]
-                is_signal_exit = any(msg in stderr for msg in signal_messages)
+                is_signal_exit = any(msg in stderr for msg in signal_messages) if stderr else False
 
                 if is_signal_exit and self._temp_file and self._temp_file.exists():
                     file_size = self._temp_file.stat().st_size
-                    if file_size > 44:  # Valid WAV file
+                    if file_size > 44:
                         logger.info(f"Recording stopped by signal - file saved successfully ({file_size} bytes)")
                     else:
                         raise AudioRecordingError(f"Recording stopped by signal but file is too small: {file_size} bytes")
@@ -230,14 +273,76 @@ class AudioHandler:
             # Validate recorded file
             self._validate_recorded_file()
 
-            # NOTE: Visualization bridge stop is no longer needed since we disabled the monitor
-
             # Start transcription
             self._set_state(RecordingState.PROCESSING)
             self._transcribe_audio()
 
         except Exception as e:
             self._handle_error(e)
+        finally:
+            # Clean up named pipe
+            if self._temp_pipe and self._temp_pipe.exists():
+                try:
+                    self._temp_pipe.unlink()
+                    logger.debug(f"Cleaned up named pipe: {self._temp_pipe}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up named pipe: {e}")
+
+    def _extract_amplitude_from_pipe(self) -> None:
+        """Extract amplitude data from the named pipe and send to visualizer.
+
+        This runs in a separate thread and reads audio data from the pipe
+        that is being written to by the tee process.
+        """
+        try:
+            if not self._temp_pipe or not self._temp_pipe.exists():
+                logger.warning("Named pipe does not exist")
+                return
+
+            # Open pipe for reading (non-blocking would be better but Python doesn't support it easily)
+            with open(str(self._temp_pipe), 'rb') as pipe:
+                chunk_size = 1024  # 1024 bytes = 512 samples for S16_LE
+
+                while self._state == RecordingState.RECORDING:
+                    try:
+                        # Read audio chunk from pipe
+                        audio_chunk = pipe.read(chunk_size)
+
+                        if not audio_chunk:
+                            break
+
+                        # Calculate amplitude from raw audio data
+                        amplitude = self._calculate_amplitude_from_chunk(audio_chunk)
+
+                        # Send to visualizer
+                        if self._visualization_bridge and self._visualization_bridge.voice_visualizer:
+                            self._visualization_bridge.voice_visualizer.set_amplitude(amplitude)
+
+                    except Exception as e:
+                        logger.warning(f"Error reading from amplitude pipe: {e}")
+                        break
+
+        except Exception as e:
+            logger.error(f"Error in amplitude extraction: {e}")
+
+    def _calculate_amplitude_from_chunk(self, audio_data: bytes) -> float:
+        """Calculate RMS amplitude from raw audio chunk."""
+        try:
+            # Convert bytes to 16-bit signed integers
+            samples = struct.unpack(f'<{len(audio_data)//2}h', audio_data)
+
+            if samples:
+                # Calculate RMS (Root Mean Square) amplitude
+                rms = math.sqrt(sum(sample * sample for sample in samples) / len(samples))
+                # Normalize to 0.0-1.0 range (16-bit max is 32767)
+                normalized_amplitude = min(1.0, rms / 32767.0)
+                return normalized_amplitude
+            else:
+                return 0.0
+
+        except Exception as e:
+            logger.warning(f"Error calculating amplitude: {e}")
+            return 0.0
 
     def _monitor_recording_progress_continuous(self) -> None:
         """Monitor continuous recording progress (no duration limit)"""
@@ -320,7 +425,23 @@ class AudioHandler:
             except Exception as e:
                 logger.warning(f"Error terminating recording process: {e}")
 
+        # Wait for amplitude thread to finish
+        if self._amplitude_thread and self._amplitude_thread.is_alive():
+            try:
+                self._amplitude_thread.join(timeout=2)
+            except Exception as e:
+                logger.warning(f"Error waiting for amplitude thread: {e}")
+
+        # Clean up named pipe
+        if self._temp_pipe and self._temp_pipe.exists():
+            try:
+                self._temp_pipe.unlink()
+            except Exception as e:
+                logger.warning(f"Error cleaning up named pipe: {e}")
+
         self._recording_process = None
+        self._amplitude_thread = None
+        self._temp_pipe = None
         self._cleanup_temp_file()
         self._recording_thread = None
         self._start_time = None
