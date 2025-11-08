@@ -67,11 +67,30 @@ The implementation requires:
 4. Ensure proper cleanup of the named pipe when recording stops
 5. Handle edge cases: pipe creation failures, thread synchronization, signal handling
 
-## Recommendation
+## Implementation Status
 
-Revert commit `fea7ff1` and implement the named pipe solution described above. This restores the visualization feature while fixing the underlying device access conflict. The solution is architecturally sound, uses only standard Unix tools (`arecord`, `tee`, named pipes), and requires no external dependencies.
+**COMPLETED** - Commit `4537fff` implements the named pipe solution as described above.
 
-The current state is unacceptable because it removes a feature that was working. The next engineer should implement the proper fix rather than accept the workaround.
+The fix has been implemented in `control/gtk4_gui/handlers/audio_handler.py` with the following changes:
+
+1. **Named Pipe Creation**: `_record_audio_continuous()` creates a temporary FIFO in `/tmp` with a unique name based on PID and timestamp.
+
+2. **Stream Splitting**: Uses `arecord | tee` pipeline where:
+   - `arecord` outputs WAV data to stdout
+   - `tee` writes to both the named pipe and the WAV file
+   - Only ONE `arecord` process accesses the audio device
+
+3. **Amplitude Extraction**: New method `_extract_amplitude_from_pipe()` runs in a separate thread and:
+   - Reads audio chunks from the named pipe
+   - Calculates RMS amplitude using `_calculate_amplitude_from_chunk()`
+   - Sends amplitude data to the visualizer in real-time
+
+4. **Proper Cleanup**: `_cleanup()` method ensures:
+   - Amplitude thread is joined with timeout
+   - Named pipe is deleted after recording stops
+   - No resource leaks
+
+The solution restores the visualization feature while fixing the underlying device access conflict. It is architecturally sound, uses only standard Unix tools, and requires no external dependencies.
 
 ## Files Affected
 
