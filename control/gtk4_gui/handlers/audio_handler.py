@@ -146,10 +146,12 @@ class AudioHandler:
             self._start_time = time.time()
             self._recording_thread.start()
 
-            # Start real-time audio visualization
-            self._visualization_bridge.start_recording_visualization()
+            # NOTE: Disabled separate audio monitor to avoid device access conflicts
+            # The visualizer will use simulated animation instead of real audio data
+            # This prevents the "two processes accessing same device" issue
+            # self._visualization_bridge.start_recording_visualization()
 
-            logger.info(f"Started recording for {duration} seconds")
+            logger.info(f"Started recording (continuous, no duration limit)")
 
         except Exception as e:
             self._cleanup()
@@ -228,8 +230,7 @@ class AudioHandler:
             # Validate recorded file
             self._validate_recorded_file()
 
-            # Stop real-time audio visualization
-            self._visualization_bridge.stop_recording_visualization()
+            # NOTE: Visualization bridge stop is no longer needed since we disabled the monitor
 
             # Start transcription
             self._set_state(RecordingState.PROCESSING)
