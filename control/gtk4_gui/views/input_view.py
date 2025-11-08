@@ -22,29 +22,32 @@ class InputView:
         # Simple initialization without complex hooks for now
         self.devices = self._get_input_devices()
         self.current_device = self._get_current_default_device()
+        self.container = None
+        self.devices_group = None
 
     def render(self) -> Gtk.Widget:
         """Render the input view (like React's render method)."""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        container.set_margin_top(24)
-        container.set_margin_bottom(24)
-        container.set_margin_start(24)
-        container.set_margin_end(24)
+        self.container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.container.set_margin_top(24)
+        self.container.set_margin_bottom(24)
+        self.container.set_margin_start(24)
+        self.container.set_margin_end(24)
 
         # Header section
         header = self._render_header()
-        container.append(header)
+        self.container.append(header)
 
         # Current status section
         if self.current_device:
             status = self._render_current_status()
-            container.append(status)
+            self.container.append(status)
 
         # Device list section
         devices = self._render_device_list()
-        container.append(devices)
+        self.devices_group = devices
+        self.container.append(devices)
 
-        return container
+        return self.container
 
     def _render_header(self) -> Gtk.Widget:
         """Render header section."""
@@ -259,6 +262,39 @@ class InputView:
         self.devices = self._get_input_devices()
         self.current_device = self._get_current_default_device()
         print("🔄 Audio devices refreshed")
+
+        # Re-render the device list
+        if self.devices_group and self.container:
+            self._refresh_device_list_ui()
+
+    def _refresh_device_list_ui(self):
+        """Refresh the device list UI without recreating the entire view."""
+        if not self.devices_group:
+            return
+
+        # Remove all children from the devices group
+        while True:
+            child = self.devices_group.get_first_child()
+            if child is None:
+                break
+            self.devices_group.remove(child)
+
+        # Re-add devices
+        if self.devices:
+            for device in self.devices:
+                device_row = self._create_device_row(device)
+                self.devices_group.add(device_row)
+        else:
+            # No devices found
+            no_devices_row = Adw.ActionRow()
+            no_devices_row.set_title("No Input Devices Found")
+            no_devices_row.set_subtitle("No audio input devices detected")
+
+            warning_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+            warning_icon.set_icon_size(Gtk.IconSize.NORMAL)
+            no_devices_row.add_prefix(warning_icon)
+
+            self.devices_group.add(no_devices_row)
 
     def _on_set_default_clicked(self, button, device):
         """Handle set default button click."""
