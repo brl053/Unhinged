@@ -13,9 +13,16 @@ import subprocess
 import tempfile
 import threading
 import time
+import sys
 from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
+
+# Add utils to path for audio_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+
+from audio_utils import calculate_rms_amplitude
+from event_bus import get_event_bus, AudioEvents, Event
 
 try:
     from .audio_monitor import AudioVisualizationBridge
@@ -63,7 +70,10 @@ class AudioHandler:
         self._temp_pipe: Path | None = None
         self._start_time: float | None = None
 
-        # Callbacks for UI updates
+        # Event bus for UI updates (replaces callbacks)
+        self._event_bus = get_event_bus()
+
+        # Legacy callbacks for backward compatibility
         self._state_callback: Callable[[RecordingState], None] | None = None
         self._progress_callback: Callable[[float], None] | None = None
         self._result_callback: Callable[[str], None] | None = None
@@ -97,8 +107,8 @@ class AudioHandler:
                      progress_callback: Callable[[float], None] | None = None,
                      result_callback: Callable[[str], None] | None = None,
                      error_callback: Callable[[Exception], None] | None = None):
-        """Set callbacks for UI updates
-        
+        """Set callbacks for UI updates (DEPRECATED: use event_bus instead)
+
         Args:
             state_callback: Called when recording state changes
             progress_callback: Called with recording progress (0.0 to 1.0)
@@ -109,6 +119,18 @@ class AudioHandler:
         self._progress_callback = progress_callback
         self._result_callback = result_callback
         self._error_callback = error_callback
+
+    def subscribe_to_events(self, event_type: str, callback: Callable[[Event], None]) -> Callable[[], None]:
+        """Subscribe to audio events via event bus
+
+        Args:
+            event_type: Event type (use AudioEvents constants)
+            callback: Function to call when event is emitted
+
+        Returns:
+            Unsubscribe function
+        """
+        return self._event_bus.subscribe(event_type, callback)
 
     def set_voice_visualizer(self, visualizer) -> None:
         """Connect voice visualizer for real-time feedback"""
@@ -212,14 +234,14 @@ class AudioHandler:
             self._amplitude_thread.start()
 
             # Use arecord with tee to split stream: one to file, one to pipe
-            # arecord outputs WAV to stdout, tee splits it
+            # arecord outputs raw audio to stdout, tee splits it
             arecord_cmd = [
                 'arecord',
                 '-D', app_config.audio_device,
                 '-f', app_config.audio_format,
                 '-r', str(app_config.audio_sample_rate),
                 '-c', str(app_config.audio_channels),
-                '-t', 'wav',
+                '-t', 'raw',  # Output raw audio (not WAV) for amplitude extraction
                 '-'  # Output to stdout
             ]
 
@@ -228,7 +250,7 @@ class AudioHandler:
                 str(self._temp_pipe)  # First copy to pipe for amplitude extraction
             ]
 
-            # Start arecord process
+            # Start arecord process - capture stderr to detect device/format errors
             arecord_process = subprocess.Popen(
                 arecord_cmd,
                 stdout=subprocess.PIPE,
@@ -236,6 +258,8 @@ class AudioHandler:
             )
 
             # Start tee process to split the stream
+            # tee writes raw audio to pipe AND to file
+            # We'll convert raw to WAV after recording completes
             self._recording_process = subprocess.Popen(
                 tee_cmd,
                 stdin=arecord_process.stdout,
@@ -250,16 +274,31 @@ class AudioHandler:
             self._monitor_recording_progress_continuous()
 
             # Wait for tee process to complete
-            stdout, stderr = self._recording_process.communicate()
+            tee_stdout, tee_stderr = self._recording_process.communicate()
+
+            # Wait for arecord process to complete and capture its stderr
+            arecord_stdout, arecord_stderr = arecord_process.communicate()
 
             # Wait for amplitude thread to finish
             if self._amplitude_thread and self._amplitude_thread.is_alive():
                 self._amplitude_thread.join(timeout=5)
 
-            # Handle recording completion
+            # Check if arecord process failed (this is the actual recording process)
+            # returncode < 0 means terminated by signal (e.g., -15 for SIGTERM) - this is normal when user stops recording
+            # returncode > 0 means actual error
+            if arecord_process.returncode is not None and arecord_process.returncode > 0:
+                # arecord failed with actual error - extract error details
+                arecord_stderr_str = arecord_stderr.decode('utf-8', errors='replace').strip() if arecord_stderr else "Unknown error"
+                raise AudioRecordingError(
+                    f"Recording failed: {arecord_stderr_str}",
+                    device=app_config.audio_device,
+                    details={"arecord_stderr": arecord_stderr_str}
+                )
+
+            # Check if tee process failed (should not happen if arecord succeeded)
             if self._recording_process.returncode != 0:
                 signal_messages = ["Aborted by signal", "Interrupted by signal", "Terminated"]
-                is_signal_exit = any(msg in stderr for msg in signal_messages) if stderr else False
+                is_signal_exit = any(msg in tee_stderr for msg in signal_messages) if tee_stderr else False
 
                 if is_signal_exit and self._temp_file and self._temp_file.exists():
                     file_size = self._temp_file.stat().st_size
@@ -268,7 +307,26 @@ class AudioHandler:
                     else:
                         raise AudioRecordingError(f"Recording stopped by signal but file is too small: {file_size} bytes")
                 else:
-                    raise AudioRecordingError(f"Recording failed: {stderr}")
+                    tee_stderr_str = tee_stderr.decode('utf-8', errors='replace').strip() if tee_stderr else "Unknown error"
+                    raise AudioRecordingError(f"Recording failed: {tee_stderr_str}")
+
+            # Both processes succeeded - validate the recorded file
+            if not self._temp_file or not self._temp_file.exists():
+                raise AudioRecordingError("Recording failed: no output file created")
+
+            file_size = self._temp_file.stat().st_size
+            if file_size <= 4:  # Raw audio should be at least a few bytes
+                raise AudioRecordingError(f"Recording file too small: {file_size} bytes")
+
+            logger.info(f"Recording completed successfully ({file_size} bytes of raw audio)")
+
+            # Convert raw audio to WAV format for transcription
+            _convert_raw_to_wav(
+                self._temp_file,
+                self._temp_file,  # Overwrite with WAV version
+                app_config.audio_sample_rate,
+                app_config.audio_channels
+            )
 
             # Validate recorded file
             self._validate_recorded_file()
@@ -327,31 +385,20 @@ class AudioHandler:
 
     def _calculate_amplitude_from_chunk(self, audio_data: bytes) -> float:
         """Calculate RMS amplitude from raw audio chunk."""
-        try:
-            # Convert bytes to 16-bit signed integers
-            samples = struct.unpack(f'<{len(audio_data)//2}h', audio_data)
-
-            if samples:
-                # Calculate RMS (Root Mean Square) amplitude
-                rms = math.sqrt(sum(sample * sample for sample in samples) / len(samples))
-                # Normalize to 0.0-1.0 range (16-bit max is 32767)
-                normalized_amplitude = min(1.0, rms / 32767.0)
-                return normalized_amplitude
-            else:
-                return 0.0
-
-        except Exception as e:
-            logger.warning(f"Error calculating amplitude: {e}")
-            return 0.0
+        return calculate_rms_amplitude(audio_data)
 
     def _monitor_recording_progress_continuous(self) -> None:
         """Monitor continuous recording progress (no duration limit)"""
         while self._recording_process and self._recording_process.poll() is None:
             # For continuous recording, we don't have a progress percentage
             # Just keep the UI updated that recording is active
+            elapsed = time.time() - self._start_time if self._start_time else 0
+
+            # Emit event via event bus
+            self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"elapsed": elapsed})
+
+            # Legacy callback support
             if self._progress_callback:
-                # Send elapsed time instead of progress percentage
-                elapsed = time.time() - self._start_time if self._start_time else 0
                 self._progress_callback(elapsed)
 
             time.sleep(0.1)  # Update every 100ms
@@ -387,7 +434,10 @@ class AudioHandler:
             # Set state back to idle
             self._set_state(RecordingState.IDLE)
 
-            # Notify UI of result
+            # Notify UI of result via event bus
+            self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": transcript})
+
+            # Legacy callback support
             if self._result_callback:
                 self._result_callback(transcript)
 
@@ -397,21 +447,43 @@ class AudioHandler:
             self._handle_error(e)
 
     def _set_state(self, new_state: RecordingState) -> None:
-        """Update recording state and notify UI"""
+        """Update recording state and notify UI via event bus"""
         if self._state != new_state:
             self._state = new_state
             logger.debug(f"Recording state changed to: {new_state.value}")
 
+            # Emit event via event bus
+            event_type = (AudioEvents.RECORDING_STARTED if new_state == RecordingState.RECORDING
+                         else AudioEvents.RECORDING_STOPPED)
+            self._event_bus.emit_simple(event_type, {"state": new_state.value})
+
+            # Legacy callback support
             if self._state_callback:
                 self._state_callback(new_state)
 
     def _handle_error(self, error: Exception) -> None:
-        """Handle errors and notify UI"""
+        """Handle errors and notify UI via event bus
+
+        Emits full exception object with details for proper error diagnostics.
+        Preserves device context and stderr output for debugging.
+        """
         logger.error(f"Audio handler error: {error}")
 
         self._cleanup()
         self._set_state(RecordingState.ERROR)
 
+        # Emit error event via event bus with full exception details
+        # This preserves device context, stderr output, and other metadata
+        error_data = {
+            "error": str(error),
+            "type": error.__class__.__name__,
+            "message": getattr(error, 'message', str(error)),
+            "device": getattr(error, 'device', None),
+            "details": getattr(error, 'details', {})
+        }
+        self._event_bus.emit_simple(AudioEvents.ERROR, error_data)
+
+        # Legacy callback support
         if self._error_callback:
             self._error_callback(error)
 
@@ -547,3 +619,33 @@ class AudioHandler:
         except Exception as e:
             logger.warning(f"Recording test failed: {e}")
             return False
+
+
+def _convert_raw_to_wav(raw_file: Path, wav_file: Path, sample_rate: int, channels: int, sample_width: int = 2) -> None:
+    """Convert raw audio data to WAV format.
+
+    Args:
+        raw_file: Path to raw audio file
+        wav_file: Path to output WAV file
+        sample_rate: Sample rate in Hz
+        channels: Number of channels
+        sample_width: Sample width in bytes (2 for S16_LE)
+    """
+    import wave
+
+    try:
+        # Read raw audio data
+        with open(raw_file, 'rb') as f:
+            raw_data = f.read()
+
+        # Write WAV file
+        with wave.open(str(wav_file), 'wb') as wav:
+            wav.setnchannels(channels)
+            wav.setsampwidth(sample_width)
+            wav.setframerate(sample_rate)
+            wav.writeframes(raw_data)
+
+        logger.debug(f"Converted raw audio to WAV: {wav_file}")
+    except Exception as e:
+        logger.error(f"Failed to convert raw audio to WAV: {e}")
+        raise
