@@ -63,7 +63,8 @@ class AudioHandler:
 
     def __init__(self):
         self._state = RecordingState.IDLE
-        self._recording_process: subprocess.Popen | None = None
+        self._recording_process: subprocess.Popen | None = None  # tee process
+        self._arecord_process: subprocess.Popen | None = None  # arecord process
         self._temp_file: Path | None = None
         self._recording_thread: threading.Thread | None = None
         self._amplitude_thread: threading.Thread | None = None
@@ -185,19 +186,19 @@ class AudioHandler:
             return
 
         try:
-            if self._recording_process and self._recording_process.poll() is None:
-                # Send SIGTERM for graceful shutdown (better than SIGINT for arecord)
+            # Send SIGTERM to arecord process (not tee) for graceful shutdown
+            if self._arecord_process and self._arecord_process.poll() is None:
                 import signal
-                self._recording_process.send_signal(signal.SIGTERM)
+                self._arecord_process.send_signal(signal.SIGTERM)
 
-                # Wait for process to finish
+                # Wait for arecord to finish
                 try:
-                    self._recording_process.wait(timeout=3)
+                    self._arecord_process.wait(timeout=3)
                 except subprocess.TimeoutExpired:
                     # Force terminate if graceful shutdown fails
-                    logger.warning("Graceful recording stop timed out, force terminating")
-                    self._recording_process.terminate()
-                    self._recording_process.wait(timeout=2)
+                    logger.warning("Graceful arecord stop timed out, force terminating")
+                    self._arecord_process.terminate()
+                    self._arecord_process.wait(timeout=2)
 
             logger.info("Recording stopped")
 
@@ -251,7 +252,7 @@ class AudioHandler:
             ]
 
             # Start arecord process - capture stderr to detect device/format errors
-            arecord_process = subprocess.Popen(
+            self._arecord_process = subprocess.Popen(
                 arecord_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -262,13 +263,13 @@ class AudioHandler:
             # We'll convert raw to WAV after recording completes
             self._recording_process = subprocess.Popen(
                 tee_cmd,
-                stdin=arecord_process.stdout,
+                stdin=self._arecord_process.stdout,
                 stdout=open(str(self._temp_file), 'wb'),
                 stderr=subprocess.PIPE
             )
 
             # Close the reference in parent so pipe closes when arecord exits
-            arecord_process.stdout.close()
+            self._arecord_process.stdout.close()
 
             # Monitor progress continuously
             self._monitor_recording_progress_continuous()
@@ -277,23 +278,31 @@ class AudioHandler:
             tee_stdout, tee_stderr = self._recording_process.communicate()
 
             # Wait for arecord process to complete and capture its stderr
-            arecord_stdout, arecord_stderr = arecord_process.communicate()
+            arecord_stdout, arecord_stderr = self._arecord_process.communicate()
 
             # Wait for amplitude thread to finish
             if self._amplitude_thread and self._amplitude_thread.is_alive():
                 self._amplitude_thread.join(timeout=5)
 
             # Check if arecord process failed (this is the actual recording process)
-            # returncode < 0 means terminated by signal (e.g., -15 for SIGTERM) - this is normal when user stops recording
-            # returncode > 0 means actual error
-            if arecord_process.returncode is not None and arecord_process.returncode > 0:
-                # arecord failed with actual error - extract error details
+            # When arecord is terminated by signal (SIGTERM), it exits with code 1 and writes "Aborted by signal" to stderr
+            # This is NORMAL when user stops recording - not an error
+            # Only raise error if it's an actual failure (format error, device error, etc.)
+            if self._arecord_process.returncode is not None and self._arecord_process.returncode != 0:
                 arecord_stderr_str = arecord_stderr.decode('utf-8', errors='replace').strip() if arecord_stderr else "Unknown error"
-                raise AudioRecordingError(
-                    f"Recording failed: {arecord_stderr_str}",
-                    device=app_config.audio_device,
-                    details={"arecord_stderr": arecord_stderr_str}
-                )
+
+                # Check if this is a signal termination (normal) vs actual error
+                signal_messages = ["Aborted by signal", "Interrupted by signal", "Terminated"]
+                is_signal_exit = any(msg in arecord_stderr_str for msg in signal_messages)
+
+                if not is_signal_exit:
+                    # This is an actual error (format error, device error, etc.)
+                    raise AudioRecordingError(
+                        f"Recording failed: {arecord_stderr_str}",
+                        device=app_config.audio_device,
+                        details={"arecord_stderr": arecord_stderr_str}
+                    )
+                # If it's a signal exit, continue - this is normal
 
             # Check if tee process failed (should not happen if arecord succeeded)
             if self._recording_process.returncode != 0:
@@ -489,13 +498,21 @@ class AudioHandler:
 
     def _cleanup(self) -> None:
         """Clean up resources"""
-        # Stop recording process if running
+        # Stop arecord process if running
+        if self._arecord_process and self._arecord_process.poll() is None:
+            try:
+                self._arecord_process.terminate()
+                self._arecord_process.wait(timeout=2)
+            except Exception as e:
+                logger.warning(f"Error terminating arecord process: {e}")
+
+        # Stop tee process if running
         if self._recording_process and self._recording_process.poll() is None:
             try:
                 self._recording_process.terminate()
                 self._recording_process.wait(timeout=2)
             except Exception as e:
-                logger.warning(f"Error terminating recording process: {e}")
+                logger.warning(f"Error terminating tee process: {e}")
 
         # Wait for amplitude thread to finish
         if self._amplitude_thread and self._amplitude_thread.is_alive():
@@ -511,6 +528,7 @@ class AudioHandler:
             except Exception as e:
                 logger.warning(f"Error cleaning up named pipe: {e}")
 
+        self._arecord_process = None
         self._recording_process = None
         self._amplitude_thread = None
         self._temp_pipe = None
