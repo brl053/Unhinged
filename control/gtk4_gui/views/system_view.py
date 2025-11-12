@@ -92,11 +92,24 @@ class SystemInfoView:
         self.system_info_box.set_vexpand(True)
         self.system_info_box.set_hexpand(True)
 
-        # Header section
-        header_group = Adw.PreferencesGroup()
-        header_group.set_title("System Information")
-        header_group.set_description("Comprehensive system hardware and performance information")
-        self.system_info_box.append(header_group)
+        # Header section with refresh button
+        header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        header_box.set_margin_bottom(12)
+
+        # Title
+        title_label = Gtk.Label(label="System Information")
+        title_label.add_css_class("title-2")
+        title_label.set_halign(Gtk.Align.START)
+        header_box.append(title_label)
+
+        # Refresh button (right-aligned)
+        refresh_button = Gtk.Button()
+        refresh_button.set_icon_name("view-refresh-symbolic")
+        refresh_button.set_tooltip_text("Refresh system information")
+        refresh_button.connect("clicked", self._on_refresh_system_info)
+        header_box.append(refresh_button)
+
+        self.system_info_box.append(header_box)
 
         if SYSTEM_INFO_AVAILABLE and COMPONENTS_AVAILABLE:
             # Collect system information
@@ -131,10 +144,6 @@ class SystemInfoView:
                     self.system_info_box.append(platform_section)
                 except Exception as e:
                     print(f"⚠️ Skipping platform section: {e}")
-
-                # Add refresh button
-                refresh_section = self._create_refresh_section()
-                self.system_info_box.append(refresh_section)
 
             except Exception as e:
                 # Error handling
@@ -430,51 +439,6 @@ class SystemInfoView:
 
         return platform_group
 
-    def _create_refresh_section(self):
-        """Create refresh controls section."""
-        refresh_group = Adw.PreferencesGroup()
-        refresh_group.set_title("Controls")
-
-        # Manual refresh row
-        refresh_row = Adw.ActionRow()
-        refresh_row.set_title("Refresh System Information")
-        refresh_row.set_subtitle("Update all system information and metrics")
-
-        refresh_button = Gtk.Button()
-        refresh_button.set_icon_name("view-refresh-symbolic")
-        refresh_button.add_css_class("suggested-action")
-        refresh_button.set_tooltip_text("Refresh system information")
-        refresh_button.connect("clicked", self._on_refresh_system_info)
-
-        refresh_row.add_suffix(refresh_button)
-        refresh_group.add(refresh_row)
-
-        # Auto-refresh row
-        auto_refresh_row = Adw.ActionRow()
-        auto_refresh_row.set_title("Auto-Refresh")
-        auto_refresh_row.set_subtitle(f"Automatically refresh every {self.system_info_refresh_interval} seconds")
-
-        auto_refresh_switch = Gtk.Switch()
-        auto_refresh_switch.set_active(self.system_info_auto_refresh)
-        auto_refresh_switch.connect("notify::active", self._on_auto_refresh_toggled)
-
-        auto_refresh_row.add_suffix(auto_refresh_switch)
-        refresh_group.add(auto_refresh_row)
-
-        # Real-time updates row
-        realtime_row = Adw.ActionRow()
-        realtime_row.set_title("Real-time Performance Updates")
-        realtime_row.set_subtitle("Live updating of CPU, memory, and disk usage (2s interval)")
-
-        realtime_switch = Gtk.Switch()
-        realtime_switch.set_active(self.realtime_updates_enabled)
-        realtime_switch.connect("notify::active", self._on_realtime_updates_toggled)
-
-        realtime_row.add_suffix(realtime_switch)
-        refresh_group.add(realtime_row)
-
-        return refresh_group
-
     def _on_refresh_system_info(self, button):
         """Handle refresh button click."""
         if SYSTEM_INFO_AVAILABLE:
@@ -496,30 +460,53 @@ class SystemInfoView:
                     # Rebuild content with fresh data
                     system_info = get_system_info(self.project_root, use_cache=False)
 
-                    # Header section
-                    header_group = Adw.PreferencesGroup()
-                    header_group.set_title("System Information")
-                    header_group.set_description("Comprehensive system hardware and performance information")
-                    self.system_info_box.append(header_group)
+                    # Header section with refresh button
+                    header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+                    header_box.set_margin_bottom(12)
+
+                    title_label = Gtk.Label(label="System Information")
+                    title_label.add_css_class("title-2")
+                    title_label.set_halign(Gtk.Align.START)
+                    header_box.append(title_label)
+
+                    refresh_button = Gtk.Button()
+                    refresh_button.set_icon_name("view-refresh-symbolic")
+                    refresh_button.set_tooltip_text("Refresh system information")
+                    refresh_button.connect("clicked", self._on_refresh_system_info)
+                    header_box.append(refresh_button)
+
+                    self.system_info_box.append(header_box)
 
                     # Add all sections
-                    overview_section = self._create_system_overview_section(system_info)
-                    self.system_info_box.append(overview_section)
+                    try:
+                        motherboard_section = self._create_motherboard_section(system_info)
+                        self.system_info_box.append(motherboard_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping motherboard section: {e}")
 
-                    performance_section = self._create_performance_metrics_section(system_info)
-                    self.system_info_box.append(performance_section)
+                    try:
+                        overview_section = self._create_system_overview_section(system_info)
+                        self.system_info_box.append(overview_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping overview section: {e}")
 
-                    hardware_section = self._create_hardware_info_section(system_info)
-                    self.system_info_box.append(hardware_section)
+                    try:
+                        performance_section = self._create_performance_metrics_section(system_info)
+                        self.system_info_box.append(performance_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping performance section: {e}")
 
-                    motherboard_section = self._create_motherboard_section(system_info)
-                    self.system_info_box.append(motherboard_section)
+                    try:
+                        hardware_section = self._create_hardware_info_section(system_info)
+                        self.system_info_box.append(hardware_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping hardware section: {e}")
 
-                    platform_section = self._create_platform_status_section(system_info)
-                    self.system_info_box.append(platform_section)
-
-                    refresh_section = self._create_refresh_section()
-                    self.system_info_box.append(refresh_section)
+                    try:
+                        platform_section = self._create_platform_status_section(system_info)
+                        self.system_info_box.append(platform_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping platform section: {e}")
 
                 # Show toast notification
                 if hasattr(self.app, 'show_toast'):
