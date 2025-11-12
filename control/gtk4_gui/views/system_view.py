@@ -124,6 +124,10 @@ class SystemInfoView:
                 cpu_details_section = self._create_cpu_details_section(system_info)
                 self.system_info_box.append(cpu_details_section)
 
+                # Create GPU details section
+                gpu_details_section = self._create_gpu_details_section(system_info)
+                self.system_info_box.append(gpu_details_section)
+
                 # Try to create other sections (may fail if attributes missing)
                 try:
                     overview_section = self._create_system_overview_section(system_info)
@@ -444,6 +448,47 @@ class SystemInfoView:
 
         return cpu_group
 
+    def _create_gpu_details_section(self, system_info):
+        """Create GPU details information section."""
+        gpu_group = Adw.PreferencesGroup()
+        gpu_group.set_title("Graphics")
+        gpu_group.set_description("GPU and graphics information")
+
+        if system_info.gpu and system_info.gpu.vendor != "Unknown":
+            # Vendor
+            vendor_row = Adw.ActionRow()
+            vendor_row.set_title("Vendor")
+            vendor_row.set_subtitle(system_info.gpu.vendor)
+            gpu_group.add(vendor_row)
+
+            # Model
+            if system_info.gpu.model:
+                model_row = Adw.ActionRow()
+                model_row.set_title("Model")
+                model_row.set_subtitle(system_info.gpu.model)
+                gpu_group.add(model_row)
+
+            # Driver
+            if system_info.gpu.driver:
+                driver_row = Adw.ActionRow()
+                driver_row.set_title("Driver")
+                driver_row.set_subtitle(system_info.gpu.driver)
+                gpu_group.add(driver_row)
+
+            # Memory
+            if system_info.gpu.memory_mb:
+                memory_row = Adw.ActionRow()
+                memory_row.set_title("Memory")
+                memory_row.set_subtitle(f"{system_info.gpu.memory_mb} MB")
+                gpu_group.add(memory_row)
+        else:
+            # No GPU info available
+            empty_row = Adw.ActionRow()
+            empty_row.set_title("No GPU information available")
+            gpu_group.add(empty_row)
+
+        return gpu_group
+
     def _create_platform_status_section(self, system_info):
         """Create platform status section with Unhinged-specific information."""
         platform_group = Adw.PreferencesGroup()
@@ -549,6 +594,12 @@ class SystemInfoView:
                         self.system_info_box.append(cpu_details_section)
                     except Exception as e:
                         print(f"⚠️ Skipping CPU details section: {e}")
+
+                    try:
+                        gpu_details_section = self._create_gpu_details_section(system_info)
+                        self.system_info_box.append(gpu_details_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping GPU details section: {e}")
 
                     try:
                         overview_section = self._create_system_overview_section(system_info)
