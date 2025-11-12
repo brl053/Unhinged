@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "updated": 1762931942.1267838,
-    "updated_iso": "2025-11-11 23:19:02",
+    "updated": 1762932706.0968444,
+    "updated_iso": "2025-11-11 23:31:46",
     "version": "1.0"
   },
   "checksums": {
     "control/gtk4_gui": {
       "realtime_system_info.py": "83654d2cb5adbb43834dff80838e9a7bbf97f2bb51a7d45bbe948ca7cb39ef87",
       "__init__.py": "b99c829c492a10dbcea8d2d55cb7dd5ba145c714f13b2ab61b78d83c4bcc00ec",
-      "system_info.py": "a3bcfe11f80de893d11b10d1fe91d1cfb1033dd4adf7ad8d5e086a09e2e8b9f0",
+      "system_info.py": "4cf361acaa688423a9583ea982e94e512ef03cbe68832fd27487a0596b3084b6",
       "gpu_driver_detector.py": "703602fcb4099f08d4991cd02fcbd5f38806cc1cd612d9d64893f5bc86e57c12",
       "process_monitor.py": "c9b6e1468ff019f4435d60c56f8fa63c3af2142bd06afb93054972521e6b0641",
       "service_connector.py": "aaae2021efebc16fd407f1e76ecd5acfce1e976473f0dd6ce5f477e3787513bc",
@@ -40,7 +40,7 @@
       "views/chatroom_view.py": "067e3f9187bdcafa7b9643d92eb5aca6ed1e4de30c0072f226375c2822d97f33",
       "views/bluetooth_view.py": "ffc35d0521b1f95f3ca44a7b121fcc7ab2537686653ebd5faaa3fafc94625100",
       "views/usb_view.py": "5fabceb94088c669db5db1b349df91e8d9ad647235f52473e1381a9f137a4ddd",
-      "views/system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
+      "views/system_view.py": "6a23d498acf331f58bf975cae073463c7aef78f81b0135139eb374d0374646f1",
       "views/status_view.py": "efe7283e7dbd9a27513cfc18c8d25306cb791ec1dfb3dd5343e7ae24a22e66c9",
       "views/graph_workspace_view.py": "7b55bcdfa15bf5fe68de30ee86f7266a922a1ef7fcf560aaf54b370decd46bfb",
       "views/document_workspace_view.py": "457609f8f99bdb2fca90d30fe1580793ade87fe07ee866e523cbf8398fdf6828",
@@ -105,7 +105,7 @@
       "chatroom_view.py": "067e3f9187bdcafa7b9643d92eb5aca6ed1e4de30c0072f226375c2822d97f33",
       "bluetooth_view.py": "ffc35d0521b1f95f3ca44a7b121fcc7ab2537686653ebd5faaa3fafc94625100",
       "usb_view.py": "5fabceb94088c669db5db1b349df91e8d9ad647235f52473e1381a9f137a4ddd",
-      "system_view.py": "164ea2cc0232e8f0c1ff885b017153e4cf217180ce006cb5d04c98458db4170a",
+      "system_view.py": "6a23d498acf331f58bf975cae073463c7aef78f81b0135139eb374d0374646f1",
       "status_view.py": "efe7283e7dbd9a27513cfc18c8d25306cb791ec1dfb3dd5343e7ae24a22e66c9",
       "graph_workspace_view.py": "7b55bcdfa15bf5fe68de30ee86f7266a922a1ef7fcf560aaf54b370decd46bfb",
       "document_workspace_view.py": "457609f8f99bdb2fca90d30fe1580793ade87fe07ee866e523cbf8398fdf6828",
@@ -122,7 +122,7 @@
     },
     "build": {
       "llm_integration.py": "d5a6131399ede139168978600235f407ada6aa7951bf9a6198e94e1044f6a56d",
-      "code_checksums.json": "e9bcf0ebf418f490d7698c97dd53beaef67d2109d0e38f0799c8c99a02af71bb",
+      "code_checksums.json": "a7ca279b68111e023dfc40d6417c53fa50a77a71b3787f5e616a305c2075c976",
       "static_analysis_results.json": "26290add0e97daf4215c2e5c50c6556ab786670e519804dd6e0d1fa737acdfa3",
       "cli.py": "9d368a81b4c99c34d7c8e127ec3afee5d5a2103c3ba61ac54ebab21a1161aadc",
       "preflight_check.py": "f3235a1828abfdb74fddcc3476773a575a04d798b50d7a42a5d9cb6657220d9e",

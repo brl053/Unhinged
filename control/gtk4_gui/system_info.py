@@ -144,6 +144,7 @@ class SystemInformation:
     network: NetworkInfo = field(default_factory=NetworkInfo)
     system: SystemStatus = field(default_factory=SystemStatus)
     platform: PlatformStatus = field(default_factory=PlatformStatus)
+    motherboard: dict = field(default_factory=dict)
     collection_time: float = field(default_factory=time.time)
     collection_errors: list[str] = field(default_factory=list)
 
@@ -189,6 +190,12 @@ class SystemInfoCollector:
         system_info.collection_time = current_time
 
         # Collect each category with error handling
+        try:
+            system_info.motherboard = self._collect_motherboard_info()
+        except Exception as e:
+            logger.error(f"Failed to collect motherboard info: {e}")
+            system_info.collection_errors.append(f"Motherboard: {str(e)}")
+
         try:
             system_info.cpu = self._collect_cpu_info()
         except Exception as e:
@@ -255,6 +262,47 @@ class SystemInfoCollector:
         runner = SubprocessRunner(timeout=timeout)
         result = runner.run_list(command)
         return result["success"], result["output"]
+
+    def _collect_motherboard_info(self) -> dict:
+        """Collect motherboard information from dmidecode or /sys/class/dmi/id/"""
+        motherboard = {}
+
+        # Try dmidecode first (requires root)
+        success, output = self._run_command(['dmidecode', '-t', 'baseboard'])
+        if success:
+            for line in output.split('\n'):
+                line = line.strip()
+                if line.startswith('Manufacturer:'):
+                    motherboard['manufacturer'] = line.split(':', 1)[1].strip()
+                elif line.startswith('Product Name:'):
+                    motherboard['model'] = line.split(':', 1)[1].strip()
+                elif line.startswith('Serial Number:'):
+                    motherboard['serial'] = line.split(':', 1)[1].strip()
+                elif line.startswith('Version:'):
+                    motherboard['version'] = line.split(':', 1)[1].strip()
+            return motherboard
+
+        # Fallback to /sys/class/dmi/id/ (no root needed)
+        dmi_path = Path('/sys/class/dmi/id')
+        if dmi_path.exists():
+            # Try to read each file, skip if permission denied
+            for dmi_file, key in [
+                ('board_vendor', 'manufacturer'),
+                ('board_name', 'model'),
+                ('board_serial', 'serial'),
+                ('board_version', 'version'),
+            ]:
+                try:
+                    file_path = dmi_path / dmi_file
+                    if file_path.exists():
+                        motherboard[key] = file_path.read_text().strip()
+                except (PermissionError, OSError):
+                    # Skip files we can't read
+                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to read {dmi_file}: {e}")
+
+        return motherboard
 
     def _collect_cpu_info(self) -> CPUInfo:
         """Collect CPU information from multiple sources"""

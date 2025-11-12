@@ -47,22 +47,26 @@ class SystemInfoView:
         # Timer references
         self._auto_refresh_timer_id = None
 
+        # Content references for refresh
+        self.system_info_box = None
+        self.scrolled_window = None
+
     def create_content(self):
         """Create the system info tab content with comprehensive system information."""
         # Create main content box
-        system_info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        system_info_box.set_margin_top(24)
-        system_info_box.set_margin_bottom(24)
-        system_info_box.set_margin_start(24)
-        system_info_box.set_margin_end(24)
-        system_info_box.set_vexpand(True)
-        system_info_box.set_hexpand(True)
+        self.system_info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.system_info_box.set_margin_top(24)
+        self.system_info_box.set_margin_bottom(24)
+        self.system_info_box.set_margin_start(24)
+        self.system_info_box.set_margin_end(24)
+        self.system_info_box.set_vexpand(True)
+        self.system_info_box.set_hexpand(True)
 
         # Header section
         header_group = Adw.PreferencesGroup()
         header_group.set_title("System Information")
         header_group.set_description("Comprehensive system hardware and performance information")
-        system_info_box.append(header_group)
+        self.system_info_box.append(header_group)
 
         if SYSTEM_INFO_AVAILABLE and COMPONENTS_AVAILABLE:
             # Collect system information
@@ -71,23 +75,27 @@ class SystemInfoView:
 
                 # Create system overview section
                 overview_section = self._create_system_overview_section(system_info)
-                system_info_box.append(overview_section)
+                self.system_info_box.append(overview_section)
 
                 # Create performance metrics section
                 performance_section = self._create_performance_metrics_section(system_info)
-                system_info_box.append(performance_section)
+                self.system_info_box.append(performance_section)
 
                 # Create hardware information section
                 hardware_section = self._create_hardware_info_section(system_info)
-                system_info_box.append(hardware_section)
+                self.system_info_box.append(hardware_section)
+
+                # Create motherboard information section
+                motherboard_section = self._create_motherboard_section(system_info)
+                self.system_info_box.append(motherboard_section)
 
                 # Create platform status section
                 platform_section = self._create_platform_status_section(system_info)
-                system_info_box.append(platform_section)
+                self.system_info_box.append(platform_section)
 
                 # Add refresh button
                 refresh_section = self._create_refresh_section()
-                system_info_box.append(refresh_section)
+                self.system_info_box.append(refresh_section)
 
             except Exception as e:
                 # Error handling
@@ -103,7 +111,7 @@ class SystemInfoView:
                 error_row.add_prefix(error_icon)
 
                 error_group.add(error_row)
-                system_info_box.append(error_group)
+                self.system_info_box.append(error_group)
         else:
             # Fallback when system info or components not available
             fallback_group = Adw.PreferencesGroup()
@@ -122,17 +130,17 @@ class SystemInfoView:
             fallback_row.add_prefix(fallback_icon)
 
             fallback_group.add(fallback_row)
-            system_info_box.append(fallback_group)
+            self.system_info_box.append(fallback_group)
 
         # Create scrolled window with proper sizing
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_vexpand(True)
-        scrolled.set_hexpand(True)
-        scrolled.set_min_content_height(400)
-        scrolled.set_child(system_info_box)
+        self.scrolled_window = Gtk.ScrolledWindow()
+        self.scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.scrolled_window.set_vexpand(True)
+        self.scrolled_window.set_hexpand(True)
+        self.scrolled_window.set_min_content_height(400)
+        self.scrolled_window.set_child(self.system_info_box)
 
-        return scrolled
+        return self.scrolled_window
 
     def _create_system_overview_section(self, system_info):
         """Create system overview section with basic system information."""
@@ -276,6 +284,48 @@ class SystemInfoView:
 
         return hardware_group
 
+    def _create_motherboard_section(self, system_info):
+        """Create motherboard information section."""
+        motherboard_group = Adw.PreferencesGroup()
+        motherboard_group.set_title("Motherboard")
+        motherboard_group.set_description("Motherboard and BIOS information")
+
+        if system_info.motherboard:
+            # Manufacturer
+            if 'manufacturer' in system_info.motherboard:
+                mfg_row = Adw.ActionRow()
+                mfg_row.set_title("Manufacturer")
+                mfg_row.set_subtitle(system_info.motherboard['manufacturer'])
+                motherboard_group.add(mfg_row)
+
+            # Model
+            if 'model' in system_info.motherboard:
+                model_row = Adw.ActionRow()
+                model_row.set_title("Model")
+                model_row.set_subtitle(system_info.motherboard['model'])
+                motherboard_group.add(model_row)
+
+            # Version
+            if 'version' in system_info.motherboard:
+                version_row = Adw.ActionRow()
+                version_row.set_title("Version")
+                version_row.set_subtitle(system_info.motherboard['version'])
+                motherboard_group.add(version_row)
+
+            # Serial Number
+            if 'serial' in system_info.motherboard:
+                serial_row = Adw.ActionRow()
+                serial_row.set_title("Serial Number")
+                serial_row.set_subtitle(system_info.motherboard['serial'])
+                motherboard_group.add(serial_row)
+        else:
+            # No motherboard info available
+            empty_row = Adw.ActionRow()
+            empty_row.set_title("No motherboard information available")
+            motherboard_group.add(empty_row)
+
+        return motherboard_group
+
     def _create_platform_status_section(self, system_info):
         """Create platform status section with Unhinged-specific information."""
         platform_group = Adw.PreferencesGroup()
@@ -385,6 +435,43 @@ class SystemInfoView:
                 collector = SystemInfoCollector(self.project_root)
                 collector.clear_cache()
 
+                # Refresh the UI by clearing and rebuilding content
+                if self.system_info_box:
+                    # Remove all children from the box
+                    while True:
+                        child = self.system_info_box.get_first_child()
+                        if child is None:
+                            break
+                        self.system_info_box.remove(child)
+
+                    # Rebuild content with fresh data
+                    system_info = get_system_info(self.project_root, use_cache=False)
+
+                    # Header section
+                    header_group = Adw.PreferencesGroup()
+                    header_group.set_title("System Information")
+                    header_group.set_description("Comprehensive system hardware and performance information")
+                    self.system_info_box.append(header_group)
+
+                    # Add all sections
+                    overview_section = self._create_system_overview_section(system_info)
+                    self.system_info_box.append(overview_section)
+
+                    performance_section = self._create_performance_metrics_section(system_info)
+                    self.system_info_box.append(performance_section)
+
+                    hardware_section = self._create_hardware_info_section(system_info)
+                    self.system_info_box.append(hardware_section)
+
+                    motherboard_section = self._create_motherboard_section(system_info)
+                    self.system_info_box.append(motherboard_section)
+
+                    platform_section = self._create_platform_status_section(system_info)
+                    self.system_info_box.append(platform_section)
+
+                    refresh_section = self._create_refresh_section()
+                    self.system_info_box.append(refresh_section)
+
                 # Show toast notification
                 if hasattr(self.app, 'show_toast'):
                     self.app.show_toast("System information refreshed")
@@ -392,9 +479,6 @@ class SystemInfoView:
                 # Log refresh action
                 if hasattr(self.app, 'session_logger') and self.app.session_logger:
                     self.app.session_logger.log_gui_event("SYSTEM_INFO_REFRESH", "User refreshed system information")
-
-                # Note: In a full implementation, we would refresh the tab content here
-                # For now, the user needs to switch tabs to see updated information
 
             except Exception as e:
                 # Show error toast
