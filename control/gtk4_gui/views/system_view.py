@@ -128,6 +128,10 @@ class SystemInfoView:
                 gpu_details_section = self._create_gpu_details_section(system_info)
                 self.system_info_box.append(gpu_details_section)
 
+                # Create storage section
+                storage_section = self._create_storage_section(system_info)
+                self.system_info_box.append(storage_section)
+
                 # Try to create other sections (may fail if attributes missing)
                 try:
                     overview_section = self._create_system_overview_section(system_info)
@@ -489,6 +493,37 @@ class SystemInfoView:
 
         return gpu_group
 
+    def _create_storage_section(self, system_info):
+        """Create storage/USB devices information section."""
+        storage_group = Adw.PreferencesGroup()
+        storage_group.set_title("Storage Devices")
+        storage_group.set_description("Disks and USB devices")
+
+        if system_info.storage and system_info.storage.devices:
+            # Show summary first
+            summary_row = Adw.ActionRow()
+            summary_row.set_title("Total Storage")
+            summary_row.set_subtitle(f"{system_info.storage.total_storage_gb:.1f} GB ({system_info.storage.total_used_gb:.1f} GB used)")
+            storage_group.add(summary_row)
+
+            # Show each device (filter out loop devices for cleaner display)
+            for device in system_info.storage.devices:
+                # Skip loop devices (squashfs) for cleaner display
+                if 'loop' in device.device.lower():
+                    continue
+
+                device_row = Adw.ActionRow()
+                device_row.set_title(device.device)
+                device_row.set_subtitle(f"{device.total_gb:.1f} GB ({device.filesystem}) - {device.usage_percent:.0f}% used")
+                storage_group.add(device_row)
+        else:
+            # No storage info available
+            empty_row = Adw.ActionRow()
+            empty_row.set_title("No storage information available")
+            storage_group.add(empty_row)
+
+        return storage_group
+
     def _create_platform_status_section(self, system_info):
         """Create platform status section with Unhinged-specific information."""
         platform_group = Adw.PreferencesGroup()
@@ -600,6 +635,12 @@ class SystemInfoView:
                         self.system_info_box.append(gpu_details_section)
                     except Exception as e:
                         print(f"⚠️ Skipping GPU details section: {e}")
+
+                    try:
+                        storage_section = self._create_storage_section(system_info)
+                        self.system_info_box.append(storage_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping storage section: {e}")
 
                     try:
                         overview_section = self._create_system_overview_section(system_info)
