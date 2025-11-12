@@ -35,24 +35,30 @@ except ImportError:
     def stop_realtime_updates():
         pass
 
-# Import component library - these may not all be available
-try:
-    from ..components import InfoCard, StatusIndicator
-    COMPONENTS_AVAILABLE = True
-except ImportError:
-    COMPONENTS_AVAILABLE = False
-    # Define dummy classes
-    class InfoCard:
-        def __init__(self, **kwargs):
-            pass
-        def get_widget(self):
-            return Gtk.Label(label="Info Card")
+# Define fallback component classes
+class InfoCard:
+    def __init__(self, **kwargs):
+        self.title = kwargs.get('title', 'Info')
+        self.data = kwargs.get('data', {})
+    def get_widget(self):
+        return Gtk.Label(label=self.title)
 
-    class StatusIndicator:
-        def __init__(self, **kwargs):
-            pass
-        def get_widget(self):
-            return Gtk.Label(label="Status")
+class StatusIndicator:
+    def __init__(self, **kwargs):
+        pass
+    def get_widget(self):
+        return Gtk.Label(label="Status")
+
+# Try to import real components (optional)
+try:
+    from ..components import InfoCard as RealInfoCard, StatusIndicator as RealStatusIndicator
+    InfoCard = RealInfoCard
+    StatusIndicator = RealStatusIndicator
+except ImportError:
+    pass
+
+# Components are always available (we have fallbacks)
+COMPONENTS_AVAILABLE = True
 
 
 class SystemInfoView:
@@ -97,25 +103,34 @@ class SystemInfoView:
             try:
                 system_info = get_system_info(self.project_root, use_cache=True)
 
-                # Create system overview section
-                overview_section = self._create_system_overview_section(system_info)
-                self.system_info_box.append(overview_section)
-
-                # Create performance metrics section
-                performance_section = self._create_performance_metrics_section(system_info)
-                self.system_info_box.append(performance_section)
-
-                # Create hardware information section
-                hardware_section = self._create_hardware_info_section(system_info)
-                self.system_info_box.append(hardware_section)
-
-                # Create motherboard information section
+                # Create motherboard information section (PRIORITY)
                 motherboard_section = self._create_motherboard_section(system_info)
                 self.system_info_box.append(motherboard_section)
 
-                # Create platform status section
-                platform_section = self._create_platform_status_section(system_info)
-                self.system_info_box.append(platform_section)
+                # Try to create other sections (may fail if attributes missing)
+                try:
+                    overview_section = self._create_system_overview_section(system_info)
+                    self.system_info_box.append(overview_section)
+                except Exception as e:
+                    print(f"⚠️ Skipping overview section: {e}")
+
+                try:
+                    performance_section = self._create_performance_metrics_section(system_info)
+                    self.system_info_box.append(performance_section)
+                except Exception as e:
+                    print(f"⚠️ Skipping performance section: {e}")
+
+                try:
+                    hardware_section = self._create_hardware_info_section(system_info)
+                    self.system_info_box.append(hardware_section)
+                except Exception as e:
+                    print(f"⚠️ Skipping hardware section: {e}")
+
+                try:
+                    platform_section = self._create_platform_status_section(system_info)
+                    self.system_info_box.append(platform_section)
+                except Exception as e:
+                    print(f"⚠️ Skipping platform section: {e}")
 
                 # Add refresh button
                 refresh_section = self._create_refresh_section()
@@ -123,6 +138,10 @@ class SystemInfoView:
 
             except Exception as e:
                 # Error handling
+                import traceback
+                print(f"❌ Error creating system info sections: {e}")
+                traceback.print_exc()
+
                 error_group = Adw.PreferencesGroup()
                 error_group.set_title("Error")
 
@@ -168,11 +187,17 @@ class SystemInfoView:
 
     def _create_system_overview_section(self, system_info):
         """Create system overview section with basic system information."""
+        # Format uptime
+        uptime_seconds = system_info.system.uptime_seconds
+        uptime_hours = int(uptime_seconds // 3600)
+        uptime_minutes = int((uptime_seconds % 3600) // 60)
+        uptime_formatted = f"{uptime_hours}h {uptime_minutes}m"
+
         overview_data = {
             "os_name": f"{system_info.system.os_name} {system_info.system.os_version}",
             "kernel_version": system_info.system.kernel_version,
             "hostname": system_info.system.hostname,
-            "uptime": system_info.system.uptime_formatted,
+            "uptime": uptime_formatted,
             "architecture": system_info.system.architecture
         }
 
