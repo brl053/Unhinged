@@ -136,6 +136,10 @@ class SystemInfoView:
                 memory_section = self._create_memory_section(system_info)
                 self.system_info_box.append(memory_section)
 
+                # Create network section
+                network_section = self._create_network_section(system_info)
+                self.system_info_box.append(network_section)
+
                 # Try to create other sections (may fail if attributes missing)
                 try:
                     overview_section = self._create_system_overview_section(system_info)
@@ -567,6 +571,44 @@ class SystemInfoView:
 
         return memory_group
 
+    def _create_network_section(self, system_info):
+        """Create network information section."""
+        network_group = Adw.PreferencesGroup()
+        network_group.set_title("Network")
+        network_group.set_description("Network interfaces and connectivity")
+
+        if system_info.network:
+            # Hostname
+            hostname_row = Adw.ActionRow()
+            hostname_row.set_title("Hostname")
+            hostname_row.set_subtitle(system_info.network.hostname)
+            network_group.add(hostname_row)
+
+            # Network interfaces (show only active ones with IP addresses)
+            active_interfaces = [
+                iface for iface in system_info.network.interfaces
+                if iface.status == "Up" and iface.ip_address
+            ]
+
+            if active_interfaces:
+                for iface in active_interfaces:
+                    iface_row = Adw.ActionRow()
+                    iface_row.set_title(iface.name)
+                    iface_row.set_subtitle(iface.ip_address)
+                    network_group.add(iface_row)
+            else:
+                # No active interfaces
+                empty_row = Adw.ActionRow()
+                empty_row.set_title("No active network interfaces")
+                network_group.add(empty_row)
+        else:
+            # No network info available
+            empty_row = Adw.ActionRow()
+            empty_row.set_title("No network information available")
+            network_group.add(empty_row)
+
+        return network_group
+
     def _create_platform_status_section(self, system_info):
         """Create platform status section with Unhinged-specific information."""
         platform_group = Adw.PreferencesGroup()
@@ -690,6 +732,12 @@ class SystemInfoView:
                         self.system_info_box.append(memory_section)
                     except Exception as e:
                         print(f"⚠️ Skipping memory section: {e}")
+
+                    try:
+                        network_section = self._create_network_section(system_info)
+                        self.system_info_box.append(network_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping network section: {e}")
 
                     try:
                         overview_section = self._create_system_overview_section(system_info)
