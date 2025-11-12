@@ -15,7 +15,7 @@ import time
 from gi.repository import GLib, Gtk, Pango
 
 # Import component library - FRAMEWORK ONLY
-from ..components import ActionButton
+from ..components import ActionButton, FormInput
 
 # Framework availability - NO FALLBACK
 COMPONENTS_AVAILABLE = True
@@ -99,110 +99,70 @@ class ChatroomView:
         input_area.set_margin_start(16)   # sp_4 - major component margins
         input_area.set_margin_end(16)     # sp_4 - major component margins
 
-        # Import and create TextEditor component
+        # Create FormInput with voice support (replaces TextEditor + custom voice controls)
         if COMPONENTS_AVAILABLE:
-            from ..components import TextEditor
-
-            # Create proper text editor component following design system specification
-            text_editor = TextEditor(
-                placeholder="Type your message here...",
-                word_wrap=True,
-                min_height=120
+            # Create FormInput with voice-enabled textarea
+            # Pass audio_handler if available for actual voice recording
+            audio_handler = self.app.audio_handler if hasattr(self.app, 'audio_handler') else None
+            form_input = FormInput(
+                input_type="textarea",
+                name="chatroom_message",
+                placeholder="Type or speak your message...",
+                enable_voice=True,
+                voice_mode="append",
+                show_visualizer=True,
+                visualizer_width=250,
+                rows=4,
+                audio_handler=audio_handler
             )
 
-            # Apply design system margins (already handled by TextEditor component)
-            text_editor_widget = text_editor.get_widget()
-            text_editor_widget.set_margin_top(8)     # sp_2 - form field padding
-            text_editor_widget.set_margin_bottom(8)  # sp_2 - form field padding
-            text_editor_widget.set_margin_start(8)   # sp_2 - form field padding
-            text_editor_widget.set_margin_end(8)     # sp_2 - form field padding
+            # Get the widget and apply design system margins
+            form_input_widget = form_input.get_widget()
+            form_input_widget.set_margin_top(8)     # sp_2 - form field padding
+            form_input_widget.set_margin_bottom(8)  # sp_2 - form field padding
+            form_input_widget.set_margin_start(8)   # sp_2 - form field padding
+            form_input_widget.set_margin_end(8)     # sp_2 - form field padding
+            form_input_widget.set_hexpand(True)
+            form_input_widget.set_vexpand(True)
 
-            # Connect text editor events
-            text_editor.connect('content-changed', self._on_chatroom_content_changed)
-            text_editor.connect('focus-gained', self._on_chatroom_focus_gained)
-            text_editor.connect('focus-lost', self._on_chatroom_focus_lost)
+            # Connect FormInput events
+            form_input.connect('value-changed', self._on_chatroom_content_changed)
+            form_input.connect('recording-started', self._on_voice_recording_started)
+            form_input.connect('recording-stopped', self._on_voice_recording_stopped)
+            form_input.connect('transcription-completed', self._on_voice_transcription_completed)
 
-            # Store reference
-            self._chat_input = text_editor
+            # Store references
+            self._chat_input = form_input
+            self._voice_visualizer = form_input._voice_visualizer
+            self._recording_status_label = form_input._recording_timer_label
+            self._chatroom_voice_button = form_input._voice_button if hasattr(form_input, '_voice_button') else None
+            self._chatroom_input_row = form_input_widget
+
+            # Connect visualizer to audio handler for real-time feedback
+            if self._voice_visualizer and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
+                self.app.audio_handler.set_voice_visualizer(self._voice_visualizer)
+
+            input_area.append(form_input_widget)
         else:
             # Fallback to basic TextView
             text_editor_widget = Gtk.TextView()
             text_editor_widget.set_wrap_mode(Gtk.WrapMode.WORD)
             self._chat_input = text_editor_widget
+            input_area.append(text_editor_widget)
 
-        # Create vertical container for text editor and voice controls
-        input_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)  # sp_3 spacing
+        # Create Send button (below input)
+        send_button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        send_button_box.set_halign(Gtk.Align.END)
 
-        # Add text editor at the top (expand to fill space)
-        text_editor_widget.set_hexpand(True)
-        input_container.append(text_editor_widget)
-
-        # Create horizontal row for voice controls (below text editor)
-        voice_controls_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)  # sp_2 spacing
-        voice_controls_row.add_css_class("voice-controls-row")
-        self._chatroom_input_row = voice_controls_row  # Store reference for timer
-
-        # Create recording timer display (left side) - replaces status dots
-        recording_timer = Gtk.Label(label="00:00")
-        recording_timer.set_halign(Gtk.Align.START)
-        recording_timer.add_css_class("caption")
-        recording_timer.add_css_class("dim-label")
-        recording_timer.add_css_class("recording-timer")
-        recording_timer.set_visible(False)  # Hidden by default
-        self._recording_status_label = recording_timer
-        voice_controls_row.append(recording_timer)
-
-        # Create horizontal waveform visualizer (center, expandable)
-        if VOICE_VISUALIZER_AVAILABLE:
-            try:
-                self._voice_visualizer = VoiceVisualizerFactory.create_waveform_display(width=250)
-                self._voice_visualizer.set_hexpand(True)  # Expand to fill available space
-                self._voice_visualizer.add_css_class("voice-visualizer")
-                voice_controls_row.append(self._voice_visualizer)
-
-                # Connect visualizer to audio handler for real-time feedback
-                if hasattr(self.app, 'audio_handler') and self.app.audio_handler:
-                    self.app.audio_handler.set_voice_visualizer(self._voice_visualizer)
-
-            except Exception as e:
-                print(f"Failed to create voice visualizer: {e}")
-                self._voice_visualizer = None
-
-        # Create Voice button (right side)
-        if COMPONENTS_AVAILABLE:
-            self._chatroom_voice_button = ActionButton(
-                text="",
-                style="secondary",
-                icon_name="audio-input-microphone-symbolic"
-            )
-            # Connect to click event for toggle recording
-            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
-            voice_widget = self._chatroom_voice_button.get_widget()
-            voice_widget.set_tooltip_text("Click to start/stop recording")
-            voice_controls_row.append(voice_widget)
-        else:
-            self._chatroom_voice_button = Gtk.Button()
-            self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            self._chatroom_voice_button.connect("clicked", self._on_chatroom_voice_toggle)
-            self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-            voice_controls_row.append(self._chatroom_voice_button)
-
-        # Create Send button (far right)
         self._chatroom_send_button = Gtk.Button(label="Send")
         self._chatroom_send_button.add_css_class("suggested-action")
         self._chatroom_send_button.set_sensitive(False)  # Initially disabled
 
         # Connect send button handler
         self._chatroom_send_button.connect("clicked", self._on_chatroom_send_clicked)
+        send_button_box.append(self._chatroom_send_button)
 
-        # Add send button to voice controls row
-        voice_controls_row.append(self._chatroom_send_button)
-
-        # Add voice controls row to input container
-        input_container.append(voice_controls_row)
-
-        # Add input container to input area
-        input_area.append(input_container)
+        input_area.append(send_button_box)
 
         # Add input area to main container
         # NOTE: Session management is now handled in Status tab only
@@ -493,6 +453,33 @@ class ChatroomView:
         except Exception as e:
             print(f"❌ Chatroom focus lost error: {e}")
 
+    def _on_voice_recording_started(self, form_input):
+        """Handle voice recording started from FormInput"""
+        try:
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHATROOM_VOICE_RECORDING_STARTED", "Voice recording started")
+            self.app.show_toast("Recording...")
+        except Exception as e:
+            print(f"❌ Voice recording started error: {e}")
+
+    def _on_voice_recording_stopped(self, form_input):
+        """Handle voice recording stopped from FormInput"""
+        try:
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHATROOM_VOICE_RECORDING_STOPPED", "Voice recording stopped")
+            self.app.show_toast("Processing...")
+        except Exception as e:
+            print(f"❌ Voice recording stopped error: {e}")
+
+    def _on_voice_transcription_completed(self, form_input, transcript):
+        """Handle voice transcription completed from FormInput"""
+        try:
+            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+                self.app.session_logger.log_gui_event("CHATROOM_VOICE_TRANSCRIPTION_COMPLETED", f"Transcribed: {transcript[:50]}...")
+            self.app.show_toast("Transcription complete")
+        except Exception as e:
+            print(f"❌ Voice transcription completed error: {e}")
+
     def _on_chatroom_voice_toggle(self, button):
         """Handle chatroom voice button toggle - start or stop recording."""
         try:
@@ -669,7 +656,9 @@ class ChatroomView:
         """Handle send button click in chatroom"""
         try:
             # Get message content
-            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
+                message = self._chat_input.get_value()
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
                 message = self._chat_input.get_content()
             else:
                 # Fallback for basic TextView
@@ -684,19 +673,24 @@ class ChatroomView:
             # Check for slash commands
             message_stripped = message.strip()
             if message_stripped.startswith("/image "):
-                # Handle /image command
+                # Handle /image command for GPU-accelerated image generation
+                # NOTE: When FormInput gains an 'image' input type, this command will be renamed
+                # to avoid naming collision. Current plan: /generate-image or /img
                 prompt = message_stripped[7:].strip()  # Remove "/image " prefix
                 self._handle_slash_image_command(prompt)
 
                 # Clear input
-                if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
+                if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
+                    self._chat_input.set_value("")
+                elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
                     self._chat_input.clear_content()
                 else:
                     buffer = self._chat_input.get_buffer()
                     buffer.set_text("")
 
                 # Focus input field for next command
-                self._chat_input.grab_focus()
+                if hasattr(self._chat_input, 'grab_focus'):
+                    self._chat_input.grab_focus()
 
                 # Disable send button
                 self._chatroom_send_button.set_sensitive(False)
@@ -706,14 +700,17 @@ class ChatroomView:
             self._add_chat_message("You", message_stripped, "user")
 
             # Clear input
-            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
+            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
+                self._chat_input.set_value("")
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
                 self._chat_input.clear_content()
             else:
                 buffer = self._chat_input.get_buffer()
                 buffer.set_text("")
 
             # Focus input field for next message
-            self._chat_input.grab_focus()
+            if hasattr(self._chat_input, 'grab_focus'):
+                self._chat_input.grab_focus()
 
             # Disable send button
             self._chatroom_send_button.set_sensitive(False)
@@ -1560,7 +1557,9 @@ class ChatroomView:
                 self.app.session_logger.log_gui_event("TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}")
 
             # Re-enable send button only if there's content AND active session
-            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
+                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
                 has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
             else:
                 buffer = self._chat_input.get_buffer()
@@ -1582,7 +1581,9 @@ class ChatroomView:
             self._add_chat_message("System", f"Framework Error: {error_msg}", "error")
 
             # Re-enable send button only if there's content AND active session
-            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
+                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
                 has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
             else:
                 buffer = self._chat_input.get_buffer()
@@ -1676,8 +1677,13 @@ class ChatroomView:
     def add_voice_transcript(self, transcript):
         """Add voice transcript to input field with proper UI refresh (called from parent app)"""
         try:
-            # Set transcript in input field
-            if COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+            # Handle FormInput (new centralized component)
+            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
+                # FormInput handles append/replace based on voice_mode
+                self._chat_input.append_transcript(transcript)
+                new_text = self._chat_input.get_value()
+            # Handle TextEditor (legacy)
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
                 current_text = self._chat_input.get_content()
                 if current_text.strip():
                     # Append to existing text with space
