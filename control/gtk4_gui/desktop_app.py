@@ -274,8 +274,8 @@ class UnhingedDesktopApp(Adw.Application):
             css_provider = Gtk.CssProvider()
             css_dir = self.project_root / "generated" / "design_system" / "gtk4"
 
-            # Load CSS files
-            css_files = ["design-tokens.css", "theme-light.css", "components.css"]
+            # Load CSS files (only components.css - GTK4 doesn't support CSS variables so we don't load design-tokens.css or theme files)
+            css_files = ["components.css"]
             combined_css = ""
             loaded_files = []
 
@@ -286,29 +286,29 @@ class UnhingedDesktopApp(Adw.Application):
                     loaded_files.append(css_file)
 
             if combined_css:
-                # Add basic design system styles
+                # Add basic design system styles (using resolved token values, not CSS variables)
                 combined_css += """
-                .navigation-sidebar { background-color: var(--color-surface-default, #ffffff); }
-                .sidebar-nav-active { background-color: var(--color-action-primary, #0969da); }
-                .recording-active { background-color: var(--color-error, #dc3545) !important; }
+                .navigation-sidebar { background-color: #FFFFFF; }
+                .sidebar-nav-active { background-color: #0066CC; }
+                .recording-active { background-color: #C21E1E; }
 
                 /* Voice Recording UI Styles */
                 .voice-controls-row {
                     padding: 8px 0;
-                    border-top: 1px solid var(--color-border-muted, #e1e4e8);
+                    border-top: 1px solid #D9D9D9;
                 }
                 .recording-status.accent {
-                    color: var(--color-accent-fg, #0969da);
+                    color: #0066CC;
                     font-weight: 500;
                 }
                 .recording-status.warning {
-                    color: var(--color-attention-fg, #9a6700);
+                    color: #C17A00;
                     font-weight: 500;
                 }
                 .voice-visualizer {
-                    border: 1px solid var(--color-border-default, #d1d9e0);
+                    border: 1px solid #D9D9D9;
                     border-radius: 6px;
-                    background-color: var(--color-canvas-subtle, #f6f8fa);
+                    background-color: #F5F5F5;
                 }
                 """
 

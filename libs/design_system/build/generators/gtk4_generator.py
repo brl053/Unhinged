@@ -112,15 +112,10 @@ class GTK4CSSGenerator:
         """Generate CSS files for GTK4"""
         css_files = {}
 
-        # Performance: Generate files in order of dependency
-        # Base tokens first (most fundamental)
-        self.logger.debug("Generating base CSS with resolved semantic tokens")
-        css_files['design-tokens.css'] = self._generate_base_css()
-
-        # Theme variants (depend on base tokens)
-        self.logger.debug("Generating theme-specific CSS files with resolved tokens")
-        css_files['theme-light.css'] = self._generate_theme_css('light')
-        css_files['theme-dark.css'] = self._generate_theme_css('dark')
+        # NOTE: We do NOT generate design-tokens.css or theme-*.css files because GTK4 does not support CSS custom properties.
+        # All tokens are resolved at generation time in component CSS files.
+        # These files would only contain CSS variables which GTK4 rejects.
+        # Theme switching can be implemented via Python code or by regenerating CSS for different themes.
 
         # Component styles (depend on tokens and themes) - generate for light theme
         self.logger.debug("Generating component CSS with resolved semantic tokens")
@@ -380,11 +375,11 @@ class GTK4CSSGenerator:
             "}",
             "",
             "button:hover, .btn:hover {",
-            "  box-shadow: 0 2px 4px rgba(26, 26, 26, 0.08);",
+            "  opacity: 0.9;",
             "}",
             "",
             "button:active, .btn:active {",
-            "  transform: translateY(1px);",
+            "  opacity: 0.8;",
             "}",
             "",
             "button:disabled, .btn:disabled {",
@@ -423,10 +418,6 @@ class GTK4CSSGenerator:
             "input:focus, textarea:focus, select:focus {",
             "  border-width: 2px;",
             "  outline: none;",
-            "}",
-            "",
-            "input::placeholder, textarea::placeholder {",
-            f"  color: {text_tertiary};",
             "}"
         ]
         return css
@@ -448,11 +439,10 @@ class GTK4CSSGenerator:
             f"  border-radius: {border_radius};",
             f"  background-color: {surface_elevated};",
             f"  border: 1px solid {border_subtle};",
-            "  box-shadow: 0 4px 8px rgba(26, 26, 26, 0.08);",
             "}",
             "",
             ".card:hover {",
-            "  box-shadow: 0 6px 12px rgba(26, 26, 26, 0.08);",
+            "  opacity: 0.95;",
             "}"
         ]
         return css
