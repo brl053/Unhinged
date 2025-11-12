@@ -145,6 +145,7 @@ class SystemInformation:
     system: SystemStatus = field(default_factory=SystemStatus)
     platform: PlatformStatus = field(default_factory=PlatformStatus)
     motherboard: dict = field(default_factory=dict)
+    cpu_details: dict = field(default_factory=dict)
     collection_time: float = field(default_factory=time.time)
     collection_errors: list[str] = field(default_factory=list)
 
@@ -201,6 +202,12 @@ class SystemInfoCollector:
         except Exception as e:
             logger.error(f"Failed to collect CPU info: {e}")
             system_info.collection_errors.append(f"CPU: {str(e)}")
+
+        try:
+            system_info.cpu_details = self._collect_cpu_details()
+        except Exception as e:
+            logger.error(f"Failed to collect CPU details: {e}")
+            system_info.collection_errors.append(f"CPU Details: {str(e)}")
 
         try:
             system_info.memory = self._collect_memory_info()
@@ -303,6 +310,63 @@ class SystemInfoCollector:
                     logger.debug(f"Failed to read {dmi_file}: {e}")
 
         return motherboard
+
+    def _collect_cpu_details(self) -> dict:
+        """Collect detailed CPU information (brand, series, cache, stepping)"""
+        cpu_details = {}
+
+        # Try to read from /proc/cpuinfo
+        try:
+            with open('/proc/cpuinfo', 'r') as f:
+                cpuinfo_content = f.read()
+
+            # Parse cpuinfo
+            for line in cpuinfo_content.split('\n'):
+                line = line.strip()
+
+                # Get model name (contains brand and series)
+                if line.startswith('model name'):
+                    model_name = line.split(':', 1)[1].strip()
+                    cpu_details['model_name'] = model_name
+
+                    # Extract brand (Intel or AMD)
+                    if 'Intel' in model_name:
+                        cpu_details['brand'] = 'Intel'
+                    elif 'AMD' in model_name:
+                        cpu_details['brand'] = 'AMD'
+
+                # Get stepping
+                elif line.startswith('stepping'):
+                    try:
+                        cpu_details['stepping'] = line.split(':', 1)[1].strip()
+                    except:
+                        pass
+
+                # Get cache info
+                elif line.startswith('cache size'):
+                    try:
+                        cache_str = line.split(':', 1)[1].strip()
+                        cpu_details['cache'] = cache_str
+                    except:
+                        pass
+
+                # Get family
+                elif line.startswith('cpu family'):
+                    try:
+                        cpu_details['family'] = line.split(':', 1)[1].strip()
+                    except:
+                        pass
+
+                # Get model number
+                elif line.startswith('model') and 'model name' not in line:
+                    try:
+                        cpu_details['model_number'] = line.split(':', 1)[1].strip()
+                    except:
+                        pass
+        except Exception as e:
+            logger.debug(f"Failed to read /proc/cpuinfo: {e}")
+
+        return cpu_details
 
     def _collect_cpu_info(self) -> CPUInfo:
         """Collect CPU information from multiple sources"""

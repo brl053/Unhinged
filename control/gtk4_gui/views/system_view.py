@@ -120,6 +120,10 @@ class SystemInfoView:
                 motherboard_section = self._create_motherboard_section(system_info)
                 self.system_info_box.append(motherboard_section)
 
+                # Create CPU details section
+                cpu_details_section = self._create_cpu_details_section(system_info)
+                self.system_info_box.append(cpu_details_section)
+
                 # Try to create other sections (may fail if attributes missing)
                 try:
                     overview_section = self._create_system_overview_section(system_info)
@@ -384,6 +388,62 @@ class SystemInfoView:
 
         return motherboard_group
 
+    def _create_cpu_details_section(self, system_info):
+        """Create CPU details information section."""
+        cpu_group = Adw.PreferencesGroup()
+        cpu_group.set_title("Processor Details")
+        cpu_group.set_description("CPU brand, model, and specifications")
+
+        if system_info.cpu_details:
+            # Brand
+            if 'brand' in system_info.cpu_details:
+                brand_row = Adw.ActionRow()
+                brand_row.set_title("Brand")
+                brand_row.set_subtitle(system_info.cpu_details['brand'])
+                cpu_group.add(brand_row)
+
+            # Model Name
+            if 'model_name' in system_info.cpu_details:
+                model_row = Adw.ActionRow()
+                model_row.set_title("Model")
+                model_row.set_subtitle(system_info.cpu_details['model_name'])
+                cpu_group.add(model_row)
+
+            # Cache
+            if 'cache' in system_info.cpu_details:
+                cache_row = Adw.ActionRow()
+                cache_row.set_title("Cache")
+                cache_row.set_subtitle(system_info.cpu_details['cache'])
+                cpu_group.add(cache_row)
+
+            # Stepping
+            if 'stepping' in system_info.cpu_details:
+                stepping_row = Adw.ActionRow()
+                stepping_row.set_title("Stepping")
+                stepping_row.set_subtitle(system_info.cpu_details['stepping'])
+                cpu_group.add(stepping_row)
+
+            # Family
+            if 'family' in system_info.cpu_details:
+                family_row = Adw.ActionRow()
+                family_row.set_title("Family")
+                family_row.set_subtitle(system_info.cpu_details['family'])
+                cpu_group.add(family_row)
+
+            # Model Number
+            if 'model_number' in system_info.cpu_details:
+                model_num_row = Adw.ActionRow()
+                model_num_row.set_title("Model Number")
+                model_num_row.set_subtitle(system_info.cpu_details['model_number'])
+                cpu_group.add(model_num_row)
+        else:
+            # No CPU details available
+            empty_row = Adw.ActionRow()
+            empty_row.set_title("No CPU details available")
+            cpu_group.add(empty_row)
+
+        return cpu_group
+
     def _create_platform_status_section(self, system_info):
         """Create platform status section with Unhinged-specific information."""
         platform_group = Adw.PreferencesGroup()
@@ -483,6 +543,12 @@ class SystemInfoView:
                         self.system_info_box.append(motherboard_section)
                     except Exception as e:
                         print(f"⚠️ Skipping motherboard section: {e}")
+
+                    try:
+                        cpu_details_section = self._create_cpu_details_section(system_info)
+                        self.system_info_box.append(cpu_details_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping CPU details section: {e}")
 
                     try:
                         overview_section = self._create_system_overview_section(system_info)
