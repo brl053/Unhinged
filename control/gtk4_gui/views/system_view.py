@@ -132,6 +132,10 @@ class SystemInfoView:
                 storage_section = self._create_storage_section(system_info)
                 self.system_info_box.append(storage_section)
 
+                # Create memory section
+                memory_section = self._create_memory_section(system_info)
+                self.system_info_box.append(memory_section)
+
                 # Try to create other sections (may fail if attributes missing)
                 try:
                     overview_section = self._create_system_overview_section(system_info)
@@ -524,6 +528,45 @@ class SystemInfoView:
 
         return storage_group
 
+    def _create_memory_section(self, system_info):
+        """Create memory information section."""
+        memory_group = Adw.PreferencesGroup()
+        memory_group.set_title("Memory")
+        memory_group.set_description("RAM and swap information")
+
+        if system_info.memory:
+            # Total RAM
+            total_row = Adw.ActionRow()
+            total_row.set_title("Total RAM")
+            total_row.set_subtitle(f"{system_info.memory.total_gb:.1f} GB")
+            memory_group.add(total_row)
+
+            # Used RAM
+            used_row = Adw.ActionRow()
+            used_row.set_title("Used")
+            used_row.set_subtitle(f"{system_info.memory.used_gb:.1f} GB ({system_info.memory.usage_percent:.0f}%)")
+            memory_group.add(used_row)
+
+            # Available RAM
+            available_row = Adw.ActionRow()
+            available_row.set_title("Available")
+            available_row.set_subtitle(f"{system_info.memory.available_gb:.1f} GB")
+            memory_group.add(available_row)
+
+            # Swap
+            if system_info.memory.swap_total_gb > 0:
+                swap_row = Adw.ActionRow()
+                swap_row.set_title("Swap")
+                swap_row.set_subtitle(f"{system_info.memory.swap_total_gb:.1f} GB ({system_info.memory.swap_used_gb:.1f} GB used, {system_info.memory.swap_percent:.0f}%)")
+                memory_group.add(swap_row)
+        else:
+            # No memory info available
+            empty_row = Adw.ActionRow()
+            empty_row.set_title("No memory information available")
+            memory_group.add(empty_row)
+
+        return memory_group
+
     def _create_platform_status_section(self, system_info):
         """Create platform status section with Unhinged-specific information."""
         platform_group = Adw.PreferencesGroup()
@@ -641,6 +684,12 @@ class SystemInfoView:
                         self.system_info_box.append(storage_section)
                     except Exception as e:
                         print(f"⚠️ Skipping storage section: {e}")
+
+                    try:
+                        memory_section = self._create_memory_section(system_info)
+                        self.system_info_box.append(memory_section)
+                    except Exception as e:
+                        print(f"⚠️ Skipping memory section: {e}")
 
                     try:
                         overview_section = self._create_system_overview_section(system_info)
