@@ -38,6 +38,50 @@ class GTK4CSSGenerator:
         self.output_dir = output_dir
         self.tokens: Dict[str, Any] = {}
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
+    def resolve_token(self, token_path: str, context: str = "light") -> str:
+        """
+        Resolve a design token to its actual value for GTK4 CSS.
+
+        Args:
+            token_path: Dot-separated path like "colors.action.primary" or "spacing.scale.sp_2"
+            context: Theme context ("light" or "dark")
+
+        Returns:
+            Actual CSS value (e.g., "#0066CC", "8px")
+        """
+        parts = token_path.split('.')
+        category = parts[0]  # 'colors', 'spacing', 'elevation'
+
+        # Handle theme-aware color tokens
+        if category == 'colors':
+            # Try theme-aware resolution first: tokens['colors']['themes'][context][...]
+            try:
+                value = self.tokens['colors']['themes'][context]
+                for part in parts[1:]:
+                    value = value[part]
+                return str(value)
+            except (KeyError, TypeError):
+                # Fall back to base color value: tokens['colors']['colors'][...]
+                try:
+                    value = self.tokens['colors']['colors']
+                    for part in parts[1:]:
+                        value = value[part]
+                    return str(value)
+                except (KeyError, TypeError) as e:
+                    self.logger.error(f"Failed to resolve color token {token_path}: {e}")
+                    raise
+
+        # For non-color tokens (spacing, elevation, etc.)
+        # The YAML structure has an extra nesting level: tokens[category][category][...]
+        try:
+            value = self.tokens[category][category]
+            for part in parts[1:]:
+                value = value[part]
+            return str(value)
+        except (KeyError, TypeError) as e:
+            self.logger.error(f"Failed to resolve token {token_path}: {e}")
+            raise
         
     def load_tokens(self) -> None:
         """Load all semantic token files"""
@@ -70,19 +114,19 @@ class GTK4CSSGenerator:
 
         # Performance: Generate files in order of dependency
         # Base tokens first (most fundamental)
-        self.logger.debug("Generating base CSS with semantic tokens")
+        self.logger.debug("Generating base CSS with resolved semantic tokens")
         css_files['design-tokens.css'] = self._generate_base_css()
 
         # Theme variants (depend on base tokens)
-        self.logger.debug("Generating theme-specific CSS files")
+        self.logger.debug("Generating theme-specific CSS files with resolved tokens")
         css_files['theme-light.css'] = self._generate_theme_css('light')
         css_files['theme-dark.css'] = self._generate_theme_css('dark')
 
-        # Component styles (depend on tokens and themes)
-        self.logger.debug("Generating component CSS with semantic token usage")
-        css_files['components.css'] = self._generate_component_css()
+        # Component styles (depend on tokens and themes) - generate for light theme
+        self.logger.debug("Generating component CSS with resolved semantic tokens")
+        css_files['components.css'] = self._generate_component_css('light')
 
-        self.logger.info(f"Generated {len(css_files)} CSS files for GTK4")
+        self.logger.info(f"Generated {len(css_files)} CSS files for GTK4 with resolved tokens")
         return css_files
     
     def _generate_base_css(self) -> str:
@@ -278,55 +322,65 @@ class GTK4CSSGenerator:
         
         return "\n".join(css_lines)
     
-    def _generate_component_css(self) -> str:
-        """Generate component CSS using semantic tokens"""
+    def _generate_component_css(self, context: str = "light") -> str:
+        """Generate component CSS using resolved semantic tokens"""
         css_lines = [
-            "/* Component Styles Using Semantic Tokens */",
+            "/* Component Styles Using Resolved Semantic Tokens */",
             "/* GTK4-compatible component patterns */",
             "/* Selective overrides over Libadwaita base */",
             "",
         ]
-        
+
         if 'components' in self.tokens:
             components = self.tokens['components']['components']
-            
+
             # Button component
             if 'button' in components:
-                css_lines.extend(self._generate_button_css(components['button']))
+                css_lines.extend(self._generate_button_css(components['button'], context))
                 css_lines.append("")
-            
+
             # Form field component
             if 'form_field' in components:
-                css_lines.extend(self._generate_form_field_css(components['form_field']))
+                css_lines.extend(self._generate_form_field_css(components['form_field'], context))
                 css_lines.append("")
-            
+
             # Card component
             if 'card' in components:
-                css_lines.extend(self._generate_card_css(components['card']))
+                css_lines.extend(self._generate_card_css(components['card'], context))
                 css_lines.append("")
-        
+
         return "\n".join(css_lines)
     
-    def _generate_button_css(self, button_config: Dict[str, Any]) -> List[str]:
-        """Generate button CSS using semantic tokens"""
+    def _generate_button_css(self, button_config: Dict[str, Any], context: str = "light") -> List[str]:
+        """Generate button CSS using resolved semantic tokens"""
+        # Resolve tokens to actual values
+        vertical_padding = self.resolve_token(f"spacing.scale.{button_config['padding']['vertical']}", context)
+        horizontal_padding = self.resolve_token(f"spacing.scale.{button_config['padding']['horizontal']}", context)
+        # Strip 'radius_' prefix from border_radius shorthand
+        radius_key = button_config['border_radius'].replace('radius_', '')
+        border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
+        action_primary = self.resolve_token("colors.action.primary", context)
+        text_inverse = self.resolve_token("colors.text.inverse", context)
+        action_disabled = self.resolve_token("colors.action.disabled", context)
+        text_disabled = self.resolve_token("colors.text.disabled", context)
+
         css = [
-            "/* Button Component - Semantic Token Usage */",
+            "/* Button Component - Resolved Semantic Tokens */",
             "button, .btn {",
-            f"  padding: var(--spacing-{button_config['padding']['vertical'].replace('sp_', 'sp-')}) var(--spacing-{button_config['padding']['horizontal'].replace('sp_', 'sp-')});",
-            f"  border-radius: var(--{button_config['border_radius'].replace('_', '-')});",
-            "  font-family: var(--font-family-prose);",
-            "  font-size: var(--font-size-body);",
-            "  font-weight: var(--font-weight-body);",
-            "  background-color: var(--color-action-primary);",
-            "  color: var(--color-text-inverse);",
-            "  border: var(--border-thin) solid var(--color-action-primary);",
+            f"  padding: {vertical_padding} {horizontal_padding};",
+            f"  border-radius: {border_radius};",
+            "  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;",
+            "  font-size: 1rem;",
+            "  font-weight: 500;",
+            f"  background-color: {action_primary};",
+            f"  color: {text_inverse};",
+            f"  border: 1px solid {action_primary};",
             f"  min-height: {button_config.get('minimum_height', '44px')};",
-            "  /* cursor: pointer; - GTK4 handles cursor automatically */",
             "  transition: all 150ms ease;",
             "}",
             "",
             "button:hover, .btn:hover {",
-            "  box-shadow: var(--elevation-1);",
+            "  box-shadow: 0 2px 4px rgba(26, 26, 26, 0.08);",
             "}",
             "",
             "button:active, .btn:active {",
@@ -334,53 +388,71 @@ class GTK4CSSGenerator:
             "}",
             "",
             "button:disabled, .btn:disabled {",
-            "  background-color: var(--color-action-disabled);",
-            "  color: var(--color-text-disabled);",
-            "  /* cursor: not-allowed; - GTK4 handles disabled cursor automatically */",
+            f"  background-color: {action_disabled};",
+            f"  color: {text_disabled};",
             "  opacity: 0.5;",
             "}"
         ]
         return css
     
-    def _generate_form_field_css(self, field_config: Dict[str, Any]) -> List[str]:
-        """Generate form field CSS using semantic tokens"""
+    def _generate_form_field_css(self, field_config: Dict[str, Any], context: str = "light") -> List[str]:
+        """Generate form field CSS using resolved semantic tokens"""
+        # Resolve tokens to actual values
+        vertical_padding = self.resolve_token(f"spacing.scale.{field_config['padding']['vertical']}", context)
+        horizontal_padding = self.resolve_token(f"spacing.scale.{field_config['padding']['horizontal']}", context)
+        # Strip 'radius_' prefix from border_radius shorthand
+        radius_key = field_config['border_radius'].replace('radius_', '')
+        border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
+        border_default = self.resolve_token("colors.border.default", context)
+        surface_default = self.resolve_token("colors.surface.default", context)
+        text_primary = self.resolve_token("colors.text.primary", context)
+        text_tertiary = self.resolve_token("colors.text.tertiary", context)
+
         css = [
-            "/* Form Field Component - Semantic Token Usage */",
+            "/* Form Field Component - Resolved Semantic Tokens */",
             "input, textarea, select {",
-            f"  padding: var(--spacing-{field_config['padding']['vertical'].replace('sp_', 'sp-')}) var(--spacing-{field_config['padding']['horizontal'].replace('sp_', 'sp-')});",
-            f"  border-radius: var(--{field_config['border_radius'].replace('_', '-')});",
-            "  border: var(--border-thin) solid var(--color-border-default);",
-            "  font-family: var(--font-family-prose);",
-            "  font-size: var(--font-size-body);",
-            "  background-color: var(--color-surface-default);",
-            "  color: var(--color-text-primary);",
+            f"  padding: {vertical_padding} {horizontal_padding};",
+            f"  border-radius: {border_radius};",
+            f"  border: 1px solid {border_default};",
+            "  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;",
+            "  font-size: 1rem;",
+            f"  background-color: {surface_default};",
+            f"  color: {text_primary};",
             "}",
             "",
             "input:focus, textarea:focus, select:focus {",
-            "  border-width: var(--border-medium);",
+            "  border-width: 2px;",
             "  outline: none;",
             "}",
             "",
             "input::placeholder, textarea::placeholder {",
-            "  color: var(--color-text-tertiary);",
+            f"  color: {text_tertiary};",
             "}"
         ]
         return css
     
-    def _generate_card_css(self, card_config: Dict[str, Any]) -> List[str]:
-        """Generate card CSS using semantic tokens"""
+    def _generate_card_css(self, card_config: Dict[str, Any], context: str = "light") -> List[str]:
+        """Generate card CSS using resolved semantic tokens"""
+        # Resolve tokens to actual values
+        padding = self.resolve_token(f"spacing.scale.{card_config['padding']}", context)
+        # Strip 'radius_' prefix from border_radius shorthand
+        radius_key = card_config['border_radius'].replace('radius_', '')
+        border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
+        surface_elevated = self.resolve_token("colors.surface.elevated", context)
+        border_subtle = self.resolve_token("colors.border.subtle", context)
+
         css = [
-            "/* Card Component - Semantic Token Usage */",
+            "/* Card Component - Resolved Semantic Tokens */",
             ".card {",
-            f"  padding: var(--spacing-{card_config['padding'].replace('sp_', 'sp-')});",
-            f"  border-radius: var(--{card_config['border_radius'].replace('_', '-')});",
-            "  background-color: var(--color-surface-elevated);",
-            "  border: var(--border-thin) solid var(--color-border-subtle);",
-            f"  box-shadow: var(--{card_config['shadow'].replace('.', '-')});",
+            f"  padding: {padding};",
+            f"  border-radius: {border_radius};",
+            f"  background-color: {surface_elevated};",
+            f"  border: 1px solid {border_subtle};",
+            "  box-shadow: 0 4px 8px rgba(26, 26, 26, 0.08);",
             "}",
             "",
             ".card:hover {",
-            "  box-shadow: var(--elevation-3);",
+            "  box-shadow: 0 6px 12px rgba(26, 26, 26, 0.08);",
             "}"
         ]
         return css

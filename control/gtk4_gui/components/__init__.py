@@ -62,7 +62,11 @@ from .primitives import (
     StatusLabel,
     TextEditor,
 )
+from .form_input import FormInput
 from .registry_ui import RegistryUI
+from .document_workspace_tabs import DocumentWorkspaceTabs
+from .document_registry import DocumentRegistry
+from .document_renderer import DocumentRenderer
 from .tables import GenericTable, TableColumn
 
 # Version and metadata
@@ -95,6 +99,7 @@ __all__ = [
     "ChatBubble",
     "LoadingDots",
     "CopyButton",
+    "FormInput",
 
     # Container components
     "AbstractWindow",
@@ -118,6 +123,11 @@ __all__ = [
     "GraphWorkspaceTabs",
     "RegistryUI",
 
+    # Document workspace components
+    "DocumentWorkspaceTabs",
+    "DocumentRegistry",
+    "DocumentRenderer",
+
     # Table components
     "GenericTable",
     "TableColumn",
@@ -137,6 +147,7 @@ COMPONENT_REGISTRY = {
         "ChatBubble",
         "LoadingDots",
         "CopyButton",
+        "FormInput",
     ],
     "containers": [
         "AbstractWindow",
@@ -163,6 +174,11 @@ COMPONENT_REGISTRY = {
         "GraphCanvasWidget",
         "GraphWorkspaceTabs",
         "RegistryUI",
+    ],
+    "document_workspace": [
+        "DocumentWorkspaceTabs",
+        "DocumentRegistry",
+        "DocumentRenderer",
     ]
 }
 

@@ -1,0 +1,161 @@
+# @llm-type component.spec
+# @llm-does Individual form input field with label and error display
+# @llm-key Atomic form element for document creation/editing
+
+component:
+  id: "form-field"
+  name: "Form Field"
+  category: "primitive"
+  
+  description: |
+    Individual form input field with label, error message display, and validation.
+    Supports text, textarea, select, and checkbox input types.
+
+  interface:
+    properties:
+      field_name:
+        type: "string"
+        required: true
+        description: "Field identifier"
+      
+      label:
+        type: "string"
+        required: true
+        description: "Field label text"
+      
+      value:
+        type: "string"
+        default: ""
+        description: "Current field value"
+      
+      input_type:
+        type: "enum"
+        values: ["text", "textarea", "select", "checkbox", "email", "number"]
+        default: "text"
+        description: "Type of input"
+      
+      placeholder:
+        type: "string"
+        default: ""
+        description: "Placeholder text"
+      
+      required:
+        type: "boolean"
+        default: false
+        description: "Whether field is required"
+      
+      error_message:
+        type: "string"
+        required: false
+        description: "Error text if validation fails"
+      
+      disabled:
+        type: "boolean"
+        default: false
+        description: "Whether field is disabled"
+
+    states:
+      default:
+        description: "Normal state"
+        visual_tokens: ["surface.default"]
+      
+      focused:
+        description: "Has keyboard focus"
+        visual_tokens: ["interactive.focus"]
+        triggers: ["keyboard_focus"]
+      
+      filled:
+        description: "Contains user-entered text"
+        visual_tokens: ["text.primary"]
+        triggers: ["value_change"]
+      
+      error:
+        description: "Validation failed"
+        visual_tokens: ["feedback.error"]
+        triggers: ["validation_failed"]
+      
+      disabled:
+        description: "Non-interactive"
+        visual_tokens: ["text.disabled"]
+        triggers: ["disabled_property_true"]
+
+    events:
+      value_changed:
+        description: "Field value changed"
+        payload:
+          field_name: "string"
+          value: "string"
+      
+      validation_error:
+        description: "Validation failed"
+        payload:
+          field_name: "string"
+          error_message: "string"
+      
+      focus:
+        description: "Field gained focus"
+        payload:
+          field_name: "string"
+      
+      blur:
+        description: "Field lost focus"
+        payload:
+          field_name: "string"
+          value: "string"
+
+  styling:
+    default_state:
+      background: "surface.default"
+      border: ["border.thin", "border.default"]
+      border_radius: "radius.sm"
+      padding_vertical: "sp.2"
+      padding_horizontal: "sp.3"
+      min_height: "40px"
+    
+    label_styling:
+      text_color: "text.primary"
+      font_size: "type.caption"
+      font_weight: "medium"
+      margin_bottom: "sp.1"
+    
+    error_styling:
+      text_color: "feedback.error"
+      font_size: "type.caption"
+      margin_top: "sp.1"
+    
+    state_overrides:
+      focused:
+        border: ["border.medium", "interactive.focus"]
+      
+      error:
+        border: ["border.medium", "feedback.error"]
+        background: "feedback.error"
+        background_opacity: 0.05
+      
+      disabled:
+        background: "surface.subtle"
+        text_color: "text.disabled"
+        cursor: "not-allowed"
+
+  composition:
+    is_leaf: true
+    can_contain: []
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Tab"
+        action: "focus_next_field"
+      - key: "Shift+Tab"
+        action: "focus_previous_field"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

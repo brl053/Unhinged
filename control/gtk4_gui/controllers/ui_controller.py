@@ -104,6 +104,7 @@ class UIController:
             ("bluetooth", "Bluetooth", self.app.create_bluetooth_tab_content),
             ("output", "Output", self.app.create_output_tab_content),
             ("usb", "USB", self.app.create_usb_tab_content),
+            ("documents", "Documents", self.app.create_documents_tab_content),
             ("graphs", "Graphs", self.app.create_graph_tab_content),
         ]
 
@@ -161,6 +162,7 @@ class UIController:
             ("bluetooth", "Bluetooth", "bluetooth-symbolic"),
             ("output", "Output", "audio-speakers-symbolic"),
             ("usb", "USB", "drive-removable-media-symbolic"),
+            ("documents", "Documents", "folder-documents-symbolic"),
             ("graphs", "Graphs", "network-workgroup-symbolic"),
         ]
 

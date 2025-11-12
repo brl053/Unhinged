@@ -1,0 +1,94 @@
+# @llm-type component.spec
+# @llm-does Form action buttons (submit/cancel)
+# @llm-key Bottom section of document form
+
+component:
+  id: "form-actions"
+  name: "Form Actions"
+  category: "container"
+  
+  description: |
+    Container for form action buttons. Displays submit button (enabled when form valid)
+    and cancel button. Shows loading state during submission.
+
+  interface:
+    properties:
+      is_valid:
+        type: "boolean"
+        default: false
+        description: "Whether form is valid (submit button enabled)"
+      
+      is_submitting:
+        type: "boolean"
+        default: false
+        description: "Whether form submission in progress"
+      
+      submit_label:
+        type: "string"
+        default: "Submit"
+        description: "Label for submit button"
+      
+      cancel_label:
+        type: "string"
+        default: "Cancel"
+        description: "Label for cancel button"
+
+    states:
+      default:
+        description: "Normal state"
+        visual_tokens: ["surface.default"]
+      
+      submitting:
+        description: "Submission in progress"
+        visual_tokens: ["surface.elevated"]
+        triggers: ["is_submitting_true"]
+      
+      invalid:
+        description: "Form invalid (submit disabled)"
+        visual_tokens: ["surface.default"]
+        triggers: ["is_valid_false"]
+
+    events:
+      submit_clicked:
+        description: "Submit button clicked"
+        payload: {}
+      
+      cancel_clicked:
+        description: "Cancel button clicked"
+        payload: {}
+
+  styling:
+    default_state:
+      background: "surface.default"
+      padding: "sp.3"
+      gap: "sp.2"
+      display: "flex"
+      justify_content: "flex-end"
+      min_height: "48px"
+    
+    state_overrides:
+      submitting:
+        opacity: 0.6
+
+  composition:
+    is_leaf: false
+    can_contain: ["primitive"]
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Enter"
+        action: "submit_form"
+      - key: "Escape"
+        action: "cancel_form"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

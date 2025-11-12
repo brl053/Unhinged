@@ -1,0 +1,88 @@
+# @llm-type component.spec
+# @llm-does Search and filter input for documents
+# @llm-key Enables filtering document list by search text
+
+component:
+  id: "document-search"
+  name: "Document Search"
+  category: "primitive"
+  
+  description: |
+    Search and filter input for documents. Emits search events as user types.
+    Supports debouncing to avoid excessive filtering.
+
+  interface:
+    properties:
+      search_text:
+        type: "string"
+        default: ""
+        description: "Current search text"
+      
+      placeholder:
+        type: "string"
+        default: "Search documents..."
+        description: "Placeholder text"
+      
+      debounce_ms:
+        type: "number"
+        default: 300
+        description: "Debounce delay in milliseconds"
+
+    states:
+      default:
+        description: "Empty search"
+        visual_tokens: ["surface.default"]
+      
+      focused:
+        description: "Input has focus"
+        visual_tokens: ["interactive.focus"]
+        triggers: ["keyboard_focus"]
+      
+      searching:
+        description: "Search in progress"
+        visual_tokens: ["surface.elevated"]
+        triggers: ["search_changed"]
+
+    events:
+      search_changed:
+        description: "Search text changed (debounced)"
+        payload:
+          search_text: "string"
+      
+      search_cleared:
+        description: "Search cleared"
+        payload: {}
+
+  styling:
+    default_state:
+      background: "surface.default"
+      border: ["border.thin", "border.default"]
+      border_radius: "radius.sm"
+      padding_vertical: "sp.2"
+      padding_horizontal: "sp.3"
+      min_height: "40px"
+    
+    state_overrides:
+      focused:
+        border: ["border.medium", "interactive.focus"]
+
+  composition:
+    is_leaf: true
+    can_contain: []
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Escape"
+        action: "clear_search"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

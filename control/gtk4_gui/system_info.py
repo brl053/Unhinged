@@ -14,9 +14,15 @@ import os
 import platform
 import subprocess
 import time
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+# Add utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent / "utils"))
+
+from subprocess_utils import SubprocessRunner
 
 # Import psutil with fallback
 try:
@@ -242,24 +248,13 @@ class SystemInfoCollector:
     def _run_command(self, command: list[str], timeout: int = 10) -> tuple[bool, str]:
         """
         Run a system command safely with timeout.
-        
+
         Returns:
             Tuple of (success, output)
         """
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            return result.returncode == 0, result.stdout.strip()
-        except subprocess.TimeoutExpired:
-            return False, "Command timeout"
-        except FileNotFoundError:
-            return False, f"Command not found: {command[0]}"
-        except Exception as e:
-            return False, str(e)
+        runner = SubprocessRunner(timeout=timeout)
+        result = runner.run_list(command)
+        return result["success"], result["output"]
 
     def _collect_cpu_info(self) -> CPUInfo:
         """Collect CPU information from multiple sources"""

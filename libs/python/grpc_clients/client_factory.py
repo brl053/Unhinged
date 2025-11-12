@@ -190,26 +190,7 @@ class GrpcClientFactory:
             raise RuntimeError(f"Failed to import Chat protobuf clients: {e}. "
                              f"Make sure protobuf clients are generated.")
 
-    def create_persistence_client(self, address: str = 'localhost:9090'):
-        """Create a Persistence Platform gRPC client."""
-        try:
-            from unhinged_proto_clients import persistence_platform_pb2_grpc
 
-            persistence_address = f"{address}_persistence"
-            if persistence_address not in self._clients_cache:
-                channel = grpc.insecure_channel(address)
-                client = persistence_platform_pb2_grpc.PersistencePlatformServiceStub(channel)
-                self._clients_cache[persistence_address] = {
-                    'client': client,
-                    'channel': channel,
-                    'service_type': 'persistence'
-                }
-
-            return self._clients_cache[persistence_address]['client']
-
-        except ImportError as e:
-            raise RuntimeError(f"Failed to import Persistence Platform protobuf clients: {e}. "
-                             f"Make sure protobuf clients are generated.")
 
     def create_image_generation_client(self, address: str = 'localhost:9094'):
         """Create an Image Generation service gRPC client."""
@@ -316,9 +297,7 @@ def create_chat_client(address: str = 'localhost:9095'):
     """Create a Chat service gRPC client using default factory."""
     return _get_default_factory().create_chat_client(address)
 
-def create_persistence_client(address: str = 'localhost:9090'):
-    """Create a Persistence Platform gRPC client using default factory."""
-    return _get_default_factory().create_persistence_client(address)
+
 
 def create_image_generation_client(address: str = 'localhost:9094'):
     """Create an Image Generation service gRPC client using default factory."""
@@ -358,13 +337,6 @@ def initialize_service_framework():
             register_service("chat", "localhost:9095", stub_class=chat_pb2_grpc.ChatServiceStub, timeout=60.0)
         except ImportError:
             register_service("chat", "localhost:9095", timeout=60.0)  # Fallback without stub
-
-        # Persistence service - standard timeout
-        try:
-            from unhinged_proto_clients import persistence_pb2_grpc
-            register_service("persistence", "localhost:9090", stub_class=persistence_pb2_grpc.PersistenceServiceStub, timeout=60.0)
-        except ImportError:
-            register_service("persistence", "localhost:9090", timeout=60.0)  # Fallback without stub
 
         # Image generation service - longer timeout for image processing
         try:

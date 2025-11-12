@@ -1,4 +1,18 @@
-# Unhinged Persistence Platform
+# ⚠️ DEPRECATED: Unhinged Persistence Platform (Kotlin)
+
+**STATUS**: DEPRECATED - Being replaced by Python implementation
+
+This Kotlin-based persistence platform is no longer actively maintained. A new Python-based persistence platform is being developed at `/libs/python/persistence/` that provides:
+- Simpler document abstraction (file-like interface)
+- PostgreSQL backend (not CockroachDB)
+- LLM-documented code
+- Integration with central build chain
+
+**Do not use this for new development.** Existing code referencing this platform should be migrated to the Python implementation.
+
+---
+
+## Legacy Documentation (Archived)
 
 A centralized, multi-technology persistence platform that abstracts database complexity behind unified APIs, enabling self-service data operations across multiple database technologies.
 

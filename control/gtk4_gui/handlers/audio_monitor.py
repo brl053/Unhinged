@@ -11,7 +11,15 @@ import struct
 import subprocess
 import threading
 import time
+import sys
 from collections.abc import Callable
+from pathlib import Path
+
+# Add utils to path for audio_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+
+from audio_utils import calculate_rms_amplitude
+from event_bus import get_event_bus, AudioEvents, Event
 
 try:
     from ..models.audio_types import AudioDevice, AudioDeviceType
@@ -64,14 +72,30 @@ class AudioLevelMonitor:
         self.is_monitoring = False
         self.monitor_thread: threading.Thread | None = None
         self.monitor_process: subprocess.Popen | None = None
+
+        # Event bus for amplitude updates (replaces callbacks)
+        self._event_bus = get_event_bus()
+
+        # Legacy callback for backward compatibility
         self.amplitude_callback: Callable[[float], None] | None = None
         self.sample_rate = 16000
         self.channels = 1
         self.format = 'S16_LE'  # 16-bit signed little endian
 
     def set_amplitude_callback(self, callback: Callable[[float], None]) -> None:
-        """Set callback function to receive amplitude updates"""
+        """Set callback function to receive amplitude updates (DEPRECATED: use event_bus instead)"""
         self.amplitude_callback = callback
+
+    def subscribe_to_amplitude(self, callback: Callable[[Event], None]) -> Callable[[], None]:
+        """Subscribe to amplitude updates via event bus
+
+        Args:
+            callback: Function to call when amplitude is updated
+
+        Returns:
+            Unsubscribe function
+        """
+        return self._event_bus.subscribe(AudioEvents.AMPLITUDE_UPDATED, callback)
 
     def start_monitoring(self) -> bool:
         """Start real-time audio level monitoring"""
@@ -141,7 +165,10 @@ class AudioLevelMonitor:
                     # Calculate amplitude from raw audio data
                     amplitude = self._calculate_amplitude(audio_data)
 
-                    # Send amplitude to callback
+                    # Emit amplitude event via event bus
+                    self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"amplitude": amplitude})
+
+                    # Legacy callback support
                     if self.amplitude_callback:
                         self.amplitude_callback(amplitude)
 
@@ -160,120 +187,65 @@ class AudioLevelMonitor:
 
     def _calculate_amplitude(self, audio_data: bytes) -> float:
         """Calculate amplitude from raw audio data"""
-        try:
-            # Convert bytes to 16-bit signed integers
-            samples = struct.unpack(f'<{len(audio_data)//2}h', audio_data)
-
-            # Calculate RMS (Root Mean Square) amplitude
-            if samples:
-                rms = math.sqrt(sum(sample * sample for sample in samples) / len(samples))
-                # Normalize to 0.0-1.0 range (16-bit max is 32767)
-                normalized_amplitude = min(1.0, rms / 32767.0)
-                return normalized_amplitude
-            else:
-                return 0.0
-
-        except Exception as e:
-            print(f"Error calculating amplitude: {e}")
-            return 0.0
+        return calculate_rms_amplitude(audio_data)
 
     def get_playback_devices(self):
         """Get available audio playback devices (for compatibility with complex.py)"""
-        try:
-            # Use aplay to list playback devices
-            result = subprocess.run(['aplay', '-l'], capture_output=True, text=True)
-            devices = []
+        from audio_utils import get_playback_devices as get_playback_devices_util
 
-            if result.returncode == 0:
-                lines = result.stdout.split('\n')
-                for line in lines:
-                    if 'card' in line and ':' in line:
-                        # Parse device info from aplay output
-                        parts = line.split(':')
-                        if len(parts) >= 2:
-                            device_name = parts[1].strip()
-                            card_info = parts[0].strip()
+        # Get devices from utility function
+        util_devices = get_playback_devices_util()
 
-                            # Parse card and device IDs from "card 0: device 0" format
-                            card_id = 0
-                            device_id = 0
-                            try:
-                                if 'card' in card_info:
-                                    card_id = int(card_info.split('card')[1].split(':')[0].strip())
-                            except:
-                                pass
+        # Convert to AudioDevice format for compatibility
+        devices = []
+        for util_device in util_devices:
+            device = AudioDevice(
+                name=util_device.name,
+                description=util_device.name,
+                card_id=util_device.card_number,
+                device_id=util_device.device_number,
+                alsa_device=util_device.device_id,
+                icon="audio-speakers-symbolic",
+                device_type=AudioDeviceType.SPEAKER,
+                driver="ALSA",
+                subdevices=1,
+                is_default=False,
+                is_active=False,
+                volume=None,
+                is_muted=False
+            )
+            devices.append(device)
 
-                            device = AudioDevice(
-                                name=device_name,
-                                description=device_name,
-                                card_id=card_id,
-                                device_id=device_id,
-                                alsa_device=f"hw:{card_id},{device_id}",
-                                icon="audio-speakers-symbolic",
-                                device_type=AudioDeviceType.SPEAKER,
-                                driver="ALSA",  # Audio driver
-                                subdevices=1,  # Default single subdevice
-                                is_default=False,
-                                is_active=False,
-                                volume=None,
-                                is_muted=False
-                            )
-                            devices.append(device)
-
-            return devices
-
-        except Exception as e:
-            print(f"Error getting playback devices: {e}")
-            return []
+        return devices
 
     def get_capture_devices(self):
         """Get available audio capture devices"""
-        try:
-            # Use arecord to list capture devices
-            result = subprocess.run(['arecord', '-l'], capture_output=True, text=True)
-            devices = []
+        from audio_utils import get_capture_devices as get_capture_devices_util
 
-            if result.returncode == 0:
-                lines = result.stdout.split('\n')
-                for line in lines:
-                    if 'card' in line and ':' in line:
-                        # Parse device info from arecord output
-                        parts = line.split(':')
-                        if len(parts) >= 2:
-                            device_name = parts[1].strip()
-                            card_info = parts[0].strip()
+        # Get devices from utility function
+        util_devices = get_capture_devices_util()
 
-                            # Parse card and device IDs from "card 0: device 0" format
-                            card_id = 0
-                            device_id = 0
-                            try:
-                                if 'card' in card_info:
-                                    card_id = int(card_info.split('card')[1].split(':')[0].strip())
-                            except:
-                                pass
+        # Convert to AudioDevice format for compatibility
+        devices = []
+        for util_device in util_devices:
+            device = AudioDevice(
+                name=util_device.name,
+                description=util_device.name,
+                card_id=util_device.card_number,
+                device_id=util_device.device_number,
+                alsa_device=util_device.device_id,
+                icon="audio-input-microphone-symbolic",
+                device_type=AudioDeviceType.MICROPHONE,
+                driver="ALSA",
+                subdevices=1,
+                is_default=False,
+                is_active=False,
+                volume=None,
+                is_muted=False
+            )
+            devices.append(device)
 
-                            device = AudioDevice(
-                                name=device_name,
-                                description=device_name,
-                                card_id=card_id,
-                                device_id=device_id,
-                                alsa_device=f"hw:{card_id},{device_id}",
-                                icon="audio-input-microphone-symbolic",
-                                device_type=AudioDeviceType.MICROPHONE,
-                                driver="ALSA",  # Audio driver
-                                subdevices=1,  # Default single subdevice
-                                is_default=False,
-                                is_active=False,
-                                volume=None,
-                                is_muted=False
-                            )
-                            devices.append(device)
-
-            return devices
-
-        except Exception as e:
-            print(f"Error getting capture devices: {e}")
-            return []
+        return devices
 
 
 class AudioVisualizationBridge:

@@ -1,0 +1,131 @@
+# @llm-type component.spec
+# @llm-does Create new or edit existing document with validation
+# @llm-key Document creation/editing form
+
+component:
+  id: "document-form"
+  name: "Document Form"
+  category: "complex"
+  
+  description: |
+    Create new or edit existing document with validation. Displays form fields,
+    validates in real-time, and enables submit only when all required fields valid.
+
+  interface:
+    properties:
+      mode:
+        type: "enum"
+        values: ["create", "edit"]
+        required: true
+        description: "Form mode"
+      
+      document:
+        type: "object"
+        required: false
+        description: "Document data (for edit mode)"
+      
+      fields:
+        type: "array"
+        required: true
+        description: "Array of form field definitions"
+      
+      is_submitting:
+        type: "boolean"
+        default: false
+        description: "Submitting form"
+      
+      submit_error:
+        type: "string"
+        required: false
+        description: "Error message from submission"
+
+    states:
+      empty:
+        description: "New document form"
+        visual_tokens: ["surface.default"]
+      
+      populated:
+        description: "Form with data"
+        visual_tokens: ["surface.default"]
+      
+      validating:
+        description: "Validation in progress"
+        visual_tokens: ["surface.elevated"]
+      
+      submitting:
+        description: "Submitting form"
+        visual_tokens: ["surface.elevated"]
+      
+      success:
+        description: "Form submitted successfully"
+        visual_tokens: ["feedback.success"]
+      
+      error:
+        description: "Submission error"
+        visual_tokens: ["feedback.error"]
+
+    events:
+      field_changed:
+        description: "Form field value changed"
+        payload:
+          field_name: "string"
+          value: "any"
+      
+      validation_error:
+        description: "Field validation failed"
+        payload:
+          field_name: "string"
+          error_message: "string"
+      
+      form_submitted:
+        description: "Form submitted"
+        payload:
+          mode: "string"
+          form_data: "object"
+      
+      form_cancelled:
+        description: "Form cancelled"
+        payload: {}
+      
+      submit_error:
+        description: "Error submitting form"
+        payload:
+          error_message: "string"
+
+  styling:
+    default_state:
+      background: "surface.default"
+      padding: "sp.3"
+      gap: "sp.3"
+    
+    state_overrides:
+      submitting:
+        opacity: 0.6
+      
+      error:
+        border_left: ["border.thick", "feedback.error"]
+
+  composition:
+    is_leaf: false
+    can_contain: ["form-field", "form-actions"]
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Tab"
+        action: "navigate_fields"
+      - key: "Enter"
+        action: "submit_form"
+      - key: "Escape"
+        action: "cancel_form"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

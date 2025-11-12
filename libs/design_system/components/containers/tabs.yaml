@@ -1,0 +1,157 @@
+# @llm-type component.spec
+# @llm-does non-closeable workspace tabs container component specification
+# @llm-rule tabs specifications must define persistent, non-closeable tab interface with semantic behavior
+component:
+  id: "workspace-tabs"
+  name: "Workspace Tabs"
+  category: "container"
+  
+  description: |
+    Non-closeable workspace tabs container for displaying multiple persistent views of the same document.
+    Each tab represents a unique visual representation (Registry, Editor, Metrics) with its own feature set.
+    Tabs are non-closeable, non-organizable, and persist for the lifetime of the workspace.
+    
+    Use for workspace interfaces where users need to switch between different views of the same data
+    without the ability to close tabs. Provides simple, crude tab switching with inner padding for visual taste.
+
+  interface:
+    properties:
+      tabs:
+        type: "array"
+        required: true
+        description: "Array of tab definitions with id, title, and icon"
+        items:
+          type: "object"
+          properties:
+            id:
+              type: "string"
+              description: "Unique identifier for the tab"
+            title:
+              type: "string"
+              description: "Display title for the tab"
+            icon:
+              type: "string"
+              description: "Emoji or icon identifier for the tab"
+      
+      selected_tab:
+        type: "string"
+        description: "ID of currently selected tab"
+      
+      closeable:
+        type: "boolean"
+        default: false
+        description: "Whether tabs can be closed (always false for workspace tabs)"
+      
+      organizable:
+        type: "boolean"
+        default: false
+        description: "Whether tabs can be reordered (always false for workspace tabs)"
+    
+    states:
+      default:
+        description: "Initial tab state"
+        visual_tokens: ["colors.surface.default", "elevation.layers.base"]
+        triggers: ["component_mount"]
+      
+      tab_selected:
+        description: "Tab is currently selected and active"
+        visual_tokens: ["colors.action.primary", "colors.text.primary"]
+        triggers: ["tab_click", "keyboard_navigation"]
+        transitions: ["tab_unselected"]
+      
+      tab_unselected:
+        description: "Tab is not currently selected"
+        visual_tokens: ["colors.surface.elevated", "colors.text.secondary"]
+        triggers: ["other_tab_selected"]
+        transitions: ["tab_selected"]
+    
+    events:
+      tab_changed:
+        description: "User switched to a different tab"
+        payload:
+          previous_tab_id: "string"
+          new_tab_id: "string"
+          timestamp: "number"
+
+  styling:
+    default_state:
+      background: "colors.surface.default"
+      border_bottom: "colors.border.subtle"
+      border_width: "elevation.border.thin"
+      padding_top: "spacing.scale.sp_2"
+      padding_bottom: "spacing.scale.sp_2"
+      padding_start: "spacing.scale.sp_2"
+      padding_end: "spacing.scale.sp_2"
+      z_index: "elevation.layers.base"
+    
+    state_overrides:
+      tab_selected:
+        background: "colors.action.primary"
+        color: "colors.text.inverse"
+        border_bottom: "colors.action.primary"
+        border_width: "elevation.border.medium"
+      
+      tab_unselected:
+        background: "colors.surface.elevated"
+        color: "colors.text.secondary"
+        border_bottom: "colors.border.subtle"
+
+  composition:
+    is_leaf: false
+    can_contain: ["primitive", "container", "complex"]
+    required_context: []
+    layout_type: "horizontal"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Left Arrow"
+        action: "select_previous_tab"
+      - key: "Right Arrow"
+        action: "select_next_tab"
+      - key: "Home"
+        action: "select_first_tab"
+      - key: "End"
+        action: "select_last_tab"
+      - key: "Tab"
+        action: "focus_next_element"
+      - key: "Shift+Tab"
+        action: "focus_previous_element"
+    
+    aria_attributes:
+      - "role=tablist for tab container"
+      - "role=tab for each tab"
+      - "aria-selected=true for active tab"
+      - "aria-selected=false for inactive tabs"
+      - "aria-controls pointing to tab content"
+
+  examples:
+    - name: "Document workspace tabs"
+      description: "Registry, Editor, Metrics tabs for document workspace"
+      properties:
+        tabs:
+          - id: "registry"
+            title: "Registry"
+            icon: "📚"
+          - id: "editor"
+            title: "Editor"
+            icon: "✏️"
+          - id: "metrics"
+            title: "Metrics"
+            icon: "📊"
+        selected_tab: "registry"
+        closeable: false
+        organizable: false
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-27"
+  design_review: "pending"
+  implementation_status:
+    gtk4: "pending"
+    alpine_native: "pending"
+

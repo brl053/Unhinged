@@ -18,6 +18,12 @@ from enum import Enum
 import hashlib
 import time
 import logging
+import sys
+
+# Add control/gtk4_gui/utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "control" / "gtk4_gui" / "utils"))
+
+from subprocess_utils import SubprocessRunner
 
 class PluginCapability(Enum):
     """Capabilities that plugins can declare support for."""
@@ -291,37 +297,18 @@ class BuilderPlugin(ABC):
     def _run_command(self, command: str, working_dir: Path, timeout: int = 300) -> Tuple[bool, str, str]:
         """
         Run shell command and return result.
-        
+
         Args:
             command: Command to execute
             working_dir: Working directory for command
             timeout: Timeout in seconds
-            
+
         Returns:
             Tuple of (success, stdout, stderr)
         """
-        import subprocess
-        
-        try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=working_dir,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            
-            return (
-                result.returncode == 0,
-                result.stdout,
-                result.stderr
-            )
-            
-        except subprocess.TimeoutExpired:
-            return False, "", f"Command timed out after {timeout} seconds"
-        except Exception as e:
-            return False, "", f"Command execution failed: {e}"
+        runner = SubprocessRunner(timeout=timeout)
+        result = runner.run_shell(command, cwd=working_dir)
+        return result["success"], result["output"], result["error"]
     
     def _check_tool_available(self, tool_name: str) -> bool:
         """Check if a command-line tool is available."""

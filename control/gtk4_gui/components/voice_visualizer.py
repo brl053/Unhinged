@@ -11,10 +11,16 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 import math
+import sys
 from collections.abc import Callable
 from enum import Enum
+from pathlib import Path
 
 from gi.repository import GLib, Gtk
+
+# Add utils to path for event_bus import
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+from event_bus import get_event_bus, AudioEvents, Event
 
 
 class VisualizationMode(Enum):
@@ -57,7 +63,10 @@ class VoiceVisualizer(Gtk.DrawingArea):
         self.waveform_data = [0.0] * 50  # 50 sample points
         self.bars_data = [0.0] * 8       # 8 frequency bars
 
-        # Callbacks
+        # Event bus for state updates (replaces callbacks)
+        self._event_bus = get_event_bus()
+
+        # Legacy callback for backward compatibility
         self.state_callback: Callable[[str], None] | None = None
 
         # Setup widget
@@ -89,8 +98,14 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
             self.queue_draw()
 
+            # Emit event via event bus
+            state = "recording" if recording else "idle"
+            self._event_bus.emit_simple(AudioEvents.RECORDING_STARTED if recording else AudioEvents.RECORDING_STOPPED,
+                                       {"state": state})
+
+            # Legacy callback support
             if self.state_callback:
-                self.state_callback("recording" if recording else "idle")
+                self.state_callback(state)
 
     def set_processing_state(self, processing: bool) -> None:
         """Set processing state and update visualization"""
@@ -104,8 +119,13 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
             self.queue_draw()
 
+            # Emit event via event bus
+            state = "processing" if processing else "idle"
+            self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"state": state})
+
+            # Legacy callback support
             if self.state_callback:
-                self.state_callback("processing" if processing else "idle")
+                self.state_callback(state)
 
     def set_amplitude(self, amplitude: float) -> None:
         """Set current audio amplitude (0.0 to 1.0) from real audio data"""
@@ -130,8 +150,19 @@ class VoiceVisualizer(Gtk.DrawingArea):
         self.queue_draw()
 
     def connect_state_callback(self, callback: Callable[[str], None]) -> None:
-        """Connect state change callback"""
+        """Connect state change callback (DEPRECATED: use event_bus instead)"""
         self.state_callback = callback
+
+    def subscribe_to_state_changes(self, callback: Callable[[Event], None]) -> Callable[[], None]:
+        """Subscribe to state changes via event bus
+
+        Args:
+            callback: Function to call when state changes
+
+        Returns:
+            Unsubscribe function
+        """
+        return self._event_bus.subscribe(AudioEvents.AMPLITUDE_UPDATED, callback)
 
     def _start_animation(self) -> None:
         """Start animation timer"""

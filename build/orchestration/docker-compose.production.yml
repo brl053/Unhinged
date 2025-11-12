@@ -177,34 +177,9 @@ services:
   # =============================================================================
   # PLATFORMS (1300-1399)
   # =============================================================================
-  
-  persistence-platform:
-    build:
-      context: ../../platforms/persistence
-      dockerfile: Dockerfile.mock
-    container_name: persistence-platform-service
-    ports:
-      - "1300:8090"  # External 1300 → Internal 8090 (REST)
-      - "1301:9090"  # External 1301 → Internal 9090 (gRPC)
-    environment:
-      - JAVA_OPTS=-Xmx2g -Xms1g
-      - CONFIG_PATH=/app/config/persistence-platform.yaml
-      - LOG_LEVEL=INFO
-    volumes:
-      - ./platforms/persistence/config:/app/config:ro
-      - persistence-logs:/app/logs
-    depends_on:
-      - redis
-      - database
-    networks:
-      - unhinged-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8090/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
+  # NOTE: Kotlin persistence platform has been deprecated and replaced with
+  # Python persistence platform (libs/python/persistence/). Services now use
+  # the document store abstraction directly with PostgreSQL backend.
 
 # =============================================================================
 # Networks
@@ -242,8 +217,4 @@ volumes:
   postgres-data:
     driver: local
   redis-data:
-    driver: local
-  
-  # Platform storage
-  persistence-logs:
     driver: local

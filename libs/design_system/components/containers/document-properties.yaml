@@ -1,0 +1,87 @@
+# @llm-type component.spec
+# @llm-does Container for document properties display and editing
+# @llm-key Displays key-value properties of document
+
+component:
+  id: "document-properties"
+  name: "Document Properties"
+  category: "container"
+  
+  description: |
+    Container for displaying and editing document properties. Shows key-value pairs
+    in read-only mode, becomes editable in edit mode. Displays validation errors.
+
+  interface:
+    properties:
+      properties:
+        type: "array"
+        required: true
+        description: "Array of property objects with name, value, type, editable, required"
+      
+      is_editing:
+        type: "boolean"
+        default: false
+        description: "Whether properties are editable"
+      
+      validation_errors:
+        type: "object"
+        required: false
+        description: "Map of property_name -> error_message"
+
+    states:
+      viewing:
+        description: "Read-only display"
+        visual_tokens: ["surface.default"]
+      
+      editing:
+        description: "Editable fields"
+        visual_tokens: ["surface.elevated"]
+        triggers: ["is_editing_true"]
+      
+      error:
+        description: "Validation errors present"
+        visual_tokens: ["feedback.error"]
+        triggers: ["validation_errors_present"]
+
+    events:
+      property_changed:
+        description: "Property value modified"
+        payload:
+          property_name: "string"
+          value: "any"
+      
+      validation_error:
+        description: "Validation failed"
+        payload:
+          property_name: "string"
+          error_message: "string"
+
+  styling:
+    default_state:
+      background: "surface.default"
+      padding: "sp.3"
+      gap: "sp.2"
+    
+    state_overrides:
+      editing:
+        background: "surface.elevated"
+      
+      error:
+        border_left: ["border.thick", "feedback.error"]
+
+  composition:
+    is_leaf: false
+    can_contain: ["form-field"]
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

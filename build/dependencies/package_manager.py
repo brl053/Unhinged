@@ -14,6 +14,11 @@ import yaml
 import subprocess
 from pathlib import Path
 
+# Add control/gtk4_gui/utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "control" / "gtk4_gui" / "utils"))
+
+from subprocess_utils import SubprocessRunner
+
 class UbuntuPackageManager:
     def __init__(self):
         self.config_path = Path(__file__).parent / "dependencies.yaml"
@@ -27,23 +32,22 @@ class UbuntuPackageManager:
         # Check if we need sudo for apt-get commands
         if command.startswith('apt-get'):
             # Try to run with sudo
-            result = subprocess.run(f"sudo {command}", shell=True)
+            command = f"sudo {command}"
         elif command.startswith('build/python/venv/bin/pip'):
             # Handle Python venv pip commands - ensure venv exists first
             venv_path = Path("build/python/venv")
             if not venv_path.exists():
                 print("⚠️ Python virtual environment not found. Setting up...")
-                setup_result = subprocess.run("cd build/python && python3 setup.py", shell=True)
-                if setup_result.returncode != 0:
+                runner = SubprocessRunner(timeout=300)
+                setup_result = runner.run_shell("cd build/python && python3 setup.py")
+                if not setup_result["success"]:
                     print("❌ Failed to setup Python virtual environment")
                     return False
-            # Run the pip command
-            result = subprocess.run(command, shell=True)
-        else:
-            # Run other commands without sudo
-            result = subprocess.run(command, shell=True)
 
-        if result.returncode != 0:
+        runner = SubprocessRunner(timeout=300)
+        result = runner.run_shell(command)
+
+        if not result["success"]:
             print(f"❌ Command failed: {command}")
             return False
         else:

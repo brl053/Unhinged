@@ -1050,6 +1050,11 @@ validate-design-tokens: ## Validate semantic tokens against designer constraints
 	@python3 libs/design_system/build/design_token_builder.py --validate
 	$(call log_success,Design tokens validation passed)
 
+validate-gtk4-css: ## Validate GTK4 CSS for compatibility issues
+	$(call log_info,🔍 Validating GTK4 CSS compatibility...)
+	@python3 build/tools/gtk4_css_validator.py generated/design_system/gtk4/
+	$(call log_success,GTK4 CSS validation passed)
+
 components: ## Generate components for all platforms
 	$(call log_info,📦 Generating components...)
 	@python3 build/build.py build components

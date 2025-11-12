@@ -10,11 +10,17 @@ Tasks are defined in JSON format and executed with full logging and feedback.
 import json
 import subprocess
 import time
+import sys
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, asdict
 from enum import Enum
 from datetime import datetime
+
+# Add control/gtk4_gui/utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent / "control" / "gtk4_gui" / "utils"))
+
+from subprocess_utils import SubprocessRunner
 
 
 class TaskStatus(Enum):
@@ -124,33 +130,14 @@ class DevelopmentLoop:
     
     def execute_shell_command(self, command: str, cwd: Optional[Path] = None) -> Dict[str, Any]:
         """Execute shell command and return result"""
-        try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=cwd or self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=300
-            )
-            return {
-                "success": result.returncode == 0,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode
-            }
-        except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": "Command timeout (300s)",
-                "returncode": -1
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "returncode": -1
-            }
+        runner = SubprocessRunner(timeout=300)
+        result = runner.run_shell(command, cwd=cwd or self.project_root)
+        return {
+            "success": result["success"],
+            "stdout": result["output"],
+            "stderr": result["error"],
+            "returncode": result["returncode"]
+        }
 
 
 if __name__ == "__main__":

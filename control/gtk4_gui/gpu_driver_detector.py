@@ -10,9 +10,15 @@ We don't care about proprietary vs open-source - we care about what works.
 """
 
 import re
-import subprocess
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+
+# Add utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent / "utils"))
+
+from subprocess_utils import SystemCommandRunner
 
 
 @dataclass
@@ -35,27 +41,20 @@ class GPUDriverDetector:
         self.nvidia_available = False
         self.driver_version = None
         self.cuda_version = None
+        self.runner = SystemCommandRunner(timeout=5)
         self._detect_nvidia()
 
     def _detect_nvidia(self):
         """Detect NVIDIA GPU and driver information"""
-        try:
-            # Check if nvidia-smi is available
-            result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=index,name,driver_version,memory.total,compute_cap"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+        # Use SystemCommandRunner to query GPU info
+        query = "index,name,driver_version,memory.total,compute_cap"
+        result = self.runner.run_nvidia_smi(query=query)
 
-            if result.returncode == 0:
-                self.nvidia_available = True
-                self._parse_nvidia_output(result.stdout)
-                self._get_cuda_version()
-            else:
-                self.nvidia_available = False
-
-        except (subprocess.TimeoutExpired, FileNotFoundError):
+        if result["success"]:
+            self.nvidia_available = True
+            self._parse_nvidia_output(result["output"])
+            self._get_cuda_version()
+        else:
             self.nvidia_available = False
 
     def _parse_nvidia_output(self, output: str):
@@ -105,29 +104,20 @@ class GPUDriverDetector:
 
     def _get_cuda_version(self):
         """Get CUDA version from nvidia-smi"""
-        try:
-            result = subprocess.run(
-                ["nvidia-smi"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+        result = self.runner.run_nvidia_smi()
 
-            if result.returncode == 0:
-                # Look for CUDA Version line
-                for line in result.stdout.split('\n'):
-                    if 'CUDA Version' in line:
-                        # Extract version (format: "CUDA Version: 12.8")
-                        match = re.search(r'CUDA Version:\s+([\d.]+)', line)
-                        if match:
-                            self.cuda_version = match.group(1)
-                            # Update all GPUs with CUDA version
-                            for gpu in self.gpus:
-                                gpu.cuda_version = self.cuda_version
-                        break
-
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
+        if result["success"]:
+            # Look for CUDA Version line
+            for line in result["output"].split('\n'):
+                if 'CUDA Version' in line:
+                    # Extract version (format: "CUDA Version: 12.8")
+                    match = re.search(r'CUDA Version:\s+([\d.]+)', line)
+                    if match:
+                        self.cuda_version = match.group(1)
+                        # Update all GPUs with CUDA version
+                        for gpu in self.gpus:
+                            gpu.cuda_version = self.cuda_version
+                    break
 
     def _detect_driver_type(self, driver_version: str) -> str:
         """Detect if driver is open-source or proprietary"""

@@ -2,11 +2,12 @@
 """
 Session Store - Write-Through Architecture
 
-Simple write-through implementation with Redis cache and CRDB persistence.
+Write-through implementation with Redis cache and Python persistence platform.
 Optimized for local development with high-performance hardware.
 
 @llm-type storage.session
-@llm-does write-through session storage with Redis cache and CRDB persistence
+@llm-does write-through session storage with Redis cache and PostgreSQL persistence
+@llm-rule uses document store abstraction for persistence, Redis for caching
 """
 
 import json
@@ -16,10 +17,7 @@ from dataclasses import dataclass
 from typing import Any
 
 try:
-    import psycopg2
-    import psycopg2.pool
     import redis
-    from psycopg2.extras import RealDictCursor
 except ImportError as e:
     print(f"⚠️ Session store dependencies not available: {e}")
     print("💡 Install with: pip install redis psycopg2-binary")
@@ -32,13 +30,6 @@ class SessionStoreConfig:
     redis_db: int = 0
     redis_password: str | None = None
 
-    crdb_host: str = "localhost"
-    crdb_port: int = 26257
-    crdb_database: str = "unhinged"
-    crdb_user: str = "root"
-    crdb_password: str | None = None
-
-    connection_pool_size: int = 10
     connection_timeout: int = 5
 
 class SessionStoreError(Exception):
@@ -48,28 +39,27 @@ class SessionStoreError(Exception):
 class SessionStore:
     """
     Write-through session storage implementation
-    
+
     Simple pattern:
-    - write(): Redis first, then CRDB synchronously
-    - read(): Redis first, CRDB on miss with cache population
+    - write(): Redis first, then document store synchronously
+    - read(): Redis first, document store on miss with cache population
     - delete(): Remove from both stores atomically
-    - exists(): Check Redis, fallback to CRDB if needed
+    - exists(): Check Redis, fallback to document store if needed
     """
 
     def __init__(self, config: SessionStoreConfig | None = None):
         self.config = config or SessionStoreConfig()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-        # Connection pools
+        # Clients
         self.redis_client = None
-        self.crdb_pool = None
+        self.document_store = None
 
         # Initialize connections
         self._initialize_connections()
-        self._initialize_schema()
 
     def _initialize_connections(self):
-        """Initialize Redis and CRDB connections"""
+        """Initialize Redis and document store connections"""
         try:
             # Redis connection
             self.redis_client = redis.Redis(
@@ -91,66 +81,25 @@ class SessionStore:
             raise SessionStoreError(f"Redis connection failed: {e}")
 
         try:
-            # CRDB connection pool
-            self.crdb_pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=self.config.connection_pool_size,
-                host=self.config.crdb_host,
-                port=self.config.crdb_port,
-                database=self.config.crdb_database,
-                user=self.config.crdb_user,
-                password=self.config.crdb_password,
-                cursor_factory=RealDictCursor
-            )
-
-            # Test CRDB connection
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT version()")
-                    version = cursor.fetchone()
-                    self.logger.info(f"CRDB connected: {version['version'][:50]}...")
-            finally:
-                self.crdb_pool.putconn(conn)
+            # Document store connection
+            from libs.python.persistence import get_document_store
+            self.document_store = get_document_store()
+            self.logger.info("Document store connected (PostgreSQL)")
 
         except Exception as e:
-            self.logger.error(f"Failed to connect to CRDB: {e}")
-            raise SessionStoreError(f"CRDB connection failed: {e}")
+            self.logger.error(f"Failed to connect to document store: {e}")
+            raise SessionStoreError(f"Document store connection failed: {e}")
 
-    def _initialize_schema(self):
-        """Initialize CRDB schema for session storage"""
-        schema_sql = """
-        CREATE TABLE IF NOT EXISTS sessions (
-            key VARCHAR(255) PRIMARY KEY,
-            value JSONB NOT NULL,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at);
-        """
 
-        try:
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(schema_sql)
-                    conn.commit()
-                    self.logger.info("CRDB schema initialized")
-            finally:
-                self.crdb_pool.putconn(conn)
-        except Exception as e:
-            self.logger.error(f"Failed to initialize CRDB schema: {e}")
-            raise SessionStoreError(f"Schema initialization failed: {e}")
 
     def write(self, key: str, value: Any) -> bool:
         """
-        Write-through operation: Redis first, then CRDB synchronously
-        
+        Write-through operation: Redis first, then document store synchronously
+
         Args:
             key: Session key
             value: Session data (will be JSON serialized)
-            
+
         Returns:
             True if both writes succeed, False otherwise
         """
@@ -164,28 +113,24 @@ class SessionStore:
                 self.logger.error(f"Redis write failed for key: {key}")
                 return False
 
-            # Write to CRDB synchronously
-            conn = self.crdb_pool.getconn()
+            # Write to document store synchronously
             try:
-                with conn.cursor() as cursor:
-                    cursor.execute("""
-                        INSERT INTO sessions (key, value, updated_at) 
-                        VALUES (%s, %s, NOW())
-                        ON CONFLICT (key) 
-                        DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
-                    """, (key, json_value))
-                    conn.commit()
+                # Try to update existing document
+                doc = self.document_store.read("sessions", key)
+                if doc:
+                    self.document_store.update("sessions", key, {"value": value})
+                else:
+                    # Create new document
+                    self.document_store.create("sessions", {"id": key, "value": value})
 
-                    self.logger.debug(f"Write-through completed for key: {key}")
-                    return True
+                self.logger.debug(f"Write-through completed for key: {key}")
+                return True
 
             except Exception as e:
-                # If CRDB write fails, remove from Redis to maintain consistency
+                # If document store write fails, remove from Redis to maintain consistency
                 self.redis_client.delete(key)
-                self.logger.error(f"CRDB write failed for key {key}, removed from Redis: {e}")
+                self.logger.error(f"Document store write failed for key {key}, removed from Redis: {e}")
                 return False
-            finally:
-                self.crdb_pool.putconn(conn)
 
         except Exception as e:
             self.logger.error(f"Write operation failed for key {key}: {e}")
@@ -193,11 +138,11 @@ class SessionStore:
 
     def read(self, key: str) -> Any | None:
         """
-        Read operation: Redis first, CRDB on miss with cache population
-        
+        Read operation: Redis first, document store on miss with cache population
+
         Args:
             key: Session key
-            
+
         Returns:
             Session data or None if not found
         """
@@ -208,26 +153,18 @@ class SessionStore:
                 self.logger.debug(f"Redis cache hit for key: {key}")
                 return json.loads(redis_value)
 
-            # Cache miss - read from CRDB
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT value FROM sessions WHERE key = %s", (key,))
-                    result = cursor.fetchone()
+            # Cache miss - read from document store
+            doc = self.document_store.read("sessions", key)
+            if doc is None:
+                self.logger.debug(f"Key not found in document store: {key}")
+                return None
 
-                    if result is None:
-                        self.logger.debug(f"Key not found in CRDB: {key}")
-                        return None
+            # Populate Redis cache atomically
+            json_value = json.dumps(doc.data.get("value"), default=str)
+            self.redis_client.set(key, json_value)
 
-                    # Populate Redis cache atomically
-                    json_value = result['value']
-                    self.redis_client.set(key, json_value)
-
-                    self.logger.debug(f"CRDB cache miss populated for key: {key}")
-                    return json.loads(json_value)
-
-            finally:
-                self.crdb_pool.putconn(conn)
+            self.logger.debug(f"Document store cache miss populated for key: {key}")
+            return doc.data.get("value")
 
         except Exception as e:
             self.logger.error(f"Read operation failed for key {key}: {e}")
@@ -236,10 +173,10 @@ class SessionStore:
     def delete(self, key: str) -> bool:
         """
         Delete operation: Remove from both stores atomically
-        
+
         Args:
             key: Session key
-            
+
         Returns:
             True if deletion succeeds from both stores
         """
@@ -247,20 +184,12 @@ class SessionStore:
             # Delete from Redis
             redis_deleted = self.redis_client.delete(key)
 
-            # Delete from CRDB
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("DELETE FROM sessions WHERE key = %s", (key,))
-                    crdb_deleted = cursor.rowcount > 0
-                    conn.commit()
+            # Delete from document store
+            doc_deleted = self.document_store.delete("sessions", key)
 
-                    success = redis_deleted > 0 or crdb_deleted
-                    self.logger.debug(f"Delete operation for key {key}: Redis={redis_deleted}, CRDB={crdb_deleted}")
-                    return success
-
-            finally:
-                self.crdb_pool.putconn(conn)
+            success = redis_deleted > 0 or doc_deleted
+            self.logger.debug(f"Delete operation for key {key}: Redis={redis_deleted}, DocStore={doc_deleted}")
+            return success
 
         except Exception as e:
             self.logger.error(f"Delete operation failed for key {key}: {e}")
@@ -268,11 +197,11 @@ class SessionStore:
 
     def exists(self, key: str) -> bool:
         """
-        Check if key exists: Redis first, CRDB fallback
-        
+        Check if key exists: Redis first, document store fallback
+
         Args:
             key: Session key
-            
+
         Returns:
             True if key exists in either store
         """
@@ -281,14 +210,9 @@ class SessionStore:
             if self.redis_client.exists(key):
                 return True
 
-            # Fallback to CRDB
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT 1 FROM sessions WHERE key = %s LIMIT 1", (key,))
-                    return cursor.fetchone() is not None
-            finally:
-                self.crdb_pool.putconn(conn)
+            # Fallback to document store
+            doc = self.document_store.read("sessions", key)
+            return doc is not None
 
         except Exception as e:
             self.logger.error(f"Exists check failed for key {key}: {e}")
@@ -297,10 +221,10 @@ class SessionStore:
     def list_keys(self, pattern: str = "session:*") -> list[str]:
         """
         List session keys matching pattern
-        
+
         Args:
             pattern: Redis-style pattern (default: session:*)
-            
+
         Returns:
             List of matching keys
         """
@@ -310,16 +234,11 @@ class SessionStore:
             if keys:
                 return keys
 
-            # Fallback to CRDB if Redis is empty
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    # Convert Redis pattern to SQL LIKE pattern
-                    sql_pattern = pattern.replace('*', '%').replace('?', '_')
-                    cursor.execute("SELECT key FROM sessions WHERE key LIKE %s", (sql_pattern,))
-                    return [row['key'] for row in cursor.fetchall()]
-            finally:
-                self.crdb_pool.putconn(conn)
+            # Fallback to document store if Redis is empty
+            # Note: Document store doesn't support pattern matching,
+            # so we return all session keys
+            docs = self.document_store.query("sessions", limit=1000)
+            return [doc.id for doc in docs]
 
         except Exception as e:
             self.logger.error(f"List keys failed for pattern {pattern}: {e}")
@@ -328,13 +247,13 @@ class SessionStore:
     def health_check(self) -> dict[str, Any]:
         """
         Health check for both stores
-        
+
         Returns:
-            Dict with health status for Redis and CRDB
+            Dict with health status for Redis and document store
         """
         health = {
             "redis": {"status": "unknown", "latency_ms": None},
-            "crdb": {"status": "unknown", "latency_ms": None}
+            "document_store": {"status": "unknown", "latency_ms": None}
         }
 
         # Redis health check
@@ -347,21 +266,16 @@ class SessionStore:
             health["redis"]["status"] = "unhealthy"
             health["redis"]["error"] = str(e)
 
-        # CRDB health check
+        # Document store health check
         try:
             start_time = time.time()
-            conn = self.crdb_pool.getconn()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT 1")
-                    cursor.fetchone()
-                health["crdb"]["status"] = "healthy"
-                health["crdb"]["latency_ms"] = (time.time() - start_time) * 1000
-            finally:
-                self.crdb_pool.putconn(conn)
+            # Simple health check: list collections
+            self.document_store.list_collections()
+            health["document_store"]["status"] = "healthy"
+            health["document_store"]["latency_ms"] = (time.time() - start_time) * 1000
         except Exception as e:
-            health["crdb"]["status"] = "unhealthy"
-            health["crdb"]["error"] = str(e)
+            health["document_store"]["status"] = "unhealthy"
+            health["document_store"]["error"] = str(e)
 
         return health
 
@@ -370,8 +284,7 @@ class SessionStore:
         try:
             if self.redis_client:
                 self.redis_client.close()
-            if self.crdb_pool:
-                self.crdb_pool.closeall()
+            # Document store doesn't need explicit close
             self.logger.info("Session store connections closed")
         except Exception as e:
             self.logger.error(f"Error closing connections: {e}")

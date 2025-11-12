@@ -6,9 +6,15 @@ Provides real-time enumeration of USB devices using lsusb command.
 Captures both basic and verbose output for display in UI.
 """
 
-import subprocess
 import logging
+import sys
 from typing import Optional
+from pathlib import Path
+
+# Add utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+
+from subprocess_utils import SystemCommandRunner
 
 logger = logging.getLogger(__name__)
 
@@ -20,91 +26,40 @@ class USBMonitor:
         """Initialize USB monitor"""
         self.last_basic_output = ""
         self.last_verbose_output = ""
+        self.runner = SystemCommandRunner(timeout=5)
 
     def get_basic_devices(self) -> str:
         """
         Get basic USB device list using lsusb.
-        
+
         Returns:
             String containing lsusb output
         """
-        try:
-            result = subprocess.run(
-                ['lsusb'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            
-            if result.returncode == 0:
-                self.last_basic_output = result.stdout
-                return result.stdout
-            else:
-                error_msg = f"lsusb failed: {result.stderr}"
-                logger.error(error_msg)
-                return error_msg
-                
-        except subprocess.TimeoutExpired:
-            error_msg = "lsusb command timed out"
-            logger.error(error_msg)
-            return error_msg
-        except FileNotFoundError:
-            error_msg = "lsusb command not found"
-            logger.error(error_msg)
-            return error_msg
-        except Exception as e:
-            error_msg = f"Error running lsusb: {e}"
+        result = self.runner.run_lsusb(verbose=False)
+
+        if result["success"]:
+            self.last_basic_output = result["output"]
+            return result["output"]
+        else:
+            error_msg = result["error"] or f"lsusb failed with code {result['returncode']}"
             logger.error(error_msg)
             return error_msg
 
     def get_verbose_devices(self) -> str:
         """
         Get verbose USB device information using lsusb -v.
-        
+
         Returns:
             String containing lsusb -v output
         """
-        try:
-            result = subprocess.run(
-                ['lsusb', '-v'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            if result.returncode == 0:
-                self.last_verbose_output = result.stdout
-                return result.stdout
-            else:
-                # lsusb -v may fail due to permissions, try with sudo
-                try:
-                    result = subprocess.run(
-                        ['sudo', 'lsusb', '-v'],
-                        capture_output=True,
-                        text=True,
-                        timeout=10
-                    )
-                    if result.returncode == 0:
-                        self.last_verbose_output = result.stdout
-                        return result.stdout
-                except Exception:
-                    pass
-                
-                error_msg = f"lsusb -v failed: {result.stderr}"
-                logger.warning(error_msg)
-                return error_msg
-                
-        except subprocess.TimeoutExpired:
-            error_msg = "lsusb -v command timed out"
+        result = self.runner.run_lsusb(verbose=True)
+
+        if result["success"]:
+            self.last_verbose_output = result["output"]
+            return result["output"]
+        else:
+            error_msg = result["error"] or f"lsusb -v failed with code {result['returncode']}"
             logger.warning(error_msg)
-            return error_msg
-        except FileNotFoundError:
-            error_msg = "lsusb command not found"
-            logger.error(error_msg)
-            return error_msg
-        except Exception as e:
-            error_msg = f"Error running lsusb -v: {e}"
-            logger.error(error_msg)
             return error_msg
 
     def refresh(self) -> tuple[str, str]:

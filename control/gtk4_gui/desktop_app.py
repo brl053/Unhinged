@@ -428,19 +428,23 @@ class UnhingedDesktopApp(Adw.Application):
             print(f"❌ Error creating processes view: {e}")
             return self._create_processes_fallback()
 
-    def _create_processes_fallback(self):
-        """Fallback processes implementation"""
+    def _create_fallback(self, title: str):
+        """Create a generic fallback widget for unavailable features"""
         container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         container.set_margin_top(16)
         container.set_margin_bottom(16)
         container.set_margin_start(16)
         container.set_margin_end(16)
 
-        label = Gtk.Label(label="Process monitoring functionality temporarily unavailable")
+        label = Gtk.Label(label=f"{title} functionality temporarily unavailable")
         label.add_css_class("dim-label")
         container.append(label)
 
         return container
+
+    def _create_processes_fallback(self):
+        """Fallback processes implementation"""
+        return self._create_fallback("Process monitoring")
 
     def create_input_tab_content(self):
         """Create the Input tab content using InputView."""
@@ -588,14 +592,41 @@ class UnhingedDesktopApp(Adw.Application):
             print(f"❌ Transcription result error: {e}")
             self.show_toast(f"Transcription error: {e}")
 
-    def _on_audio_error(self, error):
-        """Handle audio errors from AudioHandler"""
-        try:
-            error_msg = str(error)
-            self.show_toast(f"Audio error: {error_msg}")
+    def _on_audio_error(self, error_data):
+        """Handle audio errors from AudioHandler
 
+        Receives error_data dict with full diagnostic information:
+        - error: string representation
+        - type: exception class name
+        - message: detailed message
+        - device: audio device that failed
+        - details: dict with stderr output and other context
+        """
+        try:
+            # Handle both old string format and new dict format for backward compatibility
+            if isinstance(error_data, dict):
+                error_msg = error_data.get("error", "Unknown error")
+                device = error_data.get("device", "unknown")
+                details = error_data.get("details", {})
+                stderr_output = details.get("arecord_stderr", "")
+
+                # Build comprehensive error message
+                if stderr_output:
+                    # Include stderr for device/format errors
+                    full_msg = f"Audio error on {device}: {error_msg}\n\nDetails: {stderr_output}"
+                else:
+                    full_msg = f"Audio error on {device}: {error_msg}"
+            else:
+                # Fallback for old string format
+                full_msg = f"Audio error: {str(error_data)}"
+
+            # Show user-friendly toast (truncated)
+            toast_msg = full_msg.split('\n')[0][:100]  # First line, max 100 chars
+            self.show_toast(toast_msg)
+
+            # Log full diagnostic information to session
             if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_gui_event("AUDIO_ERROR", error_msg)
+                self.session_logger.log_gui_event("AUDIO_ERROR", full_msg)
 
         except Exception as e:
             print(f"❌ Audio error handler error: {e}")
@@ -704,6 +735,18 @@ class UnhingedDesktopApp(Adw.Application):
             import traceback
             traceback.print_exc()
             return self._create_fallback("Graph Editor")
+
+    def create_documents_tab_content(self):
+        """Create the Documents tab content using DocumentWorkspaceView"""
+        try:
+            from .views.document_workspace_view import DocumentWorkspaceView
+            self.document_workspace_view = DocumentWorkspaceView(self, document_type="document")
+            return self.document_workspace_view.create_content()
+        except Exception as e:
+            print(f"❌ Error creating documents view: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._create_fallback("Documents")
 
     def create_gpu_drivers_tab_content(self):
         """Create the GPU tab content using GPUView"""

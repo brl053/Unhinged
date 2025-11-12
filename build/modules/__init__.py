@@ -8,6 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
+import sys
+
+# Add control/gtk4_gui/utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "control" / "gtk4_gui" / "utils"))
+
+from subprocess_utils import SubprocessRunner
 
 logger = logging.getLogger(__name__)
 
@@ -179,22 +185,9 @@ class BuildUtils:
     @staticmethod
     def run_command(command: str, cwd: Path, timeout: int = 300) -> tuple[bool, str, str]:
         """Run a command and return success, stdout, stderr"""
-        import subprocess
-        
-        try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            return result.returncode == 0, result.stdout, result.stderr
-        except subprocess.TimeoutExpired:
-            return False, "", f"Command timed out after {timeout} seconds"
-        except Exception as e:
-            return False, "", str(e)
+        runner = SubprocessRunner(timeout=timeout)
+        result = runner.run_shell(command, cwd=cwd)
+        return result["success"], result["output"], result["error"]
     
     @staticmethod
     def check_tool_available(tool_name: str) -> bool:

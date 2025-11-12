@@ -1,16 +1,20 @@
 // ============================================================================
-// Persistence Platform - Main Application
+// ⚠️ DEPRECATED: Persistence Platform - Main Application
 // ============================================================================
 //
 // @file PersistencePlatformApplication.kt
-// @version 1.0.0
+// @version 1.0.0 (DEPRECATED)
 // @author Unhinged Team
 // @date 2025-10-19
+// @deprecated This Kotlin implementation is being replaced by a Python-based
+//             persistence platform at /libs/python/persistence/
 // @description Main application entry point for the Persistence Platform
 //
 // This is the main application that starts the persistence platform,
 // initializes all database providers, and starts the unified API server.
 // It handles configuration loading, dependency injection, and graceful shutdown.
+//
+// DO NOT USE FOR NEW DEVELOPMENT - Use Python implementation instead.
 //
 // ============================================================================
 

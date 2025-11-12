@@ -15,6 +15,11 @@ import json
 import requests
 from pathlib import Path
 
+# Add control/gtk4_gui/utils to path for subprocess_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "control" / "gtk4_gui" / "utils"))
+
+from subprocess_utils import SubprocessRunner
+
 class UnhingedSystemTest:
     """Complete system test for Unhinged with Alpine VM"""
     
@@ -35,21 +40,14 @@ class UnhingedSystemTest:
     
     def run_command(self, command, timeout=30, check=True):
         """Run shell command and return result"""
-        try:
-            result = subprocess.run(
-                command, shell=True, capture_output=True, 
-                text=True, timeout=timeout, cwd=self.project_root
-            )
-            return {
-                "success": result.returncode == 0 if check else True,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode
-            }
-        except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Command timed out"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        runner = SubprocessRunner(timeout=timeout)
+        result = runner.run_shell(command, cwd=self.project_root)
+        return {
+            "success": result["success"] if check else True,
+            "stdout": result["output"],
+            "stderr": result["error"],
+            "returncode": result["returncode"]
+        }
     
     def test_prerequisites(self):
         """Test system prerequisites"""

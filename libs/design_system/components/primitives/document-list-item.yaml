@@ -1,0 +1,120 @@
+# @llm-type component.spec
+# @llm-does Individual document entry in list view with selection and metadata display
+# @llm-key Atomic unit of document list - represents single document
+
+component:
+  id: "document-list-item"
+  name: "Document List Item"
+  category: "primitive"
+  
+  description: |
+    Individual document entry in a list view. Displays document metadata
+    (title, type, timestamps) with selection checkbox and context menu support.
+
+  interface:
+    properties:
+      document_id:
+        type: "string"
+        required: true
+        description: "Unique document identifier"
+      
+      title:
+        type: "string"
+        required: true
+        description: "Document display name"
+      
+      document_type:
+        type: "string"
+        required: true
+        description: "Type of document (e.g., 'graph', 'text')"
+      
+      created_at:
+        type: "string"
+        required: true
+        description: "ISO 8601 timestamp of creation"
+      
+      modified_at:
+        type: "string"
+        required: true
+        description: "ISO 8601 timestamp of last modification"
+      
+      is_selected:
+        type: "boolean"
+        default: false
+        description: "Whether item is currently selected"
+
+    states:
+      default:
+        description: "Normal appearance"
+        visual_tokens: ["surface.default", "text.primary"]
+      
+      hover:
+        description: "Mouse over item"
+        visual_tokens: ["surface.elevated"]
+        triggers: ["mouse_enter"]
+      
+      selected:
+        description: "Item is selected"
+        visual_tokens: ["action.primary"]
+        triggers: ["selection_changed"]
+      
+      focused:
+        description: "Keyboard focus"
+        visual_tokens: ["interactive.focus"]
+        triggers: ["keyboard_focus"]
+
+    events:
+      clicked:
+        description: "Item clicked"
+        payload:
+          document_id: "string"
+      
+      double_clicked:
+        description: "Item double-clicked (open)"
+        payload:
+          document_id: "string"
+      
+      selection_changed:
+        description: "Selection state changed"
+        payload:
+          document_id: "string"
+          is_selected: "boolean"
+
+  styling:
+    default_state:
+      background: "surface.default"
+      padding_vertical: "sp.2"
+      padding_horizontal: "sp.3"
+      border_bottom: ["border.thin", "border.subtle"]
+      min_height: "48px"
+    
+    state_overrides:
+      hover:
+        background: "surface.elevated"
+      
+      selected:
+        background: "action.primary"
+        background_opacity: 0.1
+
+  composition:
+    is_leaf: false
+    can_contain: ["primitive"]
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+    
+    keyboard_interactions:
+      - key: "Space"
+        action: "toggle_selection"
+      - key: "Enter"
+        action: "open_document"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

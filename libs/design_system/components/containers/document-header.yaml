@@ -1,0 +1,88 @@
+# @llm-type component.spec
+# @llm-does Document header with title, metadata, and action buttons
+# @llm-key Top section of document detail view
+
+component:
+  id: "document-header"
+  name: "Document Header"
+  category: "container"
+  
+  description: |
+    Header section of document detail view. Displays document title (editable in edit mode),
+    type, creation/modification timestamps, and action buttons (edit, delete, share).
+
+  interface:
+    properties:
+      title:
+        type: "string"
+        required: true
+        description: "Document title"
+      
+      document_type:
+        type: "string"
+        required: true
+        description: "Type of document"
+      
+      created_at:
+        type: "string"
+        required: true
+        description: "ISO 8601 creation timestamp"
+      
+      modified_at:
+        type: "string"
+        required: true
+        description: "ISO 8601 modification timestamp"
+      
+      is_editing:
+        type: "boolean"
+        default: false
+        description: "Whether in edit mode (title becomes editable)"
+
+    states:
+      viewing:
+        description: "Read-only view mode"
+        visual_tokens: ["surface.default"]
+      
+      editing:
+        description: "Edit mode (title editable)"
+        visual_tokens: ["surface.elevated"]
+        triggers: ["is_editing_true"]
+
+    events:
+      title_changed:
+        description: "Title edited"
+        payload:
+          title: "string"
+      
+      action_clicked:
+        description: "Action button clicked"
+        payload:
+          action: "string"
+
+  styling:
+    default_state:
+      background: "surface.default"
+      padding: "sp.3"
+      border_bottom: ["border.thin", "border.subtle"]
+      min_height: "80px"
+    
+    state_overrides:
+      editing:
+        background: "surface.elevated"
+
+  composition:
+    is_leaf: false
+    can_contain: ["primitive"]
+    layout_type: "box"
+
+  accessibility:
+    keyboard_support: true
+    screen_reader_label: "required"
+    focus_indicator: "required"
+    contrast_requirement: "WCAG_AA"
+
+metadata:
+  version: "1.0.0"
+  implementation_status:
+    gtk4: "pending"
+

@@ -7,9 +7,15 @@ across different views and components.
 
 import subprocess
 import time
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+
+# Add utils to path for audio_utils import
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+
+from audio_utils import get_capture_devices
 
 from ..models.audio_types import AudioDevice, AudioDeviceState, AudioDeviceType
 
@@ -33,66 +39,36 @@ class AudioDeviceManager:
 
     def get_input_devices(self) -> list[AudioDevice]:
         """Get list of audio input devices using arecord."""
+        # Use shared utility function
+        util_devices = get_capture_devices()
         devices = []
 
-        try:
-            # Use arecord -l to list input devices
-            result = subprocess.run(
-                ['arecord', '-l'],
-                capture_output=True,
-                text=True,
-                timeout=5
+        for util_device in util_devices:
+            # Determine device type and icon based on name
+            device_type = AudioDeviceType.UNKNOWN
+            icon = "audio-input-microphone-symbolic"
+
+            name_lower = util_device.name.lower()
+            if "camera" in name_lower or "webcam" in name_lower:
+                device_type = AudioDeviceType.CAMERA
+                icon = "camera-web-symbolic"
+            elif "headset" in name_lower or "lightspeed" in name_lower:
+                device_type = AudioDeviceType.HEADSET
+                icon = "audio-headphones-symbolic"
+            else:
+                device_type = AudioDeviceType.MICROPHONE
+                icon = "audio-input-microphone-symbolic"
+
+            device = AudioDevice(
+                name=util_device.name,
+                description=f"Card {util_device.card_number}, Device {util_device.device_number}",
+                card_id=util_device.card_number,
+                device_id=util_device.device_number,
+                alsa_device=util_device.device_id,
+                icon=icon,
+                device_type=device_type
             )
-
-            if result.returncode == 0:
-                import re
-
-                for line in result.stdout.split('\n'):
-                    line = line.strip()
-
-                    # Parse card line: "card 1: LIGHTSPEED [PRO X 2 LIGHTSPEED], device 0: USB Audio [USB Audio]"
-                    card_match = re.match(
-                        r'card (\d+): (\w+) \[([^\]]+)\], device (\d+): ([^[]+) \[([^\]]+)\]',
-                        line
-                    )
-
-                    if card_match:
-                        card_id = int(card_match.group(1))
-                        card_name = card_match.group(2)
-                        card_desc = card_match.group(3)
-                        device_id = int(card_match.group(4))
-                        device_name = card_match.group(5).strip()
-                        device_desc = card_match.group(6)
-
-                        # Determine device type and icon
-                        device_type = AudioDeviceType.UNKNOWN
-                        icon = "audio-input-microphone-symbolic"
-
-                        if "camera" in card_desc.lower() or "webcam" in card_desc.lower():
-                            device_type = AudioDeviceType.CAMERA
-                            icon = "camera-web-symbolic"
-                        elif "headset" in card_desc.lower() or "lightspeed" in card_desc.lower():
-                            device_type = AudioDeviceType.HEADSET
-                            icon = "audio-headphones-symbolic"
-                        else:
-                            device_type = AudioDeviceType.MICROPHONE
-                            icon = "audio-input-microphone-symbolic"
-
-                        device = AudioDevice(
-                            name=card_desc,
-                            description=f"Card {card_id}, Device {device_id} - {device_desc}",
-                            card_id=card_id,
-                            device_id=device_id,
-                            alsa_device=f"hw:{card_id},{device_id}",
-                            icon=icon,
-                            device_type=device_type
-                        )
-
-                        devices.append(device)
-
-        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
-            # Return empty list on any error
-            pass
+            devices.append(device)
 
         return devices
 
