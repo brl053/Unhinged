@@ -274,98 +274,7 @@ class ChatroomView:
         import datetime
         return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    def _store_session_metadata(self, session_id):
-        """Store session metadata in persistence platform for historical archiving"""
-        try:
-            # Store in background thread to avoid blocking UI
-            import threading
-            thread = threading.Thread(target=self._store_session_metadata_async, args=(session_id,), daemon=True)
-            thread.start()
-        except Exception as e:
-            print(f"❌ Store session metadata error: {e}")
 
-    def _store_session_metadata_async(self, session_id):
-        """Store session metadata via persistence platform (async)"""
-        try:
-            # Import persistence client
-            import sys
-            from pathlib import Path as PathlibPath
-            project_root = PathlibPath(__file__).parent.parent.parent
-            grpc_lib_path = project_root / "libs" / "python" / "grpc"
-            if grpc_lib_path.exists():
-                sys.path.insert(0, str(grpc_lib_path.parent))
-
-            from libs.python.grpc_clients.client_factory import (
-                create_persistence_client,
-            )
-
-            # Import protobuf messages
-            protobuf_path = project_root / "generated" / "python" / "clients"
-            if protobuf_path.exists():
-                sys.path.insert(0, str(protobuf_path))
-
-            import datetime
-
-            from google.protobuf import struct_pb2
-            try:
-                from unhinged_proto_clients import persistence_platform_pb2
-            except ImportError:
-                # Persistence platform protobuf not generated yet
-                print("⚠️ Persistence platform protobuf not available, skipping session metadata storage")
-                return
-
-            # Create persistence client
-            client = create_persistence_client()
-
-            # Prepare session metadata
-            session_data = struct_pb2.Struct()
-            session_data.update({
-                "session_id": session_id,
-                "session_type": "os_chatroom",
-                "created_at": datetime.datetime.now().isoformat(),
-                "created_by": "desktop_user",
-                "platform": "unhinged_desktop",
-                "namespace": "os-chatroom",
-                "status": "active",
-                "metadata": {
-                    "ui_component": "ChatroomView",
-                    "session_source": "desktop_gui",
-                    "archival_purpose": "historical_documentation"
-                }
-            })
-
-            # Create insert request
-            request = persistence_platform_pb2.InsertRequest(
-                table_name="chat_sessions",
-                data=session_data,
-                context=persistence_platform_pb2.ExecutionContext(
-                    user_id="desktop_user",
-                    session_id=session_id,
-                    operation_id=f"store_session_{session_id}",
-                    metadata={"source": "os_chatroom_view"}
-                )
-            )
-
-            # Store session metadata with timeout
-            response = client.Insert(request, timeout=5)
-
-            if response and response.success:
-                print(f"✅ Session metadata stored: {session_id}")
-
-                # Log successful storage
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("SESSION_METADATA_STORED",
-                        f"Session {session_id} metadata stored in persistence platform")
-            else:
-                error_msg = response.error_message if response else "Unknown error"
-                print(f"⚠️ Session metadata storage failed: {error_msg}")
-
-        except ImportError as e:
-            # Graceful fallback when persistence platform not available
-            print(f"⚠️ Persistence platform not available, session metadata not stored: {e}")
-        except Exception as e:
-            print(f"❌ Session metadata storage error: {e}")
-            # Don't fail the session creation if storage fails
 
     def _on_session_created(self, session_id):
         """Handle successful session creation"""
@@ -381,9 +290,6 @@ class ChatroomView:
             # Update session ID display in Status tab
             if hasattr(self.app, 'status_view') and self.app.status_view:
                 self.app.status_view.update_session_id(session_id)
-
-            # Store session metadata in persistence platform
-            self._store_session_metadata(session_id)
 
             # Log session creation
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
@@ -925,10 +831,8 @@ class ChatroomView:
                 self.app.session_logger.log_gui_event("CHAT_MESSAGE_SENT",
                     f"Session {self._current_session_id}: {message[:50]}...")
 
-            # Archive message to persistence platform
+            # Send message if session is active
             if self._current_session_id:
-                self._archive_message(message, "user")
-
                 # Check for image generation request
                 image_request = self._detect_image_generation_request(message)
                 if image_request:
@@ -1331,86 +1235,7 @@ class ChatroomView:
         except Exception as e:
             print(f"❌ Add error message error: {e}")
 
-    def _archive_message(self, message, sender_type):
-        """Archive message to persistence platform for historical documentation"""
-        try:
-            # Archive in background thread to avoid blocking UI
-            import threading
-            thread = threading.Thread(target=self._archive_message_async,
-                                     args=(message, sender_type), daemon=True)
-            thread.start()
-        except Exception as e:
-            print(f"❌ Archive message error: {e}")
 
-    def _archive_message_async(self, message, sender_type):
-        """Archive message via persistence platform (async)"""
-        try:
-            # Import persistence client (same pattern as session storage)
-            import sys
-            from pathlib import Path as PathlibPath
-            project_root = PathlibPath(__file__).parent.parent.parent
-            grpc_lib_path = project_root / "libs" / "python" / "grpc"
-            if grpc_lib_path.exists():
-                sys.path.insert(0, str(grpc_lib_path.parent))
-
-            import datetime
-            import uuid
-
-            from google.protobuf import struct_pb2
-
-            from libs.python.grpc_clients.client_factory import (
-                create_persistence_client,
-            )
-            try:
-                from unhinged_proto_clients import persistence_platform_pb2
-            except ImportError:
-                # Persistence platform protobuf not generated yet
-                print("⚠️ Persistence platform protobuf not available, skipping message archival")
-                return
-
-            # Create persistence client
-            client = create_persistence_client()
-
-            # Prepare message data
-            message_data = struct_pb2.Struct()
-            message_data.update({
-                "message_id": str(uuid.uuid4()),
-                "session_id": self._current_session_id,
-                "sender_type": sender_type,  # "user" or "assistant"
-                "message_content": message,
-                "timestamp": datetime.datetime.now().isoformat(),
-                "platform": "unhinged_desktop",
-                "component": "os_chatroom",
-                "archived_for": "historical_documentation"
-            })
-
-            # Create insert request
-            request = persistence_platform_pb2.InsertRequest(
-                table_name="chat_messages",
-                data=message_data,
-                context=persistence_platform_pb2.ExecutionContext(
-                    user_id="desktop_user",
-                    session_id=self._current_session_id,
-                    operation_id=f"archive_message_{uuid.uuid4()}",
-                    metadata={"source": "os_chatroom_view", "type": "message_archival"}
-                )
-            )
-
-            # Archive message with timeout
-            response = client.Insert(request, timeout=3)
-
-            if response and response.success:
-                print(f"✅ Message archived: {sender_type} - {message[:30]}...")
-            else:
-                error_msg = response.error_message if response else "Unknown error"
-                print(f"⚠️ Message archival failed: {error_msg}")
-
-        except ImportError:
-            # Graceful fallback when persistence platform not available
-            pass  # Silent fallback for message archival
-        except Exception as e:
-            print(f"❌ Message archival error: {e}")
-            # Don't fail the message sending if archival fails
 
     def _send_text_message_framework(self, message):
         """Send text message using FRAMEWORK ONLY - NO LEGACY"""
@@ -1547,10 +1372,6 @@ class ChatroomView:
 
             # Add assistant response
             self._add_chat_message("Assistant", response, "assistant")
-
-            # Archive assistant response to persistence platform
-            if self._current_session_id:
-                self._archive_message(response, "assistant")
 
             # Log the interaction
             if hasattr(self.app, 'session_logger') and self.app.session_logger:
