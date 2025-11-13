@@ -28,15 +28,15 @@ class UnhingedPythonRunner:
     
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent
-        # Use unified virtual environment
-        self.venv_path = self.project_root / ".venv"
         self.build_python_dir = self.project_root / "build" / "python"
+        # Use centralized virtual environment at build/python/venv
+        self.venv_path = self.build_python_dir / "venv"
         self.python_executable = self.venv_path / "bin" / "python3"
-        
+
         # Ensure venv exists
         if not self.python_executable.exists():
             logger.error(f"❌ Python virtual environment not found at {self.venv_path}")
-            logger.info("💡 Run 'build/python/setup.py' to create the environment")
+            logger.info("💡 Run 'python3 build/python/setup.py' to create the environment")
             sys.exit(1)
     
     def setup_environment(self) -> Dict[str, str]:

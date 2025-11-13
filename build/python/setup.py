@@ -30,11 +30,12 @@ class UnhingedPythonSetup:
         self.project_root = Path(__file__).parent.parent.parent
         self.build_python_dir = Path(__file__).parent
         self.venv_path = self.build_python_dir / "venv"
-        self.requirements_file = self.project_root / "requirements.txt"
-        
+        self.requirements_file = self.build_python_dir / "requirements.txt"
+
         logger.info(f"🏗️ Setting up Python environment for Unhinged ML/AI ETL & Big Data")
         logger.info(f"📁 Project root: {self.project_root}")
         logger.info(f"🐍 Virtual environment: {self.venv_path}")
+        logger.info(f"📦 Requirements file: {self.requirements_file}")
     
     def check_python_version(self) -> bool:
         """Check if Python version is compatible"""
