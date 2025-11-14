@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""
+Unhinged Linter Dispatcher - Option C
+
+Routes Python files to appropriate linters based on file type and location.
+No external services. Complete control. On-premise only.
+
+Usage:
+    python /build/lint.py <file1> <file2> ...
+"""
+
+import sys
+import subprocess
+from pathlib import Path
+
+
+def get_linter_config(file_path: str) -> dict:
+    """Determine linter configuration based on file location and type."""
+    path = Path(file_path)
+    
+    # Skip non-Python files
+    if path.suffix != '.py':
+        return {'skip': True, 'reason': 'Not a Python file'}
+    
+    # Skip generated files
+    if 'proto' in path.parts or path.name.startswith('pb2_'):
+        return {'skip': True, 'reason': 'Generated code'}
+    
+    # Skip test files (different rules)
+    if 'test' in path.parts or path.name.startswith('test_'):
+        return {
+            'linters': ['ruff'],
+            'ruff_args': ['--select', 'E,W,F', '--ignore', 'E501'],
+            'type': 'test'
+        }
+    
+    # Build infrastructure (stricter)
+    if 'build' in path.parts:
+        return {
+            'linters': ['ruff'],
+            'ruff_args': ['--select', 'E,W,F,C901'],
+            'type': 'build'
+        }
+
+    # Default: standard Python code
+    return {
+        'linters': ['ruff'],
+        'ruff_args': ['--select', 'E,W,F,C901'],
+        'type': 'standard'
+    }
+
+
+def run_ruff(file_path: str, args: list) -> int:
+    """Run ruff linter on file."""
+    cmd = ['ruff', 'check', file_path] + args
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.stdout:
+        print(result.stdout, end='')
+    if result.stderr:
+        print(result.stderr, end='', file=sys.stderr)
+    
+    return result.returncode
+
+
+def lint_file(file_path: str) -> int:
+    """Lint a single file. Returns 0 if OK, 1 if violations found."""
+    config = get_linter_config(file_path)
+    
+    if config.get('skip'):
+        return 0
+    
+    exit_code = 0
+    for linter in config.get('linters', []):
+        if linter == 'ruff':
+            args = config.get('ruff_args', [])
+            code = run_ruff(file_path, args)
+            exit_code = max(exit_code, code)
+    
+    return exit_code
+
+
+def main():
+    """Main entry point."""
+    if len(sys.argv) < 2:
+        print("Usage: python /build/lint.py <file1> <file2> ...")
+        sys.exit(1)
+    
+    files = sys.argv[1:]
+    exit_code = 0
+    
+    for file_path in files:
+        code = lint_file(file_path)
+        exit_code = max(exit_code, code)
+    
+    sys.exit(exit_code)
+
+
+if __name__ == '__main__':
+    main()
+
