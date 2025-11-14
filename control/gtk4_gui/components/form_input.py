@@ -96,6 +96,12 @@ class FormInput(ComponentBase):
         self._voice_visualizer = None
         self._recording_timer_label = None
 
+        # Event subscription management (Phase 1 fix: prevent subscription accumulation)
+        # Store unsubscribe functions to clean up subscriptions when recording stops
+        # This prevents multiple subscriptions from accumulating across multiple recordings
+        self._audio_event_unsubscribe = None
+        self._audio_error_unsubscribe = None
+
         # Error state
         self.error_message = ""
         self._error_label = None
@@ -312,17 +318,27 @@ class FormInput(ComponentBase):
         try:
             # If audio handler is available, use it for actual recording
             if self.audio_handler and hasattr(self.audio_handler, 'start_recording'):
+                # Phase 1 fix: Clean up any existing subscriptions before creating new ones
+                # This prevents subscription accumulation across multiple recordings
+                if self._audio_event_unsubscribe:
+                    self._audio_event_unsubscribe()
+                    self._audio_event_unsubscribe = None
+                if self._audio_error_unsubscribe:
+                    self._audio_error_unsubscribe()
+                    self._audio_error_unsubscribe = None
+
                 # Subscribe to transcription completion BEFORE starting
                 # Audio handler emits transcript via AMPLITUDE_UPDATED event
                 if hasattr(self.audio_handler, 'subscribe_to_events'):
                     from ..utils.event_bus import AudioEvents
                     # Subscribe to amplitude updates (which includes transcripts)
-                    self.audio_handler.subscribe_to_events(
+                    # Store the unsubscribe function for cleanup in _stop_recording()
+                    self._audio_event_unsubscribe = self.audio_handler.subscribe_to_events(
                         AudioEvents.AMPLITUDE_UPDATED,
                         self._on_audio_event
                     )
                     # Also subscribe to errors
-                    self.audio_handler.subscribe_to_events(
+                    self._audio_error_unsubscribe = self.audio_handler.subscribe_to_events(
                         AudioEvents.ERROR,
                         self._on_audio_error
                     )
@@ -355,6 +371,15 @@ class FormInput(ComponentBase):
             # If audio handler is available, stop it
             if self.audio_handler and hasattr(self.audio_handler, 'stop_recording'):
                 self.audio_handler.stop_recording()
+
+            # Phase 1 fix: Clean up event subscriptions after recording stops
+            # This ensures subscriptions don't accumulate across multiple recordings
+            if self._audio_event_unsubscribe:
+                self._audio_event_unsubscribe()
+                self._audio_event_unsubscribe = None
+            if self._audio_error_unsubscribe:
+                self._audio_error_unsubscribe()
+                self._audio_error_unsubscribe = None
 
             self.emit('recording-stopped')
 
