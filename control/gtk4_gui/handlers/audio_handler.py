@@ -6,9 +6,7 @@ providing a clean interface for the UI layer.
 """
 
 import logging
-import math
 import os
-import struct
 import subprocess
 import tempfile
 import threading
@@ -185,7 +183,7 @@ class AudioHandler:
             self._start_time = time.time()
             self._recording_thread.start()
 
-            logger.info(f"Started recording (continuous, no duration limit)")
+            logger.info("Started recording (continuous, no duration limit)")
 
         except Exception as e:
             self._cleanup()
