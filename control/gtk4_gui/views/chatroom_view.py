@@ -1553,7 +1553,9 @@ class ChatroomView:
         try:
             # Force the input widget to refresh and show the updated content
             if self._chat_input:
-                self._chat_input.queue_draw()
+                # FormInput is a composite component, so we need to call queue_draw on its widget
+                if hasattr(self._chat_input, 'widget') and self._chat_input.widget:
+                    self._chat_input.widget.queue_draw()
 
             # Ensure the input area is visible and focused
             if hasattr(self._chat_input, 'grab_focus'):
