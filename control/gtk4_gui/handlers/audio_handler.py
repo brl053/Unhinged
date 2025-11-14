@@ -21,7 +21,7 @@ from pathlib import Path
 # Add utils to path for audio_utils import
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
-from audio_utils import calculate_rms_amplitude
+from audio_utils import calculate_rms_amplitude, get_best_format_for_device
 from event_bus import get_event_bus, AudioEvents, Event
 
 try:
@@ -74,14 +74,18 @@ class AudioHandler:
         # Event bus for UI updates (replaces callbacks)
         self._event_bus = get_event_bus()
 
-        # Legacy callbacks for backward compatibility
-        self._state_callback: Callable[[RecordingState], None] | None = None
-        self._progress_callback: Callable[[float], None] | None = None
-        self._result_callback: Callable[[str], None] | None = None
-        self._error_callback: Callable[[Exception], None] | None = None
-
         # Real-time audio visualization
         self._visualization_bridge = AudioVisualizationBridge()
+
+        # Legacy callback support (for backward compatibility)
+        self._state_callback: Callable[[RecordingState], None] | None = None
+        self._error_callback: Callable[[Exception], None] | None = None
+        self._progress_callback: Callable[[float], None] | None = None
+
+        # Audio format detection (done once during initialization)
+        self._detected_format: str | None = None
+        self._detected_sample_width: int | None = None
+        self._initialize_audio_format()
 
     @property
     def state(self) -> RecordingState:
@@ -103,24 +107,6 @@ class AudioHandler:
         """Check if handler is busy (recording or processing)"""
         return self._state in [RecordingState.RECORDING, RecordingState.PROCESSING]
 
-    def set_callbacks(self,
-                     state_callback: Callable[[RecordingState], None] | None = None,
-                     progress_callback: Callable[[float], None] | None = None,
-                     result_callback: Callable[[str], None] | None = None,
-                     error_callback: Callable[[Exception], None] | None = None):
-        """Set callbacks for UI updates (DEPRECATED: use event_bus instead)
-
-        Args:
-            state_callback: Called when recording state changes
-            progress_callback: Called with recording progress (0.0 to 1.0)
-            result_callback: Called with transcription result
-            error_callback: Called when an error occurs
-        """
-        self._state_callback = state_callback
-        self._progress_callback = progress_callback
-        self._result_callback = result_callback
-        self._error_callback = error_callback
-
     def subscribe_to_events(self, event_type: str, callback: Callable[[Event], None]) -> Callable[[], None]:
         """Subscribe to audio events via event bus
 
@@ -132,6 +118,31 @@ class AudioHandler:
             Unsubscribe function
         """
         return self._event_bus.subscribe(event_type, callback)
+
+    def _initialize_audio_format(self) -> None:
+        """Initialize audio format detection during handler setup.
+
+        This runs once during __init__ to avoid per-recording overhead.
+        Format detection results are cached globally.
+        """
+        try:
+            self._detected_format = get_best_format_for_device(
+                app_config.audio_device,
+                app_config.audio_format
+            )
+            self._detected_sample_width = self._get_sample_width(self._detected_format)
+            logger.info(
+                f"Audio handler initialized: device={app_config.audio_device} "
+                f"format={self._detected_format} sample_width={self._detected_sample_width}bytes"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to detect audio format: {e}, using defaults")
+            self._detected_format = app_config.audio_format
+            self._detected_sample_width = 2
+            logger.info(
+                f"Audio handler initialized (fallback): device={app_config.audio_device} "
+                f"format={self._detected_format} sample_width={self._detected_sample_width}bytes"
+            )
 
     def set_voice_visualizer(self, visualizer) -> None:
         """Connect voice visualizer for real-time feedback"""
@@ -213,6 +224,8 @@ class AudioHandler:
         - One copy goes to the WAV file for transcription
         - One copy goes to amplitude extraction for visualization
         This ensures only ONE arecord process accesses the device.
+
+        Format detection was performed during __init__ to avoid per-recording overhead.
         """
         try:
             # Create named pipe for amplitude extraction
@@ -239,7 +252,7 @@ class AudioHandler:
             arecord_cmd = [
                 'arecord',
                 '-D', app_config.audio_device,
-                '-f', app_config.audio_format,
+                '-f', self._detected_format,
                 '-r', str(app_config.audio_sample_rate),
                 '-c', str(app_config.audio_channels),
                 '-t', 'raw',  # Output raw audio (not WAV) for amplitude extraction
@@ -334,7 +347,8 @@ class AudioHandler:
                 self._temp_file,
                 self._temp_file,  # Overwrite with WAV version
                 app_config.audio_sample_rate,
-                app_config.audio_channels
+                app_config.audio_channels,
+                self._detected_sample_width or 2
             )
 
             # Validate recorded file
@@ -396,6 +410,33 @@ class AudioHandler:
         """Calculate RMS amplitude from raw audio chunk."""
         return calculate_rms_amplitude(audio_data)
 
+    def _get_sample_width(self, format_str: str) -> int:
+        """Get sample width in bytes for a given audio format.
+
+        Args:
+            format_str: Audio format string (e.g., 'S16_LE', 'S24_3LE', 'S32_LE')
+
+        Returns:
+            Sample width in bytes
+        """
+        format_map = {
+            'U8': 1,
+            'S8': 1,
+            'S16_LE': 2,
+            'S16_BE': 2,
+            'U16_LE': 2,
+            'U16_BE': 2,
+            'S24_LE': 3,
+            'S24_BE': 3,
+            'S24_3LE': 3,
+            'S24_3BE': 3,
+            'S32_LE': 4,
+            'S32_BE': 4,
+            'U32_LE': 4,
+            'U32_BE': 4,
+        }
+        return format_map.get(format_str, 2)  # Default to 2 bytes (S16_LE)
+
     def _monitor_recording_progress_continuous(self) -> None:
         """Monitor continuous recording progress (no duration limit)"""
         while self._recording_process and self._recording_process.poll() is None:
@@ -445,10 +486,6 @@ class AudioHandler:
 
             # Notify UI of result via event bus
             self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": transcript})
-
-            # Legacy callback support
-            if self._result_callback:
-                self._result_callback(transcript)
 
             logger.info(f"Transcription completed: {len(transcript)} characters")
 
