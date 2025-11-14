@@ -13,6 +13,18 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Venv-aware tool discovery
+BUILD_DIR = Path(__file__).parent
+VENV_BIN = BUILD_DIR / 'python' / 'venv' / 'bin'
+
+
+def find_tool(name: str) -> str:
+    """Find tool in venv first, fall back to system PATH."""
+    venv_tool = VENV_BIN / name
+    if venv_tool.exists():
+        return str(venv_tool)
+    return name  # Assume it's in PATH
+
 
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
@@ -52,7 +64,8 @@ def get_linter_config(file_path: str) -> dict:
 
 def run_ruff(file_path: str, args: list) -> int:
     """Run ruff linter on file."""
-    cmd = ['ruff', 'check', file_path] + args
+    ruff_cmd = find_tool('ruff')
+    cmd = [ruff_cmd, 'check', file_path] + args
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.stdout:

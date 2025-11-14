@@ -3,16 +3,16 @@ repos:
     hooks:
       - id: unhinged-lint
         name: Unhinged Linter (Ruff)
-        entry: python /build/lint.py
-        language: python
+        entry: /build/python/venv/bin/python /build/lint.py
+        language: system
         types: [python]
         pass_filenames: true
         stages: [commit]
 
       - id: llmdocs-validator
         name: LLMDocs Validator
-        entry: python /build/validators/llmdocs_validator.py
-        language: python
+        entry: /build/python/venv/bin/python /build/validators/llmdocs_validator.py
+        language: system
         types: [python]
         pass_filenames: true
         stages: [commit]
