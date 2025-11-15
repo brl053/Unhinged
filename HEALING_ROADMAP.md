@@ -1,5 +1,27 @@
 # Project Healing Roadmap
 
+## STATIC ANALYSIS INTEGRATION
+
+**New Command Available:**
+```bash
+./unhinged dev analyze [module]    # Run static analysis
+./unhinged dev analyze control     # Analyze control/ module
+./unhinged dev analyze             # Analyze all modules
+```
+
+**What it does:**
+- Detects changed files (via checksums)
+- Runs ruff static analysis
+- Auto-fixes violations
+- Caches results
+
+**Current Status:**
+- 2438 ruff errors found in control/
+- Mostly unused imports and style issues
+- Can be auto-fixed with `./unhinged dev fix`
+
+---
+
 ## PHASE 1: UNBLOCK TESTING (Priority: CRITICAL)
 
 **Time: 30 minutes**

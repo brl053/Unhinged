@@ -11,8 +11,11 @@
 ## Commands You Need
 
 ```bash
-# See all violations
+# See all violations (custom linter)
 ./unhinged dev lint -v
+
+# Run static analysis (ruff, change-aware)
+./unhinged dev analyze control
 
 # Auto-fix what you can
 ./unhinged dev fix
@@ -22,6 +25,25 @@
 
 # Run tests
 ./unhinged dev test
+```
+
+## Workflow with Static Analysis
+
+```bash
+# 1. Check what changed
+./unhinged dev analyze control
+
+# 2. Auto-fix violations
+./unhinged dev fix
+
+# 3. Format code
+./unhinged dev format
+
+# 4. Run tests
+./unhinged dev test
+
+# 5. Check custom linter
+./unhinged dev lint -v
 ```
 
 ## Files to Fix (Priority Order)
