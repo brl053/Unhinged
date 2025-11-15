@@ -10,11 +10,11 @@ Minimal implementation - just document name and type.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw, GObject
-from typing import Callable, Optional, List, Dict, Any
+from gi.repository import Gtk, GObject
+from typing import Optional, List, Dict, Any
 
 
 class DocumentListSimple(Gtk.Box):
@@ -22,10 +22,14 @@ class DocumentListSimple(Gtk.Box):
 
     # Signals
     __gsignals__ = {
-        'document-selected': (GObject.SignalFlags.RUN_FIRST, None, (str,)),  # document_id
-        'document-opened': (GObject.SignalFlags.RUN_FIRST, None, (str,)),    # document_id
+        "document-selected": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (str,),
+        ),  # document_id
+        "document-opened": (GObject.SignalFlags.RUN_FIRST, None, (str,)),  # document_id
     }
-    
+
     def __init__(self, **kwargs):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8, **kwargs)
         self.set_margin_top(12)
@@ -38,7 +42,7 @@ class DocumentListSimple(Gtk.Box):
         self.row_to_doc_id: Dict[Gtk.ListBoxRow, str] = {}  # Map rows to document IDs
 
         self._create_ui()
-    
+
     def _create_ui(self):
         """Create UI components"""
         # Header with title
@@ -47,31 +51,31 @@ class DocumentListSimple(Gtk.Box):
         title.add_css_class("title-2")
         header.append(title)
         self.append(header)
-        
+
         # Search box (placeholder for now)
         search_box = Gtk.SearchEntry()
         search_box.set_placeholder_text("Search documents...")
         self.append(search_box)
-        
+
         # Scrolled window for list
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_vexpand(True)
         scrolled.set_hexpand(True)
-        
+
         # List box for documents
         self.list_box = Gtk.ListBox()
         self.list_box.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self.list_box.connect('row-selected', self._on_row_selected)
-        self.list_box.connect('row-activated', self._on_row_activated)
-        
+        self.list_box.connect("row-selected", self._on_row_selected)
+        self.list_box.connect("row-activated", self._on_row_activated)
+
         scrolled.set_child(self.list_box)
         self.append(scrolled)
-    
+
     def set_documents(self, documents: List[Dict[str, Any]]):
         """Set list of documents to display"""
         self.documents = documents
         self._refresh_list()
-    
+
     def _refresh_list(self):
         """Refresh the document list display"""
         # Clear existing rows
@@ -80,12 +84,12 @@ class DocumentListSimple(Gtk.Box):
             if row is None:
                 break
             self.list_box.remove(row)
-        
+
         # Add document rows
         for doc in self.documents:
             row = self._create_document_row(doc)
             self.list_box.append(row)
-    
+
     def _create_document_row(self, doc: Dict[str, Any]) -> Gtk.ListBoxRow:
         """Create a row for a document"""
         row = Gtk.ListBoxRow()
@@ -121,7 +125,7 @@ class DocumentListSimple(Gtk.Box):
         row.set_child(box)
 
         return row
-    
+
     def _on_row_selected(self, list_box, row):
         """Handle row selection"""
         if row is None:
@@ -131,7 +135,7 @@ class DocumentListSimple(Gtk.Box):
         doc_id = self.row_to_doc_id.get(row)
         if doc_id:
             self.selected_document_id = doc_id
-            self.emit('document-selected', doc_id)
+            self.emit("document-selected", doc_id)
 
     def _on_row_activated(self, list_box, row):
         """Handle row double-click (open)"""
@@ -140,9 +144,8 @@ class DocumentListSimple(Gtk.Box):
 
         doc_id = self.row_to_doc_id.get(row)
         if doc_id:
-            self.emit('document-opened', doc_id)
-    
+            self.emit("document-opened", doc_id)
+
     def get_selected_document_id(self) -> Optional[str]:
         """Get currently selected document ID"""
         return self.selected_document_id
-

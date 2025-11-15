@@ -26,8 +26,9 @@ class TextToSpeechServicer(health_pb2_grpc.HealthServiceServicer):
         self.start_time = time.time()
         self.service_ready = True
 
-
-    def Heartbeat(self, request: health_pb2.HeartbeatRequest, context) -> health_pb2.HeartbeatResponse:
+    def Heartbeat(
+        self, request: health_pb2.HeartbeatRequest, context
+    ) -> health_pb2.HeartbeatResponse:
         """Fast heartbeat endpoint (<10ms) - health.proto implementation"""
         try:
             response = health_pb2.HeartbeatResponse()
@@ -36,7 +37,11 @@ class TextToSpeechServicer(health_pb2_grpc.HealthServiceServicer):
             response.service_id = "text-to-speech-service"
             response.version = "1.0.0"
             response.uptime_ms = int((time.time() - self.start_time) * 1000)
-            response.status = health_pb2.HEALTH_STATUS_HEALTHY if self.service_ready else health_pb2.HEALTH_STATUS_UNHEALTHY
+            response.status = (
+                health_pb2.HEALTH_STATUS_HEALTHY
+                if self.service_ready
+                else health_pb2.HEALTH_STATUS_UNHEALTHY
+            )
             return response
         except Exception as e:
             events.error("Heartbeat failed", exception=e)
@@ -48,7 +53,9 @@ class TextToSpeechServicer(health_pb2_grpc.HealthServiceServicer):
             response.status = health_pb2.HEALTH_STATUS_UNHEALTHY
             return response
 
-    def Diagnostics(self, request: health_pb2.DiagnosticsRequest, context) -> health_pb2.DiagnosticsResponse:
+    def Diagnostics(
+        self, request: health_pb2.DiagnosticsRequest, context
+    ) -> health_pb2.DiagnosticsResponse:
         """Detailed diagnostics endpoint (<1s) - health.proto implementation"""
         try:
             # Get heartbeat first
@@ -69,7 +76,9 @@ class TextToSpeechServicer(health_pb2_grpc.HealthServiceServicer):
             events.error("Diagnostics failed", exception=e)
             # Return minimal response on error
             response = health_pb2.DiagnosticsResponse()
-            response.heartbeat.CopyFrom(self.Heartbeat(health_pb2.HeartbeatRequest(), context))
+            response.heartbeat.CopyFrom(
+                self.Heartbeat(health_pb2.HeartbeatRequest(), context)
+            )
             response.metadata["error"] = str(e)
             response.last_updated.GetCurrentTime()
             return response
@@ -83,7 +92,7 @@ def serve():
     # Register health service
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
 
-    listen_addr = '[::]:9092'
+    listen_addr = "[::]:9092"
     server.add_insecure_port(listen_addr)
 
     server.start()
@@ -95,5 +104,5 @@ def serve():
         server.stop(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     serve()

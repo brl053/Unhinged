@@ -14,25 +14,27 @@ from pathlib import Path
 
 def clear_screen():
     """Clear terminal screen"""
-    os.system('clear' if os.name == 'posix' else 'cls')
+    os.system("clear" if os.name == "posix" else "cls")
+
 
 def parse_log_line(line):
     """Parse log line to extract structured data"""
     try:
         # Look for JSON data in log lines
-        json_match = re.search(r'\{.*\}', line)
+        json_match = re.search(r"\{.*\}", line)
         if json_match:
             return json.loads(json_match.group())
     except:
         pass
     return None
 
+
 def get_latest_metrics():
     """Get latest metrics from log files"""
     metrics = {
         "stability_test": {"status": "unknown", "data": {}},
         "monitor": {"status": "unknown", "data": {}},
-        "services": {"redis": "unknown", "crdb": "unknown"}
+        "services": {"redis": "unknown", "crdb": "unknown"},
     }
 
     # Parse stability test log
@@ -76,13 +78,18 @@ def get_latest_metrics():
 
                         # Extract service status
                         session_metrics = data.get("current_session_metrics", {})
-                        metrics["services"]["redis"] = session_metrics.get("redis_status", "unknown")
-                        metrics["services"]["crdb"] = session_metrics.get("crdb_status", "unknown")
+                        metrics["services"]["redis"] = session_metrics.get(
+                            "redis_status", "unknown"
+                        )
+                        metrics["services"]["crdb"] = session_metrics.get(
+                            "crdb_status", "unknown"
+                        )
                         break
         except Exception as e:
             metrics["monitor"]["status"] = f"error: {e}"
 
     return metrics
+
 
 def format_duration(seconds):
     """Format duration in human readable format"""
@@ -93,11 +100,13 @@ def format_duration(seconds):
     else:
         return f"{seconds/3600:.1f}h"
 
+
 def format_number(num):
     """Format number with commas"""
     if isinstance(num, (int, float)):
         return f"{num:,}"
     return str(num)
+
 
 def display_dashboard(metrics):
     """Display real-time dashboard"""
@@ -203,7 +212,9 @@ def display_dashboard(metrics):
 
             print(f"Redis Lat:  {redis_lat:.2f}ms")
             print(f"CRDB Lat:   {crdb_lat:.2f}ms")
-            print(f"Sessions:   {format_number(total_sessions)} total, {format_number(active_sessions)} active")
+            print(
+                f"Sessions:   {format_number(total_sessions)} total, {format_number(active_sessions)} active"
+            )
 
         # Usage patterns
         patterns = data.get("usage_patterns", {})
@@ -211,7 +222,9 @@ def display_dashboard(metrics):
             trend = patterns.get("latency_trend", "unknown")
             growth = patterns.get("session_growth_rate_per_minute", 0)
 
-            trend_icon = {"increasing": "📈", "decreasing": "📉", "stable": "➡️"}.get(trend, "❓")
+            trend_icon = {"increasing": "📈", "decreasing": "📉", "stable": "➡️"}.get(
+                trend, "❓"
+            )
             print(f"Trend:      {trend_icon} {trend}")
             print(f"Growth:     {growth:.2f} sessions/min")
 
@@ -231,6 +244,7 @@ def display_dashboard(metrics):
     print("=" * 80)
     print("📝 Log Files: stability_test.log, monitor.log")
     print("🔄 Refreshing every 10 seconds... (Ctrl+C to exit)")
+
 
 def main():
     """Main dashboard loop"""
@@ -254,5 +268,6 @@ def main():
     except Exception as e:
         print(f"❌ Dashboard error: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

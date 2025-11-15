@@ -6,8 +6,6 @@ the existing arecord-based recording system. It captures live audio amplitude
 data for visualization without interfering with the main recording process.
 """
 
-import math
-import struct
 import subprocess
 import threading
 import time
@@ -53,6 +51,7 @@ except ImportError:
             volume: float | None = None
             is_muted: bool = False
 
+
 try:
     from .config import app_config
 except ImportError:
@@ -62,6 +61,7 @@ except ImportError:
         # Fallback for testing - use default device
         class MockConfig:
             audio_device = "pipewire"
+
         app_config = MockConfig()
 
 
@@ -80,13 +80,15 @@ class AudioLevelMonitor:
         self.amplitude_callback: Callable[[float], None] | None = None
         self.sample_rate = 16000
         self.channels = 1
-        self.format = 'S16_LE'  # 16-bit signed little endian
+        self.format = "S16_LE"  # 16-bit signed little endian
 
     def set_amplitude_callback(self, callback: Callable[[float], None]) -> None:
         """Set callback function to receive amplitude updates (DEPRECATED: use event_bus instead)"""
         self.amplitude_callback = callback
 
-    def subscribe_to_amplitude(self, callback: Callable[[Event], None]) -> Callable[[], None]:
+    def subscribe_to_amplitude(
+        self, callback: Callable[[Event], None]
+    ) -> Callable[[], None]:
         """Subscribe to amplitude updates via event bus
 
         Args:
@@ -105,8 +107,7 @@ class AudioLevelMonitor:
         try:
             self.is_monitoring = True
             self.monitor_thread = threading.Thread(
-                target=self._monitor_audio_levels,
-                daemon=True
+                target=self._monitor_audio_levels, daemon=True
             )
             self.monitor_thread.start()
             return True
@@ -134,21 +135,26 @@ class AudioLevelMonitor:
         try:
             # Use arecord to capture raw audio data in small chunks
             cmd = [
-                'arecord',
-                '-D', app_config.audio_device,
-                '-f', self.format,
-                '-r', str(self.sample_rate),
-                '-c', str(self.channels),
-                '-t', 'raw',  # Raw format for easier processing
-                '--buffer-size=1024',  # Small buffer for low latency
-                '-'  # Output to stdout
+                "arecord",
+                "-D",
+                app_config.audio_device,
+                "-f",
+                self.format,
+                "-r",
+                str(self.sample_rate),
+                "-c",
+                str(self.channels),
+                "-t",
+                "raw",  # Raw format for easier processing
+                "--buffer-size=1024",  # Small buffer for low latency
+                "-",  # Output to stdout
             ]
 
             self.monitor_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                bufsize=0  # Unbuffered for real-time processing
+                bufsize=0,  # Unbuffered for real-time processing
             )
 
             # Process audio data in chunks
@@ -166,7 +172,9 @@ class AudioLevelMonitor:
                     amplitude = self._calculate_amplitude(audio_data)
 
                     # Emit amplitude event via event bus
-                    self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"amplitude": amplitude})
+                    self._event_bus.emit_simple(
+                        AudioEvents.AMPLITUDE_UPDATED, {"amplitude": amplitude}
+                    )
 
                     # Legacy callback support
                     if self.amplitude_callback:
@@ -176,7 +184,9 @@ class AudioLevelMonitor:
                     time.sleep(0.02)  # 50 FPS update rate
 
                 except Exception as e:
-                    if self.is_monitoring:  # Only log if we're still supposed to be monitoring
+                    if (
+                        self.is_monitoring
+                    ):  # Only log if we're still supposed to be monitoring
                         print(f"Audio monitoring error: {e}")
                     break
 
@@ -212,7 +222,7 @@ class AudioLevelMonitor:
                 is_default=False,
                 is_active=False,
                 volume=None,
-                is_muted=False
+                is_muted=False,
             )
             devices.append(device)
 
@@ -241,7 +251,7 @@ class AudioLevelMonitor:
                 is_default=False,
                 is_active=False,
                 volume=None,
-                is_muted=False
+                is_muted=False,
             )
             devices.append(device)
 
@@ -287,8 +297,8 @@ def test_audio_monitoring():
     def amplitude_callback(amplitude):
         # Create simple ASCII visualization
         bar_length = int(amplitude * 50)
-        bar = '█' * bar_length + '░' * (50 - bar_length)
-        print(f"\rAmplitude: {amplitude:.3f} |{bar}|", end='', flush=True)
+        bar = "█" * bar_length + "░" * (50 - bar_length)
+        print(f"\rAmplitude: {amplitude:.3f} |{bar}|", end="", flush=True)
 
     monitor = AudioLevelMonitor()
     monitor.set_amplitude_callback(amplitude_callback)

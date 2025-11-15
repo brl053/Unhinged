@@ -38,6 +38,7 @@ _FORMAT_CACHE: Dict[str, List[str]] = {}
 @dataclass
 class AudioDevice:
     """Represents an audio device."""
+
     device_id: str
     name: str
     device_type: str  # 'playback' or 'capture'
@@ -48,34 +49,34 @@ class AudioDevice:
 def calculate_rms_amplitude(audio_data: bytes) -> float:
     """
     Calculate RMS (Root Mean Square) amplitude from raw 16-bit audio data.
-    
+
     Shared implementation used by both audio_handler and audio_monitor.
     Converts raw audio samples to normalized amplitude (0.0 to 1.0).
-    
+
     Args:
         audio_data: Raw audio bytes in 16-bit signed little-endian format
-        
+
     Returns:
         Normalized amplitude value (0.0 to 1.0)
     """
     try:
         if not audio_data or len(audio_data) < 2:
             return 0.0
-        
+
         # Unpack 16-bit signed little-endian samples
-        samples = struct.unpack(f'<{len(audio_data)//2}h', audio_data)
-        
+        samples = struct.unpack(f"<{len(audio_data) // 2}h", audio_data)
+
         if not samples:
             return 0.0
-        
+
         # Calculate RMS (Root Mean Square) amplitude
         rms = math.sqrt(sum(sample * sample for sample in samples) / len(samples))
-        
+
         # Normalize to 0.0-1.0 range (max value for 16-bit signed is 32767)
         normalized_amplitude = min(1.0, rms / 32767.0)
-        
+
         return normalized_amplitude
-        
+
     except Exception as e:
         logger.warning(f"Error calculating amplitude: {e}")
         return 0.0
@@ -84,45 +85,45 @@ def calculate_rms_amplitude(audio_data: bytes) -> float:
 def parse_audio_device_line(line: str, device_type: str) -> Optional[AudioDevice]:
     """
     Parse a single device line from arecord/aplay output.
-    
+
     Args:
         line: Single line from arecord -l or aplay -l output
         device_type: 'playback' or 'capture'
-        
+
     Returns:
         AudioDevice object or None if parsing fails
     """
     try:
         # Format: "card 0: PCH [HDA Intel PCH], device 0: ALC892 Analog [ALC892 Analog]"
-        if not line.strip() or not line.startswith('card'):
+        if not line.strip() or not line.startswith("card"):
             return None
-        
+
         # Extract card number
-        card_part = line.split(':')[0].strip()
+        card_part = line.split(":")[0].strip()
         card_number = int(card_part.split()[-1])
-        
+
         # Extract device number
-        device_part = line.split('device')[1].split(':')[0].strip()
+        device_part = line.split("device")[1].split(":")[0].strip()
         device_number = int(device_part)
-        
+
         # Extract device name (between brackets)
-        name_start = line.rfind('[')
-        name_end = line.rfind(']')
+        name_start = line.rfind("[")
+        name_end = line.rfind("]")
         if name_start != -1 and name_end != -1:
-            device_name = line[name_start + 1:name_end]
+            device_name = line[name_start + 1 : name_end]
         else:
             device_name = "Unknown"
-        
+
         device_id = f"hw:{card_number},{device_number}"
-        
+
         return AudioDevice(
             device_id=device_id,
             name=device_name,
             device_type=device_type,
             card_number=card_number,
-            device_number=device_number
+            device_number=device_number,
         )
-        
+
     except Exception as e:
         logger.debug(f"Error parsing audio device line: {e}")
         return None
@@ -131,72 +132,66 @@ def parse_audio_device_line(line: str, device_type: str) -> Optional[AudioDevice
 def get_playback_devices() -> List[AudioDevice]:
     """
     Get list of audio playback devices using aplay.
-    
+
     Returns:
         List of AudioDevice objects for playback devices
     """
     devices = []
     try:
         result = subprocess.run(
-            ['aplay', '-l'],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["aplay", "-l"], capture_output=True, text=True, timeout=5
         )
-        
+
         if result.returncode == 0:
-            for line in result.stdout.split('\n'):
-                device = parse_audio_device_line(line, 'playback')
+            for line in result.stdout.split("\n"):
+                device = parse_audio_device_line(line, "playback")
                 if device:
                     devices.append(device)
         else:
             logger.warning(f"aplay -l failed: {result.stderr}")
-            
+
     except subprocess.TimeoutExpired:
         logger.warning("aplay -l command timed out")
     except FileNotFoundError:
         logger.warning("aplay command not found")
     except Exception as e:
         logger.warning(f"Error getting playback devices: {e}")
-    
+
     return devices
 
 
 def get_capture_devices() -> List[AudioDevice]:
     """
     Get list of audio capture devices using arecord.
-    
+
     Returns:
         List of AudioDevice objects for capture devices
     """
     devices = []
     try:
         result = subprocess.run(
-            ['arecord', '-l'],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["arecord", "-l"], capture_output=True, text=True, timeout=5
         )
-        
+
         if result.returncode == 0:
-            for line in result.stdout.split('\n'):
-                device = parse_audio_device_line(line, 'capture')
+            for line in result.stdout.split("\n"):
+                device = parse_audio_device_line(line, "capture")
                 if device:
                     devices.append(device)
         else:
             logger.warning(f"arecord -l failed: {result.stderr}")
-            
+
     except subprocess.TimeoutExpired:
         logger.warning("arecord -l command timed out")
     except FileNotFoundError:
         logger.warning("arecord command not found")
     except Exception as e:
         logger.warning(f"Error getting capture devices: {e}")
-    
+
     return devices
 
 
-def get_audio_devices(device_type: str = 'capture') -> List[AudioDevice]:
+def get_audio_devices(device_type: str = "capture") -> List[AudioDevice]:
     """
     Get audio devices of specified type.
 
@@ -206,9 +201,9 @@ def get_audio_devices(device_type: str = 'capture') -> List[AudioDevice]:
     Returns:
         List of AudioDevice objects
     """
-    if device_type == 'capture':
+    if device_type == "capture":
         return get_capture_devices()
-    elif device_type == 'playback':
+    elif device_type == "playback":
         return get_playback_devices()
     else:
         logger.warning(f"Unknown device type: {device_type}")
@@ -231,11 +226,13 @@ def detect_supported_formats(device_id: str, use_cache: bool = True) -> List[str
     # Return cached result if available
     if use_cache and device_id in _FORMAT_CACHE:
         cached_formats = _FORMAT_CACHE[device_id]
-        logger.info(f"Audio format detection: device={device_id} cache_hit=true formats={cached_formats}")
+        logger.info(
+            f"Audio format detection: device={device_id} cache_hit=true formats={cached_formats}"
+        )
         return cached_formats
 
     # Common formats to test, in order of preference
-    formats_to_test = ['S16_LE', 'S24_3LE', 'S32_LE', 'U8', 'S8']
+    formats_to_test = ["S16_LE", "S24_3LE", "S32_LE", "U8", "S8"]
     supported_formats = []
 
     for fmt in formats_to_test:
@@ -244,24 +241,30 @@ def detect_supported_formats(device_id: str, use_cache: bool = True) -> List[str
             # Use integer duration only (arecord doesn't support fractional seconds)
             result = subprocess.run(
                 [
-                    'arecord',
-                    '-D', device_id,
-                    '-f', fmt,
-                    '-r', '16000',
-                    '-c', '1',
-                    '-t', 'raw',
-                    '-d', '1',  # 1 second test
-                    '/dev/null'
+                    "arecord",
+                    "-D",
+                    device_id,
+                    "-f",
+                    fmt,
+                    "-r",
+                    "16000",
+                    "-c",
+                    "1",
+                    "-t",
+                    "raw",
+                    "-d",
+                    "1",  # 1 second test
+                    "/dev/null",
                 ],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             stderr_str = result.stderr.lower()
 
             # Check if format is NOT supported
-            if 'sample format non available' in stderr_str:
+            if "sample format non available" in stderr_str:
                 logger.debug(f"Device {device_id} does NOT support format: {fmt}")
                 continue
 
@@ -278,17 +281,21 @@ def detect_supported_formats(device_id: str, use_cache: bool = True) -> List[str
 
     # If no formats detected, return defaults
     if not supported_formats:
-        logger.warning(f"Could not detect formats for device {device_id}, using defaults")
-        supported_formats = ['S16_LE', 'S24_3LE']
+        logger.warning(
+            f"Could not detect formats for device {device_id}, using defaults"
+        )
+        supported_formats = ["S16_LE", "S24_3LE"]
 
     # Cache the result
     _FORMAT_CACHE[device_id] = supported_formats
-    logger.info(f"Audio format detection: device={device_id} cache_hit=false formats={supported_formats}")
+    logger.info(
+        f"Audio format detection: device={device_id} cache_hit=false formats={supported_formats}"
+    )
 
     return supported_formats
 
 
-def get_best_format_for_device(device_id: str, preferred_format: str = 'S16_LE') -> str:
+def get_best_format_for_device(device_id: str, preferred_format: str = "S16_LE") -> str:
     """
     Get the best supported format for a device.
 
@@ -310,7 +317,7 @@ def get_best_format_for_device(device_id: str, preferred_format: str = 'S16_LE')
         return supported[0]
 
     # Fallback
-    return 'S16_LE'
+    return "S16_LE"
 
 
 def clear_format_cache(device_id: Optional[str] = None) -> None:
@@ -328,4 +335,3 @@ def clear_format_cache(device_id: Optional[str] = None) -> None:
     else:
         _FORMAT_CACHE.clear()
         logger.debug("Cleared all format cache entries")
-

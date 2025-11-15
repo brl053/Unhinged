@@ -23,11 +23,13 @@ from ..models.audio_types import AudioDevice, AudioDeviceState, AudioDeviceType
 @dataclass
 class AudioDevicesHook:
     """Hook return type for audio device management (like React hook return)."""
+
     state: AudioDeviceState
     refresh: Callable[[], None]
     set_default: Callable[[AudioDevice], bool]
     get_current_default: Callable[[], AudioDevice | None]
     is_device_active: Callable[[AudioDevice], bool]
+
 
 class AudioDeviceManager:
     """Internal manager for audio device operations."""
@@ -66,7 +68,7 @@ class AudioDeviceManager:
                 device_id=util_device.device_number,
                 alsa_device=util_device.device_id,
                 icon=icon,
-                device_type=device_type
+                device_type=device_type,
             )
             devices.append(device)
 
@@ -77,26 +79,24 @@ class AudioDeviceManager:
         try:
             # Try to get default source from wpctl (PipeWire)
             result = subprocess.run(
-                ['wpctl', 'status'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["wpctl", "status"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
                 # Parse wpctl output to find default source
-                lines = result.stdout.split('\n')
+                lines = result.stdout.split("\n")
                 in_sources_section = False
 
                 for line in lines:
-                    if 'Sources:' in line:
+                    if "Sources:" in line:
                         in_sources_section = True
                         continue
-                    elif in_sources_section and ('├─' in line or '└─' in line):
+                    elif in_sources_section and ("├─" in line or "└─" in line):
                         # Check if this line has an asterisk (default device)
-                        if '*' in line:
+                        if "*" in line:
                             import re
-                            match = re.search(r'(\d+)\.\s+([^[]+)', line)
+
+                            match = re.search(r"(\d+)\.\s+([^[]+)", line)
                             if match:
                                 device_id = match.group(1).strip()
                                 device_name = match.group(2).strip()
@@ -111,9 +111,11 @@ class AudioDeviceManager:
                                     icon="audio-input-microphone-symbolic",
                                     device_type=AudioDeviceType.MICROPHONE,
                                     is_default=True,
-                                    is_active=True
+                                    is_active=True,
                                 )
-                    elif in_sources_section and ('Sinks:' in line or line.strip() == ''):
+                    elif in_sources_section and (
+                        "Sinks:" in line or line.strip() == ""
+                    ):
                         # End of sources section
                         break
 
@@ -127,7 +129,8 @@ class AudioDeviceManager:
                 with open(asoundrc_path) as f:
                     content = f.read()
                     import re
-                    match = re.search(r'hw:(\d+),(\d+)', content)
+
+                    match = re.search(r"hw:(\d+),(\d+)", content)
                     if match:
                         card_id = int(match.group(1))
                         device_id = int(match.group(2))
@@ -141,7 +144,7 @@ class AudioDeviceManager:
                             icon="audio-input-microphone-symbolic",
                             device_type=AudioDeviceType.MICROPHONE,
                             is_default=True,
-                            is_active=True
+                            is_active=True,
                         )
         except Exception:
             pass
@@ -170,7 +173,7 @@ ctl.!default {{
 
             # Write to ~/.asoundrc
             asoundrc_path = Path.home() / ".asoundrc"
-            with open(asoundrc_path, 'w') as f:
+            with open(asoundrc_path, "w") as f:
                 f.write(asoundrc_content)
 
             return True
@@ -182,9 +185,11 @@ ctl.!default {{
         """Get current audio device state with caching."""
         current_time = time.time()
 
-        if (not force_refresh and
-            self._cached_state and
-            current_time - self._last_update < self._cache_duration):
+        if (
+            not force_refresh
+            and self._cached_state
+            and current_time - self._last_update < self._cache_duration
+        ):
             return self._cached_state
 
         # Refresh state
@@ -202,7 +207,7 @@ ctl.!default {{
             current_device=current_device,
             is_loading=False,
             error=None,
-            last_updated=current_time
+            last_updated=current_time,
         )
 
         self._last_update = current_time
@@ -215,19 +220,23 @@ ctl.!default {{
             return True
 
         # Match by card/device ID (for ALSA devices)
-        if (device1.card_id == device2.card_id and
-            device1.device_id == device2.device_id):
+        if (
+            device1.card_id == device2.card_id
+            and device1.device_id == device2.device_id
+        ):
             return True
 
         return False
 
+
 # Global manager instance
 _audio_manager = AudioDeviceManager()
+
 
 def use_audio_devices() -> AudioDevicesHook:
     """
     Hook for managing audio devices (React hook-like).
-    
+
     Returns:
         AudioDevicesHook with current state and action functions
     """
@@ -260,5 +269,5 @@ def use_audio_devices() -> AudioDevicesHook:
         refresh=refresh,
         set_default=set_default,
         get_current_default=get_current_default,
-        is_device_active=is_device_active
+        is_device_active=is_device_active,
     )

@@ -15,10 +15,12 @@ from ..services.transcription_service import TranscriptionService
 @dataclass
 class TranscriptionHook:
     """Hook return type for transcription operations (like React hook return)."""
+
     transcribe: Callable[[str], dict[str, Any]]
     is_service_available: Callable[[], bool]
     get_service_info: Callable[[], dict[str, Any]]
     test_connection: Callable[[], dict[str, Any]]
+
 
 class TranscriptionManager:
     """Internal manager for transcription operations."""
@@ -35,7 +37,7 @@ class TranscriptionManager:
         """Check if the transcription service is available."""
         if self._service_status_cache is None:
             self._service_status_cache = self._service.test_connection()
-        return self._service_status_cache.get('available', False)
+        return self._service_status_cache.get("available", False)
 
     def get_service_info(self) -> dict[str, Any]:
         """Get transcription service information."""
@@ -49,13 +51,15 @@ class TranscriptionManager:
         self._service_status_cache = result
         return result
 
+
 # Global manager instance
 _transcription_manager = TranscriptionManager()
+
 
 def use_transcription() -> TranscriptionHook:
     """
     Hook for transcription operations (React hook-like).
-    
+
     Returns:
         TranscriptionHook with transcription functions
     """
@@ -80,5 +84,5 @@ def use_transcription() -> TranscriptionHook:
         transcribe=transcribe,
         is_service_available=is_service_available,
         get_service_info=get_service_info,
-        test_connection=test_connection
+        test_connection=test_connection,
     )

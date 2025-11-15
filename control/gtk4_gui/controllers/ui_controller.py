@@ -7,8 +7,8 @@ Manages window creation, tab navigation, and content layout.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk
 
@@ -26,6 +26,7 @@ class UIController:
         # Import AbstractWindow component (lazy import to avoid circular dependencies)
         import sys
         from pathlib import Path
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
         from components import AbstractWindow
 
@@ -40,7 +41,7 @@ class UIController:
             decorated=True,  # Use platform decorations
             modal=False,
             always_on_top=False,
-            application=self.app
+            application=self.app,
         )
 
         # Create toast overlay for notifications
@@ -120,6 +121,7 @@ class UIController:
                 failed.append(f"{title}: {e}")
                 # NO FALLBACKS - Let it fail and fix the root cause
                 import traceback
+
                 traceback.print_exc()
                 raise Exception(f"Page creation failed for {title}: {e}")
 
@@ -141,8 +143,6 @@ class UIController:
             "graphs": "network-workgroup-symbolic",
         }
         return icons.get(page_id, "dialog-information-symbolic")
-
-
 
     def create_sidebar_navigation(self):
         """Create sidebar navigation with design system styling"""
@@ -217,10 +217,10 @@ class UIController:
 
     def _on_sidebar_selection_changed(self, list_box, row):
         """Handle sidebar navigation selection with lifecycle management"""
-        if row and hasattr(row, 'item_id'):
+        if row and hasattr(row, "item_id"):
             # Cleanup previous view if it has lifecycle hooks
-            if hasattr(self.app, 'current_view') and self.app.current_view:
-                if hasattr(self.app.current_view, 'on_cleanup'):
+            if hasattr(self.app, "current_view") and self.app.current_view:
+                if hasattr(self.app.current_view, "on_cleanup"):
                     try:
                         self.app.current_view.on_cleanup()
                     except Exception as e:
@@ -231,37 +231,37 @@ class UIController:
 
             # Call on_ready for new view if it has lifecycle hooks
             view_name = row.item_id
-            if view_name == "bluetooth" and hasattr(self.app, 'bluetooth_view'):
+            if view_name == "bluetooth" and hasattr(self.app, "bluetooth_view"):
                 self.app.current_view = self.app.bluetooth_view
-                if hasattr(self.app.bluetooth_view, 'on_ready'):
+                if hasattr(self.app.bluetooth_view, "on_ready"):
                     try:
                         self.app.bluetooth_view.on_ready()
                     except Exception as e:
                         print(f"⚠️ Error during view ready: {e}")
-            elif view_name == "processes" and hasattr(self.app, 'processes_view'):
+            elif view_name == "processes" and hasattr(self.app, "processes_view"):
                 self.app.current_view = self.app.processes_view
-                if hasattr(self.app.processes_view, 'on_ready'):
+                if hasattr(self.app.processes_view, "on_ready"):
                     try:
                         self.app.processes_view.on_ready()
                     except Exception as e:
                         print(f"⚠️ Error during view ready: {e}")
-            elif view_name == "chatroom" and hasattr(self.app, 'chatroom_view'):
+            elif view_name == "chatroom" and hasattr(self.app, "chatroom_view"):
                 self.app.current_view = self.app.chatroom_view
-                if hasattr(self.app.chatroom_view, 'on_ready'):
+                if hasattr(self.app.chatroom_view, "on_ready"):
                     try:
                         self.app.chatroom_view.on_ready()
                     except Exception as e:
                         print(f"⚠️ Error during view ready: {e}")
-            elif view_name == "usb" and hasattr(self.app, 'usb_view'):
+            elif view_name == "usb" and hasattr(self.app, "usb_view"):
                 self.app.current_view = self.app.usb_view
-                if hasattr(self.app.usb_view, 'on_ready'):
+                if hasattr(self.app.usb_view, "on_ready"):
                     try:
                         self.app.usb_view.on_ready()
                     except Exception as e:
                         print(f"⚠️ Error during view ready: {e}")
-            elif view_name == "gpu_drivers" and hasattr(self.app, 'gpu_view'):
+            elif view_name == "gpu_drivers" and hasattr(self.app, "gpu_view"):
                 self.app.current_view = self.app.gpu_view
-                if hasattr(self.app.gpu_view, 'on_ready'):
+                if hasattr(self.app.gpu_view, "on_ready"):
                     try:
                         self.app.gpu_view.on_ready()
                     except Exception as e:

@@ -9,8 +9,8 @@ control/gtk4_gui/desktop_app.py with minimal changes.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import sys
 from pathlib import Path
@@ -28,13 +28,13 @@ from gi.repository import Adw, GLib, Gtk
 class EnhancedUnhingedDesktopApp(Adw.Application):
     """
     Enhanced version of your desktop app using the component library.
-    
+
     This shows how to integrate components into your existing app
     with minimal changes to the overall structure.
     """
 
     def __init__(self):
-        super().__init__(application_id='com.unhinged.platform.enhanced')
+        super().__init__(application_id="com.unhinged.platform.enhanced")
         self.project_root = Path(__file__).parent.parent.parent.parent
         self.window = None
 
@@ -67,7 +67,7 @@ class EnhancedUnhingedDesktopApp(Adw.Application):
                 Gtk.StyleContext.add_provider_for_display(
                     self.window.get_display(),
                     css_provider,
-                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
                 )
                 print("✅ Component CSS loaded")
         except Exception as e:
@@ -113,7 +113,7 @@ class EnhancedUnhingedDesktopApp(Adw.Application):
             status="info",
             subtitle="Native graphics platform with dual-system architecture",
             description="Launch and manage the complete Unhinged experience with enhanced VM communication.",
-            icon_name="applications-graphics"
+            icon_name="applications-graphics",
         )
 
         return welcome_card.get_widget()
@@ -135,28 +135,24 @@ class EnhancedUnhingedDesktopApp(Adw.Application):
         self.start_button = ActionButton(
             label="Start Platform",
             style="primary",
-            icon_name="media-playback-start-symbolic"
+            icon_name="media-playback-start-symbolic",
         )
-        self.start_button.connect('clicked', self.on_start_clicked)
+        self.start_button.connect("clicked", self.on_start_clicked)
         button_box.append(self.start_button.get_widget())
 
         # Enhanced stop button
         self.stop_button = ActionButton(
-            label="Stop",
-            style="destructive",
-            icon_name="process-stop-symbolic"
+            label="Stop", style="destructive", icon_name="process-stop-symbolic"
         )
         self.stop_button.set_sensitive(False)
-        self.stop_button.connect('clicked', self.on_stop_clicked)
+        self.stop_button.connect("clicked", self.on_stop_clicked)
         button_box.append(self.stop_button.get_widget())
 
         # Status button
         status_button = ActionButton(
-            label="Check Status",
-            style="secondary",
-            icon_name="view-refresh-symbolic"
+            label="Check Status", style="secondary", icon_name="view-refresh-symbolic"
         )
-        status_button.connect('clicked', self.on_status_clicked)
+        status_button.connect("clicked", self.on_status_clicked)
         button_box.append(status_button.get_widget())
 
         control_row.add_suffix(button_box)
@@ -187,8 +183,8 @@ class EnhancedUnhingedDesktopApp(Adw.Application):
 
         # Create LogViewer component
         self.log_viewer = LogViewer()
-        self.log_viewer.connect('export-requested', self.on_export_logs)
-        self.log_viewer.connect('filter-changed', self.on_log_filter_changed)
+        self.log_viewer.connect("export-requested", self.on_export_logs)
+        self.log_viewer.connect("filter-changed", self.on_log_filter_changed)
 
         # Set reasonable height
         self.log_viewer.get_widget().set_size_request(-1, 300)
@@ -260,17 +256,49 @@ class EnhancedUnhingedDesktopApp(Adw.Application):
         # Simulate getting service status (replace with actual service_launcher call)
         if self.running:
             services_data = {
-                "LLM Service (Ollama)": {"running": True, "port": 1500, "health_method": "HTTP:1500"},
-                "Text-to-Speech Service": {"running": True, "port": 1102, "health_method": "gRPC:9092"},
-                "Vision AI Service": {"running": True, "port": 1103, "health_method": "gRPC:9093"},
-                "Database": {"running": True, "port": 1200, "health_method": "container"},
+                "LLM Service (Ollama)": {
+                    "running": True,
+                    "port": 1500,
+                    "health_method": "HTTP:1500",
+                },
+                "Text-to-Speech Service": {
+                    "running": True,
+                    "port": 1102,
+                    "health_method": "gRPC:9092",
+                },
+                "Vision AI Service": {
+                    "running": True,
+                    "port": 1103,
+                    "health_method": "gRPC:9093",
+                },
+                "Database": {
+                    "running": True,
+                    "port": 1200,
+                    "health_method": "container",
+                },
             }
         else:
             services_data = {
-                "LLM Service (Ollama)": {"running": False, "port": 1500, "health_method": "HTTP:1500"},
-                "Text-to-Speech Service": {"running": False, "port": 1102, "health_method": "gRPC:9092"},
-                "Vision AI Service": {"running": False, "port": 1103, "health_method": "gRPC:9093"},
-                "Database": {"running": False, "port": 1200, "health_method": "container"},
+                "LLM Service (Ollama)": {
+                    "running": False,
+                    "port": 1500,
+                    "health_method": "HTTP:1500",
+                },
+                "Text-to-Speech Service": {
+                    "running": False,
+                    "port": 1102,
+                    "health_method": "gRPC:9092",
+                },
+                "Vision AI Service": {
+                    "running": False,
+                    "port": 1103,
+                    "health_method": "gRPC:9093",
+                },
+                "Database": {
+                    "running": False,
+                    "port": 1200,
+                    "health_method": "container",
+                },
             }
 
         # Update SystemStatus component
@@ -280,8 +308,7 @@ class EnhancedUnhingedDesktopApp(Adw.Application):
         running_count = sum(1 for data in services_data.values() if data.get("running"))
         total_count = len(services_data)
         self.log_viewer.append_log(
-            f"Status updated: {running_count}/{total_count} services running",
-            "INFO"
+            f"Status updated: {running_count}/{total_count} services running", "INFO"
         )
 
     def on_export_logs(self, log_viewer):

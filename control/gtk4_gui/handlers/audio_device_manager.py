@@ -21,17 +21,26 @@ class AudioDeviceManager:
         """Initialize device manager."""
         # Format to sample width mapping
         self.format_sample_width = {
-            'U8': 1, 'S8': 1,
-            'S16_LE': 2, 'S16_BE': 2, 'U16_LE': 2, 'U16_BE': 2,
-            'S24_LE': 3, 'S24_BE': 3, 'S24_3LE': 3, 'S24_3BE': 3,
-            'S32_LE': 4, 'S32_BE': 4, 'U32_LE': 4, 'U32_BE': 4,
+            "U8": 1,
+            "S8": 1,
+            "S16_LE": 2,
+            "S16_BE": 2,
+            "U16_LE": 2,
+            "U16_BE": 2,
+            "S24_LE": 3,
+            "S24_BE": 3,
+            "S24_3LE": 3,
+            "S24_3BE": 3,
+            "S32_LE": 4,
+            "S32_BE": 4,
+            "U32_LE": 4,
+            "U32_BE": 4,
         }
 
     def _parse_device_line(self, line: str) -> tuple[str, str] | None:
         """Parse arecord device line. Returns (device_id, display_name) or None."""
         match = re.match(
-            r'card (\d+): (.+?) \[(.+?)\], device (\d+): (.+?) \[(.+?)\]',
-            line
+            r"card (\d+): (.+?) \[(.+?)\], device (\d+): (.+?) \[(.+?)\]", line
         )
         if not match:
             return None
@@ -43,7 +52,7 @@ class AudioDeviceManager:
 
     def _add_parsed_devices(self, devices: dict, output: str) -> None:
         """Parse arecord output and add devices to dict."""
-        for line in output.split('\n'):
+        for line in output.split("\n"):
             parsed = self._parse_device_line(line)
             if parsed:
                 device_id, display_name = parsed
@@ -59,10 +68,7 @@ class AudioDeviceManager:
 
         try:
             result = subprocess.run(
-                ['arecord', '-l'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["arecord", "-l"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
@@ -74,10 +80,7 @@ class AudioDeviceManager:
 
         except Exception as e:
             logger.warning(f"Failed to enumerate audio devices: {e}")
-            devices = {
-                "Default (PipeWire)": "pipewire",
-                "Default (ALSA)": "default"
-            }
+            devices = {"Default (PipeWire)": "pipewire", "Default (ALSA)": "default"}
 
         return devices
 
@@ -98,7 +101,7 @@ class AudioDeviceManager:
         format_str: str,
         sample_rate: int,
         channels: int,
-        duration: int = 2
+        duration: int = 2,
     ) -> bool:
         """Test if device works with given configuration.
 
@@ -113,31 +116,34 @@ class AudioDeviceManager:
             True if test recording succeeds
         """
         try:
-            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                 test_file = Path(f.name)
 
             cmd = [
-                'arecord',
-                '-D', device_id,
-                '-f', format_str,
-                '-r', str(sample_rate),
-                '-c', str(channels),
-                '-t', 'wav',
-                '-d', str(duration),
-                str(test_file)
+                "arecord",
+                "-D",
+                device_id,
+                "-f",
+                format_str,
+                "-r",
+                str(sample_rate),
+                "-c",
+                str(channels),
+                "-t",
+                "wav",
+                "-d",
+                str(duration),
+                str(test_file),
             ]
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=duration + 5
+                cmd, capture_output=True, text=True, timeout=duration + 5
             )
 
             success = (
-                result.returncode == 0 and
-                test_file.exists() and
-                test_file.stat().st_size > 44
+                result.returncode == 0
+                and test_file.exists()
+                and test_file.stat().st_size > 44
             )
 
             if test_file.exists():
@@ -148,4 +154,3 @@ class AudioDeviceManager:
         except Exception as e:
             logger.warning(f"Device test failed: {e}")
             return False
-

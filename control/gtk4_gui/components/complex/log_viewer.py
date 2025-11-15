@@ -15,23 +15,21 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import GObject, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
+from ..containers import LogContainer
 from ..primitives import ActionButton
-
-
 
 
 class LogViewer(AdwComponentBase):
     """
     Advanced log viewer with filtering, search, and export capabilities.
-    
+
     Features:
     - Real-time log streaming
     - Text filtering and search
@@ -41,8 +39,8 @@ class LogViewer(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'filter-changed': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
-        'export-requested': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "filter-changed": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        "export-requested": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     def __init__(self, **kwargs):
@@ -68,9 +66,9 @@ class LogViewer(AdwComponentBase):
         # Create log container with error handling
         try:
             self._log_container = LogContainer()
-            if hasattr(self._log_container, 'get_widget'):
+            if hasattr(self._log_container, "get_widget"):
                 self.widget.append(self._log_container.get_widget())
-            elif hasattr(self._log_container, 'widget'):
+            elif hasattr(self._log_container, "widget"):
                 self.widget.append(self._log_container.widget)
             else:
                 print("⚠️ LogContainer missing widget accessor")
@@ -95,7 +93,7 @@ class LogViewer(AdwComponentBase):
         # Search entry
         self._search_entry = Gtk.SearchEntry()
         self._search_entry.set_placeholder_text("Search logs...")
-        self._search_entry.connect('search-changed', self._on_search_changed)
+        self._search_entry.connect("search-changed", self._on_search_changed)
         toolbar.append(self._search_entry)
 
         # Filter dropdown
@@ -105,7 +103,7 @@ class LogViewer(AdwComponentBase):
 
         self._filter_dropdown = Gtk.DropDown(model=filter_model)
         self._filter_dropdown.set_selected(0)  # ALL
-        self._filter_dropdown.connect('notify::selected', self._on_filter_changed)
+        self._filter_dropdown.connect("notify::selected", self._on_filter_changed)
         toolbar.append(self._filter_dropdown)
 
         # Auto-scroll toggle
@@ -113,16 +111,14 @@ class LogViewer(AdwComponentBase):
         self._auto_scroll_toggle.set_icon_name("view-continuous-symbolic")
         self._auto_scroll_toggle.set_tooltip_text("Auto-scroll to bottom")
         self._auto_scroll_toggle.set_active(True)
-        self._auto_scroll_toggle.connect('toggled', self._on_auto_scroll_toggled)
+        self._auto_scroll_toggle.connect("toggled", self._on_auto_scroll_toggled)
         toolbar.append(self._auto_scroll_toggle)
 
         # Export button
         self._export_button = ActionButton(
-            label="Export",
-            style="flat",
-            icon_name="document-save-symbolic"
+            label="Export", style="flat", icon_name="document-save-symbolic"
         )
-        self._export_button.connect('clicked', self._on_export_clicked)
+        self._export_button.connect("clicked", self._on_export_clicked)
         toolbar.append(self._export_button.get_widget())
 
         return toolbar
@@ -131,7 +127,7 @@ class LogViewer(AdwComponentBase):
         """Handle search text changes."""
         search_text = entry.get_text()
         self._current_filter = search_text
-        self.emit('filter-changed', search_text)
+        self.emit("filter-changed", search_text)
 
     def _on_filter_changed(self, dropdown, param):
         """Handle log level filter changes."""
@@ -147,9 +143,11 @@ class LogViewer(AdwComponentBase):
 
     def _on_export_clicked(self, button):
         """Handle export button click."""
-        self.emit('export-requested')
+        self.emit("export-requested")
 
-    def append_log(self, message: str, level: str = "INFO", timestamp: str | None = None):
+    def append_log(
+        self, message: str, level: str = "INFO", timestamp: str | None = None
+    ):
         """Add a log message."""
         # Format log message
         if timestamp:
@@ -159,7 +157,7 @@ class LogViewer(AdwComponentBase):
 
         # Add to log container - with error handling
         try:
-            if self._log_container and hasattr(self._log_container, 'append_text'):
+            if self._log_container and hasattr(self._log_container, "append_text"):
                 self._log_container.append_text(formatted_message)
             else:
                 print(f"⚠️ LogContainer not properly initialized: {self._log_container}")

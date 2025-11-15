@@ -8,16 +8,18 @@
 # This file exists solely to hold architectural documentation for LlmDocs generation
 # It contains no executable code, only comprehensive documentation about UnhingedOS
 
+
 def main():
     """
     UnhingedOS Architecture Documentation Holder
-    
+
     This file serves as a documentation container for the LlmDocs system.
     All architectural information is contained in the module docstring above.
     """
     print("UnhingedOS Architecture Documentation")
     print("This file contains architectural specifications in LlmDocs format.")
     print("Run 'make docs-update' to generate documentation from these comments.")
+
 
 if __name__ == "__main__":
     main()

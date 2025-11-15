@@ -10,8 +10,8 @@ GTK4 application. Shows practical usage patterns and best practices.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import sys
 from pathlib import Path
@@ -40,7 +40,7 @@ class ComponentExampleApp(Adw.Application):
     """Example application demonstrating component usage."""
 
     def __init__(self):
-        super().__init__(application_id='com.unhinged.components.example')
+        super().__init__(application_id="com.unhinged.components.example")
         self.window = None
 
     def do_activate(self):
@@ -89,9 +89,11 @@ class ComponentExampleApp(Adw.Application):
             if css_path.exists():
                 css_provider.load_from_path(str(css_path))
                 Gtk.StyleContext.add_provider_for_display(
-                    self.window.get_display() if self.window else Gtk.Widget.get_default_direction(),
+                    self.window.get_display()
+                    if self.window
+                    else Gtk.Widget.get_default_direction(),
                     css_provider,
-                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
                 )
                 print("✅ Component CSS loaded")
             else:
@@ -114,33 +116,23 @@ class ComponentExampleApp(Adw.Application):
 
         # Primary button
         primary_btn = ActionButton(
-            label="Primary",
-            style="primary",
-            icon_name="emblem-ok-symbolic"
+            label="Primary", style="primary", icon_name="emblem-ok-symbolic"
         )
-        primary_btn.connect('clicked', lambda b: print("Primary clicked"))
+        primary_btn.connect("clicked", lambda b: print("Primary clicked"))
         button_box.append(primary_btn.get_widget())
 
         # Secondary button
-        secondary_btn = ActionButton(
-            label="Secondary",
-            style="secondary"
-        )
+        secondary_btn = ActionButton(label="Secondary", style="secondary")
         button_box.append(secondary_btn.get_widget())
 
         # Destructive button
         destructive_btn = ActionButton(
-            label="Delete",
-            style="destructive",
-            icon_name="user-trash-symbolic"
+            label="Delete", style="destructive", icon_name="user-trash-symbolic"
         )
         button_box.append(destructive_btn.get_widget())
 
         # Loading button
-        loading_btn = ActionButton(
-            label="Loading",
-            style="primary"
-        )
+        loading_btn = ActionButton(label="Loading", style="primary")
         loading_btn.set_loading(True)
         button_box.append(loading_btn.get_widget())
 
@@ -167,9 +159,7 @@ class ComponentExampleApp(Adw.Application):
         progress_row.set_subtitle("Progress with percentage")
 
         progress = ProgressIndicator(
-            progress=0.65,
-            text="Processing...",
-            show_percentage=True
+            progress=0.65, text="Processing...", show_percentage=True
         )
         progress_row.add_suffix(progress.get_widget())
         group.add(progress_row)
@@ -188,31 +178,25 @@ class ComponentExampleApp(Adw.Application):
             status="success",
             subtitle="All systems operational",
             description="All services are running normally with no issues detected.",
-            icon_name="computer-symbolic"
+            icon_name="computer-symbolic",
         )
 
         # Add action button to card
         refresh_btn = ActionButton(
-            label="Refresh",
-            style="flat",
-            icon_name="view-refresh-symbolic"
+            label="Refresh", style="flat", icon_name="view-refresh-symbolic"
         )
         status_card.add_action_button(refresh_btn.get_widget())
 
         group.add(status_card.get_widget())
 
         # Service panel
-        service_data = {
-            "running": True,
-            "port": 9092,
-            "health_method": "gRPC:9092"
-        }
+        service_data = {"running": True, "port": 9092, "health_method": "gRPC:9092"}
 
         service_panel = ServicePanel(
             service_name="Text-to-Speech Service",
             service_status="running",
             port=service_data["port"],
-            health_method=service_data["health_method"]
+            health_method=service_data["health_method"],
         )
 
         group.add(service_panel.get_widget())
@@ -253,9 +237,21 @@ class ComponentExampleApp(Adw.Application):
 
         # Sample services data (like from your service_launcher.py)
         services_data = {
-            "LLM Service (Ollama)": {"running": True, "port": 1500, "health_method": "HTTP:1500"},
-            "Text-to-Speech Service": {"running": True, "port": 1102, "health_method": "gRPC:9092"},
-            "Vision AI Service": {"running": True, "port": 1103, "health_method": "gRPC:9093"},
+            "LLM Service (Ollama)": {
+                "running": True,
+                "port": 1500,
+                "health_method": "HTTP:1500",
+            },
+            "Text-to-Speech Service": {
+                "running": True,
+                "port": 1102,
+                "health_method": "gRPC:9092",
+            },
+            "Vision AI Service": {
+                "running": True,
+                "port": 1103,
+                "health_method": "gRPC:9093",
+            },
             "Database": {"running": True, "port": 1200, "health_method": "container"},
         }
 
@@ -268,7 +264,9 @@ class ComponentExampleApp(Adw.Application):
         """Create examples of new components: ChatBubble, LoadingDots, CopyButton."""
         group = Adw.PreferencesGroup()
         group.set_title("New Components")
-        group.set_description("Chat bubbles, loading animations, and copy-paste functionality")
+        group.set_description(
+            "Chat bubbles, loading animations, and copy-paste functionality"
+        )
 
         # Chat Bubble Examples
         chat_row = Adw.ActionRow()
@@ -285,7 +283,7 @@ class ComponentExampleApp(Adw.Application):
             sender="Alice",
             timestamp="2:30 PM",
             alignment="left",
-            message_type="default"
+            message_type="default",
         )
         chat_container.append(received_bubble.get_widget())
 
@@ -295,7 +293,7 @@ class ComponentExampleApp(Adw.Application):
             sender="You",
             timestamp="2:31 PM",
             alignment="right",
-            message_type="default"
+            message_type="default",
         )
         chat_container.append(sent_bubble.get_widget())
 
@@ -304,7 +302,7 @@ class ComponentExampleApp(Adw.Application):
             message="Alice joined the conversation",
             timestamp="2:29 PM",
             alignment="left",
-            message_type="system"
+            message_type="system",
         )
         chat_container.append(system_bubble.get_widget())
 
@@ -341,7 +339,9 @@ class ComponentExampleApp(Adw.Application):
         # Copy Button Examples
         copy_row = Adw.ActionRow()
         copy_row.set_title("Copy Functionality")
-        copy_row.set_subtitle("Generic copy-paste components with different content sources")
+        copy_row.set_subtitle(
+            "Generic copy-paste components with different content sources"
+        )
 
         copy_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         copy_container.set_margin_top(12)
@@ -351,19 +351,18 @@ class ComponentExampleApp(Adw.Application):
         static_copy = CopyButton(
             content="This is static content to copy!",
             label="Copy Text",
-            style="secondary"
+            style="secondary",
         )
         copy_container.append(static_copy.get_widget())
 
         # Dynamic content copy
         def get_dynamic_content():
             import datetime
+
             return f"Generated at {datetime.datetime.now().strftime('%H:%M:%S')}"
 
         dynamic_copy = CopyButton(
-            content_source=get_dynamic_content,
-            label="Copy Time",
-            style="primary"
+            content_source=get_dynamic_content, label="Copy Time", style="primary"
         )
         copy_container.append(dynamic_copy.get_widget())
 
@@ -372,7 +371,7 @@ class ComponentExampleApp(Adw.Application):
             content="Secret data: 42",
             label="",
             icon_name="edit-copy-symbolic",
-            style="flat"
+            style="flat",
         )
         copy_container.append(icon_copy.get_widget())
 

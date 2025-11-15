@@ -12,9 +12,9 @@ Container components for organizing and grouping content:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
 from typing import Any
 
@@ -40,25 +40,35 @@ class AbstractWindow(AdwComponentBase):
 
     # GObject signals for window events
     __gsignals__ = {
-        'window-resize': (GObject.SignalFlags.RUN_FIRST, None, (int, int, str)),
-        'window-state-changed': (GObject.SignalFlags.RUN_FIRST, None, (str, str, GObject.TYPE_INT64)),
-        'window-close-requested': (GObject.SignalFlags.RUN_FIRST, None, (bool, str)),
-        'window-focus-changed': (GObject.SignalFlags.RUN_FIRST, None, (bool, GObject.TYPE_INT64)),
-        'window-move': (GObject.SignalFlags.RUN_FIRST, None, (int, int, str)),
+        "window-resize": (GObject.SignalFlags.RUN_FIRST, None, (int, int, str)),
+        "window-state-changed": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (str, str, GObject.TYPE_INT64),
+        ),
+        "window-close-requested": (GObject.SignalFlags.RUN_FIRST, None, (bool, str)),
+        "window-focus-changed": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (bool, GObject.TYPE_INT64),
+        ),
+        "window-move": (GObject.SignalFlags.RUN_FIRST, None, (int, int, str)),
     }
 
-    def __init__(self,
-                 title: str,
-                 width: int = 800,
-                 height: int = 600,
-                 min_width: int = 320,
-                 min_height: int = 240,
-                 resizable: bool = True,
-                 decorated: bool = True,
-                 modal: bool = False,
-                 always_on_top: bool = False,
-                 application: Adw.Application | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        title: str,
+        width: int = 800,
+        height: int = 600,
+        min_width: int = 320,
+        min_height: int = 240,
+        resizable: bool = True,
+        decorated: bool = True,
+        modal: bool = False,
+        always_on_top: bool = False,
+        application: Adw.Application | None = None,
+        **kwargs,
+    ):
         """
         Initialize the abstract window component.
 
@@ -126,7 +136,9 @@ class AbstractWindow(AdwComponentBase):
         self._main_box.append(self._header_bar)
 
         # Create content container (will be set via set_content())
-        self._content_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self._content_container = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
         self._content_container.set_vexpand(True)
         self._content_container.set_hexpand(True)
         self._main_box.append(self._content_container)
@@ -149,14 +161,18 @@ class AbstractWindow(AdwComponentBase):
     def _setup_window_handlers(self):
         """Set up basic window event handlers."""
         # Connect window state change signals
-        self.connect_signal(self.widget, 'notify::is-active', self._on_focus_changed)
-        self.connect_signal(self.widget, 'close-request', self._on_close_requested)
+        self.connect_signal(self.widget, "notify::is-active", self._on_focus_changed)
+        self.connect_signal(self.widget, "close-request", self._on_close_requested)
 
         # Connect to window state notifications
-        if hasattr(self.widget, 'connect'):
+        if hasattr(self.widget, "connect"):
             # Monitor window state changes (maximized, minimized, etc.)
-            self.connect_signal(self.widget, 'notify::maximized', self._on_window_state_changed)
-            self.connect_signal(self.widget, 'notify::fullscreened', self._on_window_state_changed)
+            self.connect_signal(
+                self.widget, "notify::maximized", self._on_window_state_changed
+            )
+            self.connect_signal(
+                self.widget, "notify::fullscreened", self._on_window_state_changed
+            )
 
     def _setup_drag_gesture(self):
         """Set up drag gesture for window movement."""
@@ -165,9 +181,9 @@ class AbstractWindow(AdwComponentBase):
         self._drag_gesture.set_button(Gdk.BUTTON_PRIMARY)
 
         # Connect drag signals
-        self.connect_signal(self._drag_gesture, 'drag-begin', self._on_drag_begin)
-        self.connect_signal(self._drag_gesture, 'drag-update', self._on_drag_update)
-        self.connect_signal(self._drag_gesture, 'drag-end', self._on_drag_end)
+        self.connect_signal(self._drag_gesture, "drag-begin", self._on_drag_begin)
+        self.connect_signal(self._drag_gesture, "drag-update", self._on_drag_update)
+        self.connect_signal(self._drag_gesture, "drag-end", self._on_drag_end)
 
         # Add gesture to window
         self.widget.add_controller(self._drag_gesture)
@@ -175,8 +191,12 @@ class AbstractWindow(AdwComponentBase):
     def _setup_resize_handlers(self):
         """Set up resize event handlers."""
         # Connect to size change notifications
-        self.connect_signal(self.widget, 'notify::default-width', self._on_window_resized)
-        self.connect_signal(self.widget, 'notify::default-height', self._on_window_resized)
+        self.connect_signal(
+            self.widget, "notify::default-width", self._on_window_resized
+        )
+        self.connect_signal(
+            self.widget, "notify::default-height", self._on_window_resized
+        )
 
     def _apply_design_system(self):
         """Apply design system styling and window-specific CSS classes."""
@@ -198,8 +218,9 @@ class AbstractWindow(AdwComponentBase):
                         surface.begin_move_drag(
                             device,
                             Gdk.BUTTON_PRIMARY,
-                            x, y,
-                            gesture.get_current_event_time()
+                            x,
+                            y,
+                            gesture.get_current_event_time(),
                         )
                     except AttributeError:
                         # Wayland surfaces don't support begin_move_drag
@@ -216,7 +237,7 @@ class AbstractWindow(AdwComponentBase):
         # Get final window position
         if self.widget.get_surface():
             # Emit move signal with final position
-            self.emit('window-move', int(offset_x), int(offset_y), "drag")
+            self.emit("window-move", int(offset_x), int(offset_y), "drag")
 
     def _on_window_resized(self, window, param):
         """Handle window resize events."""
@@ -229,15 +250,15 @@ class AbstractWindow(AdwComponentBase):
         self.height = height
 
         # Emit resize signal
-        self.emit('window-resize', width, height, "user")
+        self.emit("window-resize", width, height, "user")
 
     def _on_window_state_changed(self, window, param):
         """Handle window state changes (maximize, minimize, fullscreen)."""
         # Determine new state
         new_state = "normal"
-        if hasattr(window, 'is_maximized') and window.is_maximized():
+        if hasattr(window, "is_maximized") and window.is_maximized():
             new_state = "maximized"
-        elif hasattr(window, 'is_fullscreen') and window.is_fullscreen():
+        elif hasattr(window, "is_fullscreen") and window.is_fullscreen():
             new_state = "fullscreen"
 
         # Update state if changed
@@ -250,11 +271,13 @@ class AbstractWindow(AdwComponentBase):
             self.set_state("current_state", new_state)
 
             # Emit state change signal
-            self.emit('window-state-changed', old_state, new_state, GLib.get_monotonic_time())
+            self.emit(
+                "window-state-changed", old_state, new_state, GLib.get_monotonic_time()
+            )
 
     def _on_focus_changed(self, window, param):
         """Handle window focus changes."""
-        is_active = window.is_active() if hasattr(window, 'is_active') else False
+        is_active = window.is_active() if hasattr(window, "is_active") else False
 
         if is_active != self._is_focused:
             self._is_focused = is_active
@@ -264,12 +287,12 @@ class AbstractWindow(AdwComponentBase):
             self.set_state("focus_state", focus_state)
 
             # Emit focus change signal
-            self.emit('window-focus-changed', is_active, GLib.get_monotonic_time())
+            self.emit("window-focus-changed", is_active, GLib.get_monotonic_time())
 
     def _on_close_requested(self, window):
         """Handle window close request."""
         # Emit close requested signal
-        self.emit('window-close-requested', True, "user")
+        self.emit("window-close-requested", True, "user")
 
         # Return False to allow default close behavior
         # Subclasses can override this to prevent closing
@@ -285,9 +308,9 @@ class AbstractWindow(AdwComponentBase):
         elif state == "fullscreen":
             self.widget.fullscreen()
         elif state == "normal":
-            if hasattr(self.widget, 'unmaximize'):
+            if hasattr(self.widget, "unmaximize"):
                 self.widget.unmaximize()
-            if hasattr(self.widget, 'unfullscreen'):
+            if hasattr(self.widget, "unfullscreen"):
                 self.widget.unfullscreen()
 
     def get_window_state(self) -> str:
@@ -370,13 +393,15 @@ class StatusCard(AdwComponentBase):
     - Status-based styling
     """
 
-    def __init__(self,
-                 title: str,
-                 status: str = "neutral",
-                 subtitle: str | None = None,
-                 description: str | None = None,
-                 icon_name: str | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        title: str,
+        status: str = "neutral",
+        subtitle: str | None = None,
+        description: str | None = None,
+        icon_name: str | None = None,
+        **kwargs,
+    ):
         self.title = title
         self.status = status
         self.subtitle = subtitle
@@ -426,7 +451,7 @@ class StatusCard(AdwComponentBase):
             "warning": "warning",
             "error": "error",
             "info": "accent",
-            "neutral": ""
+            "neutral": "",
         }
 
         css_class = status_classes.get(self.status, "")
@@ -471,12 +496,14 @@ class ServicePanel(AdwComponentBase):
     - Expandable details
     """
 
-    def __init__(self,
-                 service_name: str,
-                 service_status: str = "unknown",
-                 port: int | None = None,
-                 health_method: str | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        service_name: str,
+        service_status: str = "unknown",
+        port: int | None = None,
+        health_method: str | None = None,
+        **kwargs,
+    ):
         self.service_name = service_name
         self.service_status = service_status
         self.port = port
@@ -575,10 +602,7 @@ class LogContainer(ComponentBase):
     - Monospace font
     """
 
-    def __init__(self,
-                 auto_scroll: bool = True,
-                 max_lines: int = 1000,
-                 **kwargs):
+    def __init__(self, auto_scroll: bool = True, max_lines: int = 1000, **kwargs):
         self.auto_scroll = auto_scroll
         self.max_lines = max_lines
         self._text_buffer = None
@@ -592,8 +616,7 @@ class LogContainer(ComponentBase):
         # Create scrolled window
         self._scrolled_window = Gtk.ScrolledWindow()
         self._scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
         self._scrolled_window.set_min_content_height(200)
 
@@ -628,13 +651,15 @@ class SystemInfoCard(AdwComponentBase):
     - Expandable sections for detailed information
     """
 
-    def __init__(self,
-                 title: str = "",
-                 subtitle: str = "",
-                 icon_name: str | None = None,
-                 data: dict[str, Any] | None = None,
-                 expandable: bool = False,
-                 **kwargs):
+    def __init__(
+        self,
+        title: str = "",
+        subtitle: str = "",
+        icon_name: str | None = None,
+        data: dict[str, Any] | None = None,
+        expandable: bool = False,
+        **kwargs,
+    ):
         self.title = title
         self.subtitle = subtitle
         self.icon_name = icon_name
@@ -665,7 +690,7 @@ class SystemInfoCard(AdwComponentBase):
         # Apply semantic styling based on data
         if self.data:
             for key, value in self.data.items():
-                if key.endswith('_percent') and isinstance(value, (int, float)):
+                if key.endswith("_percent") and isinstance(value, (int, float)):
                     if value > 90:
                         self.add_css_class("status-error")
                     elif value > 75:
@@ -675,9 +700,13 @@ class SystemInfoCard(AdwComponentBase):
 
         # Add accessibility attributes
         self.widget.set_accessible_role(Gtk.AccessibleRole.GROUP)
-        self.widget.update_property([Gtk.AccessibleProperty.LABEL], [f"System Information: {self.title}"])
+        self.widget.update_property(
+            [Gtk.AccessibleProperty.LABEL], [f"System Information: {self.title}"]
+        )
         if self.subtitle:
-            self.widget.update_property([Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle])
+            self.widget.update_property(
+                [Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle]
+            )
 
     def _create_header_row(self):
         """Create header row with icon and title."""
@@ -705,10 +734,10 @@ class SystemInfoCard(AdwComponentBase):
 
         # Format value based on type
         if isinstance(value, (int, float)):
-            if key.endswith('_percent') or key.endswith('_usage'):
+            if key.endswith("_percent") or key.endswith("_usage"):
                 # Show as percentage with progress bar
                 self._add_progress_row(row, key, value)
-            elif key.endswith('_gb') or key.endswith('_mb'):
+            elif key.endswith("_gb") or key.endswith("_mb"):
                 # Show as formatted size
                 formatted_value = self._format_size(value, key)
                 row.set_subtitle(formatted_value)
@@ -716,7 +745,9 @@ class SystemInfoCard(AdwComponentBase):
                 row.set_subtitle(str(value))
         elif isinstance(value, list):
             # Show list as comma-separated string
-            row.set_subtitle(", ".join(str(v) for v in value[:3]))  # Limit to first 3 items
+            row.set_subtitle(
+                ", ".join(str(v) for v in value[:3])
+            )  # Limit to first 3 items
             if len(value) > 3:
                 row.set_subtitle(row.get_subtitle() + f" (+{len(value) - 3} more)")
         else:
@@ -750,16 +781,16 @@ class SystemInfoCard(AdwComponentBase):
     def _format_key(self, key: str) -> str:
         """Format key for display."""
         # Convert snake_case to Title Case
-        return key.replace('_', ' ').title()
+        return key.replace("_", " ").title()
 
     def _format_size(self, value: float, key: str) -> str:
         """Format size values for display."""
-        if key.endswith('_gb'):
+        if key.endswith("_gb"):
             if value >= 1024:
                 return f"{value / 1024:.1f} TB"
             else:
                 return f"{value:.1f} GB"
-        elif key.endswith('_mb'):
+        elif key.endswith("_mb"):
             if value >= 1024:
                 return f"{value / 1024:.1f} GB"
             else:
@@ -799,11 +830,13 @@ class SystemStatusGrid(AdwComponentBase):
     - Automatic layout adjustment
     """
 
-    def __init__(self,
-                 columns: int = 2,
-                 spacing: int = 12,
-                 cards_data: list[dict[str, Any]] | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        columns: int = 2,
+        spacing: int = 12,
+        cards_data: list[dict[str, Any]] | None = None,
+        **kwargs,
+    ):
         self.columns = columns
         self.spacing = spacing
         self.cards_data = cards_data or []
@@ -814,7 +847,9 @@ class SystemStatusGrid(AdwComponentBase):
     def _init_component(self, **kwargs):
         """Initialize the system status grid."""
         # Create main container with grid layout
-        self.widget = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=self.spacing)
+        self.widget = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=self.spacing
+        )
 
         # Create grid rows
         self._create_grid_layout()
@@ -833,7 +868,9 @@ class SystemStatusGrid(AdwComponentBase):
         for i, card_data in enumerate(self.cards_data):
             # Create new row if needed
             if cards_in_row == 0:
-                current_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=self.spacing)
+                current_row = Gtk.Box(
+                    orientation=Gtk.Orientation.HORIZONTAL, spacing=self.spacing
+                )
                 current_row.set_homogeneous(True)  # Equal width columns
                 self.widget.append(current_row)
 
@@ -850,31 +887,32 @@ class SystemStatusGrid(AdwComponentBase):
 
     def _create_card(self, card_data: dict[str, Any]):
         """Create a card based on card data."""
-        card_type = card_data.get('type', 'info')
+        card_type = card_data.get("type", "info")
 
-        if card_type == 'performance':
+        if card_type == "performance":
             # Import here to avoid circular imports
             from complex import PerformanceIndicator
+
             return PerformanceIndicator(
-                metric_type=card_data.get('metric_type', 'generic'),
-                title=card_data.get('title', ''),
-                current_value=card_data.get('current_value', 0.0),
-                max_value=card_data.get('max_value', 100.0),
-                unit=card_data.get('unit', '%')
+                metric_type=card_data.get("metric_type", "generic"),
+                title=card_data.get("title", ""),
+                current_value=card_data.get("current_value", 0.0),
+                max_value=card_data.get("max_value", 100.0),
+                unit=card_data.get("unit", "%"),
             )
-        elif card_type == 'system_info':
+        elif card_type == "system_info":
             return SystemInfoCard(
-                title=card_data.get('title', ''),
-                subtitle=card_data.get('subtitle', ''),
-                icon_name=card_data.get('icon_name'),
-                data=card_data.get('data', {})
+                title=card_data.get("title", ""),
+                subtitle=card_data.get("subtitle", ""),
+                icon_name=card_data.get("icon_name"),
+                data=card_data.get("data", {}),
             )
         else:
             # Default to SystemInfoCard
             return SystemInfoCard(
-                title=card_data.get('title', 'Information'),
-                subtitle=card_data.get('subtitle', ''),
-                data=card_data.get('data', {})
+                title=card_data.get("title", "Information"),
+                subtitle=card_data.get("subtitle", ""),
+                data=card_data.get("data", {}),
             )
 
     def update_grid(self, new_cards_data: list[dict[str, Any]]):
@@ -903,10 +941,10 @@ class SystemStatusGrid(AdwComponentBase):
         """Update data for a specific card."""
         if 0 <= card_index < len(self._cards):
             card = self._cards[card_index]
-            if hasattr(card, 'update_data'):
+            if hasattr(card, "update_data"):
                 card.update_data(new_data)
-            elif hasattr(card, 'update_value') and 'current_value' in new_data:
-                card.update_value(new_data['current_value'])
+            elif hasattr(card, "update_value") and "current_value" in new_data:
+                card.update_value(new_data["current_value"])
 
     def get_card_count(self) -> int:
         """Get the number of cards in the grid."""

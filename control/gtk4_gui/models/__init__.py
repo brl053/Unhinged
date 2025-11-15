@@ -9,7 +9,7 @@ from .audio_types import AudioDevice, AudioDeviceState, VoiceRecordingState
 
 __all__ = [
     # Audio models
-    'AudioDevice',
-    'AudioDeviceState',
-    'VoiceRecordingState'
+    "AudioDevice",
+    "AudioDeviceState",
+    "VoiceRecordingState",
 ]

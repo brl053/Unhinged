@@ -1,7 +1,6 @@
 """CLI utilities and helpers."""
 
 import subprocess
-import sys
 from pathlib import Path
 
 import click
@@ -51,4 +50,3 @@ def check_file_exists(path: str, name: str) -> bool:
         log_error(f"{name} not found at {path}")
         return False
     return True
-

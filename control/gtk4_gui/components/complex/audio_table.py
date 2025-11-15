@@ -15,17 +15,13 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import GLib, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
-from ..primitives import ActionButton
-
-
 
 
 class AudioTable(AdwComponentBase):
@@ -44,12 +40,12 @@ class AudioTable(AdwComponentBase):
         # Import required modules
         import sys
         from pathlib import Path
-        sys.path.append(str(Path(__file__).parent))
 
+        sys.path.append(str(Path(__file__).parent))
 
         # Configuration
         self.current_devices = []
-        self.sort_column = 'name'
+        self.sort_column = "name"
         self.filter_text = ""
         self.filter_type = None
 
@@ -104,7 +100,9 @@ class AudioTable(AdwComponentBase):
 
         self.type_filter_dropdown = Gtk.DropDown()
         self.type_filter_dropdown.set_tooltip_text("Filter by connection type")
-        self.type_filter_dropdown.connect("notify::selected", self._on_type_filter_changed)
+        self.type_filter_dropdown.connect(
+            "notify::selected", self._on_type_filter_changed
+        )
 
         type_filter_box.append(type_label)
         type_filter_box.append(self.type_filter_dropdown)
@@ -117,11 +115,15 @@ class AudioTable(AdwComponentBase):
         volume_label.add_css_class("ds-text-caption")
         volume_box.append(volume_label)
 
-        self.volume_master_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 5)
+        self.volume_master_scale = Gtk.Scale.new_with_range(
+            Gtk.Orientation.HORIZONTAL, 0, 100, 5
+        )
         self.volume_master_scale.set_value(50)  # Default volume
         self.volume_master_scale.set_size_request(120, -1)
         self.volume_master_scale.set_tooltip_text("Master volume control")
-        self.volume_master_scale.connect("value-changed", self._on_master_volume_changed)
+        self.volume_master_scale.connect(
+            "value-changed", self._on_master_volume_changed
+        )
         volume_box.append(self.volume_master_scale)
 
         master_volume_label = Gtk.Label(label="50%")
@@ -170,11 +172,11 @@ class AudioTable(AdwComponentBase):
 
         # Define columns
         columns = [
-            TableColumn('name', 'Device Name', sortable=True, width=200),
-            TableColumn('connection', 'Connection', sortable=True, width=100),
-            TableColumn('volume', 'Volume', sortable=True, width=80),
-            TableColumn('status', 'Status', sortable=True, width=100),
-            TableColumn('actions', 'Actions', sortable=False, width=-1)
+            TableColumn("name", "Device Name", sortable=True, width=200),
+            TableColumn("connection", "Connection", sortable=True, width=100),
+            TableColumn("volume", "Volume", sortable=True, width=80),
+            TableColumn("status", "Status", sortable=True, width=100),
+            TableColumn("actions", "Actions", sortable=False, width=-1),
         ]
 
         # Create table
@@ -199,6 +201,7 @@ class AudioTable(AdwComponentBase):
     def _create_audio_row(self, device_info):
         """Create an AudioDeviceRow for the given device info."""
         from ..primitives import AudioDeviceRow
+
         audio_row = AudioDeviceRow(device_info)
         return audio_row.get_widget()
 
@@ -221,6 +224,7 @@ class AudioTable(AdwComponentBase):
                 # Fallback for direct execution
                 import sys
                 from pathlib import Path
+
                 sys.path.append(str(Path(__file__).parent.parent / "handlers"))
                 from audio_monitor import AudioLevelMonitor as AudioMonitor
 
@@ -249,6 +253,7 @@ class AudioTable(AdwComponentBase):
         except Exception as e:
             self.status_label.set_text(f"Error loading devices: {e}")
             import logging
+
             logging.getLogger(__name__).error(f"Failed to refresh audio devices: {e}")
 
         finally:
@@ -262,14 +267,19 @@ class AudioTable(AdwComponentBase):
         if self.filter_text:
             search_lower = self.filter_text.lower()
             filtered = [
-                d for d in filtered
-                if (search_lower in d.name.lower() or
-                    search_lower in d.description.lower())
+                d
+                for d in filtered
+                if (
+                    search_lower in d.name.lower()
+                    or search_lower in d.description.lower()
+                )
             ]
 
         # Apply type filter
         if self.filter_type and self.filter_type != "All":
-            filtered = [d for d in filtered if d.connection_type == self.filter_type.lower()]
+            filtered = [
+                d for d in filtered if d.connection_type == self.filter_type.lower()
+            ]
 
         return filtered
 
@@ -279,10 +289,10 @@ class AudioTable(AdwComponentBase):
             return devices
 
         sort_key_map = {
-            'name': lambda d: d.name.lower(),
-            'connection': lambda d: d.connection_type,
-            'volume': lambda d: d.volume or 0,
-            'status': lambda d: (d.is_default, d.is_active, not d.is_muted)
+            "name": lambda d: d.name.lower(),
+            "connection": lambda d: d.connection_type,
+            "volume": lambda d: d.volume or 0,
+            "status": lambda d: (d.is_default, d.is_active, not d.is_muted),
         }
 
         sort_key = sort_key_map.get(self.sort_column, lambda d: d.name.lower())
@@ -390,7 +400,7 @@ class AudioTable(AdwComponentBase):
 
         self.refresh_timeout_id = GLib.timeout_add(
             int(self.refresh_interval * 1000),  # Convert to milliseconds
-            self._auto_refresh_callback
+            self._auto_refresh_callback,
         )
 
     def _stop_auto_refresh(self):

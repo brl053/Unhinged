@@ -9,8 +9,8 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk
 
@@ -43,7 +43,9 @@ class OutputView:
             # Create header section
             header_group = Adw.PreferencesGroup()
             header_group.set_title("Audio Output Management")
-            header_group.set_description("Manage audio devices, volume control, and connection switching")
+            header_group.set_description(
+                "Manage audio devices, volume control, and connection switching"
+            )
 
             # Add audio info row
             info_row = Adw.ActionRow()
@@ -81,8 +83,10 @@ class OutputView:
             output_box.append(table_group)
 
             # Log Output tab creation
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("OUTPUT_TAB_CREATED", "Output tab with AudioTable created")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "OUTPUT_TAB_CREATED", "Output tab with AudioTable created"
+                )
 
             return output_box
 
@@ -112,8 +116,10 @@ class OutputView:
             error_box.append(error_group)
 
             # Log error
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("OUTPUT_TAB_ERROR", f"Failed to create Output tab: {e}")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "OUTPUT_TAB_ERROR", f"Failed to create Output tab: {e}"
+                )
 
             return error_box
 
@@ -124,43 +130,54 @@ class OutputView:
     def refresh_audio_devices(self):
         """Refresh the audio device list"""
         try:
-            if self.audio_table and hasattr(self.audio_table, 'refresh'):
+            if self.audio_table and hasattr(self.audio_table, "refresh"):
                 self.audio_table.refresh()
 
             # Log refresh
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("AUDIO_DEVICES_REFRESH", "Audio device list refreshed")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "AUDIO_DEVICES_REFRESH", "Audio device list refreshed"
+                )
 
         except Exception as e:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("AUDIO_DEVICES_REFRESH_ERROR", str(e))
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "AUDIO_DEVICES_REFRESH_ERROR", str(e)
+                )
 
     def set_default_device(self, device_name):
         """Set the default audio output device"""
         try:
-            if self.audio_table and hasattr(self.audio_table, 'set_default_device'):
+            if self.audio_table and hasattr(self.audio_table, "set_default_device"):
                 self.audio_table.set_default_device(device_name)
 
             # Log device change
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("AUDIO_DEFAULT_DEVICE_CHANGED", f"Default device set to: {device_name}")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "AUDIO_DEFAULT_DEVICE_CHANGED",
+                    f"Default device set to: {device_name}",
+                )
 
         except Exception as e:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("AUDIO_DEFAULT_DEVICE_ERROR", str(e))
-
-
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "AUDIO_DEFAULT_DEVICE_ERROR", str(e)
+                )
 
     def cleanup(self):
         """Clean up audio output components"""
         try:
-            if self.audio_table and hasattr(self.audio_table, 'cleanup'):
+            if self.audio_table and hasattr(self.audio_table, "cleanup"):
                 self.audio_table.cleanup()
 
             # Log cleanup
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("AUDIO_OUTPUT_CLEANUP", "Audio output components cleaned up")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "AUDIO_OUTPUT_CLEANUP", "Audio output components cleaned up"
+                )
 
         except Exception as e:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("AUDIO_OUTPUT_CLEANUP_ERROR", str(e))
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "AUDIO_OUTPUT_CLEANUP_ERROR", str(e)
+                )

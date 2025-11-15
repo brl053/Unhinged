@@ -15,24 +15,21 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import GObject, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
+from ..containers import ServicePanel
 from ..primitives import ActionButton
-from ..primitives import HardwareInfoRow
-
-
 
 
 class ServiceRow(AdwComponentBase):
     """
     Complete service status row with controls and status display.
-    
+
     Features:
     - Service name and status
     - Health indicator with method
@@ -41,13 +38,10 @@ class ServiceRow(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'action-requested': (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
+        "action-requested": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
     }
 
-    def __init__(self,
-                 service_name: str,
-                 service_data: dict,
-                 **kwargs):
+    def __init__(self, service_name: str, service_data: dict, **kwargs):
         self.service_name = service_name
         self.service_data = service_data
         self._service_panel = None
@@ -62,7 +56,7 @@ class ServiceRow(AdwComponentBase):
             service_name=self.service_name,
             service_status="running" if self.service_data.get("running") else "stopped",
             port=self.service_data.get("port"),
-            health_method=self.service_data.get("health_method", "unknown")
+            health_method=self.service_data.get("health_method", "unknown"),
         )
 
         # Add action buttons
@@ -81,30 +75,26 @@ class ServiceRow(AdwComponentBase):
         # Start/Stop button
         if self.service_data.get("running"):
             stop_button = ActionButton(
-                label="Stop",
-                style="destructive",
-                icon_name="process-stop-symbolic"
+                label="Stop", style="destructive", icon_name="process-stop-symbolic"
             )
-            stop_button.connect('clicked', lambda b: self._on_action_clicked("stop"))
+            stop_button.connect("clicked", lambda b: self._on_action_clicked("stop"))
             self._action_buttons["stop"] = stop_button
             button_box.append(stop_button.get_widget())
         else:
             start_button = ActionButton(
                 label="Start",
                 style="primary",
-                icon_name="media-playback-start-symbolic"
+                icon_name="media-playback-start-symbolic",
             )
-            start_button.connect('clicked', lambda b: self._on_action_clicked("start"))
+            start_button.connect("clicked", lambda b: self._on_action_clicked("start"))
             self._action_buttons["start"] = start_button
             button_box.append(start_button.get_widget())
 
         # Restart button
         restart_button = ActionButton(
-            label="Restart",
-            style="secondary",
-            icon_name="view-refresh-symbolic"
+            label="Restart", style="secondary", icon_name="view-refresh-symbolic"
         )
-        restart_button.connect('clicked', lambda b: self._on_action_clicked("restart"))
+        restart_button.connect("clicked", lambda b: self._on_action_clicked("restart"))
         self._action_buttons["restart"] = restart_button
         button_box.append(restart_button.get_widget())
 
@@ -113,7 +103,7 @@ class ServiceRow(AdwComponentBase):
 
     def _on_action_clicked(self, action: str):
         """Handle action button clicks."""
-        self.emit('action-requested', self.service_name, action)
+        self.emit("action-requested", self.service_name, action)
 
     def update_service_data(self, service_data: dict):
         """Update service data and refresh display."""

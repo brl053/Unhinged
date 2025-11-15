@@ -17,8 +17,8 @@ Implementation: Adw.TabView with set_closeable(False) on each tab page.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from collections.abc import Callable
 from typing import Any, List, Dict, Optional
@@ -47,9 +47,7 @@ class DocumentWorkspaceTabs:
     NOT traditional tabs with X buttons - these are persistent workspace views.
     """
 
-    def __init__(self,
-                 document_type: str = "document",
-                 doc_store_client=None):
+    def __init__(self, document_type: str = "document", doc_store_client=None):
         """
         Initialize document workspace tabs
 
@@ -111,7 +109,7 @@ class DocumentWorkspaceTabs:
         self._create_tabs()
 
         # Connect tab change signal
-        self.notebook.connect('notify::selected-page', self._on_tab_changed)
+        self.notebook.connect("notify::selected-page", self._on_tab_changed)
 
     def _create_tabs(self):
         """Create the three main workspace tabs (non-closeable)"""
@@ -131,7 +129,7 @@ class DocumentWorkspaceTabs:
         self.metrics_page.set_title("📊 Metrics")
 
         # Prevent tab closing by handling the close-page signal
-        self.notebook.connect('close-page', self._on_close_page_requested)
+        self.notebook.connect("close-page", self._on_close_page_requested)
 
     def _create_registry_tab(self) -> Gtk.Widget:
         """Create registry tab content"""
@@ -140,8 +138,8 @@ class DocumentWorkspaceTabs:
 
         # Create document list component
         self.document_list = DocumentListSimple()
-        self.document_list.connect('document-selected', self._on_document_selected)
-        self.document_list.connect('document-opened', self._on_document_opened)
+        self.document_list.connect("document-selected", self._on_document_selected)
+        self.document_list.connect("document-opened", self._on_document_opened)
 
         return self.document_list
 
@@ -152,8 +150,8 @@ class DocumentWorkspaceTabs:
 
         # Create document detail component
         self.document_detail = DocumentDetailSimple()
-        self.document_detail.connect('edit-clicked', self._on_edit_clicked)
-        self.document_detail.connect('delete-clicked', self._on_delete_clicked)
+        self.document_detail.connect("edit-clicked", self._on_edit_clicked)
+        self.document_detail.connect("delete-clicked", self._on_delete_clicked)
 
         return self.document_detail
 
@@ -161,7 +159,7 @@ class DocumentWorkspaceTabs:
         """Create metrics tab content"""
         if self.on_metrics_content:
             return self.on_metrics_content()
-        
+
         # Default placeholder
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         label = Gtk.Label(label=f"Metrics for {self.document_type}")
@@ -243,4 +241,3 @@ class DocumentWorkspaceTabs:
         """Handle delete button click"""
         # TODO: Implement delete with confirmation
         pass
-

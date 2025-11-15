@@ -12,8 +12,8 @@ Base classes providing common functionality for all components:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from pathlib import Path
 from typing import Any
@@ -23,6 +23,7 @@ from gi.repository import GObject, Gtk
 # Optional yaml import for design tokens
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -30,13 +31,14 @@ except ImportError:
 
 class ComponentError(Exception):
     """Base exception for component-related errors."""
+
     pass
 
 
 class ComponentBase(GObject.Object):
     """
     Base class for all Unhinged GTK4 components.
-    
+
     Provides:
     - Design system token integration
     - Theme management
@@ -47,8 +49,8 @@ class ComponentBase(GObject.Object):
 
     # GObject signals
     __gsignals__ = {
-        'state-changed': (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
-        'action-triggered': (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
+        "state-changed": (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
+        "action-triggered": (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
     }
 
     def __init__(self, component_id: str, **kwargs):
@@ -77,7 +79,9 @@ class ComponentBase(GObject.Object):
         try:
             # Path to design system tokens
             project_root = Path(__file__).parent.parent.parent.parent
-            tokens_path = project_root / "libs" / "design_system" / "tokens" / "semantic.yaml"
+            tokens_path = (
+                project_root / "libs" / "design_system" / "tokens" / "semantic.yaml"
+            )
 
             if tokens_path.exists() and YAML_AVAILABLE:
                 with open(tokens_path) as f:
@@ -95,15 +99,15 @@ class ComponentBase(GObject.Object):
         return {
             "color": {
                 "action": {"primary": "#0066CC", "secondary": "#6C757D"},
-                "status": {"success": "#28A745", "warning": "#FFC107", "error": "#DC3545"},
-                "surface": {"primary": "#FFFFFF", "secondary": "#F8F9FA"}
+                "status": {
+                    "success": "#28A745",
+                    "warning": "#FFC107",
+                    "error": "#DC3545",
+                },
+                "surface": {"primary": "#FFFFFF", "secondary": "#F8F9FA"},
             },
-            "spacing": {
-                "sp_1": "4px", "sp_2": "8px", "sp_3": "12px", "sp_4": "16px"
-            },
-            "radius": {
-                "sm": "4px", "md": "8px", "lg": "12px"
-            }
+            "spacing": {"sp_1": "4px", "sp_2": "8px", "sp_3": "12px", "sp_4": "16px"},
+            "radius": {"sm": "4px", "md": "8px", "lg": "12px"},
         }
 
     def _setup_accessibility(self):
@@ -141,7 +145,7 @@ class ComponentBase(GObject.Object):
         self._state[key] = value
 
         if old_value != value:
-            self.emit('state-changed', key, value)
+            self.emit("state-changed", key, value)
             self._on_state_changed(key, value, old_value)
 
     def get_state(self, key: str, default: Any = None) -> Any:
@@ -154,7 +158,7 @@ class ComponentBase(GObject.Object):
 
     def trigger_action(self, action: str, data: Any = None):
         """Trigger a component action and emit signal."""
-        self.emit('action-triggered', action, data)
+        self.emit("action-triggered", action, data)
         self._on_action_triggered(action, data)
 
     def _on_action_triggered(self, action: str, data: Any):
@@ -167,7 +171,7 @@ class ComponentBase(GObject.Object):
 
     def cleanup(self):
         """Clean up component resources and disconnect signals."""
-        if hasattr(self, '_signal_handlers'):
+        if hasattr(self, "_signal_handlers"):
             for handler_id, widget in self._signal_handlers:
                 if widget and handler_id:
                     try:
@@ -177,12 +181,12 @@ class ComponentBase(GObject.Object):
             self._signal_handlers.clear()
 
         # Clear widget reference
-        if hasattr(self, 'widget'):
+        if hasattr(self, "widget"):
             self.widget = None
 
     def connect_signal(self, widget, signal, callback, *args):
         """Connect a signal and track it for cleanup."""
-        if not hasattr(self, '_signal_handlers'):
+        if not hasattr(self, "_signal_handlers"):
             self._signal_handlers = []
 
         handler_id = widget.connect(signal, callback, *args)
@@ -202,17 +206,17 @@ class ComponentBase(GObject.Object):
     def get_design_token(self, path: str, default: str = "") -> str:
         """
         Get a design token value by path.
-        
+
         Args:
             path: Dot-separated path like "color.action.primary"
             default: Default value if token not found
-            
+
         Returns:
             Token value or default
         """
         try:
             value = self._design_tokens
-            for key in path.split('.'):
+            for key in path.split("."):
                 value = value[key]
             return str(value)
         except (KeyError, TypeError):
@@ -222,7 +226,7 @@ class ComponentBase(GObject.Object):
 class AdwComponentBase(ComponentBase):
     """
     Base class for components that use Libadwaita widgets.
-    
+
     Provides additional Adw-specific functionality and styling.
     """
 

@@ -33,4 +33,3 @@ def stop():
     """Stop running VM."""
     log_info("Stopping VM...")
     subprocess.run(["make", "vm-stop"])
-

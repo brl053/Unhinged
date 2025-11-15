@@ -15,23 +15,20 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import Adw, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
-from ..primitives import ActionButton
-
-
+from ..containers import StatusCard
 
 
 class SystemStatus(AdwComponentBase):
     """
     Overall system status display with service overview.
-    
+
     Features:
     - Overall health indicator
     - Service count summary
@@ -57,7 +54,7 @@ class SystemStatus(AdwComponentBase):
             title="System Status",
             status="neutral",
             subtitle="Checking services...",
-            icon_name="computer-symbolic"
+            icon_name="computer-symbolic",
         )
         self.widget.append(self._status_card.get_widget())
 
@@ -75,7 +72,9 @@ class SystemStatus(AdwComponentBase):
 
         # Calculate overall status
         total_services = len(services_data)
-        running_services = sum(1 for data in services_data.values() if data.get("running"))
+        running_services = sum(
+            1 for data in services_data.values() if data.get("running")
+        )
 
         # Update status card
         if running_services == total_services:

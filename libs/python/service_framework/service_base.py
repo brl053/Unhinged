@@ -22,7 +22,7 @@ from .resource_manager import ResourceManager
 class ServiceBase(ABC):
     """
     Base class for all Python services in Unhinged platform
-    
+
     Provides:
     - Automatic health endpoints
     - Hardware-aware resource management
@@ -145,7 +145,9 @@ class ServiceBase(ABC):
         """Register custom health check"""
         self.health_manager.register_health_check(name, check_func)
 
-    def register_dependency(self, name: str, type_: str, endpoint: str, check_func: Callable) -> None:
+    def register_dependency(
+        self, name: str, type_: str, endpoint: str, check_func: Callable
+    ) -> None:
         """Register dependency for monitoring"""
         self.health_manager.register_dependency(name, type_, endpoint, check_func)
 
@@ -169,19 +171,30 @@ class ServiceBase(ABC):
 
     # Service discovery and communication
 
-    def register_service_dependency(self, name: str, address: str, stub_class=None) -> None:
+    def register_service_dependency(
+        self, name: str, address: str, stub_class=None
+    ) -> None:
         """Register a service dependency"""
         from .connection_pool import ServiceConfig
+
         config = ServiceConfig(name=name, address=address, stub_class=stub_class)
         self.connection_pool.register_service(config)
 
-    def call_service(self, service_name: str, method_name: str, request, timeout: float | None = None):
+    def call_service(
+        self, service_name: str, method_name: str, request, timeout: float | None = None
+    ):
         """Call another service"""
-        return self.connection_pool.call_service(service_name, method_name, request, timeout)
+        return self.connection_pool.call_service(
+            service_name, method_name, request, timeout
+        )
 
-    def stream_service(self, service_name: str, method_name: str, request, timeout: float | None = None):
+    def stream_service(
+        self, service_name: str, method_name: str, request, timeout: float | None = None
+    ):
         """Call streaming service method"""
-        return self.connection_pool.stream_service(service_name, method_name, request, timeout)
+        return self.connection_pool.stream_service(
+            service_name, method_name, request, timeout
+        )
 
     # Monitoring and diagnostics
 
@@ -193,11 +206,11 @@ class ServiceBase(ABC):
                 "version": self.version,
                 "port": self.port,
                 "running": self._running,
-                "uptime_seconds": time.time() - self.health_manager.start_time
+                "uptime_seconds": time.time() - self.health_manager.start_time,
             },
             "health": self.health_manager.get_diagnostics(),
             "resources": self.resource_manager.get_resource_stats(),
-            "connections": self.connection_pool.get_connection_stats()
+            "connections": self.connection_pool.get_connection_stats(),
         }
 
     def _register_default_health_checks(self) -> None:
@@ -207,16 +220,18 @@ class ServiceBase(ABC):
         # Add service running check
         def service_running_check():
             from .health_manager import HealthCheckResult
+
             return HealthCheckResult(
                 healthy=self._running,
                 message="Service running" if self._running else "Service not running",
-                response_time_ms=1.0
+                response_time_ms=1.0,
             )
 
         self.register_health_check("service_running", service_running_check)
 
     def _setup_signal_handlers(self) -> None:
         """Setup signal handlers for graceful shutdown"""
+
         def signal_handler(signum, frame):
             self.logger.info(f"Received signal {signum}, initiating shutdown")
             asyncio.create_task(self.stop())
@@ -229,7 +244,7 @@ class ServiceBase(ABC):
 class SimpleService(ServiceBase):
     """
     Simple service implementation for basic use cases
-    
+
     Provides minimal implementation for services that don't need gRPC.
     """
 
@@ -248,7 +263,7 @@ class SimpleService(ServiceBase):
 class GrpcService(ServiceBase):
     """
     gRPC service implementation
-    
+
     Provides gRPC server management for services that need it.
     """
 
@@ -276,13 +291,14 @@ class GrpcService(ServiceBase):
             # Add health service if available
             try:
                 from grpc_health.v1 import health, health_pb2_grpc
+
                 health_servicer = health.HealthServicer()
                 health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
             except ImportError:
                 self.logger.warning("gRPC health service not available")
 
             # Start server
-            listen_addr = f'[::]:{self.port}'
+            listen_addr = f"[::]:{self.port}"
             server.add_insecure_port(listen_addr)
             server.start()
 
@@ -309,8 +325,10 @@ class GrpcService(ServiceBase):
 
 # Convenience functions for common patterns
 
+
 def run_service(service: ServiceBase) -> None:
     """Run a service with proper async handling"""
+
     async def main():
         await service.start()
         service.wait_for_termination()

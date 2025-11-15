@@ -11,13 +11,13 @@ import os
 def get_service_path(subdir: str = "") -> str:
     """
     Get service-relative path, eliminating hardcoded /app/ Docker paths
-    
+
     Args:
         subdir: Subdirectory relative to service root (e.g., 'uploads', 'models', 'outputs')
-        
+
     Returns:
         Absolute path to service subdirectory
-        
+
     Examples:
         get_service_path('uploads') → '/path/to/service/uploads'
         get_service_path('models') → '/path/to/service/models'
@@ -32,10 +32,10 @@ def get_service_path(subdir: str = "") -> str:
 def ensure_service_directory(subdir: str) -> str:
     """
     Ensure service subdirectory exists, create if missing
-    
+
     Args:
         subdir: Subdirectory to create (e.g., 'uploads', 'models', 'outputs')
-        
+
     Returns:
         Absolute path to created directory
     """
@@ -46,40 +46,39 @@ def ensure_service_directory(subdir: str) -> str:
 
 def get_upload_directory() -> str:
     """Get standardized upload directory for service file uploads"""
-    return ensure_service_directory('uploads')
+    return ensure_service_directory("uploads")
 
 
 def get_models_directory() -> str:
     """Get standardized models directory for ML model storage"""
-    return ensure_service_directory('models')
+    return ensure_service_directory("models")
 
 
 def get_outputs_directory() -> str:
     """Get standardized outputs directory for service-generated files"""
-    return ensure_service_directory('outputs')
+    return ensure_service_directory("outputs")
 
 
 def get_cache_directory() -> str:
     """Get standardized cache directory for service caching"""
-    return ensure_service_directory('cache')
+    return ensure_service_directory("cache")
 
 
 def get_logs_directory() -> str:
     """Get standardized logs directory for service logging"""
-    return ensure_service_directory('logs')
+    return ensure_service_directory("logs")
 
 
 class ServicePaths:
     """
-@llm-type service.api
-@llm-does service path manager providing standardized directory access
-@llm-rule service paths must be consistent, predictable, and environment-agnostic
-"""
+    @llm-type service.api
+    @llm-does service path manager providing standardized directory access
+    @llm-rule service paths must be consistent, predictable, and environment-agnostic"""
 
     def __init__(self, service_root: str | None = None):
         """
         Initialize service path manager
-        
+
         Args:
             service_root: Optional service root directory (defaults to current working directory)
         """
@@ -100,27 +99,27 @@ class ServicePaths:
     @property
     def uploads(self) -> str:
         """Upload directory for file uploads"""
-        return self.ensure_directory('uploads')
+        return self.ensure_directory("uploads")
 
     @property
     def models(self) -> str:
         """Models directory for ML model storage"""
-        return self.ensure_directory('models')
+        return self.ensure_directory("models")
 
     @property
     def outputs(self) -> str:
         """Outputs directory for generated files"""
-        return self.ensure_directory('outputs')
+        return self.ensure_directory("outputs")
 
     @property
     def cache(self) -> str:
         """Cache directory for service caching"""
-        return self.ensure_directory('cache')
+        return self.ensure_directory("cache")
 
     @property
     def logs(self) -> str:
         """Logs directory for service logging"""
-        return self.ensure_directory('logs')
+        return self.ensure_directory("logs")
 
 
 # Global service paths instance for convenience
@@ -130,10 +129,10 @@ service_paths = ServicePaths()
 def get_service_config_path(config_name: str = "config.yml") -> str:
     """
     Get path to service configuration file
-    
+
     Args:
         config_name: Configuration file name (defaults to 'config.yml')
-        
+
     Returns:
         Path to service configuration file
     """
@@ -143,10 +142,10 @@ def get_service_config_path(config_name: str = "config.yml") -> str:
 def get_service_env_path(env_name: str = ".env") -> str:
     """
     Get path to service environment file
-    
+
     Args:
         env_name: Environment file name (defaults to '.env')
-        
+
     Returns:
         Path to service environment file
     """
@@ -155,15 +154,15 @@ def get_service_env_path(env_name: str = ".env") -> str:
 
 # Convenience exports for common patterns
 __all__ = [
-    'get_service_path',
-    'ensure_service_directory',
-    'get_upload_directory',
-    'get_models_directory',
-    'get_outputs_directory',
-    'get_cache_directory',
-    'get_logs_directory',
-    'ServicePaths',
-    'service_paths',
-    'get_service_config_path',
-    'get_service_env_path'
+    "get_service_path",
+    "ensure_service_directory",
+    "get_upload_directory",
+    "get_models_directory",
+    "get_outputs_directory",
+    "get_cache_directory",
+    "get_logs_directory",
+    "ServicePaths",
+    "service_paths",
+    "get_service_config_path",
+    "get_service_env_path",
 ]

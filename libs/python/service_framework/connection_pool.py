@@ -17,6 +17,7 @@ import grpc  # System grpc module (grpcio)
 @dataclass
 class ServiceConfig:
     """Configuration for a gRPC service"""
+
     name: str
     address: str
     timeout: float = 120.0  # Expert recommended 120s for local image generation
@@ -26,6 +27,7 @@ class ServiceConfig:
     def __post_init__(self):
         """Allow timeout to be overridden by environment variable"""
         import os
+
         env_timeout_key = f"{self.name.upper()}_TIMEOUT"
         env_timeout = os.environ.get(env_timeout_key)
         if env_timeout:
@@ -43,7 +45,7 @@ class ServiceConfig:
 class ServiceClient:
     """
     Wrapper for gRPC service clients with local OS optimizations
-    
+
     Simplified for localhost deployment - no complex retry logic needed
     since network partitions don't exist locally.
     """
@@ -70,7 +72,9 @@ class ServiceClient:
     def _connect(self) -> None:
         """Establish gRPC connection"""
         try:
-            self.logger.info(f"Connecting to {self.config.name} at {self.config.address}")
+            self.logger.info(
+                f"Connecting to {self.config.name} at {self.config.address}"
+            )
 
             # For local deployment, use insecure channel
             self._channel = grpc.insecure_channel(self.config.address)
@@ -82,17 +86,21 @@ class ServiceClient:
                 self._stub = self._channel  # Return channel directly
 
             self._connection_count += 1
-            self.logger.info(f"Connected to {self.config.name} (connection #{self._connection_count})")
+            self.logger.info(
+                f"Connected to {self.config.name} (connection #{self._connection_count})"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to connect to {self.config.name}: {e}")
             self._cleanup()
             raise
 
-    def call_with_timeout(self, method_name: str, request, timeout: float | None = None) -> Any:
+    def call_with_timeout(
+        self, method_name: str, request, timeout: float | None = None
+    ) -> Any:
         """
         Call gRPC method with timeout and simple retry logic
-        
+
         Simplified for local deployment - just retry on connection errors.
         """
         stub = self.get_stub()
@@ -104,8 +112,13 @@ class ServiceClient:
                 return method(request, timeout=call_timeout)
 
             except grpc.RpcError as e:
-                if e.code() == grpc.StatusCode.UNAVAILABLE and attempt < self.config.max_retries - 1:
-                    self.logger.warning(f"Service {self.config.name} unavailable, retrying... (attempt {attempt + 1})")
+                if (
+                    e.code() == grpc.StatusCode.UNAVAILABLE
+                    and attempt < self.config.max_retries - 1
+                ):
+                    self.logger.warning(
+                        f"Service {self.config.name} unavailable, retrying... (attempt {attempt + 1})"
+                    )
                     self._reconnect()
                     time.sleep(0.5 * (attempt + 1))  # Simple backoff
                     continue
@@ -116,12 +129,16 @@ class ServiceClient:
                 self.logger.error(f"Unexpected error calling {method_name}: {e}")
                 raise
 
-        raise RuntimeError(f"Failed to call {method_name} after {self.config.max_retries} attempts")
+        raise RuntimeError(
+            f"Failed to call {method_name} after {self.config.max_retries} attempts"
+        )
 
-    def stream_with_timeout(self, method_name: str, request, timeout: float | None = None):
+    def stream_with_timeout(
+        self, method_name: str, request, timeout: float | None = None
+    ):
         """
         Call streaming gRPC method with timeout
-        
+
         For image generation and other streaming operations.
         """
         stub = self.get_stub()
@@ -158,9 +175,10 @@ class ServiceClient:
 
         try:
             # Try a simple call if health check method exists
-            if hasattr(self._stub, 'Check'):
+            if hasattr(self._stub, "Check"):
                 try:
                     from grpc_health.v1 import health_pb2
+
                     request = health_pb2.HealthCheckRequest()
                     response = self._stub.Check(request, timeout=5.0)
                     return response.status == health_pb2.HealthCheckResponse.SERVING
@@ -179,7 +197,7 @@ class ServiceClient:
             "connected": self._stub is not None,
             "connection_count": self._connection_count,
             "last_used": self._last_used,
-            "idle_time": time.time() - self._last_used
+            "idle_time": time.time() - self._last_used,
         }
 
     def close(self) -> None:
@@ -191,7 +209,7 @@ class ServiceClient:
 class ConnectionPool:
     """
     Connection pool for gRPC services
-    
+
     Optimized for local OS deployment with simplified management.
     """
 
@@ -203,7 +221,9 @@ class ConnectionPool:
 
         # Connection monitoring
         self._monitoring = True
-        self._monitor_thread = threading.Thread(target=self._monitor_connections, daemon=True)
+        self._monitor_thread = threading.Thread(
+            target=self._monitor_connections, daemon=True
+        )
         self._monitor_thread.start()
 
     def register_service(self, config: ServiceConfig) -> None:
@@ -224,14 +244,16 @@ class ConnectionPool:
 
             return self._clients[service_name]
 
-    def call_service(self, service_name: str, method_name: str, request,
-                    timeout: float | None = None) -> Any:
+    def call_service(
+        self, service_name: str, method_name: str, request, timeout: float | None = None
+    ) -> Any:
         """Convenience method to call service method"""
         client = self.get_client(service_name)
         return client.call_with_timeout(method_name, request, timeout)
 
-    def stream_service(self, service_name: str, method_name: str, request,
-                      timeout: float | None = None):
+    def stream_service(
+        self, service_name: str, method_name: str, request, timeout: float | None = None
+    ):
         """Convenience method to call streaming service method"""
         client = self.get_client(service_name)
         return client.stream_with_timeout(method_name, request, timeout)
@@ -310,8 +332,9 @@ def get_global_pool() -> ConnectionPool:
     return _global_pool
 
 
-def register_service(name: str, address: str, stub_class: type | None = None,
-                    timeout: float = 120.0) -> None:
+def register_service(
+    name: str, address: str, stub_class: type | None = None, timeout: float = 120.0
+) -> None:
     """
     Register a service with the global pool.
 
@@ -319,21 +342,20 @@ def register_service(name: str, address: str, stub_class: type | None = None,
     Example: SPEECH_TO_TEXT_TIMEOUT=600 for 10-minute timeout
     """
     config = ServiceConfig(
-        name=name,
-        address=address,
-        timeout=timeout,
-        stub_class=stub_class
+        name=name, address=address, timeout=timeout, stub_class=stub_class
     )
     get_global_pool().register_service(config)
 
 
-def call_service(service_name: str, method_name: str, request,
-                timeout: float | None = None) -> Any:
+def call_service(
+    service_name: str, method_name: str, request, timeout: float | None = None
+) -> Any:
     """Call service method using global pool"""
     return get_global_pool().call_service(service_name, method_name, request, timeout)
 
 
-def stream_service(service_name: str, method_name: str, request,
-                  timeout: float | None = None):
+def stream_service(
+    service_name: str, method_name: str, request, timeout: float | None = None
+):
     """Call streaming service method using global pool"""
     return get_global_pool().stream_service(service_name, method_name, request, timeout)

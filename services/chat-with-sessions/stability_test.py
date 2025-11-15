@@ -23,9 +23,11 @@ from session.session_store import SessionStore, SessionStoreConfig
 # Initialize event logger
 events = create_service_logger("stability-test", "1.0.0")
 
+
 @dataclass
 class StabilityMetrics:
     """Metrics collection for stability test"""
+
     start_time: float
     end_time: float = 0.0
     duration_hours: float = 0.0
@@ -59,6 +61,7 @@ class StabilityMetrics:
         if self.crdb_connection_count is None:
             self.crdb_connection_count = []
 
+
 class StabilityTest:
     """24-hour stability test for write-through session management"""
 
@@ -79,23 +82,26 @@ class StabilityTest:
         self.write_latencies = []
         self.read_latencies = []
 
-        events.info("Stability test initialized", {
-            "duration_hours": duration_hours,
-            "operations_per_second": self.operations_per_second,
-            "max_concurrent_sessions": self.max_concurrent_sessions
-        })
+        events.info(
+            "Stability test initialized",
+            {
+                "duration_hours": duration_hours,
+                "operations_per_second": self.operations_per_second,
+                "max_concurrent_sessions": self.max_concurrent_sessions,
+            },
+        )
 
     def _initialize_session_store(self):
         """Initialize session store for stability testing"""
         try:
             config = SessionStoreConfig(
-                redis_host='localhost',
+                redis_host="localhost",
                 redis_port=6379,
                 redis_db=2,  # Use separate DB for stability test
-                crdb_host='localhost',
+                crdb_host="localhost",
                 crdb_port=26257,
-                crdb_database='unhinged',
-                crdb_user='root'
+                crdb_database="unhinged",
+                crdb_user="root",
             )
 
             self.session_store = SessionStore(config)
@@ -116,7 +122,7 @@ class StabilityTest:
                 "user_id": f"test_user_{random.randint(1000, 9999)}",
                 "created_at": time.time(),
                 "test_data": f"stability_test_{self.metrics.sessions_created}",
-                "random_value": random.random()
+                "random_value": random.random(),
             }
 
             session_key = f"stability:session:{session_id}:metadata"
@@ -171,7 +177,7 @@ class StabilityTest:
                 "id": str(uuid.uuid4()),
                 "content": f"Test message {len(context_data['messages']) + 1}",
                 "timestamp": time.time(),
-                "test_data": random.choice(["alpha", "beta", "gamma", "delta"])
+                "test_data": random.choice(["alpha", "beta", "gamma", "delta"]),
             }
 
             context_data["messages"].append(message_data)
@@ -212,12 +218,9 @@ class StabilityTest:
 
     def _random_operation(self):
         """Perform a random operation for load testing"""
-        operation = random.choice([
-            "create_session",
-            "retrieve_session",
-            "add_message",
-            "health_check"
-        ])
+        operation = random.choice(
+            ["create_session", "retrieve_session", "add_message", "health_check"]
+        )
 
         if operation == "create_session":
             if len(self.active_sessions) < self.max_concurrent_sessions:
@@ -237,11 +240,15 @@ class StabilityTest:
     def _update_performance_metrics(self):
         """Update performance metrics"""
         if self.write_latencies:
-            self.metrics.avg_write_latency_ms = sum(self.write_latencies) / len(self.write_latencies)
+            self.metrics.avg_write_latency_ms = sum(self.write_latencies) / len(
+                self.write_latencies
+            )
             self.metrics.max_write_latency_ms = max(self.write_latencies)
 
         if self.read_latencies:
-            self.metrics.avg_read_latency_ms = sum(self.read_latencies) / len(self.read_latencies)
+            self.metrics.avg_read_latency_ms = sum(self.read_latencies) / len(
+                self.read_latencies
+            )
             self.metrics.max_read_latency_ms = max(self.read_latencies)
 
     def _log_progress(self):
@@ -249,39 +256,49 @@ class StabilityTest:
         elapsed_hours = (time.time() - self.metrics.start_time) / 3600
         progress_percent = (elapsed_hours / self.duration_hours) * 100
 
-        total_operations = (self.metrics.sessions_created +
-                          self.metrics.sessions_retrieved +
-                          self.metrics.messages_added +
-                          self.metrics.health_checks)
+        total_operations = (
+            self.metrics.sessions_created
+            + self.metrics.sessions_retrieved
+            + self.metrics.messages_added
+            + self.metrics.health_checks
+        )
 
-        total_errors = (self.metrics.session_errors +
-                       self.metrics.message_errors +
-                       self.metrics.health_errors +
-                       self.metrics.connection_errors)
+        total_errors = (
+            self.metrics.session_errors
+            + self.metrics.message_errors
+            + self.metrics.health_errors
+            + self.metrics.connection_errors
+        )
 
         error_rate = (total_errors / max(total_operations, 1)) * 100
 
-        events.info("Stability test progress", {
-            "elapsed_hours": round(elapsed_hours, 2),
-            "progress_percent": round(progress_percent, 1),
-            "total_operations": total_operations,
-            "total_errors": total_errors,
-            "error_rate_percent": round(error_rate, 3),
-            "active_sessions": len(self.active_sessions),
-            "avg_write_latency_ms": round(self.metrics.avg_write_latency_ms, 2),
-            "avg_read_latency_ms": round(self.metrics.avg_read_latency_ms, 2)
-        })
+        events.info(
+            "Stability test progress",
+            {
+                "elapsed_hours": round(elapsed_hours, 2),
+                "progress_percent": round(progress_percent, 1),
+                "total_operations": total_operations,
+                "total_errors": total_errors,
+                "error_rate_percent": round(error_rate, 3),
+                "active_sessions": len(self.active_sessions),
+                "avg_write_latency_ms": round(self.metrics.avg_write_latency_ms, 2),
+                "avg_read_latency_ms": round(self.metrics.avg_read_latency_ms, 2),
+            },
+        )
 
     def run(self):
         """Run the 24-hour stability test"""
         self.running = True
         end_time = self.metrics.start_time + (self.duration_hours * 3600)
 
-        events.info("Starting 24-hour stability test", {
-            "duration_hours": self.duration_hours,
-            "end_time": time.ctime(end_time),
-            "operations_per_second": self.operations_per_second
-        })
+        events.info(
+            "Starting 24-hour stability test",
+            {
+                "duration_hours": self.duration_hours,
+                "end_time": time.ctime(end_time),
+                "operations_per_second": self.operations_per_second,
+            },
+        )
 
         last_progress_log = time.time()
 
@@ -315,7 +332,9 @@ class StabilityTest:
     def _finalize_test(self):
         """Finalize test and generate report"""
         self.metrics.end_time = time.time()
-        self.metrics.duration_hours = (self.metrics.end_time - self.metrics.start_time) / 3600
+        self.metrics.duration_hours = (
+            self.metrics.end_time - self.metrics.start_time
+        ) / 3600
 
         # Final metrics update
         self._update_performance_metrics()
@@ -328,15 +347,19 @@ class StabilityTest:
 
     def _generate_report(self):
         """Generate final stability test report"""
-        total_operations = (self.metrics.sessions_created +
-                          self.metrics.sessions_retrieved +
-                          self.metrics.messages_added +
-                          self.metrics.health_checks)
+        total_operations = (
+            self.metrics.sessions_created
+            + self.metrics.sessions_retrieved
+            + self.metrics.messages_added
+            + self.metrics.health_checks
+        )
 
-        total_errors = (self.metrics.session_errors +
-                       self.metrics.message_errors +
-                       self.metrics.health_errors +
-                       self.metrics.connection_errors)
+        total_errors = (
+            self.metrics.session_errors
+            + self.metrics.message_errors
+            + self.metrics.health_errors
+            + self.metrics.connection_errors
+        )
 
         error_rate = (total_errors / max(total_operations, 1)) * 100
         ops_per_hour = total_operations / max(self.metrics.duration_hours, 0.001)
@@ -348,46 +371,51 @@ class StabilityTest:
                 "operations_per_hour": round(ops_per_hour, 1),
                 "total_errors": total_errors,
                 "error_rate_percent": round(error_rate, 4),
-                "final_active_sessions": len(self.active_sessions)
+                "final_active_sessions": len(self.active_sessions),
             },
             "operation_breakdown": {
                 "sessions_created": self.metrics.sessions_created,
                 "sessions_retrieved": self.metrics.sessions_retrieved,
                 "messages_added": self.metrics.messages_added,
-                "health_checks": self.metrics.health_checks
+                "health_checks": self.metrics.health_checks,
             },
             "error_breakdown": {
                 "session_errors": self.metrics.session_errors,
                 "message_errors": self.metrics.message_errors,
                 "health_errors": self.metrics.health_errors,
-                "connection_errors": self.metrics.connection_errors
+                "connection_errors": self.metrics.connection_errors,
             },
             "performance_metrics": {
                 "avg_write_latency_ms": round(self.metrics.avg_write_latency_ms, 2),
                 "avg_read_latency_ms": round(self.metrics.avg_read_latency_ms, 2),
                 "max_write_latency_ms": round(self.metrics.max_write_latency_ms, 2),
-                "max_read_latency_ms": round(self.metrics.max_read_latency_ms, 2)
-            }
+                "max_read_latency_ms": round(self.metrics.max_read_latency_ms, 2),
+            },
         }
 
         events.info("24-HOUR STABILITY TEST COMPLETED", report)
 
         # Save detailed report
         report_file = f"stability_test_report_{int(self.metrics.start_time)}.json"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🎉 24-HOUR STABILITY TEST COMPLETED")
-        print("="*80)
+        print("=" * 80)
         print(f"Duration: {report['test_summary']['duration_hours']} hours")
         print(f"Total Operations: {report['test_summary']['total_operations']:,}")
         print(f"Operations/Hour: {report['test_summary']['operations_per_hour']:,.1f}")
         print(f"Error Rate: {report['test_summary']['error_rate_percent']:.4f}%")
-        print(f"Avg Write Latency: {report['performance_metrics']['avg_write_latency_ms']:.2f}ms")
-        print(f"Avg Read Latency: {report['performance_metrics']['avg_read_latency_ms']:.2f}ms")
+        print(
+            f"Avg Write Latency: {report['performance_metrics']['avg_write_latency_ms']:.2f}ms"
+        )
+        print(
+            f"Avg Read Latency: {report['performance_metrics']['avg_read_latency_ms']:.2f}ms"
+        )
         print(f"Report saved: {report_file}")
-        print("="*80)
+        print("=" * 80)
+
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
@@ -395,6 +423,7 @@ def signal_handler(signum, frame):
     global stability_test
     if stability_test:
         stability_test.running = False
+
 
 def main():
     """Main entry point for stability test"""
@@ -416,5 +445,6 @@ def main():
     stability_test = StabilityTest(duration_hours)
     stability_test.run()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

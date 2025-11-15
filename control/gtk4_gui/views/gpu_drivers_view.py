@@ -10,8 +10,8 @@ Philosophy: GPUs first, then each vendor extends the GPU abstraction.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import sys
 from pathlib import Path
@@ -73,6 +73,7 @@ class GPUDriversView:
         except Exception as e:
             print(f"❌ Error creating GPU drivers view: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_error_view(str(e))
 
@@ -198,4 +199,3 @@ class GPUDriversView:
         box.append(label)
 
         return box
-

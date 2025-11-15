@@ -17,19 +17,16 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import GObject, Gtk, Pango
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import AdwComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class ChatBubble(AdwComponentBase):
@@ -45,16 +42,18 @@ class ChatBubble(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'message-clicked': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        "message-clicked": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
-    def __init__(self,
-                 message: str = "",
-                 sender: str = "",
-                 timestamp: str = "",
-                 alignment: str = "left",  # "left" or "right"
-                 message_type: str = "default",  # "default", "system", "error"
-                 **kwargs):
+    def __init__(
+        self,
+        message: str = "",
+        sender: str = "",
+        timestamp: str = "",
+        alignment: str = "left",  # "left" or "right"
+        message_type: str = "default",  # "default", "system", "error"
+        **kwargs,
+    ):
         self.message = message
         self.sender = sender
         self.timestamp = timestamp
@@ -82,7 +81,9 @@ class ChatBubble(AdwComponentBase):
         if self.sender:
             self._sender_label = Gtk.Label()
             self._sender_label.set_text(self.sender)
-            self._sender_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+            self._sender_label.set_halign(
+                Gtk.Align.START if self.alignment == "left" else Gtk.Align.END
+            )
             self._sender_label.add_css_class("ds-chat-sender")
             bubble_container.append(self._sender_label)
 
@@ -95,7 +96,9 @@ class ChatBubble(AdwComponentBase):
         self._message_label.set_wrap(True)
         self._message_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._message_label.set_max_width_chars(50)
-        self._message_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+        self._message_label.set_halign(
+            Gtk.Align.START if self.alignment == "left" else Gtk.Align.END
+        )
         self._message_label.set_selectable(True)
         message_container.append(self._message_label)
 
@@ -103,7 +106,9 @@ class ChatBubble(AdwComponentBase):
         if self.timestamp:
             self._timestamp_label = Gtk.Label()
             self._timestamp_label.set_text(self.timestamp)
-            self._timestamp_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+            self._timestamp_label.set_halign(
+                Gtk.Align.START if self.alignment == "left" else Gtk.Align.END
+            )
             self._timestamp_label.add_css_class("ds-chat-timestamp")
             message_container.append(self._timestamp_label)
 
@@ -126,13 +131,16 @@ class ChatBubble(AdwComponentBase):
 
         # Make clickable
         click_controller = Gtk.GestureClick()
-        click_controller.connect('pressed', self._on_bubble_clicked)
+        click_controller.connect("pressed", self._on_bubble_clicked)
         bubble_container.add_controller(click_controller)
 
         # Accessibility
         bubble_container.set_accessible_role(Gtk.AccessibleRole.ARTICLE)
         if self.message:
-            bubble_container.update_property([Gtk.AccessibleProperty.LABEL], [f"Message from {self.sender}: {self.message}"])
+            bubble_container.update_property(
+                [Gtk.AccessibleProperty.LABEL],
+                [f"Message from {self.sender}: {self.message}"],
+            )
 
     def _apply_bubble_styling(self, container):
         """Apply chat bubble styling using design system tokens."""
@@ -146,8 +154,8 @@ class ChatBubble(AdwComponentBase):
 
     def _on_bubble_clicked(self, gesture, n_press, x, y):
         """Handle bubble click."""
-        self.emit('message-clicked', self.message)
-        self.trigger_action('message-clicked', self.message)
+        self.emit("message-clicked", self.message)
+        self.trigger_action("message-clicked", self.message)
 
     def set_message(self, message: str):
         """Update message content."""
@@ -164,7 +172,9 @@ class ChatBubble(AdwComponentBase):
             # Create timestamp label if it doesn't exist
             self._timestamp_label = Gtk.Label()
             self._timestamp_label.set_text(timestamp)
-            self._timestamp_label.set_halign(Gtk.Align.START if self.alignment == "left" else Gtk.Align.END)
+            self._timestamp_label.set_halign(
+                Gtk.Align.START if self.alignment == "left" else Gtk.Align.END
+            )
             self._timestamp_label.add_css_class("ds-chat-timestamp")
             # Add to parent container (need to find message container)
             parent = self._message_label.get_parent()

@@ -11,6 +11,7 @@ from enum import Enum
 
 class AudioDeviceType(Enum):
     """Audio device types."""
+
     MICROPHONE = "microphone"
     CAMERA = "camera"
     HEADSET = "headset"
@@ -21,17 +22,21 @@ class AudioDeviceType(Enum):
         """Return title-cased version of the enum value for UI display"""
         return self.value.title()
 
+
 class VoiceRecordingStatus(Enum):
     """Voice recording status states."""
+
     IDLE = "idle"
     RECORDING = "recording"
     PROCESSING = "processing"
     COMPLETED = "completed"
     ERROR = "error"
 
+
 @dataclass
 class AudioDevice:
     """Represents an audio input/output device."""
+
     name: str
     description: str
     card_id: int
@@ -39,7 +44,9 @@ class AudioDevice:
     alsa_device: str
     icon: str
     device_type: AudioDeviceType = AudioDeviceType.UNKNOWN
-    connection_type: str = "internal"  # Connection type: "internal", "usb", "hdmi", "bluetooth"
+    connection_type: str = (
+        "internal"  # Connection type: "internal", "usb", "hdmi", "bluetooth"
+    )
     driver: str = "ALSA"  # Audio driver name
     subdevices: int = 1  # Number of subdevices available on this audio device
     is_default: bool = False
@@ -89,9 +96,11 @@ class AudioDevice:
         status = f" • {', '.join(status_parts)}" if status_parts else ""
         return f"{self.description}{status}"
 
+
 @dataclass
 class AudioDeviceState:
     """State container for audio device management (like React state)."""
+
     devices: list[AudioDevice]
     current_device: AudioDevice | None
     is_loading: bool
@@ -108,9 +117,11 @@ class AudioDeviceState:
         """Get the default device."""
         return next((d for d in self.devices if d.is_default), None)
 
+
 @dataclass
 class VoiceRecordingState:
     """State container for voice recording (like React state)."""
+
     status: VoiceRecordingStatus
     is_recording: bool
     duration: float
@@ -136,9 +147,11 @@ class VoiceRecordingState:
         seconds = int(self.duration % 60)
         return f"{minutes:02d}:{seconds:02d}"
 
+
 @dataclass
 class AudioSystemInfo:
     """Information about the audio system."""
+
     audio_server: str  # "PipeWire", "PulseAudio", "ALSA"
     default_source: str | None
     default_sink: str | None

@@ -15,17 +15,13 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import GLib, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
-from ..primitives import ActionButton
-
-
 
 
 class BluetoothTable(AdwComponentBase):
@@ -44,14 +40,14 @@ class BluetoothTable(AdwComponentBase):
         # Import required modules
         import sys
         from pathlib import Path
-        sys.path.append(str(Path(__file__).parent))
 
+        sys.path.append(str(Path(__file__).parent))
 
         # Configuration
         self.current_devices = []
         self.current_adapters = []
         self.include_unpaired = True
-        self.sort_column = 'name'
+        self.sort_column = "name"
         self.filter_text = ""
         self.filter_type = None
 
@@ -104,7 +100,9 @@ class BluetoothTable(AdwComponentBase):
 
         self.type_filter_dropdown = Gtk.DropDown()
         self.type_filter_dropdown.set_tooltip_text("Filter by device type")
-        self.type_filter_dropdown.connect("notify::selected", self._on_type_filter_changed)
+        self.type_filter_dropdown.connect(
+            "notify::selected", self._on_type_filter_changed
+        )
 
         type_filter_box.append(type_label)
         type_filter_box.append(self.type_filter_dropdown)
@@ -164,12 +162,12 @@ class BluetoothTable(AdwComponentBase):
 
         # Define columns
         columns = [
-            TableColumn('name', 'Device Name', sortable=True, width=200),
-            TableColumn('address', 'Address', sortable=True, width=150),
-            TableColumn('device_type', 'Type', sortable=True, width=100),
-            TableColumn('status', 'Status', sortable=True, width=100),
-            TableColumn('rssi', 'Signal', sortable=True, width=80),
-            TableColumn('actions', 'Actions', sortable=False, width=-1)
+            TableColumn("name", "Device Name", sortable=True, width=200),
+            TableColumn("address", "Address", sortable=True, width=150),
+            TableColumn("device_type", "Type", sortable=True, width=100),
+            TableColumn("status", "Status", sortable=True, width=100),
+            TableColumn("rssi", "Signal", sortable=True, width=80),
+            TableColumn("actions", "Actions", sortable=False, width=-1),
         ]
 
         # Create table
@@ -186,6 +184,7 @@ class BluetoothTable(AdwComponentBase):
     def _create_bluetooth_row(self, device_info):
         """Create a BluetoothRow for the given device info."""
         from ..primitives import BluetoothRow
+
         bluetooth_row = BluetoothRow(device_info)
         return bluetooth_row.get_widget()
 
@@ -201,6 +200,7 @@ class BluetoothTable(AdwComponentBase):
             # Import Bluetooth monitor
             import sys
             from pathlib import Path
+
             sys.path.append(str(Path(__file__).parent.parent))
             from bluetooth_monitor import BluetoothMonitor
 
@@ -237,6 +237,7 @@ class BluetoothTable(AdwComponentBase):
         except Exception as e:
             self.status_label.set_text(f"Error scanning devices: {e}")
             import logging
+
             logging.getLogger(__name__).error(f"Failed to refresh device list: {e}")
 
         finally:
@@ -250,15 +251,20 @@ class BluetoothTable(AdwComponentBase):
         if self.filter_text:
             search_lower = self.filter_text.lower()
             filtered = [
-                d for d in filtered
-                if (search_lower in d.name.lower() or
-                    search_lower in d.address.lower() or
-                    search_lower in d.device_type.lower())
+                d
+                for d in filtered
+                if (
+                    search_lower in d.name.lower()
+                    or search_lower in d.address.lower()
+                    or search_lower in d.device_type.lower()
+                )
             ]
 
         # Apply type filter
         if self.filter_type and self.filter_type != "All":
-            filtered = [d for d in filtered if d.device_type == self.filter_type.lower()]
+            filtered = [
+                d for d in filtered if d.device_type == self.filter_type.lower()
+            ]
 
         return filtered
 
@@ -267,13 +273,11 @@ class BluetoothTable(AdwComponentBase):
         if not self.sort_column or not devices:
             return devices
 
-        reverse = self.sort_column in ['rssi']  # Higher RSSI is better
+        reverse = self.sort_column in ["rssi"]  # Higher RSSI is better
 
         try:
             return sorted(
-                devices,
-                key=lambda d: getattr(d, self.sort_column, ""),
-                reverse=reverse
+                devices, key=lambda d: getattr(d, self.sort_column, ""), reverse=reverse
             )
         except (AttributeError, TypeError):
             return devices
@@ -340,6 +344,7 @@ class BluetoothTable(AdwComponentBase):
         try:
             import sys
             from pathlib import Path
+
             sys.path.append(str(Path(__file__).parent.parent))
             from bluetooth_monitor import BluetoothMonitor
 
@@ -363,7 +368,9 @@ class BluetoothTable(AdwComponentBase):
                     self.status_label.set_text("Discovering devices...")
 
                     # Refresh after starting discovery
-                    GLib.timeout_add(2000, self._refresh_device_list)  # Refresh after 2 seconds
+                    GLib.timeout_add(
+                        2000, self._refresh_device_list
+                    )  # Refresh after 2 seconds
 
         except Exception as e:
             self.status_label.set_text(f"Discovery error: {e}")
@@ -394,7 +401,7 @@ class BluetoothTable(AdwComponentBase):
 
         self.refresh_timeout_id = GLib.timeout_add(
             int(self.refresh_interval * 1000),  # Convert to milliseconds
-            self._auto_refresh_callback
+            self._auto_refresh_callback,
         )
 
     def _stop_auto_refresh(self):
@@ -423,6 +430,7 @@ class BluetoothTable(AdwComponentBase):
             try:
                 import sys
                 from pathlib import Path
+
                 sys.path.append(str(Path(__file__).parent.parent))
                 from bluetooth_monitor import BluetoothMonitor
 

@@ -17,10 +17,8 @@ class ServiceLogger:
         # Set up logging
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.StreamHandler(sys.stdout)
-            ]
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
         )
         self.logger = logging.getLogger(service_name)
 
@@ -53,6 +51,7 @@ class ServiceLogger:
             self.logger.debug(f"{message} - {metadata}")
         else:
             self.logger.debug(message)
+
 
 def create_service_logger(service_name, version):
     """Create a service logger instance"""

@@ -7,15 +7,15 @@ embedded in the monolithic desktop_app.py file.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import time
 
 from gi.repository import GLib, Gtk, Pango
 
 # Import component library - FRAMEWORK ONLY
-from ..components import ActionButton, FormInput
+from ..components import FormInput
 
 # Framework availability - NO FALLBACK
 COMPONENTS_AVAILABLE = True
@@ -25,6 +25,7 @@ COMPONENTS_AVAILABLE = True
 # Import voice visualizer separately
 try:
     from ..components.voice_visualizer import VoiceVisualizerFactory
+
     VOICE_VISUALIZER_AVAILABLE = True
 except ImportError as e:
     print(f"Voice visualizer not available: {e}")
@@ -79,11 +80,13 @@ class ChatroomView:
         messages_area.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         # Messages container with design system padding
-        messages_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)  # sp_2 (8px) for element spacing
-        messages_container.set_margin_top(16)     # sp_4 - major component margins
+        messages_container = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=8
+        )  # sp_2 (8px) for element spacing
+        messages_container.set_margin_top(16)  # sp_4 - major component margins
         messages_container.set_margin_bottom(16)  # sp_4 - major component margins
-        messages_container.set_margin_start(16)   # sp_4 - major component margins
-        messages_container.set_margin_end(16)     # sp_4 - major component margins
+        messages_container.set_margin_start(16)  # sp_4 - major component margins
+        messages_container.set_margin_end(16)  # sp_4 - major component margins
 
         messages_area.set_child(messages_container)
         chatroom_container.append(messages_area)
@@ -94,16 +97,18 @@ class ChatroomView:
         # Input area container (fixed at bottom, will contain text editor)
         # Using design system spacing: sp_6 (24px) for section breaks
         input_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        input_area.set_margin_top(24)     # sp_6 - section breaks, modal internal spacing
+        input_area.set_margin_top(24)  # sp_6 - section breaks, modal internal spacing
         input_area.set_margin_bottom(16)  # sp_4 - major component margins
-        input_area.set_margin_start(16)   # sp_4 - major component margins
-        input_area.set_margin_end(16)     # sp_4 - major component margins
+        input_area.set_margin_start(16)  # sp_4 - major component margins
+        input_area.set_margin_end(16)  # sp_4 - major component margins
 
         # Create FormInput with voice support (replaces TextEditor + custom voice controls)
         if COMPONENTS_AVAILABLE:
             # Create FormInput with voice-enabled textarea
             # Pass audio_handler if available for actual voice recording
-            audio_handler = self.app.audio_handler if hasattr(self.app, 'audio_handler') else None
+            audio_handler = (
+                self.app.audio_handler if hasattr(self.app, "audio_handler") else None
+            )
             form_input = FormInput(
                 input_type="textarea",
                 name="chatroom_message",
@@ -113,33 +118,43 @@ class ChatroomView:
                 show_visualizer=True,
                 visualizer_width=250,
                 rows=4,
-                audio_handler=audio_handler
+                audio_handler=audio_handler,
             )
 
             # Get the widget and apply design system margins
             form_input_widget = form_input.get_widget()
-            form_input_widget.set_margin_top(8)     # sp_2 - form field padding
+            form_input_widget.set_margin_top(8)  # sp_2 - form field padding
             form_input_widget.set_margin_bottom(8)  # sp_2 - form field padding
-            form_input_widget.set_margin_start(8)   # sp_2 - form field padding
-            form_input_widget.set_margin_end(8)     # sp_2 - form field padding
+            form_input_widget.set_margin_start(8)  # sp_2 - form field padding
+            form_input_widget.set_margin_end(8)  # sp_2 - form field padding
             form_input_widget.set_hexpand(True)
             form_input_widget.set_vexpand(True)
 
             # Connect FormInput events
-            form_input.connect('value-changed', self._on_chatroom_content_changed)
-            form_input.connect('recording-started', self._on_voice_recording_started)
-            form_input.connect('recording-stopped', self._on_voice_recording_stopped)
-            form_input.connect('transcription-completed', self._on_voice_transcription_completed)
+            form_input.connect("value-changed", self._on_chatroom_content_changed)
+            form_input.connect("recording-started", self._on_voice_recording_started)
+            form_input.connect("recording-stopped", self._on_voice_recording_stopped)
+            form_input.connect(
+                "transcription-completed", self._on_voice_transcription_completed
+            )
 
             # Store references
             self._chat_input = form_input
             self._voice_visualizer = form_input._voice_visualizer
             self._recording_status_label = form_input._recording_timer_label
-            self._chatroom_voice_button = form_input._voice_button if hasattr(form_input, '_voice_button') else None
+            self._chatroom_voice_button = (
+                form_input._voice_button
+                if hasattr(form_input, "_voice_button")
+                else None
+            )
             self._chatroom_input_row = form_input_widget
 
             # Connect visualizer to audio handler for real-time feedback
-            if self._voice_visualizer and hasattr(self.app, 'audio_handler') and self.app.audio_handler:
+            if (
+                self._voice_visualizer
+                and hasattr(self.app, "audio_handler")
+                and self.app.audio_handler
+            ):
                 self.app.audio_handler.set_voice_visualizer(self._voice_visualizer)
 
             input_area.append(form_input_widget)
@@ -175,7 +190,9 @@ class ChatroomView:
         try:
             # Prevent multiple session creation requests
             if self._session_status != "no_session":
-                print(f"⚠️ Session creation already in progress or session exists (status: {self._session_status})")
+                print(
+                    f"⚠️ Session creation already in progress or session exists (status: {self._session_status})"
+                )
                 return
 
             # Clear old messages from previous session
@@ -186,6 +203,7 @@ class ChatroomView:
 
             # Create session in background thread
             import threading
+
             thread = threading.Thread(target=self._create_session_grpc, daemon=True)
             thread.start()
 
@@ -207,6 +225,7 @@ class ChatroomView:
 
         # Also try relative to current working directory
         import os
+
         cwd_libs_path = PathlibPath(os.getcwd()) / "libs" / "python"
         if cwd_libs_path.exists():
             sys.path.insert(0, str(cwd_libs_path))
@@ -230,7 +249,10 @@ class ChatroomView:
 
         # Framework must be available - NO FALLBACK
         if not _framework_initialized:
-            GLib.idle_add(self._on_session_creation_failed, "Service framework required but not available")
+            GLib.idle_add(
+                self._on_session_creation_failed,
+                "Service framework required but not available",
+            )
             return
 
         # Create conversation request
@@ -245,36 +267,41 @@ class ChatroomView:
                 max_tokens=2048,
                 include_context=True,
                 context_window_size=4096,
-                enable_tools=False
-            )
+                enable_tools=False,
+            ),
         )
-
-
 
         try:
             # Use framework service call - NO LEGACY CLIENT
-            response = call_service_method("chat", "CreateConversation", request, timeout=10.0)
+            response = call_service_method(
+                "chat", "CreateConversation", request, timeout=10.0
+            )
 
             # Check response
             if response and response.response.success:
                 conversation_id = response.conversation.metadata.resource_id
                 GLib.idle_add(self._on_session_created, conversation_id)
             else:
-                error_msg = response.response.message if response else "Service unavailable"
-                GLib.idle_add(self._on_session_creation_failed, f"Framework error: {error_msg}")
+                error_msg = (
+                    response.response.message if response else "Service unavailable"
+                )
+                GLib.idle_add(
+                    self._on_session_creation_failed, f"Framework error: {error_msg}"
+                )
 
         except Exception as e:
             print(f"❌ gRPC session creation error: {e}")
-            GLib.idle_add(self._on_session_creation_failed, f"Service framework required: {e}")
+            GLib.idle_add(
+                self._on_session_creation_failed, f"Service framework required: {e}"
+            )
 
     # SIMULATION REMOVED - FRAMEWORK ONLY
 
     def _get_timestamp(self):
         """Get current timestamp for session naming"""
         import datetime
+
         return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
 
     def _on_session_created(self, session_id):
         """Handle successful session creation"""
@@ -284,19 +311,21 @@ class ChatroomView:
 
             # Update session logger with persisted chat session ID
             # This replaces the random desktop app UUID with the real persisted session ID
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
                 self.app.session_logger.update_session_id(session_id)
 
             # Update session ID display in Status tab
-            if hasattr(self.app, 'status_view') and self.app.status_view:
+            if hasattr(self.app, "status_view") and self.app.status_view:
                 self.app.status_view.update_session_id(session_id)
 
             # Log session creation
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHAT_SESSION_CREATED", f"Created chat session: {session_id}")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHAT_SESSION_CREATED", f"Created chat session: {session_id}"
+                )
 
             # Show success toast
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(f"Session {session_id[:8]} created successfully")
 
         except Exception as e:
@@ -308,11 +337,13 @@ class ChatroomView:
             self._session_status = "no_session"
 
             # Log session creation failure
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHAT_SESSION_FAILED", f"Session creation failed: {error_message}")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHAT_SESSION_FAILED", f"Session creation failed: {error_message}"
+                )
 
             # Show error toast
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(f"Session creation failed: {error_message}")
 
         except Exception as e:
@@ -333,7 +364,9 @@ class ChatroomView:
 
             # Set new timer if there's content
             if has_content:
-                self._typing_timer_id = GLib.timeout_add_seconds(3, self._on_typing_timeout)
+                self._typing_timer_id = GLib.timeout_add_seconds(
+                    3, self._on_typing_timeout
+                )
 
         except Exception as e:
             print(f"❌ Chatroom content change error: {e}")
@@ -346,24 +379,30 @@ class ChatroomView:
     def _on_chatroom_focus_gained(self, text_editor):
         """Handle focus gained in chatroom"""
         try:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_FOCUS_GAINED", "User focused on chatroom input")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_FOCUS_GAINED", "User focused on chatroom input"
+                )
         except Exception as e:
             print(f"❌ Chatroom focus gained error: {e}")
 
     def _on_chatroom_focus_lost(self, text_editor):
         """Handle focus lost in chatroom"""
         try:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_FOCUS_LOST", "User left chatroom input")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_FOCUS_LOST", "User left chatroom input"
+                )
         except Exception as e:
             print(f"❌ Chatroom focus lost error: {e}")
 
     def _on_voice_recording_started(self, form_input):
         """Handle voice recording started from FormInput"""
         try:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_VOICE_RECORDING_STARTED", "Voice recording started")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_VOICE_RECORDING_STARTED", "Voice recording started"
+                )
             self.app.show_toast("Recording...")
         except Exception as e:
             print(f"❌ Voice recording started error: {e}")
@@ -371,8 +410,10 @@ class ChatroomView:
     def _on_voice_recording_stopped(self, form_input):
         """Handle voice recording stopped from FormInput"""
         try:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_VOICE_RECORDING_STOPPED", "Voice recording stopped")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_VOICE_RECORDING_STOPPED", "Voice recording stopped"
+                )
             self.app.show_toast("Processing...")
         except Exception as e:
             print(f"❌ Voice recording stopped error: {e}")
@@ -380,8 +421,11 @@ class ChatroomView:
     def _on_voice_transcription_completed(self, form_input, transcript):
         """Handle voice transcription completed from FormInput"""
         try:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_VOICE_TRANSCRIPTION_COMPLETED", f"Transcribed: {transcript[:50]}...")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_VOICE_TRANSCRIPTION_COMPLETED",
+                    f"Transcribed: {transcript[:50]}...",
+                )
             self.app.show_toast("Transcription complete")
         except Exception as e:
             print(f"❌ Voice transcription completed error: {e}")
@@ -396,7 +440,7 @@ class ChatroomView:
 
         except Exception as e:
             print(f"❌ Chatroom voice toggle error: {e}")
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(f"Voice recording failed: {e}")
 
     def _start_toggle_recording(self):
@@ -408,11 +452,13 @@ class ChatroomView:
 
             # Update button appearance
             self._chatroom_voice_button.add_css_class("recording-active")
-            if hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                self._chatroom_voice_button.set_icon_name("media-playback-stop-symbolic")
-            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+            if hasattr(self._chatroom_voice_button, "set_icon_name"):
+                self._chatroom_voice_button.set_icon_name(
+                    "media-playback-stop-symbolic"
+                )
+            elif hasattr(self._chatroom_voice_button, "get_widget"):
                 widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, 'set_icon_name'):
+                if hasattr(widget, "set_icon_name"):
                     widget.set_icon_name("media-playback-stop-symbolic")
 
             # Start recording timer (always show timer regardless of backend)
@@ -433,11 +479,14 @@ class ChatroomView:
             self.app.show_toast("Recording...")
 
             # Log event
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_START", "Started toggle recording in chatroom")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_TOGGLE_RECORDING_START",
+                    "Started toggle recording in chatroom",
+                )
 
             # Use AudioHandler (always available now)
-            if hasattr(self.app, 'audio_handler') and self.app.audio_handler:
+            if hasattr(self.app, "audio_handler") and self.app.audio_handler:
                 self.app.audio_handler.start_recording()
             else:
                 print("⚠️ AudioHandler not available")
@@ -450,11 +499,13 @@ class ChatroomView:
             self._stop_recording_timer()
             # Reset button appearance
             self._chatroom_voice_button.remove_css_class("recording-active")
-            if hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+            if hasattr(self._chatroom_voice_button, "set_icon_name"):
+                self._chatroom_voice_button.set_icon_name(
+                    "audio-input-microphone-symbolic"
+                )
+            elif hasattr(self._chatroom_voice_button, "get_widget"):
                 widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, 'set_icon_name'):
+                if hasattr(widget, "set_icon_name"):
                     widget.set_icon_name("audio-input-microphone-symbolic")
             # Reset timer display
             if self._recording_status_label:
@@ -468,11 +519,13 @@ class ChatroomView:
 
             # Reset button appearance
             self._chatroom_voice_button.remove_css_class("recording-active")
-            if hasattr(self._chatroom_voice_button, 'set_icon_name'):
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+            if hasattr(self._chatroom_voice_button, "set_icon_name"):
+                self._chatroom_voice_button.set_icon_name(
+                    "audio-input-microphone-symbolic"
+                )
+            elif hasattr(self._chatroom_voice_button, "get_widget"):
                 widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, 'set_icon_name'):
+                if hasattr(widget, "set_icon_name"):
                     widget.set_icon_name("audio-input-microphone-symbolic")
 
             # Stop timer
@@ -491,11 +544,14 @@ class ChatroomView:
             self.app.show_toast("Processing...")
 
             # Log event
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHATROOM_TOGGLE_RECORDING_STOP", "Stopped toggle recording in chatroom")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHATROOM_TOGGLE_RECORDING_STOP",
+                    "Stopped toggle recording in chatroom",
+                )
 
             # Use AudioHandler (always available now)
-            if hasattr(self.app, 'audio_handler') and self.app.audio_handler:
+            if hasattr(self.app, "audio_handler") and self.app.audio_handler:
                 self.app.audio_handler.stop_recording()
             else:
                 print("⚠️ AudioHandler not available")
@@ -511,6 +567,7 @@ class ChatroomView:
     def _start_recording_timer(self):
         """Start the recording timer display"""
         try:
+
             def update_timer():
                 if self._is_recording and self._recording_start_time:
                     elapsed = time.time() - self._recording_start_time
@@ -524,11 +581,11 @@ class ChatroomView:
 
                     # Update button tooltip (simplified)
                     tooltip_text = "Click to stop recording"
-                    if hasattr(self._chatroom_voice_button, 'set_tooltip_text'):
+                    if hasattr(self._chatroom_voice_button, "set_tooltip_text"):
                         self._chatroom_voice_button.set_tooltip_text(tooltip_text)
-                    elif hasattr(self._chatroom_voice_button, 'get_widget'):
+                    elif hasattr(self._chatroom_voice_button, "get_widget"):
                         widget = self._chatroom_voice_button.get_widget()
-                        if hasattr(widget, 'set_tooltip_text'):
+                        if hasattr(widget, "set_tooltip_text"):
                             widget.set_tooltip_text(tooltip_text)
 
                     return True  # Continue timer
@@ -548,11 +605,13 @@ class ChatroomView:
                 self._recording_timer_id = None
 
             # Reset tooltip
-            if hasattr(self._chatroom_voice_button, 'set_tooltip_text'):
-                self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-            elif hasattr(self._chatroom_voice_button, 'get_widget'):
+            if hasattr(self._chatroom_voice_button, "set_tooltip_text"):
+                self._chatroom_voice_button.set_tooltip_text(
+                    "Click to start/stop recording"
+                )
+            elif hasattr(self._chatroom_voice_button, "get_widget"):
                 widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, 'set_tooltip_text'):
+                if hasattr(widget, "set_tooltip_text"):
                     widget.set_tooltip_text("Click to start/stop recording")
 
         except Exception as e:
@@ -564,7 +623,7 @@ class ChatroomView:
             # Get message content
             if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
                 message = self._chat_input.get_value()
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
                 message = self._chat_input.get_content()
             else:
                 # Fallback for basic TextView
@@ -588,14 +647,16 @@ class ChatroomView:
                 # Clear input
                 if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
                     self._chat_input.set_value("")
-                elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
+                elif COMPONENTS_AVAILABLE and hasattr(
+                    self._chat_input, "clear_content"
+                ):
                     self._chat_input.clear_content()
                 else:
                     buffer = self._chat_input.get_buffer()
                     buffer.set_text("")
 
                 # Focus input field for next command
-                if hasattr(self._chat_input, 'grab_focus'):
+                if hasattr(self._chat_input, "grab_focus"):
                     self._chat_input.grab_focus()
 
                 # Disable send button
@@ -608,14 +669,14 @@ class ChatroomView:
             # Clear input
             if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
                 self._chat_input.set_value("")
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'clear_content'):
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "clear_content"):
                 self._chat_input.clear_content()
             else:
                 buffer = self._chat_input.get_buffer()
                 buffer.set_text("")
 
             # Focus input field for next message
-            if hasattr(self._chat_input, 'grab_focus'):
+            if hasattr(self._chat_input, "grab_focus"):
                 self._chat_input.grab_focus()
 
             # Disable send button
@@ -628,7 +689,7 @@ class ChatroomView:
             print(f"❌ Chatroom send error: {e}")
             # Re-enable send button so user can retry
             self._chatroom_send_button.set_sensitive(True)
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(f"Send failed: {e}")
 
     def _add_chat_message(self, sender, message, message_type="user"):
@@ -665,7 +726,9 @@ class ChatroomView:
             message_label.set_wrap(True)
             message_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
             message_label.set_selectable(True)
-            message_label.set_max_width_chars(80)  # Prevent very long messages from stretching window
+            message_label.set_max_width_chars(
+                80
+            )  # Prevent very long messages from stretching window
 
             message_box.append(message_label)
 
@@ -706,7 +769,9 @@ class ChatroomView:
                 vadj = parent.get_vadjustment()
                 if vadj:
                     # Use idle_add to ensure scroll happens after widget is rendered
-                    GLib.idle_add(lambda: vadj.set_value(vadj.get_upper() - vadj.get_page_size()))
+                    GLib.idle_add(
+                        lambda: vadj.set_value(vadj.get_upper() - vadj.get_page_size())
+                    )
 
         except Exception as e:
             print(f"❌ Scroll to bottom error: {e}")
@@ -740,6 +805,7 @@ class ChatroomView:
             # Submit to thread pool for image generation
             import sys
             from pathlib import Path as PathlibPath
+
             project_root = PathlibPath(__file__).parent.parent.parent
 
             # Add project root to path for proper imports
@@ -756,18 +822,23 @@ class ChatroomView:
                         num_inference_steps=20,  # Fast generation
                         guidance_scale=7.5,
                         height=512,
-                        width=512
+                        width=512,
                     )
 
                     # Update UI on main thread
-                    GLib.idle_add(self._display_generated_image, thinking_box, result, prompt)
+                    GLib.idle_add(
+                        self._display_generated_image, thinking_box, result, prompt
+                    )
 
                 except Exception as e:
                     print(f"❌ Image generation error: {e}")
-                    GLib.idle_add(self._add_error_message, f"Image generation failed: {e}")
+                    GLib.idle_add(
+                        self._add_error_message, f"Image generation failed: {e}"
+                    )
 
             # Submit to thread pool
             import threading
+
             thread = threading.Thread(target=generate_image_thread, daemon=True)
             thread.start()
 
@@ -801,8 +872,8 @@ class ChatroomView:
                     "generation_time": generation_time,
                     "model": result.get("model", "unknown"),
                     "device": result.get("device", "unknown"),
-                    "steps": result.get("num_inference_steps", 20)
-                }
+                    "steps": result.get("num_inference_steps", 20),
+                },
             )
 
             # Add widget to chat
@@ -811,12 +882,14 @@ class ChatroomView:
                 self._scroll_to_bottom()
 
             # Log generation
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("IMAGE_GENERATED",
-                    f"Prompt: {prompt[:50]}... | Time: {generation_time:.1f}s | Path: {image_path}")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "IMAGE_GENERATED",
+                    f"Prompt: {prompt[:50]}... | Time: {generation_time:.1f}s | Path: {image_path}",
+                )
 
             # Show toast
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(f"✅ Image generated in {generation_time:.1f}s")
 
         except Exception as e:
@@ -827,9 +900,11 @@ class ChatroomView:
         """Send message to LLM with session context and archival"""
         try:
             # Log message with session context
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("CHAT_MESSAGE_SENT",
-                    f"Session {self._current_session_id}: {message[:50]}...")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "CHAT_MESSAGE_SENT",
+                    f"Session {self._current_session_id}: {message[:50]}...",
+                )
 
             # Send message if session is active
             if self._current_session_id:
@@ -843,8 +918,10 @@ class ChatroomView:
             else:
                 # This shouldn't happen due to UI controls, but handle gracefully
                 print("⚠️ Attempting to send message without active session")
-                if hasattr(self.app, 'show_toast'):
-                    self.app.show_toast("No active session - please create a session first")
+                if hasattr(self.app, "show_toast"):
+                    self.app.show_toast(
+                        "No active session - please create a session first"
+                    )
 
         except Exception as e:
             print(f"❌ Send message with session error: {e}")
@@ -866,7 +943,9 @@ class ChatroomView:
         # This method is disabled - use /image command instead
         pass
 
-    def _image_generation_with_framework(self, image_request, thinking_box, original_message):
+    def _image_generation_with_framework(
+        self, image_request, thinking_box, original_message
+    ):
         """Hardware-aware image generation using service framework - DISABLED
 
         The gRPC image generation service is not running.
@@ -879,7 +958,9 @@ class ChatroomView:
         """Add image generation progress indicator to chat"""
         try:
             # Create thinking indicator container
-            thinking_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            thinking_container = Gtk.Box(
+                orientation=Gtk.Orientation.HORIZONTAL, spacing=8
+            )
             thinking_container.add_css_class("message-container")
             thinking_container.add_css_class("assistant-message")
             thinking_container.set_margin_top(8)
@@ -894,7 +975,9 @@ class ChatroomView:
 
             # Add status label
             status_label = Gtk.Label()
-            status_label.set_markup(f"<b>Generating image...</b>\nPrompt: {prompt[:50]}...")
+            status_label.set_markup(
+                f"<b>Generating image...</b>\nPrompt: {prompt[:50]}..."
+            )
             status_label.set_halign(Gtk.Align.START)
             status_label.set_valign(Gtk.Align.CENTER)
             thinking_container.append(status_label)
@@ -924,13 +1007,15 @@ class ChatroomView:
     def _update_image_progress(self, thinking_box, progress_data):
         """Update image generation progress"""
         try:
-            if thinking_box and hasattr(thinking_box, 'progress_bar'):
-                progress = progress_data.get('progress', 0)
-                step = progress_data.get('step', 0)
-                total_steps = progress_data.get('total_steps', 25)
+            if thinking_box and hasattr(thinking_box, "progress_bar"):
+                progress = progress_data.get("progress", 0)
+                step = progress_data.get("step", 0)
+                total_steps = progress_data.get("total_steps", 25)
 
                 thinking_box.progress_bar.set_fraction(progress)
-                thinking_box.progress_bar.set_text(f"Step {step}/{total_steps} ({int(progress * 100)}%)")
+                thinking_box.progress_bar.set_text(
+                    f"Step {step}/{total_steps} ({int(progress * 100)}%)"
+                )
 
         except Exception as e:
             print(f"❌ Update image progress error: {e}")
@@ -943,7 +1028,9 @@ class ChatroomView:
                 self._messages_container.remove(thinking_box)
 
             # Create image message container
-            image_container = self._create_image_message_container(result, original_message)
+            image_container = self._create_image_message_container(
+                result, original_message
+            )
 
             # Add to chat
             self._messages_container.append(image_container)
@@ -967,7 +1054,9 @@ class ChatroomView:
 
             # Add generation info
             info_label = Gtk.Label()
-            info_label.set_markup(f"<b>Generated Images</b> (Prompt: {original_message[:50]}...)")
+            info_label.set_markup(
+                f"<b>Generated Images</b> (Prompt: {original_message[:50]}...)"
+            )
             info_label.set_halign(Gtk.Align.START)
             container.append(info_label)
 
@@ -984,9 +1073,11 @@ class ChatroomView:
 
             # Add metadata
             metadata_label = Gtk.Label()
-            generation_time = result.get('generation_time', 0)
-            seed = result.get('seed', 'Unknown')
-            metadata_label.set_markup(f"<small>Generated in {generation_time:.1f}s • Seed: {seed}</small>")
+            generation_time = result.get("generation_time", 0)
+            seed = result.get("seed", "Unknown")
+            metadata_label.set_markup(
+                f"<small>Generated in {generation_time:.1f}s • Seed: {seed}</small>"
+            )
             metadata_label.add_css_class("dim-label")
             metadata_label.set_halign(Gtk.Align.START)
             container.append(metadata_label)
@@ -1005,6 +1096,7 @@ class ChatroomView:
 
             try:
                 import psutil
+
                 memory_percent = psutil.virtual_memory().percent
                 use_thumbnail = memory_percent > memory_threshold
             except ImportError:
@@ -1031,7 +1123,10 @@ class ChatroomView:
 
             # Make it clickable for full-size view
             click_controller = Gtk.GestureClick()
-            click_controller.connect("pressed", lambda gesture, n_press, x, y: self._show_full_image(image_path))
+            click_controller.connect(
+                "pressed",
+                lambda gesture, n_press, x, y: self._show_full_image(image_path),
+            )
             image.add_controller(click_controller)
 
             return image
@@ -1059,15 +1154,20 @@ class ChatroomView:
             load_button = Gtk.Button()
             load_button.set_label("Load Image")
             load_button.add_css_class("suggested-action")
-            load_button.connect("clicked", lambda btn: self._load_full_image(container, image_path))
+            load_button.connect(
+                "clicked", lambda btn: self._load_full_image(container, image_path)
+            )
             container.append(load_button)
 
             # Add memory info
             try:
                 import psutil
+
                 memory_percent = psutil.virtual_memory().percent
                 info_label = Gtk.Label()
-                info_label.set_markup(f"<small>Thumbnail mode (Memory: {memory_percent:.1f}%)</small>")
+                info_label.set_markup(
+                    f"<small>Thumbnail mode (Memory: {memory_percent:.1f}%)</small>"
+                )
                 info_label.add_css_class("dim-label")
                 container.append(info_label)
             except ImportError:
@@ -1088,6 +1188,7 @@ class ChatroomView:
             # Check memory again before loading
             try:
                 import psutil
+
                 memory_percent = psutil.virtual_memory().percent
                 if memory_percent > 85.0:
                     # Show warning instead of loading
@@ -1127,7 +1228,9 @@ class ChatroomView:
 
             # Add warning message
             warning_label = Gtk.Label()
-            warning_label.set_markup(f"<b>Memory Usage High</b>\n{memory_percent:.1f}% used\n\nClose some applications\nto load images")
+            warning_label.set_markup(
+                f"<b>Memory Usage High</b>\n{memory_percent:.1f}% used\n\nClose some applications\nto load images"
+            )
             warning_label.set_justify(Gtk.Justification.CENTER)
             warning_label.add_css_class("warning-text")
             container.append(warning_label)
@@ -1135,7 +1238,9 @@ class ChatroomView:
             # Add view button for external viewer
             view_button = Gtk.Button()
             view_button.set_label("Open Externally")
-            view_button.connect("clicked", lambda btn: self._open_image_externally(container.image_path))
+            view_button.connect(
+                "clicked", lambda btn: self._open_image_externally(container.image_path)
+            )
             container.append(view_button)
 
         except Exception as e:
@@ -1160,6 +1265,7 @@ class ChatroomView:
         """Check if image path exists"""
         try:
             from pathlib import Path
+
             return Path(image_path).exists()
         except:
             return False
@@ -1235,13 +1341,12 @@ class ChatroomView:
         except Exception as e:
             print(f"❌ Add error message error: {e}")
 
-
-
     def _send_text_message_framework(self, message):
         """Send text message using FRAMEWORK ONLY - NO LEGACY"""
         # FRAMEWORK ONLY - NO LEGACY LLM METHOD
         import sys
         from pathlib import Path as PathlibPath
+
         project_root = PathlibPath(__file__).parent.parent.parent
         grpc_lib_path = project_root / "libs" / "python" / "grpc"
         if grpc_lib_path.exists():
@@ -1264,8 +1369,7 @@ class ChatroomView:
 
         # Submit to I/O thread pool for text processing
         future = resource_manager.submit_io_task(
-            self._text_chat_framework_thread,
-            message, thinking_box
+            self._text_chat_framework_thread, message, thinking_box
         )
 
         # Store future for potential cancellation
@@ -1307,7 +1411,6 @@ class ChatroomView:
             from libs.python.grpc_clients.client_factory import call_service_method
             from unhinged_proto_clients import chat_pb2
             import requests
-            import json
 
             # Step 1: Send user message to chat service (store it)
             request = chat_pb2.SendMessageRequest()
@@ -1317,8 +1420,16 @@ class ChatroomView:
 
             response = call_service_method("chat", "SendMessage", request, timeout=60.0)
             if not response or not response.response.success:
-                error_msg = response.response.message if response else "Failed to store user message"
-                GLib.idle_add(self._handle_text_error, f"Chat service error: {error_msg}", thinking_box)
+                error_msg = (
+                    response.response.message
+                    if response
+                    else "Failed to store user message"
+                )
+                GLib.idle_add(
+                    self._handle_text_error,
+                    f"Chat service error: {error_msg}",
+                    thinking_box,
+                )
                 return
 
             # Step 2: Call Ollama LLM to generate response
@@ -1329,18 +1440,24 @@ class ChatroomView:
                         "model": "llama2",  # Default model
                         "prompt": message,
                         "stream": False,
-                        "temperature": 0.7
+                        "temperature": 0.7,
                     },
-                    timeout=120.0
+                    timeout=120.0,
                 )
                 ollama_response.raise_for_status()
 
                 response_data = ollama_response.json()
-                assistant_response = response_data.get("response", "No response from LLM")
+                assistant_response = response_data.get(
+                    "response", "No response from LLM"
+                )
             except requests.exceptions.ConnectionError:
-                assistant_response = "Error: LLM service not available at localhost:1500"
+                assistant_response = (
+                    "Error: LLM service not available at localhost:1500"
+                )
             except requests.exceptions.Timeout:
-                assistant_response = "Error: LLM service timeout (took longer than 120 seconds)"
+                assistant_response = (
+                    "Error: LLM service timeout (took longer than 120 seconds)"
+                )
             except Exception as e:
                 assistant_response = f"Error: LLM generation failed: {str(e)}"
 
@@ -1352,7 +1469,9 @@ class ChatroomView:
                     response_request.role = chat_pb2.MESSAGE_ROLE_ASSISTANT
                     response_request.content = assistant_response
 
-                    call_service_method("chat", "SendMessage", response_request, timeout=60.0)
+                    call_service_method(
+                        "chat", "SendMessage", response_request, timeout=60.0
+                    )
                 except Exception as e:
                     print(f"⚠️ Failed to store assistant response: {e}")
 
@@ -1361,7 +1480,10 @@ class ChatroomView:
 
         except Exception as e:
             from gi.repository import GLib
-            GLib.idle_add(self._handle_text_error, f"Text chat failed: {e}", thinking_box)
+
+            GLib.idle_add(
+                self._handle_text_error, f"Text chat failed: {e}", thinking_box
+            )
 
     def _handle_text_response(self, response, thinking_box):
         """Handle text response using framework patterns"""
@@ -1374,17 +1496,27 @@ class ChatroomView:
             self._add_chat_message("Assistant", response, "assistant")
 
             # Log the interaction
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}"
+                )
 
             # Re-enable send button only if there's content AND active session
             if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
-                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
+                has_content = (
+                    self._chat_input.get_value()
+                    and str(self._chat_input.get_value()).strip()
+                )
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
+                has_content = (
+                    self._chat_input.get_content()
+                    and self._chat_input.get_content().strip()
+                )
             else:
                 buffer = self._chat_input.get_buffer()
-                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
+                has_content = buffer.get_text(
+                    buffer.get_start_iter(), buffer.get_end_iter(), False
+                ).strip()
             has_session = self._session_status == "active"
             self._chatroom_send_button.set_sensitive(has_content and has_session)
 
@@ -1403,17 +1535,25 @@ class ChatroomView:
 
             # Re-enable send button only if there's content AND active session
             if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
-                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
+                has_content = (
+                    self._chat_input.get_value()
+                    and str(self._chat_input.get_value()).strip()
+                )
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
+                has_content = (
+                    self._chat_input.get_content()
+                    and self._chat_input.get_content().strip()
+                )
             else:
                 buffer = self._chat_input.get_buffer()
-                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
+                has_content = buffer.get_text(
+                    buffer.get_start_iter(), buffer.get_end_iter(), False
+                ).strip()
             has_session = self._session_status == "active"
             self._chatroom_send_button.set_sensitive(has_content and has_session)
 
             # Show toast
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(error_msg)
 
         except Exception as e:
@@ -1427,7 +1567,10 @@ class ChatroomView:
 
             # Run TTS in background thread
             import threading
-            thread = threading.Thread(target=self._tts_thread, args=(text, button), daemon=True)
+
+            thread = threading.Thread(
+                target=self._tts_thread, args=(text, button), daemon=True
+            )
             thread.start()
 
         except Exception as e:
@@ -1451,20 +1594,22 @@ class ChatroomView:
             request.voice_id = "default"
 
             # Call TTS service (registered as "text_to_speech" in service framework)
-            response = call_service_method("text_to_speech", "TextToSpeech", request, timeout=30.0)
+            response = call_service_method(
+                "text_to_speech", "TextToSpeech", request, timeout=30.0
+            )
 
-            if response and hasattr(response, 'audio_data') and response.audio_data:
+            if response and hasattr(response, "audio_data") and response.audio_data:
                 # Save audio to temporary file
-                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                     f.write(response.audio_data)
                     audio_file = f.name
 
                 # Play audio using system player
                 try:
-                    subprocess.run(['aplay', audio_file], check=True, timeout=60)
+                    subprocess.run(["aplay", audio_file], check=True, timeout=60)
                 except FileNotFoundError:
                     # Fallback to paplay if aplay not available
-                    subprocess.run(['paplay', audio_file], check=True, timeout=60)
+                    subprocess.run(["paplay", audio_file], check=True, timeout=60)
                 finally:
                     # Clean up temp file
                     Path(audio_file).unlink(missing_ok=True)
@@ -1473,16 +1618,21 @@ class ChatroomView:
                 GLib.idle_add(lambda: self._update_tts_button(button, "✅ Done"))
                 GLib.idle_add(lambda: button.set_sensitive(True))
                 # Reset button label after 2 seconds
-                GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
+                GLib.timeout_add(
+                    2000, lambda: self._update_tts_button(button, "🎤 Hear")
+                )
             else:
                 GLib.idle_add(lambda: self._update_tts_button(button, "❌ Failed"))
                 GLib.idle_add(lambda: button.set_sensitive(True))
                 # Reset button label after 2 seconds
-                GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
+                GLib.timeout_add(
+                    2000, lambda: self._update_tts_button(button, "🎤 Hear")
+                )
 
         except Exception as e:
             print(f"❌ TTS thread error: {e}")
             from gi.repository import GLib
+
             GLib.idle_add(lambda: self._update_tts_button(button, "❌ Error"))
             GLib.idle_add(lambda: button.set_sensitive(True))
             # Reset button label after 2 seconds
@@ -1504,7 +1654,7 @@ class ChatroomView:
                 self._chat_input.append_transcript(transcript)
                 new_text = self._chat_input.get_value()
             # Handle TextEditor (legacy)
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, 'get_content'):
+            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
                 current_text = self._chat_input.get_content()
                 if current_text.strip():
                     # Append to existing text with space
@@ -1517,7 +1667,9 @@ class ChatroomView:
             else:
                 # Fallback for basic TextView
                 buffer = self._chat_input.get_buffer()
-                current_text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+                current_text = buffer.get_text(
+                    buffer.get_start_iter(), buffer.get_end_iter(), False
+                )
 
                 if current_text.strip():
                     new_text = f"{current_text} {transcript}"
@@ -1541,11 +1693,12 @@ class ChatroomView:
 
             # Force UI refresh to prevent blank view issue
             from gi.repository import GLib
+
             GLib.idle_add(self._refresh_ui_after_transcript)
 
         except Exception as e:
             print(f"❌ Add voice transcript error: {e}")
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast(f"Transcript: {transcript}")
 
     def _refresh_ui_after_transcript(self):
@@ -1554,11 +1707,11 @@ class ChatroomView:
             # Force the input widget to refresh and show the updated content
             if self._chat_input:
                 # FormInput is a composite component, so we need to call queue_draw on its widget
-                if hasattr(self._chat_input, 'widget') and self._chat_input.widget:
+                if hasattr(self._chat_input, "widget") and self._chat_input.widget:
                     self._chat_input.widget.queue_draw()
 
             # Ensure the input area is visible and focused
-            if hasattr(self._chat_input, 'grab_focus'):
+            if hasattr(self._chat_input, "grab_focus"):
                 self._chat_input.grab_focus()
 
             return False  # Don't repeat this idle callback

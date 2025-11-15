@@ -13,15 +13,15 @@ from .copy_button import CopyButton
 from .text_editor import TextEditor
 
 __all__ = [
-    'ActionButton',
-    'StatusLabel',
-    'ProgressIndicator',
-    'HardwareInfoRow',
-    'ProcessRow',
-    'BluetoothRow',
-    'AudioDeviceRow',
-    'ChatBubble',
-    'LoadingDots',
-    'CopyButton',
-    'TextEditor',
+    "ActionButton",
+    "StatusLabel",
+    "ProgressIndicator",
+    "HardwareInfoRow",
+    "ProcessRow",
+    "BluetoothRow",
+    "AudioDeviceRow",
+    "ChatBubble",
+    "LoadingDots",
+    "CopyButton",
+    "TextEditor",
 ]

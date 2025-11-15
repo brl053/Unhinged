@@ -23,8 +23,8 @@ real-time updates, component library integration, and professional design system
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import os
 import sys
@@ -38,7 +38,9 @@ project_root = Path(__file__).parent.parent.parent
 
 # Use build/python/venv as single source of truth for all dependencies
 # See: build/requirements-unified.txt and LLM_MASTER_PROMPT.md
-venv_packages = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
+venv_packages = (
+    project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
+)
 protobuf_clients = project_root / "generated" / "python" / "clients"
 
 if venv_packages.exists():
@@ -109,6 +111,7 @@ try:
         SystemInfoCard,
         SystemStatusGrid,
     )
+
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
@@ -125,6 +128,7 @@ try:
         get_performance_summary,
         get_system_info,
     )
+
     SYSTEM_INFO_AVAILABLE = True
 except ImportError:
     SYSTEM_INFO_AVAILABLE = False
@@ -134,9 +138,25 @@ SESSION_LOGGING_AVAILABLE = False
 try:
     # Try multiple possible paths for the event framework
     event_paths = [
-        str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"),
-        str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"),
-        str(Path(__file__).parent.parent.parent / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages")
+        str(
+            Path(__file__).parent.parent.parent
+            / "libs"
+            / "event-framework"
+            / "python"
+            / "src"
+        ),
+        str(
+            Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"
+        ),
+        str(
+            Path(__file__).parent.parent.parent
+            / "build"
+            / "python"
+            / "venv"
+            / "lib"
+            / "python3.12"
+            / "site-packages"
+        ),
     ]
 
     for path in event_paths:
@@ -145,6 +165,7 @@ try:
             break
 
     from events import GUIOutputCapture, create_gui_session_logger
+
     SESSION_LOGGING_AVAILABLE = True
 except ImportError:
     # Session logging is optional - continue without it
@@ -152,6 +173,7 @@ except ImportError:
 
 # Simple approach: Use control modules as scripts (academic exercise)
 CONTROL_MODULES_AVAILABLE = True
+
 
 class UnhingedDesktopApp(Adw.Application):
     """
@@ -167,7 +189,7 @@ class UnhingedDesktopApp(Adw.Application):
     """
 
     def __init__(self):
-        super().__init__(application_id='com.unhinged.platform.gtk4')
+        super().__init__(application_id="com.unhinged.platform.gtk4")
         self.project_root = Path(__file__).parent.parent.parent  # Updated path
         self.window = None
         # UI elements moved to StatusView
@@ -194,7 +216,7 @@ class UnhingedDesktopApp(Adw.Application):
         self.recording_timer_id = None
 
         # Development mode detection
-        self.dev_mode = os.environ.get('DEV_MODE', '0') == '1'
+        self.dev_mode = os.environ.get("DEV_MODE", "0") == "1"
 
         # Initialize session logging (optional)
         self.session_logger = None
@@ -203,10 +225,11 @@ class UnhingedDesktopApp(Adw.Application):
             try:
                 self.session_logger = create_gui_session_logger(self.project_root)
                 self.output_capture = GUIOutputCapture(
-                    self.session_logger,
-                    self._gui_log_callback
+                    self.session_logger, self._gui_log_callback
                 )
-                self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with system info integration")
+                self.session_logger.log_session_event(
+                    "APP_INIT", "GTK4 desktop app with system info integration"
+                )
             except Exception:
                 self.session_logger = None
                 self.output_capture = None
@@ -223,7 +246,7 @@ class UnhingedDesktopApp(Adw.Application):
                 self.audio_handler.set_callbacks(
                     state_callback=self._on_recording_state_changed,
                     result_callback=self._on_transcription_result,
-                    error_callback=self._on_audio_error
+                    error_callback=self._on_audio_error,
                 )
 
                 # Log configuration for debugging
@@ -269,7 +292,7 @@ class UnhingedDesktopApp(Adw.Application):
 
     def _load_design_system_css(self):
         """Load design system CSS files"""
-        if os.environ.get('SKIP_DESIGN_SYSTEM', '0') == '1':
+        if os.environ.get("SKIP_DESIGN_SYSTEM", "0") == "1":
             print("ℹ️ Skipping design system CSS loading")
             return
 
@@ -292,19 +315,21 @@ class UnhingedDesktopApp(Adw.Application):
                 Gtk.StyleContext.add_provider_for_display(
                     display,
                     self._pending_css_provider,
-                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
                 )
                 self._pending_css_provider = None
 
         # Log application activation
         if self.session_logger:
-            self.session_logger.log_gui_event("APP_ACTIVATE", "Main window created and presented")
+            self.session_logger.log_gui_event(
+                "APP_ACTIVATE", "Main window created and presented"
+            )
 
         self.window.present()
 
     def create_main_window(self):
         """Create main application window using UIController"""
-        if hasattr(self, 'ui_controller') and self.ui_controller:
+        if hasattr(self, "ui_controller") and self.ui_controller:
             # Set title based on mode
             if self.dev_mode:
                 title = "Unhinged - Development Mode"
@@ -316,7 +341,7 @@ class UnhingedDesktopApp(Adw.Application):
             self.max_toast_stack = 3
 
             # Setup actions
-            if hasattr(self, 'action_controller') and self.action_controller:
+            if hasattr(self, "action_controller") and self.action_controller:
                 self.action_controller.setup_actions()
 
             return self.ui_controller.create_main_window()
@@ -329,14 +354,12 @@ class UnhingedDesktopApp(Adw.Application):
 
     def create_tab_navigation(self):
         """Create sidebar navigation using UIController"""
-        if hasattr(self, 'ui_controller') and self.ui_controller:
+        if hasattr(self, "ui_controller") and self.ui_controller:
             self.ui_controller.create_tab_navigation()
         else:
             # Fallback: create basic navigation
             self.content_stack = Gtk.Stack()
             self.toast_overlay.set_child(self.content_stack)
-
-
 
     # Main tab removed - functionality migrated to enhanced Status tab
 
@@ -344,12 +367,14 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the status tab content using extracted StatusView."""
         try:
             from .views.status_view import StatusView
+
             self.status_view = StatusView(self)
             content = self.status_view.create_content()
             return content
         except Exception as e:
             print(f"❌ CRITICAL: Status creation failed: {e}")
             import traceback
+
             traceback.print_exc()
             raise
 
@@ -357,12 +382,14 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the system info tab content using extracted SystemInfoView"""
         try:
             from .views.system_view import SystemInfoView
+
             self.system_info_view = SystemInfoView(self)
             content = self.system_info_view.create_content()
             return content
         except Exception as e:
             print(f"❌ CRITICAL: System Info creation failed: {e}")
             import traceback
+
             traceback.print_exc()
             raise
 
@@ -409,7 +436,9 @@ class UnhingedDesktopApp(Adw.Application):
             widget = input_view.render()
 
             if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_TAB_CREATED", "Input tab created")
+                self.session_logger.log_gui_event(
+                    "INPUT_TAB_CREATED", "Input tab created"
+                )
 
             return widget
 
@@ -425,6 +454,7 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the OS Chatroom tab content using extracted ChatroomView"""
         try:
             from .views.chatroom_view import ChatroomView
+
             self.chatroom_view = ChatroomView(self)
             content = self.chatroom_view.create_content()
 
@@ -436,40 +466,39 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             print(f"❌ CRITICAL: OS Chatroom creation failed: {e}")
             import traceback
+
             traceback.print_exc()
             raise
 
     def _auto_create_session(self):
         """Automatically create a session on app launch (headless)"""
         try:
-            if hasattr(self, 'chatroom_view') and self.chatroom_view:
+            if hasattr(self, "chatroom_view") and self.chatroom_view:
                 # Check if session already exists
                 if self.chatroom_view._session_status == "no_session":
                     self.chatroom_view._create_new_session()
                     if self.session_logger:
                         self.session_logger.log_gui_event(
                             "AUTO_SESSION_CREATED",
-                            "Session automatically created on app launch (headless)"
+                            "Session automatically created on app launch (headless)",
                         )
         except Exception:
             pass  # Auto-session creation failed, continue
         return False  # Don't repeat
 
-
-
-
-
     def _start_toggle_recording(self):
         """Start toggle recording using AudioHandler"""
         try:
-            if not hasattr(self, 'audio_handler'):
+            if not hasattr(self, "audio_handler"):
                 self._init_audio_handler()
 
             self.audio_handler.start_recording()
             self.show_toast("Recording... (click to stop)")
 
             if self.session_logger:
-                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started toggle recording")
+                self.session_logger.log_gui_event(
+                    "TOGGLE_RECORDING_START", "Started toggle recording"
+                )
 
         except Exception as e:
             print(f"❌ Start toggle recording error: {e}")
@@ -484,7 +513,7 @@ class UnhingedDesktopApp(Adw.Application):
             self.audio_handler.set_callbacks(
                 state_callback=self._on_recording_state_changed,
                 result_callback=self._on_transcription_result,
-                error_callback=self._on_audio_error
+                error_callback=self._on_audio_error,
             )
 
         except Exception as e:
@@ -500,7 +529,7 @@ class UnhingedDesktopApp(Adw.Application):
             self.platform_handler.set_callbacks(
                 status_callback=self.update_status,
                 log_callback=self.append_log,
-                error_callback=self.show_error_dialog
+                error_callback=self.show_error_dialog,
             )
 
         except Exception as e:
@@ -510,8 +539,10 @@ class UnhingedDesktopApp(Adw.Application):
     def _on_recording_state_changed(self, state):
         """Handle recording state changes from AudioHandler"""
         try:
-            if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_gui_event("RECORDING_STATE_CHANGED", f"Recording state: {state}")
+            if hasattr(self, "session_logger") and self.session_logger:
+                self.session_logger.log_gui_event(
+                    "RECORDING_STATE_CHANGED", f"Recording state: {state}"
+                )
 
             # Update UI based on state - minimal feedback
             if state.name == "RECORDING":
@@ -529,7 +560,7 @@ class UnhingedDesktopApp(Adw.Application):
         try:
             if transcript:
                 # Route to chatroom if it's active
-                if hasattr(self, 'chatroom_view') and self.chatroom_view:
+                if hasattr(self, "chatroom_view") and self.chatroom_view:
                     self.chatroom_view.add_voice_transcript(transcript)
                     # No toast needed - user can see transcript was added
                 else:
@@ -537,8 +568,10 @@ class UnhingedDesktopApp(Adw.Application):
                     self.show_toast(f"Transcript: {transcript}")
 
                 # Log successful transcription
-                if hasattr(self, 'session_logger') and self.session_logger:
-                    self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}")
+                if hasattr(self, "session_logger") and self.session_logger:
+                    self.session_logger.log_gui_event(
+                        "TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}"
+                    )
             else:
                 self.show_toast("No transcription received")
 
@@ -575,57 +608,33 @@ class UnhingedDesktopApp(Adw.Application):
                 full_msg = f"Audio error: {str(error_data)}"
 
             # Show user-friendly toast (truncated)
-            toast_msg = full_msg.split('\n')[0][:100]  # First line, max 100 chars
+            toast_msg = full_msg.split("\n")[0][:100]  # First line, max 100 chars
             self.show_toast(toast_msg)
 
             # Log full diagnostic information to session
-            if hasattr(self, 'session_logger') and self.session_logger:
+            if hasattr(self, "session_logger") and self.session_logger:
                 self.session_logger.log_gui_event("AUDIO_ERROR", full_msg)
 
         except Exception as e:
             print(f"❌ Audio error handler error: {e}")
 
-
-
     def _stop_toggle_recording(self):
         """Stop toggle recording using AudioHandler"""
         try:
-            if hasattr(self, 'audio_handler') and self.audio_handler:
+            if hasattr(self, "audio_handler") and self.audio_handler:
                 self.audio_handler.stop_recording()
                 self.show_toast("Processing recording...")
 
                 if self.session_logger:
-                    self.session_logger.log_gui_event("TOGGLE_RECORDING_STOP", "Stopped toggle recording")
+                    self.session_logger.log_gui_event(
+                        "TOGGLE_RECORDING_STOP", "Stopped toggle recording"
+                    )
             else:
                 print("⚠️ AudioHandler not available")
 
         except Exception as e:
             print(f"❌ Stop toggle recording error: {e}")
             self.show_toast(f"Stop recording failed: {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def create_bluetooth_tab_content(self):
         """Create the Bluetooth tab content using extracted BluetoothView."""
@@ -651,6 +660,7 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the Output tab content using extracted OutputView"""
         try:
             from .views.output_view import OutputView
+
             self.output_view = OutputView(self)
             return self.output_view.create_content()
         except Exception as e:
@@ -665,11 +675,13 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the USB tab content using extracted USBView"""
         try:
             from .views.usb_view import USBView
+
             self.usb_view = USBView(self)
             return self.usb_view.create_content()
         except Exception as e:
             print(f"❌ Error creating USB view: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_fallback("USB Devices")
 
@@ -677,6 +689,7 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the Graph Editor tab content using GraphWorkspaceView"""
         try:
             from .views.graph_workspace_view import GraphWorkspaceView
+
             self.graph_workspace_view = GraphWorkspaceView(self)
             content = self.graph_workspace_view.create_content()
 
@@ -687,6 +700,7 @@ class UnhingedDesktopApp(Adw.Application):
         except Exception as e:
             print(f"❌ Error creating graph editor view: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_fallback("Graph Editor")
 
@@ -694,11 +708,15 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the Documents tab content using DocumentWorkspaceView"""
         try:
             from .views.document_workspace_view import DocumentWorkspaceView
-            self.document_workspace_view = DocumentWorkspaceView(self, document_type="document")
+
+            self.document_workspace_view = DocumentWorkspaceView(
+                self, document_type="document"
+            )
             return self.document_workspace_view.create_content()
         except Exception as e:
             print(f"❌ Error creating documents view: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_fallback("Documents")
 
@@ -706,63 +724,39 @@ class UnhingedDesktopApp(Adw.Application):
         """Create the GPU tab content using GPUView"""
         try:
             from .views.gpu_view import GPUView
+
             self.gpu_view = GPUView(self)
             return self.gpu_view.create_content()
         except Exception as e:
             print(f"❌ Error creating GPU view: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_fallback("GPU")
 
     def setup_actions(self):
         """Setup application actions using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.setup_actions()
         else:
             print("⚠️ Action controller not available")
 
-
-
     def on_about_action(self, action, param):
         """Show about dialog using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_about_action(action, param)
 
     def on_preferences_action(self, action, param):
         """Show preferences dialog using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_preferences_action(action, param)
-
-
 
     def on_quit_action(self, action, param):
         """Quit application using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_quit_action(action, param)
         else:
             self.quit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def update_status(self, message, progress=None):
         """Update status label and progress bar"""
@@ -771,7 +765,7 @@ class UnhingedDesktopApp(Adw.Application):
     def _update_status_ui(self, message, progress):
         """Update UI elements from main thread (now delegates to StatusView)"""
         # Delegate to StatusView if available
-        if hasattr(self, 'status_view') and self.status_view:
+        if hasattr(self, "status_view") and self.status_view:
             self.status_view._update_platform_status(message, progress)
 
         # Log status change
@@ -787,7 +781,7 @@ class UnhingedDesktopApp(Adw.Application):
     def _append_log_ui(self, message):
         """Append to log from main thread (now delegates to StatusView)"""
         # Delegate to StatusView if available
-        if hasattr(self, 'status_view') and self.status_view:
+        if hasattr(self, "status_view") and self.status_view:
             self.status_view._append_platform_log(message)
 
         # Log to session file with noise reduction
@@ -808,30 +802,24 @@ class UnhingedDesktopApp(Adw.Application):
 
     def on_start_clicked(self, button):
         """Handle start button click using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_start_clicked(button)
         else:
             self.show_toast("Action controller not available")
 
     def on_stop_clicked(self, button):
         """Handle stop button click using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_stop_clicked(button)
         else:
             self.show_toast("Action controller not available")
 
     def on_record_voice_clicked(self, button):
         """Handle voice recording button click using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_record_voice_clicked(button)
         else:
             self.show_toast("Action controller not available")
-
-
-
-
-
-
 
     def _show_operation_loading(self, title="Processing"):
         """Show loading dots for long operations."""
@@ -846,20 +834,9 @@ class UnhingedDesktopApp(Adw.Application):
             self.operation_loading_dots.stop_animation()
             self.operation_loading_row.set_visible(False)
 
-
-
-
-
-
-
-
-
-
-
-
-
     def show_error_dialog(self, title, message):
         """Show error dialog to user"""
+
         def show_dialog():
             dialog = Adw.MessageDialog(transient_for=self.window)
             dialog.set_heading(title)
@@ -872,6 +849,7 @@ class UnhingedDesktopApp(Adw.Application):
 
     def show_toast(self, message, timeout=3):
         """Show toast notification with visual stack management"""
+
         def show_toast_ui():
             # Create new toast
             toast = Adw.Toast.new(message)
@@ -907,56 +885,47 @@ class UnhingedDesktopApp(Adw.Application):
                 toast.connect("dismissed", lambda t: on_toast_dismissed())
             except:
                 # Fallback: use timeout to clean up stack
-                GLib.timeout_add_seconds(max(timeout, 3), lambda: on_toast_dismissed() or False)
+                GLib.timeout_add_seconds(
+                    max(timeout, 3), lambda: on_toast_dismissed() or False
+                )
 
         GLib.idle_add(show_toast_ui)
 
     def _reset_buttons(self):
         """Reset button states (now handled by StatusView)"""
         # Button state management now handled by StatusView
-        if hasattr(self, 'status_view') and self.status_view:
-            if hasattr(self.status_view, 'start_button') and self.status_view.start_button:
+        if hasattr(self, "status_view") and self.status_view:
+            if (
+                hasattr(self.status_view, "start_button")
+                and self.status_view.start_button
+            ):
                 self.status_view.start_button.set_sensitive(True)
-            if hasattr(self.status_view, 'stop_button') and self.status_view.stop_button:
+            if (
+                hasattr(self.status_view, "stop_button")
+                and self.status_view.stop_button
+            ):
                 self.status_view.stop_button.set_sensitive(False)
         return False
 
     def is_voice_service_available(self):
         """Check if voice service is available using AudioHandler"""
-        if hasattr(self, 'audio_handler') and self.audio_handler:
+        if hasattr(self, "audio_handler") and self.audio_handler:
             return True  # AudioHandler handles service availability
         return False
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def _on_set_default_input_device(self, button, device):
         """Set default input device using ActionController"""
-        if hasattr(self, 'action_controller') and self.action_controller:
+        if hasattr(self, "action_controller") and self.action_controller:
             self.action_controller.on_set_default_input_device(button, device)
         else:
             print("⚠️ Action controller not available")
-
 
 
 def main():
     """Main function"""
     app = UnhingedDesktopApp()
     return app.run(sys.argv)
+
 
 if __name__ == "__main__":
     sys.exit(main())

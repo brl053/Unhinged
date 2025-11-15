@@ -13,6 +13,7 @@ from typing import Any, Protocol
 
 class IntentType(Enum):
     """Types of intents that can be detected"""
+
     TEXT_CHAT = "text_chat"
     IMAGE_GENERATION = "image_generation"
     COMMAND = "command"
@@ -22,6 +23,7 @@ class IntentType(Enum):
 @dataclass
 class IntentResult:
     """Result of intent detection"""
+
     intent_type: IntentType
     confidence: float  # 0.0 to 1.0
     parameters: dict[str, Any]
@@ -64,18 +66,16 @@ class ExplicitCommandDetector:
             "/generate": IntentType.IMAGE_GENERATION,
             "/draw": IntentType.IMAGE_GENERATION,
             "/create": IntentType.IMAGE_GENERATION,
-
             # System commands
             "/help": IntentType.COMMAND,
             "/status": IntentType.COMMAND,
             "/clear": IntentType.COMMAND,
             "/session": IntentType.COMMAND,
-
             # Alternative syntax
             "!image": IntentType.IMAGE_GENERATION,
             "!generate": IntentType.IMAGE_GENERATION,
             "!help": IntentType.COMMAND,
-            "!status": IntentType.COMMAND
+            "!status": IntentType.COMMAND,
         }
 
     def detect(self, text: str) -> IntentResult:
@@ -87,7 +87,7 @@ class ExplicitCommandDetector:
                 intent_type=IntentType.UNKNOWN,
                 confidence=0.0,
                 parameters={},
-                original_text=text
+                original_text=text,
             )
 
         # Check for explicit commands - PRIMARY INTERFACE
@@ -105,8 +105,10 @@ class ExplicitCommandDetector:
                         return IntentResult(
                             intent_type=IntentType.UNKNOWN,
                             confidence=0.0,
-                            parameters={"error": f"Command {command} requires a prompt"},
-                            original_text=text
+                            parameters={
+                                "error": f"Command {command} requires a prompt"
+                            },
+                            original_text=text,
                         )
 
                     return IntentResult(
@@ -114,16 +116,19 @@ class ExplicitCommandDetector:
                         confidence=1.0,  # Perfect confidence for explicit commands
                         parameters={"prompt": args},
                         original_text=text,
-                        matched_pattern=command
+                        matched_pattern=command,
                     )
 
                 elif intent_type == IntentType.COMMAND:
                     return IntentResult(
                         intent_type=IntentType.COMMAND,
                         confidence=1.0,
-                        parameters={"command": command[1:], "args": args},  # Remove / or !
+                        parameters={
+                            "command": command[1:],
+                            "args": args,
+                        },  # Remove / or !
                         original_text=text,
-                        matched_pattern=command
+                        matched_pattern=command,
                     )
 
         # Default to text chat for non-commands
@@ -131,7 +136,7 @@ class ExplicitCommandDetector:
             intent_type=IntentType.TEXT_CHAT,
             confidence=0.9,
             parameters={"message": text},
-            original_text=text
+            original_text=text,
         )
 
     # REGEX PATTERN METHODS REMOVED - EXPLICIT COMMANDS ONLY
@@ -153,7 +158,7 @@ class ExplicitCommandDetector:
 class LLMIntentDetector:
     """
     Future LLM-based intent detector
-    
+
     Placeholder for future implementation using LLM for intent analysis.
     Will implement the same IntentDetector protocol.
     """
@@ -183,7 +188,7 @@ class LLMIntentDetector:
 class IntentDetectorManager:
     """
     Manager for pluggable intent detection
-    
+
     Allows switching between different detection implementations.
     """
 
@@ -192,7 +197,9 @@ class IntentDetectorManager:
 
         # Use explicit command detector as default - NO REGEX
         self._detector = default_detector or ExplicitCommandDetector()
-        self.logger.info(f"Intent detector initialized: {type(self._detector).__name__}")
+        self.logger.info(
+            f"Intent detector initialized: {type(self._detector).__name__}"
+        )
 
     def set_detector(self, detector: IntentDetector) -> None:
         """Switch to a different intent detector"""
@@ -205,8 +212,10 @@ class IntentDetectorManager:
         """Detect intent using current detector"""
         try:
             result = self._detector.detect(text)
-            self.logger.debug(f"Intent detected: {result.intent_type.value} "
-                            f"(confidence: {result.confidence:.2f})")
+            self.logger.debug(
+                f"Intent detected: {result.intent_type.value} "
+                f"(confidence: {result.confidence:.2f})"
+            )
             return result
         except Exception as e:
             self.logger.error(f"Intent detection failed: {e}")
@@ -215,14 +224,16 @@ class IntentDetectorManager:
                 intent_type=IntentType.TEXT_CHAT,
                 confidence=0.5,
                 parameters={"message": text},
-                original_text=text
+                original_text=text,
             )
 
     def get_detector_info(self) -> dict[str, Any]:
         """Get information about current detector"""
         return {
             "type": type(self._detector).__name__,
-            "supported_intents": [intent.value for intent in self._detector.get_supported_intents()]
+            "supported_intents": [
+                intent.value for intent in self._detector.get_supported_intents()
+            ],
         }
 
 

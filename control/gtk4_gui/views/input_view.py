@@ -7,8 +7,8 @@ Uses basic device detection without complex hooks for now.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 import re
 import subprocess
 import sys
@@ -89,7 +89,9 @@ class InputView:
         if self.current_device:
             status_row = Adw.ActionRow()
             status_row.set_title("Active Input Device")
-            status_row.set_subtitle(f"{self.current_device.get('name', 'Unknown Device')}")
+            status_row.set_subtitle(
+                f"{self.current_device.get('name', 'Unknown Device')}"
+            )
 
             # Active icon
             active_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
@@ -100,8 +102,6 @@ class InputView:
             status_group.add(status_row)
 
         return status_group
-
-
 
     def _render_device_list(self) -> Gtk.Widget:
         """Render the list of audio devices."""
@@ -129,7 +129,7 @@ class InputView:
     def _create_device_row(self, device) -> Adw.ActionRow:
         """Create a row for an audio device."""
         device_row = Adw.ActionRow()
-        device_row.set_title(device['name'])
+        device_row.set_title(device["name"])
 
         # Check if this device is currently active
         is_active = self._is_device_active(device)
@@ -142,7 +142,7 @@ class InputView:
             check_icon.add_css_class("success")
             device_row.add_suffix(check_icon)
         else:
-            device_row.set_subtitle(device['description'])
+            device_row.set_subtitle(device["description"])
             # Add "Set as Default" button
             default_button = Gtk.Button(label="Set as Default")
             default_button.add_css_class("suggested-action")
@@ -150,7 +150,7 @@ class InputView:
             device_row.add_suffix(default_button)
 
         # Add device icon
-        device_icon = Gtk.Image.new_from_icon_name(device['icon'])
+        device_icon = Gtk.Image.new_from_icon_name(device["icon"])
         device_icon.set_icon_size(Gtk.IconSize.NORMAL)
         device_row.add_prefix(device_icon)
 
@@ -173,12 +173,12 @@ class InputView:
                 icon = "audio-input-microphone-symbolic"
 
             device = {
-                'name': util_device.name,
-                'description': f"Card {util_device.card_number}, Device {util_device.device_number}",
-                'card_id': util_device.card_number,
-                'device_id': util_device.device_number,
-                'alsa_device': util_device.device_id,
-                'icon': icon
+                "name": util_device.name,
+                "description": f"Card {util_device.card_number}, Device {util_device.device_number}",
+                "card_id": util_device.card_number,
+                "device_id": util_device.device_number,
+                "alsa_device": util_device.device_id,
+                "icon": icon,
             }
             devices.append(device)
 
@@ -189,34 +189,33 @@ class InputView:
         try:
             # Try to get default source from wpctl (PipeWire)
             result = subprocess.run(
-                ['wpctl', 'status'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["wpctl", "status"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
                 # Parse wpctl output to find default source
-                lines = result.stdout.split('\n')
+                lines = result.stdout.split("\n")
                 in_sources_section = False
 
                 for line in lines:
-                    if 'Sources:' in line:
+                    if "Sources:" in line:
                         in_sources_section = True
                         continue
-                    elif in_sources_section and ('├─' in line or '└─' in line):
+                    elif in_sources_section and ("├─" in line or "└─" in line):
                         # Check if this line has an asterisk (default device)
-                        if '*' in line:
-                            match = re.search(r'(\d+)\.\s+([^[]+)', line)
+                        if "*" in line:
+                            match = re.search(r"(\d+)\.\s+([^[]+)", line)
                             if match:
                                 device_id = match.group(1).strip()
                                 device_name = match.group(2).strip()
                                 return {
-                                    'id': device_id,
-                                    'name': device_name,
-                                    'source': 'wpctl'
+                                    "id": device_id,
+                                    "name": device_name,
+                                    "source": "wpctl",
                                 }
-                    elif in_sources_section and ('Sinks:' in line or line.strip() == ''):
+                    elif in_sources_section and (
+                        "Sinks:" in line or line.strip() == ""
+                    ):
                         # End of sources section
                         break
 
@@ -231,7 +230,7 @@ class InputView:
             return False
 
         # Match by name (for PipeWire devices)
-        if device['name'] in self.current_device.get('name', ''):
+        if device["name"] in self.current_device.get("name", ""):
             return True
 
         return False
@@ -282,24 +281,24 @@ class InputView:
 
             # Create ALSA configuration for default input device
             asoundrc_content = f"""# ALSA configuration - Default input device set by Unhinged
-# Device: {device['name']} ({device['alsa_device']})
+# Device: {device["name"]} ({device["alsa_device"]})
 
 pcm.!default {{
     type plug
     slave {{
-        pcm "hw:{device['card_id']},{device['device_id']}"
+        pcm "hw:{device["card_id"]},{device["device_id"]}"
     }}
 }}
 
 ctl.!default {{
     type hw
-    card {device['card_id']}
+    card {device["card_id"]}
 }}
 """
 
             # Write to ~/.asoundrc
             asoundrc_path = Path.home() / ".asoundrc"
-            with open(asoundrc_path, 'w') as f:
+            with open(asoundrc_path, "w") as f:
                 f.write(asoundrc_content)
 
             button.set_label("✓ Set as Default")

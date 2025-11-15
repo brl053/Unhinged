@@ -6,4 +6,3 @@ from control.cli.commands.system import system
 from control.cli.commands.vm import vm
 
 __all__ = ["system", "dev", "admin", "vm"]
-

@@ -19,16 +19,14 @@ and writes it to timestamped log files in /build/tmp/ directory.
 @llm-culture Independence through detailed session tracking
 """
 
-import os
 import sys
-import uuid
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, TextIO, Callable
+from typing import Optional, Callable
 from contextlib import contextmanager
 
-from .event_logger import EventLogger, LogLevel, EventLoggerConfig, create_logger
+from .event_logger import LogLevel, EventLoggerConfig, create_logger
 
 
 class GUISessionLogger:
@@ -61,11 +59,11 @@ class GUISessionLogger:
 
         # Platform state tracking for accurate status reporting
         self.platform_components = {
-            'dependencies': False,
-            'build_system': False,
-            'graphics': False,
-            'vm': False,
-            'gui': True  # GUI is working if we can log
+            "dependencies": False,
+            "build_system": False,
+            "graphics": False,
+            "vm": False,
+            "gui": True,  # GUI is working if we can log
         }
 
         # Create log directory
@@ -79,10 +77,10 @@ class GUISessionLogger:
             service_id="unhinged-desktop-gui",
             version="1.0.0",
             environment="desktop",
-            min_log_level=LogLevel.DEBUG
+            min_log_level=LogLevel.DEBUG,
         )
         self.event_logger = create_logger(config)
-    
+
     def _initialize_session_file(self):
         """Initialize the session log file with proper naming convention"""
         # Format: unhinged-session-{timestamp}-{session_id}.log
@@ -92,7 +90,7 @@ class GUISessionLogger:
         self.log_file_path = self.log_dir / filename
 
         try:
-            self.log_file = open(self.log_file_path, 'w', encoding='utf-8', buffering=1)
+            self.log_file = open(self.log_file_path, "w", encoding="utf-8", buffering=1)
             self.active = True
 
             # Write session header
@@ -101,7 +99,7 @@ class GUISessionLogger:
         except Exception as e:
             print(f"❌ Failed to create session log file: {e}", file=sys.stderr)
             self.active = False
-    
+
     def _write_session_header(self):
         """Write session information header to log file"""
         if not self.active:
@@ -122,35 +120,35 @@ class GUISessionLogger:
 """
         self.log_file.write(header)
         self.log_file.flush()
-    
+
     def log_output(self, message: str, source: str = "GUI"):
         """
         @llm-doc Log Output to Session File
-        
+
         Logs a message that appeared in the GTK4 application's output log
         to the session file with timestamp and source information.
-        
+
         Args:
             message: The message that appeared in the GUI
             source: Source of the message (GUI, VM, MAKE, etc.)
         """
         if not self.active:
             return
-        
+
         with self.lock:
             try:
                 timestamp = datetime.now(timezone.utc).isoformat()
                 log_entry = f"[{timestamp}] [{source}] {message}\n"
                 self.log_file.write(log_entry)
                 self.log_file.flush()
-                
+
             except Exception as e:
                 print(f"❌ Failed to write to session log: {e}", file=sys.stderr)
-    
+
     def log_gui_event(self, event_type: str, details: str):
         """Log GUI-specific events (button clicks, status changes, etc.)"""
         self.log_output(f"GUI_EVENT: {event_type} - {details}", "GUI_EVENT")
-    
+
     def log_platform_output(self, output: str):
         """
         @llm-doc Enhanced platform output logging with noise reduction
@@ -197,7 +195,10 @@ class GUISessionLogger:
             return self._handle_compilation_error(output)
 
         # Handle sudo permission errors
-        if "sudo: a terminal is required" in output or "sudo: a password is required" in output:
+        if (
+            "sudo: a terminal is required" in output
+            or "sudo: a password is required" in output
+        ):
             return self._handle_sudo_error(output)
 
         # Handle DRM/graphics errors
@@ -221,27 +222,41 @@ class GUISessionLogger:
         """Simplified source classification (3-4 categories instead of 7+)"""
         if any(keyword in output.lower() for keyword in ["error", "failed", "❌"]):
             return "ERROR"
-        elif any(keyword in output.lower() for keyword in ["success", "✅", "completed"]):
+        elif any(
+            keyword in output.lower() for keyword in ["success", "✅", "completed"]
+        ):
             return "SUCCESS"
-        elif any(keyword in output.lower() for keyword in ["gui_event", "button", "status_change"]):
+        elif any(
+            keyword in output.lower()
+            for keyword in ["gui_event", "button", "status_change"]
+        ):
             return "GUI"
         else:
             return "SYSTEM"
-    
+
     def log_status_change(self, old_status: str, new_status: str):
         """Log status changes in the application"""
         self.log_gui_event("STATUS_CHANGE", f"{old_status} → {new_status}")
-    
+
     def log_mode_selection(self, mode: str):
         """Log launch mode selection"""
         self.log_gui_event("MODE_SELECTED", mode)
-    
+
     def _is_compilation_error(self, output: str) -> bool:
         """Check if output is a compilation error"""
-        return any(keyword in output for keyword in [
-            "error:", "warning:", "undefined reference", "undeclared",
-            "CMakeFiles", "gmake", "gcc", "clang"
-        ])
+        return any(
+            keyword in output
+            for keyword in [
+                "error:",
+                "warning:",
+                "undefined reference",
+                "undeclared",
+                "CMakeFiles",
+                "gmake",
+                "gcc",
+                "clang",
+            ]
+        )
 
     def _handle_compilation_error(self, output: str) -> Optional[str]:
         """Handle compilation errors with grouping"""
@@ -273,28 +288,32 @@ class GUISessionLogger:
     def _update_component_status(self, output: str):
         """Update platform component status based on output"""
         if "Requirements file not found" in output:
-            self.platform_components['dependencies'] = False
+            self.platform_components["dependencies"] = False
         elif "✅ Pip upgraded successfully" in output:
-            self.platform_components['dependencies'] = True
+            self.platform_components["dependencies"] = True
         elif "Build system (v1) initialized successfully" in output:
-            self.platform_components['build_system'] = True
+            self.platform_components["build_system"] = True
         elif "Module build for 'c-graphics-build' failed" in output:
-            self.platform_components['graphics'] = False
+            self.platform_components["graphics"] = False
         elif "VM failed to start" in output:
-            self.platform_components['vm'] = False
+            self.platform_components["vm"] = False
         elif "Simple VM fallback completed" in output:
-            self.platform_components['vm'] = True  # Fallback succeeded
+            self.platform_components["vm"] = True  # Fallback succeeded
 
     def _get_platform_status(self) -> str:
         """Get accurate platform status based on component states"""
-        failed_components = [name for name, status in self.platform_components.items() if not status]
+        failed_components = [
+            name for name, status in self.platform_components.items() if not status
+        ]
 
         if not failed_components:
             return "✅ Platform started successfully"
         elif len(failed_components) == len(self.platform_components):
             return "❌ Platform failed to start"
         else:
-            return f"⚠️ Platform partially started (failed: {', '.join(failed_components)})"
+            return (
+                f"⚠️ Platform partially started (failed: {', '.join(failed_components)})"
+            )
 
     def log_session_event(self, event: str, details: str = ""):
         """Log session-level events (start, stop, error, etc.)"""
@@ -302,7 +321,7 @@ class GUISessionLogger:
         if details:
             event_msg += f" - {details}"
         self.log_output(event_msg, "GUI")
-    
+
     def log_platform_status_update(self, claimed_status: str):
         """
         @llm-doc Log platform status with accuracy verification
@@ -316,7 +335,10 @@ class GUISessionLogger:
         # Only log success if components actually succeeded
         if "success" in claimed_status.lower() and "❌" in actual_status:
             # Don't log premature success claims
-            self.log_output(f"⚠️ Status claim '{claimed_status}' overridden by component failures", "SYSTEM")
+            self.log_output(
+                f"⚠️ Status claim '{claimed_status}' overridden by component failures",
+                "SYSTEM",
+            )
             self.log_output(actual_status, "SYSTEM")
         else:
             self.log_output(claimed_status, "SYSTEM")
@@ -343,22 +365,24 @@ class GUISessionLogger:
                         self.log_file.close()
 
                         # Read current file content
-                        with open(self.log_file_path, 'r', encoding='utf-8') as f:
+                        with open(self.log_file_path, "r", encoding="utf-8") as f:
                             content = f.read()
 
                         # Replace old session ID with new one in the header
                         updated_content = content.replace(
                             f"# Session ID: {old_session_id}",
-                            f"# Session ID: {new_session_id}"
+                            f"# Session ID: {new_session_id}",
                         )
 
                         # Generate new filename with real session ID
                         old_filename = self.log_file_path.name
-                        new_filename = old_filename.replace(f"-{old_session_id}.log", f"-{new_session_id}.log")
+                        new_filename = old_filename.replace(
+                            f"-{old_session_id}.log", f"-{new_session_id}.log"
+                        )
                         new_log_file_path = self.log_dir / new_filename
 
                         # Write updated content to new file
-                        with open(new_log_file_path, 'w', encoding='utf-8') as f:
+                        with open(new_log_file_path, "w", encoding="utf-8") as f:
                             f.write(updated_content)
 
                         # Remove old file
@@ -369,14 +393,18 @@ class GUISessionLogger:
 
                         # Update path and reopen for appending
                         self.log_file_path = new_log_file_path
-                        self.log_file = open(self.log_file_path, 'a', encoding='utf-8', buffering=1)
+                        self.log_file = open(
+                            self.log_file_path, "a", encoding="utf-8", buffering=1
+                        )
 
-                    except Exception as e:
+                    except Exception:
                         pass  # Log file update failed, continue with current file
 
             # Log the session ID update
-            self.log_gui_event("SESSION_ID_UPDATED",
-                f"Session ID updated from TBD to persisted chat session: {new_session_id}")
+            self.log_gui_event(
+                "SESSION_ID_UPDATED",
+                f"Session ID updated from TBD to persisted chat session: {new_session_id}",
+            )
         except Exception as e:
             print(f"❌ Failed to update session ID: {e}")
 
@@ -392,10 +420,10 @@ class GUISessionLogger:
             "errors_suppressed": {
                 "compilation": self.compilation_errors_logged,
                 "sudo": self.sudo_errors_logged,
-                "drm": self.drm_errors_logged
-            }
+                "drm": self.drm_errors_logged,
+            },
         }
-    
+
     def close_session(self):
         """Close the current session and log file with enhanced summary"""
         if not self.active:
@@ -412,11 +440,16 @@ class GUISessionLogger:
                 duration = end_time - self.session_start
 
                 # Count error suppression statistics
-                total_errors_suppressed = sum([
-                    self.compilation_errors_logged,
-                    self.sudo_errors_logged,
-                    self.drm_errors_logged
-                ]) * 10  # Estimate suppressed errors
+                total_errors_suppressed = (
+                    sum(
+                        [
+                            self.compilation_errors_logged,
+                            self.sudo_errors_logged,
+                            self.drm_errors_logged,
+                        ]
+                    )
+                    * 10
+                )  # Estimate suppressed errors
 
                 footer = f"""
 # === SESSION END ===
@@ -438,11 +471,11 @@ class GUISessionLogger:
 
             except Exception as e:
                 print(f"❌ Failed to close session log: {e}", file=sys.stderr)
-    
+
     def __enter__(self):
         """Context manager entry"""
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit"""
         self.close_session()
@@ -451,35 +484,38 @@ class GUISessionLogger:
 class GUIOutputCapture:
     """
     @llm-doc Output capture system for GTK4 application
-    
+
     Captures output that would normally go to the GTK4 text view
     and sends it to both the GUI and the session logger.
     """
-    
-    def __init__(self, session_logger: GUISessionLogger, 
-                 gui_callback: Optional[Callable[[str], None]] = None):
+
+    def __init__(
+        self,
+        session_logger: GUISessionLogger,
+        gui_callback: Optional[Callable[[str], None]] = None,
+    ):
         self.session_logger = session_logger
         self.gui_callback = gui_callback
-    
+
     def capture_output(self, message: str, source: str = "OUTPUT"):
         """
         Capture output and send to both GUI and session log
-        
+
         Args:
             message: The output message
             source: Source of the output
         """
         # Send to session logger
         self.session_logger.log_output(message, source)
-        
+
         # Send to GUI if callback provided
         if self.gui_callback:
             self.gui_callback(message)
-    
+
     def capture_platform_output(self, output: str):
         """Capture platform-specific output"""
         self.session_logger.log_platform_output(output)
-        
+
         if self.gui_callback:
             self.gui_callback(output)
 
@@ -487,10 +523,10 @@ class GUIOutputCapture:
 def create_gui_session_logger(project_root: Optional[Path] = None) -> GUISessionLogger:
     """
     Create a new GUI session logger
-    
+
     Args:
         project_root: Project root directory (defaults to current working directory)
-    
+
     Returns:
         Configured GUISessionLogger instance
     """
@@ -501,7 +537,7 @@ def create_gui_session_logger(project_root: Optional[Path] = None) -> GUISession
 def gui_session_context(project_root: Optional[Path] = None):
     """
     Context manager for GUI session logging
-    
+
     Usage:
         with gui_session_context() as session_logger:
             session_logger.log_output("Application started")
@@ -528,5 +564,5 @@ if __name__ == "__main__":
         logger.log_platform_output("VM: Alpine Linux booting...")
         logger.log_platform_output("✅ Platform started successfully")
         logger.log_status_change("Starting", "Running")
-        
+
         print(f"Session info: {logger.get_session_info()}")

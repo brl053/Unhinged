@@ -15,17 +15,13 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import Adw, GLib, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
-from ..primitives import ActionButton
-
-
 
 
 class PerformanceIndicator(AdwComponentBase):
@@ -39,15 +35,17 @@ class PerformanceIndicator(AdwComponentBase):
     - Configurable thresholds for warning/error states
     """
 
-    def __init__(self,
-                 metric_type: str = "cpu",
-                 title: str = "",
-                 current_value: float = 0.0,
-                 max_value: float = 100.0,
-                 unit: str = "%",
-                 warning_threshold: float = 75.0,
-                 error_threshold: float = 90.0,
-                 **kwargs):
+    def __init__(
+        self,
+        metric_type: str = "cpu",
+        title: str = "",
+        current_value: float = 0.0,
+        max_value: float = 100.0,
+        unit: str = "%",
+        warning_threshold: float = 75.0,
+        error_threshold: float = 90.0,
+        **kwargs,
+    ):
         self.metric_type = metric_type
         self.title = title or self._get_default_title()
         self.current_value = current_value
@@ -95,7 +93,9 @@ class PerformanceIndicator(AdwComponentBase):
         self.add_css_class(f"metric-{self.metric_type}")
 
         # Apply initial status styling
-        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        percentage = (
+            (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        )
         if percentage >= self.error_threshold:
             self.add_css_class("status-error")
         elif percentage >= self.warning_threshold:
@@ -105,7 +105,9 @@ class PerformanceIndicator(AdwComponentBase):
 
         # Add accessibility attributes
         self.widget.set_accessible_role(Gtk.AccessibleRole.GROUP)
-        self.widget.update_property([Gtk.AccessibleProperty.LABEL], [f"Performance Metric: {self.title}"])
+        self.widget.update_property(
+            [Gtk.AccessibleProperty.LABEL], [f"Performance Metric: {self.title}"]
+        )
 
         # Update display
         self._update_display()
@@ -118,7 +120,7 @@ class PerformanceIndicator(AdwComponentBase):
             "disk": "Disk Usage",
             "network": "Network Usage",
             "temperature": "Temperature",
-            "generic": "Performance"
+            "generic": "Performance",
         }
         return titles.get(self.metric_type, "Performance")
 
@@ -130,7 +132,7 @@ class PerformanceIndicator(AdwComponentBase):
             "disk": "drive-harddisk-symbolic",
             "network": "network-wired-symbolic",
             "temperature": "temperature-symbolic",
-            "generic": "utilities-system-monitor-symbolic"
+            "generic": "utilities-system-monitor-symbolic",
         }
 
         icon_name = icon_map.get(self.metric_type, "utilities-system-monitor-symbolic")
@@ -170,7 +172,9 @@ class PerformanceIndicator(AdwComponentBase):
     def _update_display(self):
         """Update the display with current values."""
         # Calculate percentage
-        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        percentage = (
+            (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        )
 
         # Update progress bar
         self._progress_bar.set_fraction(min(percentage / 100, 1.0))
@@ -229,7 +233,9 @@ class PerformanceIndicator(AdwComponentBase):
 
     def get_status(self) -> str:
         """Get current status based on thresholds."""
-        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        percentage = (
+            (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        )
 
         if percentage >= self.error_threshold:
             return "error"
@@ -249,7 +255,7 @@ class PerformanceIndicator(AdwComponentBase):
 
         self._update_timeout_id = GLib.timeout_add(
             int(self._update_interval * 1000),  # Convert to milliseconds
-            self._auto_update_callback
+            self._auto_update_callback,
         )
 
     def stop_auto_update(self):
@@ -265,7 +271,7 @@ class PerformanceIndicator(AdwComponentBase):
             return False
 
         try:
-            if hasattr(self, '_update_callback') and self._update_callback:
+            if hasattr(self, "_update_callback") and self._update_callback:
                 new_value = self._update_callback(self.metric_type)
                 if new_value is not None:
                     self.update_value(new_value)

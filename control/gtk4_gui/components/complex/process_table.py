@@ -15,17 +15,13 @@ Complex components that combine multiple elements for comprehensive interfaces:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import GLib, Gtk
 
 from ..base import AdwComponentBase
-from ..containers import LogContainer, ServicePanel, StatusCard
-from ..primitives import ActionButton
-
-
 
 
 class ProcessTable(AdwComponentBase):
@@ -45,14 +41,14 @@ class ProcessTable(AdwComponentBase):
         # Import required modules
         import sys
         from pathlib import Path
-        sys.path.append(str(Path(__file__).parent))
 
+        sys.path.append(str(Path(__file__).parent))
 
         # Configuration
         self.current_processes = []
         self.process_limit = 50
         self.include_system_processes = True
-        self.sort_column = 'cpu_percent'
+        self.sort_column = "cpu_percent"
         self.filter_text = ""
         self.filter_user = None
 
@@ -103,7 +99,9 @@ class ProcessTable(AdwComponentBase):
 
         self.user_filter_dropdown = Gtk.DropDown()
         self.user_filter_dropdown.set_tooltip_text("Filter by user")
-        self.user_filter_dropdown.connect("notify::selected", self._on_user_filter_changed)
+        self.user_filter_dropdown.connect(
+            "notify::selected", self._on_user_filter_changed
+        )
 
         user_filter_box.append(user_label)
         user_filter_box.append(self.user_filter_dropdown)
@@ -151,13 +149,13 @@ class ProcessTable(AdwComponentBase):
 
         # Define columns
         columns = [
-            TableColumn('pid', 'PID', sortable=True, width=80),
-            TableColumn('name', 'Name', sortable=True, width=150),
-            TableColumn('cpu_percent', 'CPU%', sortable=True, width=80),
-            TableColumn('memory_percent', 'Memory%', sortable=True, width=80),
-            TableColumn('user', 'User', sortable=True, width=100),
-            TableColumn('status', 'Status', sortable=True, width=80),
-            TableColumn('command', 'Command', sortable=False, width=-1)
+            TableColumn("pid", "PID", sortable=True, width=80),
+            TableColumn("name", "Name", sortable=True, width=150),
+            TableColumn("cpu_percent", "CPU%", sortable=True, width=80),
+            TableColumn("memory_percent", "Memory%", sortable=True, width=80),
+            TableColumn("user", "User", sortable=True, width=100),
+            TableColumn("status", "Status", sortable=True, width=80),
+            TableColumn("command", "Command", sortable=False, width=-1),
         ]
 
         # Create table
@@ -174,6 +172,7 @@ class ProcessTable(AdwComponentBase):
     def _create_process_row(self, process_info):
         """Create a ProcessRow for the given process info."""
         from ..primitives import ProcessRow
+
         process_row = ProcessRow(process_info)
         return process_row.get_widget()
 
@@ -188,6 +187,7 @@ class ProcessTable(AdwComponentBase):
             # Import process monitor
             import sys
             from pathlib import Path
+
             sys.path.append(str(Path(__file__).parent.parent))
             from process_monitor import ProcessMonitor
 
@@ -206,7 +206,7 @@ class ProcessTable(AdwComponentBase):
             sorted_processes = self._sort_processes(filtered_processes)
 
             # Limit results
-            limited_processes = sorted_processes[:self.process_limit]
+            limited_processes = sorted_processes[: self.process_limit]
 
             # Update table
             self.process_table.set_data(limited_processes)
@@ -226,6 +226,7 @@ class ProcessTable(AdwComponentBase):
         except Exception as e:
             self.status_label.set_text(f"Error loading processes: {e}")
             import logging
+
             logging.getLogger(__name__).error(f"Failed to refresh process list: {e}")
 
         finally:
@@ -239,10 +240,13 @@ class ProcessTable(AdwComponentBase):
         if self.filter_text:
             search_lower = self.filter_text.lower()
             filtered = [
-                p for p in filtered
-                if (search_lower in p.name.lower() or
-                    search_lower in p.command.lower() or
-                    search_lower in str(p.pid))
+                p
+                for p in filtered
+                if (
+                    search_lower in p.name.lower()
+                    or search_lower in p.command.lower()
+                    or search_lower in str(p.pid)
+                )
             ]
 
         # Apply user filter
@@ -256,13 +260,13 @@ class ProcessTable(AdwComponentBase):
         if not self.sort_column or not processes:
             return processes
 
-        reverse = self.sort_column in ['cpu_percent', 'memory_percent', 'memory_mb']
+        reverse = self.sort_column in ["cpu_percent", "memory_percent", "memory_mb"]
 
         try:
             return sorted(
                 processes,
                 key=lambda p: getattr(p, self.sort_column, 0),
-                reverse=reverse
+                reverse=reverse,
             )
         except (AttributeError, TypeError):
             return processes
@@ -333,7 +337,7 @@ class ProcessTable(AdwComponentBase):
 
         self.refresh_timeout_id = GLib.timeout_add(
             int(self.refresh_interval * 1000),  # Convert to milliseconds
-            self._auto_refresh_callback
+            self._auto_refresh_callback,
         )
 
     def _stop_auto_refresh(self):

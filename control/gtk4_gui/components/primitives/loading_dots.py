@@ -17,19 +17,16 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import GObject, Gtk
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import AdwComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class LoadingDots(AdwComponentBase):
@@ -45,14 +42,16 @@ class LoadingDots(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'animation-complete': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "animation-complete": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
-    def __init__(self,
-                 size: str = "normal",  # "small", "normal", "large"
-                 speed: str = "normal",  # "slow", "normal", "fast"
-                 color: str = "primary",  # "primary", "secondary", "muted"
-                 **kwargs):
+    def __init__(
+        self,
+        size: str = "normal",  # "small", "normal", "large"
+        speed: str = "normal",  # "slow", "normal", "fast"
+        color: str = "primary",  # "primary", "secondary", "muted"
+        **kwargs,
+    ):
         self.size = size
         self.speed = speed
         self.color = color
@@ -80,7 +79,8 @@ class LoadingDots(AdwComponentBase):
         # In a real implementation, this would check system settings
         # For now, we'll use an environment variable or default to false
         import os
-        self._use_fallback = os.environ.get('PREFER_REDUCED_MOTION', '0') == '1'
+
+        self._use_fallback = os.environ.get("PREFER_REDUCED_MOTION", "0") == "1"
 
     def _create_spinner_fallback(self):
         """Create Gtk.Spinner fallback for accessibility."""
@@ -141,7 +141,7 @@ class LoadingDots(AdwComponentBase):
         else:
             self.widget.remove_css_class("ds-loading-active")
 
-        self.emit('animation-complete')
+        self.emit("animation-complete")
 
     def set_speed(self, speed: str):
         """Change animation speed."""

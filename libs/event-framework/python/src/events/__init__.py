@@ -12,7 +12,7 @@ from .event_logger import (
     EventLoggerConfig,
     OutputFormat,
     create_logger,
-    create_service_logger
+    create_service_logger,
 )
 
 from .protobuf_integration import (
@@ -21,7 +21,7 @@ from .protobuf_integration import (
     ServiceHealthStatus,
     StateChangeType,
     create_universal_emitter,
-    emit_universal_event
+    emit_universal_event,
 )
 
 # GTK4 GUI session logging integration
@@ -29,7 +29,7 @@ from .gui_session_logger import (
     GUISessionLogger,
     GUIOutputCapture,
     create_gui_session_logger,
-    gui_session_context
+    gui_session_context,
 )
 
 __version__ = "1.0.0"
@@ -50,5 +50,5 @@ __all__ = [
     "GUISessionLogger",
     "GUIOutputCapture",
     "create_gui_session_logger",
-    "gui_session_context"
+    "gui_session_context",
 ]

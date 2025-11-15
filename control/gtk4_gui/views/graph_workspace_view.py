@@ -10,8 +10,8 @@ Provides a complete workspace for editing node-based graphs with:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import asyncio
 import sys
@@ -20,7 +20,12 @@ from pathlib import Path
 from gi.repository import Gtk
 
 # Add proto clients to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"))
+sys.path.insert(
+    0,
+    str(
+        Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"
+    ),
+)
 
 # Import graph canvas component
 try:
@@ -28,6 +33,7 @@ try:
     from ..components.document_store_client import DocumentStoreClient
     from ..components.graph_serializer import GraphSerializer
     from ..components.graph_service_client import GraphServiceClient
+
     GRAPH_CANVAS_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Some graph components not available: {e}")
@@ -89,10 +95,10 @@ class GraphWorkspaceView:
             self.canvas.set_vexpand(True)
 
             # Connect canvas signals
-            self.canvas.connect('node-selected', self._on_node_selected)
-            self.canvas.connect('node-moved', self._on_node_moved)
-            self.canvas.connect('edge-created', self._on_edge_created)
-            self.canvas.connect('viewport-changed', self._on_viewport_changed)
+            self.canvas.connect("node-selected", self._on_node_selected)
+            self.canvas.connect("node-moved", self._on_node_moved)
+            self.canvas.connect("edge-created", self._on_edge_created)
+            self.canvas.connect("viewport-changed", self._on_viewport_changed)
 
             # Set canvas as editor tab content
             self.tabs.set_editor_content(self.canvas)
@@ -109,6 +115,7 @@ class GraphWorkspaceView:
         except Exception as e:
             print(f"❌ Failed to create graph workspace: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_error_view(f"Failed to create workspace: {e}")
 
@@ -125,7 +132,7 @@ class GraphWorkspaceView:
         zoom_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
 
         zoom_out_btn = Gtk.Button(label="−")
-        zoom_out_btn.connect('clicked', self._on_zoom_out)
+        zoom_out_btn.connect("clicked", self._on_zoom_out)
         zoom_box.append(zoom_out_btn)
 
         self.zoom_label = Gtk.Label(label="100%")
@@ -133,11 +140,11 @@ class GraphWorkspaceView:
         zoom_box.append(self.zoom_label)
 
         zoom_in_btn = Gtk.Button(label="+")
-        zoom_in_btn.connect('clicked', self._on_zoom_in)
+        zoom_in_btn.connect("clicked", self._on_zoom_in)
         zoom_box.append(zoom_in_btn)
 
         zoom_reset_btn = Gtk.Button(label="Reset")
-        zoom_reset_btn.connect('clicked', self._on_zoom_reset)
+        zoom_reset_btn.connect("clicked", self._on_zoom_reset)
         zoom_box.append(zoom_reset_btn)
 
         toolbar.append(zoom_box)
@@ -151,12 +158,12 @@ class GraphWorkspaceView:
 
         self.grid_toggle = Gtk.ToggleButton(label="Grid")
         self.grid_toggle.set_active(True)
-        self.grid_toggle.connect('toggled', self._on_grid_toggled)
+        self.grid_toggle.connect("toggled", self._on_grid_toggled)
         grid_box.append(self.grid_toggle)
 
         self.snap_toggle = Gtk.ToggleButton(label="Snap")
         self.snap_toggle.set_active(True)
-        self.snap_toggle.connect('toggled', self._on_snap_toggled)
+        self.snap_toggle.connect("toggled", self._on_snap_toggled)
         grid_box.append(self.snap_toggle)
 
         toolbar.append(grid_box)
@@ -169,15 +176,15 @@ class GraphWorkspaceView:
         action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
 
         clear_btn = Gtk.Button(label="Clear")
-        clear_btn.connect('clicked', self._on_clear_canvas)
+        clear_btn.connect("clicked", self._on_clear_canvas)
         action_box.append(clear_btn)
 
         load_btn = Gtk.Button(label="Load Graph")
-        load_btn.connect('clicked', self._on_load_graph)
+        load_btn.connect("clicked", self._on_load_graph)
         action_box.append(load_btn)
 
         save_btn = Gtk.Button(label="Save Graph")
-        save_btn.connect('clicked', self._on_save_graph)
+        save_btn.connect("clicked", self._on_save_graph)
         action_box.append(save_btn)
 
         toolbar.append(action_box)
@@ -283,7 +290,9 @@ class GraphWorkspaceView:
         """Handle node moved"""
         self._update_status(f"Moved node {node_id} to ({x:.0f}, {y:.0f})")
 
-    def _on_edge_created(self, canvas, edge_id: str, source: str, target: str, handle: str):
+    def _on_edge_created(
+        self, canvas, edge_id: str, source: str, target: str, handle: str
+    ):
         """Handle edge created"""
         self._update_status(f"Created edge from {source} to {target}")
 
@@ -311,7 +320,7 @@ class GraphWorkspaceView:
 
     def _update_status(self, message: str):
         """Update status bar"""
-        if hasattr(self, '_status_label'):
+        if hasattr(self, "_status_label"):
             self._status_label.set_label(message)
 
     def load_sample_graph(self):
@@ -322,44 +331,44 @@ class GraphWorkspaceView:
         # Create sample nodes
         self.nodes = [
             {
-                'id': 'node-1',
-                'label': 'STT',
-                'type': 'speech_to_text',
-                'position': {'x': 100, 'y': 100},
-                'data': {}
+                "id": "node-1",
+                "label": "STT",
+                "type": "speech_to_text",
+                "position": {"x": 100, "y": 100},
+                "data": {},
             },
             {
-                'id': 'node-2',
-                'label': 'LLM',
-                'type': 'llm_chat',
-                'position': {'x': 300, 'y': 100},
-                'data': {}
+                "id": "node-2",
+                "label": "LLM",
+                "type": "llm_chat",
+                "position": {"x": 300, "y": 100},
+                "data": {},
             },
             {
-                'id': 'node-3',
-                'label': 'TTS',
-                'type': 'text_to_speech',
-                'position': {'x': 500, 'y': 100},
-                'data': {}
-            }
+                "id": "node-3",
+                "label": "TTS",
+                "type": "text_to_speech",
+                "position": {"x": 500, "y": 100},
+                "data": {},
+            },
         ]
 
         # Create sample edges
         self.edges = [
             {
-                'id': 'edge-1',
-                'source': 'node-1',
-                'target': 'node-2',
-                'sourceHandle': 'output',
-                'targetHandle': 'input'
+                "id": "edge-1",
+                "source": "node-1",
+                "target": "node-2",
+                "sourceHandle": "output",
+                "targetHandle": "input",
             },
             {
-                'id': 'edge-2',
-                'source': 'node-2',
-                'target': 'node-3',
-                'sourceHandle': 'output',
-                'targetHandle': 'input'
-            }
+                "id": "edge-2",
+                "source": "node-2",
+                "target": "node-3",
+                "sourceHandle": "output",
+                "targetHandle": "input",
+            },
         ]
 
         # Update canvas
@@ -382,10 +391,7 @@ class GraphWorkspaceView:
         # Serialize to protobuf
         try:
             graph = self.serializer.serialize_graph(
-                nodes=nodes,
-                edges=edges,
-                graph_name="My Graph",
-                graph_type="dag"
+                nodes=nodes, edges=edges, graph_name="My Graph", graph_type="dag"
             )
 
             # Save asynchronously
@@ -416,7 +422,7 @@ class GraphWorkspaceView:
 
     def _update_status(self, message: str):
         """Update status bar message"""
-        if hasattr(self, '_status_label'):
+        if hasattr(self, "_status_label"):
             self._status_label.set_label(message)
 
     def execute_graph(self):
@@ -433,7 +439,7 @@ class GraphWorkspaceView:
                 nodes=self.canvas.nodes,
                 edges=self.canvas.edges,
                 graph_name="Execution Graph",
-                graph_type="dag"
+                graph_type="dag",
             )
 
             # Execute asynchronously
@@ -488,14 +494,22 @@ class GraphWorkspaceView:
         elif event_type == "NODE_FAILED":
             # Update node status to failed
             self._update_node_status(node_id, "failed")
-            error_msg = event.event_data.get('error', 'Unknown error') if event.event_data else 'Unknown error'
+            error_msg = (
+                event.event_data.get("error", "Unknown error")
+                if event.event_data
+                else "Unknown error"
+            )
             self._update_status(f"❌ Failed node: {node_id} - {error_msg}")
 
         elif event_type == "EXECUTION_COMPLETED":
             self._update_status("✅ Execution completed")
 
         elif event_type == "EXECUTION_FAILED":
-            error_msg = event.event_data.get('error', 'Unknown error') if event.event_data else 'Unknown error'
+            error_msg = (
+                event.event_data.get("error", "Unknown error")
+                if event.event_data
+                else "Unknown error"
+            )
             self._update_status(f"❌ Execution failed: {error_msg}")
 
         elif event_type == "EXECUTION_CANCELLED":
@@ -508,10 +522,9 @@ class GraphWorkspaceView:
 
         # Find and update node
         for node in self.canvas.nodes:
-            if node.get('id') == node_id:
-                node['status'] = status
+            if node.get("id") == node_id:
+                node["status"] = status
                 break
 
         # Redraw canvas
         self.canvas.queue_draw()
-

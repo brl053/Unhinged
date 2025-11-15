@@ -6,8 +6,8 @@ Simple status display for the active chat session.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk
 
@@ -61,7 +61,6 @@ class StatusView:
         group.add(session_row)
 
         return group
-
 
     def update_session_id(self, session_id):
         """Update the displayed session ID from chatroom"""

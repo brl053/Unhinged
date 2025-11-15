@@ -50,10 +50,7 @@ class AudioTranscriber:
         return True
 
     def transcribe(
-        self,
-        audio_file: Path,
-        language: str = "en",
-        timeout_seconds: int = 300
+        self, audio_file: Path, language: str = "en", timeout_seconds: int = 300
     ) -> TranscriptionResult:
         """Transcribe audio file.
 
@@ -76,8 +73,7 @@ class AudioTranscriber:
 
             # Call service
             transcript = self.service_connector.transcribe_audio(
-                audio_file,
-                timeout=timeout_seconds
+                audio_file, timeout=timeout_seconds
             )
 
             # Parse result
@@ -86,12 +82,10 @@ class AudioTranscriber:
                 confidence=1.0,
                 duration_seconds=0.0,
                 language=language,
-                error=None
+                error=None,
             )
 
-            logger.info(
-                f"Transcription completed: {len(result.text)} characters"
-            )
+            logger.info(f"Transcription completed: {len(result.text)} characters")
 
             return result
 
@@ -102,7 +96,7 @@ class AudioTranscriber:
                 confidence=0.0,
                 duration_seconds=0.0,
                 language=language,
-                error=str(e)
+                error=str(e),
             )
 
         except ValueError as e:
@@ -112,7 +106,7 @@ class AudioTranscriber:
                 confidence=0.0,
                 duration_seconds=0.0,
                 language=language,
-                error=str(e)
+                error=str(e),
             )
 
         except Exception as e:
@@ -122,6 +116,5 @@ class AudioTranscriber:
                 confidence=0.0,
                 duration_seconds=0.0,
                 language=language,
-                error=f"Transcription failed: {str(e)}"
+                error=f"Transcription failed: {str(e)}",
             )
-

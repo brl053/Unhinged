@@ -11,8 +11,8 @@ Designed as an iframe-like container for generated content.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import subprocess
 from pathlib import Path
@@ -25,7 +25,7 @@ from .base import AdwComponentBase
 class GeneratedArtifactWidget(AdwComponentBase):
     """
     Widget for displaying generated artifacts inline in chat.
-    
+
     Features:
     - Mini-window appearance with header bar
     - Top-right action buttons (folder icon to open in file manager)
@@ -35,18 +35,20 @@ class GeneratedArtifactWidget(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'artifact-action': (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
+        "artifact-action": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
     }
 
-    def __init__(self,
-                 artifact_type: str = "image",
-                 artifact_path: str = "",
-                 artifact_title: str = "Generated Artifact",
-                 artifact_metadata: dict | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        artifact_type: str = "image",
+        artifact_path: str = "",
+        artifact_title: str = "Generated Artifact",
+        artifact_metadata: dict | None = None,
+        **kwargs,
+    ):
         """
         Initialize generated artifact widget.
-        
+
         Args:
             artifact_type: Type of artifact ("image", "email", "movie", etc.)
             artifact_path: Full path to the artifact file
@@ -229,4 +231,3 @@ class GeneratedArtifactWidget(AdwComponentBase):
                 print(f"⚠️ Artifact file not found: {self.artifact_path}")
         except Exception as e:
             print(f"❌ Failed to open folder: {e}")
-

@@ -17,24 +17,26 @@ Supports:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from typing import Any, Callable, Optional
 
-from gi.repository import Adw, Gtk
+from gi.repository import Gtk
 
 
 class DocumentRenderer:
     """Reusable component for rendering documents"""
 
-    def __init__(self, 
-                 document: dict[str, Any],
-                 document_type: str = "document",
-                 custom_renderer: Optional[Callable] = None):
+    def __init__(
+        self,
+        document: dict[str, Any],
+        document_type: str = "document",
+        custom_renderer: Optional[Callable] = None,
+    ):
         """
         Initialize document renderer
-        
+
         Args:
             document: Document data dict with id, name, description, etc.
             document_type: Type of document (e.g., "graph", "tool", "user")
@@ -49,7 +51,7 @@ class DocumentRenderer:
         """Render the document and return widget"""
         if self.custom_renderer:
             return self.custom_renderer(self.document)
-        
+
         return self._render_default()
 
     def _render_default(self) -> Gtk.Widget:
@@ -80,7 +82,7 @@ class DocumentRenderer:
         header_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
 
         # Title
-        title = self.document.get('name', 'Untitled Document')
+        title = self.document.get("name", "Untitled Document")
         title_label = Gtk.Label(label=title)
         title_label.add_css_class("title-2")
         title_label.set_halign(Gtk.Align.START)
@@ -95,19 +97,19 @@ class DocumentRenderer:
         metadata_box.append(doc_type_label)
 
         # Created date
-        created = self.document.get('created_at', 'Unknown')
+        created = self.document.get("created_at", "Unknown")
         created_label = Gtk.Label(label=f"Created: {created}")
         metadata_box.append(created_label)
 
         # Updated date
-        updated = self.document.get('updated_at', 'Unknown')
+        updated = self.document.get("updated_at", "Unknown")
         updated_label = Gtk.Label(label=f"Updated: {updated}")
         metadata_box.append(updated_label)
 
         header_box.append(metadata_box)
 
         # Description
-        description = self.document.get('description', '')
+        description = self.document.get("description", "")
         if description:
             desc_label = Gtk.Label(label=description)
             desc_label.add_css_class("dim-label")
@@ -126,7 +128,7 @@ class DocumentRenderer:
         content_box.append(sep)
 
         # Document properties
-        properties = self.document.get('properties', {})
+        properties = self.document.get("properties", {})
         if properties:
             props_label = Gtk.Label(label="Properties")
             props_label.add_css_class("title-3")
@@ -174,7 +176,7 @@ class DocumentRenderer:
         footer_box.append(sep)
 
         # Document ID
-        doc_id = self.document.get('id', 'Unknown')
+        doc_id = self.document.get("id", "Unknown")
         id_label = Gtk.Label(label=f"ID: {doc_id}")
         id_label.add_css_class("dim-label")
         id_label.set_halign(Gtk.Align.START)
@@ -194,4 +196,3 @@ class DocumentRenderer:
         self.document = document
         self.widget = None
         return self.render()
-

@@ -15,19 +15,18 @@ try:
     # test_integration has no test classes currently
 except ImportError:
     # Fallback for direct execution
-    import test_components
-    import test_monitors
+    pass
 
 __all__ = [
     # Available test classes
-    'SystemInfoProductionTester',
-    'TestApp',
-
+    "SystemInfoProductionTester",
+    "TestApp",
     # Test utilities
-    'run_all_tests',
-    'run_monitor_tests',
-    'run_component_tests',
+    "run_all_tests",
+    "run_monitor_tests",
+    "run_component_tests",
 ]
+
 
 def run_all_tests():
     """Run the complete test suite."""
@@ -35,12 +34,13 @@ def run_all_tests():
 
     # Discover and run all tests
     loader = unittest.TestLoader()
-    suite = loader.discover('.', pattern='test_*.py')
+    suite = loader.discover(".", pattern="test_*.py")
 
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
 
     return result.wasSuccessful()
+
 
 def run_monitor_tests():
     """Run only monitor-related tests."""
@@ -57,6 +57,7 @@ def run_monitor_tests():
 
     return result.wasSuccessful()
 
+
 def run_component_tests():
     """Run only component-related tests."""
     import unittest
@@ -71,6 +72,7 @@ def run_component_tests():
     result = runner.run(suite)
 
     return result.wasSuccessful()
+
 
 def run_integration_tests():
     """Run only integration tests."""

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ServiceEndpoint:
     """Represents a service endpoint with host, port, and protocol information"""
+
     host: str
     port: int
     protocol: str = "grpc"
@@ -41,51 +42,51 @@ class ServiceConfig:
 
     # Default service configurations
     _DEFAULTS = {
-        'speech_to_text': ServiceEndpoint(
-            host=os.environ.get('STT_HOST', 'localhost'),
-            port=int(os.environ.get('STT_GRPC_PORT', '1191')),
-            protocol='grpc'
+        "speech_to_text": ServiceEndpoint(
+            host=os.environ.get("STT_HOST", "localhost"),
+            port=int(os.environ.get("STT_GRPC_PORT", "1191")),
+            protocol="grpc",
         ),
-        'text_to_speech': ServiceEndpoint(
-            host=os.environ.get('TTS_HOST', 'localhost'),
-            port=int(os.environ.get('TTS_GRPC_PORT', '9092')),
-            protocol='grpc'
+        "text_to_speech": ServiceEndpoint(
+            host=os.environ.get("TTS_HOST", "localhost"),
+            port=int(os.environ.get("TTS_GRPC_PORT", "9092")),
+            protocol="grpc",
         ),
-        'vision_ai': ServiceEndpoint(
-            host=os.environ.get('VISION_HOST', 'localhost'),
-            port=int(os.environ.get('VISION_GRPC_PORT', '9093')),
-            protocol='grpc'
+        "vision_ai": ServiceEndpoint(
+            host=os.environ.get("VISION_HOST", "localhost"),
+            port=int(os.environ.get("VISION_GRPC_PORT", "9093")),
+            protocol="grpc",
         ),
-        'llm': ServiceEndpoint(
-            host=os.environ.get('LLM_HOST', 'localhost'),
-            port=int(os.environ.get('LLM_HTTP_PORT', '1500')),
-            protocol='http'
+        "llm": ServiceEndpoint(
+            host=os.environ.get("LLM_HOST", "localhost"),
+            port=int(os.environ.get("LLM_HTTP_PORT", "1500")),
+            protocol="http",
         ),
-        'chat': ServiceEndpoint(
-            host=os.environ.get('CHAT_HOST', 'localhost'),
-            port=int(os.environ.get('CHAT_GRPC_PORT', '9095')),
-            protocol='grpc'
+        "chat": ServiceEndpoint(
+            host=os.environ.get("CHAT_HOST", "localhost"),
+            port=int(os.environ.get("CHAT_GRPC_PORT", "9095")),
+            protocol="grpc",
         ),
-        'persistence': ServiceEndpoint(
-            host=os.environ.get('PERSISTENCE_HOST', 'localhost'),
-            port=int(os.environ.get('PERSISTENCE_HTTP_PORT', '1300')),
-            protocol='http'
+        "persistence": ServiceEndpoint(
+            host=os.environ.get("PERSISTENCE_HOST", "localhost"),
+            port=int(os.environ.get("PERSISTENCE_HTTP_PORT", "1300")),
+            protocol="http",
         ),
-        'redis': ServiceEndpoint(
-            host=os.environ.get('REDIS_HOST', 'localhost'),
-            port=int(os.environ.get('REDIS_PORT', '1201')),
-            protocol='redis'
+        "redis": ServiceEndpoint(
+            host=os.environ.get("REDIS_HOST", "localhost"),
+            port=int(os.environ.get("REDIS_PORT", "1201")),
+            protocol="redis",
         ),
-        'postgres': ServiceEndpoint(
-            host=os.environ.get('POSTGRES_HOST', 'localhost'),
-            port=int(os.environ.get('POSTGRES_PORT', '1200')),
-            protocol='postgres'
-        )
+        "postgres": ServiceEndpoint(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            port=int(os.environ.get("POSTGRES_PORT", "1200")),
+            protocol="postgres",
+        ),
     }
 
     def __init__(self, config_file: Path | None = None):
         """Initialize service configuration
-        
+
         Args:
             config_file: Optional path to configuration file (for future use)
         """
@@ -98,13 +99,13 @@ class ServiceConfig:
 
     def get_endpoint(self, service_name: str) -> ServiceEndpoint:
         """Get endpoint configuration for a service
-        
+
         Args:
             service_name: Name of the service (e.g., 'speech_to_text', 'llm')
-            
+
         Returns:
             ServiceEndpoint object with connection details
-            
+
         Raises:
             KeyError: If service name is not configured
         """
@@ -115,7 +116,7 @@ class ServiceConfig:
 
     def set_endpoint(self, service_name: str, endpoint: ServiceEndpoint) -> None:
         """Set endpoint configuration for a service
-        
+
         Args:
             service_name: Name of the service
             endpoint: ServiceEndpoint object with connection details
@@ -129,21 +130,22 @@ class ServiceConfig:
 
     def validate_configuration(self) -> dict[str, bool]:
         """Validate that all required services are configured
-        
+
         Returns:
             Dictionary mapping service names to validation status
         """
         validation_results = {}
-        required_services = ['speech_to_text', 'llm', 'persistence']
+        required_services = ["speech_to_text", "llm", "persistence"]
 
         for service in required_services:
             try:
                 endpoint = self.get_endpoint(service)
                 # Basic validation - check that port is reasonable
                 is_valid = (
-                    1 <= endpoint.port <= 65535 and
-                    endpoint.host and
-                    endpoint.protocol in ['grpc', 'http', 'https', 'redis', 'postgres']
+                    1 <= endpoint.port <= 65535
+                    and endpoint.host
+                    and endpoint.protocol
+                    in ["grpc", "http", "https", "redis", "postgres"]
                 )
                 validation_results[service] = is_valid
 
@@ -167,25 +169,27 @@ class AppConfig:
 
     def __init__(self):
         # Audio recording settings
-        self.audio_sample_rate = int(os.environ.get('AUDIO_SAMPLE_RATE', '16000'))
-        self.audio_channels = int(os.environ.get('AUDIO_CHANNELS', '1'))
-        self.audio_format = os.environ.get('AUDIO_FORMAT', 'S16_LE')
-        self.audio_device = os.environ.get('AUDIO_DEVICE', 'pipewire')
-        self.recording_duration = int(os.environ.get('RECORDING_DURATION', '10'))
+        self.audio_sample_rate = int(os.environ.get("AUDIO_SAMPLE_RATE", "16000"))
+        self.audio_channels = int(os.environ.get("AUDIO_CHANNELS", "1"))
+        self.audio_format = os.environ.get("AUDIO_FORMAT", "S16_LE")
+        self.audio_device = os.environ.get("AUDIO_DEVICE", "pipewire")
+        self.recording_duration = int(os.environ.get("RECORDING_DURATION", "10"))
 
         # gRPC settings
-        self.grpc_max_message_size = int(os.environ.get('GRPC_MAX_MESSAGE_SIZE', str(1024 * 1024 * 1024)))  # 1GB
-        self.grpc_timeout = int(os.environ.get('GRPC_TIMEOUT', '30'))
+        self.grpc_max_message_size = int(
+            os.environ.get("GRPC_MAX_MESSAGE_SIZE", str(1024 * 1024 * 1024))
+        )  # 1GB
+        self.grpc_timeout = int(os.environ.get("GRPC_TIMEOUT", "30"))
 
         # UI settings
-        self.enable_debug_mode = os.environ.get('DEBUG_MODE', 'false').lower() == 'true'
-        self.log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+        self.enable_debug_mode = os.environ.get("DEBUG_MODE", "false").lower() == "true"
+        self.log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 
         # Service health check settings
-        self.health_check_timeout = int(os.environ.get('HEALTH_CHECK_TIMEOUT', '5'))
-        self.health_check_interval = int(os.environ.get('HEALTH_CHECK_INTERVAL', '30'))
-        self.max_retry_attempts = int(os.environ.get('MAX_RETRY_ATTEMPTS', '3'))
-        self.retry_delay = float(os.environ.get('RETRY_DELAY', '1.0'))
+        self.health_check_timeout = int(os.environ.get("HEALTH_CHECK_TIMEOUT", "5"))
+        self.health_check_interval = int(os.environ.get("HEALTH_CHECK_INTERVAL", "30"))
+        self.max_retry_attempts = int(os.environ.get("MAX_RETRY_ATTEMPTS", "3"))
+        self.retry_delay = float(os.environ.get("RETRY_DELAY", "1.0"))
 
 
 # Global configuration instances
@@ -200,7 +204,7 @@ def get_service_endpoint(service_name: str) -> ServiceEndpoint:
 
 def validate_all_services() -> bool:
     """Validate all service configurations
-    
+
     Returns:
         True if all required services are properly configured
     """
@@ -208,7 +212,9 @@ def validate_all_services() -> bool:
     all_valid = all(validation_results.values())
 
     if not all_valid:
-        failed_services = [name for name, valid in validation_results.items() if not valid]
+        failed_services = [
+            name for name, valid in validation_results.items() if not valid
+        ]
         logger.error(f"Configuration validation failed for services: {failed_services}")
 
     return all_valid
@@ -221,6 +227,10 @@ def log_configuration() -> None:
         logger.info(f"{name}: {endpoint.protocol}://{endpoint.address}")
 
     logger.info("=== App Configuration ===")
-    logger.info(f"Audio: {app_config.audio_sample_rate}Hz, {app_config.audio_channels}ch, {app_config.audio_format}")
-    logger.info(f"gRPC: max_message_size={app_config.grpc_max_message_size}, timeout={app_config.grpc_timeout}s")
+    logger.info(
+        f"Audio: {app_config.audio_sample_rate}Hz, {app_config.audio_channels}ch, {app_config.audio_format}"
+    )
+    logger.info(
+        f"gRPC: max_message_size={app_config.grpc_max_message_size}, timeout={app_config.grpc_timeout}s"
+    )
     logger.info(f"Debug mode: {app_config.enable_debug_mode}")

@@ -17,19 +17,16 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import GObject, Gtk
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import AdwComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class TextEditor(AdwComponentBase):
@@ -46,17 +43,19 @@ class TextEditor(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'content-changed': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
-        'focus-gained': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'focus-lost': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "content-changed": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        "focus-gained": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "focus-lost": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
-    def __init__(self,
-                 content: str = "",
-                 placeholder: str = "",
-                 word_wrap: bool = True,
-                 min_height: int = 120,
-                 **kwargs):
+    def __init__(
+        self,
+        content: str = "",
+        placeholder: str = "",
+        word_wrap: bool = True,
+        min_height: int = 120,
+        **kwargs,
+    ):
         self.content = content
         self.placeholder = placeholder
         self.word_wrap = word_wrap
@@ -78,7 +77,9 @@ class TextEditor(AdwComponentBase):
 
         # Create text view
         self._text_view = Gtk.TextView()
-        self._text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR if self.word_wrap else Gtk.WrapMode.NONE)
+        self._text_view.set_wrap_mode(
+            Gtk.WrapMode.WORD_CHAR if self.word_wrap else Gtk.WrapMode.NONE
+        )
         self._text_view.set_accepts_tab(True)
         self._text_view.set_vexpand(True)
         self._text_view.set_hexpand(True)
@@ -115,12 +116,12 @@ class TextEditor(AdwComponentBase):
         self.widget.append(overlay)
 
         # Connect signals
-        self._text_buffer.connect('changed', self._on_content_changed)
+        self._text_buffer.connect("changed", self._on_content_changed)
 
         # Create focus controller for GTK4
         focus_controller = Gtk.EventControllerFocus()
-        focus_controller.connect('enter', self._on_focus_in)
-        focus_controller.connect('leave', self._on_focus_out)
+        focus_controller.connect("enter", self._on_focus_in)
+        focus_controller.connect("leave", self._on_focus_out)
         self._text_view.add_controller(focus_controller)
 
         # Apply design system styling
@@ -152,7 +153,7 @@ class TextEditor(AdwComponentBase):
             self._update_placeholder_visibility()
 
         # Emit content changed signal
-        self.emit('content-changed', content)
+        self.emit("content-changed", content)
 
     def _on_focus_in(self, controller):
         """Handle focus in event."""
@@ -160,7 +161,7 @@ class TextEditor(AdwComponentBase):
         self.add_css_class("ds-focused")
         if self._placeholder_label:
             self._update_placeholder_visibility()
-        self.emit('focus-gained')
+        self.emit("focus-gained")
 
     def _on_focus_out(self, controller):
         """Handle focus out event."""
@@ -168,13 +169,15 @@ class TextEditor(AdwComponentBase):
         self.remove_css_class("ds-focused")
         if self._placeholder_label:
             self._update_placeholder_visibility()
-        self.emit('focus-lost')
+        self.emit("focus-lost")
 
     def _update_placeholder_visibility(self):
         """Show/hide placeholder based on content."""
         if self._placeholder_label:
             has_content = bool(self.content.strip())
-            self._placeholder_label.set_visible(not has_content and not self._is_focused)
+            self._placeholder_label.set_visible(
+                not has_content and not self._is_focused
+            )
 
     def set_content(self, content: str):
         """Set text editor content."""

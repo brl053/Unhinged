@@ -22,9 +22,11 @@ except ImportError as e:
     print(f"⚠️ Session store dependencies not available: {e}")
     print("💡 Install with: pip install redis psycopg2-binary")
 
+
 @dataclass
 class SessionStoreConfig:
     """Configuration for session store"""
+
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_db: int = 0
@@ -32,9 +34,12 @@ class SessionStoreConfig:
 
     connection_timeout: int = 5
 
+
 class SessionStoreError(Exception):
     """Base exception for session store operations"""
+
     pass
+
 
 class SessionStore:
     """
@@ -69,12 +74,14 @@ class SessionStore:
                 password=self.config.redis_password,
                 decode_responses=True,
                 socket_connect_timeout=self.config.connection_timeout,
-                socket_timeout=self.config.connection_timeout
+                socket_timeout=self.config.connection_timeout,
             )
 
             # Test Redis connection
             self.redis_client.ping()
-            self.logger.info(f"Redis connected: {self.config.redis_host}:{self.config.redis_port}")
+            self.logger.info(
+                f"Redis connected: {self.config.redis_host}:{self.config.redis_port}"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to connect to Redis: {e}")
@@ -83,14 +90,13 @@ class SessionStore:
         try:
             # Document store connection
             from libs.python.persistence import get_document_store
+
             self.document_store = get_document_store()
             self.logger.info("Document store connected (PostgreSQL)")
 
         except Exception as e:
             self.logger.error(f"Failed to connect to document store: {e}")
             raise SessionStoreError(f"Document store connection failed: {e}")
-
-
 
     def write(self, key: str, value: Any) -> bool:
         """
@@ -129,7 +135,9 @@ class SessionStore:
             except Exception as e:
                 # If document store write fails, remove from Redis to maintain consistency
                 self.redis_client.delete(key)
-                self.logger.error(f"Document store write failed for key {key}, removed from Redis: {e}")
+                self.logger.error(
+                    f"Document store write failed for key {key}, removed from Redis: {e}"
+                )
                 return False
 
         except Exception as e:
@@ -188,7 +196,9 @@ class SessionStore:
             doc_deleted = self.document_store.delete("sessions", key)
 
             success = redis_deleted > 0 or doc_deleted
-            self.logger.debug(f"Delete operation for key {key}: Redis={redis_deleted}, DocStore={doc_deleted}")
+            self.logger.debug(
+                f"Delete operation for key {key}: Redis={redis_deleted}, DocStore={doc_deleted}"
+            )
             return success
 
         except Exception as e:
@@ -253,7 +263,7 @@ class SessionStore:
         """
         health = {
             "redis": {"status": "unknown", "latency_ms": None},
-            "document_store": {"status": "unknown", "latency_ms": None}
+            "document_store": {"status": "unknown", "latency_ms": None},
         }
 
         # Redis health check
@@ -289,8 +299,10 @@ class SessionStore:
         except Exception as e:
             self.logger.error(f"Error closing connections: {e}")
 
+
 # Convenience functions for global session store
 _global_session_store = None
+
 
 def get_session_store(config: SessionStoreConfig | None = None) -> SessionStore:
     """Get global session store instance"""
@@ -298,6 +310,7 @@ def get_session_store(config: SessionStoreConfig | None = None) -> SessionStore:
     if _global_session_store is None:
         _global_session_store = SessionStore(config)
     return _global_session_store
+
 
 def close_session_store():
     """Close global session store"""

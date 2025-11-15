@@ -30,16 +30,16 @@ IOHandler: Base class for output handlers
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any
 from enum import Enum
 import logging
 import json
-import os
 from pathlib import Path
 
 
 class IOLevel(Enum):
     """Standard IO event levels"""
+
     DEBUG = "debug"
     INFO = "info"
     SUCCESS = "success"
@@ -49,6 +49,7 @@ class IOLevel(Enum):
 
 class SystemCallType(Enum):
     """Types of system calls made by the GUI on behalf of the user"""
+
     KERNEL_CALL = "kernel_call"  # Direct kernel interaction
     D_BUS_CALL = "dbus_call"  # D-Bus IPC (e.g., BlueZ)
     SUBPROCESS_CALL = "subprocess_call"  # External process execution
@@ -60,12 +61,17 @@ class SystemCallType(Enum):
 @dataclass
 class IOEvent:
     """Structured representation of a stdout/stderr message"""
+
     message: str
     level: IOLevel
     source: str  # 'startup', 'discovery', 'ui', 'bluetooth', etc
     timestamp: datetime = field(default_factory=datetime.now)
-    system_call_type: Optional[SystemCallType] = None  # Type of system call if applicable
-    system_call_target: Optional[str] = None  # Target of system call (e.g., 'org.bluez', 'arecord')
+    system_call_type: Optional[SystemCallType] = (
+        None  # Type of system call if applicable
+    )
+    system_call_target: Optional[str] = (
+        None  # Target of system call (e.g., 'org.bluez', 'arecord')
+    )
 
     def __str__(self) -> str:
         """Format event as string"""
@@ -90,15 +96,19 @@ class IOEvent:
                 SystemCallType.AUDIO_CALL: "🎤",
             }
             call_icon = call_emoji.get(self.system_call_type, "•")
-            target_info = f" → {self.system_call_target}" if self.system_call_target else ""
-            system_call_info = f" {call_icon}[{self.system_call_type.value}]{target_info}"
+            target_info = (
+                f" → {self.system_call_target}" if self.system_call_target else ""
+            )
+            system_call_info = (
+                f" {call_icon}[{self.system_call_type.value}]{target_info}"
+            )
 
         return f"{emoji} [{self.source}] {self.message}{system_call_info}"
 
 
 class IOHandler:
     """Base class for IO event handlers"""
-    
+
     def handle(self, event: IOEvent) -> None:
         """Handle an IO event"""
         raise NotImplementedError
@@ -149,10 +159,10 @@ class CLIHandler(IOHandler):
 
 class LogHandler(IOHandler):
     """Handler that writes to log files"""
-    
+
     def __init__(self, logger: logging.Logger):
         self.logger = logger
-    
+
     def handle(self, event: IOEvent) -> None:
         """Log event using Python logging"""
         level_map = {
@@ -261,11 +271,11 @@ class StatusStackHandler(IOHandler):
         # Try to update status stack if it has the method
         if self.status_stack is not None:
             try:
-                if hasattr(self.status_stack, 'add_message'):
+                if hasattr(self.status_stack, "add_message"):
                     self.status_stack.add_message(message)
-                elif hasattr(self.status_stack, 'push'):
+                elif hasattr(self.status_stack, "push"):
                     self.status_stack.push(message)
-            except Exception as e:
+            except Exception:
                 # Silently fail if status stack is not available
                 pass
 
@@ -281,7 +291,9 @@ class StatusStackHandler(IOHandler):
 class FileLogHandler(IOHandler):
     """Handler that writes IO events to persistent log files"""
 
-    def __init__(self, log_dir: str = "/tmp/unhinged/logs", max_file_size: int = 10 * 1024 * 1024):
+    def __init__(
+        self, log_dir: str = "/tmp/unhinged/logs", max_file_size: int = 10 * 1024 * 1024
+    ):
         """
         Initialize FileLogHandler
 
@@ -298,7 +310,10 @@ class FileLogHandler(IOHandler):
         """Write event to log file"""
         try:
             # Check if we need to rotate
-            if self.current_log_file.exists() and self.current_log_file.stat().st_size > self.max_file_size:
+            if (
+                self.current_log_file.exists()
+                and self.current_log_file.stat().st_size > self.max_file_size
+            ):
                 self._rotate_log()
 
             # Format log entry
@@ -306,9 +321,9 @@ class FileLogHandler(IOHandler):
             log_entry = f"[{timestamp}] [{event.level.value.upper()}] [{event.source}] {event.message}\n"
 
             # Write to log file
-            with open(self.current_log_file, 'a') as f:
+            with open(self.current_log_file, "a") as f:
                 f.write(log_entry)
-        except Exception as e:
+        except Exception:
             # Silently fail if we can't write to log
             pass
 
@@ -347,16 +362,16 @@ class JSONHandler(IOHandler):
                 "timestamp": event.timestamp.isoformat(),
                 "level": event.level.value,
                 "source": event.source,
-                "message": event.message
+                "message": event.message,
             }
 
             self.events.append(event_dict)
 
             # Write to file if specified
             if self.output_file:
-                with open(self.output_file, 'a') as f:
-                    f.write(json.dumps(event_dict) + '\n')
-        except Exception as e:
+                with open(self.output_file, "a") as f:
+                    f.write(json.dumps(event_dict) + "\n")
+        except Exception:
             # Silently fail if we can't write JSON
             pass
 
@@ -392,7 +407,7 @@ class RemoteHandler(IOHandler):
                 "timestamp": event.timestamp.isoformat(),
                 "level": event.level.value,
                 "source": event.source,
-                "message": event.message
+                "message": event.message,
             }
 
             self.queue.append(event_dict)
@@ -400,7 +415,7 @@ class RemoteHandler(IOHandler):
             # Send batch if queue is full
             if len(self.queue) >= self.batch_size:
                 self._send_batch()
-        except Exception as e:
+        except Exception:
             # Silently fail if we can't queue event
             pass
 
@@ -414,21 +429,21 @@ class RemoteHandler(IOHandler):
             import urllib.error
 
             # Prepare batch payload
-            payload = json.dumps({"events": self.queue}).encode('utf-8')
+            payload = json.dumps({"events": self.queue}).encode("utf-8")
 
             # Create request
             req = urllib.request.Request(
                 self.server_url,
                 data=payload,
-                headers={'Content-Type': 'application/json'},
-                method='POST'
+                headers={"Content-Type": "application/json"},
+                method="POST",
             )
 
             # Send request
             with urllib.request.urlopen(req, timeout=self.timeout) as response:
                 if response.status == 200:
                     self.queue.clear()
-        except Exception as e:
+        except Exception:
             # Silently fail if we can't send to remote server
             pass
 
@@ -443,21 +458,23 @@ class RemoteHandler(IOHandler):
 
 class IORouter:
     """Routes IO events to appropriate handlers"""
-    
+
     def __init__(self):
-        self.handlers: Dict[IOLevel, List[IOHandler]] = {
-            level: [] for level in IOLevel
-        }
+        self.handlers: Dict[IOLevel, List[IOHandler]] = {level: [] for level in IOLevel}
         self.global_handlers: List[IOHandler] = []
-    
-    def register_handler(self, handler: IOHandler, level: Optional[IOLevel] = None) -> None:
+
+    def register_handler(
+        self, handler: IOHandler, level: Optional[IOLevel] = None
+    ) -> None:
         """Register a handler for a specific level or globally"""
         if level is None:
             self.global_handlers.append(handler)
         else:
             self.handlers[level].append(handler)
-    
-    def unregister_handler(self, handler: IOHandler, level: Optional[IOLevel] = None) -> None:
+
+    def unregister_handler(
+        self, handler: IOHandler, level: Optional[IOLevel] = None
+    ) -> None:
         """Unregister a handler"""
         if level is None:
             if handler in self.global_handlers:
@@ -465,7 +482,7 @@ class IORouter:
         else:
             if handler in self.handlers[level]:
                 self.handlers[level].remove(handler)
-    
+
     def emit(self, event: IOEvent) -> None:
         """Emit an IO event to all registered handlers"""
         # Call global handlers
@@ -474,36 +491,42 @@ class IORouter:
                 handler.handle(event)
             except Exception as e:
                 print(f"Error in IO handler: {e}")
-        
+
         # Call level-specific handlers
         for handler in self.handlers[event.level]:
             try:
                 handler.handle(event)
             except Exception as e:
                 print(f"Error in IO handler: {e}")
-    
+
     def emit_info(self, message: str, source: str) -> None:
         """Emit an info event"""
         self.emit(IOEvent(message, IOLevel.INFO, source))
-    
+
     def emit_success(self, message: str, source: str) -> None:
         """Emit a success event"""
         self.emit(IOEvent(message, IOLevel.SUCCESS, source))
-    
+
     def emit_warning(self, message: str, source: str) -> None:
         """Emit a warning event"""
         self.emit(IOEvent(message, IOLevel.WARNING, source))
-    
+
     def emit_error(self, message: str, source: str) -> None:
         """Emit an error event"""
         self.emit(IOEvent(message, IOLevel.ERROR, source))
-    
+
     def emit_debug(self, message: str, source: str) -> None:
         """Emit a debug event"""
         self.emit(IOEvent(message, IOLevel.DEBUG, source))
 
-    def emit_system_call(self, message: str, source: str, call_type: SystemCallType,
-                        target: Optional[str] = None, level: IOLevel = IOLevel.INFO) -> None:
+    def emit_system_call(
+        self,
+        message: str,
+        source: str,
+        call_type: SystemCallType,
+        target: Optional[str] = None,
+        level: IOLevel = IOLevel.INFO,
+    ) -> None:
         """
         Emit a system call event with kernel interaction documentation.
 
@@ -519,7 +542,7 @@ class IORouter:
             level=level,
             source=source,
             system_call_type=call_type,
-            system_call_target=target
+            system_call_target=target,
         )
         self.emit(event)
 
@@ -589,4 +612,3 @@ def emit_error(message: str, source: str) -> None:
 def emit_debug(message: str, source: str) -> None:
     """Emit a debug event"""
     get_io_router().emit_debug(message, source)
-

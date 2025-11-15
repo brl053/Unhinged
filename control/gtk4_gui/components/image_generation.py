@@ -11,8 +11,8 @@ Integrates with the image generation service.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import logging
 import threading
@@ -28,19 +28,28 @@ try:
     from unhinged_proto_clients import common_pb2, image_generation_pb2
 
     from libs.python.grpc_clients.client_factory import create_image_generation_client
+
     GRPC_AVAILABLE = True
 except ImportError:
     GRPC_AVAILABLE = False
     print("⚠️ gRPC clients not available for image generation")
 
+
 class ImageGenerationRequest(GObject.Object):
     """Data model for image generation requests."""
 
-    __gtype_name__ = 'ImageGenerationRequest'
+    __gtype_name__ = "ImageGenerationRequest"
 
-    def __init__(self, prompt: str = "", negative_prompt: str = "",
-                 width: int = 1024, height: int = 1024,
-                 steps: int = 25, guidance: float = 7.5, seed: int | None = None):
+    def __init__(
+        self,
+        prompt: str = "",
+        negative_prompt: str = "",
+        width: int = 1024,
+        height: int = 1024,
+        steps: int = 25,
+        guidance: float = 7.5,
+        seed: int | None = None,
+    ):
         super().__init__()
         self.prompt = prompt
         self.negative_prompt = negative_prompt
@@ -50,12 +59,13 @@ class ImageGenerationRequest(GObject.Object):
         self.guidance = guidance
         self.seed = seed
 
+
 class ImageGenerationPanel(BaseComponent):
     """
     Main image generation panel with prompt input and generation controls.
     """
 
-    __gtype_name__ = 'ImageGenerationPanel'
+    __gtype_name__ = "ImageGenerationPanel"
 
     def __init__(self):
         super().__init__()
@@ -232,7 +242,9 @@ class ImageGenerationPanel(BaseComponent):
             height=int(self.height_spin.get_value()),
             steps=int(self.steps_spin.get_value()),
             guidance=self.guidance_spin.get_value(),
-            seed=int(self.seed_entry.get_text()) if self.seed_entry.get_text() else None
+            seed=int(self.seed_entry.get_text())
+            if self.seed_entry.get_text()
+            else None,
         )
 
         # Start generation
@@ -333,7 +345,7 @@ class ImageGenerationPanel(BaseComponent):
         self.generate_button.set_sensitive(True)
         self.progress_bar.set_visible(False)
 
-        generation_time = response.get('total_time', response.get('generation_time', 0))
+        generation_time = response.get("total_time", response.get("generation_time", 0))
         self.status_label.set_text(f"✅ Generated in {generation_time:.1f}s")
 
         # Show results
@@ -366,11 +378,15 @@ class ImageGenerationPanel(BaseComponent):
             image_row = self._create_image_result_row(image_path, response, i)
             self.results_group.add(image_row)
 
-    def _create_image_result_row(self, image_path: str, response: dict[str, Any], index: int) -> Adw.ActionRow:
+    def _create_image_result_row(
+        self, image_path: str, response: dict[str, Any], index: int
+    ) -> Adw.ActionRow:
         """Create a row for displaying an image result."""
         row = Adw.ActionRow()
         row.set_title(f"Generated Image {index + 1}")
-        row.set_subtitle(f"Seed: {response.get('seed', 'Unknown')} • Time: {response.get('generation_time', 0):.1f}s")
+        row.set_subtitle(
+            f"Seed: {response.get('seed', 'Unknown')} • Time: {response.get('generation_time', 0):.1f}s"
+        )
 
         # Add thumbnail (placeholder for now)
         thumbnail = Gtk.Image()
@@ -405,12 +421,13 @@ class ImageGenerationPanel(BaseComponent):
         # This would open a file chooser dialog
         self.logger.info(f"Save as requested for: {image_path}")
 
+
 class ImageGenerationView(Gtk.ScrolledWindow):
     """
     Scrollable view containing the image generation panel.
     """
 
-    __gtype_name__ = 'ImageGenerationView'
+    __gtype_name__ = "ImageGenerationView"
 
     def __init__(self):
         super().__init__()

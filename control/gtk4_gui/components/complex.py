@@ -19,11 +19,11 @@ from .complex import (
 )
 
 __all__ = [
-    'LogViewer',
-    'ServiceRow',
-    'SystemStatus',
-    'PerformanceIndicator',
-    'ProcessTable',
-    'BluetoothTable',
-    'AudioTable',
+    "LogViewer",
+    "ServiceRow",
+    "SystemStatus",
+    "PerformanceIndicator",
+    "ProcessTable",
+    "BluetoothTable",
+    "AudioTable",
 ]

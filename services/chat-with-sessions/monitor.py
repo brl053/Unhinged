@@ -22,9 +22,11 @@ from session.session_store import SessionStore, SessionStoreConfig
 # Initialize event logger
 events = create_service_logger("session-monitor", "1.0.0")
 
+
 @dataclass
 class SystemMetrics:
     """System resource metrics"""
+
     timestamp: float
     cpu_percent: float
     memory_percent: float
@@ -33,9 +35,11 @@ class SystemMetrics:
     network_bytes_sent: int
     network_bytes_recv: int
 
+
 @dataclass
 class SessionStoreMetrics:
     """Session store specific metrics"""
+
     timestamp: float
     redis_latency_ms: float
     crdb_latency_ms: float
@@ -44,6 +48,7 @@ class SessionStoreMetrics:
     total_sessions: int
     active_sessions: int
     session_keys_count: int
+
 
 class ProductionMonitor:
     """Production monitoring for session management system"""
@@ -60,22 +65,25 @@ class ProductionMonitor:
         self.monitoring_interval = 60  # 1 minute
         self.max_history_points = 1440  # 24 hours of data
 
-        events.info("Production monitor initialized", {
-            "monitoring_interval": self.monitoring_interval,
-            "max_history_points": self.max_history_points
-        })
+        events.info(
+            "Production monitor initialized",
+            {
+                "monitoring_interval": self.monitoring_interval,
+                "max_history_points": self.max_history_points,
+            },
+        )
 
     def _initialize_session_store(self):
         """Initialize session store for monitoring"""
         try:
             config = SessionStoreConfig(
-                redis_host='localhost',
+                redis_host="localhost",
                 redis_port=6379,
                 redis_db=0,  # Production database
-                crdb_host='localhost',
+                crdb_host="localhost",
                 crdb_port=26257,
-                crdb_database='unhinged',
-                crdb_user='root'
+                crdb_database="unhinged",
+                crdb_user="root",
             )
 
             self.session_store = SessionStore(config)
@@ -93,7 +101,7 @@ class ProductionMonitor:
             memory = psutil.virtual_memory()
 
             # Disk usage
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
 
             # Network stats
             network = psutil.net_io_counters()
@@ -105,7 +113,7 @@ class ProductionMonitor:
                 memory_available_gb=memory.available / (1024**3),
                 disk_usage_percent=disk.percent,
                 network_bytes_sent=network.bytes_sent,
-                network_bytes_recv=network.bytes_recv
+                network_bytes_recv=network.bytes_recv,
             )
 
         except Exception as e:
@@ -132,7 +140,7 @@ class ProductionMonitor:
                 if ":metadata" in key:
                     session_data = self.session_store.read(key)
                     if session_data and isinstance(session_data, dict):
-                        created_at = session_data.get('created_at', 0)
+                        created_at = session_data.get("created_at", 0)
                         # Consider active if created within last 24 hours
                         if current_time - created_at < 86400:
                             active_count += 1
@@ -145,7 +153,7 @@ class ProductionMonitor:
                 crdb_status=health["crdb"]["status"],
                 total_sessions=len(session_keys),
                 active_sessions=active_count,
-                session_keys_count=len(session_keys)
+                session_keys_count=len(session_keys),
             )
 
         except Exception as e:
@@ -160,12 +168,18 @@ class ProductionMonitor:
         recent_metrics = self.session_metrics_history[-60:]  # Last hour
 
         # Calculate averages
-        avg_redis_latency = sum(m.redis_latency_ms for m in recent_metrics) / len(recent_metrics)
-        avg_crdb_latency = sum(m.crdb_latency_ms for m in recent_metrics) / len(recent_metrics)
+        avg_redis_latency = sum(m.redis_latency_ms for m in recent_metrics) / len(
+            recent_metrics
+        )
+        avg_crdb_latency = sum(m.crdb_latency_ms for m in recent_metrics) / len(
+            recent_metrics
+        )
 
         # Session growth rate
         if len(recent_metrics) >= 2:
-            session_growth = recent_metrics[-1].total_sessions - recent_metrics[0].total_sessions
+            session_growth = (
+                recent_metrics[-1].total_sessions - recent_metrics[0].total_sessions
+            )
             session_growth_rate = session_growth / len(recent_metrics)  # per minute
         else:
             session_growth_rate = 0
@@ -187,11 +201,12 @@ class ProductionMonitor:
             "session_growth_rate_per_minute": round(session_growth_rate, 2),
             "latency_trend": latency_trend,
             "current_total_sessions": recent_metrics[-1].total_sessions,
-            "current_active_sessions": recent_metrics[-1].active_sessions
+            "current_active_sessions": recent_metrics[-1].active_sessions,
         }
 
-    def check_performance_thresholds(self, system_metrics: SystemMetrics,
-                                   session_metrics: SessionStoreMetrics) -> list[str]:
+    def check_performance_thresholds(
+        self, system_metrics: SystemMetrics, session_metrics: SessionStoreMetrics
+    ) -> list[str]:
         """Check for performance threshold violations"""
         alerts = []
 
@@ -201,18 +216,26 @@ class ProductionMonitor:
                 alerts.append(f"High CPU usage: {system_metrics.cpu_percent:.1f}%")
 
             if system_metrics.memory_percent > 85:
-                alerts.append(f"High memory usage: {system_metrics.memory_percent:.1f}%")
+                alerts.append(
+                    f"High memory usage: {system_metrics.memory_percent:.1f}%"
+                )
 
             if system_metrics.memory_available_gb < 5:
-                alerts.append(f"Low available memory: {system_metrics.memory_available_gb:.1f}GB")
+                alerts.append(
+                    f"Low available memory: {system_metrics.memory_available_gb:.1f}GB"
+                )
 
         # Session store alerts
         if session_metrics:
             if session_metrics.redis_latency_ms > 10:
-                alerts.append(f"High Redis latency: {session_metrics.redis_latency_ms:.2f}ms")
+                alerts.append(
+                    f"High Redis latency: {session_metrics.redis_latency_ms:.2f}ms"
+                )
 
             if session_metrics.crdb_latency_ms > 50:
-                alerts.append(f"High CRDB latency: {session_metrics.crdb_latency_ms:.2f}ms")
+                alerts.append(
+                    f"High CRDB latency: {session_metrics.crdb_latency_ms:.2f}ms"
+                )
 
             if session_metrics.redis_status != "healthy":
                 alerts.append(f"Redis unhealthy: {session_metrics.redis_status}")
@@ -228,7 +251,9 @@ class ProductionMonitor:
 
         # Get latest metrics
         latest_system = self.metrics_history[-1] if self.metrics_history else None
-        latest_session = self.session_metrics_history[-1] if self.session_metrics_history else None
+        latest_session = (
+            self.session_metrics_history[-1] if self.session_metrics_history else None
+        )
 
         # Usage patterns
         usage_patterns = self.analyze_usage_patterns()
@@ -240,12 +265,15 @@ class ProductionMonitor:
             "monitoring_summary": {
                 "uptime_hours": round(uptime_hours, 2),
                 "data_points_collected": len(self.metrics_history),
-                "monitoring_healthy": latest_system is not None and latest_session is not None
+                "monitoring_healthy": latest_system is not None
+                and latest_session is not None,
             },
             "current_system_metrics": asdict(latest_system) if latest_system else None,
-            "current_session_metrics": asdict(latest_session) if latest_session else None,
+            "current_session_metrics": asdict(latest_session)
+            if latest_session
+            else None,
             "usage_patterns": usage_patterns,
-            "performance_alerts": alerts
+            "performance_alerts": alerts,
         }
 
         events.info("Production monitoring report", report)
@@ -277,9 +305,10 @@ class ProductionMonitor:
 
     def run(self):
         """Run continuous monitoring"""
-        events.info("Starting production monitoring", {
-            "interval_seconds": self.monitoring_interval
-        })
+        events.info(
+            "Starting production monitoring",
+            {"interval_seconds": self.monitoring_interval},
+        )
 
         try:
             while True:
@@ -294,10 +323,12 @@ class ProductionMonitor:
             if self.session_store:
                 self.session_store.close()
 
+
 def main():
     """Main entry point for production monitoring"""
     monitor = ProductionMonitor()
     monitor.run()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -27,4 +27,3 @@ cli.add_command(vm)
 
 if __name__ == "__main__":
     cli()
-

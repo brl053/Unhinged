@@ -23,15 +23,15 @@ from .primitives import (
 )
 
 __all__ = [
-    'ActionButton',
-    'StatusLabel',
-    'ProgressIndicator',
-    'HardwareInfoRow',
-    'ProcessRow',
-    'BluetoothRow',
-    'AudioDeviceRow',
-    'ChatBubble',
-    'LoadingDots',
-    'CopyButton',
-    'TextEditor',
+    "ActionButton",
+    "StatusLabel",
+    "ProgressIndicator",
+    "HardwareInfoRow",
+    "ProcessRow",
+    "BluetoothRow",
+    "AudioDeviceRow",
+    "ChatBubble",
+    "LoadingDots",
+    "CopyButton",
+    "TextEditor",
 ]

@@ -25,13 +25,16 @@ class UnhingedError(Exception):
 
 class ConfigurationError(UnhingedError):
     """Raised when there's a configuration problem"""
+
     pass
 
 
 class ServiceError(UnhingedError):
     """Base class for service-related errors"""
 
-    def __init__(self, service_name: str, message: str, details: dict[str, Any] | None = None):
+    def __init__(
+        self, service_name: str, message: str, details: dict[str, Any] | None = None
+    ):
         self.service_name = service_name
         super().__init__(f"{service_name}: {message}", details)
 
@@ -39,32 +42,38 @@ class ServiceError(UnhingedError):
 class ServiceUnavailableError(ServiceError):
     """Raised when a required service is not available"""
 
-    def __init__(self, service_name: str, endpoint: str, details: dict[str, Any] | None = None):
+    def __init__(
+        self, service_name: str, endpoint: str, details: dict[str, Any] | None = None
+    ):
         self.endpoint = endpoint
-        super().__init__(
-            service_name,
-            f"Service unavailable at {endpoint}",
-            details
-        )
+        super().__init__(service_name, f"Service unavailable at {endpoint}", details)
 
 
 class ServiceTimeoutError(ServiceError):
     """Raised when a service call times out"""
 
-    def __init__(self, service_name: str, timeout_seconds: float, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        service_name: str,
+        timeout_seconds: float,
+        details: dict[str, Any] | None = None,
+    ):
         self.timeout_seconds = timeout_seconds
         super().__init__(
-            service_name,
-            f"Service call timed out after {timeout_seconds}s",
-            details
+            service_name, f"Service call timed out after {timeout_seconds}s", details
         )
 
 
 class ServiceResponseError(ServiceError):
     """Raised when a service returns an error response"""
 
-    def __init__(self, service_name: str, status_code: str | None = None,
-                 response_message: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        service_name: str,
+        status_code: str | None = None,
+        response_message: str | None = None,
+        details: dict[str, Any] | None = None,
+    ):
         self.status_code = status_code
         self.response_message = response_message
 
@@ -74,19 +83,27 @@ class ServiceResponseError(ServiceError):
         if response_message:
             message_parts.append(f"Message: {response_message}")
 
-        message = " - ".join(message_parts) if message_parts else "Service returned an error"
+        message = (
+            " - ".join(message_parts) if message_parts else "Service returned an error"
+        )
         super().__init__(service_name, message, details)
 
 
 class AudioError(UnhingedError):
     """Base class for audio-related errors"""
+
     pass
 
 
 class AudioRecordingError(AudioError):
     """Raised when audio recording fails"""
 
-    def __init__(self, message: str, device: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        message: str,
+        device: str | None = None,
+        details: dict[str, Any] | None = None,
+    ):
         self.device = device
         if device:
             message = f"Recording failed on device '{device}': {message}"
@@ -96,7 +113,12 @@ class AudioRecordingError(AudioError):
 class AudioTranscriptionError(AudioError):
     """Raised when audio transcription fails"""
 
-    def __init__(self, message: str, file_path: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        message: str,
+        file_path: str | None = None,
+        details: dict[str, Any] | None = None,
+    ):
         self.file_path = file_path
         if file_path:
             message = f"Transcription failed for '{file_path}': {message}"
@@ -106,7 +128,9 @@ class AudioTranscriptionError(AudioError):
 class AudioFileSizeError(AudioError):
     """Raised when audio file is too large or too small"""
 
-    def __init__(self, file_size: int, max_size: int | None = None, min_size: int | None = None):
+    def __init__(
+        self, file_size: int, max_size: int | None = None, min_size: int | None = None
+    ):
         self.file_size = file_size
         self.max_size = max_size
         self.min_size = min_size
@@ -118,15 +142,15 @@ class AudioFileSizeError(AudioError):
         else:
             message = f"Invalid audio file size: {file_size} bytes"
 
-        super().__init__(message, {
-            'file_size': file_size,
-            'max_size': max_size,
-            'min_size': min_size
-        })
+        super().__init__(
+            message,
+            {"file_size": file_size, "max_size": max_size, "min_size": min_size},
+        )
 
 
 class UIError(UnhingedError):
     """Base class for UI-related errors"""
+
     pass
 
 
@@ -141,7 +165,13 @@ class ComponentNotFoundError(UIError):
 class UserInputError(UnhingedError):
     """Raised when user input is invalid"""
 
-    def __init__(self, field_name: str, value: Any, expected: str, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        field_name: str,
+        value: Any,
+        expected: str,
+        details: dict[str, Any] | None = None,
+    ):
         self.field_name = field_name
         self.value = value
         self.expected = expected
@@ -152,13 +182,19 @@ class UserInputError(UnhingedError):
 
 class NetworkError(UnhingedError):
     """Base class for network-related errors"""
+
     pass
 
 
 class ConnectionError(NetworkError):
     """Raised when network connection fails"""
 
-    def __init__(self, endpoint: str, reason: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        endpoint: str,
+        reason: str | None = None,
+        details: dict[str, Any] | None = None,
+    ):
         self.endpoint = endpoint
         self.reason = reason
 
@@ -171,11 +207,11 @@ class ConnectionError(NetworkError):
 
 def handle_grpc_error(error: Exception, service_name: str) -> ServiceError:
     """Convert gRPC errors to our error hierarchy
-    
+
     Args:
         error: The original gRPC error
         service_name: Name of the service that failed
-        
+
     Returns:
         Appropriate ServiceError subclass
     """
@@ -183,34 +219,41 @@ def handle_grpc_error(error: Exception, service_name: str) -> ServiceError:
 
     # Handle common gRPC error patterns
     if "UNAVAILABLE" in error_str or "failed to connect" in error_str.lower():
-        return ServiceUnavailableError(service_name, "unknown", {'original_error': error_str})
+        return ServiceUnavailableError(
+            service_name, "unknown", {"original_error": error_str}
+        )
 
     elif "DEADLINE_EXCEEDED" in error_str or "timeout" in error_str.lower():
-        return ServiceTimeoutError(service_name, 0, {'original_error': error_str})
+        return ServiceTimeoutError(service_name, 0, {"original_error": error_str})
 
     elif "RESOURCE_EXHAUSTED" in error_str:
         # Extract size information if available
-        details = {'original_error': error_str}
+        details = {"original_error": error_str}
         if "larger than max" in error_str:
             import re
-            match = re.search(r'(\d+) vs\. (\d+)', error_str)
-            if match:
-                details['received_size'] = int(match.group(1))
-                details['max_size'] = int(match.group(2))
 
-        return ServiceResponseError(service_name, "RESOURCE_EXHAUSTED", "Message too large", details)
+            match = re.search(r"(\d+) vs\. (\d+)", error_str)
+            if match:
+                details["received_size"] = int(match.group(1))
+                details["max_size"] = int(match.group(2))
+
+        return ServiceResponseError(
+            service_name, "RESOURCE_EXHAUSTED", "Message too large", details
+        )
 
     else:
         # Generic service error
-        return ServiceResponseError(service_name, "UNKNOWN", error_str, {'original_error': error_str})
+        return ServiceResponseError(
+            service_name, "UNKNOWN", error_str, {"original_error": error_str}
+        )
 
 
 def get_user_friendly_message(error: Exception) -> str:
     """Get a user-friendly error message
-    
+
     Args:
         error: The exception to convert
-        
+
     Returns:
         User-friendly error message
     """

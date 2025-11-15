@@ -49,13 +49,14 @@ from events import create_service_logger
 # Initialize event logger
 events = create_service_logger("image-generation", "1.0.0")
 
+
 class ImageGenerationServicer(
     image_generation_pb2_grpc.ImageGenerationServiceServicer,
-    health_pb2_grpc.HealthServiceServicer
+    health_pb2_grpc.HealthServiceServicer,
 ):
     """
     gRPC Image Generation Service implementation following proto contracts
-    
+
     Implements all methods defined in image_generation.proto:
     - GenerateImage: Single image generation with streaming progress
     - GenerateBatch: Batch image generation
@@ -74,10 +75,10 @@ class ImageGenerationServicer(
         # Initialize image generator
         self._initialize_generator()
 
-        events.info("Image generation service initialized", {
-            "output_dir": str(self.output_dir),
-            "service_ready": self.service_ready
-        })
+        events.info(
+            "Image generation service initialized",
+            {"output_dir": str(self.output_dir), "service_ready": self.service_ready},
+        )
 
     def _initialize_generator(self):
         """Initialize the sovereign image generator."""
@@ -88,7 +89,7 @@ class ImageGenerationServicer(
                 device="cuda" if self._check_cuda_available() else "cpu",
                 dtype="float16" if self._check_cuda_available() else "float32",
                 enable_xformers=self._check_cuda_available(),
-                cache_dir=Path.home() / ".cache" / "huggingface"
+                cache_dir=Path.home() / ".cache" / "huggingface",
             )
 
             self.generator = SovereignImageGenerator(config)
@@ -108,6 +109,7 @@ class ImageGenerationServicer(
         """Check if CUDA is available."""
         try:
             import torch
+
             return torch.cuda.is_available()
         except ImportError:
             return False
@@ -116,14 +118,16 @@ class ImageGenerationServicer(
     # Image Generation Service Methods
     # ========================================================================
 
-    def GenerateImage(self, request: image_generation_pb2.GenerateImageRequest, context) -> Iterator[common_pb2.StreamChunk]:
+    def GenerateImage(
+        self, request: image_generation_pb2.GenerateImageRequest, context
+    ) -> Iterator[common_pb2.StreamChunk]:
         """
         Generate a single image with streaming progress updates.
-        
+
         Args:
             request: GenerateImageRequest with prompt and parameters
             context: gRPC context
-            
+
         Yields:
             StreamChunk: Progress updates and final result
         """
@@ -135,20 +139,25 @@ class ImageGenerationServicer(
 
             generation_id = f"gen_{int(time.time() * 1000)}"
 
-            events.info("Starting image generation", {
-                "generation_id": generation_id,
-                "prompt": request.prompt[:50] + "..." if len(request.prompt) > 50 else request.prompt,
-                "width": request.width,
-                "height": request.height,
-                "steps": request.num_inference_steps
-            })
+            events.info(
+                "Starting image generation",
+                {
+                    "generation_id": generation_id,
+                    "prompt": request.prompt[:50] + "..."
+                    if len(request.prompt) > 50
+                    else request.prompt,
+                    "width": request.width,
+                    "height": request.height,
+                    "steps": request.num_inference_steps,
+                },
+            )
 
             # Send initial progress
             yield self._create_progress_chunk(
                 generation_id,
                 image_generation_pb2.GENERATION_STAGE_INITIALIZING,
                 0.0,
-                "Initializing generation..."
+                "Initializing generation...",
             )
 
             # Convert gRPC request to internal request
@@ -160,7 +169,7 @@ class ImageGenerationServicer(
                 num_inference_steps=request.num_inference_steps or 25,
                 guidance_scale=request.guidance_scale or 7.5,
                 seed=request.seed if request.seed != 0 else None,
-                batch_size=request.batch_size or 1
+                batch_size=request.batch_size or 1,
             )
 
             # Send encoding progress
@@ -168,7 +177,7 @@ class ImageGenerationServicer(
                 generation_id,
                 image_generation_pb2.GENERATION_STAGE_ENCODING,
                 10.0,
-                "Encoding text prompt..."
+                "Encoding text prompt...",
             )
 
             # Generate image (this would have progress callbacks in a real implementation)
@@ -180,7 +189,7 @@ class ImageGenerationServicer(
                     generation_id,
                     image_generation_pb2.GENERATION_STAGE_DENOISING,
                     progress,
-                    f"Denoising step {int(progress * gen_request.num_inference_steps / 100)}/{gen_request.num_inference_steps}"
+                    f"Denoising step {int(progress * gen_request.num_inference_steps / 100)}/{gen_request.num_inference_steps}",
                 )
 
             # Send decoding progress
@@ -188,29 +197,34 @@ class ImageGenerationServicer(
                 generation_id,
                 image_generation_pb2.GENERATION_STAGE_DECODING,
                 90.0,
-                "Decoding to image..."
+                "Decoding to image...",
             )
 
             # Save images
-            saved_paths = self.generator.save_result(result, self.output_dir, "grpc_generated")
+            saved_paths = self.generator.save_result(
+                result, self.output_dir, "grpc_generated"
+            )
 
             # Send saving progress
             yield self._create_progress_chunk(
                 generation_id,
                 image_generation_pb2.GENERATION_STAGE_SAVING,
                 95.0,
-                "Saving images..."
+                "Saving images...",
             )
 
             # Send final result
             yield self._create_completion_chunk(generation_id, result, saved_paths)
 
-            events.info("Image generation completed", {
-                "generation_id": generation_id,
-                "generation_time": result.generation_time,
-                "images_generated": len(result.images),
-                "seed": result.seed
-            })
+            events.info(
+                "Image generation completed",
+                {
+                    "generation_id": generation_id,
+                    "generation_time": result.generation_time,
+                    "images_generated": len(result.images),
+                    "seed": result.seed,
+                },
+            )
 
         except Exception as e:
             events.error("Image generation failed", exception=e)
@@ -224,14 +238,16 @@ class ImageGenerationServicer(
             error_chunk.status = common_pb2.CHUNK_STATUS_ERROR
             yield error_chunk
 
-    def GenerateBatch(self, request: image_generation_pb2.GenerateBatchRequest, context) -> Iterator[common_pb2.StreamChunk]:
+    def GenerateBatch(
+        self, request: image_generation_pb2.GenerateBatchRequest, context
+    ) -> Iterator[common_pb2.StreamChunk]:
         """
         Generate multiple images from multiple prompts.
-        
+
         Args:
             request: GenerateBatchRequest with prompts and parameters
             context: gRPC context
-            
+
         Yields:
             StreamChunk: Progress updates for batch generation
         """
@@ -244,17 +260,17 @@ class ImageGenerationServicer(
             batch_id = f"batch_{int(time.time() * 1000)}"
             total_prompts = len(request.prompts)
 
-            events.info("Starting batch generation", {
-                "batch_id": batch_id,
-                "total_prompts": total_prompts
-            })
+            events.info(
+                "Starting batch generation",
+                {"batch_id": batch_id, "total_prompts": total_prompts},
+            )
 
             # Send initial progress
             yield self._create_progress_chunk(
                 batch_id,
                 image_generation_pb2.GENERATION_STAGE_INITIALIZING,
                 0.0,
-                f"Starting batch generation for {total_prompts} prompts..."
+                f"Starting batch generation for {total_prompts} prompts...",
             )
 
             # Generate each image
@@ -266,7 +282,7 @@ class ImageGenerationServicer(
                     batch_id,
                     image_generation_pb2.GENERATION_STAGE_DENOISING,
                     progress,
-                    f"Generating image {i+1}/{total_prompts}: {prompt[:30]}..."
+                    f"Generating image {i+1}/{total_prompts}: {prompt[:30]}...",
                 )
 
                 # Generate single image
@@ -277,30 +293,37 @@ class ImageGenerationServicer(
                     height=request.height or 1024,
                     num_inference_steps=request.num_inference_steps or 25,
                     guidance_scale=request.guidance_scale or 7.5,
-                    seed=request.seeds[i] if i < len(request.seeds) else None
+                    seed=request.seeds[i] if i < len(request.seeds) else None,
                 )
 
                 result = self.generator.generate(gen_request)
                 all_results.append(result)
 
                 # Save result
-                saved_paths = self.generator.save_result(result, self.output_dir, f"batch_{i}")
+                saved_paths = self.generator.save_result(
+                    result, self.output_dir, f"batch_{i}"
+                )
 
             # Send completion
             yield self._create_batch_completion_chunk(batch_id, all_results)
 
-            events.info("Batch generation completed", {
-                "batch_id": batch_id,
-                "total_images": len(all_results),
-                "total_time": sum(r.generation_time for r in all_results)
-            })
+            events.info(
+                "Batch generation completed",
+                {
+                    "batch_id": batch_id,
+                    "total_images": len(all_results),
+                    "total_time": sum(r.generation_time for r in all_results),
+                },
+            )
 
         except Exception as e:
             events.error("Batch generation failed", exception=e)
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Batch generation failed: {str(e)}")
 
-    def GetServiceStatus(self, request: image_generation_pb2.GetServiceStatusRequest, context) -> image_generation_pb2.GetServiceStatusResponse:
+    def GetServiceStatus(
+        self, request: image_generation_pb2.GetServiceStatusRequest, context
+    ) -> image_generation_pb2.GetServiceStatusResponse:
         """Get current service status and statistics."""
         try:
             response = image_generation_pb2.GetServiceStatusResponse()
@@ -325,9 +348,15 @@ class ImageGenerationServicer(
             # Add statistics
             if self.generator:
                 stats = self.generator.get_stats()
-                response.statistics.total_generations = stats.get("total_generations", 0)
-                response.statistics.successful_generations = stats.get("total_generations", 0)
-                response.statistics.average_generation_time = stats.get("average_time", 0.0)
+                response.statistics.total_generations = stats.get(
+                    "total_generations", 0
+                )
+                response.statistics.successful_generations = stats.get(
+                    "total_generations", 0
+                )
+                response.statistics.average_generation_time = stats.get(
+                    "average_time", 0.0
+                )
 
             return response
 
@@ -340,7 +369,9 @@ class ImageGenerationServicer(
     # Health Check Implementation
     # ========================================================================
 
-    def Check(self, request: health_pb2.HealthCheckRequest, context) -> health_pb2.HealthCheckResponse:
+    def Check(
+        self, request: health_pb2.HealthCheckRequest, context
+    ) -> health_pb2.HealthCheckResponse:
         """Health check implementation."""
         response = health_pb2.HealthCheckResponse()
 
@@ -351,7 +382,9 @@ class ImageGenerationServicer(
 
         return response
 
-    def Watch(self, request: health_pb2.HealthCheckRequest, context) -> Iterator[health_pb2.HealthCheckResponse]:
+    def Watch(
+        self, request: health_pb2.HealthCheckRequest, context
+    ) -> Iterator[health_pb2.HealthCheckResponse]:
         """Health check watch implementation."""
         while True:
             response = health_pb2.HealthCheckResponse()
@@ -368,7 +401,9 @@ class ImageGenerationServicer(
     # Helper Methods
     # ========================================================================
 
-    def _create_progress_chunk(self, generation_id: str, stage: int, progress: float, message: str) -> common_pb2.StreamChunk:
+    def _create_progress_chunk(
+        self, generation_id: str, stage: int, progress: float, message: str
+    ) -> common_pb2.StreamChunk:
         """Create a progress update chunk."""
         chunk = common_pb2.StreamChunk()
         chunk.stream_id = generation_id
@@ -383,16 +418,20 @@ class ImageGenerationServicer(
         progress_payload.status_message = message
 
         # Serialize payload to structured data
-        chunk.structured.update({
-            "generation_id": generation_id,
-            "stage": stage,
-            "progress_percent": progress,
-            "status_message": message
-        })
+        chunk.structured.update(
+            {
+                "generation_id": generation_id,
+                "stage": stage,
+                "progress_percent": progress,
+                "status_message": message,
+            }
+        )
 
         return chunk
 
-    def _create_completion_chunk(self, generation_id: str, result: GenerationResult, saved_paths: list) -> common_pb2.StreamChunk:
+    def _create_completion_chunk(
+        self, generation_id: str, result: GenerationResult, saved_paths: list
+    ) -> common_pb2.StreamChunk:
         """Create a completion chunk with final result."""
         chunk = common_pb2.StreamChunk()
         chunk.stream_id = generation_id
@@ -401,20 +440,24 @@ class ImageGenerationServicer(
         chunk.is_final = True
 
         # Add result data
-        chunk.structured.update({
-            "generation_id": generation_id,
-            "stage": image_generation_pb2.GENERATION_STAGE_COMPLETE,
-            "progress_percent": 100.0,
-            "status_message": "Generation completed successfully",
-            "generation_time": result.generation_time,
-            "seed": result.seed,
-            "images": [str(path) for path in saved_paths],
-            "image_count": len(result.images)
-        })
+        chunk.structured.update(
+            {
+                "generation_id": generation_id,
+                "stage": image_generation_pb2.GENERATION_STAGE_COMPLETE,
+                "progress_percent": 100.0,
+                "status_message": "Generation completed successfully",
+                "generation_time": result.generation_time,
+                "seed": result.seed,
+                "images": [str(path) for path in saved_paths],
+                "image_count": len(result.images),
+            }
+        )
 
         return chunk
 
-    def _create_batch_completion_chunk(self, batch_id: str, results: list) -> common_pb2.StreamChunk:
+    def _create_batch_completion_chunk(
+        self, batch_id: str, results: list
+    ) -> common_pb2.StreamChunk:
         """Create a batch completion chunk."""
         chunk = common_pb2.StreamChunk()
         chunk.stream_id = batch_id
@@ -425,17 +468,20 @@ class ImageGenerationServicer(
         total_time = sum(r.generation_time for r in results)
         total_images = sum(len(r.images) for r in results)
 
-        chunk.structured.update({
-            "batch_id": batch_id,
-            "stage": image_generation_pb2.GENERATION_STAGE_COMPLETE,
-            "progress_percent": 100.0,
-            "status_message": f"Batch generation completed: {total_images} images",
-            "total_time": total_time,
-            "total_images": total_images,
-            "batch_size": len(results)
-        })
+        chunk.structured.update(
+            {
+                "batch_id": batch_id,
+                "stage": image_generation_pb2.GENERATION_STAGE_COMPLETE,
+                "progress_percent": 100.0,
+                "status_message": f"Batch generation completed: {total_images} images",
+                "total_time": total_time,
+                "total_images": total_images,
+                "batch_size": len(results),
+            }
+        )
 
         return chunk
+
 
 def serve():
     """Start the gRPC server with health.proto implementation"""
@@ -443,10 +489,12 @@ def serve():
     servicer = ImageGenerationServicer()
 
     # Register both image generation and health services
-    image_generation_pb2_grpc.add_ImageGenerationServiceServicer_to_server(servicer, server)
+    image_generation_pb2_grpc.add_ImageGenerationServiceServicer_to_server(
+        servicer, server
+    )
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
 
-    listen_addr = '[::]:9094'  # Use port 9094 for image generation
+    listen_addr = "[::]:9094"  # Use port 9094 for image generation
     server.add_insecure_port(listen_addr)
 
     events.info("Starting gRPC server", {"address": listen_addr})
@@ -458,5 +506,6 @@ def serve():
         events.info("Shutting down gRPC server")
         server.stop(0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     serve()

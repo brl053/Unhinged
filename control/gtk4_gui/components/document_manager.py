@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "libs"))
 
 try:
     from python.persistence import get_document_store
+
     PERSISTENCE_AVAILABLE = True
 except ImportError:
     PERSISTENCE_AVAILABLE = False
@@ -35,7 +36,7 @@ class DocumentManager:
             except Exception as e:
                 print(f"Warning: Could not initialize persistence store: {e}")
                 print("Documents will not be persisted.")
-    
+
     def get_all_documents(self) -> List[Dict[str, Any]]:
         """Get all documents"""
         if not self.store:
@@ -60,7 +61,9 @@ class DocumentManager:
             print(f"Error fetching document {document_id}: {e}")
             return None
 
-    def create_document(self, title: str, doc_type: str, description: str = "") -> Optional[Dict[str, Any]]:
+    def create_document(
+        self, title: str, doc_type: str, description: str = ""
+    ) -> Optional[Dict[str, Any]]:
         """
         Create a new document.
 
@@ -80,11 +83,7 @@ class DocumentManager:
             return None
 
         try:
-            data = {
-                "title": title,
-                "type": doc_type,
-                "description": description
-            }
+            data = {"title": title, "type": doc_type, "description": description}
             doc = self.store.create(self.COLLECTION, data)
             return self._document_to_dict(doc)
         except Exception as e:
@@ -164,6 +163,5 @@ class DocumentManager:
             "description": doc.data.get("description", ""),
             "created_at": doc.created_at.isoformat() if doc.created_at else None,
             "modified_at": doc.updated_at.isoformat() if doc.updated_at else None,
-            "version": doc.version
+            "version": doc.version,
         }
-

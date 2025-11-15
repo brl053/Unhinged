@@ -27,10 +27,12 @@ class PlatformHandler:
         self._log_callback: Callable[[str], None] | None = None
         self._error_callback: Callable[[str, str], None] | None = None
 
-    def set_callbacks(self,
-                     status_callback: Callable[[str, float | None], None] | None = None,
-                     log_callback: Callable[[str], None] | None = None,
-                     error_callback: Callable[[str, str], None] | None = None):
+    def set_callbacks(
+        self,
+        status_callback: Callable[[str, float | None], None] | None = None,
+        log_callback: Callable[[str], None] | None = None,
+        error_callback: Callable[[str, str], None] | None = None,
+    ):
         """Set callbacks for UI updates"""
         self._status_callback = status_callback
         self._log_callback = log_callback
@@ -60,7 +62,7 @@ class PlatformHandler:
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
             )
 
             self._update_status("Platform starting...", 0.5)
@@ -116,11 +118,23 @@ class PlatformHandler:
             elif command == "test":
                 subprocess.run(["make", "test"], cwd=self.project_root, check=True)
             elif command == "start-services":
-                subprocess.run(["python3", "control/service_launcher.py"], cwd=self.project_root, check=True)
+                subprocess.run(
+                    ["python3", "control/service_launcher.py"],
+                    cwd=self.project_root,
+                    check=True,
+                )
             elif command == "stop-services":
-                subprocess.run(["python3", "control/service_launcher.py", "--stop"], cwd=self.project_root, check=True)
+                subprocess.run(
+                    ["python3", "control/service_launcher.py", "--stop"],
+                    cwd=self.project_root,
+                    check=True,
+                )
             elif command == "status":
-                subprocess.run(["python3", "control/service_launcher.py", "--status"], cwd=self.project_root, check=True)
+                subprocess.run(
+                    ["python3", "control/service_launcher.py", "--status"],
+                    cwd=self.project_root,
+                    check=True,
+                )
             else:
                 # Use make for other commands to avoid recursive issues
                 subprocess.run(["make", command], cwd=self.project_root, check=True)
@@ -141,7 +155,7 @@ class PlatformHandler:
 
         def monitor():
             try:
-                for line in iter(self.process.stdout.readline, ''):
+                for line in iter(self.process.stdout.readline, ""):
                     if line:
                         self._log(line.rstrip())
 
@@ -156,7 +170,10 @@ class PlatformHandler:
                     self._log("Platform started successfully")
                 else:
                     self.running = False
-                    self._error("Platform Start Failed", f"Process exited with code {return_code}")
+                    self._error(
+                        "Platform Start Failed",
+                        f"Process exited with code {return_code}",
+                    )
 
             except Exception as e:
                 self.running = False

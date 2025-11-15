@@ -8,16 +8,18 @@
 # This file exists solely to hold build system documentation for LlmDocs generation
 # It contains no executable code, only comprehensive documentation about the build system
 
+
 def main():
     """
     UnhingedOS Build System Documentation Holder
-    
+
     This file serves as a documentation container for the LlmDocs system.
     All build system information is contained in the module docstring above.
     """
     print("UnhingedOS Build System Documentation")
     print("This file contains build system specifications in LlmDocs format.")
     print("Run 'make docs-update' to generate documentation from these comments.")
+
 
 if __name__ == "__main__":
     main()

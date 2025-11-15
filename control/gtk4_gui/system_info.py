@@ -12,7 +12,6 @@ import json
 import logging
 import os
 import platform
-import subprocess
 import time
 import sys
 from dataclasses import dataclass, field
@@ -27,6 +26,7 @@ from subprocess_utils import SubprocessRunner
 # Import psutil with fallback
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CPUInfo:
     """CPU information structure"""
+
     model: str = "Unknown"
     cores: int = 0
     threads: int = 0
@@ -51,6 +52,7 @@ class CPUInfo:
 @dataclass
 class MemoryInfo:
     """Memory information structure"""
+
     total_gb: float = 0.0
     available_gb: float = 0.0
     used_gb: float = 0.0
@@ -63,6 +65,7 @@ class MemoryInfo:
 @dataclass
 class StorageDevice:
     """Individual storage device information"""
+
     device: str = ""
     mountpoint: str = ""
     filesystem: str = ""
@@ -75,6 +78,7 @@ class StorageDevice:
 @dataclass
 class StorageInfo:
     """Storage information structure"""
+
     devices: list[StorageDevice] = field(default_factory=list)
     total_storage_gb: float = 0.0
     total_used_gb: float = 0.0
@@ -84,6 +88,7 @@ class StorageInfo:
 @dataclass
 class GPUInfo:
     """GPU information structure"""
+
     vendor: str = "Unknown"
     model: str = "Unknown"
     driver: str = "Unknown"
@@ -93,6 +98,7 @@ class GPUInfo:
 @dataclass
 class NetworkInterface:
     """Network interface information"""
+
     name: str = ""
     ip_address: str = ""
     mac_address: str = ""
@@ -104,6 +110,7 @@ class NetworkInterface:
 @dataclass
 class NetworkInfo:
     """Network information structure"""
+
     interfaces: list[NetworkInterface] = field(default_factory=list)
     hostname: str = "Unknown"
     total_bytes_sent: int = 0
@@ -113,6 +120,7 @@ class NetworkInfo:
 @dataclass
 class SystemStatus:
     """System status information"""
+
     os_name: str = "Unknown"
     os_version: str = "Unknown"
     kernel_version: str = "Unknown"
@@ -127,6 +135,7 @@ class SystemStatus:
 @dataclass
 class PlatformStatus:
     """Unhinged platform-specific status"""
+
     services_running: list[str] = field(default_factory=list)
     services_failed: list[str] = field(default_factory=list)
     vm_status: dict[str, Any] = field(default_factory=dict)
@@ -137,6 +146,7 @@ class PlatformStatus:
 @dataclass
 class SystemInformation:
     """Complete system information structure"""
+
     cpu: CPUInfo = field(default_factory=CPUInfo)
     memory: MemoryInfo = field(default_factory=MemoryInfo)
     storage: StorageInfo = field(default_factory=StorageInfo)
@@ -153,7 +163,7 @@ class SystemInformation:
 class SystemInfoCollector:
     """
     Main system information collector class.
-    
+
     Gathers comprehensive system information using multiple sources:
     - psutil for performance metrics
     - platform module for system details
@@ -170,20 +180,22 @@ class SystemInfoCollector:
     def collect_all(self, use_cache: bool = True) -> SystemInformation:
         """
         Collect all system information.
-        
+
         Args:
             use_cache: Whether to use cached data if available
-            
+
         Returns:
             SystemInformation object with all collected data
         """
         current_time = time.time()
 
         # Check cache
-        if (use_cache and
-            self._cache and
-            current_time - self._last_collection < self._cache_timeout):
-            return self._cache.get('system_info', SystemInformation())
+        if (
+            use_cache
+            and self._cache
+            and current_time - self._last_collection < self._cache_timeout
+        ):
+            return self._cache.get("system_info", SystemInformation())
 
         logger.info("🔍 Collecting system information...")
 
@@ -246,12 +258,14 @@ class SystemInfoCollector:
             system_info.collection_errors.append(f"Platform: {str(e)}")
 
         # Update cache
-        self._cache['system_info'] = system_info
+        self._cache["system_info"] = system_info
         self._last_collection = current_time
 
         # Log collection summary
         if system_info.collection_errors:
-            logger.warning(f"⚠️  System information collected with {len(system_info.collection_errors)} errors")
+            logger.warning(
+                f"⚠️  System information collected with {len(system_info.collection_errors)} errors"
+            )
             for error in system_info.collection_errors:
                 logger.warning(f"  - {error}")
         else:
@@ -275,29 +289,29 @@ class SystemInfoCollector:
         motherboard = {}
 
         # Try dmidecode first (requires root)
-        success, output = self._run_command(['dmidecode', '-t', 'baseboard'])
+        success, output = self._run_command(["dmidecode", "-t", "baseboard"])
         if success:
-            for line in output.split('\n'):
+            for line in output.split("\n"):
                 line = line.strip()
-                if line.startswith('Manufacturer:'):
-                    motherboard['manufacturer'] = line.split(':', 1)[1].strip()
-                elif line.startswith('Product Name:'):
-                    motherboard['model'] = line.split(':', 1)[1].strip()
-                elif line.startswith('Serial Number:'):
-                    motherboard['serial'] = line.split(':', 1)[1].strip()
-                elif line.startswith('Version:'):
-                    motherboard['version'] = line.split(':', 1)[1].strip()
+                if line.startswith("Manufacturer:"):
+                    motherboard["manufacturer"] = line.split(":", 1)[1].strip()
+                elif line.startswith("Product Name:"):
+                    motherboard["model"] = line.split(":", 1)[1].strip()
+                elif line.startswith("Serial Number:"):
+                    motherboard["serial"] = line.split(":", 1)[1].strip()
+                elif line.startswith("Version:"):
+                    motherboard["version"] = line.split(":", 1)[1].strip()
             return motherboard
 
         # Fallback to /sys/class/dmi/id/ (no root needed)
-        dmi_path = Path('/sys/class/dmi/id')
+        dmi_path = Path("/sys/class/dmi/id")
         if dmi_path.exists():
             # Try to read each file, skip if permission denied
             for dmi_file, key in [
-                ('board_vendor', 'manufacturer'),
-                ('board_name', 'model'),
-                ('board_serial', 'serial'),
-                ('board_version', 'version'),
+                ("board_vendor", "manufacturer"),
+                ("board_name", "model"),
+                ("board_serial", "serial"),
+                ("board_version", "version"),
             ]:
                 try:
                     file_path = dmi_path / dmi_file
@@ -317,50 +331,50 @@ class SystemInfoCollector:
 
         # Try to read from /proc/cpuinfo
         try:
-            with open('/proc/cpuinfo', 'r') as f:
+            with open("/proc/cpuinfo", "r") as f:
                 cpuinfo_content = f.read()
 
             # Parse cpuinfo
-            for line in cpuinfo_content.split('\n'):
+            for line in cpuinfo_content.split("\n"):
                 line = line.strip()
 
                 # Get model name (contains brand and series)
-                if line.startswith('model name'):
-                    model_name = line.split(':', 1)[1].strip()
-                    cpu_details['model_name'] = model_name
+                if line.startswith("model name"):
+                    model_name = line.split(":", 1)[1].strip()
+                    cpu_details["model_name"] = model_name
 
                     # Extract brand (Intel or AMD)
-                    if 'Intel' in model_name:
-                        cpu_details['brand'] = 'Intel'
-                    elif 'AMD' in model_name:
-                        cpu_details['brand'] = 'AMD'
+                    if "Intel" in model_name:
+                        cpu_details["brand"] = "Intel"
+                    elif "AMD" in model_name:
+                        cpu_details["brand"] = "AMD"
 
                 # Get stepping
-                elif line.startswith('stepping'):
+                elif line.startswith("stepping"):
                     try:
-                        cpu_details['stepping'] = line.split(':', 1)[1].strip()
+                        cpu_details["stepping"] = line.split(":", 1)[1].strip()
                     except:
                         pass
 
                 # Get cache info
-                elif line.startswith('cache size'):
+                elif line.startswith("cache size"):
                     try:
-                        cache_str = line.split(':', 1)[1].strip()
-                        cpu_details['cache'] = cache_str
+                        cache_str = line.split(":", 1)[1].strip()
+                        cpu_details["cache"] = cache_str
                     except:
                         pass
 
                 # Get family
-                elif line.startswith('cpu family'):
+                elif line.startswith("cpu family"):
                     try:
-                        cpu_details['family'] = line.split(':', 1)[1].strip()
+                        cpu_details["family"] = line.split(":", 1)[1].strip()
                     except:
                         pass
 
                 # Get model number
-                elif line.startswith('model') and 'model name' not in line:
+                elif line.startswith("model") and "model name" not in line:
                     try:
-                        cpu_details['model_number'] = line.split(':', 1)[1].strip()
+                        cpu_details["model_number"] = line.split(":", 1)[1].strip()
                     except:
                         pass
         except Exception as e:
@@ -389,33 +403,47 @@ class SystemInfoCollector:
                 pass
 
         # Try to get detailed info from lscpu
-        success, output = self._run_command(['lscpu'])
+        success, output = self._run_command(["lscpu"])
         if success:
-            for line in output.split('\n'):
-                if 'Model name:' in line:
-                    cpu_info.model = line.split(':', 1)[1].strip()
-                elif 'CPU(s):' in line and 'NUMA' not in line:
+            for line in output.split("\n"):
+                if "Model name:" in line:
+                    cpu_info.model = line.split(":", 1)[1].strip()
+                elif "CPU(s):" in line and "NUMA" not in line:
                     try:
-                        cpu_info.threads = int(line.split(':', 1)[1].strip())
+                        cpu_info.threads = int(line.split(":", 1)[1].strip())
                     except:
                         pass
-                elif 'Core(s) per socket:' in line:
+                elif "Core(s) per socket:" in line:
                     try:
-                        cores_per_socket = int(line.split(':', 1)[1].strip())
+                        cores_per_socket = int(line.split(":", 1)[1].strip())
                         # Get socket count
                         socket_count = 1
-                        for l in output.split('\n'):
-                            if 'Socket(s):' in l:
-                                socket_count = int(l.split(':', 1)[1].strip())
+                        for l in output.split("\n"):
+                            if "Socket(s):" in l:
+                                socket_count = int(l.split(":", 1)[1].strip())
                                 break
                         cpu_info.cores = cores_per_socket * socket_count
                     except:
                         pass
-                elif 'Flags:' in line:
-                    flags = line.split(':', 1)[1].strip().split()
+                elif "Flags:" in line:
+                    flags = line.split(":", 1)[1].strip().split()
                     # Filter for interesting features
-                    interesting_features = ['avx', 'avx2', 'sse', 'sse2', 'sse3', 'sse4_1', 'sse4_2', 'aes', 'fma']
-                    cpu_info.features = [f for f in flags if any(feat in f.lower() for feat in interesting_features)]
+                    interesting_features = [
+                        "avx",
+                        "avx2",
+                        "sse",
+                        "sse2",
+                        "sse3",
+                        "sse4_1",
+                        "sse4_2",
+                        "aes",
+                        "fma",
+                    ]
+                    cpu_info.features = [
+                        f
+                        for f in flags
+                        if any(feat in f.lower() for feat in interesting_features)
+                    ]
 
         return cpu_info
 
@@ -439,26 +467,32 @@ class SystemInfoCollector:
         else:
             # Fallback to /proc/meminfo
             try:
-                with open('/proc/meminfo') as f:
+                with open("/proc/meminfo") as f:
                     meminfo = f.read()
 
-                for line in meminfo.split('\n'):
-                    if 'MemTotal:' in line:
+                for line in meminfo.split("\n"):
+                    if "MemTotal:" in line:
                         memory_info.total_gb = int(line.split()[1]) / (1024**2)
-                    elif 'MemAvailable:' in line:
+                    elif "MemAvailable:" in line:
                         memory_info.available_gb = int(line.split()[1]) / (1024**2)
-                    elif 'SwapTotal:' in line:
+                    elif "SwapTotal:" in line:
                         memory_info.swap_total_gb = int(line.split()[1]) / (1024**2)
-                    elif 'SwapFree:' in line:
+                    elif "SwapFree:" in line:
                         swap_free = int(line.split()[1]) / (1024**2)
                         memory_info.swap_used_gb = memory_info.swap_total_gb - swap_free
 
                 if memory_info.total_gb > 0:
-                    memory_info.used_gb = memory_info.total_gb - memory_info.available_gb
-                    memory_info.usage_percent = (memory_info.used_gb / memory_info.total_gb) * 100
+                    memory_info.used_gb = (
+                        memory_info.total_gb - memory_info.available_gb
+                    )
+                    memory_info.usage_percent = (
+                        memory_info.used_gb / memory_info.total_gb
+                    ) * 100
 
                 if memory_info.swap_total_gb > 0:
-                    memory_info.swap_percent = (memory_info.swap_used_gb / memory_info.swap_total_gb) * 100
+                    memory_info.swap_percent = (
+                        memory_info.swap_used_gb / memory_info.swap_total_gb
+                    ) * 100
 
             except Exception as e:
                 logger.warning(f"Failed to read /proc/meminfo: {e}")
@@ -484,7 +518,9 @@ class SystemInfoCollector:
                         total_gb=usage.total / (1024**3),
                         used_gb=usage.used / (1024**3),
                         free_gb=usage.free / (1024**3),
-                        usage_percent=(usage.used / usage.total) * 100 if usage.total > 0 else 0
+                        usage_percent=(usage.used / usage.total) * 100
+                        if usage.total > 0
+                        else 0,
                     )
 
                     storage_info.devices.append(device)
@@ -496,15 +532,19 @@ class SystemInfoCollector:
                     # Skip inaccessible partitions
                     continue
                 except Exception as e:
-                    logger.warning(f"Failed to get usage for {partition.mountpoint}: {e}")
+                    logger.warning(
+                        f"Failed to get usage for {partition.mountpoint}: {e}"
+                    )
                     continue
         else:
             # Fallback to lsblk command
-            success, output = self._run_command(['lsblk', '-J', '-o', 'NAME,SIZE,MOUNTPOINT,FSTYPE'])
+            success, output = self._run_command(
+                ["lsblk", "-J", "-o", "NAME,SIZE,MOUNTPOINT,FSTYPE"]
+            )
             if success:
                 try:
                     data = json.loads(output)
-                    for device in data.get('blockdevices', []):
+                    for device in data.get("blockdevices", []):
                         self._parse_lsblk_device(device, storage_info)
                 except json.JSONDecodeError:
                     logger.warning("Failed to parse lsblk JSON output")
@@ -513,32 +553,34 @@ class SystemInfoCollector:
 
     def _parse_lsblk_device(self, device: dict, storage_info: StorageInfo):
         """Parse lsblk device information recursively"""
-        if device.get('mountpoint') and device.get('size'):
+        if device.get("mountpoint") and device.get("size"):
             # Try to get usage information
-            mountpoint = device['mountpoint']
+            mountpoint = device["mountpoint"]
             try:
                 if PSUTIL_AVAILABLE:
                     usage = psutil.disk_usage(mountpoint)
                     total_gb = usage.total / (1024**3)
                     used_gb = usage.used / (1024**3)
                     free_gb = usage.free / (1024**3)
-                    usage_percent = (usage.used / usage.total) * 100 if usage.total > 0 else 0
+                    usage_percent = (
+                        (usage.used / usage.total) * 100 if usage.total > 0 else 0
+                    )
                 else:
                     # Parse size string (e.g., "100G", "1.5T")
-                    size_str = device['size']
+                    size_str = device["size"]
                     total_gb = self._parse_size_string(size_str)
                     used_gb = 0  # Can't determine without df
                     free_gb = total_gb
                     usage_percent = 0
 
                 storage_device = StorageDevice(
-                    device=device.get('name', ''),
+                    device=device.get("name", ""),
                     mountpoint=mountpoint,
-                    filesystem=device.get('fstype', ''),
+                    filesystem=device.get("fstype", ""),
                     total_gb=total_gb,
                     used_gb=used_gb,
                     free_gb=free_gb,
-                    usage_percent=usage_percent
+                    usage_percent=usage_percent,
                 )
 
                 storage_info.devices.append(storage_device)
@@ -550,7 +592,7 @@ class SystemInfoCollector:
                 logger.warning(f"Failed to get usage for {mountpoint}: {e}")
 
         # Process children recursively
-        for child in device.get('children', []):
+        for child in device.get("children", []):
             self._parse_lsblk_device(child, storage_info)
 
     def _parse_size_string(self, size_str: str) -> float:
@@ -559,8 +601,15 @@ class SystemInfoCollector:
             return 0.0
 
         size_str = size_str.strip().upper()
-        if size_str[-1] in 'KMGTPE':
-            multipliers = {'K': 1/1024, 'M': 1, 'G': 1024, 'T': 1024**2, 'P': 1024**3, 'E': 1024**4}
+        if size_str[-1] in "KMGTPE":
+            multipliers = {
+                "K": 1 / 1024,
+                "M": 1,
+                "G": 1024,
+                "T": 1024**2,
+                "P": 1024**3,
+                "E": 1024**4,
+            }
             try:
                 number = float(size_str[:-1])
                 unit = size_str[-1]
@@ -578,39 +627,49 @@ class SystemInfoCollector:
         gpu_info = GPUInfo()
 
         # Try lspci for GPU information
-        success, output = self._run_command(['lspci', '-v'])
+        success, output = self._run_command(["lspci", "-v"])
         if success:
-            for line in output.split('\n'):
-                if 'VGA compatible controller' in line or 'Display controller' in line:
+            for line in output.split("\n"):
+                if "VGA compatible controller" in line or "Display controller" in line:
                     # Extract vendor and model
-                    parts = line.split(': ', 1)
+                    parts = line.split(": ", 1)
                     if len(parts) > 1:
                         gpu_desc = parts[1]
 
                         # Detect vendor
-                        if 'Intel' in gpu_desc:
-                            gpu_info.vendor = 'Intel'
-                        elif 'NVIDIA' in gpu_desc or 'GeForce' in gpu_desc:
-                            gpu_info.vendor = 'NVIDIA'
-                        elif 'AMD' in gpu_desc or 'Radeon' in gpu_desc or 'ATI' in gpu_desc:
-                            gpu_info.vendor = 'AMD'
+                        if "Intel" in gpu_desc:
+                            gpu_info.vendor = "Intel"
+                        elif "NVIDIA" in gpu_desc or "GeForce" in gpu_desc:
+                            gpu_info.vendor = "NVIDIA"
+                        elif (
+                            "AMD" in gpu_desc
+                            or "Radeon" in gpu_desc
+                            or "ATI" in gpu_desc
+                        ):
+                            gpu_info.vendor = "AMD"
                         else:
-                            gpu_info.vendor = 'Unknown'
+                            gpu_info.vendor = "Unknown"
 
                         gpu_info.model = gpu_desc
                     break
 
         # Try to get driver information
-        if gpu_info.vendor == 'NVIDIA':
-            success, output = self._run_command(['nvidia-smi', '--query-gpu=driver_version', '--format=csv,noheader,nounits'])
+        if gpu_info.vendor == "NVIDIA":
+            success, output = self._run_command(
+                [
+                    "nvidia-smi",
+                    "--query-gpu=driver_version",
+                    "--format=csv,noheader,nounits",
+                ]
+            )
             if success:
                 gpu_info.driver = f"NVIDIA {output.strip()}"
-        elif gpu_info.vendor == 'AMD':
+        elif gpu_info.vendor == "AMD":
             # Try to find AMD driver info
-            success, output = self._run_command(['modinfo', 'amdgpu'])
+            success, output = self._run_command(["modinfo", "amdgpu"])
             if success:
-                for line in output.split('\n'):
-                    if 'version:' in line:
+                for line in output.split("\n"):
+                    if "version:" in line:
                         gpu_info.driver = f"AMDGPU {line.split(':', 1)[1].strip()}"
                         break
 
@@ -630,16 +689,16 @@ class SystemInfoCollector:
             io_counters = psutil.net_io_counters(pernic=True)
 
             for interface_name, addresses in interfaces.items():
-                if interface_name == 'lo':  # Skip loopback
+                if interface_name == "lo":  # Skip loopback
                     continue
 
                 interface = NetworkInterface(name=interface_name)
 
                 # Get IP and MAC addresses
                 for addr in addresses:
-                    if addr.family.name == 'AF_INET':
+                    if addr.family.name == "AF_INET":
                         interface.ip_address = addr.address
-                    elif addr.family.name == 'AF_PACKET':
+                    elif addr.family.name == "AF_PACKET":
                         interface.mac_address = addr.address
 
                 # Get interface status
@@ -657,29 +716,31 @@ class SystemInfoCollector:
                 network_info.interfaces.append(interface)
         else:
             # Fallback to ip command
-            success, output = self._run_command(['ip', 'addr', 'show'])
+            success, output = self._run_command(["ip", "addr", "show"])
             if success:
                 current_interface = None
-                for line in output.split('\n'):
+                for line in output.split("\n"):
                     line = line.strip()
-                    if ': ' in line and 'state' in line:
+                    if ": " in line and "state" in line:
                         # New interface
-                        parts = line.split(': ')
+                        parts = line.split(": ")
                         if len(parts) > 1:
-                            interface_name = parts[1].split('@')[0]
-                            if interface_name != 'lo':
-                                current_interface = NetworkInterface(name=interface_name)
-                                if 'state UP' in line:
+                            interface_name = parts[1].split("@")[0]
+                            if interface_name != "lo":
+                                current_interface = NetworkInterface(
+                                    name=interface_name
+                                )
+                                if "state UP" in line:
                                     current_interface.status = "Up"
                                 else:
                                     current_interface.status = "Down"
                                 network_info.interfaces.append(current_interface)
-                    elif current_interface and 'inet ' in line:
+                    elif current_interface and "inet " in line:
                         # IP address
                         parts = line.split()
                         if len(parts) > 1:
-                            current_interface.ip_address = parts[1].split('/')[0]
-                    elif current_interface and 'link/ether' in line:
+                            current_interface.ip_address = parts[1].split("/")[0]
+                    elif current_interface and "link/ether" in line:
                         # MAC address
                         parts = line.split()
                         if len(parts) > 1:
@@ -696,10 +757,10 @@ class SystemInfoCollector:
         system_status.os_version = platform.release()
         system_status.architecture = platform.machine()
         system_status.hostname = platform.node()
-        system_status.username = os.getenv('USER', 'Unknown')
+        system_status.username = os.getenv("USER", "Unknown")
 
         # Kernel version
-        success, output = self._run_command(['uname', '-r'])
+        success, output = self._run_command(["uname", "-r"])
         if success:
             system_status.kernel_version = output.strip()
 
@@ -717,7 +778,7 @@ class SystemInfoCollector:
         else:
             # Fallback to /proc/uptime
             try:
-                with open('/proc/uptime') as f:
+                with open("/proc/uptime") as f:
                     uptime_line = f.read().strip()
                     system_status.uptime_seconds = float(uptime_line.split()[0])
                     system_status.boot_time = time.time() - system_status.uptime_seconds
@@ -726,7 +787,7 @@ class SystemInfoCollector:
 
             # Fallback to /proc/loadavg
             try:
-                with open('/proc/loadavg') as f:
+                with open("/proc/loadavg") as f:
                     loadavg_line = f.read().strip()
                     loads = loadavg_line.split()[:3]
                     system_status.load_average = [float(load) for load in loads]
@@ -743,53 +804,65 @@ class SystemInfoCollector:
             # Enhanced service health monitoring
             try:
                 from control.service_health_monitor import ServiceHealthMonitor
+
                 health_monitor = ServiceHealthMonitor()
 
                 # Get all service statuses
                 service_results = health_monitor.monitor_and_recover_all()
 
                 for service_id, result in service_results.items():
-                    status = result.get('status', 'unknown')
-                    if status in ['healthy', 'recovered']:
+                    status = result.get("status", "unknown")
+                    if status in ["healthy", "recovered"]:
                         platform_status.services_running.append(service_id)
                     else:
-                        platform_status.services_failed.append(f"{service_id}: {result.get('message', 'Unknown error')}")
+                        platform_status.services_failed.append(
+                            f"{service_id}: {result.get('message', 'Unknown error')}"
+                        )
 
             except Exception as e:
                 logger.debug(f"Service health monitor not available: {e}")
 
                 # Fallback to Docker container checking
-                success, output = self._run_command(['docker', 'ps', '--format', 'table {{.Names}}\t{{.Status}}'])
+                success, output = self._run_command(
+                    ["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}"]
+                )
                 if success:
-                    lines = output.split('\n')[1:]  # Skip header
+                    lines = output.split("\n")[1:]  # Skip header
                     for line in lines:
                         if line.strip():
-                            parts = line.split('\t')
+                            parts = line.split("\t")
                             if len(parts) >= 2:
                                 service_name = parts[0].strip()
                                 status = parts[1].strip()
-                                if 'Up' in status:
-                                    platform_status.services_running.append(service_name)
+                                if "Up" in status:
+                                    platform_status.services_running.append(
+                                        service_name
+                                    )
                                 else:
                                     platform_status.services_failed.append(service_name)
 
             # Enhanced VM status monitoring
             try:
                 from control.vm_monitor import VMMonitor
+
                 vm_monitor = VMMonitor()
                 vm_status = vm_monitor.get_vm_status()
 
                 # Enhance VM status with additional details
                 platform_status.vm_status = {
                     "available": True,
-                    "qemu_running": vm_status.get('qemu_running', False),
-                    "shared_accessible": vm_status.get('shared_accessible', False),
-                    "serial_active": vm_status.get('serial_active', False),
-                    "last_check": vm_status.get('timestamp', time.time()),
-                    "overall_status": "healthy" if all([
-                        vm_status.get('qemu_running', False),
-                        vm_status.get('shared_accessible', False)
-                    ]) else "degraded"
+                    "qemu_running": vm_status.get("qemu_running", False),
+                    "shared_accessible": vm_status.get("shared_accessible", False),
+                    "serial_active": vm_status.get("serial_active", False),
+                    "last_check": vm_status.get("timestamp", time.time()),
+                    "overall_status": "healthy"
+                    if all(
+                        [
+                            vm_status.get("qemu_running", False),
+                            vm_status.get("shared_accessible", False),
+                        ]
+                    )
+                    else "degraded",
                 }
 
             except Exception as e:
@@ -808,7 +881,9 @@ class SystemInfoCollector:
                         latest_cache = max(cache_files, key=lambda p: p.stat().st_mtime)
                         cache_age = time.time() - latest_cache.stat().st_mtime
                         if cache_age < 3600:  # Less than 1 hour old
-                            platform_status.build_system_status = "Active (recent builds)"
+                            platform_status.build_system_status = (
+                                "Active (recent builds)"
+                            )
                         else:
                             platform_status.build_system_status = "Available (idle)"
                     else:
@@ -824,11 +899,15 @@ class SystemInfoCollector:
 
             if graphics_lib.exists() and vm_dir.exists():
                 # Check for graphics-related processes
-                success, output = self._run_command(['pgrep', '-f', 'qemu.*gl'])
+                success, output = self._run_command(["pgrep", "-f", "qemu.*gl"])
                 if success and output.strip():
-                    platform_status.graphics_platform_status = "Active (GPU acceleration)"
+                    platform_status.graphics_platform_status = (
+                        "Active (GPU acceleration)"
+                    )
                 else:
-                    platform_status.graphics_platform_status = "Available (software rendering)"
+                    platform_status.graphics_platform_status = (
+                        "Available (software rendering)"
+                    )
             elif graphics_lib.exists():
                 platform_status.graphics_platform_status = "Available (no VM)"
             else:
@@ -848,11 +927,16 @@ class SystemInfoCollector:
             return {
                 "cpu_usage": system_info.cpu.usage_percent,
                 "memory_usage": system_info.memory.usage_percent,
-                "storage_usage": (system_info.storage.total_used_gb / system_info.storage.total_storage_gb * 100)
-                                if system_info.storage.total_storage_gb > 0 else 0,
+                "storage_usage": (
+                    system_info.storage.total_used_gb
+                    / system_info.storage.total_storage_gb
+                    * 100
+                )
+                if system_info.storage.total_storage_gb > 0
+                else 0,
                 "services_count": len(system_info.platform.services_running),
                 "errors_count": len(system_info.collection_errors),
-                "last_updated": system_info.collection_time
+                "last_updated": system_info.collection_time,
             }
         except Exception as e:
             logger.error(f"Failed to get performance summary: {e}")
@@ -863,7 +947,7 @@ class SystemInfoCollector:
                 "services_count": 0,
                 "errors_count": 1,
                 "last_updated": time.time(),
-                "error": str(e)
+                "error": str(e),
             }
 
     def clear_cache(self):
@@ -873,12 +957,13 @@ class SystemInfoCollector:
 
     def is_cache_valid(self) -> bool:
         """Check if cached data is still valid"""
-        return (self._cache and
-                time.time() - self._last_collection < self._cache_timeout)
+        return self._cache and time.time() - self._last_collection < self._cache_timeout
 
 
 # Convenience function for quick access
-def get_system_info(project_root: Path | None = None, use_cache: bool = True) -> SystemInformation:
+def get_system_info(
+    project_root: Path | None = None, use_cache: bool = True
+) -> SystemInformation:
     """
     Convenience function to get system information.
 

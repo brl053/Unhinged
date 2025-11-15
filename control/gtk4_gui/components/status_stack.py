@@ -32,8 +32,8 @@ from datetime import datetime
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Gtk
 
@@ -43,30 +43,32 @@ logger = logging.getLogger(__name__)
 class StatusStack:
     """
     @llm-doc Status stack component for displaying operation status
-    
+
     Maintains a stack of 3-5 status messages with timestamps.
     Integrates with event framework for all operations.
     """
 
     # Status type colors (CSS class names)
     STATUS_COLORS = {
-        'info': 'status-info',
-        'success': 'status-success',
-        'warning': 'status-warning',
-        'error': 'status-error',
-        'pending': 'status-pending'
+        "info": "status-info",
+        "success": "status-success",
+        "warning": "status-warning",
+        "error": "status-error",
+        "pending": "status-pending",
     }
 
     def __init__(self, max_messages: int = 5):
         """
         Initialize status stack.
-        
+
         Args:
             max_messages: Maximum number of messages to display (3-5)
         """
         self.max_messages = max(3, min(5, max_messages))
         self.messages: deque = deque(maxlen=self.max_messages)
-        self.session_history: list[tuple[str, str, str]] = []  # (timestamp, type, message)
+        self.session_history: list[
+            tuple[str, str, str]
+        ] = []  # (timestamp, type, message)
 
         # UI Components
         self.container = None
@@ -77,7 +79,7 @@ class StatusStack:
     def create_widget(self) -> Gtk.Widget:
         """
         Create the status stack widget.
-        
+
         Returns:
             Gtk.Widget: The status stack container
         """
@@ -98,7 +100,7 @@ class StatusStack:
     def push_status(self, message: str, status_type: str = "info"):
         """
         Push a new status message onto the stack.
-        
+
         Args:
             message: Status message
             status_type: Type of status (info, success, warning, error, pending)
@@ -127,24 +129,28 @@ class StatusStack:
 
         # Add messages in reverse order (newest first)
         for timestamp, status_type, message in reversed(list(self.messages)):
-            message_widget = self._create_message_widget(timestamp, status_type, message)
+            message_widget = self._create_message_widget(
+                timestamp, status_type, message
+            )
             self.message_box.append(message_widget)
 
-    def _create_message_widget(self, timestamp: str, status_type: str, message: str) -> Gtk.Widget:
+    def _create_message_widget(
+        self, timestamp: str, status_type: str, message: str
+    ) -> Gtk.Widget:
         """
         Create a single message widget.
-        
+
         Args:
             timestamp: Message timestamp
             status_type: Type of status
             message: Message text
-            
+
         Returns:
             Gtk.Widget: Message widget
         """
         message_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         message_row.add_css_class("status-message")
-        message_row.add_css_class(self.STATUS_COLORS.get(status_type, 'status-info'))
+        message_row.add_css_class(self.STATUS_COLORS.get(status_type, "status-info"))
 
         # Timestamp label
         time_label = Gtk.Label(label=timestamp)
@@ -172,7 +178,7 @@ class StatusStack:
     def get_session_history(self) -> list[tuple[str, str, str]]:
         """
         Get the complete session history.
-        
+
         Returns:
             List of (timestamp, status_type, message) tuples
         """
@@ -187,17 +193,17 @@ class StatusStack:
     def get_status_summary(self) -> dict:
         """
         Get a summary of status messages.
-        
+
         Returns:
             Dictionary with counts by status type
         """
         summary = {
-            'total': len(self.session_history),
-            'info': 0,
-            'success': 0,
-            'warning': 0,
-            'error': 0,
-            'pending': 0
+            "total": len(self.session_history),
+            "info": 0,
+            "success": 0,
+            "warning": 0,
+            "error": 0,
+            "pending": 0,
         }
 
         for _, status_type, _ in self.session_history:
@@ -205,4 +211,3 @@ class StatusStack:
                 summary[status_type] += 1
 
         return summary
-

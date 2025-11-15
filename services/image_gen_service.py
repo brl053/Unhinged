@@ -20,7 +20,9 @@ try:
     from fastapi.responses import FileResponse, JSONResponse
     from pydantic import BaseModel
 except ImportError:
-    print("⚠️ FastAPI dependencies not available. Install with: pip install fastapi uvicorn")
+    print(
+        "⚠️ FastAPI dependencies not available. Install with: pip install fastapi uvicorn"
+    )
     exit(1)
 
 # Import our sovereign image generation module
@@ -39,6 +41,7 @@ except ImportError as e:
     print(f"⚠️ Image generation module not available: {e}")
     print("💡 Make sure the build system is set up correctly")
 
+
 # Pydantic models for API
 class ImageGenerationAPIRequest(BaseModel):
     prompt: str
@@ -50,6 +53,7 @@ class ImageGenerationAPIRequest(BaseModel):
     seed: int | None = None
     batch_size: int = 1
 
+
 class ImageGenerationAPIResponse(BaseModel):
     success: bool
     message: str
@@ -57,6 +61,7 @@ class ImageGenerationAPIResponse(BaseModel):
     generation_time: float = 0.0
     parameters: dict[str, Any] = {}
     seed: int | None = None
+
 
 class BatchGenerationRequest(BaseModel):
     prompts: list[str]
@@ -66,9 +71,11 @@ class BatchGenerationRequest(BaseModel):
     num_inference_steps: int = 25
     guidance_scale: float = 7.5
 
+
 # Global generator instance
 generator: SovereignImageGenerator | None = None
 output_dir = Path("/output/images")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -85,7 +92,7 @@ async def lifespan(app: FastAPI):
             device="cuda" if torch.cuda.is_available() else "cpu",
             dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
             enable_xformers=torch.cuda.is_available(),
-            cache_dir=Path.home() / ".cache" / "huggingface"
+            cache_dir=Path.home() / ".cache" / "huggingface",
         )
 
         generator = SovereignImageGenerator(config)
@@ -110,13 +117,15 @@ async def lifespan(app: FastAPI):
     if generator:
         generator.clear_cache()
 
+
 # Create FastAPI app
 app = FastAPI(
     title="Sovereign Image Generation API",
     description="Direct metal image generation without corporate wrapper bullshit",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
+
 
 @app.get("/")
 async def root():
@@ -126,8 +135,9 @@ async def root():
         "version": "1.0.0",
         "description": "Direct metal image generation - no middlemen",
         "status": "ready" if generator else "not_ready",
-        "gpu_available": torch.cuda.is_available() if 'torch' in globals() else False
+        "gpu_available": torch.cuda.is_available() if "torch" in globals() else False,
     }
+
 
 @app.get("/health")
 async def health_check():
@@ -141,11 +151,14 @@ async def health_check():
         "generator_ready": generator.current_model is not None,
         "current_model": generator.current_model,
         "device": generator.device,
-        "stats": stats
+        "stats": stats,
     }
 
+
 @app.post("/generate", response_model=ImageGenerationAPIResponse)
-async def generate_image(request: ImageGenerationAPIRequest, background_tasks: BackgroundTasks):
+async def generate_image(
+    request: ImageGenerationAPIRequest, background_tasks: BackgroundTasks
+):
     """Generate a single image or batch of images."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
@@ -160,7 +173,7 @@ async def generate_image(request: ImageGenerationAPIRequest, background_tasks: B
             num_inference_steps=request.num_inference_steps,
             guidance_scale=request.guidance_scale,
             seed=request.seed,
-            batch_size=request.batch_size
+            batch_size=request.batch_size,
         )
 
         # Generate image(s)
@@ -176,12 +189,15 @@ async def generate_image(request: ImageGenerationAPIRequest, background_tasks: B
             images=[str(path) for path in saved_paths],
             generation_time=result.generation_time,
             parameters=result.parameters,
-            seed=result.seed
+            seed=result.seed,
         )
 
     except Exception as e:
         logging.error(f"❌ Image generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Image generation failed: {str(e)}"
+        )
+
 
 @app.post("/generate/batch")
 async def generate_batch(request: BatchGenerationRequest):
@@ -197,7 +213,7 @@ async def generate_batch(request: BatchGenerationRequest):
             width=request.width,
             height=request.height,
             num_inference_steps=request.num_inference_steps,
-            guidance_scale=request.guidance_scale
+            guidance_scale=request.guidance_scale,
         )
 
         # Save all results
@@ -214,12 +230,15 @@ async def generate_batch(request: BatchGenerationRequest):
             "message": f"Generated {len(all_paths)} images from {len(request.prompts)} prompts",
             "images": [str(path) for path in all_paths],
             "total_generation_time": total_time,
-            "average_time_per_image": total_time / len(all_paths) if all_paths else 0
+            "average_time_per_image": total_time / len(all_paths) if all_paths else 0,
         }
 
     except Exception as e:
         logging.error(f"❌ Batch generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Batch generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Batch generation failed: {str(e)}"
+        )
+
 
 @app.get("/image/{filename}")
 async def get_image(filename: str):
@@ -231,6 +250,7 @@ async def get_image(filename: str):
 
     return FileResponse(image_path)
 
+
 @app.get("/stats")
 async def get_stats():
     """Get generation statistics."""
@@ -238,6 +258,7 @@ async def get_stats():
         raise HTTPException(status_code=503, detail="Image generator not initialized")
 
     return generator.get_stats()
+
 
 @app.post("/clear-cache")
 async def clear_cache():
@@ -247,6 +268,7 @@ async def clear_cache():
 
     generator.clear_cache()
     return {"message": "Cache cleared successfully"}
+
 
 @app.get("/models")
 async def list_models():
@@ -258,8 +280,9 @@ async def list_models():
             "runwayml/stable-diffusion-v1-5",
             # Add more models as they become available
         ],
-        "current_model": generator.current_model if generator else None
+        "current_model": generator.current_model if generator else None,
     }
+
 
 # Development server
 if __name__ == "__main__":
@@ -268,7 +291,7 @@ if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Run server
@@ -277,5 +300,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8080,
         reload=True,
-        log_level="info"
+        log_level="info",
     )

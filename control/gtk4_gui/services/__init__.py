@@ -8,7 +8,4 @@ protobuf clients and gRPC client factory.
 from .audio_service import AudioService
 from .transcription_service import TranscriptionService
 
-__all__ = [
-    'AudioService',
-    'TranscriptionService'
-]
+__all__ = ["AudioService", "TranscriptionService"]

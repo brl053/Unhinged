@@ -8,16 +8,18 @@
 # This file exists solely to hold development workflow documentation for LlmDocs generation
 # It contains no executable code, only comprehensive documentation about development
 
+
 def main():
     """
     UnhingedOS Development Workflow Documentation Holder
-    
+
     This file serves as a documentation container for the LlmDocs system.
     All development workflow information is contained in the module docstring above.
     """
     print("UnhingedOS Development Workflow Documentation")
     print("This file contains development specifications in LlmDocs format.")
     print("Run 'make docs-update' to generate documentation from these comments.")
+
 
 if __name__ == "__main__":
     main()

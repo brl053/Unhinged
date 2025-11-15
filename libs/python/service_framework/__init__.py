@@ -3,7 +3,7 @@ Python Service Framework for Unhinged Platform
 
 Provides base classes and utilities for creating gRPC services with:
 - Automatic health endpoints
-- Hardware-aware resource management  
+- Hardware-aware resource management
 - Connection pooling and retry logic
 - Local OS optimized patterns
 
@@ -39,5 +39,5 @@ __all__ = [
     "get_global_pool",
     "call_service",
     "stream_service",
-    "register_service"
+    "register_service",
 ]

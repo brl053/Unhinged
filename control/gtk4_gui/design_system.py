@@ -5,12 +5,11 @@ Centralizes all CSS and theme configuration for the Unhinged desktop application
 """
 
 import logging
-from pathlib import Path
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk
 
@@ -107,8 +106,7 @@ def load_design_system_css(app: Gtk.Application) -> None:
     Gtk.StyleContext.add_provider_for_display(
         Adw.StyleManager.get_default().get_display(),
         css_provider,
-        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
     )
 
     logger.debug("Design system CSS loaded")
-

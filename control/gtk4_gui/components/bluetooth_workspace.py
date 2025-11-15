@@ -30,8 +30,8 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import GLib, Gtk
 
@@ -41,18 +41,18 @@ logger = logging.getLogger(__name__)
 class BluetoothWorkspace:
     """
     @llm-doc Advanced Bluetooth management workspace
-    
+
     Manages Bluetooth device discovery and connection with two separate tables:
     - Registered Devices: Devices already paired/connected
     - Discovering Devices: Devices currently discoverable
-    
+
     Provides Force Grab feature to disconnect from other devices and connect to desktop.
     """
 
     def __init__(self, parent_app=None, session_logger=None):
         """
         Initialize Bluetooth workspace.
-        
+
         Args:
             parent_app: Reference to parent application
             session_logger: Session logger for event tracking
@@ -79,7 +79,7 @@ class BluetoothWorkspace:
     def create_content(self) -> Gtk.Widget:
         """
         Create the workspace content with two tables.
-        
+
         Returns:
             Gtk.Widget: The root widget for the workspace
         """
@@ -243,6 +243,7 @@ class BluetoothWorkspace:
         try:
             import sys
             from pathlib import Path
+
             sys.path.append(str(Path(__file__).parent.parent))
             from bluetooth_monitor import BluetoothMonitor
 
@@ -265,8 +266,10 @@ class BluetoothWorkspace:
                     f"Found {len(self.discovering_devices)} discoverable device(s)"
                 )
 
-            self._log_event("DISCOVERY_CYCLE",
-                f"Registered: {len(self.registered_devices)}, Discovering: {len(self.discovering_devices)}")
+            self._log_event(
+                "DISCOVERY_CYCLE",
+                f"Registered: {len(self.registered_devices)}, Discovering: {len(self.discovering_devices)}",
+            )
 
             # Update device tables
             self._update_device_tables()
@@ -319,8 +322,6 @@ class BluetoothWorkspace:
         except Exception as e:
             logger.error(f"Failed to update device tables: {e}")
 
-
-
     def _log_event(self, event_type: str, details: str = ""):
         """Log an event through the session logger."""
         if self.session_logger:
@@ -332,4 +333,3 @@ class BluetoothWorkspace:
     def cleanup(self):
         """Clean up workspace resources."""
         self.on_cleanup()
-

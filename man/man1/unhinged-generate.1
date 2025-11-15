@@ -1,0 +1,190 @@
+.TH UNHINGED-GENERATE 1 "November 2025" "Unhinged" "User Commands"
+.SH NAME
+unhinged-generate \- Headless image and video generation for Unhinged platform
+
+.SH SYNOPSIS
+.B unhinged generate image
+[\fIMODEL\fR] [\fIPROMPT\fR] [\fIOPTIONS\fR]
+.br
+.B unhinged generate video
+[\fIMODEL\fR] [\fIPROMPT\fR] [\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The
+.B unhinged generate
+command provides headless generation of images and videos using GPU-accelerated
+models. Designed to be layered with GTK4 UI later, this command works standalone
+for scripting and automation.
+
+.SH SUBCOMMANDS
+
+.SS IMAGE GENERATION
+.B unhinged generate image
+[\fIMODEL\fR] [\fIPROMPT\fR] [\fIOPTIONS\fR]
+
+Generate images from text prompts using specified model.
+
+.B Models:
+.RS
+.TP
+.B stable-diffusion
+Stable Diffusion v1.5 (fast, 512x512, ~10-15s)
+.TP
+.B sdxl
+Stable Diffusion XL (high quality, 1024x1024, ~30-40s)
+.TP
+.B flux
+Flux.1 (state-of-art, ~25s, requires 24GB VRAM)
+.RE
+
+.B Image Options:
+.RS
+.TP
+.B --steps \fINUM\fR
+Number of inference steps (default: 20, range: 10-50)
+.TP
+.B --guidance \fFLOAT\fR
+Guidance scale for prompt adherence (default: 7.5, range: 1.0-20.0)
+.TP
+.B --height \fIPIXELS\fR
+Image height in pixels (default: 512, must be multiple of 8)
+.TP
+.B --width \fIPIXELS\fR
+Image width in pixels (default: 512, must be multiple of 8)
+.TP
+.B --seed \fISEED\fR
+Random seed for reproducibility (optional)
+.TP
+.B --format \fIFORMAT\fR
+Output format: json or text (default: text)
+.RE
+
+.SS VIDEO GENERATION
+.B unhinged generate video
+[\fIMODEL\fR] [\fIPROMPT\fR] [\fIOPTIONS\fR]
+
+Generate videos from text prompts using specified model.
+
+.B Models:
+.RS
+.TP
+.B stable-diffusion
+Frame interpolation approach (simplest, ~30s total)
+.TP
+.B frame-interp
+RIFE-based frame interpolation (fast, smooth motion)
+.TP
+.B svd
+Stable Video Diffusion (natural motion, ~60s total)
+.RE
+
+.B Video Options:
+.RS
+.TP
+.B --duration \fISECONDS\fR
+Video duration in seconds (default: 30)
+.TP
+.B --fps \fIFPS\fR
+Frames per second (default: 24)
+.TP
+.B --format \fIFORMAT\fR
+Output format: json or text (default: text)
+.RE
+
+.SH EXAMPLES
+
+.SS Image Generation
+Generate a landscape with default settings:
+.RS
+.B unhinged generate image stable-diffusion "a serene mountain landscape at sunset"
+.RE
+
+Generate high-quality portrait with SDXL:
+.RS
+.B unhinged generate image sdxl "professional portrait, studio lighting" --steps 40 --guidance 7.5
+.RE
+
+Generate with custom resolution and seed:
+.RS
+.B unhinged generate image stable-diffusion "abstract art" --width 768 --height 768 --seed 42
+.RE
+
+Output as JSON for scripting:
+.RS
+.B unhinged generate image stable-diffusion "landscape" --format json
+.RE
+
+.SS Video Generation
+Generate 30-second video with default settings:
+.RS
+.B unhinged generate video stable-diffusion "sunset over the ocean"
+.RE
+
+Generate video with custom duration and fps:
+.RS
+.B unhinged generate video svd "dancing figure" --duration 60 --fps 30
+.RE
+
+.SH OUTPUT
+
+Generated images and videos are saved to:
+.RS
+.B /build/tmp/generated_images/
+.RE
+
+Output filenames follow the pattern:
+.RS
+.B generated_YYYYMMDD_HHMMSS.png
+.B generated_YYYYMMDD_HHMMSS.mp4
+.RE
+
+.SH PERFORMANCE
+
+.B Image Generation Times (approximate):
+.RS
+.TP
+Stable Diffusion v1.5: 10-15 seconds (512x512, 20 steps)
+.TP
+SDXL: 30-40 seconds (1024x1024, 25 steps)
+.TP
+Flux.1: 20-30 seconds (1024x1024, 25 steps)
+.RE
+
+.B Memory Requirements:
+.RS
+.TP
+Stable Diffusion v1.5: ~4GB VRAM
+.TP
+SDXL: ~8GB VRAM
+.TP
+Flux.1: ~24GB VRAM
+.RE
+
+.SH ENVIRONMENT VARIABLES
+
+.TP
+.B UNHINGED_SKIP_PREFLIGHT
+Set to "true" to skip preflight checks before generation
+
+.TP
+.B CUDA_VISIBLE_DEVICES
+Specify which GPU to use (e.g., "0" for first GPU)
+
+.SH INTEGRATION WITH GTK4 UI
+
+The
+.B unhinged generate
+command is designed to be layered with the GTK4 UI. The OS Chatroom view
+can call these commands directly, providing a clean separation between
+headless generation logic and UI presentation.
+
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-vm (1)
+
+.SH AUTHOR
+Unhinged Team
+
+.SH BUGS
+Report bugs at: https://github.com/brl053/Unhinged/issues
+

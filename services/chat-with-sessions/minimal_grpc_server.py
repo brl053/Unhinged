@@ -33,9 +33,9 @@ from events import create_service_logger
 # Initialize event logger
 events = create_service_logger("minimal-chat", "1.0.0")
 
+
 class MinimalChatServicer(
-    chat_pb2_grpc.ChatServiceServicer,
-    health_pb2_grpc.HealthServiceServicer
+    chat_pb2_grpc.ChatServiceServicer, health_pb2_grpc.HealthServiceServicer
 ):
     """Minimal chat service for testing session creation"""
 
@@ -47,17 +47,21 @@ class MinimalChatServicer(
     def CreateConversation(self, request, context):
         """Create a new conversation (session)"""
         try:
-            events.info("Creating conversation", {
-                "team_id": request.team_id,
-                "namespace_id": request.namespace_id,
-                "title": request.title
-            })
+            events.info(
+                "Creating conversation",
+                {
+                    "team_id": request.team_id,
+                    "namespace_id": request.namespace_id,
+                    "title": request.title,
+                },
+            )
 
             # Generate a simple conversation ID
             conversation_id = str(uuid.uuid4())
 
             # Create timestamps
             from google.protobuf.timestamp_pb2 import Timestamp
+
             now = Timestamp()
             now.GetCurrentTime()
 
@@ -70,20 +74,19 @@ class MinimalChatServicer(
                     created_by="system",  # TODO: Get from auth context
                     created_at=now,
                     updated_at=now,
-                    version=1
+                    version=1,
                 ),
                 title=request.title,
                 description=request.description,
                 settings=request.settings,
-                status=chat_pb2.ConversationStatus.CONVERSATION_STATUS_ACTIVE
+                status=chat_pb2.ConversationStatus.CONVERSATION_STATUS_ACTIVE,
             )
 
             response = chat_pb2.CreateConversationResponse(
                 response=common_pb2.StandardResponse(
-                    success=True,
-                    message="Conversation created successfully"
+                    success=True, message="Conversation created successfully"
                 ),
-                conversation=conversation
+                conversation=conversation,
             )
 
             events.info("Conversation created", {"conversation_id": conversation_id})
@@ -93,8 +96,7 @@ class MinimalChatServicer(
             events.error("Failed to create conversation", exception=e)
             return chat_pb2.CreateConversationResponse(
                 response=common_pb2.StandardResponse(
-                    success=False,
-                    message=f"Failed to create conversation: {e}"
+                    success=False, message=f"Failed to create conversation: {e}"
                 )
             )
 
@@ -122,7 +124,7 @@ def serve():
     chat_pb2_grpc.add_ChatServiceServicer_to_server(servicer, server)
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
 
-    listen_addr = '[::]:9095'  # Chat service port
+    listen_addr = "[::]:9095"  # Chat service port
     server.add_insecure_port(listen_addr)
 
     events.info("Starting minimal chat service", {"address": listen_addr})
@@ -134,5 +136,6 @@ def serve():
         events.info("Shutting down minimal chat service")
         server.stop(0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     serve()

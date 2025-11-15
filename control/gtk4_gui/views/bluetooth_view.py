@@ -23,11 +23,9 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from components.bluetooth_workspace import BluetoothWorkspace
-from components.status_stack import StatusStack
 from gi.repository import Adw, Gtk
 from views.base import ViewBase
 
@@ -69,7 +67,9 @@ class BluetoothView(ViewBase):
 
         notice_row = Adw.ActionRow()
         notice_row.set_title("Bluetooth Tab Disabled")
-        notice_row.set_subtitle("Bluetooth device discovery is currently disabled to prevent UI freezing")
+        notice_row.set_subtitle(
+            "Bluetooth device discovery is currently disabled to prevent UI freezing"
+        )
 
         notice_icon = Gtk.Image.new_from_icon_name("dialog-information-symbolic")
         notice_icon.add_css_class("info")
@@ -79,7 +79,9 @@ class BluetoothView(ViewBase):
         bluetooth_box.append(notice_group)
 
         # Log that Bluetooth tab is disabled
-        self._log_event("BLUETOOTH_TAB_DISABLED", "Bluetooth tab disabled to prevent D-Bus blocking")
+        self._log_event(
+            "BLUETOOTH_TAB_DISABLED", "Bluetooth tab disabled to prevent D-Bus blocking"
+        )
 
         return bluetooth_box
 

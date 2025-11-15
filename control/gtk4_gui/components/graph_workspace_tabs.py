@@ -9,8 +9,8 @@ Provides a tabbed interface for the graph workspace with three main sections:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from collections.abc import Callable
 from typing import Any
@@ -20,6 +20,7 @@ from gi.repository import Adw, Gtk
 # Import registry UI
 try:
     from .registry_ui import RegistryUI
+
     REGISTRY_UI_AVAILABLE = True
 except ImportError:
     REGISTRY_UI_AVAILABLE = False
@@ -79,7 +80,7 @@ class GraphWorkspaceTabs:
         self.metrics_page.set_title("📊 Metrics")
 
         # Connect tab change signal
-        self.notebook.connect('notify::selected-page', self._on_tab_changed)
+        self.notebook.connect("notify::selected-page", self._on_tab_changed)
 
     def _create_registry_tab(self) -> Gtk.Widget:
         """Create the registry tab content"""
@@ -99,7 +100,9 @@ class GraphWorkspaceTabs:
             title.add_css_class("title-2")
             box.append(title)
 
-            desc = Gtk.Label(label="Browse and manage available node types and saved graphs")
+            desc = Gtk.Label(
+                label="Browse and manage available node types and saved graphs"
+            )
             desc.add_css_class("dim-label")
             desc.set_wrap(True)
             box.append(desc)
@@ -266,6 +269,5 @@ class GraphWorkspaceTabs:
 
     def set_registry_client(self, doc_store_client):
         """Set the document store client for registry operations"""
-        if REGISTRY_UI_AVAILABLE and hasattr(self, 'registry_ui'):
+        if REGISTRY_UI_AVAILABLE and hasattr(self, "registry_ui"):
             self.registry_ui.doc_store_client = doc_store_client
-

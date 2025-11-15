@@ -92,9 +92,7 @@ class AudioHandler:
         return self._state in [RecordingState.RECORDING, RecordingState.PROCESSING]
 
     def subscribe_to_events(
-        self,
-        event_type: str,
-        callback: Callable[[Event], None]
+        self, event_type: str, callback: Callable[[Event], None]
     ) -> Callable[[], None]:
         """Subscribe to audio events via event bus."""
         return self._event_bus.subscribe(event_type, callback)
@@ -103,8 +101,7 @@ class AudioHandler:
         """Initialize audio format detection."""
         try:
             self._detected_format = get_best_format_for_device(
-                app_config.audio_device,
-                app_config.audio_format
+                app_config.audio_device, app_config.audio_format
             )
             self._detected_sample_width = self.device_manager.get_sample_width(
                 self._detected_format
@@ -149,9 +146,9 @@ class AudioHandler:
         error_data = {
             "error": str(error),
             "type": error.__class__.__name__,
-            "message": getattr(error, 'message', str(error)),
-            "device": getattr(error, 'device', None),
-            "details": getattr(error, 'details', {})
+            "message": getattr(error, "message", str(error)),
+            "device": getattr(error, "device", None),
+            "details": getattr(error, "details", {}),
         }
         self._event_bus.emit_simple(AudioEvents.ERROR, error_data)
 
@@ -180,12 +177,12 @@ class AudioHandler:
         if self.is_busy:
             raise AudioRecordingError("Already recording or processing")
 
-        if not service_connector.check_service_health('speech_to_text'):
-            raise ServiceUnavailableError('speech_to_text', 'unknown')
+        if not service_connector.check_service_health("speech_to_text"):
+            raise ServiceUnavailableError("speech_to_text", "unknown")
 
         try:
             # Create temp file
-            temp_fd, temp_path = tempfile.mkstemp(suffix='.wav')
+            temp_fd, temp_path = tempfile.mkstemp(suffix=".wav")
             self._temp_file = Path(temp_path)
             os.close(temp_fd)
 
@@ -194,14 +191,13 @@ class AudioHandler:
                 device_id=app_config.audio_device,
                 sample_rate=app_config.audio_sample_rate,
                 format=self._detected_format or app_config.audio_format,
-                channels=app_config.audio_channels
+                channels=app_config.audio_channels,
             )
             self.recorder = AudioRecorder(config)
 
             # Start recording in background thread
             self._recording_thread = threading.Thread(
-                target=self._record_and_transcribe,
-                daemon=True
+                target=self._record_and_transcribe, daemon=True
             )
             self._set_state(RecordingState.RECORDING)
             self._start_time = time.time()
@@ -236,9 +232,11 @@ class AudioHandler:
             self.recorder.start_recording(self._temp_file)
 
             # Wait for completion
-            arecord_code, arecord_stderr, tee_stderr = (
-                self.recorder.wait_for_completion()
-            )
+            (
+                arecord_code,
+                arecord_stderr,
+                tee_stderr,
+            ) = self.recorder.wait_for_completion()
 
             # Validate recording
             self.recorder.validate_recording()
@@ -249,7 +247,7 @@ class AudioHandler:
                 self._temp_file,
                 app_config.audio_sample_rate,
                 app_config.audio_channels,
-                self._detected_sample_width or 2
+                self._detected_sample_width or 2,
             )
 
             # Validate WAV file
@@ -265,8 +263,7 @@ class AudioHandler:
 
             # Notify UI
             self._event_bus.emit_simple(
-                AudioEvents.AMPLITUDE_UPDATED,
-                {"transcript": result.text}
+                AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text}
             )
 
             logger.info(f"Transcription completed: {len(result.text)} chars")
@@ -288,6 +285,5 @@ class AudioHandler:
             self._detected_format or app_config.audio_format,
             app_config.audio_sample_rate,
             app_config.audio_channels,
-            duration
+            duration,
         )
-

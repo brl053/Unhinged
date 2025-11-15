@@ -12,7 +12,9 @@ from pathlib import Path
 import grpc
 
 # Add generated proto clients to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
+sys.path.insert(
+    0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients")
+)
 
 try:
     from unhinged_proto_clients import (
@@ -31,6 +33,7 @@ from graph_executor import GraphExecutor
 # Initialize event logger
 events = create_service_logger("graph-grpc-server", "1.0.0")
 
+
 class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
     """Graph service implementation"""
 
@@ -48,7 +51,9 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             response.response.message = "Graph created successfully"
             response.id = graph_id
 
-            events.info("Graph created", {"graph_id": graph_id, "name": request.graph.name})
+            events.info(
+                "Graph created", {"graph_id": graph_id, "name": request.graph.name}
+            )
             return response
 
         except Exception as e:
@@ -71,7 +76,9 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error("Failed to get Graph", exception=e, metadata={"id": request.id})
+            events.error(
+                "Failed to get Graph", exception=e, metadata={"id": request.id}
+            )
             response = graph_service_pb2.GetGraphResponse()
             response.response.success = False
             response.response.message = f"Failed to get Graph: {str(e)}"
@@ -80,7 +87,9 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
     async def ListGraphs(self, request, context):
         """List all Graph definitions"""
         try:
-            graphs = await self.executor.list_graphs(request.pagination, request.filters, request.graph_type)
+            graphs = await self.executor.list_graphs(
+                request.pagination, request.filters, request.graph_type
+            )
 
             response = graph_service_pb2.ListGraphsResponse()
             response.response.success = True
@@ -109,7 +118,9 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error("Failed to delete Graph", exception=e, metadata={"id": request.id})
+            events.error(
+                "Failed to delete Graph", exception=e, metadata={"id": request.id}
+            )
             response = graph_service_pb2.DeleteGraphResponse()
             response.response.success = False
             response.response.message = f"Failed to delete Graph: {str(e)}"
@@ -119,9 +130,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
         """Execute a Graph"""
         try:
             execution_id = await self.executor.execute_graph(
-                request.id,
-                request.input_data,
-                request.execution_id
+                request.id, request.input_data, request.execution_id
             )
 
             response = graph_service_pb2.ExecuteGraphResponse()
@@ -130,14 +139,16 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             response.execution_id = execution_id
             response.status = graph_service_pb2.PENDING
 
-            events.info("Graph execution started", {
-                "graph_id": request.id,
-                "execution_id": execution_id
-            })
+            events.info(
+                "Graph execution started",
+                {"graph_id": request.id, "execution_id": execution_id},
+            )
             return response
 
         except Exception as e:
-            events.error("Failed to execute Graph", exception=e, metadata={"id": request.id})
+            events.error(
+                "Failed to execute Graph", exception=e, metadata={"id": request.id}
+            )
             response = graph_service_pb2.ExecuteGraphResponse()
             response.response.success = False
             response.response.message = f"Failed to execute Graph: {str(e)}"
@@ -149,8 +160,11 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             async for event in self.executor.stream_execution(request.execution_id):
                 yield event
         except Exception as e:
-            events.error("Failed to stream execution", exception=e,
-                        metadata={"execution_id": request.execution_id})
+            events.error(
+                "Failed to stream execution",
+                exception=e,
+                metadata={"execution_id": request.execution_id},
+            )
 
     async def GetExecution(self, request, context):
         """Get execution status and results"""
@@ -165,8 +179,11 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error("Failed to get execution", exception=e,
-                        metadata={"execution_id": request.execution_id})
+            events.error(
+                "Failed to get execution",
+                exception=e,
+                metadata={"execution_id": request.execution_id},
+            )
             response = graph_service_pb2.GetExecutionResponse()
             response.response.success = False
             response.response.message = f"Failed to get execution: {str(e)}"
@@ -185,8 +202,11 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error("Failed to cancel execution", exception=e,
-                        metadata={"execution_id": request.execution_id})
+            events.error(
+                "Failed to cancel execution",
+                exception=e,
+                metadata={"execution_id": request.execution_id},
+            )
             response = graph_service_pb2.CancelExecutionResponse()
             response.response.success = False
             response.response.message = f"Failed to cancel execution: {str(e)}"
@@ -199,12 +219,15 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
         response.message = "Graph service is healthy"
         return response
 
+
 def serve():
     """Start the gRPC server"""
     server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
-    graph_service_pb2_grpc.add_GraphServiceServicer_to_server(GraphServiceImpl(), server)
+    graph_service_pb2_grpc.add_GraphServiceServicer_to_server(
+        GraphServiceImpl(), server
+    )
 
-    listen_addr = '[::]:9096'
+    listen_addr = "[::]:9096"
     server.add_insecure_port(listen_addr)
 
     events.info("Starting Graph gRPC server", {"address": listen_addr})
@@ -216,5 +239,6 @@ def serve():
 
     asyncio.run(serve_async())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     serve()

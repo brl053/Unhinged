@@ -126,8 +126,11 @@ def validate_session_store_implementation():
     print("-" * 40)
 
     # Check configuration class
-    config_classes = [node.name for node in ast.walk(tree)
-                     if isinstance(node, ast.ClassDef) and "Config" in node.name]
+    config_classes = [
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and "Config" in node.name
+    ]
     if config_classes:
         print(f"✅ Configuration class found: {config_classes}")
     else:
@@ -135,8 +138,11 @@ def validate_session_store_implementation():
         return False
 
     # Check error handling
-    exception_classes = [node.name for node in ast.walk(tree)
-                        if isinstance(node, ast.ClassDef) and "Error" in node.name]
+    exception_classes = [
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and "Error" in node.name
+    ]
     if exception_classes:
         print(f"✅ Custom exception class found: {exception_classes}")
     else:
@@ -150,8 +156,11 @@ def validate_session_store_implementation():
         return False
 
     # Check health monitoring
-    if "health_check" in [node.name for node in session_store_class.body
-                         if isinstance(node, ast.FunctionDef)]:
+    if "health_check" in [
+        node.name
+        for node in session_store_class.body
+        if isinstance(node, ast.FunctionDef)
+    ]:
         print("✅ Health check method implemented")
     else:
         print("❌ Health check method not found")
@@ -161,17 +170,22 @@ def validate_session_store_implementation():
     print("-" * 30)
 
     # Count methods
-    method_count = len([node for node in session_store_class.body
-                       if isinstance(node, ast.FunctionDef)])
+    method_count = len(
+        [node for node in session_store_class.body if isinstance(node, ast.FunctionDef)]
+    )
     print(f"Methods implemented: {method_count}")
 
     # Count lines
-    lines = source_code.split('\n')
-    code_lines = [line for line in lines if line.strip() and not line.strip().startswith('#')]
+    lines = source_code.split("\n")
+    code_lines = [
+        line for line in lines if line.strip() and not line.strip().startswith("#")
+    ]
     print(f"Lines of code: {len(code_lines)}")
 
     # Check imports
-    imports = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
+    imports = [
+        node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))
+    ]
     print(f"Import statements: {len(imports)}")
 
     print("\n✅ SESSION STORE IMPLEMENTATION VALIDATION COMPLETE")
@@ -180,13 +194,19 @@ def validate_session_store_implementation():
 
     return True
 
+
 def validate_chat_service_integration():
     """Validate chat service integration"""
     print("\n🔍 VALIDATING CHAT SERVICE INTEGRATION")
     print("=" * 60)
 
     # Check chat service file
-    chat_service_path = Path(__file__).parent.parent.parent.parent / "services" / "chat-with-sessions" / "grpc_server.py"
+    chat_service_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "services"
+        / "chat-with-sessions"
+        / "grpc_server.py"
+    )
     if not chat_service_path.exists():
         print("❌ Chat service with sessions not found")
         return False
@@ -229,13 +249,20 @@ def validate_chat_service_integration():
     print("✅ Chat service integration validation complete")
     return True
 
+
 def validate_ui_integration():
     """Validate UI integration"""
     print("\n🔍 VALIDATING UI INTEGRATION")
     print("=" * 60)
 
     # Check session management component
-    ui_component_path = Path(__file__).parent.parent.parent.parent / "control" / "gtk4_gui" / "components" / "session_management.py"
+    ui_component_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "control"
+        / "gtk4_gui"
+        / "components"
+        / "session_management.py"
+    )
     if not ui_component_path.exists():
         print("❌ Session management UI component not found")
         return False
@@ -268,6 +295,7 @@ def validate_ui_integration():
 
     print("✅ UI integration validation complete")
     return True
+
 
 def main():
     """Main validation function"""
@@ -303,6 +331,7 @@ def main():
         print("🔧 Fix issues before proceeding")
 
     return success
+
 
 if __name__ == "__main__":
     main()

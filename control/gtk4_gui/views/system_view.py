@@ -7,14 +7,15 @@ embedded in the monolithic desktop_app.py file.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib, Gtk
 
 # Import system info components
 try:
     from ..system_info import get_system_info
+
     SYSTEM_INFO_AVAILABLE = True
 except ImportError as e:
     SYSTEM_INFO_AVAILABLE = False
@@ -26,32 +27,44 @@ try:
         start_realtime_updates,
         stop_realtime_updates,
     )
+
     REALTIME_AVAILABLE = True
 except ImportError:
     REALTIME_AVAILABLE = False
+
     # Define dummy functions
     def start_realtime_updates(interval=2.0):
         return False
+
     def stop_realtime_updates():
         pass
+
 
 # Define fallback component classes
 class InfoCard:
     def __init__(self, **kwargs):
-        self.title = kwargs.get('title', 'Info')
-        self.data = kwargs.get('data', {})
+        self.title = kwargs.get("title", "Info")
+        self.data = kwargs.get("data", {})
+
     def get_widget(self):
         return Gtk.Label(label=self.title)
+
 
 class StatusIndicator:
     def __init__(self, **kwargs):
         pass
+
     def get_widget(self):
         return Gtk.Label(label="Status")
 
+
 # Try to import real components (optional)
 try:
-    from ..components import InfoCard as RealInfoCard, StatusIndicator as RealStatusIndicator
+    from ..components import (
+        InfoCard as RealInfoCard,
+        StatusIndicator as RealStatusIndicator,
+    )
+
     InfoCard = RealInfoCard
     StatusIndicator = RealStatusIndicator
 except ImportError:
@@ -70,9 +83,15 @@ class SystemInfoView:
         self.project_root = parent_app.project_root
 
         # System info settings
-        self.system_info_auto_refresh = getattr(parent_app, 'system_info_auto_refresh', False)
-        self.system_info_refresh_interval = getattr(parent_app, 'system_info_refresh_interval', 30)
-        self.realtime_updates_enabled = getattr(parent_app, 'realtime_updates_enabled', False)
+        self.system_info_auto_refresh = getattr(
+            parent_app, "system_info_auto_refresh", False
+        )
+        self.system_info_refresh_interval = getattr(
+            parent_app, "system_info_refresh_interval", 30
+        )
+        self.realtime_updates_enabled = getattr(
+            parent_app, "realtime_updates_enabled", False
+        )
 
         # Timer references
         self._auto_refresh_timer_id = None
@@ -148,7 +167,9 @@ class SystemInfoView:
                     print(f"⚠️ Skipping overview section: {e}")
 
                 try:
-                    performance_section = self._create_performance_metrics_section(system_info)
+                    performance_section = self._create_performance_metrics_section(
+                        system_info
+                    )
                     self.system_info_box.append(performance_section)
                 except Exception as e:
                     print(f"⚠️ Skipping performance section: {e}")
@@ -168,6 +189,7 @@ class SystemInfoView:
             except Exception as e:
                 # Error handling
                 import traceback
+
                 print(f"❌ Error creating system info sections: {e}")
                 traceback.print_exc()
 
@@ -227,13 +249,11 @@ class SystemInfoView:
             "kernel_version": system_info.system.kernel_version,
             "hostname": system_info.system.hostname,
             "uptime": uptime_formatted,
-            "architecture": system_info.system.architecture
+            "architecture": system_info.system.architecture,
         }
 
         overview_card = InfoCard(
-            title="System Overview",
-            icon_name="computer-symbolic",
-            data=overview_data
+            title="System Overview", icon_name="computer-symbolic", data=overview_data
         )
 
         return overview_card.get_widget()
@@ -247,14 +267,20 @@ class SystemInfoView:
         # CPU Usage
         cpu_row = Adw.ActionRow()
         cpu_row.set_title("CPU Usage")
-        cpu_row.set_subtitle(f"{system_info.performance.cpu_count} cores, {system_info.performance.cpu_freq_current:.1f} MHz")
+        cpu_row.set_subtitle(
+            f"{system_info.performance.cpu_count} cores, {system_info.performance.cpu_freq_current:.1f} MHz"
+        )
 
         if COMPONENTS_AVAILABLE:
             cpu_indicator = StatusIndicator(
                 value=system_info.performance.cpu_percent,
                 max_value=100,
                 unit="%",
-                status="success" if system_info.performance.cpu_percent < 70 else "warning" if system_info.performance.cpu_percent < 90 else "error"
+                status="success"
+                if system_info.performance.cpu_percent < 70
+                else "warning"
+                if system_info.performance.cpu_percent < 90
+                else "error",
             )
             cpu_row.add_suffix(cpu_indicator.get_widget())
 
@@ -263,14 +289,20 @@ class SystemInfoView:
         # Memory Usage
         memory_row = Adw.ActionRow()
         memory_row.set_title("Memory Usage")
-        memory_row.set_subtitle(f"{system_info.performance.memory_total_gb:.1f} GB total")
+        memory_row.set_subtitle(
+            f"{system_info.performance.memory_total_gb:.1f} GB total"
+        )
 
         if COMPONENTS_AVAILABLE:
             memory_indicator = StatusIndicator(
                 value=system_info.performance.memory_percent,
                 max_value=100,
                 unit="%",
-                status="success" if system_info.performance.memory_percent < 70 else "warning" if system_info.performance.memory_percent < 90 else "error"
+                status="success"
+                if system_info.performance.memory_percent < 70
+                else "warning"
+                if system_info.performance.memory_percent < 90
+                else "error",
             )
             memory_row.add_suffix(memory_indicator.get_widget())
 
@@ -286,7 +318,11 @@ class SystemInfoView:
                 value=system_info.performance.disk_percent,
                 max_value=100,
                 unit="%",
-                status="success" if system_info.performance.disk_percent < 70 else "warning" if system_info.performance.disk_percent < 90 else "error"
+                status="success"
+                if system_info.performance.disk_percent < 70
+                else "warning"
+                if system_info.performance.disk_percent < 90
+                else "error",
             )
             disk_row.add_suffix(disk_indicator.get_widget())
 
@@ -315,7 +351,7 @@ class SystemInfoView:
             cpu_details = ActionRow(
                 title="CPU Details",
                 subtitle=f"Cores: {system_info.hardware.cpu_cores}, Threads: {system_info.hardware.cpu_threads}",
-                icon_name="cpu-symbolic"
+                icon_name="cpu-symbolic",
             )
             hardware_group.add(cpu_details.get_widget())
         else:
@@ -324,14 +360,16 @@ class SystemInfoView:
         # Memory Information
         memory_row = Adw.ActionRow()
         memory_row.set_title("Memory")
-        memory_row.set_subtitle(f"{system_info.hardware.memory_total_gb:.1f} GB ({system_info.hardware.memory_type})")
+        memory_row.set_subtitle(
+            f"{system_info.hardware.memory_total_gb:.1f} GB ({system_info.hardware.memory_type})"
+        )
 
         memory_icon = Gtk.Image.new_from_icon_name("memory-symbolic")
         memory_row.add_prefix(memory_icon)
         hardware_group.add(memory_row)
 
         # Storage Information
-        if hasattr(system_info.hardware, 'storage_devices'):
+        if hasattr(system_info.hardware, "storage_devices"):
             for device in system_info.hardware.storage_devices:
                 storage_row = Adw.ActionRow()
                 storage_row.set_title(f"Storage: {device.name}")
@@ -342,7 +380,7 @@ class SystemInfoView:
                 hardware_group.add(storage_row)
 
         # GPU Information
-        if hasattr(system_info.hardware, 'gpu_info') and system_info.hardware.gpu_info:
+        if hasattr(system_info.hardware, "gpu_info") and system_info.hardware.gpu_info:
             gpu_row = Adw.ActionRow()
             gpu_row.set_title("Graphics")
             gpu_row.set_subtitle(system_info.hardware.gpu_info)
@@ -354,7 +392,7 @@ class SystemInfoView:
                 gpu_details = ActionRow(
                     title="GPU Details",
                     subtitle=system_info.hardware.gpu_info,
-                    icon_name="video-display-symbolic"
+                    icon_name="video-display-symbolic",
                 )
                 hardware_group.add(gpu_details.get_widget())
             else:
@@ -370,31 +408,31 @@ class SystemInfoView:
 
         if system_info.motherboard:
             # Manufacturer
-            if 'manufacturer' in system_info.motherboard:
+            if "manufacturer" in system_info.motherboard:
                 mfg_row = Adw.ActionRow()
                 mfg_row.set_title("Manufacturer")
-                mfg_row.set_subtitle(system_info.motherboard['manufacturer'])
+                mfg_row.set_subtitle(system_info.motherboard["manufacturer"])
                 motherboard_group.add(mfg_row)
 
             # Model
-            if 'model' in system_info.motherboard:
+            if "model" in system_info.motherboard:
                 model_row = Adw.ActionRow()
                 model_row.set_title("Model")
-                model_row.set_subtitle(system_info.motherboard['model'])
+                model_row.set_subtitle(system_info.motherboard["model"])
                 motherboard_group.add(model_row)
 
             # Version
-            if 'version' in system_info.motherboard:
+            if "version" in system_info.motherboard:
                 version_row = Adw.ActionRow()
                 version_row.set_title("Version")
-                version_row.set_subtitle(system_info.motherboard['version'])
+                version_row.set_subtitle(system_info.motherboard["version"])
                 motherboard_group.add(version_row)
 
             # Serial Number
-            if 'serial' in system_info.motherboard:
+            if "serial" in system_info.motherboard:
                 serial_row = Adw.ActionRow()
                 serial_row.set_title("Serial Number")
-                serial_row.set_subtitle(system_info.motherboard['serial'])
+                serial_row.set_subtitle(system_info.motherboard["serial"])
                 motherboard_group.add(serial_row)
         else:
             # No motherboard info available
@@ -412,45 +450,45 @@ class SystemInfoView:
 
         if system_info.cpu_details:
             # Brand
-            if 'brand' in system_info.cpu_details:
+            if "brand" in system_info.cpu_details:
                 brand_row = Adw.ActionRow()
                 brand_row.set_title("Brand")
-                brand_row.set_subtitle(system_info.cpu_details['brand'])
+                brand_row.set_subtitle(system_info.cpu_details["brand"])
                 cpu_group.add(brand_row)
 
             # Model Name
-            if 'model_name' in system_info.cpu_details:
+            if "model_name" in system_info.cpu_details:
                 model_row = Adw.ActionRow()
                 model_row.set_title("Model")
-                model_row.set_subtitle(system_info.cpu_details['model_name'])
+                model_row.set_subtitle(system_info.cpu_details["model_name"])
                 cpu_group.add(model_row)
 
             # Cache
-            if 'cache' in system_info.cpu_details:
+            if "cache" in system_info.cpu_details:
                 cache_row = Adw.ActionRow()
                 cache_row.set_title("Cache")
-                cache_row.set_subtitle(system_info.cpu_details['cache'])
+                cache_row.set_subtitle(system_info.cpu_details["cache"])
                 cpu_group.add(cache_row)
 
             # Stepping
-            if 'stepping' in system_info.cpu_details:
+            if "stepping" in system_info.cpu_details:
                 stepping_row = Adw.ActionRow()
                 stepping_row.set_title("Stepping")
-                stepping_row.set_subtitle(system_info.cpu_details['stepping'])
+                stepping_row.set_subtitle(system_info.cpu_details["stepping"])
                 cpu_group.add(stepping_row)
 
             # Family
-            if 'family' in system_info.cpu_details:
+            if "family" in system_info.cpu_details:
                 family_row = Adw.ActionRow()
                 family_row.set_title("Family")
-                family_row.set_subtitle(system_info.cpu_details['family'])
+                family_row.set_subtitle(system_info.cpu_details["family"])
                 cpu_group.add(family_row)
 
             # Model Number
-            if 'model_number' in system_info.cpu_details:
+            if "model_number" in system_info.cpu_details:
                 model_num_row = Adw.ActionRow()
                 model_num_row.set_title("Model Number")
-                model_num_row.set_subtitle(system_info.cpu_details['model_number'])
+                model_num_row.set_subtitle(system_info.cpu_details["model_number"])
                 cpu_group.add(model_num_row)
         else:
             # No CPU details available
@@ -511,18 +549,22 @@ class SystemInfoView:
             # Show summary first
             summary_row = Adw.ActionRow()
             summary_row.set_title("Total Storage")
-            summary_row.set_subtitle(f"{system_info.storage.total_storage_gb:.1f} GB ({system_info.storage.total_used_gb:.1f} GB used)")
+            summary_row.set_subtitle(
+                f"{system_info.storage.total_storage_gb:.1f} GB ({system_info.storage.total_used_gb:.1f} GB used)"
+            )
             storage_group.add(summary_row)
 
             # Show each device (filter out loop devices for cleaner display)
             for device in system_info.storage.devices:
                 # Skip loop devices (squashfs) for cleaner display
-                if 'loop' in device.device.lower():
+                if "loop" in device.device.lower():
                     continue
 
                 device_row = Adw.ActionRow()
                 device_row.set_title(device.device)
-                device_row.set_subtitle(f"{device.total_gb:.1f} GB ({device.filesystem}) - {device.usage_percent:.0f}% used")
+                device_row.set_subtitle(
+                    f"{device.total_gb:.1f} GB ({device.filesystem}) - {device.usage_percent:.0f}% used"
+                )
                 storage_group.add(device_row)
         else:
             # No storage info available
@@ -548,7 +590,9 @@ class SystemInfoView:
             # Used RAM
             used_row = Adw.ActionRow()
             used_row.set_title("Used")
-            used_row.set_subtitle(f"{system_info.memory.used_gb:.1f} GB ({system_info.memory.usage_percent:.0f}%)")
+            used_row.set_subtitle(
+                f"{system_info.memory.used_gb:.1f} GB ({system_info.memory.usage_percent:.0f}%)"
+            )
             memory_group.add(used_row)
 
             # Available RAM
@@ -561,7 +605,9 @@ class SystemInfoView:
             if system_info.memory.swap_total_gb > 0:
                 swap_row = Adw.ActionRow()
                 swap_row.set_title("Swap")
-                swap_row.set_subtitle(f"{system_info.memory.swap_total_gb:.1f} GB ({system_info.memory.swap_used_gb:.1f} GB used, {system_info.memory.swap_percent:.0f}%)")
+                swap_row.set_subtitle(
+                    f"{system_info.memory.swap_total_gb:.1f} GB ({system_info.memory.swap_used_gb:.1f} GB used, {system_info.memory.swap_percent:.0f}%)"
+                )
                 memory_group.add(swap_row)
         else:
             # No memory info available
@@ -586,7 +632,8 @@ class SystemInfoView:
 
             # Network interfaces (show only active ones with IP addresses)
             active_interfaces = [
-                iface for iface in system_info.network.interfaces
+                iface
+                for iface in system_info.network.interfaces
                 if iface.status == "Up" and iface.ip_address
             ]
 
@@ -636,14 +683,16 @@ class SystemInfoView:
         # GTK Version
         gtk_row = Adw.ActionRow()
         gtk_row.set_title("GTK Version")
-        gtk_row.set_subtitle(f"GTK {Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}")
+        gtk_row.set_subtitle(
+            f"GTK {Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}"
+        )
 
         gtk_icon = Gtk.Image.new_from_icon_name("applications-graphics-symbolic")
         gtk_row.add_prefix(gtk_icon)
         platform_group.add(gtk_row)
 
         # Desktop Environment
-        if hasattr(system_info.platform, 'desktop_environment'):
+        if hasattr(system_info.platform, "desktop_environment"):
             desktop_row = Adw.ActionRow()
             desktop_row.set_title("Desktop Environment")
             desktop_row.set_subtitle(system_info.platform.desktop_environment)
@@ -653,7 +702,7 @@ class SystemInfoView:
             platform_group.add(desktop_row)
 
         # Display Information
-        if hasattr(system_info.platform, 'display_info'):
+        if hasattr(system_info.platform, "display_info"):
             display_row = Adw.ActionRow()
             display_row.set_title("Display")
             display_row.set_subtitle(system_info.platform.display_info)
@@ -670,6 +719,7 @@ class SystemInfoView:
             try:
                 # Clear cache and collect fresh data
                 from ..system_info import SystemInfoCollector
+
                 collector = SystemInfoCollector(self.project_root)
                 collector.clear_cache()
 
@@ -686,7 +736,9 @@ class SystemInfoView:
                     system_info = get_system_info(self.project_root, use_cache=False)
 
                     # Header section with refresh button
-                    header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+                    header_box = Gtk.Box(
+                        orientation=Gtk.Orientation.HORIZONTAL, spacing=12
+                    )
                     header_box.set_margin_bottom(12)
 
                     title_label = Gtk.Label(label="System Information")
@@ -704,19 +756,25 @@ class SystemInfoView:
 
                     # Add all sections
                     try:
-                        motherboard_section = self._create_motherboard_section(system_info)
+                        motherboard_section = self._create_motherboard_section(
+                            system_info
+                        )
                         self.system_info_box.append(motherboard_section)
                     except Exception as e:
                         print(f"⚠️ Skipping motherboard section: {e}")
 
                     try:
-                        cpu_details_section = self._create_cpu_details_section(system_info)
+                        cpu_details_section = self._create_cpu_details_section(
+                            system_info
+                        )
                         self.system_info_box.append(cpu_details_section)
                     except Exception as e:
                         print(f"⚠️ Skipping CPU details section: {e}")
 
                     try:
-                        gpu_details_section = self._create_gpu_details_section(system_info)
+                        gpu_details_section = self._create_gpu_details_section(
+                            system_info
+                        )
                         self.system_info_box.append(gpu_details_section)
                     except Exception as e:
                         print(f"⚠️ Skipping GPU details section: {e}")
@@ -740,40 +798,50 @@ class SystemInfoView:
                         print(f"⚠️ Skipping network section: {e}")
 
                     try:
-                        overview_section = self._create_system_overview_section(system_info)
+                        overview_section = self._create_system_overview_section(
+                            system_info
+                        )
                         self.system_info_box.append(overview_section)
                     except Exception as e:
                         print(f"⚠️ Skipping overview section: {e}")
 
                     try:
-                        performance_section = self._create_performance_metrics_section(system_info)
+                        performance_section = self._create_performance_metrics_section(
+                            system_info
+                        )
                         self.system_info_box.append(performance_section)
                     except Exception as e:
                         print(f"⚠️ Skipping performance section: {e}")
 
                     try:
-                        hardware_section = self._create_hardware_info_section(system_info)
+                        hardware_section = self._create_hardware_info_section(
+                            system_info
+                        )
                         self.system_info_box.append(hardware_section)
                     except Exception as e:
                         print(f"⚠️ Skipping hardware section: {e}")
 
                     try:
-                        platform_section = self._create_platform_status_section(system_info)
+                        platform_section = self._create_platform_status_section(
+                            system_info
+                        )
                         self.system_info_box.append(platform_section)
                     except Exception as e:
                         print(f"⚠️ Skipping platform section: {e}")
 
                 # Show toast notification
-                if hasattr(self.app, 'show_toast'):
+                if hasattr(self.app, "show_toast"):
                     self.app.show_toast("System information refreshed")
 
                 # Log refresh action
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("SYSTEM_INFO_REFRESH", "User refreshed system information")
+                if hasattr(self.app, "session_logger") and self.app.session_logger:
+                    self.app.session_logger.log_gui_event(
+                        "SYSTEM_INFO_REFRESH", "User refreshed system information"
+                    )
 
             except Exception as e:
                 # Show error toast
-                if hasattr(self.app, 'show_toast'):
+                if hasattr(self.app, "show_toast"):
                     self.app.show_toast(f"Refresh failed: {str(e)}")
 
     def _on_auto_refresh_toggled(self, switch, param):
@@ -784,18 +852,21 @@ class SystemInfoView:
             # Start auto-refresh
             if SYSTEM_INFO_AVAILABLE:
                 self._auto_refresh_timer_id = GLib.timeout_add_seconds(
-                    self.system_info_refresh_interval,
-                    self._auto_refresh_callback
+                    self.system_info_refresh_interval, self._auto_refresh_callback
                 )
 
                 # Show toast notification
-                if hasattr(self.app, 'show_toast'):
-                    self.app.show_toast(f"Auto-refresh enabled ({self.system_info_refresh_interval}s interval)")
+                if hasattr(self.app, "show_toast"):
+                    self.app.show_toast(
+                        f"Auto-refresh enabled ({self.system_info_refresh_interval}s interval)"
+                    )
 
                 # Log toggle action
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH_ENABLED",
-                                                        f"Auto-refresh enabled with {self.system_info_refresh_interval}s interval")
+                if hasattr(self.app, "session_logger") and self.app.session_logger:
+                    self.app.session_logger.log_gui_event(
+                        "SYSTEM_INFO_AUTO_REFRESH_ENABLED",
+                        f"Auto-refresh enabled with {self.system_info_refresh_interval}s interval",
+                    )
         else:
             # Stop auto-refresh
             if self._auto_refresh_timer_id:
@@ -803,12 +874,14 @@ class SystemInfoView:
                 self._auto_refresh_timer_id = None
 
             # Show toast notification
-            if hasattr(self.app, 'show_toast'):
+            if hasattr(self.app, "show_toast"):
                 self.app.show_toast("Auto-refresh disabled")
 
             # Log toggle action
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH_DISABLED", "Auto-refresh disabled")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "SYSTEM_INFO_AUTO_REFRESH_DISABLED", "Auto-refresh disabled"
+                )
 
     def _auto_refresh_callback(self):
         """Auto-refresh callback function."""
@@ -819,17 +892,22 @@ class SystemInfoView:
             if SYSTEM_INFO_AVAILABLE:
                 # Clear cache and collect fresh data
                 from ..system_info import SystemInfoCollector
+
                 collector = SystemInfoCollector(self.project_root)
                 collector.clear_cache()
 
                 # Log auto-refresh
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH", "Auto-refresh triggered")
+                if hasattr(self.app, "session_logger") and self.app.session_logger:
+                    self.app.session_logger.log_gui_event(
+                        "SYSTEM_INFO_AUTO_REFRESH", "Auto-refresh triggered"
+                    )
 
         except Exception as e:
             # Log error but continue auto-refresh
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH_ERROR", str(e))
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "SYSTEM_INFO_AUTO_REFRESH_ERROR", str(e)
+                )
 
         # Return True to continue the timer
         return self.system_info_auto_refresh
@@ -845,11 +923,13 @@ class SystemInfoView:
                 success = start_realtime_updates(interval=2.0)
                 if not success:
                     # Failed to start real-time updates
-                    if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                        self.app.session_logger.log_gui_event("REALTIME_SETUP_FAILED", "Failed to start real-time updates")
+                    if hasattr(self.app, "session_logger") and self.app.session_logger:
+                        self.app.session_logger.log_gui_event(
+                            "REALTIME_SETUP_FAILED", "Failed to start real-time updates"
+                        )
 
         except Exception as e:
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
                 self.app.session_logger.log_gui_event("REALTIME_SETUP_ERROR", str(e))
 
     def _on_realtime_updates_toggled(self, switch, param):
@@ -862,7 +942,7 @@ class SystemInfoView:
                 success = start_realtime_updates(interval=2.0)
                 if success:
                     # Show toast notification
-                    if hasattr(self.app, 'show_toast'):
+                    if hasattr(self.app, "show_toast"):
                         self.app.show_toast("Real-time updates enabled")
                 else:
                     # Failed to start - reset switch
@@ -874,13 +954,15 @@ class SystemInfoView:
                 stop_realtime_updates()
 
                 # Show toast notification
-                if hasattr(self.app, 'show_toast'):
+                if hasattr(self.app, "show_toast"):
                     self.app.show_toast("Real-time updates disabled")
 
         # Log toggle action
-        if hasattr(self.app, 'session_logger') and self.app.session_logger:
-            self.app.session_logger.log_gui_event("REALTIME_TOGGLE",
-                                                f"Real-time updates {'enabled' if self.realtime_updates_enabled else 'disabled'}")
+        if hasattr(self.app, "session_logger") and self.app.session_logger:
+            self.app.session_logger.log_gui_event(
+                "REALTIME_TOGGLE",
+                f"Real-time updates {'enabled' if self.realtime_updates_enabled else 'disabled'}",
+            )
 
     def cleanup(self):
         """Clean up system info components to prevent memory leaks."""
@@ -898,13 +980,18 @@ class SystemInfoView:
                 # Clear system info cache
                 if SYSTEM_INFO_AVAILABLE:
                     from ..system_info import SystemInfoCollector
+
                     collector = SystemInfoCollector(self.project_root)
                     collector.clear_cache()
 
                 # Log cleanup
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("SYSTEM_INFO_CLEANUP", "System info components cleaned up")
+                if hasattr(self.app, "session_logger") and self.app.session_logger:
+                    self.app.session_logger.log_gui_event(
+                        "SYSTEM_INFO_CLEANUP", "System info components cleaned up"
+                    )
 
             except Exception as e:
-                if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                    self.app.session_logger.log_gui_event("SYSTEM_INFO_CLEANUP_ERROR", str(e))
+                if hasattr(self.app, "session_logger") and self.app.session_logger:
+                    self.app.session_logger.log_gui_event(
+                        "SYSTEM_INFO_CLEANUP_ERROR", str(e)
+                    )

@@ -19,7 +19,7 @@ class ServiceLogger:
         # Configure logging
         logging.basicConfig(
             level=logging.INFO,
-            format=f'%(asctime)s - {service_name} - %(levelname)s - %(message)s'
+            format=f"%(asctime)s - {service_name} - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(service_name)
 
@@ -31,7 +31,12 @@ class ServiceLogger:
             log_message = message
         self.logger.info(log_message)
 
-    def error(self, message: str, exception: Exception | None = None, data: dict[str, Any] | None = None):
+    def error(
+        self,
+        message: str,
+        exception: Exception | None = None,
+        data: dict[str, Any] | None = None,
+    ):
         """Log error message with optional exception and data"""
         if exception:
             log_message = f"{message} | Exception: {str(exception)}"
@@ -58,6 +63,7 @@ class ServiceLogger:
         else:
             log_message = message
         self.logger.debug(log_message)
+
 
 def create_service_logger(service_name: str, version: str) -> ServiceLogger:
     """Create service logger instance"""

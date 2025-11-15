@@ -18,6 +18,7 @@ import psutil
 
 class HealthStatus(Enum):
     """Health status enumeration matching protobuf definition"""
+
     UNKNOWN = "UNKNOWN"
     HEALTHY = "HEALTHY"
     DEGRADED = "DEGRADED"
@@ -28,6 +29,7 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a health check operation"""
+
     healthy: bool
     message: str
     response_time_ms: float
@@ -38,6 +40,7 @@ class HealthCheckResult:
 @dataclass
 class DependencyCheckResult:
     """Result of a dependency health check"""
+
     name: str
     type: str
     endpoint: str
@@ -50,6 +53,7 @@ class DependencyCheckResult:
 @dataclass
 class ResourceMetrics:
     """System resource metrics for local OS context"""
+
     cpu_percent: float
     memory_percent: float
     memory_used_mb: float
@@ -63,7 +67,7 @@ class ResourceMetrics:
 class HealthManager:
     """
     Health management for Python services
-    
+
     Optimized for local OS deployment - focuses on resource monitoring
     rather than distributed systems concerns.
     """
@@ -98,12 +102,19 @@ class HealthManager:
         with self._status_lock:
             return self._status
 
-    def register_health_check(self, name: str, check_func: Callable[[], HealthCheckResult]) -> None:
+    def register_health_check(
+        self, name: str, check_func: Callable[[], HealthCheckResult]
+    ) -> None:
         """Register a custom health check"""
         self._health_checks[name] = check_func
 
-    def register_dependency(self, name: str, type_: str, endpoint: str,
-                          check_func: Callable[[], DependencyCheckResult]) -> None:
+    def register_dependency(
+        self,
+        name: str,
+        type_: str,
+        endpoint: str,
+        check_func: Callable[[], DependencyCheckResult],
+    ) -> None:
         """Register a dependency for monitoring"""
         self._dependencies[name] = check_func
 
@@ -117,16 +128,19 @@ class HealthManager:
             "service_id": self.service_id,
             "version": self.version,
             "uptime_ms": uptime_ms,
-            "status": self._status.value
+            "status": self._status.value,
         }
 
-    def get_diagnostics(self, include_metrics: bool = True,
-                       include_dependencies: bool = True,
-                       include_custom_checks: bool = True) -> dict[str, Any]:
+    def get_diagnostics(
+        self,
+        include_metrics: bool = True,
+        include_dependencies: bool = True,
+        include_custom_checks: bool = True,
+    ) -> dict[str, Any]:
         """Get detailed diagnostics"""
         diagnostics = {
             "heartbeat": self.get_heartbeat(),
-            "last_updated": datetime.now(UTC).isoformat()
+            "last_updated": datetime.now(UTC).isoformat(),
         }
 
         if include_metrics:
@@ -160,8 +174,8 @@ class HealthManager:
                     "percent": memory.percent,
                     "used_mb": memory.used / (1024 * 1024),
                     "total_mb": memory.total / (1024 * 1024),
-                    "available_mb": memory.available / (1024 * 1024)
-                }
+                    "available_mb": memory.available / (1024 * 1024),
+                },
             )
 
         def cpu_check() -> HealthCheckResult:
@@ -180,14 +194,16 @@ class HealthManager:
                 details={
                     "percent": cpu_percent,
                     "core_count": psutil.cpu_count(),
-                    "load_avg": list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else []
-                }
+                    "load_avg": list(psutil.getloadavg())
+                    if hasattr(psutil, "getloadavg")
+                    else [],
+                },
             )
 
         def disk_check() -> HealthCheckResult:
             """Check disk usage"""
             start_time = time.time()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             response_time = (time.time() - start_time) * 1000
 
             disk_percent = (disk.used / disk.total) * 100
@@ -201,8 +217,8 @@ class HealthManager:
                     "percent": disk_percent,
                     "used_gb": disk.used / (1024**3),
                     "total_gb": disk.total / (1024**3),
-                    "free_gb": disk.free / (1024**3)
-                }
+                    "free_gb": disk.free / (1024**3),
+                },
             )
 
         self.register_health_check("memory", memory_check)
@@ -214,7 +230,7 @@ class HealthManager:
         try:
             memory = psutil.virtual_memory()
             cpu_percent = psutil.cpu_percent(interval=0.1)
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
 
             metrics = {
                 "cpu_percent": cpu_percent,
@@ -223,11 +239,11 @@ class HealthManager:
                 "memory_total_mb": memory.total / (1024 * 1024),
                 "disk_percent": (disk.used / disk.total) * 100,
                 "thread_count": threading.active_count(),
-                "process_count": len(psutil.pids())
+                "process_count": len(psutil.pids()),
             }
 
             # Add load average if available (Unix systems)
-            if hasattr(psutil, 'getloadavg'):
+            if hasattr(psutil, "getloadavg"):
                 metrics["load_average"] = list(psutil.getloadavg())
 
             with self._metrics_lock:
@@ -244,22 +260,26 @@ class HealthManager:
         for name, check_func in self._dependencies.items():
             try:
                 result = check_func()
-                results.append({
-                    "name": result.name,
-                    "type": result.type,
-                    "endpoint": result.endpoint,
-                    "healthy": result.healthy,
-                    "response_time_ms": result.response_time_ms,
-                    "message": result.message,
-                    "details": result.details
-                })
+                results.append(
+                    {
+                        "name": result.name,
+                        "type": result.type,
+                        "endpoint": result.endpoint,
+                        "healthy": result.healthy,
+                        "response_time_ms": result.response_time_ms,
+                        "message": result.message,
+                        "details": result.details,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "name": name,
-                    "healthy": False,
-                    "message": f"Check failed: {e}",
-                    "response_time_ms": 0
-                })
+                results.append(
+                    {
+                        "name": name,
+                        "healthy": False,
+                        "message": f"Check failed: {e}",
+                        "response_time_ms": 0,
+                    }
+                )
         return results
 
     def _run_health_checks(self) -> list[dict[str, Any]]:
@@ -268,22 +288,26 @@ class HealthManager:
         for name, check_func in self._health_checks.items():
             try:
                 result = check_func()
-                results.append({
-                    "name": name,
-                    "healthy": result.healthy,
-                    "message": result.message,
-                    "response_time_ms": result.response_time_ms,
-                    "details": result.details,
-                    "timestamp": result.timestamp.isoformat()
-                })
+                results.append(
+                    {
+                        "name": name,
+                        "healthy": result.healthy,
+                        "message": result.message,
+                        "response_time_ms": result.response_time_ms,
+                        "details": result.details,
+                        "timestamp": result.timestamp.isoformat(),
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "name": name,
-                    "healthy": False,
-                    "message": f"Check failed: {e}",
-                    "response_time_ms": 0,
-                    "timestamp": datetime.now(UTC).isoformat()
-                })
+                results.append(
+                    {
+                        "name": name,
+                        "healthy": False,
+                        "message": f"Check failed: {e}",
+                        "response_time_ms": 0,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
         return results
 
     def get_last_metrics(self) -> dict[str, Any] | None:

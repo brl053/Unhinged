@@ -11,8 +11,8 @@ Integrates with chat service's embedded session management.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import logging
 import threading
@@ -28,15 +28,17 @@ try:
     from unhinged_proto_clients import chat_pb2
 
     from libs.python.grpc_clients.client_factory import create_chat_client
+
     GRPC_AVAILABLE = True
 except ImportError:
     GRPC_AVAILABLE = False
     print("⚠️ gRPC clients not available for session management")
 
+
 class SessionState(GObject.Object):
     """Session state data model"""
 
-    __gtype_name__ = 'SessionState'
+    __gtype_name__ = "SessionState"
 
     def __init__(self):
         super().__init__()
@@ -46,10 +48,11 @@ class SessionState(GObject.Object):
         self.created_at = None
         self.metadata = {}
 
+
 class SessionManager(BaseComponent):
     """
     Session management component with progressive disclosure
-    
+
     Features:
     - Session creation button (prominent when no session)
     - Session ID display when active
@@ -57,13 +60,13 @@ class SessionManager(BaseComponent):
     - Write-through session storage via gRPC
     """
 
-    __gtype_name__ = 'SessionManager'
+    __gtype_name__ = "SessionManager"
 
     # Signals
     __gsignals__ = {
-        'session-created': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
-        'session-ended': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'session-error': (GObject.SignalFlags.RUN_FIRST, None, (str,))
+        "session-created": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        "session-ended": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "session-error": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
     def __init__(self):
@@ -84,7 +87,9 @@ class SessionManager(BaseComponent):
     def _initialize_grpc_client(self):
         """Initialize gRPC client for chat service"""
         if not GRPC_AVAILABLE:
-            self.logger.warning("gRPC not available, session management will be disabled")
+            self.logger.warning(
+                "gRPC not available, session management will be disabled"
+            )
             return
 
         try:
@@ -105,7 +110,9 @@ class SessionManager(BaseComponent):
         self.set_margin_end(12)
 
         # Session status container
-        self.status_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        self.status_container = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=12
+        )
         self.status_container.set_halign(Gtk.Align.CENTER)
 
         # Create session button (prominent when no session)
@@ -117,7 +124,9 @@ class SessionManager(BaseComponent):
         self.create_session_button.connect("clicked", self._on_create_session_clicked)
 
         # Session info display (hidden initially)
-        self.session_info_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.session_info_box = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=8
+        )
         self.session_info_box.set_visible(False)
 
         # Session ID label
@@ -240,7 +249,7 @@ class SessionManager(BaseComponent):
         self._update_ui_state()
 
         # Emit signal
-        self.emit('session-created', conversation_id)
+        self.emit("session-created", conversation_id)
 
         self.logger.info(f"Session created: {conversation_id}")
 
@@ -261,7 +270,7 @@ class SessionManager(BaseComponent):
         self._update_ui_state()
 
         # Emit signal
-        self.emit('session-ended')
+        self.emit("session-ended")
 
         self.logger.info("Session ended by user")
 
@@ -300,7 +309,7 @@ class SessionManager(BaseComponent):
         self.status_label.set_text(f"❌ Error: {error_message}")
 
         # Emit error signal
-        self.emit('session-error', error_message)
+        self.emit("session-error", error_message)
 
     def _notify_ui_state_callbacks(self):
         """Notify registered UI state callbacks"""

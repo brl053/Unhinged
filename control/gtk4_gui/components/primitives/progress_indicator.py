@@ -17,33 +17,32 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Gtk
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import ComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class ProgressIndicator(ComponentBase):
     """
     Progress indicator with semantic styling and optional text.
-    
+
     Supports determinate and indeterminate progress.
     """
 
-    def __init__(self,
-                 progress: float = 0.0,
-                 text: str | None = None,
-                 show_percentage: bool = False,
-                 **kwargs):
+    def __init__(
+        self,
+        progress: float = 0.0,
+        text: str | None = None,
+        show_percentage: bool = False,
+        **kwargs,
+    ):
         self.progress = progress
         self.text = text
         self.show_percentage = show_percentage

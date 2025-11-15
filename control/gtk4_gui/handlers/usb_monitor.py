@@ -8,7 +8,6 @@ Captures both basic and verbose output for display in UI.
 
 import logging
 import sys
-from typing import Optional
 from pathlib import Path
 
 # Add utils to path for subprocess_utils import
@@ -41,7 +40,9 @@ class USBMonitor:
             self.last_basic_output = result["output"]
             return result["output"]
         else:
-            error_msg = result["error"] or f"lsusb failed with code {result['returncode']}"
+            error_msg = (
+                result["error"] or f"lsusb failed with code {result['returncode']}"
+            )
             logger.error(error_msg)
             return error_msg
 
@@ -58,14 +59,16 @@ class USBMonitor:
             self.last_verbose_output = result["output"]
             return result["output"]
         else:
-            error_msg = result["error"] or f"lsusb -v failed with code {result['returncode']}"
+            error_msg = (
+                result["error"] or f"lsusb -v failed with code {result['returncode']}"
+            )
             logger.warning(error_msg)
             return error_msg
 
     def refresh(self) -> tuple[str, str]:
         """
         Refresh both basic and verbose USB device information.
-        
+
         Returns:
             Tuple of (basic_output, verbose_output)
         """
@@ -76,9 +79,8 @@ class USBMonitor:
     def get_last_output(self) -> tuple[str, str]:
         """
         Get the last cached output without running commands.
-        
+
         Returns:
             Tuple of (basic_output, verbose_output)
         """
         return self.last_basic_output, self.last_verbose_output
-

@@ -18,6 +18,7 @@ from typing import Any
 try:
     import dbus
     import dbus.mainloop.glib
+
     DBUS_AVAILABLE = True
 except ImportError:
     DBUS_AVAILABLE = False
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BluetoothDevice:
     """Bluetooth device information data structure"""
+
     address: str
     name: str
     alias: str
@@ -69,7 +71,7 @@ class BluetoothDevice:
             0x06: "imaging",
             0x07: "wearable",
             0x08: "toy",
-            0x09: "health"
+            0x09: "health",
         }
 
         return device_types.get(major_class, "unknown")
@@ -78,6 +80,7 @@ class BluetoothDevice:
 @dataclass
 class BluetoothAdapter:
     """Bluetooth adapter information data structure"""
+
     address: str
     name: str
     alias: str
@@ -98,7 +101,7 @@ class BluetoothAdapter:
 class BluetoothMonitor:
     """
     Bluetooth information collection using D-Bus and bluetoothctl.
-    
+
     Features:
     - Cross-platform Bluetooth device enumeration
     - Device pairing and connection management
@@ -202,10 +205,7 @@ class BluetoothMonitor:
 
         try:
             result = subprocess.run(
-                ['bluetoothctl', 'show'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["bluetoothctl", "show"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
@@ -238,15 +238,12 @@ class BluetoothMonitor:
 
         try:
             result = subprocess.run(
-                ['bluetoothctl', 'devices'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["bluetoothctl", "devices"], capture_output=True, text=True, timeout=5
             )
 
             if result.returncode == 0:
-                for line in result.stdout.strip().split('\n'):
-                    if line.startswith('Device '):
+                for line in result.stdout.strip().split("\n"):
+                    if line.startswith("Device "):
                         device = self._parse_bluetoothctl_device(line)
                         if device:
                             devices.append(device)
@@ -260,45 +257,45 @@ class BluetoothMonitor:
 
     def _parse_bluetoothctl_show(self, output: str) -> BluetoothAdapter | None:
         """Parse bluetoothctl show output"""
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
         adapter_data = {}
 
         for line in lines:
             line = line.strip()
-            if line.startswith('Controller '):
-                adapter_data['address'] = line.split()[1]
-            elif line.startswith('Name: '):
-                adapter_data['name'] = line[6:]
-            elif line.startswith('Alias: '):
-                adapter_data['alias'] = line[7:]
-            elif line.startswith('Powered: '):
-                adapter_data['powered'] = line[9:] == 'yes'
-            elif line.startswith('Discoverable: '):
-                adapter_data['discoverable'] = line[14:] == 'yes'
-            elif line.startswith('Pairable: '):
-                adapter_data['pairable'] = line[10:] == 'yes'
-            elif line.startswith('Discovering: '):
-                adapter_data['discovering'] = line[13:] == 'yes'
+            if line.startswith("Controller "):
+                adapter_data["address"] = line.split()[1]
+            elif line.startswith("Name: "):
+                adapter_data["name"] = line[6:]
+            elif line.startswith("Alias: "):
+                adapter_data["alias"] = line[7:]
+            elif line.startswith("Powered: "):
+                adapter_data["powered"] = line[9:] == "yes"
+            elif line.startswith("Discoverable: "):
+                adapter_data["discoverable"] = line[14:] == "yes"
+            elif line.startswith("Pairable: "):
+                adapter_data["pairable"] = line[10:] == "yes"
+            elif line.startswith("Discovering: "):
+                adapter_data["discovering"] = line[13:] == "yes"
 
-        if 'address' in adapter_data:
+        if "address" in adapter_data:
             return BluetoothAdapter(
-                address=adapter_data.get('address', ''),
-                name=adapter_data.get('name', ''),
-                alias=adapter_data.get('alias', ''),
-                powered=adapter_data.get('powered', False),
-                discoverable=adapter_data.get('discoverable', False),
-                pairable=adapter_data.get('pairable', False),
-                discovering=adapter_data.get('discovering', False),
+                address=adapter_data.get("address", ""),
+                name=adapter_data.get("name", ""),
+                alias=adapter_data.get("alias", ""),
+                powered=adapter_data.get("powered", False),
+                discoverable=adapter_data.get("discoverable", False),
+                pairable=adapter_data.get("pairable", False),
+                discovering=adapter_data.get("discovering", False),
                 uuids=[],
                 manufacturer=0,
-                version=0
+                version=0,
             )
 
         return None
 
     def _parse_bluetoothctl_device(self, line: str) -> BluetoothDevice | None:
         """Parse bluetoothctl device line"""
-        parts = line.split(' ', 2)
+        parts = line.split(" ", 2)
         if len(parts) >= 3:
             address = parts[1]
             name = parts[2]
@@ -316,7 +313,7 @@ class BluetoothMonitor:
                 rssi=None,
                 uuids=[],
                 adapter="",
-                last_seen=time.time()
+                last_seen=time.time(),
             )
 
         return None
@@ -330,18 +327,18 @@ class BluetoothMonitor:
         try:
             # Use hcitool scan with very short timeout
             result = subprocess.run(
-                ['hcitool', 'scan', '--flush'],
+                ["hcitool", "scan", "--flush"],
                 capture_output=True,
                 text=True,
-                timeout=3  # Very short timeout
+                timeout=3,  # Very short timeout
             )
 
             if result.returncode == 0:
-                for line in result.stdout.strip().split('\n'):
+                for line in result.stdout.strip().split("\n"):
                     line = line.strip()
-                    if line and not line.startswith('Scanning'):
+                    if line and not line.startswith("Scanning"):
                         # Parse line format: "ADDRESS\tNAME"
-                        parts = line.split('\t', 1)
+                        parts = line.split("\t", 1)
                         if len(parts) >= 2:
                             address = parts[0].strip()
                             name = parts[1].strip()
@@ -360,7 +357,7 @@ class BluetoothMonitor:
                                 rssi=None,  # hcitool scan doesn't provide RSSI
                                 uuids=[],
                                 adapter="",
-                                last_seen=time.time()
+                                last_seen=time.time(),
                             )
 
                             devices.append(device)
@@ -385,7 +382,7 @@ class BluetoothMonitor:
             # Get all objects from BlueZ
             manager = dbus.Interface(
                 self._bus.get_object("org.bluez", "/"),
-                "org.freedesktop.DBus.ObjectManager"
+                "org.freedesktop.DBus.ObjectManager",
             )
 
             objects = manager.GetManagedObjects()
@@ -409,7 +406,7 @@ class BluetoothMonitor:
                             rssi=props.get("RSSI"),
                             uuids=[str(uuid) for uuid in props.get("UUIDs", [])],
                             adapter=str(props.get("Adapter", "")),
-                            last_seen=time.time()
+                            last_seen=time.time(),
                         )
 
                         devices.append(device)
@@ -432,7 +429,7 @@ class BluetoothMonitor:
                     adapter_path = "/org/bluez/hci0"  # Assume hci0 for now
                     adapter = dbus.Interface(
                         self._bus.get_object("org.bluez", adapter_path),
-                        "org.bluez.Adapter1"
+                        "org.bluez.Adapter1",
                     )
                     adapter.StartDiscovery()
                     success = True
@@ -444,10 +441,10 @@ class BluetoothMonitor:
         if not success:
             try:
                 result = subprocess.run(
-                    ['bluetoothctl', 'scan', 'on'],
+                    ["bluetoothctl", "scan", "on"],
                     capture_output=True,
                     text=True,
-                    timeout=3
+                    timeout=3,
                 )
                 success = result.returncode == 0
                 if success:
@@ -467,7 +464,7 @@ class BluetoothMonitor:
                 adapter_path = "/org/bluez/hci0"  # Assume hci0 for now
                 adapter = dbus.Interface(
                     self._bus.get_object("org.bluez", adapter_path),
-                    "org.bluez.Adapter1"
+                    "org.bluez.Adapter1",
                 )
                 adapter.StopDiscovery()
                 success = True
@@ -479,10 +476,10 @@ class BluetoothMonitor:
         if not success:
             try:
                 result = subprocess.run(
-                    ['bluetoothctl', 'scan', 'off'],
+                    ["bluetoothctl", "scan", "off"],
                     capture_output=True,
                     text=True,
-                    timeout=3
+                    timeout=3,
                 )
                 success = result.returncode == 0
                 if success:
@@ -500,7 +497,7 @@ class BluetoothMonitor:
         try:
             manager = dbus.Interface(
                 self._bus.get_object("org.bluez", "/"),
-                "org.freedesktop.DBus.ObjectManager"
+                "org.freedesktop.DBus.ObjectManager",
             )
 
             objects = manager.GetManagedObjects()
@@ -537,8 +534,7 @@ class BluetoothMonitor:
                 return False
 
             device = dbus.Interface(
-                self._bus.get_object("org.bluez", device_path),
-                "org.bluez.Device1"
+                self._bus.get_object("org.bluez", device_path), "org.bluez.Device1"
             )
 
             device.Connect()
@@ -574,8 +570,7 @@ class BluetoothMonitor:
                 return False
 
             device = dbus.Interface(
-                self._bus.get_object("org.bluez", device_path),
-                "org.bluez.Device1"
+                self._bus.get_object("org.bluez", device_path), "org.bluez.Device1"
             )
 
             device.Disconnect()
@@ -611,8 +606,7 @@ class BluetoothMonitor:
                 return False
 
             device = dbus.Interface(
-                self._bus.get_object("org.bluez", device_path),
-                "org.bluez.Device1"
+                self._bus.get_object("org.bluez", device_path), "org.bluez.Device1"
             )
 
             device.Pair()
@@ -650,7 +644,7 @@ class BluetoothMonitor:
 
             device = dbus.Interface(
                 self._bus.get_object("org.bluez", device_path),
-                "org.freedesktop.DBus.Properties"
+                "org.freedesktop.DBus.Properties",
             )
 
             device.Set("org.bluez.Device1", "Trusted", dbus.Boolean(trusted))
@@ -668,10 +662,10 @@ class BluetoothMonitor:
         """Connect to device using bluetoothctl fallback."""
         try:
             result = subprocess.run(
-                ['bluetoothctl', 'connect', address],
+                ["bluetoothctl", "connect", address],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
             success = result.returncode == 0
             if success:
@@ -690,10 +684,10 @@ class BluetoothMonitor:
         """Disconnect from device using bluetoothctl fallback."""
         try:
             result = subprocess.run(
-                ['bluetoothctl', 'disconnect', address],
+                ["bluetoothctl", "disconnect", address],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
             success = result.returncode == 0
             if success:
@@ -712,10 +706,10 @@ class BluetoothMonitor:
         """Pair with device using bluetoothctl fallback."""
         try:
             result = subprocess.run(
-                ['bluetoothctl', 'pair', address],
+                ["bluetoothctl", "pair", address],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             success = result.returncode == 0
             if success:
@@ -733,11 +727,11 @@ class BluetoothMonitor:
     def get_statistics(self) -> dict[str, Any]:
         """Get monitoring statistics."""
         return {
-            'dbus_available': DBUS_AVAILABLE,
-            'collection_count': self._collection_count,
-            'error_count': self._error_count,
-            'error_rate': self._error_count / max(self._collection_count, 1),
-            'cache_duration': self.cache_duration
+            "dbus_available": DBUS_AVAILABLE,
+            "collection_count": self._collection_count,
+            "error_count": self._error_count,
+            "error_rate": self._error_count / max(self._collection_count, 1),
+            "cache_duration": self.cache_duration,
         }
 
 
@@ -747,15 +741,18 @@ def get_bluetooth_adapters() -> list[BluetoothAdapter]:
     monitor = BluetoothMonitor()
     return monitor.get_adapters()
 
+
 def get_bluetooth_devices(include_unpaired: bool = True) -> list[BluetoothDevice]:
     """Get list of Bluetooth devices."""
     monitor = BluetoothMonitor()
     return monitor.get_devices(include_unpaired)
 
+
 def start_bluetooth_discovery() -> bool:
     """Start Bluetooth device discovery."""
     monitor = BluetoothMonitor()
     return monitor.start_discovery()
+
 
 def stop_bluetooth_discovery() -> bool:
     """Stop Bluetooth device discovery."""
@@ -785,7 +782,13 @@ if __name__ == "__main__":
     print(f"✅ Found {len(devices)} device(s)")
 
     for device in devices:
-        status = "Connected" if device.connected else "Paired" if device.paired else "Discovered"
+        status = (
+            "Connected"
+            if device.connected
+            else "Paired"
+            if device.paired
+            else "Discovered"
+        )
         print(f"  🔵 {device.name} ({device.address})")
         print(f"     Type: {device.device_type}, Status: {status}")
 

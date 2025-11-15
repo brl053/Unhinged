@@ -24,6 +24,7 @@ from subprocess_utils import SystemCommandRunner
 @dataclass
 class GPUInfo:
     """GPU information container"""
+
     name: str
     driver_version: str
     cuda_version: str | None
@@ -60,12 +61,12 @@ class GPUDriverDetector:
     def _parse_nvidia_output(self, output: str):
         """Parse nvidia-smi output"""
         try:
-            lines = output.strip().split('\n')
+            lines = output.strip().split("\n")
             for line in lines:
                 if not line.strip():
                     continue
 
-                parts = [p.strip() for p in line.split(',')]
+                parts = [p.strip() for p in line.split(",")]
                 if len(parts) >= 5:
                     try:
                         gpu_index = int(parts[0])
@@ -91,8 +92,8 @@ class GPUDriverDetector:
                             details={
                                 "index": gpu_index,
                                 "memory_gb": round(memory_mb / 1024, 2),
-                                "driver_type": self._detect_driver_type(driver_version)
-                            }
+                                "driver_type": self._detect_driver_type(driver_version),
+                            },
                         )
                         self.gpus.append(gpu_info)
 
@@ -108,10 +109,10 @@ class GPUDriverDetector:
 
         if result["success"]:
             # Look for CUDA Version line
-            for line in result["output"].split('\n'):
-                if 'CUDA Version' in line:
+            for line in result["output"].split("\n"):
+                if "CUDA Version" in line:
                     # Extract version (format: "CUDA Version: 12.8")
-                    match = re.search(r'CUDA Version:\s+([\d.]+)', line)
+                    match = re.search(r"CUDA Version:\s+([\d.]+)", line)
                     if match:
                         self.cuda_version = match.group(1)
                         # Update all GPUs with CUDA version
@@ -147,10 +148,10 @@ class GPUDriverDetector:
                     "memory_gb": gpu.details.get("memory_gb", 0),
                     "compute_capability": gpu.compute_capability,
                     "driver_type": gpu.details.get("driver_type", "Unknown"),
-                    "status": gpu.status
+                    "status": gpu.status,
                 }
                 for gpu in self.gpus
-            ]
+            ],
         }
 
     def get_status_summary(self) -> str:
@@ -171,4 +172,3 @@ class GPUDriverDetector:
             f"CUDA: {self.cuda_version or 'N/A'} | "
             f"Total Memory: {total_memory:.1f} GB"
         )
-

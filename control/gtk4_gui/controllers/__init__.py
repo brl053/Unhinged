@@ -19,4 +19,4 @@ except ImportError:
     from content_controller import ContentController
     from ui_controller import UIController
 
-__all__ = ['UIController', 'ContentController', 'ActionController']
+__all__ = ["UIController", "ContentController", "ActionController"]

@@ -17,20 +17,16 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Gdk, GLib, GObject, Gtk
 
-from ..base import AdwComponentBase, ComponentBase
 from .action_button import ActionButton
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class CopyButton(ActionButton):
@@ -46,18 +42,20 @@ class CopyButton(ActionButton):
     """
 
     __gsignals__ = {
-        'copy-success': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
-        'copy-error': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        "copy-success": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        "copy-error": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
-    def __init__(self,
-                 content: str = "",
-                 content_source: callable = None,  # Function to get content dynamically
-                 label: str = "Copy",
-                 icon_name: str = "edit-copy-symbolic",
-                 success_message: str = "Copied to clipboard",
-                 error_message: str = "Failed to copy",
-                 **kwargs):
+    def __init__(
+        self,
+        content: str = "",
+        content_source: callable = None,  # Function to get content dynamically
+        label: str = "Copy",
+        icon_name: str = "edit-copy-symbolic",
+        success_message: str = "Copied to clipboard",
+        error_message: str = "Failed to copy",
+        **kwargs,
+    ):
         self.content = content
         self.content_source = content_source
         self.success_message = success_message
@@ -66,14 +64,10 @@ class CopyButton(ActionButton):
         self._original_icon = icon_name
 
         # Initialize with copy functionality
-        super().__init__(
-            label=label,
-            icon_name=icon_name,
-            **kwargs
-        )
+        super().__init__(label=label, icon_name=icon_name, **kwargs)
 
         # Connect to our own clicked signal to handle copy
-        self.connect('clicked', self._on_copy_clicked)
+        self.connect("clicked", self._on_copy_clicked)
 
     def _on_copy_clicked(self, button):
         """Handle copy button click."""
@@ -135,8 +129,8 @@ class CopyButton(ActionButton):
         self._show_feedback("✓", "emblem-ok-symbolic", "success")
 
         # Emit success signal
-        self.emit('copy-success', content)
-        self.trigger_action('copy-success', content)
+        self.emit("copy-success", content)
+        self.trigger_action("copy-success", content)
 
         # Show toast if possible
         self._show_toast(self.success_message)
@@ -147,8 +141,8 @@ class CopyButton(ActionButton):
         self._show_feedback("✗", "dialog-error-symbolic", "error")
 
         # Emit error signal
-        self.emit('copy-error', error)
-        self.trigger_action('copy-error', error)
+        self.emit("copy-error", error)
+        self.trigger_action("copy-error", error)
 
         # Show toast if possible
         self._show_toast(f"{self.error_message}: {error}")
@@ -176,7 +170,7 @@ class CopyButton(ActionButton):
         # Walk up to find a window that might have toast capability
         widget = self.widget
         while widget:
-            if hasattr(widget, 'show_toast'):
+            if hasattr(widget, "show_toast"):
                 widget.show_toast(message)
                 return
             widget = widget.get_parent()

@@ -47,7 +47,6 @@ from .containers import (
     SystemInfoCard,
     SystemStatusGrid,
 )
-from .generated_artifact_widget import GeneratedArtifactWidget
 from .graph_workspace_tabs import GraphWorkspaceTabs
 from .primitives import (
     ActionButton,
@@ -73,20 +72,22 @@ from .tables import GenericTable, TableColumn
 __version__ = "1.0.0"
 __author__ = "Unhinged Team"
 
+
 # Lazy loader for GraphCanvasWidget to avoid GType registration issues
 def __getattr__(name):
     """Lazy load GraphCanvasWidget to avoid GType registration conflicts."""
     if name == "GraphCanvasWidget":
         from .graph_canvas import GraphCanvasWidget
+
         return GraphCanvasWidget
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 # Public API - components that should be imported by applications
 __all__ = [
     # Base classes
     "ComponentBase",
     "ComponentError",
-
     # Primitive components
     "ActionButton",
     "StatusLabel",
@@ -100,7 +101,6 @@ __all__ = [
     "LoadingDots",
     "CopyButton",
     "FormInput",
-
     # Container components
     "AbstractWindow",
     "StatusCard",
@@ -108,7 +108,6 @@ __all__ = [
     "LogContainer",
     "SystemInfoCard",
     "SystemStatusGrid",
-
     # Complex components
     "LogViewer",
     "ServiceRow",
@@ -117,17 +116,14 @@ __all__ = [
     "ProcessTable",
     "BluetoothTable",
     "AudioTable",
-
     # Graph components
     "GraphCanvasWidget",
     "GraphWorkspaceTabs",
     "RegistryUI",
-
     # Document workspace components
     "DocumentWorkspaceTabs",
     "DocumentRegistry",
     "DocumentRenderer",
-
     # Table components
     "GenericTable",
     "TableColumn",
@@ -179,8 +175,9 @@ COMPONENT_REGISTRY = {
         "DocumentWorkspaceTabs",
         "DocumentRegistry",
         "DocumentRenderer",
-    ]
+    ],
 }
+
 
 def get_component_info():
     """
@@ -192,8 +189,11 @@ def get_component_info():
     return {
         "version": __version__,
         "components": COMPONENT_REGISTRY,
-        "total_components": sum(len(components) for components in COMPONENT_REGISTRY.values())
+        "total_components": sum(
+            len(components) for components in COMPONENT_REGISTRY.values()
+        ),
     }
+
 
 def list_components():
     """Print available components organized by category."""
@@ -202,7 +202,7 @@ def list_components():
     print(f"📦 Total Components: {info['total_components']}")
     print()
 
-    for category, components in info['components'].items():
+    for category, components in info["components"].items():
         print(f"📂 {category.title()}:")
         for component in components:
             print(f"  • {component}")
@@ -213,5 +213,6 @@ def __getattr__(name):
     """Lazy load GraphCanvasWidget to avoid GType registration conflicts."""
     if name == "GraphCanvasWidget":
         from .graph_canvas import GraphCanvasWidget
+
         return GraphCanvasWidget
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

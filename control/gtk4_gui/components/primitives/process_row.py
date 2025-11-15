@@ -17,20 +17,16 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Adw, Gio, GLib, Gtk
 
-from ..base import AdwComponentBase, ComponentBase
 from .hardware_info_row import HardwareInfoRow
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class ProcessRow(HardwareInfoRow):
@@ -47,13 +43,13 @@ class ProcessRow(HardwareInfoRow):
     def __init__(self, process_data, **kwargs):
         # Extract process information
         self.process_data = process_data
-        self.pid = getattr(process_data, 'pid', 0)
-        self.name = getattr(process_data, 'name', 'Unknown')
-        self.cpu_percent = getattr(process_data, 'cpu_percent', 0.0)
-        self.memory_percent = getattr(process_data, 'memory_percent', 0.0)
-        self.user = getattr(process_data, 'user', 'unknown')
-        self.status = getattr(process_data, 'status', 'unknown')
-        self.command = getattr(process_data, 'command', '')
+        self.pid = getattr(process_data, "pid", 0)
+        self.name = getattr(process_data, "name", "Unknown")
+        self.cpu_percent = getattr(process_data, "cpu_percent", 0.0)
+        self.memory_percent = getattr(process_data, "memory_percent", 0.0)
+        self.user = getattr(process_data, "user", "unknown")
+        self.status = getattr(process_data, "status", "unknown")
+        self.command = getattr(process_data, "command", "")
 
         # Create title and subtitle
         title = f"{self.name} (PID: {self.pid})"
@@ -65,7 +61,7 @@ class ProcessRow(HardwareInfoRow):
             subtitle=subtitle,
             hardware_type="process",
             status=self._map_process_status(),
-            **kwargs
+            **kwargs,
         )
 
         # Setup process-specific features
@@ -83,17 +79,17 @@ class ProcessRow(HardwareInfoRow):
     def _map_process_status(self) -> str:
         """Map process status to component status."""
         status_map = {
-            'running': 'normal',
-            'sleeping': 'normal',
-            'disk-sleep': 'normal',
-            'stopped': 'warning',
-            'tracing-stop': 'warning',
-            'zombie': 'error',
-            'dead': 'error',
-            'wake-kill': 'error',
-            'waking': 'info'
+            "running": "normal",
+            "sleeping": "normal",
+            "disk-sleep": "normal",
+            "stopped": "warning",
+            "tracing-stop": "warning",
+            "zombie": "error",
+            "dead": "error",
+            "wake-kill": "error",
+            "waking": "info",
         }
-        return status_map.get(self.status.lower(), 'info')
+        return status_map.get(self.status.lower(), "info")
 
     def _setup_process_indicators(self):
         """Setup CPU and memory usage indicators."""
@@ -195,7 +191,9 @@ class ProcessRow(HardwareInfoRow):
         action_group.add_action(kill_action)
 
         # Force kill action
-        force_kill_action = Gio.SimpleAction.new("force_kill", GLib.VariantType.new("s"))
+        force_kill_action = Gio.SimpleAction.new(
+            "force_kill", GLib.VariantType.new("s")
+        )
         force_kill_action.connect("activate", self._on_force_kill_process)
         action_group.add_action(force_kill_action)
 
@@ -215,7 +213,7 @@ User: {self.user}
 Status: {self.status}
 CPU Usage: {self.cpu_percent:.1f}%
 Memory Usage: {self.memory_percent:.1f}%
-Command: {self.command[:100]}{'...' if len(self.command) > 100 else ''}"""
+Command: {self.command[:100]}{"..." if len(self.command) > 100 else ""}"""
 
         dialog.set_body(details_text)
         dialog.add_response("close", "Close")
@@ -239,7 +237,9 @@ Command: {self.command[:100]}{'...' if len(self.command) > 100 else ''}"""
 
         dialog = Adw.MessageDialog()
         dialog.set_heading("Terminate Process")
-        dialog.set_body(f"Are you sure you want to terminate '{self.name}' (PID: {self.pid})?")
+        dialog.set_body(
+            f"Are you sure you want to terminate '{self.name}' (PID: {self.pid})?"
+        )
 
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("terminate", "Terminate")
@@ -261,7 +261,9 @@ Command: {self.command[:100]}{'...' if len(self.command) > 100 else ''}"""
 
         dialog = Adw.MessageDialog()
         dialog.set_heading("Force Kill Process")
-        dialog.set_body(f"Are you sure you want to force kill '{self.name}' (PID: {self.pid})?\n\nThis may cause data loss!")
+        dialog.set_body(
+            f"Are you sure you want to force kill '{self.name}' (PID: {self.pid})?\n\nThis may cause data loss!"
+        )
 
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("force_kill", "Force Kill")
@@ -298,16 +300,18 @@ Command: {self.command[:100]}{'...' if len(self.command) > 100 else ''}"""
 
         # Update data
         self.process_data = new_data
-        self.cpu_percent = getattr(new_data, 'cpu_percent', 0.0)
-        self.memory_percent = getattr(new_data, 'memory_percent', 0.0)
-        self.status = getattr(new_data, 'status', 'unknown')
+        self.cpu_percent = getattr(new_data, "cpu_percent", 0.0)
+        self.memory_percent = getattr(new_data, "memory_percent", 0.0)
+        self.status = getattr(new_data, "status", "unknown")
 
         # Update UI
         self._update_indicators()
 
         # Highlight if changed significantly
-        if (abs(self.cpu_percent - old_cpu) > 1.0 or
-            abs(self.memory_percent - old_memory) > 1.0):
+        if (
+            abs(self.cpu_percent - old_cpu) > 1.0
+            or abs(self.memory_percent - old_memory) > 1.0
+        ):
             self._highlight_update()
 
     def _update_indicators(self):
@@ -352,7 +356,7 @@ Command: {self.command[:100]}{'...' if len(self.command) > 100 else ''}"""
 
         self._update_highlight_timeout = GLib.timeout_add(
             500,  # 500ms
-            self._remove_highlight
+            self._remove_highlight,
         )
 
     def _remove_highlight(self):

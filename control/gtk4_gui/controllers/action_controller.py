@@ -7,8 +7,8 @@ Manages button clicks, menu actions, and user interactions.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import subprocess
 import threading
@@ -62,7 +62,9 @@ class ActionController:
         about.set_issue_url("https://github.com/unhinged/platform/issues")
         about.set_copyright("© 2025 Unhinged Team")
         about.set_license_type(Gtk.License.MIT_X11)
-        about.set_comments("Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline.")
+        about.set_comments(
+            "Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline."
+        )
         about.present()
 
     def on_preferences_action(self, action, param):
@@ -97,8 +99,10 @@ class ActionController:
             self.on_stop_clicked(None)
 
         # Close session logging
-        if hasattr(self.app, 'session_logger') and self.app.session_logger:
-            self.app.session_logger.log_session_event("APP_QUIT", "Application quit requested")
+        if hasattr(self.app, "session_logger") and self.app.session_logger:
+            self.app.session_logger.log_session_event(
+                "APP_QUIT", "Application quit requested"
+            )
             self.app.session_logger.close_session()
 
         self.app.quit()
@@ -115,22 +119,30 @@ class ActionController:
         # Get selected mode
         mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
         selected_mode = self.app.mode_dropdown.get_selected()
-        mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
+        mode_name = (
+            mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
+        )
 
         # Log GUI events
-        if hasattr(self.app, 'session_logger') and self.app.session_logger:
-            self.app.session_logger.log_gui_event("START_BUTTON_CLICKED", "User clicked start button")
+        if hasattr(self.app, "session_logger") and self.app.session_logger:
+            self.app.session_logger.log_gui_event(
+                "START_BUTTON_CLICKED", "User clicked start button"
+            )
             self.app.session_logger.log_mode_selection(mode_name)
 
         # Show toast notification
         self.app.show_toast(f"Starting Unhinged in {mode_name} mode...")
 
         # Start platform using handler
-        if hasattr(self.app, 'platform_handler') and self.app.platform_handler:
-            thread = threading.Thread(target=self.app.platform_handler.start_platform, daemon=True)
+        if hasattr(self.app, "platform_handler") and self.app.platform_handler:
+            thread = threading.Thread(
+                target=self.app.platform_handler.start_platform, daemon=True
+            )
             thread.start()
         else:
-            self.app.show_error_dialog("Platform Error", "Platform handler not available")
+            self.app.show_error_dialog(
+                "Platform Error", "Platform handler not available"
+            )
 
     def on_stop_clicked(self, button):
         """Handle stop button click using PlatformHandler"""
@@ -142,11 +154,13 @@ class ActionController:
         self.app.stop_button.set_sensitive(False)
 
         # Log GUI event
-        if hasattr(self.app, 'session_logger') and self.app.session_logger:
-            self.app.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button")
+        if hasattr(self.app, "session_logger") and self.app.session_logger:
+            self.app.session_logger.log_gui_event(
+                "STOP_BUTTON_CLICKED", "User clicked stop button"
+            )
 
         # Stop platform using handler
-        if hasattr(self.app, 'platform_handler') and self.app.platform_handler:
+        if hasattr(self.app, "platform_handler") and self.app.platform_handler:
             self.app.platform_handler.stop_platform()
         else:
             self.app.append_log("⚠️ Platform handler not available")
@@ -156,8 +170,10 @@ class ActionController:
         """Handle voice recording button click"""
         try:
             # Log the event
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("VOICE_RECORD_CLICKED", "User clicked voice record button")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "VOICE_RECORD_CLICKED", "User clicked voice record button"
+                )
 
             # Disable button during recording
             button.set_sensitive(False)
@@ -170,11 +186,13 @@ class ActionController:
             def record_and_restore():
                 try:
                     # Use the existing record_and_transcribe_voice method
-                    if hasattr(self.app, 'record_and_transcribe_voice'):
+                    if hasattr(self.app, "record_and_transcribe_voice"):
                         self.app.record_and_transcribe_voice()
                     else:
                         # Fallback: show message
-                        GLib.idle_add(self.app.show_toast, "Voice recording not available")
+                        GLib.idle_add(
+                            self.app.show_toast, "Voice recording not available"
+                        )
 
                 except Exception as e:
                     print(f"❌ Voice recording error: {e}")
@@ -202,20 +220,24 @@ class ActionController:
     def on_set_default_input_device(self, button, device):
         """Set the selected device as the Ubuntu host OS default input device"""
         try:
-
             # Use pactl to set default source
-            alsa_device = device.get('alsa_device', '')
+            alsa_device = device.get("alsa_device", "")
             if alsa_device:
                 # Convert ALSA device to PulseAudio source name
                 # This is a simplified approach - in practice, you'd need to map ALSA to PA
-                result = subprocess.run(['pactl', 'set-default-source', alsa_device],
-                                      capture_output=True, text=True)
+                result = subprocess.run(
+                    ["pactl", "set-default-source", alsa_device],
+                    capture_output=True,
+                    text=True,
+                )
 
                 if result.returncode == 0:
                     self.app.show_toast(f"Set {device['name']} as default input")
-                    if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                        self.app.session_logger.log_gui_event("DEFAULT_INPUT_SET",
-                                                            f"Set default input to {device['name']}")
+                    if hasattr(self.app, "session_logger") and self.app.session_logger:
+                        self.app.session_logger.log_gui_event(
+                            "DEFAULT_INPUT_SET",
+                            f"Set default input to {device['name']}",
+                        )
                 else:
                     self.app.show_toast(f"Failed to set default input: {result.stderr}")
 
@@ -229,18 +251,25 @@ class ActionController:
         """Set the selected device as the Ubuntu host OS default output device"""
         try:
             # Use pactl to set default sink
-            alsa_device = device.get('alsa_device', '')
+            alsa_device = device.get("alsa_device", "")
             if alsa_device:
-                result = subprocess.run(['pactl', 'set-default-sink', alsa_device],
-                                      capture_output=True, text=True)
+                result = subprocess.run(
+                    ["pactl", "set-default-sink", alsa_device],
+                    capture_output=True,
+                    text=True,
+                )
 
                 if result.returncode == 0:
                     self.app.show_toast(f"Set {device['name']} as default output")
-                    if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                        self.app.session_logger.log_gui_event("DEFAULT_OUTPUT_SET",
-                                                            f"Set default output to {device['name']}")
+                    if hasattr(self.app, "session_logger") and self.app.session_logger:
+                        self.app.session_logger.log_gui_event(
+                            "DEFAULT_OUTPUT_SET",
+                            f"Set default output to {device['name']}",
+                        )
                 else:
-                    self.app.show_toast(f"Failed to set default output: {result.stderr}")
+                    self.app.show_toast(
+                        f"Failed to set default output: {result.stderr}"
+                    )
 
         except FileNotFoundError:
             self.app.show_toast("PulseAudio tools not available")

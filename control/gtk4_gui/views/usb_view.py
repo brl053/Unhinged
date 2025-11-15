@@ -6,8 +6,9 @@ Displays raw lsusb output with auto-refresh when tab is active.
 """
 
 import gi
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Gtk, Adw, GLib
 import logging
@@ -30,13 +31,13 @@ class USBView:
         self.auto_refresh_enabled = True
         self.refresh_timeout_id = None
         self.refresh_interval = 3000  # milliseconds
-        
+
         # Import USB monitor
         try:
             from ..handlers.usb_monitor import USBMonitor
         except ImportError:
             from handlers.usb_monitor import USBMonitor
-        
+
         self.usb_monitor = USBMonitor()
 
     def create_content(self) -> Gtk.Widget:
@@ -113,8 +114,10 @@ class USBView:
             self.widget = main_box
 
             # Log creation
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("USB_VIEW_CREATED", "USB view created")
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "USB_VIEW_CREATED", "USB view created"
+                )
 
             # Load initial data immediately
             GLib.idle_add(self.refresh_usb_list)
@@ -136,7 +139,7 @@ class USBView:
     def _on_auto_refresh_toggled(self, toggle):
         """Handle auto-refresh toggle"""
         self.auto_refresh_enabled = toggle.get_active()
-        
+
         if self.auto_refresh_enabled:
             self._start_auto_refresh()
         else:
@@ -155,9 +158,11 @@ class USBView:
             self.text_buffer.set_text(basic)
 
             self.status_label.set_text("Updated")
-            
-            if hasattr(self.app, 'session_logger') and self.app.session_logger:
-                self.app.session_logger.log_gui_event("USB_LIST_REFRESHED", "USB device list refreshed")
+
+            if hasattr(self.app, "session_logger") and self.app.session_logger:
+                self.app.session_logger.log_gui_event(
+                    "USB_LIST_REFRESHED", "USB device list refreshed"
+                )
 
         except Exception as e:
             logger.error(f"Error refreshing USB list: {e}")
@@ -169,10 +174,9 @@ class USBView:
         """Start auto-refresh timer"""
         if self.refresh_timeout_id:
             GLib.source_remove(self.refresh_timeout_id)
-        
+
         self.refresh_timeout_id = GLib.timeout_add(
-            self.refresh_interval,
-            self._auto_refresh_callback
+            self.refresh_interval, self._auto_refresh_callback
         )
 
     def _stop_auto_refresh(self):
@@ -196,6 +200,7 @@ class USBView:
     def cleanup(self):
         """Clean up resources"""
         self._stop_auto_refresh()
-        if hasattr(self.app, 'session_logger') and self.app.session_logger:
-            self.app.session_logger.log_gui_event("USB_VIEW_CLEANUP", "USB view cleaned up")
-
+        if hasattr(self.app, "session_logger") and self.app.session_logger:
+            self.app.session_logger.log_gui_event(
+                "USB_VIEW_CLEANUP", "USB view cleaned up"
+            )

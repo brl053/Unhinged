@@ -10,8 +10,8 @@ for structured data display with sorting, filtering, and accessibility.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 from collections.abc import Callable
 from enum import Enum
 from typing import Any
@@ -21,12 +21,14 @@ from gi.repository import Gtk, Pango
 
 class SortDirection(Enum):
     """Sort direction enumeration"""
+
     ASCENDING = "asc"
     DESCENDING = "desc"
 
 
 class TableColumn:
     """Table column definition"""
+
     def __init__(self, name: str, title: str, sortable: bool = True, width: int = -1):
         self.name = name
         self.title = title
@@ -37,7 +39,7 @@ class TableColumn:
 class GenericTable(Gtk.Box):
     """
     Reusable table foundation for structured data display.
-    
+
     Features:
     - Column headers with sort indicators
     - Row selection and highlighting
@@ -192,13 +194,13 @@ class GenericTable(Gtk.Box):
         """Update visual sort indicators in headers"""
         # Clear all indicators first
         for child in self.header_box:
-            if hasattr(child, 'sort_icon'):
+            if hasattr(child, "sort_icon"):
                 child.sort_icon.set_visible(False)
 
         # Set indicator for current sort column
         if self.sort_column:
             for child in self.header_box:
-                if hasattr(child, 'column') and child.column.name == self.sort_column:
+                if hasattr(child, "column") and child.column.name == self.sort_column:
                     icon_name = (
                         "view-sort-ascending-symbolic"
                         if self.sort_direction == SortDirection.ASCENDING
@@ -212,7 +214,7 @@ class GenericTable(Gtk.Box):
         """Handle row selection"""
         if self.selection_changed_callback and row:
             # Get the data associated with this row
-            row_data = getattr(row, 'data', None)
+            row_data = getattr(row, "data", None)
             self.selection_changed_callback(row_data)
 
     def _on_key_pressed(self, controller, keyval, keycode, state):
@@ -220,7 +222,7 @@ class GenericTable(Gtk.Box):
         if keyval == 65293:  # Enter key
             selected_row = self.list_box.get_selected_row()
             if selected_row and self.selection_changed_callback:
-                row_data = getattr(selected_row, 'data', None)
+                row_data = getattr(selected_row, "data", None)
                 self.selection_changed_callback(row_data)
             return True
         return False
@@ -269,8 +271,7 @@ class GenericTable(Gtk.Box):
             reverse = self.sort_direction == SortDirection.DESCENDING
             try:
                 self.filtered_data.sort(
-                    key=lambda item: getattr(item, self.sort_column, 0),
-                    reverse=reverse
+                    key=lambda item: getattr(item, self.sort_column, 0), reverse=reverse
                 )
             except (AttributeError, TypeError):
                 # Fallback for items without the sort attribute
@@ -298,12 +299,14 @@ class GenericTable(Gtk.Box):
             self.list_box.append(list_row)
 
         # Update accessibility
-        self.set_tooltip_text(f"Data table with {len(self.filtered_data)} rows, {len(self.columns)} columns")
+        self.set_tooltip_text(
+            f"Data table with {len(self.filtered_data)} rows, {len(self.columns)} columns"
+        )
 
     def get_selected_data(self) -> Any | None:
         """Get data for currently selected row"""
         selected_row = self.list_box.get_selected_row()
-        return getattr(selected_row, 'data', None) if selected_row else None
+        return getattr(selected_row, "data", None) if selected_row else None
 
     def set_sort_changed_callback(self, callback: Callable[[str, SortDirection], None]):
         """Set callback for sort changes"""

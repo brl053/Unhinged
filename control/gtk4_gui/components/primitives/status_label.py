@@ -17,32 +17,26 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Gtk, Pango
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import ComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class StatusLabel(ComponentBase):
     """
     Label component with semantic status styling.
-    
+
     Supports status types: success, warning, error, info, neutral
     """
 
-    def __init__(self,
-                 text: str = "",
-                 status: str = "neutral",
-                 **kwargs):
+    def __init__(self, text: str = "", status: str = "neutral", **kwargs):
         self.text = text
         self.status = status
 

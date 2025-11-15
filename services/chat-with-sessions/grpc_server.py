@@ -44,6 +44,7 @@ from events import create_service_logger
 # Initialize event logger
 events = create_service_logger("chat-with-sessions", "1.0.0")
 
+
 class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
     """
     Chat service with embedded session management using write-through architecture
@@ -64,35 +65,41 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
         # Active conversations (in-memory cache)
         self.active_conversations = {}
 
-        events.info("Chat service with sessions initialized", {
-            "session_store_ready": self.session_store is not None,
-            "service_ready": self.service_ready
-        })
+        events.info(
+            "Chat service with sessions initialized",
+            {
+                "session_store_ready": self.session_store is not None,
+                "service_ready": self.service_ready,
+            },
+        )
 
     def _initialize_session_store(self):
         """Initialize session store with write-through architecture"""
         try:
             # Use environment variables for configuration
             config = SessionStoreConfig(
-                redis_host=os.getenv('REDIS_HOST', 'localhost'),
-                redis_port=int(os.getenv('REDIS_PORT', '6379')),
-                redis_db=int(os.getenv('REDIS_DB', '0')),
-                redis_password=os.getenv('REDIS_PASSWORD'),
-                crdb_host=os.getenv('CRDB_HOST', 'localhost'),
-                crdb_port=int(os.getenv('CRDB_PORT', '26257')),
-                crdb_database=os.getenv('CRDB_DATABASE', 'unhinged'),
-                crdb_user=os.getenv('CRDB_USER', 'root'),
-                crdb_password=os.getenv('CRDB_PASSWORD')
+                redis_host=os.getenv("REDIS_HOST", "localhost"),
+                redis_port=int(os.getenv("REDIS_PORT", "6379")),
+                redis_db=int(os.getenv("REDIS_DB", "0")),
+                redis_password=os.getenv("REDIS_PASSWORD"),
+                crdb_host=os.getenv("CRDB_HOST", "localhost"),
+                crdb_port=int(os.getenv("CRDB_PORT", "26257")),
+                crdb_database=os.getenv("CRDB_DATABASE", "unhinged"),
+                crdb_user=os.getenv("CRDB_USER", "root"),
+                crdb_password=os.getenv("CRDB_PASSWORD"),
             )
 
             self.session_store = SessionStore(config)
             self.service_ready = True
 
-            events.info("Session store initialized", {
-                "redis_host": config.redis_host,
-                "crdb_host": config.crdb_host,
-                "write_through": True
-            })
+            events.info(
+                "Session store initialized",
+                {
+                    "redis_host": config.redis_host,
+                    "crdb_host": config.crdb_host,
+                    "write_through": True,
+                },
+            )
 
         except Exception as e:
             events.error("Failed to initialize session store", exception=e)
@@ -111,23 +118,23 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
                 "conversation_id": conversation_id,
                 "created_at": time.time(),
                 "status": "active",
-                **metadata
+                **metadata,
             }
 
             success = self.session_store.write(session_key, session_data)
             if success:
-                events.info("Session created", {
-                    "conversation_id": conversation_id,
-                    "session_key": session_key
-                })
+                events.info(
+                    "Session created",
+                    {"conversation_id": conversation_id, "session_key": session_key},
+                )
 
             return success
 
         except Exception as e:
-            events.error("Session creation failed", {
-                "conversation_id": conversation_id,
-                "error": str(e)
-            })
+            events.error(
+                "Session creation failed",
+                {"conversation_id": conversation_id, "error": str(e)},
+            )
             return False
 
     def _get_session(self, conversation_id: str) -> dict[str, Any] | None:
@@ -136,29 +143,33 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             session_key = f"session:{conversation_id}:metadata"
             return self.session_store.read(session_key)
         except Exception as e:
-            events.error("Session read failed", {
-                "conversation_id": conversation_id,
-                "error": str(e)
-            })
+            events.error(
+                "Session read failed",
+                {"conversation_id": conversation_id, "error": str(e)},
+            )
             return None
 
-    def _update_session_state(self, conversation_id: str, state_data: dict[str, Any]) -> bool:
+    def _update_session_state(
+        self, conversation_id: str, state_data: dict[str, Any]
+    ) -> bool:
         """Update session state with write-through"""
         try:
             state_key = f"session:{conversation_id}:state"
             return self.session_store.write(state_key, state_data)
         except Exception as e:
-            events.error("Session state update failed", {
-                "conversation_id": conversation_id,
-                "error": str(e)
-            })
+            events.error(
+                "Session state update failed",
+                {"conversation_id": conversation_id, "error": str(e)},
+            )
             return False
 
     # ========================================================================
     # Chat Service Implementation
     # ========================================================================
 
-    def CreateConversation(self, request: chat_pb2.CreateConversationRequest, context) -> chat_pb2.CreateConversationResponse:
+    def CreateConversation(
+        self, request: chat_pb2.CreateConversationRequest, context
+    ) -> chat_pb2.CreateConversationResponse:
         """Create conversation with embedded session management"""
         try:
             if not self.service_ready:
@@ -169,12 +180,15 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             # Generate conversation ID
             conversation_id = str(uuid.uuid4())
 
-            events.info("Creating conversation with session", {
-                "conversation_id": conversation_id,
-                "team_id": request.team_id,
-                "namespace_id": request.namespace_id,
-                "title": request.title
-            })
+            events.info(
+                "Creating conversation with session",
+                {
+                    "conversation_id": conversation_id,
+                    "team_id": request.team_id,
+                    "namespace_id": request.namespace_id,
+                    "title": request.title,
+                },
+            )
 
             # Create session first (write-through to Redis + CRDB)
             session_metadata = {
@@ -187,8 +201,8 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
                     "temperature": request.settings.temperature,
                     "max_tokens": request.settings.max_tokens,
                     "include_context": request.settings.include_context,
-                    "enable_tools": request.settings.enable_tools
-                }
+                    "enable_tools": request.settings.enable_tools,
+                },
             }
 
             if not self._create_session(conversation_id, session_metadata):
@@ -221,10 +235,10 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             response.response.message = "Conversation created with session"
             response.conversation.CopyFrom(conversation)
 
-            events.info("Conversation created successfully", {
-                "conversation_id": conversation_id,
-                "session_created": True
-            })
+            events.info(
+                "Conversation created successfully",
+                {"conversation_id": conversation_id, "session_created": True},
+            )
 
             return response
 
@@ -234,7 +248,9 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             context.set_details(f"Conversation creation failed: {str(e)}")
             return chat_pb2.CreateConversationResponse()
 
-    def GetConversation(self, request: chat_pb2.GetConversationRequest, context) -> chat_pb2.GetConversationResponse:
+    def GetConversation(
+        self, request: chat_pb2.GetConversationRequest, context
+    ) -> chat_pb2.GetConversationResponse:
         """Get conversation with session validation"""
         try:
             conversation_id = request.conversation_id
@@ -251,7 +267,9 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
                 conversation = self.active_conversations[conversation_id]
             else:
                 # Reconstruct from session data
-                conversation = self._reconstruct_conversation(conversation_id, session_data)
+                conversation = self._reconstruct_conversation(
+                    conversation_id, session_data
+                )
                 self.active_conversations[conversation_id] = conversation
 
             response = chat_pb2.GetConversationResponse()
@@ -267,7 +285,9 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             context.set_details(f"Failed to get conversation: {str(e)}")
             return chat_pb2.GetConversationResponse()
 
-    def SendMessage(self, request: chat_pb2.SendMessageRequest, context) -> chat_pb2.SendMessageResponse:
+    def SendMessage(
+        self, request: chat_pb2.SendMessageRequest, context
+    ) -> chat_pb2.SendMessageResponse:
         """Send message with session state update"""
         try:
             conversation_id = request.conversation_id
@@ -291,12 +311,14 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             # Store message in session context
             context_key = f"session:{conversation_id}:context"
             context_data = self.session_store.read(context_key) or {"messages": []}
-            context_data["messages"].append({
-                "id": message.metadata.resource_id,
-                "role": request.role,
-                "content": request.content,
-                "timestamp": time.time()
-            })
+            context_data["messages"].append(
+                {
+                    "id": message.metadata.resource_id,
+                    "role": request.role,
+                    "content": request.content,
+                    "timestamp": time.time(),
+                }
+            )
 
             # Write-through to both stores
             self.session_store.write(context_key, context_data)
@@ -310,11 +332,14 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             response.response.message = "Message sent and stored in session"
             response.message.CopyFrom(message)
 
-            events.info("Message sent", {
-                "conversation_id": conversation_id,
-                "message_id": message.metadata.resource_id,
-                "role": request.role
-            })
+            events.info(
+                "Message sent",
+                {
+                    "conversation_id": conversation_id,
+                    "message_id": message.metadata.resource_id,
+                    "role": request.role,
+                },
+            )
 
             return response
 
@@ -324,7 +349,9 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             context.set_details(f"Failed to send message: {str(e)}")
             return chat_pb2.SendMessageResponse()
 
-    def _reconstruct_conversation(self, conversation_id: str, session_data: dict[str, Any]) -> chat_pb2.Conversation:
+    def _reconstruct_conversation(
+        self, conversation_id: str, session_data: dict[str, Any]
+    ) -> chat_pb2.Conversation:
         """Reconstruct conversation from session data"""
         conversation = chat_pb2.Conversation()
         conversation.metadata.resource_id = conversation_id
@@ -356,6 +383,7 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
 
         return redis_healthy and crdb_healthy
 
+
 def serve():
     """Start the gRPC server with embedded session management"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -371,10 +399,12 @@ def serve():
     # Set initial health status
     health_servicer.set(
         "chat.ChatService",
-        health_pb2.HealthCheckResponse.SERVING if servicer.service_ready else health_pb2.HealthCheckResponse.NOT_SERVING
+        health_pb2.HealthCheckResponse.SERVING
+        if servicer.service_ready
+        else health_pb2.HealthCheckResponse.NOT_SERVING,
     )
 
-    listen_addr = '[::]:9095'  # Chat service with sessions
+    listen_addr = "[::]:9095"  # Chat service with sessions
     server.add_insecure_port(listen_addr)
 
     events.info("Starting chat service with sessions", {"address": listen_addr})
@@ -388,5 +418,6 @@ def serve():
             servicer.session_store.close()
         server.stop(0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     serve()

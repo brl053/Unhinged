@@ -17,20 +17,17 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
 from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Gtk
 
-from ..base import AdwComponentBase, ComponentBase
 from .hardware_info_row import HardwareInfoRow
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class AudioDeviceRow(HardwareInfoRow):
@@ -48,6 +45,7 @@ class AudioDeviceRow(HardwareInfoRow):
         # Import required modules
         import sys
         from pathlib import Path
+
         sys.path.append(str(Path(__file__).parent.parent))
 
         self.device_info = device_info
@@ -79,7 +77,7 @@ class AudioDeviceRow(HardwareInfoRow):
             status=status,
             details=self._create_device_details(),
             icon_name=self._get_device_icon(),
-            **kwargs
+            **kwargs,
         )
 
     def _determine_status(self) -> str:
@@ -100,10 +98,12 @@ class AudioDeviceRow(HardwareInfoRow):
             "hdmi": "video-display-symbolic",
             "bluetooth": "bluetooth-symbolic",
             "internal": "audio-speakers-symbolic",
-            "unknown": "audio-card-symbolic"
+            "unknown": "audio-card-symbolic",
         }
 
-        return connection_type_icons.get(self.device_info.connection_type, "audio-card-symbolic")
+        return connection_type_icons.get(
+            self.device_info.connection_type, "audio-card-symbolic"
+        )
 
     def _create_device_details(self) -> dict[str, Any]:
         """Create detailed device information."""
@@ -113,7 +113,7 @@ class AudioDeviceRow(HardwareInfoRow):
             "Driver": self.device_info.driver,
             "Type": self.device_info.device_type.title(),
             "Default": "Yes" if self.device_info.is_default else "No",
-            "Active": "Yes" if self.device_info.is_active else "No"
+            "Active": "Yes" if self.device_info.is_active else "No",
         }
 
         if self.device_info.volume is not None:
@@ -159,7 +159,9 @@ class AudioDeviceRow(HardwareInfoRow):
             volume_box.append(volume_icon)
 
             # Volume scale
-            self.volume_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 5)
+            self.volume_scale = Gtk.Scale.new_with_range(
+                Gtk.Orientation.HORIZONTAL, 0, 100, 5
+            )
             self.volume_scale.set_value(self.device_info.volume)
             self.volume_scale.set_size_request(100, -1)
             self.volume_scale.set_tooltip_text(f"Volume: {self.device_info.volume}%")
@@ -177,7 +179,11 @@ class AudioDeviceRow(HardwareInfoRow):
 
         # Mute button
         self.mute_button = Gtk.ToggleButton()
-        self.mute_button.set_icon_name("audio-volume-muted-symbolic" if self.device_info.is_muted else "audio-volume-high-symbolic")
+        self.mute_button.set_icon_name(
+            "audio-volume-muted-symbolic"
+            if self.device_info.is_muted
+            else "audio-volume-high-symbolic"
+        )
         self.mute_button.set_active(self.device_info.is_muted)
         self.mute_button.set_tooltip_text("Toggle mute")
         self.mute_button.connect("toggled", self._on_mute_toggled)
@@ -204,7 +210,7 @@ class AudioDeviceRow(HardwareInfoRow):
             control_box.append(self.connect_button)
 
         # Add control box to the row
-        if hasattr(self, 'widget'):
+        if hasattr(self, "widget"):
             self.widget.add_suffix(control_box)
 
     def _on_volume_changed(self, scale):
@@ -215,7 +221,7 @@ class AudioDeviceRow(HardwareInfoRow):
         self.device_info.volume = new_volume
 
         # Update volume label
-        if hasattr(self, 'volume_label'):
+        if hasattr(self, "volume_label"):
             self.volume_label.set_text(f"{new_volume}%")
 
         # Update tooltip
@@ -232,10 +238,14 @@ class AudioDeviceRow(HardwareInfoRow):
         self.device_info.is_muted = is_muted
 
         # Update button icon
-        icon_name = "audio-volume-muted-symbolic" if is_muted else "audio-volume-high-symbolic"
+        icon_name = (
+            "audio-volume-muted-symbolic" if is_muted else "audio-volume-high-symbolic"
+        )
         button.set_icon_name(icon_name)
 
-        print(f"🔊 Mute toggled: {self.device_info.name} -> {'Muted' if is_muted else 'Unmuted'}")
+        print(
+            f"🔊 Mute toggled: {self.device_info.name} -> {'Muted' if is_muted else 'Unmuted'}"
+        )
         # TODO: Implement actual mute control via AudioMonitor
 
     def _on_set_default_clicked(self, button):

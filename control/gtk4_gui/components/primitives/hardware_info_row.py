@@ -17,19 +17,17 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
 from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Adw, Gtk
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import AdwComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class HardwareInfoRow(AdwComponentBase):
@@ -43,14 +41,16 @@ class HardwareInfoRow(AdwComponentBase):
     - Semantic color coding
     """
 
-    def __init__(self,
-                 title: str = "",
-                 subtitle: str = "",
-                 hardware_type: str = "generic",
-                 status: str = "normal",
-                 details: dict[str, Any] | None = None,
-                 icon_name: str | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        title: str = "",
+        subtitle: str = "",
+        hardware_type: str = "generic",
+        status: str = "normal",
+        details: dict[str, Any] | None = None,
+        icon_name: str | None = None,
+        **kwargs,
+    ):
         self.title = title
         self.subtitle = subtitle
         self.hardware_type = hardware_type
@@ -93,9 +93,13 @@ class HardwareInfoRow(AdwComponentBase):
 
         # Add accessibility attributes
         self.widget.set_accessible_role(Gtk.AccessibleRole.LIST_ITEM)
-        self.widget.update_property([Gtk.AccessibleProperty.LABEL], [f"{self.hardware_type}: {self.title}"])
+        self.widget.update_property(
+            [Gtk.AccessibleProperty.LABEL], [f"{self.hardware_type}: {self.title}"]
+        )
         if self.subtitle:
-            self.widget.update_property([Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle])
+            self.widget.update_property(
+                [Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle]
+            )
 
     def _get_default_icon(self) -> str:
         """Get default icon based on hardware type."""
@@ -106,7 +110,7 @@ class HardwareInfoRow(AdwComponentBase):
             "gpu": "video-display-symbolic",
             "network": "network-wired-symbolic",
             "motherboard": "computer-symbolic",
-            "generic": "emblem-system-symbolic"
+            "generic": "emblem-system-symbolic",
         }
         return icon_map.get(self.hardware_type, "emblem-system-symbolic")
 
@@ -162,7 +166,7 @@ class HardwareInfoRow(AdwComponentBase):
         # Format details as text
         details_text = ""
         for key, value in self.details.items():
-            formatted_key = key.replace('_', ' ').title()
+            formatted_key = key.replace("_", " ").title()
             details_text += f"{formatted_key}: {value}\n"
 
         dialog.set_body(details_text)
@@ -170,7 +174,7 @@ class HardwareInfoRow(AdwComponentBase):
         dialog.set_default_response("close")
 
         # Show dialog
-        if hasattr(self.widget, 'get_root'):
+        if hasattr(self.widget, "get_root"):
             root = self.widget.get_root()
             if root:
                 dialog.set_transient_for(root)

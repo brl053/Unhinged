@@ -14,7 +14,12 @@ from typing import Any
 import grpc
 
 # Add generated proto clients to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"))
+sys.path.insert(
+    0,
+    str(
+        Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"
+    ),
+)
 
 try:
     from unhinged_proto_clients import (
@@ -30,6 +35,7 @@ except ImportError as e:
 @dataclass
 class ExecutionEvent:
     """Represents a graph execution event."""
+
     execution_id: str
     event_type: str
     node_id: str | None = None
@@ -43,7 +49,7 @@ class GraphServiceClient:
     def __init__(self, host: str = "localhost", port: int = 9096):
         """
         Initialize graph service client.
-        
+
         Args:
             host: Graph service host
             port: Graph service port
@@ -57,8 +63,7 @@ class GraphServiceClient:
         """Connect to graph service."""
         try:
             self.channel = grpc.aio.secure_channel(
-                f"{self.host}:{self.port}",
-                grpc.ssl_channel_credentials()
+                f"{self.host}:{self.port}", grpc.ssl_channel_credentials()
             )
             self.stub = graph_service_pb2_grpc.GraphServiceStub(self.channel)
             print(f"✅ Connected to graph service at {self.host}:{self.port}")
@@ -75,10 +80,10 @@ class GraphServiceClient:
     async def create_graph(self, graph: graph_service_pb2.Graph) -> str:
         """
         Create a graph in the service.
-        
+
         Args:
             graph: Graph protobuf message
-            
+
         Returns:
             Graph ID
         """
@@ -95,7 +100,9 @@ class GraphServiceClient:
                 print(f"✅ Graph created: {graph.name} ({graph.id})")
                 return graph.id
             else:
-                raise RuntimeError(f"Failed to create graph: {response.response.message}")
+                raise RuntimeError(
+                    f"Failed to create graph: {response.response.message}"
+                )
 
         except Exception as e:
             print(f"❌ Error creating graph: {e}")
@@ -105,16 +112,16 @@ class GraphServiceClient:
         self,
         graph_id: str,
         input_data: dict | None = None,
-        execution_id: str | None = None
+        execution_id: str | None = None,
     ) -> str:
         """
         Execute a graph.
-        
+
         Args:
             graph_id: Graph ID to execute
             input_data: Optional input parameters
             execution_id: Optional execution ID
-            
+
         Returns:
             Execution ID
         """
@@ -137,22 +144,23 @@ class GraphServiceClient:
                 print(f"✅ Graph execution started: {response.execution_id}")
                 return response.execution_id
             else:
-                raise RuntimeError(f"Failed to execute graph: {response.response.message}")
+                raise RuntimeError(
+                    f"Failed to execute graph: {response.response.message}"
+                )
 
         except Exception as e:
             print(f"❌ Error executing graph: {e}")
             raise
 
     async def stream_execution(
-        self,
-        execution_id: str
+        self, execution_id: str
     ) -> AsyncGenerator[ExecutionEvent, None]:
         """
         Stream execution events for a graph execution.
-        
+
         Args:
             execution_id: Execution ID to stream
-            
+
         Yields:
             ExecutionEvent objects
         """
@@ -167,10 +175,12 @@ class GraphServiceClient:
                 # Convert protobuf event to ExecutionEvent
                 exec_event = ExecutionEvent(
                     execution_id=event.execution_id,
-                    event_type=graph_service_pb2.ExecutionEventType.Name(event.event_type),
+                    event_type=graph_service_pb2.ExecutionEventType.Name(
+                        event.event_type
+                    ),
                     node_id=event.node_id if event.node_id else None,
                     event_data=dict(event.event_data) if event.event_data else None,
-                    timestamp=event.timestamp
+                    timestamp=event.timestamp,
                 )
 
                 yield exec_event
@@ -182,10 +192,10 @@ class GraphServiceClient:
     async def get_execution(self, execution_id: str) -> dict:
         """
         Get execution status and results.
-        
+
         Args:
             execution_id: Execution ID
-            
+
         Returns:
             Execution details
         """
@@ -200,27 +210,33 @@ class GraphServiceClient:
 
             if response.response.success:
                 return {
-                    'execution_id': response.execution_id,
-                    'graph_id': response.graph_id,
-                    'status': graph_service_pb2.ExecutionStatus.Name(response.status),
-                    'started_at': response.started_at,
-                    'completed_at': response.completed_at,
-                    'result_data': dict(response.result_data) if response.result_data else None,
-                    'error_message': response.error_message,
-                    'node_executions': [
+                    "execution_id": response.execution_id,
+                    "graph_id": response.graph_id,
+                    "status": graph_service_pb2.ExecutionStatus.Name(response.status),
+                    "started_at": response.started_at,
+                    "completed_at": response.completed_at,
+                    "result_data": dict(response.result_data)
+                    if response.result_data
+                    else None,
+                    "error_message": response.error_message,
+                    "node_executions": [
                         {
-                            'node_id': ne.node_id,
-                            'status': graph_service_pb2.ExecutionStatus.Name(ne.status),
-                            'started_at': ne.started_at,
-                            'completed_at': ne.completed_at,
-                            'output_data': dict(ne.output_data) if ne.output_data else None,
-                            'error_message': ne.error_message
+                            "node_id": ne.node_id,
+                            "status": graph_service_pb2.ExecutionStatus.Name(ne.status),
+                            "started_at": ne.started_at,
+                            "completed_at": ne.completed_at,
+                            "output_data": dict(ne.output_data)
+                            if ne.output_data
+                            else None,
+                            "error_message": ne.error_message,
                         }
                         for ne in response.node_executions
-                    ]
+                    ],
                 }
             else:
-                raise RuntimeError(f"Failed to get execution: {response.response.message}")
+                raise RuntimeError(
+                    f"Failed to get execution: {response.response.message}"
+                )
 
         except Exception as e:
             print(f"❌ Error getting execution: {e}")
@@ -229,10 +245,10 @@ class GraphServiceClient:
     async def cancel_execution(self, execution_id: str) -> bool:
         """
         Cancel a running execution.
-        
+
         Args:
             execution_id: Execution ID to cancel
-            
+
         Returns:
             True if cancelled successfully
         """
@@ -249,9 +265,10 @@ class GraphServiceClient:
                 print(f"✅ Execution cancelled: {execution_id}")
                 return True
             else:
-                raise RuntimeError(f"Failed to cancel execution: {response.response.message}")
+                raise RuntimeError(
+                    f"Failed to cancel execution: {response.response.message}"
+                )
 
         except Exception as e:
             print(f"❌ Error cancelling execution: {e}")
             raise
-

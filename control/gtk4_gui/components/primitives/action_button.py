@@ -17,25 +17,22 @@ import logging
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version('Gdk', '4.0')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
-from typing import Any
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import GObject, Gtk
 
-from ..base import AdwComponentBase, ComponentBase
+from ..base import AdwComponentBase
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class ActionButton(AdwComponentBase):
     """
     Enhanced button component with design system integration.
-    
+
     Features:
     - Semantic styling (primary, secondary, destructive)
     - Loading states with spinner
@@ -44,14 +41,16 @@ class ActionButton(AdwComponentBase):
     """
 
     __gsignals__ = {
-        'clicked': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "clicked": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
-    def __init__(self,
-                 label: str = "",
-                 style: str = "primary",
-                 icon_name: str | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        label: str = "",
+        style: str = "primary",
+        icon_name: str | None = None,
+        **kwargs,
+    ):
         self.label = label
         self.style = style
         self.icon_name = icon_name
@@ -72,7 +71,7 @@ class ActionButton(AdwComponentBase):
         self._apply_button_style()
 
         # Connect signals
-        self.widget.connect('clicked', self._on_clicked)
+        self.widget.connect("clicked", self._on_clicked)
 
         # Set accessibility
         if self.label:
@@ -122,8 +121,8 @@ class ActionButton(AdwComponentBase):
     def _on_clicked(self, button):
         """Handle button click."""
         if not self._loading:
-            self.emit('clicked')
-            self.trigger_action('clicked')
+            self.emit("clicked")
+            self.trigger_action("clicked")
 
     def set_loading(self, loading: bool):
         """Set loading state with spinner."""

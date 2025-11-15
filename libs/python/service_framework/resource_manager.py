@@ -20,6 +20,7 @@ import psutil
 @dataclass
 class HardwareInfo:
     """Hardware capabilities detected at runtime"""
+
     cpu_cores: int
     cpu_threads: int
     memory_gb: float
@@ -27,7 +28,7 @@ class HardwareInfo:
     has_ssd: bool
 
     @classmethod
-    def detect(cls) -> 'HardwareInfo':
+    def detect(cls) -> "HardwareInfo":
         """Detect hardware capabilities"""
         cpu_info = psutil.cpu_count(logical=False) or 1
         cpu_threads = psutil.cpu_count(logical=True) or 1
@@ -57,14 +58,14 @@ class HardwareInfo:
             cpu_threads=cpu_threads,
             memory_gb=memory_gb,
             cpu_freq_mhz=cpu_freq_mhz,
-            has_ssd=has_ssd
+            has_ssd=has_ssd,
         )
 
 
 class ResourceManager:
     """
     Hardware-aware resource management for local OS context
-    
+
     Implements expert recommendations:
     - Dynamic thread pool scaling based on hardware
     - Resource pressure relief
@@ -110,15 +111,17 @@ class ResourceManager:
         max_by_memory = max(1, int(self.hardware.memory_gb / 2))
         self.max_image_threads = min(max_by_memory, 4)  # Cap at 4 for stability
 
-        self.logger.info(f"Thread limits - IO: {self.max_io_threads}, "
-                        f"CPU: {self.max_cpu_threads}, Image: {self.max_image_threads}")
+        self.logger.info(
+            f"Thread limits - IO: {self.max_io_threads}, "
+            f"CPU: {self.max_cpu_threads}, Image: {self.max_image_threads}"
+        )
 
     def get_io_pool(self) -> ThreadPoolExecutor:
         """Get thread pool for I/O bound tasks (gRPC calls, file operations)"""
         if self._io_pool is None:
             self._io_pool = ThreadPoolExecutor(
                 max_workers=self.max_io_threads,
-                thread_name_prefix=f"{self.service_id}-io"
+                thread_name_prefix=f"{self.service_id}-io",
             )
         return self._io_pool
 
@@ -127,7 +130,7 @@ class ResourceManager:
         if self._cpu_pool is None:
             self._cpu_pool = ThreadPoolExecutor(
                 max_workers=self.max_cpu_threads,
-                thread_name_prefix=f"{self.service_id}-cpu"
+                thread_name_prefix=f"{self.service_id}-cpu",
             )
         return self._cpu_pool
 
@@ -136,7 +139,7 @@ class ResourceManager:
         if self._image_pool is None:
             self._image_pool = ThreadPoolExecutor(
                 max_workers=self.max_image_threads,
-                thread_name_prefix=f"{self.service_id}-image"
+                thread_name_prefix=f"{self.service_id}-image",
             )
         return self._image_pool
 
@@ -161,8 +164,9 @@ class ResourceManager:
         """Submit image generation task with memory pressure checking"""
         memory = psutil.virtual_memory()
         if memory.percent > 80.0:
-            self.logger.warning(f"High memory usage ({memory.percent:.1f}%), "
-                              "delaying image generation")
+            self.logger.warning(
+                f"High memory usage ({memory.percent:.1f}%), delaying image generation"
+            )
             time.sleep(1.0)  # Significant backpressure for memory-intensive tasks
 
         return self.get_image_pool().submit(func, *args, **kwargs)
@@ -203,6 +207,7 @@ class ResourceManager:
 
     def _start_monitoring(self) -> None:
         """Start resource monitoring thread"""
+
         def monitor():
             while self._monitoring:
                 try:
@@ -219,8 +224,10 @@ class ResourceManager:
 
                     if self._resource_pressure != old_pressure:
                         if self._resource_pressure:
-                            self.logger.warning(f"Resource pressure detected - "
-                                              f"Memory: {memory.percent:.1f}%, CPU: {cpu_percent:.1f}%")
+                            self.logger.warning(
+                                f"Resource pressure detected - "
+                                f"Memory: {memory.percent:.1f}%, CPU: {cpu_percent:.1f}%"
+                            )
                         else:
                             self.logger.info("Resource pressure relieved")
 
@@ -229,7 +236,9 @@ class ResourceManager:
                         # Reduce image generation concurrency under memory pressure
                         current_workers = self._image_pool._max_workers
                         if current_workers > 1:
-                            self.logger.warning("Reducing image generation concurrency due to memory pressure")
+                            self.logger.warning(
+                                "Reducing image generation concurrency due to memory pressure"
+                            )
                             # Note: ThreadPoolExecutor doesn't support dynamic resizing
                             # In a production system, we'd implement a custom pool
 
@@ -252,21 +261,27 @@ class ResourceManager:
                 "cpu_threads": self.hardware.cpu_threads,
                 "memory_gb": self.hardware.memory_gb,
                 "cpu_freq_mhz": self.hardware.cpu_freq_mhz,
-                "has_ssd": self.hardware.has_ssd
+                "has_ssd": self.hardware.has_ssd,
             },
             "current": {
                 "memory_percent": memory.percent,
                 "cpu_percent": cpu_percent,
-                "resource_pressure": self._resource_pressure
+                "resource_pressure": self._resource_pressure,
             },
             "thread_pools": {
                 "io_max": self.max_io_threads,
                 "cpu_max": self.max_cpu_threads,
                 "image_max": self.max_image_threads,
-                "io_active": getattr(self._io_pool, '_threads', 0) if self._io_pool else 0,
-                "cpu_active": getattr(self._cpu_pool, '_threads', 0) if self._cpu_pool else 0,
-                "image_active": getattr(self._image_pool, '_threads', 0) if self._image_pool else 0
-            }
+                "io_active": getattr(self._io_pool, "_threads", 0)
+                if self._io_pool
+                else 0,
+                "cpu_active": getattr(self._cpu_pool, "_threads", 0)
+                if self._cpu_pool
+                else 0,
+                "image_active": getattr(self._image_pool, "_threads", 0)
+                if self._image_pool
+                else 0,
+            },
         }
 
         return stats

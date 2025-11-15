@@ -13,6 +13,7 @@ from typing import Optional
 
 class RecordingState(Enum):
     """Audio recording state machine."""
+
     IDLE = "idle"
     RECORDING = "recording"
     PROCESSING = "processing"
@@ -24,6 +25,7 @@ class RecordingState(Enum):
 @dataclass
 class RecordingConfig:
     """Configuration for audio recording session."""
+
     device_id: str
     sample_rate: int
     format: str
@@ -43,6 +45,7 @@ class RecordingConfig:
 @dataclass
 class AudioChunk:
     """Single chunk of audio data."""
+
     data: bytes
     timestamp: float
     sample_count: int
@@ -56,6 +59,7 @@ class AudioChunk:
 @dataclass
 class RecordingMetrics:
     """Metrics for a recording session."""
+
     start_time: float
     end_time: Optional[float] = None
     total_chunks: int = 0
@@ -73,6 +77,7 @@ class RecordingMetrics:
 @dataclass
 class TranscriptionRequest:
     """Request for audio transcription."""
+
     audio_file: Path
     language: str = "en"
     model: str = "base"
@@ -87,6 +92,7 @@ class TranscriptionRequest:
 @dataclass
 class TranscriptionResult:
     """Result of audio transcription."""
+
     text: str
     confidence: float
     duration_seconds: float
@@ -97,4 +103,3 @@ class TranscriptionResult:
     def success(self) -> bool:
         """Check if transcription succeeded."""
         return self.error is None
-

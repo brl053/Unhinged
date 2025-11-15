@@ -10,8 +10,8 @@ Provides UI for:
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import asyncio
 from collections.abc import Callable
@@ -62,7 +62,7 @@ class RegistryUI:
         # Create button
         create_btn = Gtk.Button(label="+ Create New Graph")
         create_btn.add_css_class("suggested-action")
-        create_btn.connect('clicked', self._on_create_clicked)
+        create_btn.connect("clicked", self._on_create_clicked)
         main_box.append(create_btn)
 
         # Separator
@@ -156,17 +156,20 @@ class RegistryUI:
         button_box.set_margin_top(12)
 
         cancel_btn = Gtk.Button(label="Cancel")
-        cancel_btn.connect('clicked', lambda b: dialog.close())
+        cancel_btn.connect("clicked", lambda b: dialog.close())
         button_box.append(cancel_btn)
 
         create_btn = Gtk.Button(label="Create")
         create_btn.add_css_class("suggested-action")
-        create_btn.connect('clicked', lambda b: self._handle_create_graph(
-            name_entry.get_text(),
-            desc_entry.get_text(),
-            type_combo.get_active_id(),
-            dialog
-        ))
+        create_btn.connect(
+            "clicked",
+            lambda b: self._handle_create_graph(
+                name_entry.get_text(),
+                desc_entry.get_text(),
+                type_combo.get_active_id(),
+                dialog,
+            ),
+        )
         button_box.append(create_btn)
 
         content_box.append(button_box)
@@ -175,7 +178,9 @@ class RegistryUI:
         dialog.set_title("Create New Graph")
         return dialog
 
-    def _handle_create_graph(self, name: str, description: str, graph_type: str, dialog):
+    def _handle_create_graph(
+        self, name: str, description: str, graph_type: str, dialog
+    ):
         """Handle graph creation"""
         if not name.strip():
             self._update_status("❌ Graph name is required")
@@ -268,7 +273,7 @@ class RegistryUI:
         info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         info_box.set_hexpand(True)
 
-        name_label = Gtk.Label(label=graph.get('name', 'Unnamed'))
+        name_label = Gtk.Label(label=graph.get("name", "Unnamed"))
         name_label.add_css_class("title-4")
         name_label.set_halign(Gtk.Align.START)
         info_box.append(name_label)
@@ -284,12 +289,17 @@ class RegistryUI:
         action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
 
         edit_btn = Gtk.Button(label="Edit")
-        edit_btn.connect('clicked', lambda b: self._on_edit_clicked(graph['id']))
+        edit_btn.connect("clicked", lambda b: self._on_edit_clicked(graph["id"]))
         action_box.append(edit_btn)
 
         delete_btn = Gtk.Button(label="Delete")
         delete_btn.add_css_class("destructive-action")
-        delete_btn.connect('clicked', lambda b: self._on_delete_clicked(graph['id'], graph.get('name', 'Unnamed')))
+        delete_btn.connect(
+            "clicked",
+            lambda b: self._on_delete_clicked(
+                graph["id"], graph.get("name", "Unnamed")
+            ),
+        )
         action_box.append(delete_btn)
 
         row_box.append(action_box)
@@ -310,7 +320,10 @@ class RegistryUI:
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("delete", "Delete")
         dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
-        dialog.connect('response', lambda d, response: self._handle_delete_response(response, graph_id))
+        dialog.connect(
+            "response",
+            lambda d, response: self._handle_delete_response(response, graph_id),
+        )
         dialog.present()
 
     def _handle_delete_response(self, response: str, graph_id: str):
@@ -324,4 +337,3 @@ class RegistryUI:
         """Update status label"""
         if self.status_label:
             self.status_label.set_label(message)
-

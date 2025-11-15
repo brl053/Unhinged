@@ -19,7 +19,7 @@ Date: 2025-10-27
 import logging
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 
 class GTK4CSSGenerator:

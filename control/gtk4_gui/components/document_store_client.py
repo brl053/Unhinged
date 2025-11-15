@@ -13,7 +13,12 @@ from typing import Any
 import grpc
 
 # Add generated proto clients to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"))
+sys.path.insert(
+    0,
+    str(
+        Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"
+    ),
+)
 
 try:
     from unhinged_proto_clients import graph_service_pb2
@@ -39,7 +44,7 @@ class DocumentStoreClient:
     def __init__(self, host: str = "localhost", port: int = 9097):
         """
         Initialize document store client.
-        
+
         Args:
             host: Document store service host
             port: Document store service port
@@ -52,12 +57,13 @@ class DocumentStoreClient:
     async def connect(self):
         """Connect to document store service."""
         if not document_store_pb2_grpc:
-            raise RuntimeError("Document store proto not available. Run 'make generate' to generate proto clients")
+            raise RuntimeError(
+                "Document store proto not available. Run 'make generate' to generate proto clients"
+            )
 
         try:
             self.channel = grpc.aio.secure_channel(
-                f"{self.host}:{self.port}",
-                grpc.ssl_channel_credentials()
+                f"{self.host}:{self.port}", grpc.ssl_channel_credentials()
             )
             self.stub = document_store_pb2_grpc.DocumentStoreServiceStub(self.channel)
             print(f"✅ Connected to document store at {self.host}:{self.port}")
@@ -76,17 +82,17 @@ class DocumentStoreClient:
         graph: graph_service_pb2.Graph,
         namespace: str = "graphs",
         tags: list[str] = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """
         Save graph to document store.
-        
+
         Args:
             graph: Graph protobuf message to save
             namespace: Document namespace
             tags: Optional tags for versioning
             session_id: Optional session ID
-            
+
         Returns:
             Document UUID
         """
@@ -95,31 +101,33 @@ class DocumentStoreClient:
 
         try:
             # Serialize graph to JSON
-            graph_json = json.dumps({
-                'id': graph.id,
-                'name': graph.name,
-                'description': graph.description,
-                'type': graph_service_pb2.GraphType.Name(graph.type),
-                'nodes': [
-                    {
-                        'id': node.id,
-                        'name': node.name,
-                        'type': graph_service_pb2.NodeType.Name(node.type),
-                        'config': dict(node.config) if node.config else {}
-                    }
-                    for node in graph.nodes
-                ],
-                'edges': [
-                    {
-                        'id': edge.id,
-                        'source_node_id': edge.source_node_id,
-                        'target_node_id': edge.target_node_id,
-                        'source_output': edge.source_output,
-                        'target_input': edge.target_input
-                    }
-                    for edge in graph.edges
-                ]
-            })
+            graph_json = json.dumps(
+                {
+                    "id": graph.id,
+                    "name": graph.name,
+                    "description": graph.description,
+                    "type": graph_service_pb2.GraphType.Name(graph.type),
+                    "nodes": [
+                        {
+                            "id": node.id,
+                            "name": node.name,
+                            "type": graph_service_pb2.NodeType.Name(node.type),
+                            "config": dict(node.config) if node.config else {},
+                        }
+                        for node in graph.nodes
+                    ],
+                    "edges": [
+                        {
+                            "id": edge.id,
+                            "source_node_id": edge.source_node_id,
+                            "target_node_id": edge.target_node_id,
+                            "source_output": edge.source_output,
+                            "target_input": edge.target_input,
+                        }
+                        for edge in graph.edges
+                    ],
+                }
+            )
 
             # Create document
             document = document_store_pb2.Document()
@@ -150,19 +158,16 @@ class DocumentStoreClient:
             raise
 
     async def load_graph(
-        self,
-        graph_id: str,
-        version: int | None = None,
-        tag: str | None = None
+        self, graph_id: str, version: int | None = None, tag: str | None = None
     ) -> graph_service_pb2.Graph:
         """
         Load graph from document store.
-        
+
         Args:
             graph_id: Graph ID to load
             version: Optional specific version
             tag: Optional tag (e.g., "production")
-            
+
         Returns:
             Graph protobuf message
         """
@@ -189,31 +194,31 @@ class DocumentStoreClient:
             graph_data = json.loads(response.document.body_json)
 
             graph = graph_service_pb2.Graph()
-            graph.id = graph_data['id']
-            graph.name = graph_data['name']
-            graph.description = graph_data.get('description', '')
-            graph.type = graph_service_pb2.GraphType.Value(graph_data['type'])
+            graph.id = graph_data["id"]
+            graph.name = graph_data["name"]
+            graph.description = graph_data.get("description", "")
+            graph.type = graph_service_pb2.GraphType.Value(graph_data["type"])
 
             # Reconstruct nodes
-            for node_data in graph_data.get('nodes', []):
+            for node_data in graph_data.get("nodes", []):
                 node = graph_service_pb2.Node()
-                node.id = node_data['id']
-                node.name = node_data['name']
-                node.type = graph_service_pb2.NodeType.Value(node_data['type'])
+                node.id = node_data["id"]
+                node.name = node_data["name"]
+                node.type = graph_service_pb2.NodeType.Value(node_data["type"])
 
-                if node_data.get('config'):
-                    node.config.update(node_data['config'])
+                if node_data.get("config"):
+                    node.config.update(node_data["config"])
 
                 graph.nodes.append(node)
 
             # Reconstruct edges
-            for edge_data in graph_data.get('edges', []):
+            for edge_data in graph_data.get("edges", []):
                 edge = graph_service_pb2.Edge()
-                edge.id = edge_data['id']
-                edge.source_node_id = edge_data['source_node_id']
-                edge.target_node_id = edge_data['target_node_id']
-                edge.source_output = edge_data.get('source_output', '')
-                edge.target_input = edge_data.get('target_input', '')
+                edge.id = edge_data["id"]
+                edge.source_node_id = edge_data["source_node_id"]
+                edge.target_node_id = edge_data["target_node_id"]
+                edge.source_output = edge_data.get("source_output", "")
+                edge.target_input = edge_data.get("target_input", "")
 
                 graph.edges.append(edge)
 
@@ -228,16 +233,16 @@ class DocumentStoreClient:
         self,
         namespace: str = "graphs",
         tag: str | None = None,
-        session_id: str | None = None
+        session_id: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         List graphs in document store.
-        
+
         Args:
             namespace: Document namespace
             tag: Optional tag filter
             session_id: Optional session filter
-            
+
         Returns:
             List of graph metadata
         """
@@ -260,13 +265,15 @@ class DocumentStoreClient:
 
             graphs = []
             for doc in response.documents:
-                graphs.append({
-                    'id': doc.document_uuid,
-                    'name': doc.name,
-                    'version': doc.version,
-                    'tags': list(doc.tags),
-                    'created_at': doc.created_at,
-                })
+                graphs.append(
+                    {
+                        "id": doc.document_uuid,
+                        "name": doc.name,
+                        "version": doc.version,
+                        "tags": list(doc.tags),
+                        "created_at": doc.created_at,
+                    }
+                )
 
             print(f"✅ Listed {len(graphs)} graphs")
             return graphs
@@ -276,10 +283,7 @@ class DocumentStoreClient:
             raise
 
     async def delete_graph(
-        self,
-        graph_id: str,
-        deleted_by: str = "user",
-        deleted_by_type: str = "person"
+        self, graph_id: str, deleted_by: str = "user", deleted_by_type: str = "person"
     ) -> bool:
         """
         Delete graph from document store.
@@ -312,4 +316,3 @@ class DocumentStoreClient:
         except Exception as e:
             print(f"❌ Error deleting graph: {e}")
             raise
-

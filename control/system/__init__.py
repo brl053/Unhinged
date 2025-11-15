@@ -7,5 +7,5 @@
 from .system_controller import SystemController
 from .operation_result import OperationResult
 
-__all__ = ['SystemController', 'OperationResult']
-__version__ = '0.1.0-alpha'
+__all__ = ["SystemController", "OperationResult"]
+__version__ = "0.1.0-alpha"

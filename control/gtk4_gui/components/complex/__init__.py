@@ -9,11 +9,11 @@ from .bluetooth_table import BluetoothTable
 from .audio_table import AudioTable
 
 __all__ = [
-    'LogViewer',
-    'ServiceRow',
-    'SystemStatus',
-    'PerformanceIndicator',
-    'ProcessTable',
-    'BluetoothTable',
-    'AudioTable',
+    "LogViewer",
+    "ServiceRow",
+    "SystemStatus",
+    "PerformanceIndicator",
+    "ProcessTable",
+    "BluetoothTable",
+    "AudioTable",
 ]

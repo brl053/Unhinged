@@ -40,13 +40,17 @@ except ImportError as e:
     if "runtime_version" in str(e):
         # Monkey patch runtime_version for compatibility
         import google.protobuf
-        if not hasattr(google.protobuf, 'runtime_version'):
+
+        if not hasattr(google.protobuf, "runtime_version"):
+
             class MockRuntimeVersion:
                 class Domain:
                     PUBLIC = 1
+
                 @staticmethod
                 def ValidateProtobufRuntimeVersion(*args, **kwargs):
                     pass
+
             google.protobuf.runtime_version = MockRuntimeVersion()
 
         # Retry imports
@@ -62,13 +66,17 @@ def set_current_timestamp(timestamp_field):
     timestamp_field.seconds = int(time.time())
     timestamp_field.nanos = int((time.time() % 1) * 1e9)
 
+
 # Initialize event logger
 events = create_service_logger("speech-to-text", "1.0.0")
 
-class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.HealthServiceServicer):
+
+class AudioServiceServicer(
+    audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.HealthServiceServicer
+):
     """
     gRPC Audio Service implementation following proto contracts
-    
+
     Implements all methods defined in audio.proto:
     - TextToSpeech: Streaming TTS output
     - SpeechToText: Streaming STT input
@@ -79,7 +87,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
 
     def __init__(self):
         self.whisper_model = None
-        self.upload_folder = '/app/uploads'
+        self.upload_folder = "/app/uploads"
         self.start_time = time.time()  # Track service start time for uptime
         os.makedirs(self.upload_folder, exist_ok=True)
         self._load_whisper_model()
@@ -90,7 +98,9 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             self.whisper_model = whisper.load_model("base")
             events.info("Whisper model loaded", {"model": "base"})
         except Exception as e:
-            events.error("Failed to load Whisper model", exception=e, metadata={"model": "base"})
+            events.error(
+                "Failed to load Whisper model", exception=e, metadata={"model": "base"}
+            )
             self.whisper_model = None
 
     def _estimate_duration(self, audio_bytes_length):
@@ -102,22 +112,20 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         estimated_seconds = audio_bytes_length / 100000.0
         return max(0.1, estimated_seconds)  # Minimum 0.1 seconds
 
-
-
-    def SpeechToText(self, request_iterator: Iterator[common_pb2.StreamChunk], context) -> audio_pb2.STTResponse:
+    def SpeechToText(
+        self, request_iterator: Iterator[common_pb2.StreamChunk], context
+    ) -> audio_pb2.STTResponse:
         """
         Convert speech to text from streaming input
-        
+
         Args:
             request_iterator: Iterator of StreamChunk with audio data
             context: gRPC context
-            
+
         Returns:
             STTResponse: Transcription result with metadata
         """
         try:
-
-
             # Collect audio chunks
             audio_data = io.BytesIO()
             chunk_count = 0
@@ -127,13 +135,12 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                     audio_data.write(chunk.data)
                     chunk_count += 1
 
-
             if chunk_count == 0:
                 raise ValueError("No audio data received")
 
             # Save audio to temporary file for Whisper processing
             audio_bytes = audio_data.getvalue()
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
                 temp_file.write(audio_bytes)
                 temp_file_path = temp_file.name
 
@@ -152,22 +159,24 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                 response.response.message = "Transcription completed successfully"
 
                 # Set transcription data
-                response.transcript = result['text']
-                response.confidence = 0.9  # Whisper doesn't provide confidence, use default
+                response.transcript = result["text"]
+                response.confidence = (
+                    0.9  # Whisper doesn't provide confidence, use default
+                )
 
                 # Create transcript segments
-                if 'segments' in result:
-                    for segment_data in result['segments']:
+                if "segments" in result:
+                    for segment_data in result["segments"]:
                         segment = audio_pb2.TranscriptSegment()
-                        segment.text = segment_data.get('text', '')
-                        segment.start_time = segment_data.get('start', 0.0)
-                        segment.end_time = segment_data.get('end', 0.0)
+                        segment.text = segment_data.get("text", "")
+                        segment.start_time = segment_data.get("start", 0.0)
+                        segment.end_time = segment_data.get("end", 0.0)
                         segment.confidence = 0.9  # Default confidence
                         response.segments.append(segment)
                 else:
                     # Create single segment if no segments provided
                     segment = audio_pb2.TranscriptSegment()
-                    segment.text = result['text']
+                    segment.text = result["text"]
                     segment.start_time = 0.0
                     segment.end_time = self._estimate_duration(len(audio_bytes))
                     segment.confidence = 0.9
@@ -185,11 +194,11 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                 # Set metadata
                 metadata = audio_pb2.STTMetadata()
                 metadata.model = "whisper-base"
-                metadata.language = result.get('language', 'en')
+                metadata.language = result.get("language", "en")
                 metadata.processing_time_ms = 0.0  # Not tracked yet
                 metadata.signal_to_noise_ratio = 0.0  # Not calculated
                 metadata.speech_rate_wpm = 0.0  # Not calculated
-                metadata.detected_languages.append(result.get('language', 'en'))
+                metadata.detected_languages.append(result.get("language", "en"))
                 metadata.has_background_noise = False  # Not detected
                 metadata.has_multiple_speakers = False  # Not detected
                 metadata.detected_quality = audio_pb2.AUDIO_QUALITY_STANDARD
@@ -209,20 +218,20 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response.response.message = f"STT processing failed: {str(e)}"
             return response
 
-    def ProcessAudioFile(self, request: audio_pb2.ProcessAudioRequest, context) -> audio_pb2.ProcessAudioResponse:
+    def ProcessAudioFile(
+        self, request: audio_pb2.ProcessAudioRequest, context
+    ) -> audio_pb2.ProcessAudioResponse:
         """
         Process audio file for batch operations
-        
+
         Args:
             request: ProcessAudioRequest with audio file and processing type
             context: gRPC context
-            
+
         Returns:
             ProcessAudioResponse: Processing result
         """
         try:
-
-
             response = audio_pb2.ProcessAudioResponse()
 
             if request.processing_type == audio_pb2.PROCESSING_TYPE_TRANSCRIBE:
@@ -244,7 +253,9 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
 
             else:
                 response.response.success = False
-                response.response.message = f"Processing type {request.processing_type} not implemented"
+                response.response.message = (
+                    f"Processing type {request.processing_type} not implemented"
+                )
 
             return response
 
@@ -255,14 +266,16 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response.response.message = f"Processing failed: {str(e)}"
             return response
 
-    def ListVoices(self, request: audio_pb2.ListVoicesRequest, context) -> audio_pb2.ListVoicesResponse:
+    def ListVoices(
+        self, request: audio_pb2.ListVoicesRequest, context
+    ) -> audio_pb2.ListVoicesResponse:
         """
         List available voices
-        
+
         Args:
             request: ListVoicesRequest with filters
             context: gRPC context
-            
+
         Returns:
             ListVoicesResponse: Available voices
         """
@@ -285,7 +298,7 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                     "style": audio_pb2.VOICE_STYLE_FRIENDLY,
                     "is_available": True,
                     "is_premium": False,
-                    "cost_per_character": 0.001
+                    "cost_per_character": 0.001,
                 },
                 {
                     "id": "voice-en-us-male-1",
@@ -299,8 +312,8 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                     "style": audio_pb2.VOICE_STYLE_PROFESSIONAL,
                     "is_available": True,
                     "is_premium": False,
-                    "cost_per_character": 0.001
-                }
+                    "cost_per_character": 0.001,
+                },
             ]
 
             for voice_data in voices_data:
@@ -325,11 +338,13 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
                 voice.cost_per_character = voice_data["cost_per_character"]
 
                 # Add supported formats
-                voice.supported_formats.extend([
-                    audio_pb2.AUDIO_FORMAT_MP3,
-                    audio_pb2.AUDIO_FORMAT_WAV,
-                    audio_pb2.AUDIO_FORMAT_OGG
-                ])
+                voice.supported_formats.extend(
+                    [
+                        audio_pb2.AUDIO_FORMAT_MP3,
+                        audio_pb2.AUDIO_FORMAT_WAV,
+                        audio_pb2.AUDIO_FORMAT_OGG,
+                    ]
+                )
 
                 # Add supported sample rates
                 voice.supported_sample_rates.extend([16000, 22050, 44100])
@@ -349,7 +364,9 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response.response.message = f"Failed to list voices: {str(e)}"
             return response
 
-    def GetVoice(self, request: audio_pb2.GetVoiceRequest, context) -> audio_pb2.GetVoiceResponse:
+    def GetVoice(
+        self, request: audio_pb2.GetVoiceRequest, context
+    ) -> audio_pb2.GetVoiceResponse:
         """Get specific voice by ID"""
         # Implementation would look up specific voice
         # For now, return first voice from list
@@ -367,28 +384,36 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
 
         return response
 
-    def CreateCustomVoice(self, request: audio_pb2.CreateCustomVoiceRequest, context) -> audio_pb2.CreateCustomVoiceResponse:
+    def CreateCustomVoice(
+        self, request: audio_pb2.CreateCustomVoiceRequest, context
+    ) -> audio_pb2.CreateCustomVoiceResponse:
         """Create custom voice (not implemented)"""
         response = audio_pb2.CreateCustomVoiceResponse()
         response.response.success = False
         response.response.message = "Custom voice creation not implemented"
         return response
 
-    def ConvertAudioFormat(self, request: audio_pb2.ConvertAudioRequest, context) -> audio_pb2.ConvertAudioResponse:
+    def ConvertAudioFormat(
+        self, request: audio_pb2.ConvertAudioRequest, context
+    ) -> audio_pb2.ConvertAudioResponse:
         """Convert audio format (not implemented)"""
         response = audio_pb2.ConvertAudioResponse()
         response.response.success = False
         response.response.message = "Audio format conversion not implemented"
         return response
 
-    def AnalyzeAudio(self, request: audio_pb2.AnalyzeAudioRequest, context) -> audio_pb2.AnalyzeAudioResponse:
+    def AnalyzeAudio(
+        self, request: audio_pb2.AnalyzeAudioRequest, context
+    ) -> audio_pb2.AnalyzeAudioResponse:
         """Analyze audio (not implemented)"""
         response = audio_pb2.AnalyzeAudioResponse()
         response.response.success = False
         response.response.message = "Audio analysis not implemented"
         return response
 
-    def Heartbeat(self, request: health_pb2.HeartbeatRequest, context) -> health_pb2.HeartbeatResponse:
+    def Heartbeat(
+        self, request: health_pb2.HeartbeatRequest, context
+    ) -> health_pb2.HeartbeatResponse:
         """Fast heartbeat endpoint (<10ms) - health.proto implementation"""
         try:
             response = health_pb2.HeartbeatResponse()
@@ -396,8 +421,16 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response.timestamp_ms = int(time.time() * 1000)
             response.service_id = "speech-to-text-service"
             response.version = "1.0.0"
-            response.uptime_ms = int((time.time() - self.start_time) * 1000) if hasattr(self, 'start_time') else 0
-            response.status = health_pb2.HEALTH_STATUS_HEALTHY if self.whisper_model is not None else health_pb2.HEALTH_STATUS_UNHEALTHY
+            response.uptime_ms = (
+                int((time.time() - self.start_time) * 1000)
+                if hasattr(self, "start_time")
+                else 0
+            )
+            response.status = (
+                health_pb2.HEALTH_STATUS_HEALTHY
+                if self.whisper_model is not None
+                else health_pb2.HEALTH_STATUS_UNHEALTHY
+            )
             return response
         except Exception:
             response = health_pb2.HeartbeatResponse()
@@ -408,7 +441,9 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
             response.status = health_pb2.HEALTH_STATUS_UNHEALTHY
             return response
 
-    def Diagnostics(self, request: health_pb2.DiagnosticsRequest, context) -> health_pb2.DiagnosticsResponse:
+    def Diagnostics(
+        self, request: health_pb2.DiagnosticsRequest, context
+    ) -> health_pb2.DiagnosticsResponse:
         """Detailed diagnostics endpoint (<1s) - health.proto implementation"""
         try:
             # Get heartbeat first
@@ -419,7 +454,9 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
 
             # Add metadata if requested
             if request.include_metrics:
-                response.metadata["whisper_model_loaded"] = str(self.whisper_model is not None)
+                response.metadata["whisper_model_loaded"] = str(
+                    self.whisper_model is not None
+                )
                 response.metadata["cuda_available"] = str(torch.cuda.is_available())
                 response.metadata["service_type"] = "speech-to-text"
 
@@ -428,12 +465,12 @@ class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.
         except Exception as e:
             # Return minimal response on error
             response = health_pb2.DiagnosticsResponse()
-            response.heartbeat.CopyFrom(self.Heartbeat(health_pb2.HeartbeatRequest(), context))
+            response.heartbeat.CopyFrom(
+                self.Heartbeat(health_pb2.HeartbeatRequest(), context)
+            )
             response.metadata["error"] = str(e)
             response.last_updated.GetCurrentTime()
             return response
-
-
 
 
 def serve():
@@ -445,7 +482,7 @@ def serve():
     audio_pb2_grpc.add_AudioServiceServicer_to_server(servicer, server)
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
 
-    listen_addr = '[::]:9091'
+    listen_addr = "[::]:9091"
     server.add_insecure_port(listen_addr)
 
     server.start()
@@ -457,5 +494,5 @@ def serve():
         server.stop(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     serve()

@@ -11,10 +11,10 @@ Provides tabbed workspace with Registry, Editor, and Metrics tabs.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gtk
+from gi.repository import Gtk
 
 from .base import ViewBase
 
@@ -41,7 +41,7 @@ class DocumentWorkspaceView(ViewBase):
             from ..components import DocumentWorkspaceTabs
             from ..components.document_registry import DocumentRegistry
             from ..components.document_store_client import DocumentStoreClient
-            
+
             # Create main container
             main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
             main_box.set_hexpand(True)
@@ -56,15 +56,13 @@ class DocumentWorkspaceView(ViewBase):
 
             # Create workspace tabs
             self.tabs = DocumentWorkspaceTabs(
-                document_type=self.document_type,
-                doc_store_client=self.doc_store_client
+                document_type=self.document_type, doc_store_client=self.doc_store_client
             )
             self.tabs.on_workspace_changed = self._on_workspace_changed
 
             # Create registry for this document type
             registry = DocumentRegistry(
-                document_type=self.document_type,
-                doc_store_client=self.doc_store_client
+                document_type=self.document_type, doc_store_client=self.doc_store_client
             )
             registry.on_create = self._on_create_document
             registry.on_edit = self._on_edit_document
@@ -86,6 +84,7 @@ class DocumentWorkspaceView(ViewBase):
         except Exception as e:
             print(f"❌ Error creating document workspace: {e}")
             import traceback
+
             traceback.print_exc()
             return self._create_error_view(str(e))
 
@@ -111,16 +110,16 @@ class DocumentWorkspaceView(ViewBase):
         box.set_margin_bottom(24)
         box.set_margin_start(24)
         box.set_margin_end(24)
-        
+
         label = Gtk.Label(label=f"Editor for {self.document_type}")
         label.add_css_class("title-2")
         box.append(label)
-        
+
         desc = Gtk.Label(label="Select a document from the registry to edit")
         desc.add_css_class("dim-label")
         desc.set_wrap(True)
         box.append(desc)
-        
+
         return box
 
     def _create_metrics_placeholder(self) -> Gtk.Widget:
@@ -130,16 +129,16 @@ class DocumentWorkspaceView(ViewBase):
         box.set_margin_bottom(24)
         box.set_margin_start(24)
         box.set_margin_end(24)
-        
+
         label = Gtk.Label(label=f"Metrics for {self.document_type}")
         label.add_css_class("title-2")
         box.append(label)
-        
+
         desc = Gtk.Label(label="Performance and usage statistics")
         desc.add_css_class("dim-label")
         desc.set_wrap(True)
         box.append(desc)
-        
+
         return box
 
     def _on_workspace_changed(self, workspace_name: str):
@@ -168,15 +167,14 @@ class DocumentWorkspaceView(ViewBase):
         box.set_margin_bottom(24)
         box.set_margin_start(24)
         box.set_margin_end(24)
-        
+
         label = Gtk.Label(label="Error")
         label.add_css_class("title-2")
         box.append(label)
-        
+
         error_label = Gtk.Label(label=error_message)
         error_label.add_css_class("dim-label")
         error_label.set_wrap(True)
         box.append(error_label)
-        
-        return box
 
+        return box

@@ -36,10 +36,7 @@ class AudioProcessor:
         return calculate_rms_amplitude(audio_data)
 
     def process_chunk(
-        self,
-        audio_data: bytes,
-        timestamp: float,
-        sample_rate: int
+        self, audio_data: bytes, timestamp: float, sample_rate: int
     ) -> AudioChunk:
         """Process a single audio chunk.
 
@@ -58,7 +55,7 @@ class AudioProcessor:
             data=audio_data,
             timestamp=timestamp,
             sample_count=sample_count,
-            amplitude=amplitude
+            amplitude=amplitude,
         )
 
     def convert_raw_to_wav(
@@ -67,7 +64,7 @@ class AudioProcessor:
         wav_file: Path,
         sample_rate: int,
         channels: int,
-        sample_width: int = 2
+        sample_width: int = 2,
     ) -> None:
         """Convert raw audio data to WAV format.
 
@@ -82,10 +79,10 @@ class AudioProcessor:
             IOError: If conversion fails
         """
         try:
-            with open(raw_file, 'rb') as f:
+            with open(raw_file, "rb") as f:
                 raw_data = f.read()
 
-            with wave.open(str(wav_file), 'wb') as wav:
+            with wave.open(str(wav_file), "wb") as wav:
                 wav.setnchannels(channels)
                 wav.setsampwidth(sample_width)
                 wav.setframerate(sample_rate)
@@ -116,9 +113,6 @@ class AudioProcessor:
 
         file_size = file_path.stat().st_size
         if file_size < min_size:
-            raise ValueError(
-                f"File too small: {file_size} bytes (min: {min_size})"
-            )
+            raise ValueError(f"File too small: {file_size} bytes (min: {min_size})")
 
         return True
-

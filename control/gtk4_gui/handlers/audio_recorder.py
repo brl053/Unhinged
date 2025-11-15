@@ -66,20 +66,21 @@ class AudioRecorder:
             Popen object for arecord process
         """
         cmd = [
-            'arecord',
-            '-D', self.config.device_id,
-            '-f', self.config.format,
-            '-r', str(self.config.sample_rate),
-            '-c', str(self.config.channels),
-            '-t', 'raw',
-            '-'
+            "arecord",
+            "-D",
+            self.config.device_id,
+            "-f",
+            self.config.format,
+            "-r",
+            str(self.config.sample_rate),
+            "-c",
+            str(self.config.channels),
+            "-t",
+            "raw",
+            "-",
         ]
 
-        return subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def _start_tee_process(self, arecord_stdout, output_file: Path) -> subprocess.Popen:
         """Start tee subprocess to split audio stream.
@@ -91,13 +92,13 @@ class AudioRecorder:
         Returns:
             Popen object for tee process
         """
-        cmd = ['tee', str(self.temp_pipe)]
+        cmd = ["tee", str(self.temp_pipe)]
 
         return subprocess.Popen(
             cmd,
             stdin=arecord_stdout,
-            stdout=open(str(output_file), 'wb'),
-            stderr=subprocess.PIPE
+            stdout=open(str(output_file), "wb"),
+            stderr=subprocess.PIPE,
         )
 
     def _is_signal_exit(self, stderr: bytes) -> bool:
@@ -112,7 +113,7 @@ class AudioRecorder:
         if not stderr:
             return False
 
-        stderr_str = stderr.decode('utf-8', errors='replace').strip()
+        stderr_str = stderr.decode("utf-8", errors="replace").strip()
         return any(msg in stderr_str for msg in self.SIGNAL_MESSAGES)
 
     def start_recording(self, output_file: Path, amplitude_callback=None) -> None:
@@ -131,8 +132,7 @@ class AudioRecorder:
         try:
             self.arecord_process = self._start_arecord_process()
             self.recording_process = self._start_tee_process(
-                self.arecord_process.stdout,
-                output_file
+                self.arecord_process.stdout, output_file
             )
             self.arecord_process.stdout.close()
 
@@ -195,4 +195,3 @@ class AudioRecorder:
                 logger.debug(f"Cleaned up pipe: {self.temp_pipe}")
             except Exception as e:
                 logger.warning(f"Failed to clean up pipe: {e}")
-

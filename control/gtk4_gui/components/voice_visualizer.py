@@ -7,8 +7,8 @@ Provides waveform visualization, recording indicators, and state management.
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 import math
 import sys
@@ -25,6 +25,7 @@ from event_bus import get_event_bus, AudioEvents, Event
 
 class VisualizationMode(Enum):
     """Visualization modes for the voice component"""
+
     WAVEFORM = "waveform"
     PULSE = "pulse"
     BARS = "bars"
@@ -34,12 +35,14 @@ class VisualizationMode(Enum):
 class VoiceVisualizer(Gtk.DrawingArea):
     """Voice visualization component with multiple display modes"""
 
-    def __init__(self,
-                 mode: VisualizationMode = VisualizationMode.PULSE,
-                 width: int = 200,
-                 height: int = 60):
+    def __init__(
+        self,
+        mode: VisualizationMode = VisualizationMode.PULSE,
+        width: int = 200,
+        height: int = 60,
+    ):
         """Initialize voice visualizer
-        
+
         Args:
             mode: Visualization mode
             width: Component width in pixels
@@ -61,7 +64,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
         # Animation data
         self.waveform_data = [0.0] * 50  # 50 sample points
-        self.bars_data = [0.0] * 8       # 8 frequency bars
+        self.bars_data = [0.0] * 8  # 8 frequency bars
 
         # Event bus for state updates (replaces callbacks)
         self._event_bus = get_event_bus()
@@ -100,8 +103,12 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
             # Emit event via event bus
             state = "recording" if recording else "idle"
-            self._event_bus.emit_simple(AudioEvents.RECORDING_STARTED if recording else AudioEvents.RECORDING_STOPPED,
-                                       {"state": state})
+            self._event_bus.emit_simple(
+                AudioEvents.RECORDING_STARTED
+                if recording
+                else AudioEvents.RECORDING_STOPPED,
+                {"state": state},
+            )
 
             # Legacy callback support
             if self.state_callback:
@@ -131,8 +138,10 @@ class VoiceVisualizer(Gtk.DrawingArea):
         """Set current audio amplitude (0.0 to 1.0) from real audio data"""
         # Apply smoothing to reduce aggressive animation
         raw_amplitude = max(0.0, min(1.0, amplitude))
-        self.amplitude = (self.amplitude_smoothing * self.previous_amplitude +
-                         (1 - self.amplitude_smoothing) * raw_amplitude)
+        self.amplitude = (
+            self.amplitude_smoothing * self.previous_amplitude
+            + (1 - self.amplitude_smoothing) * raw_amplitude
+        )
         self.previous_amplitude = self.amplitude
         self.use_real_audio = True  # Mark that we're receiving real audio data
 
@@ -153,7 +162,9 @@ class VoiceVisualizer(Gtk.DrawingArea):
         """Connect state change callback (DEPRECATED: use event_bus instead)"""
         self.state_callback = callback
 
-    def subscribe_to_state_changes(self, callback: Callable[[Event], None]) -> Callable[[], None]:
+    def subscribe_to_state_changes(
+        self, callback: Callable[[Event], None]
+    ) -> Callable[[], None]:
         """Subscribe to state changes via event bus
 
         Args:
@@ -167,7 +178,9 @@ class VoiceVisualizer(Gtk.DrawingArea):
     def _start_animation(self) -> None:
         """Start animation timer"""
         if self.animation_timer_id is None:
-            self.animation_timer_id = GLib.timeout_add(100, self._animate)  # 10 FPS for smoother animation
+            self.animation_timer_id = GLib.timeout_add(
+                100, self._animate
+            )  # 10 FPS for smoother animation
 
     def _stop_animation(self) -> None:
         """Stop animation timer"""
@@ -182,10 +195,12 @@ class VoiceVisualizer(Gtk.DrawingArea):
         # Only use simulated data if we're not receiving real audio data
         if self.is_recording and not self.use_real_audio:
             # Create realistic voice-like waveform using multiple frequencies
-            fundamental = 0.4 * math.sin(self.animation_time * 4)  # Base voice frequency
-            harmonic1 = 0.2 * math.sin(self.animation_time * 8)    # First harmonic
-            harmonic2 = 0.1 * math.sin(self.animation_time * 12)   # Second harmonic
-            noise = 0.05 * math.sin(self.animation_time * 25)      # High frequency detail
+            fundamental = 0.4 * math.sin(
+                self.animation_time * 4
+            )  # Base voice frequency
+            harmonic1 = 0.2 * math.sin(self.animation_time * 8)  # First harmonic
+            harmonic2 = 0.1 * math.sin(self.animation_time * 12)  # Second harmonic
+            noise = 0.05 * math.sin(self.animation_time * 25)  # High frequency detail
 
             # Combine for realistic voice pattern
             voice_amplitude = fundamental + harmonic1 + harmonic2 + noise
@@ -213,7 +228,11 @@ class VoiceVisualizer(Gtk.DrawingArea):
         # Simulate frequency distribution
         for i in range(len(self.bars_data)):
             frequency_factor = 1.0 - (i / len(self.bars_data))
-            self.bars_data[i] = self.amplitude * frequency_factor * (0.8 + 0.4 * math.sin(self.animation_time * (i + 1)))
+            self.bars_data[i] = (
+                self.amplitude
+                * frequency_factor
+                * (0.8 + 0.4 * math.sin(self.animation_time * (i + 1)))
+            )
 
     def _on_draw(self, area, cr, width, height, user_data) -> None:
         """Draw the visualization"""
@@ -259,7 +278,9 @@ class VoiceVisualizer(Gtk.DrawingArea):
             # Enhanced amplitude scaling for better visual contrast
             # Stretch the amplitude range and add more pronounced peaks/dips
             normalized_amp = (amplitude - 0.5) * 2  # Convert to -1 to 1 range
-            enhanced_amp = normalized_amp * abs(normalized_amp)  # Square for more contrast
+            enhanced_amp = normalized_amp * abs(
+                normalized_amp
+            )  # Square for more contrast
             wave_height = enhanced_amp * height * 0.4  # Reduced height for better fit
             y = center_y + wave_height
 
@@ -269,8 +290,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
                 # Use curve_to for smoother waveform
                 prev_x = (i - 1) * step
                 control_x = prev_x + step / 2
-                cr.curve_to(control_x, cr.get_current_point()[1],
-                           control_x, y, x, y)
+                cr.curve_to(control_x, cr.get_current_point()[1], control_x, y, x, y)
 
         cr.stroke()
 
@@ -294,7 +314,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         # Draw multiple concentric circles
         for i in range(3):
             radius = (self.amplitude * 0.8 + 0.2) * min(width, height) / 2
-            radius *= (1.0 - i * 0.3)
+            radius *= 1.0 - i * 0.3
 
             alpha = 0.8 - i * 0.2
             cr.set_source_rgba(0.2, 0.7, 0.9, alpha)
@@ -336,17 +356,9 @@ class VoiceVisualizerFactory:
     def create_recording_indicator(compact: bool = False) -> VoiceVisualizer:
         """Create a recording indicator visualizer"""
         if compact:
-            return VoiceVisualizer(
-                mode=VisualizationMode.MINIMAL,
-                width=24,
-                height=24
-            )
+            return VoiceVisualizer(mode=VisualizationMode.MINIMAL, width=24, height=24)
         else:
-            return VoiceVisualizer(
-                mode=VisualizationMode.PULSE,
-                width=60,
-                height=60
-            )
+            return VoiceVisualizer(mode=VisualizationMode.PULSE, width=60, height=60)
 
     @staticmethod
     def create_waveform_display(width: int = 300) -> VoiceVisualizer:
@@ -354,14 +366,10 @@ class VoiceVisualizerFactory:
         return VoiceVisualizer(
             mode=VisualizationMode.WAVEFORM,
             width=width,
-            height=50  # Slightly taller for better visibility
+            height=50,  # Slightly taller for better visibility
         )
 
     @staticmethod
     def create_frequency_bars() -> VoiceVisualizer:
         """Create a frequency bars visualizer"""
-        return VoiceVisualizer(
-            mode=VisualizationMode.BARS,
-            width=120,
-            height=50
-        )
+        return VoiceVisualizer(mode=VisualizationMode.BARS, width=120, height=50)
