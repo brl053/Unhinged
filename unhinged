@@ -609,33 +609,7 @@ cmd_lint() {
 
             if [ -z "$1" ]; then
                 log_info "Checking all Python files..."
-                local output=$(find control libs -name "*.py" -type f | xargs python3 build/lint.py 2>&1)
-                local fatal_count=$(echo "$output" | grep -c "❌" || true)
-                local warn_count=$(echo "$output" | grep -c "⚠️" || true)
-
-                if [ "$verbose" = true ]; then
-                    echo "$output"
-                else
-                    if [ "$fatal_count" -gt 0 ]; then
-                        log_error "Found $fatal_count FATAL violations:"
-                        echo "$output" | grep "❌" | head -20
-                        if [ "$fatal_count" -gt 20 ]; then
-                            echo "... and $((fatal_count - 20)) more"
-                        fi
-                    fi
-
-                    if [ "$warn_count" -gt 0 ]; then
-                        log_warning "Found $warn_count warnings:"
-                        echo "$output" | grep "⚠️" | head -10
-                        if [ "$warn_count" -gt 10 ]; then
-                            echo "... and $((warn_count - 10)) more"
-                        fi
-                    fi
-
-                    if [ "$fatal_count" -eq 0 ] && [ "$warn_count" -eq 0 ]; then
-                        log_success "All checks passed!"
-                    fi
-                fi
+                python3 "$PROJECT_ROOT/build/lint_summary.py" "$verbose"
             else
                 log_info "Checking: $@"
                 python3 build/lint.py "$@"
