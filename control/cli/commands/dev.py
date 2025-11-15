@@ -6,7 +6,6 @@ import click
 
 from control.cli.utils import (
     get_python,
-    log_error,
     log_info,
     log_success,
 )
@@ -119,7 +118,8 @@ def format(file):
 
 
 @dev.command(name="static-analysis")
-def static_analysis():
+@click.option("-v", "--verbose", is_flag=True, help="Show all violations")
+def static_analysis(verbose):
     """Run static analysis on all modules (ruff).
 
     Checks: imports, unused variables, style issues.
@@ -128,49 +128,12 @@ def static_analysis():
 
     BLOCKING: Project is unhealthy if this fails.
     """
-    try:
-        from build.static_analysis_manager import StaticAnalysisManager
-    except ImportError:
-        log_error("Static analysis manager not available")
-        return 1
+    python_cmd = get_python()
 
-    sam = StaticAnalysisManager()
-    modules = ["control", "libs"]
-
-    total_errors = 0
-    total_fixed = 0
-    failed_modules = []
-
-    for module in modules:
-        if not sam.should_run_analysis(module):
-            log_info(f"No changes in {module}, skipping")
-            continue
-
-        log_info(f"Analyzing {module}...")
-        result = sam.run_analysis(module, auto_fix=True)
-
-        total_fixed += result.fixed_count
-        total_errors += len(result.errors)
-
-        if not result.passed:
-            failed_modules.append((module, result.errors))
-
-    if failed_modules:
-        log_error(f"Static analysis FAILED ({total_errors} errors)")
-        for module, errors in failed_modules:
-            log_error(f"  {module}: {len(errors)} errors")
-            for error in errors[:3]:
-                click.echo(f"    - {error}")
-            if len(errors) > 3:
-                click.echo(f"    ... and {len(errors) - 3} more")
-        return 1
-
-    if total_fixed > 0:
-        log_success(f"Static analysis passed ({total_fixed} auto-fixed)")
-    else:
-        log_success("Static analysis passed (no issues)")
-
-    return 0
+    log_info("Running static analysis...")
+    verbose_arg = "true" if verbose else "false"
+    result = subprocess.run([python_cmd, "build/static_analysis_summary.py", verbose_arg])
+    return result.returncode
 
 
 @dev.command()

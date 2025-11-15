@@ -2718,10 +2718,10 @@
       "Found 63 errors."
     ],
     "warnings": [],
-    "fixed_count": 126,
+    "fixed_count": 0,
     "total_issues": 663,
-    "execution_time": 0.040426015853881836,
-    "timestamp": 1763173115.9921787
+    "execution_time": 0.039804697036743164,
+    "timestamp": 1763185660.205284
   },
   "libs": {
     "passed": false,
@@ -2999,7 +2999,7 @@
     "warnings": [],
     "fixed_count": 0,
     "total_issues": 268,
-    "execution_time": 0.03313183784484863,
-    "timestamp": 1763173116.0378501
+    "execution_time": 0.030787944793701172,
+    "timestamp": 1763185660.2488086
   }
 }
