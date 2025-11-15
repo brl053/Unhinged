@@ -206,80 +206,33 @@ class ChatroomView:
             self._session_status = "no_session"
 
     def _create_session_grpc(self):
-        """Create session via SERVICE FRAMEWORK ONLY - NO LEGACY"""
-        # FRAMEWORK ONLY - NO LEGACY CLIENT FACTORY
-        import sys
-        from pathlib import Path as PathlibPath
-
-        # Add libs/python to path for service framework imports
-        project_root = PathlibPath(__file__).parent.parent.parent
-        libs_python_path = project_root / "libs" / "python"
-        if libs_python_path.exists():
-            sys.path.insert(0, str(libs_python_path))
-
-        # Also try relative to current working directory
-        import os
-
-        cwd_libs_path = PathlibPath(os.getcwd()) / "libs" / "python"
-        if cwd_libs_path.exists():
-            sys.path.insert(0, str(cwd_libs_path))
-
+        """Create session using direct ChatService (no gRPC overhead)"""
         from gi.repository import GLib
 
-        try:
-            from libs.python.grpc_clients.client_factory import (
-                _framework_initialized,
-                call_service_method,
-            )
-        except ImportError as e:
-            print(f"❌ Import error: {e}")
-            print(f"📁 Project root: {project_root}")
-            print(f"📁 Libs path: {libs_python_path}")
-            print(f"📁 CWD libs path: {cwd_libs_path}")
-            print(f"📁 sys.path: {sys.path[:5]}")  # First 5 entries
-            GLib.idle_add(self._on_session_creation_failed, f"Import error: {e}")
-            return
-        from unhinged_proto_clients import chat_pb2
-
-        # Framework must be available - NO FALLBACK
-        if not _framework_initialized:
-            GLib.idle_add(
-                self._on_session_creation_failed,
-                "Service framework required but not available",
-            )
-            return
-
-        # Create conversation request
-        request = chat_pb2.CreateConversationRequest(
-            team_id="unhinged-desktop",
-            namespace_id="os-chatroom",
-            title=f"OS Chatroom Session {self._get_timestamp()}",
-            description="Desktop OS Chatroom conversation session",
-            settings=chat_pb2.ConversationSettings(
-                model="llama3.2",
-                temperature=0.7,
-                max_tokens=2048,
-                include_context=True,
-                context_window_size=4096,
-                enable_tools=False,
-            ),
-        )
+        from libs.services import ChatService
 
         try:
-            # Use framework service call - NO LEGACY CLIENT
-            response = call_service_method("chat", "CreateConversation", request, timeout=10.0)
+            # Create chat service instance
+            if not hasattr(self, "_chat_service"):
+                self._chat_service = ChatService()
 
-            # Check response
-            if response and response.response.success:
-                conversation_id = response.conversation.metadata.resource_id
-                GLib.idle_add(self._on_session_created, conversation_id)
-            else:
-                error_msg = response.response.message if response else "Service unavailable"
-                GLib.idle_add(self._on_session_creation_failed, f"Framework error: {error_msg}")
+            # Create new conversation
+            conversation = self._chat_service.create_conversation(
+                metadata={
+                    "title": f"OS Chatroom Session {self._get_timestamp()}",
+                    "description": "Desktop OS Chatroom conversation session",
+                    "model": "llama3.2",
+                    "temperature": 0.7,
+                    "max_tokens": 2048,
+                }
+            )
+
+            # Notify UI on main thread
+            GLib.idle_add(self._on_session_created, conversation.conversation_id)
 
         except Exception as e:
-            print(f"❌ gRPC session creation error: {e}")
-            GLib.idle_add(self._on_session_creation_failed, f"Service framework required: {e}")
+            print(f"❌ Session creation error: {e}")
+            GLib.idle_add(self._on_session_creation_failed, f"Failed to create session: {e}")
 
     # SIMULATION REMOVED - FRAMEWORK ONLY
 
@@ -1308,13 +1261,6 @@ class ChatroomView:
 
         from service_framework import ResourceManager
 
-        from libs.python.grpc_clients.client_factory import _framework_initialized
-
-        # Framework must be available - NO FALLBACK
-        if not _framework_initialized:
-            self._add_error_message("Service framework required for text chat")
-            return
-
         # Get resource manager for hardware-aware processing
         resource_manager = ResourceManager("chatroom_view")
 
@@ -1359,28 +1305,18 @@ class ChatroomView:
             return None
 
     def _text_chat_framework_thread(self, message, thinking_box):
-        """Handle text chat using gRPC chat service + Ollama LLM"""
+        """Handle text chat using direct ChatService + Ollama LLM"""
         try:
             import requests
             from gi.repository import GLib
-            from unhinged_proto_clients import chat_pb2
-
-            from libs.python.grpc_clients.client_factory import call_service_method
 
             # Step 1: Send user message to chat service (store it)
-            request = chat_pb2.SendMessageRequest()
-            request.conversation_id = self._current_session_id
-            request.role = chat_pb2.MESSAGE_ROLE_USER
-            request.content = message
-
-            response = call_service_method("chat", "SendMessage", request, timeout=60.0)
-            if not response or not response.response.success:
-                error_msg = (
-                    response.response.message if response else "Failed to store user message"
-                )
+            try:
+                self._chat_service.send_message(self._current_session_id, "user", message)
+            except Exception as e:
                 GLib.idle_add(
                     self._handle_text_error,
-                    f"Chat service error: {error_msg}",
+                    f"Chat service error: {e}",
                     thinking_box,
                 )
                 return
@@ -1411,12 +1347,9 @@ class ChatroomView:
             # Step 3: Send assistant response to chat service (store it)
             if not assistant_response.startswith("Error:"):
                 try:
-                    response_request = chat_pb2.SendMessageRequest()
-                    response_request.conversation_id = self._current_session_id
-                    response_request.role = chat_pb2.MESSAGE_ROLE_ASSISTANT
-                    response_request.content = assistant_response
-
-                    call_service_method("chat", "SendMessage", response_request, timeout=60.0)
+                    self._chat_service.send_message(
+                        self._current_session_id, "assistant", assistant_response
+                    )
                 except Exception as e:
                     print(f"⚠️ Failed to store assistant response: {e}")
 
@@ -1523,22 +1456,20 @@ class ChatroomView:
             from pathlib import Path
 
             from gi.repository import GLib
-            from unhinged_proto_clients import audio_pb2
 
-            from libs.python.grpc_clients.client_factory import call_service_method
+            from libs.services import TTSService
 
-            # Create TTS request
-            request = audio_pb2.TTSRequest()
-            request.text = text
-            request.voice_id = "default"
+            # Create TTS service instance
+            if not hasattr(self, "_tts_service"):
+                self._tts_service = TTSService()
 
-            # Call TTS service (registered as "text_to_speech" in service framework)
-            response = call_service_method("text_to_speech", "TextToSpeech", request, timeout=30.0)
+            # Generate speech audio
+            audio_data = self._tts_service.generate_voiceover(text, voice="default")
 
-            if response and hasattr(response, "audio_data") and response.audio_data:
+            if audio_data:
                 # Save audio to temporary file
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                    f.write(response.audio_data)
+                    f.write(audio_data)
                     audio_file = f.name
 
                 # Play audio using system player

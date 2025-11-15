@@ -1,19 +1,11 @@
 """
 Unhinged gRPC Client Library
 
-Cross-project gRPC client utilities that work with generated protobuf clients.
+DEPRECATED: This module is being phased out in favor of direct service imports.
+Use libs.services instead for ChatService, TTSService, ImageGenerationService, etc.
+
+The client_factory.py file has been removed. gRPC overhead is being eliminated
+in favor of direct Python service calls.
 """
 
-from .client_factory import (
-    GrpcClientFactory,
-    create_audio_client,
-    create_llm_client,
-    create_vision_client,
-)
-
-__all__ = [
-    "GrpcClientFactory",
-    "create_audio_client",
-    "create_llm_client",
-    "create_vision_client",
-]
+__all__ = []
