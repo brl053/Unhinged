@@ -10,12 +10,17 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-import time
 
-from gi.repository import GLib, Gtk, Pango
+from gi.repository import GLib, Gtk
 
 # Import component library - FRAMEWORK ONLY
 from ..components import FormInput
+
+# Chatroom handlers
+from .chat_image_handler import ChatImageHandler
+from .chat_input_handler import ChatInputHandler
+from .chat_message_display import ChatMessageDisplay
+from .chat_voice_handler import ChatVoiceHandler
 
 # Framework availability - NO FALLBACK
 COMPONENTS_AVAILABLE = True
@@ -56,6 +61,13 @@ class ChatroomView:
 
         # Voice visualization and status
         self._voice_visualizer = None
+
+        # Handlers
+        self.message_display = ChatMessageDisplay(self)
+        self.input_handler = ChatInputHandler(self)
+        self.voice_handler = ChatVoiceHandler(self)
+        self.image_handler = ChatImageHandler(self)
+
         self._recording_status_label = None
 
         # Session management state
@@ -80,9 +92,7 @@ class ChatroomView:
         messages_area.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         # Messages container with design system padding
-        messages_container = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=8
-        )  # sp_2 (8px) for element spacing
+        messages_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)  # sp_2 (8px) for element spacing
         messages_container.set_margin_top(16)  # sp_4 - major component margins
         messages_container.set_margin_bottom(16)  # sp_4 - major component margins
         messages_container.set_margin_start(16)  # sp_4 - major component margins
@@ -138,17 +148,11 @@ class ChatroomView:
             self._chat_input = form_input
             self._voice_visualizer = form_input._voice_visualizer
             self._recording_status_label = form_input._recording_timer_label
-            self._chatroom_voice_button = (
-                form_input._voice_button if hasattr(form_input, "_voice_button") else None
-            )
+            self._chatroom_voice_button = form_input._voice_button if hasattr(form_input, "_voice_button") else None
             self._chatroom_input_row = form_input_widget
 
             # Connect visualizer to audio handler for real-time feedback
-            if (
-                self._voice_visualizer
-                and hasattr(self.app, "audio_handler")
-                and self.app.audio_handler
-            ):
+            if self._voice_visualizer and hasattr(self.app, "audio_handler") and self.app.audio_handler:
                 self.app.audio_handler.set_voice_visualizer(self._voice_visualizer)
 
             input_area.append(form_input_widget)
@@ -184,9 +188,7 @@ class ChatroomView:
         try:
             # Prevent multiple session creation requests
             if self._session_status != "no_session":
-                print(
-                    f"⚠️ Session creation already in progress or session exists (status: {self._session_status})"
-                )
+                print(f"⚠️ Session creation already in progress or session exists (status: {self._session_status})")
                 return
 
             # Clear old messages from previous session
@@ -207,8 +209,6 @@ class ChatroomView:
 
     def _create_session_grpc(self):
         """Create session using direct ChatService (no gRPC overhead)"""
-        from gi.repository import GLib
-
         from libs.services import ChatService
 
         try:
@@ -259,9 +259,7 @@ class ChatroomView:
 
             # Log session creation
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHAT_SESSION_CREATED", f"Created chat session: {session_id}"
-                )
+                self.app.session_logger.log_gui_event("CHAT_SESSION_CREATED", f"Created chat session: {session_id}")
 
             # Show success toast
             if hasattr(self.app, "show_toast"):
@@ -289,262 +287,52 @@ class ChatroomView:
             print(f"❌ Session creation failed callback error: {e}")
 
     def _on_chatroom_content_changed(self, text_editor, content):
-        """Handle content changes in chatroom text editor"""
-        try:
-            # Enable/disable send button based on content AND session state
-            has_content = content and content.strip()
-            has_session = self._session_status == "active"
-            self._chatroom_send_button.set_sensitive(has_content and has_session)
-
-            # Reset typing timer
-            if self._typing_timer_id:
-                GLib.source_remove(self._typing_timer_id)
-                self._typing_timer_id = None
-
-            # Set new timer if there's content
-            if has_content:
-                self._typing_timer_id = GLib.timeout_add_seconds(3, self._on_typing_timeout)
-
-        except Exception as e:
-            print(f"❌ Chatroom content change error: {e}")
+        """Delegate to input_handler"""
+        return self.input_handler.on_chatroom_content_changed(text_editor, content)
 
     def _on_typing_timeout(self):
-        """Handle typing timeout"""
-        self._typing_timer_id = None
-        return False  # Don't repeat
+        """Delegate to input_handler"""
+        return self.input_handler.on_typing_timeout()
 
     def _on_chatroom_focus_gained(self, text_editor):
-        """Handle focus gained in chatroom"""
-        try:
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_FOCUS_GAINED", "User focused on chatroom input"
-                )
-        except Exception as e:
-            print(f"❌ Chatroom focus gained error: {e}")
+        """Delegate to input_handler"""
+        return self.input_handler.on_chatroom_focus_gained(text_editor)
 
     def _on_chatroom_focus_lost(self, text_editor):
-        """Handle focus lost in chatroom"""
-        try:
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_FOCUS_LOST", "User left chatroom input"
-                )
-        except Exception as e:
-            print(f"❌ Chatroom focus lost error: {e}")
+        """Delegate to input_handler"""
+        return self.input_handler.on_chatroom_focus_lost(text_editor)
 
     def _on_voice_recording_started(self, form_input):
-        """Handle voice recording started from FormInput"""
-        try:
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_VOICE_RECORDING_STARTED", "Voice recording started"
-                )
-            self.app.show_toast("Recording...")
-        except Exception as e:
-            print(f"❌ Voice recording started error: {e}")
+        """Delegate to voice_handler"""
+        return self.voice_handler.on_voice_recording_started(form_input)
 
     def _on_voice_recording_stopped(self, form_input):
-        """Handle voice recording stopped from FormInput"""
-        try:
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_VOICE_RECORDING_STOPPED", "Voice recording stopped"
-                )
-            self.app.show_toast("Processing...")
-        except Exception as e:
-            print(f"❌ Voice recording stopped error: {e}")
+        """Delegate to voice_handler"""
+        return self.voice_handler.on_voice_recording_stopped(form_input)
 
     def _on_voice_transcription_completed(self, form_input, transcript):
-        """Handle voice transcription completed from FormInput"""
-        try:
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_VOICE_TRANSCRIPTION_COMPLETED",
-                    f"Transcribed: {transcript[:50]}...",
-                )
-            self.app.show_toast("Transcription complete")
-        except Exception as e:
-            print(f"❌ Voice transcription completed error: {e}")
+        """Delegate to voice_handler"""
+        return self.voice_handler.on_voice_transcription_completed(form_input, transcript)
 
     def _on_chatroom_voice_toggle(self, button):
-        """Handle chatroom voice button toggle - start or stop recording."""
-        try:
-            if not self._is_recording:
-                self._start_toggle_recording()
-            else:
-                self._stop_toggle_recording()
-
-        except Exception as e:
-            print(f"❌ Chatroom voice toggle error: {e}")
-            if hasattr(self.app, "show_toast"):
-                self.app.show_toast(f"Voice recording failed: {e}")
+        """Delegate to voice_handler"""
+        return self.voice_handler.on_chatroom_voice_toggle(button)
 
     def _start_toggle_recording(self):
-        """Start toggle recording with timer and visual feedback"""
-        try:
-            # Always start recording state and timer (works with both new and legacy)
-            self._is_recording = True
-            self._recording_start_time = time.time()
-
-            # Update button appearance
-            self._chatroom_voice_button.add_css_class("recording-active")
-            if hasattr(self._chatroom_voice_button, "set_icon_name"):
-                self._chatroom_voice_button.set_icon_name("media-playback-stop-symbolic")
-            elif hasattr(self._chatroom_voice_button, "get_widget"):
-                widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, "set_icon_name"):
-                    widget.set_icon_name("media-playback-stop-symbolic")
-
-            # Start recording timer (always show timer regardless of backend)
-            self._start_recording_timer()
-
-            # Update voice visualizer and status
-            if self._voice_visualizer:
-                self._voice_visualizer.set_recording_state(True)
-
-            # Show timer display
-            if self._recording_status_label:
-                self._recording_status_label.set_text("00:00")
-                self._recording_status_label.set_visible(True)
-                self._recording_status_label.remove_css_class("dim-label")
-                self._recording_status_label.add_css_class("accent")
-
-            # Show minimal feedback
-            self.app.show_toast("Recording...")
-
-            # Log event
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_TOGGLE_RECORDING_START",
-                    "Started toggle recording in chatroom",
-                )
-
-            # Use AudioHandler (always available now)
-            if hasattr(self.app, "audio_handler") and self.app.audio_handler:
-                self.app.audio_handler.start_recording()
-            else:
-                print("⚠️ AudioHandler not available")
-
-        except Exception as e:
-            print(f"❌ Start toggle recording error: {e}")
-            self.app.show_toast(f"Recording failed: {e}")
-            # Reset state on error
-            self._is_recording = False
-            self._stop_recording_timer()
-            # Reset button appearance
-            self._chatroom_voice_button.remove_css_class("recording-active")
-            if hasattr(self._chatroom_voice_button, "set_icon_name"):
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            elif hasattr(self._chatroom_voice_button, "get_widget"):
-                widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, "set_icon_name"):
-                    widget.set_icon_name("audio-input-microphone-symbolic")
-            # Reset timer display
-            if self._recording_status_label:
-                self._recording_status_label.set_visible(False)
+        """Delegate to voice_handler"""
+        return self.voice_handler.start_toggle_recording()
 
     def _stop_toggle_recording(self):
-        """Stop toggle recording and process transcript"""
-        try:
-            # Always stop recording state and timer
-            self._is_recording = False
-
-            # Reset button appearance
-            self._chatroom_voice_button.remove_css_class("recording-active")
-            if hasattr(self._chatroom_voice_button, "set_icon_name"):
-                self._chatroom_voice_button.set_icon_name("audio-input-microphone-symbolic")
-            elif hasattr(self._chatroom_voice_button, "get_widget"):
-                widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, "set_icon_name"):
-                    widget.set_icon_name("audio-input-microphone-symbolic")
-
-            # Stop timer
-            self._stop_recording_timer()
-
-            # Update voice visualizer and status
-            if self._voice_visualizer:
-                self._voice_visualizer.set_recording_state(False)
-                self._voice_visualizer.set_processing_state(True)
-
-            # Hide timer during processing
-            if self._recording_status_label:
-                self._recording_status_label.set_visible(False)
-
-            # Show minimal feedback
-            self.app.show_toast("Processing...")
-
-            # Log event
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHATROOM_TOGGLE_RECORDING_STOP",
-                    "Stopped toggle recording in chatroom",
-                )
-
-            # Use AudioHandler (always available now)
-            if hasattr(self.app, "audio_handler") and self.app.audio_handler:
-                self.app.audio_handler.stop_recording()
-            else:
-                print("⚠️ AudioHandler not available")
-                self.app.show_toast("Audio recording not available")
-
-        except Exception as e:
-            print(f"❌ Stop toggle recording error: {e}")
-            self.app.show_toast(f"Stop recording failed: {e}")
-            # Reset state on error
-            self._is_recording = False
-            self._stop_recording_timer()
+        """Delegate to voice_handler"""
+        return self.voice_handler.stop_toggle_recording()
 
     def _start_recording_timer(self):
-        """Start the recording timer display"""
-        try:
-
-            def update_timer():
-                if self._is_recording and self._recording_start_time:
-                    elapsed = time.time() - self._recording_start_time
-                    minutes = int(elapsed // 60)
-                    seconds = int(elapsed % 60)
-
-                    # Update timer display in the UI
-                    timer_display = f"{minutes:02d}:{seconds:02d}"
-                    if self._recording_status_label:
-                        self._recording_status_label.set_text(timer_display)
-
-                    # Update button tooltip (simplified)
-                    tooltip_text = "Click to stop recording"
-                    if hasattr(self._chatroom_voice_button, "set_tooltip_text"):
-                        self._chatroom_voice_button.set_tooltip_text(tooltip_text)
-                    elif hasattr(self._chatroom_voice_button, "get_widget"):
-                        widget = self._chatroom_voice_button.get_widget()
-                        if hasattr(widget, "set_tooltip_text"):
-                            widget.set_tooltip_text(tooltip_text)
-
-                    return True  # Continue timer
-                return False  # Stop timer
-
-            # Update every second
-            self._recording_timer_id = GLib.timeout_add_seconds(1, update_timer)
-
-        except Exception as e:
-            print(f"❌ Recording timer error: {e}")
+        """Delegate to voice_handler"""
+        return self.voice_handler.start_recording_timer()
 
     def _stop_recording_timer(self):
-        """Stop the recording timer"""
-        try:
-            if self._recording_timer_id:
-                GLib.source_remove(self._recording_timer_id)
-                self._recording_timer_id = None
-
-            # Reset tooltip
-            if hasattr(self._chatroom_voice_button, "set_tooltip_text"):
-                self._chatroom_voice_button.set_tooltip_text("Click to start/stop recording")
-            elif hasattr(self._chatroom_voice_button, "get_widget"):
-                widget = self._chatroom_voice_button.get_widget()
-                if hasattr(widget, "set_tooltip_text"):
-                    widget.set_tooltip_text("Click to start/stop recording")
-
-        except Exception as e:
-            print(f"❌ Stop recording timer error: {e}")
+        """Delegate to voice_handler"""
+        return self.voice_handler.stop_recording_timer()
 
     def _on_chatroom_send_clicked(self, button):
         """Handle send button click in chatroom"""
@@ -571,7 +359,7 @@ class ChatroomView:
                 # NOTE: When FormInput gains an 'image' input type, this command will be renamed
                 # to avoid naming collision. Current plan: /generate-image or /img
                 prompt = message_stripped[7:].strip()  # Remove "/image " prefix
-                self._handle_slash_image_command(prompt)
+                self.image_handler.handle_slash_image_command(prompt)
 
                 # Clear input
                 if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
@@ -620,155 +408,16 @@ class ChatroomView:
                 self.app.show_toast(f"Send failed: {e}")
 
     def _add_chat_message(self, sender, message, message_type="user"):
-        """Add a message to the chat display"""
-        try:
-            if not self._messages_container:
-                return
-
-            # Create message container
-            message_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            message_box.set_margin_bottom(12)
-
-            # Create sender label
-            sender_label = Gtk.Label(label=sender)
-            sender_label.set_halign(Gtk.Align.START)
-            sender_label.add_css_class("caption")
-
-            if message_type == "user":
-                sender_label.add_css_class("accent")
-            elif message_type == "assistant":
-                sender_label.add_css_class("success")
-            elif message_type == "error":
-                sender_label.add_css_class("error")
-            elif message_type == "system":
-                sender_label.add_css_class("dim-label")
-            elif message_type == "tool":
-                sender_label.add_css_class("warning")
-
-            message_box.append(sender_label)
-
-            # Create message label
-            message_label = Gtk.Label(label=message)
-            message_label.set_halign(Gtk.Align.START)
-            message_label.set_wrap(True)
-            message_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
-            message_label.set_selectable(True)
-            message_label.set_max_width_chars(
-                80
-            )  # Prevent very long messages from stretching window
-
-            message_box.append(message_label)
-
-            # Add microphone button for assistant messages
-            if message_type == "assistant":
-                button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-                button_box.set_halign(Gtk.Align.START)
-                button_box.set_margin_top(8)
-
-                mic_button = Gtk.Button(label="🎤 Hear")
-                mic_button.set_tooltip_text("Play text-to-speech audio")
-                mic_button.connect("clicked", self._on_tts_button_clicked, message)
-
-                button_box.append(mic_button)
-                message_box.append(button_box)
-
-            # Add to messages container
-            self._messages_container.append(message_box)
-
-            # Auto-scroll to bottom
-            self._scroll_to_bottom()
-
-        except Exception as e:
-            print(f"❌ Add chat message error: {e}")
+        """Delegate to message_display handler"""
+        return self.message_display.add_chat_message(sender, message, message_type)
 
     def _scroll_to_bottom(self):
-        """Scroll chat to bottom"""
-        try:
-            if not self._messages_container:
-                return
-
-            # Find the scrolled window parent
-            parent = self._messages_container.get_parent()
-            while parent and not isinstance(parent, Gtk.ScrolledWindow):
-                parent = parent.get_parent()
-
-            if parent:
-                vadj = parent.get_vadjustment()
-                if vadj:
-                    # Use idle_add to ensure scroll happens after widget is rendered
-                    GLib.idle_add(lambda: vadj.set_value(vadj.get_upper() - vadj.get_page_size()))
-
-        except Exception as e:
-            print(f"❌ Scroll to bottom error: {e}")
+        """Delegate to message_display handler"""
+        return self.message_display.scroll_to_bottom()
 
     def _clear_message_container(self):
-        """Clear all messages from the chat display"""
-        try:
-            if not self._messages_container:
-                return
-
-            # Remove all child widgets
-            while True:
-                child = self._messages_container.get_first_child()
-                if not child:
-                    break
-                self._messages_container.remove(child)
-
-        except Exception as e:
-            print(f"❌ Clear message container error: {e}")
-
-    def _handle_slash_image_command(self, prompt: str):
-        """Handle /image command for GPU-accelerated image generation"""
-        thinking_box = None
-        try:
-            # Add user command to chat
-            self._add_chat_message("You", f"/image {prompt}", "user")
-
-            # Add thinking indicator
-            thinking_box = self._add_thinking_indicator()
-
-            # Submit to thread pool for image generation
-            import sys
-            from pathlib import Path as PathlibPath
-
-            project_root = PathlibPath(__file__).parent.parent.parent
-
-            # Add project root to path for proper imports
-            sys.path.insert(0, str(project_root))
-
-            from libs.services import ImageGenerationService
-
-            # Run image generation in background thread
-            def generate_image_thread():
-                try:
-                    service = ImageGenerationService()
-                    result = service.generate_image(
-                        prompt=prompt,
-                        num_inference_steps=20,  # Fast generation
-                        guidance_scale=7.5,
-                        height=512,
-                        width=512,
-                    )
-
-                    # Update UI on main thread
-                    GLib.idle_add(self._display_generated_image, thinking_box, result, prompt)
-
-                except Exception as e:
-                    print(f"❌ Image generation error: {e}")
-                    GLib.idle_add(self._add_error_message, f"Image generation failed: {e}")
-
-            # Submit to thread pool
-            import threading
-
-            thread = threading.Thread(target=generate_image_thread, daemon=True)
-            thread.start()
-
-        except Exception as e:
-            print(f"❌ /image command error: {e}")
-            # Remove thinking indicator if it was created
-            if thinking_box and thinking_box.get_parent():
-                self._messages_container.remove(thinking_box)
-            self._add_error_message(f"Command failed: {e}")
+        """Delegate to message_display handler"""
+        return self.message_display.clear_message_container()
 
     def _display_generated_image(self, thinking_box, result, prompt):
         """Display generated image in chat using GeneratedArtifactWidget"""
@@ -871,382 +520,9 @@ class ChatroomView:
         # This method is disabled - use /image command instead
         pass
 
-    def _add_image_generation_indicator(self, prompt):
-        """Add image generation progress indicator to chat"""
-        try:
-            # Create thinking indicator container
-            thinking_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-            thinking_container.add_css_class("message-container")
-            thinking_container.add_css_class("assistant-message")
-            thinking_container.set_margin_top(8)
-            thinking_container.set_margin_bottom(8)
-            thinking_container.set_margin_start(12)
-            thinking_container.set_margin_end(12)
-
-            # Add image generation icon
-            icon = Gtk.Image.new_from_icon_name("image-x-generic-symbolic")
-            icon.set_icon_size(Gtk.IconSize.LARGE)
-            thinking_container.append(icon)
-
-            # Add status label
-            status_label = Gtk.Label()
-            status_label.set_markup(f"<b>Generating image...</b>\nPrompt: {prompt[:50]}...")
-            status_label.set_halign(Gtk.Align.START)
-            status_label.set_valign(Gtk.Align.CENTER)
-            thinking_container.append(status_label)
-
-            # Add progress bar
-            progress_bar = Gtk.ProgressBar()
-            progress_bar.set_pulse_step(0.1)
-            progress_bar.set_show_text(True)
-            progress_bar.set_text("Initializing...")
-            progress_bar.set_hexpand(True)
-            thinking_container.append(progress_bar)
-
-            # Store progress bar reference for updates
-            thinking_container.progress_bar = progress_bar
-            thinking_container.status_label = status_label
-
-            # Add to messages container
-            self._messages_container.append(thinking_container)
-            self._scroll_to_bottom()
-
-            return thinking_container
-
-        except Exception as e:
-            print(f"❌ Add image generation indicator error: {e}")
-            return None
-
-    def _update_image_progress(self, thinking_box, progress_data):
-        """Update image generation progress"""
-        try:
-            if thinking_box and hasattr(thinking_box, "progress_bar"):
-                progress = progress_data.get("progress", 0)
-                step = progress_data.get("step", 0)
-                total_steps = progress_data.get("total_steps", 25)
-
-                thinking_box.progress_bar.set_fraction(progress)
-                thinking_box.progress_bar.set_text(
-                    f"Step {step}/{total_steps} ({int(progress * 100)}%)"
-                )
-
-        except Exception as e:
-            print(f"❌ Update image progress error: {e}")
-
-    def _display_generated_images(self, thinking_box, result, original_message):
-        """Display generated images in chat interface"""
-        try:
-            # Remove thinking indicator
-            if thinking_box and thinking_box.get_parent():
-                self._messages_container.remove(thinking_box)
-
-            # Create image message container
-            image_container = self._create_image_message_container(result, original_message)
-
-            # Add to chat
-            self._messages_container.append(image_container)
-
-            # Scroll to bottom
-            self._scroll_to_bottom()
-
-        except Exception as e:
-            print(f"❌ Display images error: {e}")
-
-    def _create_image_message_container(self, result, original_message):
-        """Create container for generated images"""
-        try:
-            container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-            container.add_css_class("message-container")
-            container.add_css_class("assistant-message")
-            container.set_margin_top(8)
-            container.set_margin_bottom(8)
-            container.set_margin_start(12)
-            container.set_margin_end(12)
-
-            # Add generation info
-            info_label = Gtk.Label()
-            info_label.set_markup(f"<b>Generated Images</b> (Prompt: {original_message[:50]}...)")
-            info_label.set_halign(Gtk.Align.START)
-            container.append(info_label)
-
-            # Add images
-            images_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-            images_box.set_homogeneous(True)
-
-            for image_path in result.get("images", []):
-                if self._image_path_exists(image_path):
-                    image_widget = self._create_image_widget(image_path)
-                    images_box.append(image_widget)
-
-            container.append(images_box)
-
-            # Add metadata
-            metadata_label = Gtk.Label()
-            generation_time = result.get("generation_time", 0)
-            seed = result.get("seed", "Unknown")
-            metadata_label.set_markup(
-                f"<small>Generated in {generation_time:.1f}s • Seed: {seed}</small>"
-            )
-            metadata_label.add_css_class("dim-label")
-            metadata_label.set_halign(Gtk.Align.START)
-            container.append(metadata_label)
-
-            return container
-
-        except Exception as e:
-            print(f"❌ Create image message container error: {e}")
-            return Gtk.Label(label="Error displaying generated images")
-
-    def _create_image_widget(self, image_path):
-        """Create image widget with progressive loading and memory management"""
-        try:
-            # Check memory usage for progressive loading decision
-            memory_threshold = 75.0  # Switch to thumbnails above 75% memory usage
-
-            try:
-                import psutil
-
-                memory_percent = psutil.virtual_memory().percent
-                use_thumbnail = memory_percent > memory_threshold
-            except ImportError:
-                use_thumbnail = False  # Default to full images if psutil not available
-
-            if use_thumbnail:
-                return self._create_thumbnail_widget(image_path)
-            else:
-                return self._create_full_image_widget(image_path)
-
-        except Exception as e:
-            print(f"❌ Create image widget error: {e}")
-            return Gtk.Label(label="Error loading image")
-
-    def _create_full_image_widget(self, image_path):
-        """Create full-size image widget"""
-        try:
-            # Create image widget
-            image = Gtk.Picture()
-            image.set_filename(image_path)
-            image.set_size_request(256, 256)
-            image.set_content_fit(Gtk.ContentFit.COVER)
-            image.add_css_class("generated-image")
-
-            # Make it clickable for full-size view
-            click_controller = Gtk.GestureClick()
-            click_controller.connect(
-                "pressed",
-                lambda gesture, n_press, x, y: self._show_full_image(image_path),
-            )
-            image.add_controller(click_controller)
-
-            return image
-
-        except Exception as e:
-            print(f"❌ Create full image widget error: {e}")
-            return Gtk.Label(label="Error loading full image")
-
-    def _create_thumbnail_widget(self, image_path):
-        """Create thumbnail widget for memory-constrained situations"""
-        try:
-            # Create container for thumbnail with load button
-            container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            container.set_size_request(256, 256)
-            container.add_css_class("generated-image-thumbnail")
-
-            # Create thumbnail placeholder
-            thumbnail = Gtk.Image()
-            thumbnail.set_from_icon_name("image-x-generic-symbolic")
-            thumbnail.set_pixel_size(128)
-            thumbnail.add_css_class("thumbnail-placeholder")
-            container.append(thumbnail)
-
-            # Add load button
-            load_button = Gtk.Button()
-            load_button.set_label("Load Image")
-            load_button.add_css_class("suggested-action")
-            load_button.connect("clicked", lambda btn: self._load_full_image(container, image_path))
-            container.append(load_button)
-
-            # Add memory info
-            try:
-                import psutil
-
-                memory_percent = psutil.virtual_memory().percent
-                info_label = Gtk.Label()
-                info_label.set_markup(
-                    f"<small>Thumbnail mode (Memory: {memory_percent:.1f}%)</small>"
-                )
-                info_label.add_css_class("dim-label")
-                container.append(info_label)
-            except ImportError:
-                pass
-
-            # Store image path for later loading
-            container.image_path = image_path
-
-            return container
-
-        except Exception as e:
-            print(f"❌ Create thumbnail widget error: {e}")
-            return Gtk.Label(label="Error creating thumbnail")
-
-    def _load_full_image(self, container, image_path):
-        """Load full image replacing thumbnail"""
-        try:
-            # Check memory again before loading
-            try:
-                import psutil
-
-                memory_percent = psutil.virtual_memory().percent
-                if memory_percent > 85.0:
-                    # Show warning instead of loading
-                    self._show_memory_warning(container, memory_percent)
-                    return
-            except ImportError:
-                pass
-
-            # Create full image widget
-            full_image = self._create_full_image_widget(image_path)
-
-            # Replace container content
-            parent = container.get_parent()
-            if parent:
-                parent.remove(container)
-                parent.append(full_image)
-
-        except Exception as e:
-            print(f"❌ Load full image error: {e}")
-
-    def _show_memory_warning(self, container, memory_percent):
-        """Show memory warning instead of loading image"""
-        try:
-            # Clear container
-            child = container.get_first_child()
-            while child:
-                next_child = child.get_next_sibling()
-                container.remove(child)
-                child = next_child
-
-            # Add warning icon
-            warning_icon = Gtk.Image()
-            warning_icon.set_from_icon_name("dialog-warning-symbolic")
-            warning_icon.set_pixel_size(64)
-            warning_icon.add_css_class("warning")
-            container.append(warning_icon)
-
-            # Add warning message
-            warning_label = Gtk.Label()
-            warning_label.set_markup(
-                f"<b>Memory Usage High</b>\n{memory_percent:.1f}% used\n\nClose some applications\nto load images"
-            )
-            warning_label.set_justify(Gtk.Justification.CENTER)
-            warning_label.add_css_class("warning-text")
-            container.append(warning_label)
-
-            # Add view button for external viewer
-            view_button = Gtk.Button()
-            view_button.set_label("Open Externally")
-            view_button.connect(
-                "clicked", lambda btn: self._open_image_externally(container.image_path)
-            )
-            container.append(view_button)
-
-        except Exception as e:
-            print(f"❌ Show memory warning error: {e}")
-
-    def _open_image_externally(self, image_path):
-        """Open image in external viewer"""
-        try:
-            import os
-            import subprocess
-
-            if os.path.exists(image_path):
-                # Use xdg-open on Linux
-                subprocess.Popen(["xdg-open", image_path])
-            else:
-                print(f"❌ Image file not found: {image_path}")
-
-        except Exception as e:
-            print(f"❌ Open image externally error: {e}")
-
-    def _image_path_exists(self, image_path):
-        """Check if image path exists"""
-        try:
-            from pathlib import Path
-
-            return Path(image_path).exists()
-        except:
-            return False
-
-    def _show_full_image(self, image_path):
-        """Show full-size image in dialog"""
-        try:
-            # Create dialog
-            dialog = Gtk.Dialog()
-            dialog.set_title("Generated Image")
-            dialog.set_modal(True)
-            dialog.set_transient_for(self.app.window)
-            dialog.set_default_size(800, 600)
-
-            # Add image
-            image = Gtk.Picture()
-            image.set_filename(image_path)
-            image.set_content_fit(Gtk.ContentFit.CONTAIN)
-
-            scrolled = Gtk.ScrolledWindow()
-            scrolled.set_child(image)
-
-            dialog.get_content_area().append(scrolled)
-
-            # Add close button
-            dialog.add_button("Close", Gtk.ResponseType.CLOSE)
-            dialog.connect("response", lambda d, r: d.destroy())
-
-            dialog.present()
-
-        except Exception as e:
-            print(f"❌ Show full image error: {e}")
-
-    def _show_generation_error(self, thinking_box, error_msg):
-        """Show image generation error"""
-        try:
-            # Remove thinking indicator
-            if thinking_box and thinking_box.get_parent():
-                self._messages_container.remove(thinking_box)
-
-            # Add error message
-            self._add_error_message(f"Image generation failed: {error_msg}")
-
-        except Exception as e:
-            print(f"❌ Show generation error: {e}")
-
     def _add_error_message(self, error_msg):
-        """Add error message to chat"""
-        try:
-            error_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-            error_container.add_css_class("message-container")
-            error_container.add_css_class("error-message")
-            error_container.set_margin_top(8)
-            error_container.set_margin_bottom(8)
-            error_container.set_margin_start(12)
-            error_container.set_margin_end(12)
-
-            # Add error icon
-            icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-            icon.add_css_class("error")
-            error_container.append(icon)
-
-            # Add error label
-            label = Gtk.Label()
-            label.set_markup(f"<b>Error:</b> {error_msg}")
-            label.set_halign(Gtk.Align.START)
-            label.set_wrap(True)
-            error_container.append(label)
-
-            self._messages_container.append(error_container)
-            self._scroll_to_bottom()
-
-        except Exception as e:
-            print(f"❌ Add error message error: {e}")
+        """Delegate to message_display handler"""
+        return self.message_display.add_error_message(error_msg)
 
     def _send_text_message_framework(self, message):
         """Send text message using FRAMEWORK ONLY - NO LEGACY"""
@@ -1268,41 +544,14 @@ class ChatroomView:
         thinking_box = self._add_thinking_indicator()
 
         # Submit to I/O thread pool for text processing
-        future = resource_manager.submit_io_task(
-            self._text_chat_framework_thread, message, thinking_box
-        )
+        future = resource_manager.submit_io_task(self._text_chat_framework_thread, message, thinking_box)
 
         # Store future for potential cancellation
         thinking_box.chat_future = future
 
     def _add_thinking_indicator(self):
-        """Add thinking indicator to chat"""
-        try:
-            thinking_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-            thinking_box.set_margin_bottom(12)
-
-            # Assistant label
-            assistant_label = Gtk.Label(label="Assistant")
-            assistant_label.set_halign(Gtk.Align.START)
-            assistant_label.add_css_class("caption")
-            assistant_label.add_css_class("success")
-
-            # Thinking indicator
-            thinking_label = Gtk.Label(label="Thinking...")
-            thinking_label.set_halign(Gtk.Align.START)
-            thinking_label.add_css_class("dim-label")
-
-            thinking_box.append(assistant_label)
-            thinking_box.append(thinking_label)
-
-            self._messages_container.append(thinking_box)
-            self._scroll_to_bottom()
-
-            return thinking_box
-
-        except Exception as e:
-            print(f"❌ Add thinking indicator error: {e}")
-            return None
+        """Delegate to message_display handler"""
+        return self.message_display.add_thinking_indicator()
 
     def _text_chat_framework_thread(self, message, thinking_box):
         """Handle text chat using direct ChatService + Ollama LLM"""
@@ -1347,9 +596,7 @@ class ChatroomView:
             # Step 3: Send assistant response to chat service (store it)
             if not assistant_response.startswith("Error:"):
                 try:
-                    self._chat_service.send_message(
-                        self._current_session_id, "assistant", assistant_response
-                    )
+                    self._chat_service.send_message(self._current_session_id, "assistant", assistant_response)
                 except Exception as e:
                     print(f"⚠️ Failed to store assistant response: {e}")
 
@@ -1373,24 +620,16 @@ class ChatroomView:
 
             # Log the interaction
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}"
-                )
+                self.app.session_logger.log_gui_event("TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}")
 
             # Re-enable send button only if there's content AND active session
             if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                has_content = (
-                    self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
-                )
+                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
             elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
-                has_content = (
-                    self._chat_input.get_content() and self._chat_input.get_content().strip()
-                )
+                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
             else:
                 buffer = self._chat_input.get_buffer()
-                has_content = buffer.get_text(
-                    buffer.get_start_iter(), buffer.get_end_iter(), False
-                ).strip()
+                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
             has_session = self._session_status == "active"
             self._chatroom_send_button.set_sensitive(has_content and has_session)
 
@@ -1409,18 +648,12 @@ class ChatroomView:
 
             # Re-enable send button only if there's content AND active session
             if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                has_content = (
-                    self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
-                )
+                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
             elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
-                has_content = (
-                    self._chat_input.get_content() and self._chat_input.get_content().strip()
-                )
+                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
             else:
                 buffer = self._chat_input.get_buffer()
-                has_content = buffer.get_text(
-                    buffer.get_start_iter(), buffer.get_end_iter(), False
-                ).strip()
+                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
             has_session = self._session_status == "active"
             self._chatroom_send_button.set_sensitive(has_content and has_session)
 
@@ -1432,150 +665,21 @@ class ChatroomView:
             print(f"❌ Handle text error: {e}")
 
     def _on_tts_button_clicked(self, button, text):
-        """Handle TTS button click - generate and play audio"""
-        try:
-            button.set_sensitive(False)
-            button.set_label("🎤 Playing...")
-
-            # Run TTS in background thread
-            import threading
-
-            thread = threading.Thread(target=self._tts_thread, args=(text, button), daemon=True)
-            thread.start()
-
-        except Exception as e:
-            print(f"❌ TTS button click error: {e}")
-            button.set_sensitive(True)
-            button.set_label("🎤 Hear")
+        """Delegate to message_display handler"""
+        return self.message_display._on_tts_button_clicked(button, text)
 
     def _tts_thread(self, text, button):
-        """Generate and play TTS audio in background thread"""
-        try:
-            import subprocess
-            import tempfile
-            from pathlib import Path
-
-            from gi.repository import GLib
-
-            from libs.services import TTSService
-
-            # Create TTS service instance
-            if not hasattr(self, "_tts_service"):
-                self._tts_service = TTSService()
-
-            # Generate speech audio
-            audio_data = self._tts_service.generate_voiceover(text, voice="default")
-
-            if audio_data:
-                # Save audio to temporary file
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                    f.write(audio_data)
-                    audio_file = f.name
-
-                # Play audio using system player
-                try:
-                    subprocess.run(["aplay", audio_file], check=True, timeout=60)
-                except FileNotFoundError:
-                    # Fallback to paplay if aplay not available
-                    subprocess.run(["paplay", audio_file], check=True, timeout=60)
-                finally:
-                    # Clean up temp file
-                    Path(audio_file).unlink(missing_ok=True)
-
-                # Update button on main thread
-                GLib.idle_add(lambda: self._update_tts_button(button, "✅ Done"))
-                GLib.idle_add(lambda: button.set_sensitive(True))
-                # Reset button label after 2 seconds
-                GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
-            else:
-                GLib.idle_add(lambda: self._update_tts_button(button, "❌ Failed"))
-                GLib.idle_add(lambda: button.set_sensitive(True))
-                # Reset button label after 2 seconds
-                GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
-
-        except Exception as e:
-            print(f"❌ TTS thread error: {e}")
-            from gi.repository import GLib
-
-            GLib.idle_add(lambda: self._update_tts_button(button, "❌ Error"))
-            GLib.idle_add(lambda: button.set_sensitive(True))
-            # Reset button label after 2 seconds
-            GLib.timeout_add(2000, lambda: self._update_tts_button(button, "🎤 Hear"))
+        """Delegate to message_display handler"""
+        return self.message_display._tts_thread(text, button)
 
     def _update_tts_button(self, button, label):
-        """Update TTS button label"""
-        try:
-            button.set_label(label)
-        except Exception as e:
-            print(f"❌ Update TTS button error: {e}")
+        """Delegate to message_display handler"""
+        return self.message_display._update_tts_button(button, label)
 
     def add_voice_transcript(self, transcript):
-        """Add voice transcript to input field with proper UI refresh (called from parent app)"""
-        try:
-            # Handle FormInput (new centralized component)
-            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                # FormInput handles append/replace based on voice_mode
-                self._chat_input.append_transcript(transcript)
-                new_text = self._chat_input.get_value()
-            # Handle TextEditor (legacy)
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
-                current_text = self._chat_input.get_content()
-                if current_text.strip():
-                    # Append to existing text with space
-                    new_text = f"{current_text} {transcript}"
-                else:
-                    # Set as new text
-                    new_text = transcript
-
-                self._chat_input.set_content(new_text)
-            else:
-                # Fallback for basic TextView
-                buffer = self._chat_input.get_buffer()
-                current_text = buffer.get_text(
-                    buffer.get_start_iter(), buffer.get_end_iter(), False
-                )
-
-                new_text = f"{current_text} {transcript}" if current_text.strip() else transcript
-
-                buffer.set_text(new_text)
-
-            # Enable send button only if there's content AND active session
-            has_content = new_text and new_text.strip()
-            has_session = self._session_status == "active"
-            self._chatroom_send_button.set_sensitive(has_content and has_session)
-
-            # Reset voice visualizer and status
-            if self._voice_visualizer:
-                self._voice_visualizer.set_processing_state(False)
-
-            # Hide timer after completion
-            if self._recording_status_label:
-                self._recording_status_label.set_visible(False)
-
-            # Force UI refresh to prevent blank view issue
-            from gi.repository import GLib
-
-            GLib.idle_add(self._refresh_ui_after_transcript)
-
-        except Exception as e:
-            print(f"❌ Add voice transcript error: {e}")
-            if hasattr(self.app, "show_toast"):
-                self.app.show_toast(f"Transcript: {transcript}")
+        """Delegate to voice_handler (called from parent app)"""
+        return self.voice_handler.add_voice_transcript(transcript)
 
     def _refresh_ui_after_transcript(self):
-        """Force UI refresh after transcript to prevent blank view (called via GLib.idle_add)"""
-        try:
-            # Force the input widget to refresh and show the updated content
-            if self._chat_input:
-                # FormInput is a composite component, so we need to call queue_draw on its widget
-                if hasattr(self._chat_input, "widget") and self._chat_input.widget:
-                    self._chat_input.widget.queue_draw()
-
-            # Ensure the input area is visible and focused
-            if hasattr(self._chat_input, "grab_focus"):
-                self._chat_input.grab_focus()
-
-            return False  # Don't repeat this idle callback
-        except Exception as e:
-            print(f"❌ UI refresh after transcript error: {e}")
-            return False
+        """Delegate to voice_handler"""
+        return self.voice_handler.refresh_ui_after_transcript()
