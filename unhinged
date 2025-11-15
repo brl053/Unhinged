@@ -145,6 +145,10 @@ ${YELLOW}TESTING COMMANDS:${NC}
 ${YELLOW}SETUP COMMANDS:${NC}
   setup                       Install git hooks and dependencies
 
+${YELLOW}GIT COMMANDS:${NC}
+  commit "message"            Commit with validation (tests + lint)
+  reset                       Nuclear reset (stop, clean, reset git)
+
 ${YELLOW}EXAMPLES:${NC}
   unhinged                    # Normal user: just start the system
   unhinged dev                # Power user: development mode
@@ -731,21 +735,43 @@ cmd_test() {
 
     if [ -z "$pattern" ]; then
         log_info "Running all tests..."
+        local failed=0
         # Run individual test files to avoid import issues
         for test_file in control/gtk4_gui/tests/test_*.py; do
             if [ "$test_file" != "control/gtk4_gui/tests/test_components.py" ]; then
                 echo ""
                 log_info "Running: $(basename $test_file)"
-                $PYTHON_CMD "$test_file" || true
+                if ! $PYTHON_CMD "$test_file"; then
+                    failed=$((failed + 1))
+                fi
             fi
         done
+
+        if [ $failed -gt 0 ]; then
+            log_error "$failed test file(s) failed"
+            return 1
+        else
+            log_success "All tests passed"
+            return 0
+        fi
     else
         log_info "Running tests matching: $pattern"
+        local failed=0
         for test_file in control/gtk4_gui/tests/test_*.py; do
             if [[ "$test_file" == *"$pattern"* ]] && [ "$test_file" != "control/gtk4_gui/tests/test_components.py" ]; then
-                $PYTHON_CMD "$test_file"
+                if ! $PYTHON_CMD "$test_file"; then
+                    failed=$((failed + 1))
+                fi
             fi
         done
+
+        if [ $failed -gt 0 ]; then
+            log_error "$failed test file(s) failed"
+            return 1
+        else
+            log_success "Tests passed"
+            return 0
+        fi
     fi
 }
 
@@ -767,6 +793,69 @@ cmd_setup() {
     echo "  1. Run tests: ./unhinged test"
     echo "  2. Check linting: ./unhinged lint check"
     echo "  3. Auto-fix issues: ./unhinged lint fix"
+}
+
+# Commit command handler
+cmd_commit() {
+    if [ -z "$1" ]; then
+        log_error "Commit message required"
+        echo "Usage: ./unhinged commit 'message'"
+        exit 1
+    fi
+
+    log_info "Running pre-commit validation..."
+
+    # Run tests
+    log_info "🧪 Running tests..."
+    if ! cmd_test; then
+        log_error "Tests failed. Fix tests or use 'git commit' to bypass."
+        return 1
+    fi
+
+    # Run linting check
+    log_info "📋 Checking linting..."
+    local lint_output=$(python3 build/lint_summary.py false 2>&1)
+    if echo "$lint_output" | grep -q "FATAL"; then
+        log_error "Fatal linting violations found. Fix or use 'git commit' to bypass."
+        echo "$lint_output" | grep "FATAL"
+        return 1
+    fi
+
+    # Commit
+    log_info "📝 Committing..."
+    git add -A
+    git commit -m "$*"
+    log_success "Committed: $*"
+}
+
+# Reset command handler
+cmd_reset() {
+    log_warning "⚠️  NUCLEAR RESET - This will:"
+    echo "  - Kill all running processes"
+    echo "  - Clear Python cache"
+    echo "  - Reset git to HEAD"
+    echo "  - Clean all build artifacts"
+    echo ""
+    read -p "Continue? (y/N): " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Stopping services..."
+        cmd_stop 2>/dev/null || true
+
+        log_info "Clearing Python cache..."
+        python3 build/preflight_check.py force-clean 2>/dev/null || true
+
+        log_info "Cleaning build artifacts..."
+        make clean 2>/dev/null || true
+
+        log_info "Resetting git..."
+        git reset --hard HEAD
+
+        log_success "✅ Reset complete"
+    else
+        log_info "Reset cancelled"
+    fi
 }
 
 # Main command dispatcher
@@ -814,6 +903,10 @@ main() {
 
         # Setup commands
         setup)          cmd_setup "$@" ;;
+
+        # Git commands
+        commit)         cmd_commit "$@" ;;
+        reset)          cmd_reset "$@" ;;
 
         # Help and unknown commands
         help|--help|-h) show_help ;;
