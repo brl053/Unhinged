@@ -178,9 +178,7 @@ class RegistryUI:
         dialog.set_title("Create New Graph")
         return dialog
 
-    def _handle_create_graph(
-        self, name: str, description: str, graph_type: str, dialog
-    ):
+    def _handle_create_graph(self, name: str, description: str, graph_type: str, dialog):
         """Handle graph creation"""
         if not name.strip():
             self._update_status("❌ Graph name is required")
@@ -296,9 +294,7 @@ class RegistryUI:
         delete_btn.add_css_class("destructive-action")
         delete_btn.connect(
             "clicked",
-            lambda b: self._on_delete_clicked(
-                graph["id"], graph.get("name", "Unnamed")
-            ),
+            lambda b: self._on_delete_clicked(graph["id"], graph.get("name", "Unnamed")),
         )
         action_box.append(delete_btn)
 

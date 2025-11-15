@@ -9,11 +9,12 @@ Philosophy: Start with the smallest, fastest model (like running Doom on everyth
 Then benchmark and allow users to choose larger models later.
 """
 
-import torch
 import logging
-from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, Any
+from pathlib import Path
+from typing import Any
+
+import torch
 from diffusers import StableDiffusionPipeline
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class ImageGenerationService:
     # Model configuration - smallest, fastest model
     MODEL_ID = "runwayml/stable-diffusion-v1-5"
 
-    def __init__(self, output_dir: Optional[Path] = None):
+    def __init__(self, output_dir: Path | None = None):
         """
         Initialize image generation service.
 
@@ -33,9 +34,7 @@ class ImageGenerationService:
             output_dir: Directory to save generated images.
                        Defaults to /build/tmp/generated_images/
         """
-        self.output_dir = (
-            output_dir or Path.cwd() / "build" / "tmp" / "generated_images"
-        )
+        self.output_dir = output_dir or Path.cwd() / "build" / "tmp" / "generated_images"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         self.pipeline = None
@@ -84,8 +83,8 @@ class ImageGenerationService:
         guidance_scale: float = 7.5,
         height: int = 512,
         width: int = 512,
-        seed: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        seed: int | None = None,
+    ) -> dict[str, Any]:
         """
         Generate an image from a text prompt.
 
@@ -172,7 +171,7 @@ class ImageGenerationService:
             logger.error(f"Image generation failed: {e}")
             raise
 
-    def get_benchmark_stats(self) -> Dict[str, Any]:
+    def get_benchmark_stats(self) -> dict[str, Any]:
         """Get benchmark statistics"""
         if not self.generation_times:
             return {
@@ -184,8 +183,7 @@ class ImageGenerationService:
 
         return {
             "total_generations": self.total_generations,
-            "average_generation_time": sum(self.generation_times)
-            / len(self.generation_times),
+            "average_generation_time": sum(self.generation_times) / len(self.generation_times),
             "min_generation_time": min(self.generation_times),
             "max_generation_time": max(self.generation_times),
             "device": self.device,

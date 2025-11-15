@@ -100,9 +100,7 @@ class AudioTable(AdwComponentBase):
 
         self.type_filter_dropdown = Gtk.DropDown()
         self.type_filter_dropdown.set_tooltip_text("Filter by connection type")
-        self.type_filter_dropdown.connect(
-            "notify::selected", self._on_type_filter_changed
-        )
+        self.type_filter_dropdown.connect("notify::selected", self._on_type_filter_changed)
 
         type_filter_box.append(type_label)
         type_filter_box.append(self.type_filter_dropdown)
@@ -115,15 +113,11 @@ class AudioTable(AdwComponentBase):
         volume_label.add_css_class("ds-text-caption")
         volume_box.append(volume_label)
 
-        self.volume_master_scale = Gtk.Scale.new_with_range(
-            Gtk.Orientation.HORIZONTAL, 0, 100, 5
-        )
+        self.volume_master_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 5)
         self.volume_master_scale.set_value(50)  # Default volume
         self.volume_master_scale.set_size_request(120, -1)
         self.volume_master_scale.set_tooltip_text("Master volume control")
-        self.volume_master_scale.connect(
-            "value-changed", self._on_master_volume_changed
-        )
+        self.volume_master_scale.connect("value-changed", self._on_master_volume_changed)
         volume_box.append(self.volume_master_scale)
 
         master_volume_label = Gtk.Label(label="50%")
@@ -269,17 +263,12 @@ class AudioTable(AdwComponentBase):
             filtered = [
                 d
                 for d in filtered
-                if (
-                    search_lower in d.name.lower()
-                    or search_lower in d.description.lower()
-                )
+                if (search_lower in d.name.lower() or search_lower in d.description.lower())
             ]
 
         # Apply type filter
         if self.filter_type and self.filter_type != "All":
-            filtered = [
-                d for d in filtered if d.connection_type == self.filter_type.lower()
-            ]
+            filtered = [d for d in filtered if d.connection_type == self.filter_type.lower()]
 
         return filtered
 
@@ -333,7 +322,7 @@ class AudioTable(AdwComponentBase):
             return
 
         # Get unique connection types
-        types = sorted(set(d.connection_type.title() for d in self.current_devices))
+        types = sorted({d.connection_type.title() for d in self.current_devices})
         types.insert(0, "All")  # Add "All" option
 
         # Create string list model

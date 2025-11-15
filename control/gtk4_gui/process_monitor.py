@@ -161,9 +161,7 @@ class ProcessMonitor:
             self._error_count += 1
             return []
 
-    def get_top_processes(
-        self, limit: int = 20, sort_by: str = "cpu_percent"
-    ) -> list[ProcessInfo]:
+    def get_top_processes(self, limit: int = 20, sort_by: str = "cpu_percent") -> list[ProcessInfo]:
         """
         Get top processes sorted by specified metric.
 
@@ -248,9 +246,7 @@ class ProcessMonitor:
 
             # Safety check - don't kill critical system processes
             if self._is_critical_process(proc):
-                logger.warning(
-                    f"Refusing to kill critical process: {proc.name()} (PID: {pid})"
-                )
+                logger.warning(f"Refusing to kill critical process: {proc.name()} (PID: {pid})")
                 return False
 
             # Kill the process
@@ -322,11 +318,7 @@ class ProcessMonitor:
                 "lightdm",
             }
 
-            for critical in critical_names:
-                if critical in name:
-                    return True
-
-            return False
+            return any(critical in name for critical in critical_names)
 
         except Exception:
             # If we can't determine, err on the side of caution
@@ -356,9 +348,7 @@ def get_process_list(include_system: bool = True) -> list[ProcessInfo]:
     return monitor.get_process_list(include_system)
 
 
-def get_top_processes(
-    limit: int = 20, sort_by: str = "cpu_percent"
-) -> list[ProcessInfo]:
+def get_top_processes(limit: int = 20, sort_by: str = "cpu_percent") -> list[ProcessInfo]:
     """Get top processes sorted by specified metric."""
     monitor = ProcessMonitor()
     return monitor.get_top_processes(limit, sort_by)

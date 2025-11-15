@@ -102,9 +102,7 @@ class HealthManager:
         with self._status_lock:
             return self._status
 
-    def register_health_check(
-        self, name: str, check_func: Callable[[], HealthCheckResult]
-    ) -> None:
+    def register_health_check(self, name: str, check_func: Callable[[], HealthCheckResult]) -> None:
         """Register a custom health check"""
         self._health_checks[name] = check_func
 
@@ -194,9 +192,7 @@ class HealthManager:
                 details={
                     "percent": cpu_percent,
                     "core_count": psutil.cpu_count(),
-                    "load_avg": list(psutil.getloadavg())
-                    if hasattr(psutil, "getloadavg")
-                    else [],
+                    "load_avg": list(psutil.getloadavg()) if hasattr(psutil, "getloadavg") else [],
                 },
             )
 

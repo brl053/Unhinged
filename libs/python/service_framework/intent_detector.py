@@ -105,9 +105,7 @@ class ExplicitCommandDetector:
                         return IntentResult(
                             intent_type=IntentType.UNKNOWN,
                             confidence=0.0,
-                            parameters={
-                                "error": f"Command {command} requires a prompt"
-                            },
+                            parameters={"error": f"Command {command} requires a prompt"},
                             original_text=text,
                         )
 
@@ -197,9 +195,7 @@ class IntentDetectorManager:
 
         # Use explicit command detector as default - NO REGEX
         self._detector = default_detector or ExplicitCommandDetector()
-        self.logger.info(
-            f"Intent detector initialized: {type(self._detector).__name__}"
-        )
+        self.logger.info(f"Intent detector initialized: {type(self._detector).__name__}")
 
     def set_detector(self, detector: IntentDetector) -> None:
         """Switch to a different intent detector"""
@@ -213,8 +209,7 @@ class IntentDetectorManager:
         try:
             result = self._detector.detect(text)
             self.logger.debug(
-                f"Intent detected: {result.intent_type.value} "
-                f"(confidence: {result.confidence:.2f})"
+                f"Intent detected: {result.intent_type.value} (confidence: {result.confidence:.2f})"
             )
             return result
         except Exception as e:

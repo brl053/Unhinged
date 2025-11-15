@@ -272,15 +272,9 @@ class ResourceManager:
                 "io_max": self.max_io_threads,
                 "cpu_max": self.max_cpu_threads,
                 "image_max": self.max_image_threads,
-                "io_active": getattr(self._io_pool, "_threads", 0)
-                if self._io_pool
-                else 0,
-                "cpu_active": getattr(self._cpu_pool, "_threads", 0)
-                if self._cpu_pool
-                else 0,
-                "image_active": getattr(self._image_pool, "_threads", 0)
-                if self._image_pool
-                else 0,
+                "io_active": getattr(self._io_pool, "_threads", 0) if self._io_pool else 0,
+                "cpu_active": getattr(self._cpu_pool, "_threads", 0) if self._cpu_pool else 0,
+                "image_active": getattr(self._image_pool, "_threads", 0) if self._image_pool else 0,
             },
         }
 

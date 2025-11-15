@@ -11,10 +11,10 @@ Approaches:
 """
 
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime
 import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class VideoGenerationService:
         },
     }
 
-    def __init__(self, output_dir: Optional[Path] = None):
+    def __init__(self, output_dir: Path | None = None):
         """
         Initialize video generation service.
 
@@ -58,7 +58,7 @@ class VideoGenerationService:
         fps: int = 24,
         width: int = 512,
         height: int = 512,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate video from text prompt.
 
@@ -86,9 +86,7 @@ class VideoGenerationService:
 
         try:
             if approach == "frame-interp":
-                result = self._generate_video_frame_interp(
-                    prompt, duration, fps, width, height
-                )
+                result = self._generate_video_frame_interp(prompt, duration, fps, width, height)
             elif approach == "svd":
                 result = self._generate_video_svd(prompt, duration, fps, width, height)
 
@@ -104,7 +102,7 @@ class VideoGenerationService:
 
     def _generate_video_frame_interp(
         self, prompt: str, duration: int, fps: int, width: int, height: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate video using frame interpolation approach.
 
@@ -114,10 +112,10 @@ class VideoGenerationService:
         3. Encode to MP4 video
         """
         try:
-            import torch
-            import numpy as np
-            from diffusers import StableDiffusionPipeline
             import imageio
+            import numpy as np
+            import torch
+            from diffusers import StableDiffusionPipeline
         except ImportError as e:
             logger.error(f"Required library not available: {e}")
             raise
@@ -222,7 +220,7 @@ class VideoGenerationService:
 
     def _generate_video_svd(
         self, prompt: str, duration: int, fps: int, width: int, height: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate video using Stable Video Diffusion approach.
 
@@ -234,10 +232,10 @@ class VideoGenerationService:
         Note: Full SVD requires diffusers>=0.21.0 and may need additional setup
         """
         try:
-            import torch
-            import numpy as np
-            from diffusers import StableDiffusionPipeline
             import imageio
+            import numpy as np
+            import torch
+            from diffusers import StableDiffusionPipeline
         except ImportError as e:
             logger.error(f"Required library not available: {e}")
             raise

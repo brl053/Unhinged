@@ -9,11 +9,11 @@ Defines the contract for document storage backends. Think of this like
 the file system API - all implementations must support the same operations.
 """
 
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 from datetime import datetime
-import uuid
+from typing import Any
 
 
 @dataclass
@@ -32,13 +32,13 @@ class Document:
 
     id: str
     collection: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     created_at: datetime
     updated_at: datetime
     version: int = 1
 
     @classmethod
-    def create(cls, collection: str, data: Dict[str, Any]) -> "Document":
+    def create(cls, collection: str, data: dict[str, Any]) -> "Document":
         """Create a new document with auto-generated ID."""
         now = datetime.utcnow()
         return cls(
@@ -62,7 +62,7 @@ class DocumentStore(ABC):
     """
 
     @abstractmethod
-    def create(self, collection: str, data: Dict[str, Any]) -> Document:
+    def create(self, collection: str, data: dict[str, Any]) -> Document:
         """
         Create a new document in a collection.
 
@@ -76,7 +76,7 @@ class DocumentStore(ABC):
         pass
 
     @abstractmethod
-    def read(self, collection: str, doc_id: str) -> Optional[Document]:
+    def read(self, collection: str, doc_id: str) -> Document | None:
         """
         Read a document by ID.
 
@@ -90,9 +90,7 @@ class DocumentStore(ABC):
         pass
 
     @abstractmethod
-    def update(
-        self, collection: str, doc_id: str, data: Dict[str, Any]
-    ) -> Optional[Document]:
+    def update(self, collection: str, doc_id: str, data: dict[str, Any]) -> Document | None:
         """
         Update a document (merge with existing data).
 
@@ -122,8 +120,8 @@ class DocumentStore(ABC):
 
     @abstractmethod
     def query(
-        self, collection: str, filters: Dict[str, Any] = None, limit: int = 100
-    ) -> List[Document]:
+        self, collection: str, filters: dict[str, Any] = None, limit: int = 100
+    ) -> list[Document]:
         """
         Query documents in a collection.
 
@@ -138,7 +136,7 @@ class DocumentStore(ABC):
         pass
 
     @abstractmethod
-    def list_collections(self) -> List[str]:
+    def list_collections(self) -> list[str]:
         """
         List all collections.
 

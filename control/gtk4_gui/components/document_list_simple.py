@@ -13,8 +13,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, GObject
-from typing import Optional, List, Dict, Any
+from typing import Any
+
+from gi.repository import GObject, Gtk
 
 
 class DocumentListSimple(Gtk.Box):
@@ -37,9 +38,9 @@ class DocumentListSimple(Gtk.Box):
         self.set_margin_start(12)
         self.set_margin_end(12)
 
-        self.documents: List[Dict[str, Any]] = []
-        self.selected_document_id: Optional[str] = None
-        self.row_to_doc_id: Dict[Gtk.ListBoxRow, str] = {}  # Map rows to document IDs
+        self.documents: list[dict[str, Any]] = []
+        self.selected_document_id: str | None = None
+        self.row_to_doc_id: dict[Gtk.ListBoxRow, str] = {}  # Map rows to document IDs
 
         self._create_ui()
 
@@ -71,7 +72,7 @@ class DocumentListSimple(Gtk.Box):
         scrolled.set_child(self.list_box)
         self.append(scrolled)
 
-    def set_documents(self, documents: List[Dict[str, Any]]):
+    def set_documents(self, documents: list[dict[str, Any]]):
         """Set list of documents to display"""
         self.documents = documents
         self._refresh_list()
@@ -90,7 +91,7 @@ class DocumentListSimple(Gtk.Box):
             row = self._create_document_row(doc)
             self.list_box.append(row)
 
-    def _create_document_row(self, doc: Dict[str, Any]) -> Gtk.ListBoxRow:
+    def _create_document_row(self, doc: dict[str, Any]) -> Gtk.ListBoxRow:
         """Create a row for a document"""
         row = Gtk.ListBoxRow()
         # Store mapping instead of using deprecated set_data()
@@ -146,6 +147,6 @@ class DocumentListSimple(Gtk.Box):
         if doc_id:
             self.emit("document-opened", doc_id)
 
-    def get_selected_document_id(self) -> Optional[str]:
+    def get_selected_document_id(self) -> str | None:
         """Get currently selected document ID"""
         return self.selected_document_id

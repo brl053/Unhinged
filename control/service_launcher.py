@@ -12,17 +12,14 @@ Provides cohesive integration between `make start` and service composition.
 """
 
 import subprocess
-import time
 import sys
-import requests
+import time
 from pathlib import Path
-from typing import List, Dict
 
+import requests
 
 sys.path.append(str(Path(__file__).parent))
-sys.path.append(
-    str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src")
-)
+sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
 sys.path.append(str(Path(__file__).parent.parent / "generated/python/clients"))
 
 try:
@@ -157,10 +154,8 @@ class ServiceLauncher:
 
     def __init__(self, project_root: Path = None):
         self.project_root = project_root or Path.cwd()
-        self.compose_file = (
-            self.project_root / "build/orchestration/docker-compose.production.yml"
-        )
-        self.running_services: List[str] = []
+        self.compose_file = self.project_root / "build/orchestration/docker-compose.production.yml"
+        self.running_services: list[str] = []
         self.service_registry = get_service_registry()
 
     def launch_essential_services(self, timeout: int = 120) -> bool:
@@ -202,9 +197,7 @@ class ServiceLauncher:
                 )  # Cap individual service timeout
                 if service["required"] and not success:
                     failed_required.append(service["name"])
-                    events.error(
-                        "Required service failed to start", {"service": service["name"]}
-                    )
+                    events.error("Required service failed to start", {"service": service["name"]})
                 elif success:
                     started_count += 1
 
@@ -228,7 +221,7 @@ class ServiceLauncher:
         except Exception:
             return False
 
-    def _check_running_services(self) -> List[str]:
+    def _check_running_services(self) -> list[str]:
         """Check which services are currently running"""
         try:
             result = subprocess.run(
@@ -248,15 +241,13 @@ class ServiceLauncher:
             )
 
             if result.returncode == 0:
-                return (
-                    result.stdout.strip().split("\n") if result.stdout.strip() else []
-                )
+                return result.stdout.strip().split("\n") if result.stdout.strip() else []
             else:
                 return []
         except Exception:
             return []
 
-    def _should_start_service(self, service: Dict) -> bool:
+    def _should_start_service(self, service: dict) -> bool:
         """Determine if a service should be started"""
         # All services marked as required MUST be started
         if service["required"]:
@@ -265,7 +256,7 @@ class ServiceLauncher:
         # Optional services are skipped in non-interactive mode
         return False
 
-    def _start_service(self, service: Dict, timeout: int) -> bool:
+    def _start_service(self, service: dict, timeout: int) -> bool:
         """Start a specific service"""
         service_name = service["compose_service"]
 
@@ -322,7 +313,7 @@ class ServiceLauncher:
             )
             return False
 
-    def _start_direct_service(self, service: Dict, timeout: int) -> bool:
+    def _start_direct_service(self, service: dict, timeout: int) -> bool:
         """
         Start a service using direct command execution rather than Docker Compose.
 
@@ -348,9 +339,9 @@ class ServiceLauncher:
 
             # Set up environment
             env = os.environ.copy()
-            env["PYTHONPATH"] = (
-                f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
-            )
+            env[
+                "PYTHONPATH"
+            ] = f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
 
             # Start the service in background
             command = service["start_command"].split()
@@ -382,7 +373,7 @@ class ServiceLauncher:
             )
             return False
 
-    def _is_service_healthy(self, service: Dict) -> bool:
+    def _is_service_healthy(self, service: dict) -> bool:
         """
         Check if a service is currently healthy via HTTP health endpoint.
 
@@ -405,7 +396,7 @@ class ServiceLauncher:
         except Exception:
             return False
 
-    def _wait_for_health(self, service: Dict, timeout: int) -> bool:
+    def _wait_for_health(self, service: dict, timeout: int) -> bool:
         """Wait for service to become healthy"""
 
         start_time = time.time()
@@ -420,17 +411,13 @@ class ServiceLauncher:
                         self.running_services.append(service["compose_service"])
                     return True
                 else:
-                    print(
-                        f"      🔄 Health check attempt {attempts}: HTTP {response.status_code}"
-                    )
+                    print(f"      🔄 Health check attempt {attempts}: HTTP {response.status_code}")
             except requests.RequestException as e:
                 print(f"      🔄 Health check attempt {attempts}: {type(e).__name__}")
 
             if attempts % 5 == 0:  # Progress update every 10 seconds
                 elapsed = time.time() - start_time
-                print(
-                    f"      ⏳ Still waiting for health check... ({elapsed:.1f}s elapsed)"
-                )
+                print(f"      ⏳ Still waiting for health check... ({elapsed:.1f}s elapsed)")
 
             time.sleep(2)
 
@@ -455,7 +442,7 @@ class ServiceLauncher:
         except Exception:
             return False
 
-    def _check_service_health(self, service: Dict) -> bool:
+    def _check_service_health(self, service: dict) -> bool:
         """Check if service is healthy via gRPC or HTTP"""
         # Try gRPC health check first if service implements health proto
         if service.get("implements_health_proto") and GRPC_AVAILABLE:
@@ -479,7 +466,7 @@ class ServiceLauncher:
         except Exception:
             return False
 
-    def get_service_status(self) -> Dict:
+    def get_service_status(self) -> dict:
         """Get status of all services using gRPC health checks when available"""
         status = {}
 
@@ -528,8 +515,7 @@ class ServiceLauncher:
 
         try:
             subprocess.run(
-                ["docker", "compose", "-f", str(self.compose_file), "stop"]
-                + self.running_services,
+                ["docker", "compose", "-f", str(self.compose_file), "stop"] + self.running_services,
                 timeout=30,
             )
 
@@ -543,12 +529,8 @@ def main():
     """CLI interface for service launcher"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Launch essential services for Unhinged GUI"
-    )
-    parser.add_argument(
-        "--timeout", type=int, default=120, help="Timeout for service startup"
-    )
+    parser = argparse.ArgumentParser(description="Launch essential services for Unhinged GUI")
+    parser.add_argument("--timeout", type=int, default=120, help="Timeout for service startup")
     parser.add_argument("--status", action="store_true", help="Show service status")
     parser.add_argument("--stop", action="store_true", help="Stop services")
 

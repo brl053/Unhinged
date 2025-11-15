@@ -12,14 +12,17 @@ import json
 import logging
 import os
 import platform
-import time
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 # Add utils to path for subprocess_utils import
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
+
+import builtins
+import contextlib
 
 from subprocess_utils import SubprocessRunner
 
@@ -190,11 +193,7 @@ class SystemInfoCollector:
         current_time = time.time()
 
         # Check cache
-        if (
-            use_cache
-            and self._cache
-            and current_time - self._last_collection < self._cache_timeout
-        ):
+        if use_cache and self._cache and current_time - self._last_collection < self._cache_timeout:
             return self._cache.get("system_info", SystemInformation())
 
         logger.info("🔍 Collecting system information...")
@@ -331,7 +330,7 @@ class SystemInfoCollector:
 
         # Try to read from /proc/cpuinfo
         try:
-            with open("/proc/cpuinfo", "r") as f:
+            with open("/proc/cpuinfo") as f:
                 cpuinfo_content = f.read()
 
             # Parse cpuinfo
@@ -351,10 +350,8 @@ class SystemInfoCollector:
 
                 # Get stepping
                 elif line.startswith("stepping"):
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         cpu_details["stepping"] = line.split(":", 1)[1].strip()
-                    except:
-                        pass
 
                 # Get cache info
                 elif line.startswith("cache size"):
@@ -366,17 +363,13 @@ class SystemInfoCollector:
 
                 # Get family
                 elif line.startswith("cpu family"):
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         cpu_details["family"] = line.split(":", 1)[1].strip()
-                    except:
-                        pass
 
                 # Get model number
                 elif line.startswith("model") and "model name" not in line:
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         cpu_details["model_number"] = line.split(":", 1)[1].strip()
-                    except:
-                        pass
         except Exception as e:
             logger.debug(f"Failed to read /proc/cpuinfo: {e}")
 
@@ -409,10 +402,8 @@ class SystemInfoCollector:
                 if "Model name:" in line:
                     cpu_info.model = line.split(":", 1)[1].strip()
                 elif "CPU(s):" in line and "NUMA" not in line:
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         cpu_info.threads = int(line.split(":", 1)[1].strip())
-                    except:
-                        pass
                 elif "Core(s) per socket:" in line:
                     try:
                         cores_per_socket = int(line.split(":", 1)[1].strip())
@@ -440,9 +431,7 @@ class SystemInfoCollector:
                         "fma",
                     ]
                     cpu_info.features = [
-                        f
-                        for f in flags
-                        if any(feat in f.lower() for feat in interesting_features)
+                        f for f in flags if any(feat in f.lower() for feat in interesting_features)
                     ]
 
         return cpu_info
@@ -482,12 +471,8 @@ class SystemInfoCollector:
                         memory_info.swap_used_gb = memory_info.swap_total_gb - swap_free
 
                 if memory_info.total_gb > 0:
-                    memory_info.used_gb = (
-                        memory_info.total_gb - memory_info.available_gb
-                    )
-                    memory_info.usage_percent = (
-                        memory_info.used_gb / memory_info.total_gb
-                    ) * 100
+                    memory_info.used_gb = memory_info.total_gb - memory_info.available_gb
+                    memory_info.usage_percent = (memory_info.used_gb / memory_info.total_gb) * 100
 
                 if memory_info.swap_total_gb > 0:
                     memory_info.swap_percent = (
@@ -518,9 +503,7 @@ class SystemInfoCollector:
                         total_gb=usage.total / (1024**3),
                         used_gb=usage.used / (1024**3),
                         free_gb=usage.free / (1024**3),
-                        usage_percent=(usage.used / usage.total) * 100
-                        if usage.total > 0
-                        else 0,
+                        usage_percent=(usage.used / usage.total) * 100 if usage.total > 0 else 0,
                     )
 
                     storage_info.devices.append(device)
@@ -532,9 +515,7 @@ class SystemInfoCollector:
                     # Skip inaccessible partitions
                     continue
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to get usage for {partition.mountpoint}: {e}"
-                    )
+                    logger.warning(f"Failed to get usage for {partition.mountpoint}: {e}")
                     continue
         else:
             # Fallback to lsblk command
@@ -562,9 +543,7 @@ class SystemInfoCollector:
                     total_gb = usage.total / (1024**3)
                     used_gb = usage.used / (1024**3)
                     free_gb = usage.free / (1024**3)
-                    usage_percent = (
-                        (usage.used / usage.total) * 100 if usage.total > 0 else 0
-                    )
+                    usage_percent = (usage.used / usage.total) * 100 if usage.total > 0 else 0
                 else:
                     # Parse size string (e.g., "100G", "1.5T")
                     size_str = device["size"]
@@ -641,11 +620,7 @@ class SystemInfoCollector:
                             gpu_info.vendor = "Intel"
                         elif "NVIDIA" in gpu_desc or "GeForce" in gpu_desc:
                             gpu_info.vendor = "NVIDIA"
-                        elif (
-                            "AMD" in gpu_desc
-                            or "Radeon" in gpu_desc
-                            or "ATI" in gpu_desc
-                        ):
+                        elif "AMD" in gpu_desc or "Radeon" in gpu_desc or "ATI" in gpu_desc:
                             gpu_info.vendor = "AMD"
                         else:
                             gpu_info.vendor = "Unknown"
@@ -727,9 +702,7 @@ class SystemInfoCollector:
                         if len(parts) > 1:
                             interface_name = parts[1].split("@")[0]
                             if interface_name != "lo":
-                                current_interface = NetworkInterface(
-                                    name=interface_name
-                                )
+                                current_interface = NetworkInterface(name=interface_name)
                                 if "state UP" in line:
                                     current_interface.status = "Up"
                                 else:
@@ -835,9 +808,7 @@ class SystemInfoCollector:
                                 service_name = parts[0].strip()
                                 status = parts[1].strip()
                                 if "Up" in status:
-                                    platform_status.services_running.append(
-                                        service_name
-                                    )
+                                    platform_status.services_running.append(service_name)
                                 else:
                                     platform_status.services_failed.append(service_name)
 
@@ -881,9 +852,7 @@ class SystemInfoCollector:
                         latest_cache = max(cache_files, key=lambda p: p.stat().st_mtime)
                         cache_age = time.time() - latest_cache.stat().st_mtime
                         if cache_age < 3600:  # Less than 1 hour old
-                            platform_status.build_system_status = (
-                                "Active (recent builds)"
-                            )
+                            platform_status.build_system_status = "Active (recent builds)"
                         else:
                             platform_status.build_system_status = "Available (idle)"
                     else:
@@ -901,13 +870,9 @@ class SystemInfoCollector:
                 # Check for graphics-related processes
                 success, output = self._run_command(["pgrep", "-f", "qemu.*gl"])
                 if success and output.strip():
-                    platform_status.graphics_platform_status = (
-                        "Active (GPU acceleration)"
-                    )
+                    platform_status.graphics_platform_status = "Active (GPU acceleration)"
                 else:
-                    platform_status.graphics_platform_status = (
-                        "Available (software rendering)"
-                    )
+                    platform_status.graphics_platform_status = "Available (software rendering)"
             elif graphics_lib.exists():
                 platform_status.graphics_platform_status = "Available (no VM)"
             else:
@@ -928,9 +893,7 @@ class SystemInfoCollector:
                 "cpu_usage": system_info.cpu.usage_percent,
                 "memory_usage": system_info.memory.usage_percent,
                 "storage_usage": (
-                    system_info.storage.total_used_gb
-                    / system_info.storage.total_storage_gb
-                    * 100
+                    system_info.storage.total_used_gb / system_info.storage.total_storage_gb * 100
                 )
                 if system_info.storage.total_storage_gb > 0
                 else 0,
@@ -961,9 +924,7 @@ class SystemInfoCollector:
 
 
 # Convenience function for quick access
-def get_system_info(
-    project_root: Path | None = None, use_cache: bool = True
-) -> SystemInformation:
+def get_system_info(project_root: Path | None = None, use_cache: bool = True) -> SystemInformation:
     """
     Convenience function to get system information.
 

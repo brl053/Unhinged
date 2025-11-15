@@ -5,6 +5,8 @@ Consolidates gRPC client management with local OS optimizations.
 Implements expert recommendations for simplified local deployment.
 """
 
+import builtins
+import contextlib
 import logging
 import threading
 import time
@@ -72,9 +74,7 @@ class ServiceClient:
     def _connect(self) -> None:
         """Establish gRPC connection"""
         try:
-            self.logger.info(
-                f"Connecting to {self.config.name} at {self.config.address}"
-            )
+            self.logger.info(f"Connecting to {self.config.name} at {self.config.address}")
 
             # For local deployment, use insecure channel
             self._channel = grpc.insecure_channel(self.config.address)
@@ -95,9 +95,7 @@ class ServiceClient:
             self._cleanup()
             raise
 
-    def call_with_timeout(
-        self, method_name: str, request, timeout: float | None = None
-    ) -> Any:
+    def call_with_timeout(self, method_name: str, request, timeout: float | None = None) -> Any:
         """
         Call gRPC method with timeout and simple retry logic
 
@@ -129,13 +127,9 @@ class ServiceClient:
                 self.logger.error(f"Unexpected error calling {method_name}: {e}")
                 raise
 
-        raise RuntimeError(
-            f"Failed to call {method_name} after {self.config.max_retries} attempts"
-        )
+        raise RuntimeError(f"Failed to call {method_name} after {self.config.max_retries} attempts")
 
-    def stream_with_timeout(
-        self, method_name: str, request, timeout: float | None = None
-    ):
+    def stream_with_timeout(self, method_name: str, request, timeout: float | None = None):
         """
         Call streaming gRPC method with timeout
 
@@ -160,10 +154,8 @@ class ServiceClient:
     def _cleanup(self) -> None:
         """Clean up connection resources"""
         if self._channel:
-            try:
+            with contextlib.suppress(builtins.BaseException):
                 self._channel.close()
-            except:
-                pass
 
         self._channel = None
         self._stub = None
@@ -221,9 +213,7 @@ class ConnectionPool:
 
         # Connection monitoring
         self._monitoring = True
-        self._monitor_thread = threading.Thread(
-            target=self._monitor_connections, daemon=True
-        )
+        self._monitor_thread = threading.Thread(target=self._monitor_connections, daemon=True)
         self._monitor_thread.start()
 
     def register_service(self, config: ServiceConfig) -> None:
@@ -341,21 +331,15 @@ def register_service(
     Timeout can be overridden by environment variable: {SERVICE_NAME}_TIMEOUT
     Example: SPEECH_TO_TEXT_TIMEOUT=600 for 10-minute timeout
     """
-    config = ServiceConfig(
-        name=name, address=address, timeout=timeout, stub_class=stub_class
-    )
+    config = ServiceConfig(name=name, address=address, timeout=timeout, stub_class=stub_class)
     get_global_pool().register_service(config)
 
 
-def call_service(
-    service_name: str, method_name: str, request, timeout: float | None = None
-) -> Any:
+def call_service(service_name: str, method_name: str, request, timeout: float | None = None) -> Any:
     """Call service method using global pool"""
     return get_global_pool().call_service(service_name, method_name, request, timeout)
 
 
-def stream_service(
-    service_name: str, method_name: str, request, timeout: float | None = None
-):
+def stream_service(service_name: str, method_name: str, request, timeout: float | None = None):
     """Call streaming service method using global pool"""
     return get_global_pool().stream_service(service_name, method_name, request, timeout)

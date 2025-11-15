@@ -99,9 +99,7 @@ class ProcessTable(AdwComponentBase):
 
         self.user_filter_dropdown = Gtk.DropDown()
         self.user_filter_dropdown.set_tooltip_text("Filter by user")
-        self.user_filter_dropdown.connect(
-            "notify::selected", self._on_user_filter_changed
-        )
+        self.user_filter_dropdown.connect("notify::selected", self._on_user_filter_changed)
 
         user_filter_box.append(user_label)
         user_filter_box.append(self.user_filter_dropdown)
@@ -277,7 +275,7 @@ class ProcessTable(AdwComponentBase):
             return
 
         # Get unique users
-        users = sorted(set(p.user for p in self.current_processes))
+        users = sorted({p.user for p in self.current_processes})
         users.insert(0, "All")  # Add "All" option
 
         # Create string list model

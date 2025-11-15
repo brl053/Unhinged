@@ -97,9 +97,7 @@ class HardwareInfoRow(AdwComponentBase):
             [Gtk.AccessibleProperty.LABEL], [f"{self.hardware_type}: {self.title}"]
         )
         if self.subtitle:
-            self.widget.update_property(
-                [Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle]
-            )
+            self.widget.update_property([Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle])
 
     def _get_default_icon(self) -> str:
         """Get default icon based on hardware type."""

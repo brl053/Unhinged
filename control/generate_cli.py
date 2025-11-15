@@ -11,11 +11,11 @@ Usage:
   unhinged generate video stable-diffusion "sunset over ocean" --duration 30
 """
 
-import sys
 import argparse
 import json
+import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -25,11 +25,11 @@ sys.path.insert(0, str(PROJECT_ROOT / "libs"))
 try:
     from libs.services import (
         ImageGenerationService,
-        YOLOAnalysisService,
-        VideoGenerationService,
         ScriptParserService,
-        TTSService,
         ShortFormVideoService,
+        TTSService,
+        VideoGenerationService,
+        YOLOAnalysisService,
     )
 except ImportError as e:
     ImageGenerationService = None
@@ -52,13 +52,13 @@ class GenerateCLI:
         model: str,
         prompt: str,
         quality: str = "standard",
-        steps: Optional[int] = None,
-        guidance: Optional[float] = None,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
-        seed: Optional[int] = None,
+        steps: int | None = None,
+        guidance: float | None = None,
+        height: int | None = None,
+        width: int | None = None,
+        seed: int | None = None,
         output_format: str = "json",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate image using specified model"""
 
         if ImageGenerationService is None:
@@ -113,7 +113,7 @@ class GenerateCLI:
         width: int = 512,
         height: int = 512,
         output_format: str = "json",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate video using specified approach"""
 
         if VideoGenerationService is None:
@@ -160,14 +160,12 @@ class GenerateCLI:
         model_size: str = "m",
         confidence: float = 0.5,
         output_format: str = "json",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze screenshot for GUI elements"""
 
         if YOLOAnalysisService is None:
             print(f"❌ Dependencies not installed: {IMPORT_ERROR}", file=sys.stderr)
-            print(
-                "   Run: pip install ultralytics opencv-python pillow", file=sys.stderr
-            )
+            print("   Run: pip install ultralytics opencv-python pillow", file=sys.stderr)
             sys.exit(1)
 
         print(f"🔍 Analyzing screenshot with YOLOv8{model_size}...")
@@ -182,9 +180,7 @@ class GenerateCLI:
             if output_format == "json":
                 print(json.dumps(result, indent=2, default=str))
             else:
-                print(
-                    f"✅ Analysis complete: {result['total_detections']} elements detected"
-                )
+                print(f"✅ Analysis complete: {result['total_detections']} elements detected")
                 print(f"   Analysis time: {result['analysis_time']:.2f}s")
                 print(f"   Annotated image: {result['annotated_image_path']}")
                 print(f"   Element counts: {result['element_counts']}")
@@ -203,7 +199,7 @@ class GenerateCLI:
         style: str = "cinematic",
         quality: str = "standard",
         output_format: str = "json",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate studio-grade short-form video from script"""
 
         if ShortFormVideoService is None:
@@ -319,9 +315,7 @@ Examples:
         default=30,
         help="Video duration in seconds (default: 30)",
     )
-    video_parser.add_argument(
-        "--fps", type=int, default=24, help="Frames per second (default: 24)"
-    )
+    video_parser.add_argument("--fps", type=int, default=24, help="Frames per second (default: 24)")
     video_parser.add_argument(
         "--width", type=int, default=512, help="Video width in pixels (default: 512)"
     )
@@ -336,9 +330,7 @@ Examples:
     )
 
     # Screenshot analysis command
-    analyze_parser = subparsers.add_parser(
-        "analyze", help="Analyze screenshots for GUI elements"
-    )
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze screenshots for GUI elements")
     analyze_parser.add_argument("image_path", help="Path to screenshot image")
     analyze_parser.add_argument(
         "--model-size",

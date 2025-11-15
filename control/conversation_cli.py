@@ -7,22 +7,19 @@
 """
 
 import asyncio
+import signal
+import subprocess
 import sys
 import time
-import subprocess
-import signal
-from pathlib import Path
-from typing import Optional
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 # Add event framework to path
-sys.path.append(
-    str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src")
-)
+sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
 
 try:
-    from events import create_gui_session_logger, GUIOutputCapture
+    from events import create_gui_session_logger
 
     SESSION_LOGGING_AVAILABLE = True
 except ImportError as e:
@@ -207,7 +204,7 @@ class ConversationCLI:
         # For now, fall back to text-only
         await self._text_only_loop()
 
-    async def _capture_voice_input(self) -> Optional[str]:
+    async def _capture_voice_input(self) -> str | None:
         """Capture voice input and convert to text"""
         try:
             # Check if voice service is available
@@ -224,7 +221,7 @@ class ConversationCLI:
                 self.session_logger.log_gui_event("VOICE_CAPTURE_ERROR", str(e))
             return None
 
-    async def _check_text_input(self) -> Optional[str]:
+    async def _check_text_input(self) -> str | None:
         """Check for text input (non-blocking)"""
         # This would implement non-blocking text input
         # For now, return None
@@ -351,21 +348,15 @@ async def main():
         choices=["gtk4_control_plane", "alpine_native"],
         help="System context (auto-detected if not specified)",
     )
-    parser.add_argument(
-        "--voice-port", type=int, default=1101, help="Voice service port"
-    )
-    parser.add_argument(
-        "--no-logging", action="store_true", help="Disable session logging"
-    )
+    parser.add_argument("--voice-port", type=int, default=1101, help="Voice service port")
+    parser.add_argument("--no-logging", action="store_true", help="Disable session logging")
 
     args = parser.parse_args()
 
     # Create configuration
     config = ConversationConfig(
         mode=ConversationMode(args.mode),
-        system_context=SystemContext(args.context)
-        if args.context
-        else SystemContext.UNKNOWN,
+        system_context=SystemContext(args.context) if args.context else SystemContext.UNKNOWN,
         voice_service_port=args.voice_port,
         session_logging=not args.no_logging,
     )

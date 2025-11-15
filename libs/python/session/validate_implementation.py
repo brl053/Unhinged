@@ -157,9 +157,7 @@ def validate_session_store_implementation():
 
     # Check health monitoring
     if "health_check" in [
-        node.name
-        for node in session_store_class.body
-        if isinstance(node, ast.FunctionDef)
+        node.name for node in session_store_class.body if isinstance(node, ast.FunctionDef)
     ]:
         print("✅ Health check method implemented")
     else:
@@ -177,15 +175,11 @@ def validate_session_store_implementation():
 
     # Count lines
     lines = source_code.split("\n")
-    code_lines = [
-        line for line in lines if line.strip() and not line.strip().startswith("#")
-    ]
+    code_lines = [line for line in lines if line.strip() and not line.strip().startswith("#")]
     print(f"Lines of code: {len(code_lines)}")
 
     # Check imports
-    imports = [
-        node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))
-    ]
+    imports = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
     print(f"Import statements: {len(imports)}")
 
     print("\n✅ SESSION STORE IMPLEMENTATION VALIDATION COMPLETE")

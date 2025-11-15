@@ -28,13 +28,13 @@ IOHandler: Base class for output handlers
   - BufferHandler: Collects events for analysis
 """
 
+import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any
 from enum import Enum
-import logging
-import json
 from pathlib import Path
+from typing import Any
 
 
 class IOLevel(Enum):
@@ -66,12 +66,8 @@ class IOEvent:
     level: IOLevel
     source: str  # 'startup', 'discovery', 'ui', 'bluetooth', etc
     timestamp: datetime = field(default_factory=datetime.now)
-    system_call_type: Optional[SystemCallType] = (
-        None  # Type of system call if applicable
-    )
-    system_call_target: Optional[str] = (
-        None  # Target of system call (e.g., 'org.bluez', 'arecord')
-    )
+    system_call_type: SystemCallType | None = None  # Type of system call if applicable
+    system_call_target: str | None = None  # Target of system call (e.g., 'org.bluez', 'arecord')
 
     def __str__(self) -> str:
         """Format event as string"""
@@ -96,12 +92,8 @@ class IOEvent:
                 SystemCallType.AUDIO_CALL: "🎤",
             }
             call_icon = call_emoji.get(self.system_call_type, "•")
-            target_info = (
-                f" → {self.system_call_target}" if self.system_call_target else ""
-            )
-            system_call_info = (
-                f" {call_icon}[{self.system_call_type.value}]{target_info}"
-            )
+            target_info = f" → {self.system_call_target}" if self.system_call_target else ""
+            system_call_info = f" {call_icon}[{self.system_call_type.value}]{target_info}"
 
         return f"{emoji} [{self.source}] {self.message}{system_call_info}"
 
@@ -180,7 +172,7 @@ class BufferHandler(IOHandler):
     """Handler that collects events for analysis"""
 
     def __init__(self, max_events: int = 1000):
-        self.events: List[IOEvent] = []
+        self.events: list[IOEvent] = []
         self.max_events = max_events
 
     def handle(self, event: IOEvent) -> None:
@@ -190,11 +182,11 @@ class BufferHandler(IOHandler):
         if len(self.events) > self.max_events:
             self.events.pop(0)
 
-    def get_events_by_level(self, level: IOLevel) -> List[IOEvent]:
+    def get_events_by_level(self, level: IOLevel) -> list[IOEvent]:
         """Get all events of a specific level"""
         return [e for e in self.events if e.level == level]
 
-    def get_events_by_source(self, source: str) -> List[IOEvent]:
+    def get_events_by_source(self, source: str) -> list[IOEvent]:
         """Get all events from a specific source"""
         return [e for e in self.events if e.source == source]
 
@@ -209,7 +201,7 @@ class DelimiterHandler(IOHandler):
     def __init__(self, wrapped_handler: IOHandler, delimiter_char: str = "═"):
         self.wrapped_handler = wrapped_handler
         self.delimiter_char = delimiter_char
-        self.current_source: Optional[str] = None
+        self.current_source: str | None = None
         self.delimiter_width = 70
 
     def handle(self, event: IOEvent) -> None:
@@ -242,7 +234,7 @@ class DelimiterHandler(IOHandler):
 class StatusStackHandler(IOHandler):
     """Handler that routes IO events to UI status stack component"""
 
-    def __init__(self, status_stack: Optional[Any] = None, max_messages: int = 5):
+    def __init__(self, status_stack: Any | None = None, max_messages: int = 5):
         """
         Initialize StatusStackHandler
 
@@ -252,7 +244,7 @@ class StatusStackHandler(IOHandler):
         """
         self.status_stack = status_stack
         self.max_messages = max_messages
-        self.message_queue: List[str] = []
+        self.message_queue: list[str] = []
 
     def set_status_stack(self, status_stack: Any) -> None:
         """Set the status stack component reference"""
@@ -279,7 +271,7 @@ class StatusStackHandler(IOHandler):
                 # Silently fail if status stack is not available
                 pass
 
-    def get_messages(self) -> List[str]:
+    def get_messages(self) -> list[str]:
         """Get all queued messages"""
         return self.message_queue.copy()
 
@@ -291,9 +283,7 @@ class StatusStackHandler(IOHandler):
 class FileLogHandler(IOHandler):
     """Handler that writes IO events to persistent log files"""
 
-    def __init__(
-        self, log_dir: str = "/tmp/unhinged/logs", max_file_size: int = 10 * 1024 * 1024
-    ):
+    def __init__(self, log_dir: str = "/tmp/unhinged/logs", max_file_size: int = 10 * 1024 * 1024):
         """
         Initialize FileLogHandler
 
@@ -318,7 +308,9 @@ class FileLogHandler(IOHandler):
 
             # Format log entry
             timestamp = event.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            log_entry = f"[{timestamp}] [{event.level.value.upper()}] [{event.source}] {event.message}\n"
+            log_entry = (
+                f"[{timestamp}] [{event.level.value.upper()}] [{event.source}] {event.message}\n"
+            )
 
             # Write to log file
             with open(self.current_log_file, "a") as f:
@@ -345,7 +337,7 @@ class FileLogHandler(IOHandler):
 class JSONHandler(IOHandler):
     """Handler that outputs IO events as structured JSON"""
 
-    def __init__(self, output_file: Optional[str] = None):
+    def __init__(self, output_file: str | None = None):
         """
         Initialize JSONHandler
 
@@ -353,7 +345,7 @@ class JSONHandler(IOHandler):
             output_file: File to write JSON events to (if None, uses in-memory buffer)
         """
         self.output_file = output_file
-        self.events: List[Dict[str, Any]] = []
+        self.events: list[dict[str, Any]] = []
 
     def handle(self, event: IOEvent) -> None:
         """Convert event to JSON and store/output"""
@@ -397,7 +389,7 @@ class RemoteHandler(IOHandler):
         """
         self.server_url = server_url
         self.timeout = timeout
-        self.queue: List[Dict[str, Any]] = []
+        self.queue: list[dict[str, Any]] = []
         self.batch_size = 10
 
     def handle(self, event: IOEvent) -> None:
@@ -425,8 +417,8 @@ class RemoteHandler(IOHandler):
             return
 
         try:
-            import urllib.request
             import urllib.error
+            import urllib.request
 
             # Prepare batch payload
             payload = json.dumps({"events": self.queue}).encode("utf-8")
@@ -460,21 +452,17 @@ class IORouter:
     """Routes IO events to appropriate handlers"""
 
     def __init__(self):
-        self.handlers: Dict[IOLevel, List[IOHandler]] = {level: [] for level in IOLevel}
-        self.global_handlers: List[IOHandler] = []
+        self.handlers: dict[IOLevel, list[IOHandler]] = {level: [] for level in IOLevel}
+        self.global_handlers: list[IOHandler] = []
 
-    def register_handler(
-        self, handler: IOHandler, level: Optional[IOLevel] = None
-    ) -> None:
+    def register_handler(self, handler: IOHandler, level: IOLevel | None = None) -> None:
         """Register a handler for a specific level or globally"""
         if level is None:
             self.global_handlers.append(handler)
         else:
             self.handlers[level].append(handler)
 
-    def unregister_handler(
-        self, handler: IOHandler, level: Optional[IOLevel] = None
-    ) -> None:
+    def unregister_handler(self, handler: IOHandler, level: IOLevel | None = None) -> None:
         """Unregister a handler"""
         if level is None:
             if handler in self.global_handlers:
@@ -524,7 +512,7 @@ class IORouter:
         message: str,
         source: str,
         call_type: SystemCallType,
-        target: Optional[str] = None,
+        target: str | None = None,
         level: IOLevel = IOLevel.INFO,
     ) -> None:
         """
@@ -552,8 +540,8 @@ class IORouter:
 
 
 # Global IO router instance
-_global_io_router: Optional[IORouter] = None
-_global_delimiter_handler: Optional[DelimiterHandler] = None
+_global_io_router: IORouter | None = None
+_global_delimiter_handler: DelimiterHandler | None = None
 
 
 def get_io_router() -> IORouter:
@@ -568,7 +556,7 @@ def get_io_router() -> IORouter:
     return _global_io_router
 
 
-def get_delimiter_handler() -> Optional[DelimiterHandler]:
+def get_delimiter_handler() -> DelimiterHandler | None:
     """Get the global delimiter handler if it exists"""
     global _global_delimiter_handler
     # Try to find it from the router

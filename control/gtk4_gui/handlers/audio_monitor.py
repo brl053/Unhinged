@@ -7,9 +7,9 @@ data for visualization without interfering with the main recording process.
 """
 
 import subprocess
+import sys
 import threading
 import time
-import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from audio_utils import calculate_rms_amplitude
-from event_bus import get_event_bus, AudioEvents, Event
+from event_bus import AudioEvents, Event, get_event_bus
 
 try:
     from ..models.audio_types import AudioDevice, AudioDeviceType
@@ -86,9 +86,7 @@ class AudioLevelMonitor:
         """Set callback function to receive amplitude updates (DEPRECATED: use event_bus instead)"""
         self.amplitude_callback = callback
 
-    def subscribe_to_amplitude(
-        self, callback: Callable[[Event], None]
-    ) -> Callable[[], None]:
+    def subscribe_to_amplitude(self, callback: Callable[[Event], None]) -> Callable[[], None]:
         """Subscribe to amplitude updates via event bus
 
         Args:
@@ -106,9 +104,7 @@ class AudioLevelMonitor:
 
         try:
             self.is_monitoring = True
-            self.monitor_thread = threading.Thread(
-                target=self._monitor_audio_levels, daemon=True
-            )
+            self.monitor_thread = threading.Thread(target=self._monitor_audio_levels, daemon=True)
             self.monitor_thread.start()
             return True
 
@@ -184,9 +180,7 @@ class AudioLevelMonitor:
                     time.sleep(0.02)  # 50 FPS update rate
 
                 except Exception as e:
-                    if (
-                        self.is_monitoring
-                    ):  # Only log if we're still supposed to be monitoring
+                    if self.is_monitoring:  # Only log if we're still supposed to be monitoring
                         print(f"Audio monitoring error: {e}")
                     break
 

@@ -16,9 +16,7 @@ import grpc
 # Add generated proto clients to path
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"
-    ),
+    str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"),
 )
 
 try:
@@ -100,9 +98,7 @@ class GraphServiceClient:
                 print(f"✅ Graph created: {graph.name} ({graph.id})")
                 return graph.id
             else:
-                raise RuntimeError(
-                    f"Failed to create graph: {response.response.message}"
-                )
+                raise RuntimeError(f"Failed to create graph: {response.response.message}")
 
         except Exception as e:
             print(f"❌ Error creating graph: {e}")
@@ -144,17 +140,13 @@ class GraphServiceClient:
                 print(f"✅ Graph execution started: {response.execution_id}")
                 return response.execution_id
             else:
-                raise RuntimeError(
-                    f"Failed to execute graph: {response.response.message}"
-                )
+                raise RuntimeError(f"Failed to execute graph: {response.response.message}")
 
         except Exception as e:
             print(f"❌ Error executing graph: {e}")
             raise
 
-    async def stream_execution(
-        self, execution_id: str
-    ) -> AsyncGenerator[ExecutionEvent, None]:
+    async def stream_execution(self, execution_id: str) -> AsyncGenerator[ExecutionEvent, None]:
         """
         Stream execution events for a graph execution.
 
@@ -175,9 +167,7 @@ class GraphServiceClient:
                 # Convert protobuf event to ExecutionEvent
                 exec_event = ExecutionEvent(
                     execution_id=event.execution_id,
-                    event_type=graph_service_pb2.ExecutionEventType.Name(
-                        event.event_type
-                    ),
+                    event_type=graph_service_pb2.ExecutionEventType.Name(event.event_type),
                     node_id=event.node_id if event.node_id else None,
                     event_data=dict(event.event_data) if event.event_data else None,
                     timestamp=event.timestamp,
@@ -215,9 +205,7 @@ class GraphServiceClient:
                     "status": graph_service_pb2.ExecutionStatus.Name(response.status),
                     "started_at": response.started_at,
                     "completed_at": response.completed_at,
-                    "result_data": dict(response.result_data)
-                    if response.result_data
-                    else None,
+                    "result_data": dict(response.result_data) if response.result_data else None,
                     "error_message": response.error_message,
                     "node_executions": [
                         {
@@ -225,18 +213,14 @@ class GraphServiceClient:
                             "status": graph_service_pb2.ExecutionStatus.Name(ne.status),
                             "started_at": ne.started_at,
                             "completed_at": ne.completed_at,
-                            "output_data": dict(ne.output_data)
-                            if ne.output_data
-                            else None,
+                            "output_data": dict(ne.output_data) if ne.output_data else None,
                             "error_message": ne.error_message,
                         }
                         for ne in response.node_executions
                     ],
                 }
             else:
-                raise RuntimeError(
-                    f"Failed to get execution: {response.response.message}"
-                )
+                raise RuntimeError(f"Failed to get execution: {response.response.message}")
 
         except Exception as e:
             print(f"❌ Error getting execution: {e}")
@@ -265,9 +249,7 @@ class GraphServiceClient:
                 print(f"✅ Execution cancelled: {execution_id}")
                 return True
             else:
-                raise RuntimeError(
-                    f"Failed to cancel execution: {response.response.message}"
-                )
+                raise RuntimeError(f"Failed to cancel execution: {response.response.message}")
 
         except Exception as e:
             print(f"❌ Error cancelling execution: {e}")

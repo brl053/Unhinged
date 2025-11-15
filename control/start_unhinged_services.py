@@ -34,7 +34,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict
 
 # Add project paths
 project_root = Path(__file__).parent.parent
@@ -121,7 +120,7 @@ class UnhingedServiceStartup:
 
         return success
 
-    def _start_service(self, service_name: str, config: Dict) -> bool:
+    def _start_service(self, service_name: str, config: dict) -> bool:
         """Start a single service."""
         logger.info(f"🔄 Starting {config['description']}...")
 
@@ -141,9 +140,7 @@ class UnhingedServiceStartup:
 
                 # Check if process is still running
                 if process.poll() is not None:
-                    logger.error(
-                        f"❌ Background service {service_name} exited immediately"
-                    )
+                    logger.error(f"❌ Background service {service_name} exited immediately")
                     return False
 
             else:
@@ -165,10 +162,9 @@ class UnhingedServiceStartup:
                     return False
 
             # Run health check if available
-            if config.get("health_check"):
-                if not config["health_check"]():
-                    logger.error(f"❌ Health check failed for {service_name}")
-                    return False
+            if config.get("health_check") and not config["health_check"]():
+                logger.error(f"❌ Health check failed for {service_name}")
+                return False
 
             logger.info(f"✅ {config['description']} started successfully")
             return True
@@ -240,12 +236,8 @@ class UnhingedServiceStartup:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Start Unhinged voice-first platform services"
-    )
-    parser.add_argument(
-        "--timeout", type=int, default=120, help="Timeout for service startup"
-    )
+    parser = argparse.ArgumentParser(description="Start Unhinged voice-first platform services")
+    parser.add_argument("--timeout", type=int, default=120, help="Timeout for service startup")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--stop", action="store_true", help="Stop running services")
 

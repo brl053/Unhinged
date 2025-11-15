@@ -141,9 +141,7 @@ class OutputView:
 
         except Exception as e:
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "AUDIO_DEVICES_REFRESH_ERROR", str(e)
-                )
+                self.app.session_logger.log_gui_event("AUDIO_DEVICES_REFRESH_ERROR", str(e))
 
     def set_default_device(self, device_name):
         """Set the default audio output device"""
@@ -160,9 +158,7 @@ class OutputView:
 
         except Exception as e:
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "AUDIO_DEFAULT_DEVICE_ERROR", str(e)
-                )
+                self.app.session_logger.log_gui_event("AUDIO_DEFAULT_DEVICE_ERROR", str(e))
 
     def cleanup(self):
         """Clean up audio output components"""
@@ -178,6 +174,4 @@ class OutputView:
 
         except Exception as e:
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "AUDIO_OUTPUT_CLEANUP_ERROR", str(e)
-                )
+                self.app.session_logger.log_gui_event("AUDIO_OUTPUT_CLEANUP_ERROR", str(e))

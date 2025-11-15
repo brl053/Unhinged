@@ -87,9 +87,7 @@ class SessionManager(BaseComponent):
     def _initialize_grpc_client(self):
         """Initialize gRPC client for chat service"""
         if not GRPC_AVAILABLE:
-            self.logger.warning(
-                "gRPC not available, session management will be disabled"
-            )
+            self.logger.warning("gRPC not available, session management will be disabled")
             return
 
         try:
@@ -110,9 +108,7 @@ class SessionManager(BaseComponent):
         self.set_margin_end(12)
 
         # Session status container
-        self.status_container = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=12
-        )
+        self.status_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         self.status_container.set_halign(Gtk.Align.CENTER)
 
         # Create session button (prominent when no session)
@@ -124,9 +120,7 @@ class SessionManager(BaseComponent):
         self.create_session_button.connect("clicked", self._on_create_session_clicked)
 
         # Session info display (hidden initially)
-        self.session_info_box = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=8
-        )
+        self.session_info_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self.session_info_box.set_visible(False)
 
         # Session ID label

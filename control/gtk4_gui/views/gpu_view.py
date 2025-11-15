@@ -10,8 +10,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw, GLib
 import logging
+
+from gi.repository import Adw, GLib, Gtk
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +116,7 @@ class GPUView:
 
             # Log creation
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "GPU_VIEW_CREATED", "GPU view created"
-                )
+                self.app.session_logger.log_gui_event("GPU_VIEW_CREATED", "GPU view created")
 
             # Load initial data immediately
             GLib.idle_add(self.refresh_gpu_list)
@@ -201,6 +200,4 @@ class GPUView:
         """Clean up resources"""
         self._stop_auto_refresh()
         if hasattr(self.app, "session_logger") and self.app.session_logger:
-            self.app.session_logger.log_gui_event(
-                "GPU_VIEW_CLEANUP", "GPU view cleaned up"
-            )
+            self.app.session_logger.log_gui_event("GPU_VIEW_CLEANUP", "GPU view cleaned up")

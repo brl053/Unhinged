@@ -13,8 +13,8 @@ from pathlib import Path
 # Add utils to path for audio_utils import
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
-from audio_utils import calculate_rms_amplitude
 from audio_types import AudioChunk
+from audio_utils import calculate_rms_amplitude
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,7 @@ class AudioProcessor:
         """
         return calculate_rms_amplitude(audio_data)
 
-    def process_chunk(
-        self, audio_data: bytes, timestamp: float, sample_rate: int
-    ) -> AudioChunk:
+    def process_chunk(self, audio_data: bytes, timestamp: float, sample_rate: int) -> AudioChunk:
         """Process a single audio chunk.
 
         Args:

@@ -136,9 +136,7 @@ class AbstractWindow(AdwComponentBase):
         self._main_box.append(self._header_bar)
 
         # Create content container (will be set via set_content())
-        self._content_container = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
+        self._content_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._content_container.set_vexpand(True)
         self._content_container.set_hexpand(True)
         self._main_box.append(self._content_container)
@@ -167,12 +165,8 @@ class AbstractWindow(AdwComponentBase):
         # Connect to window state notifications
         if hasattr(self.widget, "connect"):
             # Monitor window state changes (maximized, minimized, etc.)
-            self.connect_signal(
-                self.widget, "notify::maximized", self._on_window_state_changed
-            )
-            self.connect_signal(
-                self.widget, "notify::fullscreened", self._on_window_state_changed
-            )
+            self.connect_signal(self.widget, "notify::maximized", self._on_window_state_changed)
+            self.connect_signal(self.widget, "notify::fullscreened", self._on_window_state_changed)
 
     def _setup_drag_gesture(self):
         """Set up drag gesture for window movement."""
@@ -191,12 +185,8 @@ class AbstractWindow(AdwComponentBase):
     def _setup_resize_handlers(self):
         """Set up resize event handlers."""
         # Connect to size change notifications
-        self.connect_signal(
-            self.widget, "notify::default-width", self._on_window_resized
-        )
-        self.connect_signal(
-            self.widget, "notify::default-height", self._on_window_resized
-        )
+        self.connect_signal(self.widget, "notify::default-width", self._on_window_resized)
+        self.connect_signal(self.widget, "notify::default-height", self._on_window_resized)
 
     def _apply_design_system(self):
         """Apply design system styling and window-specific CSS classes."""
@@ -271,9 +261,7 @@ class AbstractWindow(AdwComponentBase):
             self.set_state("current_state", new_state)
 
             # Emit state change signal
-            self.emit(
-                "window-state-changed", old_state, new_state, GLib.get_monotonic_time()
-            )
+            self.emit("window-state-changed", old_state, new_state, GLib.get_monotonic_time())
 
     def _on_focus_changed(self, window, param):
         """Handle window focus changes."""
@@ -615,9 +603,7 @@ class LogContainer(ComponentBase):
         """Initialize the log container."""
         # Create scrolled window
         self._scrolled_window = Gtk.ScrolledWindow()
-        self._scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
-        )
+        self._scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self._scrolled_window.set_min_content_height(200)
 
         # Create text view
@@ -704,9 +690,7 @@ class SystemInfoCard(AdwComponentBase):
             [Gtk.AccessibleProperty.LABEL], [f"System Information: {self.title}"]
         )
         if self.subtitle:
-            self.widget.update_property(
-                [Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle]
-            )
+            self.widget.update_property([Gtk.AccessibleProperty.DESCRIPTION], [self.subtitle])
 
     def _create_header_row(self):
         """Create header row with icon and title."""
@@ -745,9 +729,7 @@ class SystemInfoCard(AdwComponentBase):
                 row.set_subtitle(str(value))
         elif isinstance(value, list):
             # Show list as comma-separated string
-            row.set_subtitle(
-                ", ".join(str(v) for v in value[:3])
-            )  # Limit to first 3 items
+            row.set_subtitle(", ".join(str(v) for v in value[:3]))  # Limit to first 3 items
             if len(value) > 3:
                 row.set_subtitle(row.get_subtitle() + f" (+{len(value) - 3} more)")
         else:
@@ -847,9 +829,7 @@ class SystemStatusGrid(AdwComponentBase):
     def _init_component(self, **kwargs):
         """Initialize the system status grid."""
         # Create main container with grid layout
-        self.widget = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=self.spacing
-        )
+        self.widget = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=self.spacing)
 
         # Create grid rows
         self._create_grid_layout()
@@ -865,12 +845,10 @@ class SystemStatusGrid(AdwComponentBase):
         current_row = None
         cards_in_row = 0
 
-        for i, card_data in enumerate(self.cards_data):
+        for _i, card_data in enumerate(self.cards_data):
             # Create new row if needed
             if cards_in_row == 0:
-                current_row = Gtk.Box(
-                    orientation=Gtk.Orientation.HORIZONTAL, spacing=self.spacing
-                )
+                current_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=self.spacing)
                 current_row.set_homogeneous(True)  # Equal width columns
                 self.widget.append(current_row)
 

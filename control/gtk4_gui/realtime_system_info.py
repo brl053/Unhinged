@@ -8,6 +8,7 @@ Provides real-time system information updates for the GTK4 system info page
 with efficient data collection and UI update mechanisms.
 """
 
+import contextlib
 import logging
 import threading
 import time
@@ -17,7 +18,7 @@ from typing import Any
 
 # Import system info collection
 try:
-    from system_info import SystemInfoCollector, get_performance_summary
+    from system_info import SystemInfoCollector
 
     SYSTEM_INFO_AVAILABLE = True
 except ImportError:
@@ -50,9 +51,7 @@ class RealTimeSystemInfoManager:
 
     def __init__(self, project_root: Path | None = None):
         self.project_root = project_root
-        self.collector = (
-            SystemInfoCollector(project_root) if SYSTEM_INFO_AVAILABLE else None
-        )
+        self.collector = SystemInfoCollector(project_root) if SYSTEM_INFO_AVAILABLE else None
 
         # Update management
         self._update_callbacks = {}  # metric_type -> callback function
@@ -234,15 +233,13 @@ class RealTimeSystemInfoManager:
 
             # Trigger callbacks if there are changes
             if new_pids or removed_pids or updated_processes:
-                for callback_name, callback in self._process_callbacks.items():
+                for _callback_name, callback in self._process_callbacks.items():
                     if GLIB_AVAILABLE:
                         GLib.idle_add(
                             callback,
                             {
                                 "new": [process_data[pid] for pid in new_pids],
-                                "removed": [
-                                    self._last_processes[pid] for pid in removed_pids
-                                ],
+                                "removed": [self._last_processes[pid] for pid in removed_pids],
                                 "updated": updated_processes,
                                 "all": list(process_data.values()),
                             },
@@ -252,9 +249,7 @@ class RealTimeSystemInfoManager:
                         callback(
                             {
                                 "new": [process_data[pid] for pid in new_pids],
-                                "removed": [
-                                    self._last_processes[pid] for pid in removed_pids
-                                ],
+                                "removed": [self._last_processes[pid] for pid in removed_pids],
                                 "updated": updated_processes,
                                 "all": list(process_data.values()),
                             }
@@ -323,17 +318,14 @@ class RealTimeSystemInfoManager:
 
             # Trigger callbacks if there are changes
             if new_addresses or removed_addresses or updated_devices:
-                for callback_name, callback in self._bluetooth_callbacks.items():
+                for _callback_name, callback in self._bluetooth_callbacks.items():
                     if GLIB_AVAILABLE:
                         GLib.idle_add(
                             callback,
                             {
-                                "new": [
-                                    current_devices[addr] for addr in new_addresses
-                                ],
+                                "new": [current_devices[addr] for addr in new_addresses],
                                 "removed": [
-                                    self._last_bluetooth_devices[addr]
-                                    for addr in removed_addresses
+                                    self._last_bluetooth_devices[addr] for addr in removed_addresses
                                 ],
                                 "updated": updated_devices,
                                 "all_devices": list(current_devices.values()),
@@ -346,12 +338,9 @@ class RealTimeSystemInfoManager:
                         # Fallback for testing without GTK
                         callback(
                             {
-                                "new": [
-                                    current_devices[addr] for addr in new_addresses
-                                ],
+                                "new": [current_devices[addr] for addr in new_addresses],
                                 "removed": [
-                                    self._last_bluetooth_devices[addr]
-                                    for addr in removed_addresses
+                                    self._last_bluetooth_devices[addr] for addr in removed_addresses
                                 ],
                                 "updated": updated_devices,
                                 "all_devices": list(current_devices.values()),
@@ -495,10 +484,8 @@ if __name__ == "__main__":
     print("Starting updates for 10 seconds...")
     manager.start_updates(interval=1.0)
 
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         time.sleep(10)
-    except KeyboardInterrupt:
-        pass
 
     manager.stop_updates()
 

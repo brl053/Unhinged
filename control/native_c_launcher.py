@@ -6,9 +6,9 @@ Launches the native C graphics hello world window.
 Pure C graphics rendering with DRM framebuffer.
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 
@@ -24,9 +24,7 @@ def main():
     if not hello_world_path.exists():
         print("❌ Native C graphics binary not found")
         print(f"Expected: {hello_world_path}")
-        print(
-            "💡 Run: cd libs/graphics && cmake -B build && cd build && make hello_world"
-        )
+        print("💡 Run: cd libs/graphics && cmake -B build && cd build && make hello_world")
         return 1
 
     print(f"✅ Found native C graphics binary: {hello_world_path}")
@@ -51,9 +49,7 @@ def main():
         print("🎮 Launching native C graphics window...")
         print("💡 Press Ctrl+C to exit")
 
-        result = subprocess.run(
-            [str(hello_world_path)], cwd=hello_world_path.parent, check=False
-        )
+        result = subprocess.run([str(hello_world_path)], cwd=hello_world_path.parent, check=False)
 
         if result.returncode == 0:
             print("✅ Native C graphics window closed successfully")

@@ -10,8 +10,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw, GLib
 import logging
+
+from gi.repository import Adw, GLib, Gtk
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +116,7 @@ class USBView:
 
             # Log creation
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "USB_VIEW_CREATED", "USB view created"
-                )
+                self.app.session_logger.log_gui_event("USB_VIEW_CREATED", "USB view created")
 
             # Load initial data immediately
             GLib.idle_add(self.refresh_usb_list)
@@ -201,6 +200,4 @@ class USBView:
         """Clean up resources"""
         self._stop_auto_refresh()
         if hasattr(self.app, "session_logger") and self.app.session_logger:
-            self.app.session_logger.log_gui_event(
-                "USB_VIEW_CLEANUP", "USB view cleaned up"
-            )
+            self.app.session_logger.log_gui_event("USB_VIEW_CLEANUP", "USB view cleaned up")

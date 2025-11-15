@@ -10,8 +10,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw
 from pathlib import Path
+
+from gi.repository import Adw, Gtk
 
 
 class DesignSystemExample(Adw.ApplicationWindow):
@@ -63,11 +64,11 @@ class DesignSystemExample(Adw.ApplicationWindow):
             margin: var(--spacing-sp-3);
             box-shadow: var(--elevation-2);
         }
-        
+
         .example-card:hover {
             box-shadow: var(--elevation-3);
         }
-        
+
         .example-title {
             font-family: var(--font-family-prose);
             font-size: var(--font-size-heading);
@@ -75,14 +76,14 @@ class DesignSystemExample(Adw.ApplicationWindow):
             color: var(--color-text-primary);
             margin-bottom: var(--spacing-sp-3);
         }
-        
+
         .example-body {
             font-family: var(--font-family-prose);
             font-size: var(--font-size-body);
             color: var(--color-text-secondary);
             line-height: var(--line-height-body);
         }
-        
+
         .example-button-primary {
             background-color: var(--color-action-primary);
             color: var(--color-text-inverse);
@@ -93,11 +94,11 @@ class DesignSystemExample(Adw.ApplicationWindow):
             font-size: var(--font-size-body);
             font-weight: var(--font-weight-medium);
         }
-        
+
         .example-button-primary:hover {
             box-shadow: var(--elevation-1);
         }
-        
+
         .example-button-secondary {
             background-color: var(--color-action-secondary);
             color: var(--color-text-inverse);
@@ -108,7 +109,7 @@ class DesignSystemExample(Adw.ApplicationWindow):
             font-size: var(--font-size-body);
             font-weight: var(--font-weight-medium);
         }
-        
+
         .example-input {
             background-color: var(--color-surface-default);
             color: var(--color-text-primary);
@@ -118,12 +119,12 @@ class DesignSystemExample(Adw.ApplicationWindow):
             font-family: var(--font-family-prose);
             font-size: var(--font-size-body);
         }
-        
+
         .example-input:focus {
             border-width: var(--border-medium);
             border-color: var(--color-interactive-focus);
         }
-        
+
         .theme-switcher {
             padding: var(--spacing-sp-2);
             margin: var(--spacing-sp-2);
@@ -319,9 +320,7 @@ class DesignSystemExample(Adw.ApplicationWindow):
         self.get_root().set_data("current_theme", new_theme)
 
         # Update button text
-        button.set_label(
-            f"Switch to {'Light' if new_theme == 'dark' else 'Dark'} Theme"
-        )
+        button.set_label(f"Switch to {'Light' if new_theme == 'dark' else 'Dark'} Theme")
 
         print(f"🎨 Switched to {new_theme} theme")
 

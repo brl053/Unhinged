@@ -7,8 +7,8 @@ error handling, and optional output caching.
 """
 
 import subprocess
-from typing import Dict, Any, Optional
 from pathlib import Path
+from typing import Any
 
 
 class SubprocessRunner:
@@ -24,16 +24,16 @@ class SubprocessRunner:
         """
         self.timeout = timeout
         self.cache = cache
-        self._last_output: Optional[str] = None
-        self._last_error: Optional[str] = None
+        self._last_output: str | None = None
+        self._last_error: str | None = None
 
     def run(
         self,
         command: list[str],
-        timeout: Optional[int] = None,
-        cwd: Optional[Path] = None,
+        timeout: int | None = None,
+        cwd: Path | None = None,
         shell: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute command with standard error handling.
 
@@ -108,8 +108,8 @@ class SubprocessRunner:
             }
 
     def run_shell(
-        self, command: str, timeout: Optional[int] = None, cwd: Optional[Path] = None
-    ) -> Dict[str, Any]:
+        self, command: str, timeout: int | None = None, cwd: Path | None = None
+    ) -> dict[str, Any]:
         """
         Execute shell command (string-based).
 
@@ -126,9 +126,9 @@ class SubprocessRunner:
     def run_list(
         self,
         command: list[str],
-        timeout: Optional[int] = None,
-        cwd: Optional[Path] = None,
-    ) -> Dict[str, Any]:
+        timeout: int | None = None,
+        cwd: Path | None = None,
+    ) -> dict[str, Any]:
         """
         Execute command as list (no shell).
 
@@ -142,11 +142,11 @@ class SubprocessRunner:
         """
         return self.run(command, timeout=timeout, cwd=cwd, shell=False)
 
-    def get_last_output(self) -> Optional[str]:
+    def get_last_output(self) -> str | None:
         """Get cached last successful output."""
         return self._last_output
 
-    def get_last_error(self) -> Optional[str]:
+    def get_last_error(self) -> str | None:
         """Get cached last error."""
         return self._last_error
 
@@ -154,9 +154,7 @@ class SubprocessRunner:
 class SystemCommandRunner(SubprocessRunner):
     """Specialized runner for system commands (nvidia-smi, lsusb, arecord, etc)."""
 
-    def run_nvidia_smi(
-        self, query: Optional[str] = None, timeout: int = 10
-    ) -> Dict[str, Any]:
+    def run_nvidia_smi(self, query: str | None = None, timeout: int = 10) -> dict[str, Any]:
         """
         Run nvidia-smi command.
 
@@ -167,14 +165,11 @@ class SystemCommandRunner(SubprocessRunner):
         Returns:
             Dict with success, output, error, returncode
         """
-        if query:
-            cmd = ["nvidia-smi", f"--query-gpu={query}", "--format=csv"]
-        else:
-            cmd = ["nvidia-smi"]
+        cmd = ["nvidia-smi", f"--query-gpu={query}", "--format=csv"] if query else ["nvidia-smi"]
 
         return self.run_list(cmd, timeout=timeout)
 
-    def run_lsusb(self, verbose: bool = False, timeout: int = 10) -> Dict[str, Any]:
+    def run_lsusb(self, verbose: bool = False, timeout: int = 10) -> dict[str, Any]:
         """
         Run lsusb command.
 
@@ -193,13 +188,13 @@ class SystemCommandRunner(SubprocessRunner):
 
     def run_arecord(
         self,
-        device: Optional[str] = None,
+        device: str | None = None,
         format: str = "S16_LE",
         rate: int = 16000,
         channels: int = 1,
         timeout: int = 10,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run arecord command.
 
@@ -223,7 +218,7 @@ class SystemCommandRunner(SubprocessRunner):
 
         return self.run_list(cmd, timeout=timeout)
 
-    def run_aplay_list(self, timeout: int = 10) -> Dict[str, Any]:
+    def run_aplay_list(self, timeout: int = 10) -> dict[str, Any]:
         """
         List audio playback devices using aplay.
 
@@ -235,7 +230,7 @@ class SystemCommandRunner(SubprocessRunner):
         """
         return self.run_list(["aplay", "-l"], timeout=timeout)
 
-    def run_arecord_list(self, timeout: int = 10) -> Dict[str, Any]:
+    def run_arecord_list(self, timeout: int = 10) -> dict[str, Any]:
         """
         List audio capture devices using arecord.
 

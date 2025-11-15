@@ -28,9 +28,7 @@ class GrpcClientFactory:
             if (current / "proto").exists() and (current / "generated").exists():
                 return current
             current = current.parent
-        raise RuntimeError(
-            "Could not find project root with proto/ and generated/ directories"
-        )
+        raise RuntimeError("Could not find project root with proto/ and generated/ directories")
 
     def _ensure_protobuf_clients_in_path(self):
         """Ensure generated protobuf clients are in Python path."""
@@ -182,51 +180,6 @@ class GrpcClientFactory:
                 f"Make sure protobuf clients are generated."
             )
 
-    def create_chat_client(self, address: str = "localhost:9095"):
-        """Create a Chat service gRPC client."""
-        try:
-            from unhinged_proto_clients import chat_pb2_grpc
-
-            if address not in self._clients_cache:
-                channel = grpc.insecure_channel(address)
-                client = chat_pb2_grpc.ChatServiceStub(channel)
-                self._clients_cache[address] = {
-                    "client": client,
-                    "channel": channel,
-                    "service_type": "chat",
-                }
-
-            return self._clients_cache[address]["client"]
-
-        except ImportError as e:
-            raise RuntimeError(
-                f"Failed to import Chat protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
-            )
-
-    def create_image_generation_client(self, address: str = "localhost:9094"):
-        """Create an Image Generation service gRPC client."""
-        try:
-            from unhinged_proto_clients import image_generation_pb2_grpc
-
-            image_gen_address = f"{address}_image_gen"
-            if image_gen_address not in self._clients_cache:
-                channel = grpc.insecure_channel(address)
-                client = image_generation_pb2_grpc.ImageGenerationServiceStub(channel)
-                self._clients_cache[image_gen_address] = {
-                    "client": client,
-                    "channel": channel,
-                    "service_type": "image_generation",
-                }
-
-            return self._clients_cache[image_gen_address]["client"]
-
-        except ImportError as e:
-            raise RuntimeError(
-                f"Failed to import Image Generation protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
-            )
-
     def create_health_client(self, address: str):
         """Create a Health check gRPC client."""
         try:
@@ -329,11 +282,6 @@ def create_vision_client(address: str = "localhost:9093"):
     return _get_default_factory().create_vision_client(address)
 
 
-def create_chat_client(address: str = "localhost:9095"):
-    """Create a Chat service gRPC client using default factory."""
-    return _get_default_factory().create_chat_client(address)
-
-
 # Service Framework Integration
 # Expert recommendation: consolidate gRPC patterns with hardware-aware management
 
@@ -366,9 +314,7 @@ def initialize_service_framework():
                 timeout=60.0,
             )
         except ImportError:
-            register_service(
-                "chat", "localhost:9095", timeout=60.0
-            )  # Fallback without stub
+            register_service("chat", "localhost:9095", timeout=60.0)  # Fallback without stub
 
         # Image generation service - longer timeout for image processing
         try:
@@ -396,9 +342,7 @@ def initialize_service_framework():
                 timeout=60.0,
             )
         except ImportError:
-            register_service(
-                "vision", "localhost:9093", timeout=60.0
-            )  # Fallback without stub
+            register_service("vision", "localhost:9093", timeout=60.0)  # Fallback without stub
 
         # Speech-to-text service - longer timeout for audio transcription
         try:
@@ -430,9 +374,7 @@ def initialize_service_framework():
                 "text_to_speech", "localhost:9092", timeout=120.0
             )  # Fallback without stub
 
-        print(
-            "✅ Service framework initialized with hardware-aware resource management"
-        )
+        print("✅ Service framework initialized with hardware-aware resource management")
         return True
 
     except ImportError as e:
@@ -447,37 +389,27 @@ def get_service_framework_client(service_name: str):
 
         return get_global_pool().get_client(service_name)
     except ImportError:
-        raise RuntimeError(
-            "Service framework not available. Use legacy create_*_client functions."
-        )
+        raise RuntimeError("Service framework not available. Use legacy create_*_client functions.")
 
 
-def call_service_method(
-    service_name: str, method_name: str, request, timeout: float = 120.0
-):
+def call_service_method(service_name: str, method_name: str, request, timeout: float = 120.0):
     """Call service method using hardware-aware service framework"""
     try:
         from service_framework import call_service
 
         return call_service(service_name, method_name, request, timeout)
     except ImportError:
-        raise RuntimeError(
-            "Service framework not available. Use legacy client methods."
-        )
+        raise RuntimeError("Service framework not available. Use legacy client methods.")
 
 
-def stream_service_method(
-    service_name: str, method_name: str, request, timeout: float = 120.0
-):
+def stream_service_method(service_name: str, method_name: str, request, timeout: float = 120.0):
     """Call streaming service method using hardware-aware service framework"""
     try:
         from service_framework import stream_service
 
         return stream_service(service_name, method_name, request, timeout)
     except ImportError:
-        raise RuntimeError(
-            "Service framework not available. Use legacy client methods."
-        )
+        raise RuntimeError("Service framework not available. Use legacy client methods.")
 
 
 # Auto-initialize service framework if available

@@ -99,9 +99,7 @@ QUALITY_TIERS = {
 def get_quality_config(tier: QualityTier) -> QualityConfig:
     """Get configuration for a quality tier"""
     if tier not in QUALITY_TIERS:
-        raise ValueError(
-            f"Unknown quality tier: {tier}. Available: {list(QUALITY_TIERS.keys())}"
-        )
+        raise ValueError(f"Unknown quality tier: {tier}. Available: {list(QUALITY_TIERS.keys())}")
     return QUALITY_TIERS[tier]
 
 

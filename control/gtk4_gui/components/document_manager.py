@@ -7,9 +7,9 @@ Manages document persistence and retrieval using the Python persistence platform
 @llm-does manage document CRUD operations with real persistence
 """
 
-from typing import List, Dict, Any, Optional
 import sys
 from pathlib import Path
+from typing import Any
 
 # Add libs to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "libs"))
@@ -37,7 +37,7 @@ class DocumentManager:
                 print(f"Warning: Could not initialize persistence store: {e}")
                 print("Documents will not be persisted.")
 
-    def get_all_documents(self) -> List[Dict[str, Any]]:
+    def get_all_documents(self) -> list[dict[str, Any]]:
         """Get all documents"""
         if not self.store:
             return []
@@ -49,7 +49,7 @@ class DocumentManager:
             print(f"Error fetching documents: {e}")
             return []
 
-    def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
+    def get_document(self, document_id: str) -> dict[str, Any] | None:
         """Get a single document by ID"""
         if not self.store:
             return None
@@ -63,7 +63,7 @@ class DocumentManager:
 
     def create_document(
         self, title: str, doc_type: str, description: str = ""
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Create a new document.
 
@@ -90,7 +90,7 @@ class DocumentManager:
             print(f"Error creating document: {e}")
             return None
 
-    def update_document(self, document_id: str, **kwargs) -> Optional[Dict[str, Any]]:
+    def update_document(self, document_id: str, **kwargs) -> dict[str, Any] | None:
         """Update a document"""
         if not self.store:
             return None
@@ -120,7 +120,7 @@ class DocumentManager:
             print(f"Error deleting document {document_id}: {e}")
             return False
 
-    def search_documents(self, query: str) -> List[Dict[str, Any]]:
+    def search_documents(self, query: str) -> list[dict[str, Any]]:
         """Search documents by title or description"""
         if not self.store:
             return []
@@ -142,7 +142,7 @@ class DocumentManager:
             print(f"Error searching documents: {e}")
             return []
 
-    def get_documents_by_type(self, doc_type: str) -> List[Dict[str, Any]]:
+    def get_documents_by_type(self, doc_type: str) -> list[dict[str, Any]]:
         """Get documents filtered by type"""
         if not self.store:
             return []
@@ -154,7 +154,7 @@ class DocumentManager:
             print(f"Error filtering documents by type: {e}")
             return []
 
-    def _document_to_dict(self, doc) -> Dict[str, Any]:
+    def _document_to_dict(self, doc) -> dict[str, Any]:
         """Convert persistence Document to dict"""
         return {
             "id": doc.id,

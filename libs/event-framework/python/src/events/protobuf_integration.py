@@ -8,9 +8,9 @@ protobuf schemas defined in the observability and CDC event systems.
 import os
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .event_logger import EventLogger
 
@@ -47,9 +47,7 @@ class StateChangeType(Enum):
 class UniversalEventEmitter:
     """Universal event emitter that creates events compatible with protobuf schemas"""
 
-    def __init__(
-        self, event_logger: EventLogger, service_id: str, version: str = "1.0.0"
-    ):
+    def __init__(self, event_logger: EventLogger, service_id: str, version: str = "1.0.0"):
         self.event_logger = event_logger
         self.service_id = service_id
         self.version = version
@@ -57,12 +55,12 @@ class UniversalEventEmitter:
     def emit_universal_event(
         self,
         event_type: str,
-        payload: Dict[str, Any],
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        trace_id: Optional[str] = None,
-        span_id: Optional[str] = None,
+        payload: dict[str, Any],
+        user_id: str | None = None,
+        session_id: str | None = None,
+        correlation_id: str | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
     ) -> None:
         """Emit a universal event following the CDC event pattern"""
         event_metadata = {
@@ -97,15 +95,15 @@ class UniversalEventEmitter:
         self,
         event_type: LLMEventType,
         model_name: str,
-        prompt_tokens: Optional[int] = None,
-        response_tokens: Optional[int] = None,
-        latency_ms: Optional[int] = None,
+        prompt_tokens: int | None = None,
+        response_tokens: int | None = None,
+        latency_ms: int | None = None,
         success: bool = True,
-        error_message: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        trace_id: Optional[str] = None,
-        span_id: Optional[str] = None,
+        error_message: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
     ) -> None:
         """Emit LLM inference event"""
         payload = {"model_name": model_name, "success": success}
@@ -131,17 +129,17 @@ class UniversalEventEmitter:
     def emit_service_health_event(
         self,
         health_status: ServiceHealthStatus,
-        check_results: Optional[Dict[str, bool]] = None,
-        response_time_ms: Optional[int] = None,
-        trace_id: Optional[str] = None,
-        span_id: Optional[str] = None,
+        check_results: dict[str, bool] | None = None,
+        response_time_ms: int | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
     ) -> None:
         """Emit service health event"""
         payload = {
             "health_status": health_status.value,
             "check_results": check_results or {},
             "response_time_ms": response_time_ms,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.emit_universal_event(
@@ -156,10 +154,10 @@ class UniversalEventEmitter:
         entity_type: str,
         entity_id: str,
         change_type: StateChangeType,
-        field_changes: Optional[Dict[str, Any]] = None,
-        user_id: Optional[str] = None,
-        trace_id: Optional[str] = None,
-        span_id: Optional[str] = None,
+        field_changes: dict[str, Any] | None = None,
+        user_id: str | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
     ) -> None:
         """Emit system state change event"""
         payload = {
@@ -167,7 +165,7 @@ class UniversalEventEmitter:
             "entity_id": entity_id,
             "change_type": change_type.value,
             "field_changes": field_changes or {},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.emit_universal_event(
@@ -183,9 +181,9 @@ class UniversalEventEmitter:
         operation_name: str,
         duration_ms: int,
         success: bool,
-        metadata: Optional[Dict[str, Any]] = None,
-        trace_id: Optional[str] = None,
-        span_id: Optional[str] = None,
+        metadata: dict[str, Any] | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
     ) -> None:
         """Emit performance metric event"""
         payload = {
@@ -218,11 +216,11 @@ def emit_universal_event(
     event_logger: EventLogger,
     service_id: str,
     event_type: str,
-    payload: Dict[str, Any],
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None,
-    trace_id: Optional[str] = None,
-    span_id: Optional[str] = None,
+    payload: dict[str, Any],
+    user_id: str | None = None,
+    session_id: str | None = None,
+    trace_id: str | None = None,
+    span_id: str | None = None,
 ) -> None:
     """Emit a universal event directly from an EventLogger"""
     emitter = create_universal_emitter(event_logger, service_id)

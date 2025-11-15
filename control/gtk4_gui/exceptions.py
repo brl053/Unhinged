@@ -32,9 +32,7 @@ class ConfigurationError(UnhingedError):
 class ServiceError(UnhingedError):
     """Base class for service-related errors"""
 
-    def __init__(
-        self, service_name: str, message: str, details: dict[str, Any] | None = None
-    ):
+    def __init__(self, service_name: str, message: str, details: dict[str, Any] | None = None):
         self.service_name = service_name
         super().__init__(f"{service_name}: {message}", details)
 
@@ -42,9 +40,7 @@ class ServiceError(UnhingedError):
 class ServiceUnavailableError(ServiceError):
     """Raised when a required service is not available"""
 
-    def __init__(
-        self, service_name: str, endpoint: str, details: dict[str, Any] | None = None
-    ):
+    def __init__(self, service_name: str, endpoint: str, details: dict[str, Any] | None = None):
         self.endpoint = endpoint
         super().__init__(service_name, f"Service unavailable at {endpoint}", details)
 
@@ -59,9 +55,7 @@ class ServiceTimeoutError(ServiceError):
         details: dict[str, Any] | None = None,
     ):
         self.timeout_seconds = timeout_seconds
-        super().__init__(
-            service_name, f"Service call timed out after {timeout_seconds}s", details
-        )
+        super().__init__(service_name, f"Service call timed out after {timeout_seconds}s", details)
 
 
 class ServiceResponseError(ServiceError):
@@ -83,9 +77,7 @@ class ServiceResponseError(ServiceError):
         if response_message:
             message_parts.append(f"Message: {response_message}")
 
-        message = (
-            " - ".join(message_parts) if message_parts else "Service returned an error"
-        )
+        message = " - ".join(message_parts) if message_parts else "Service returned an error"
         super().__init__(service_name, message, details)
 
 
@@ -128,9 +120,7 @@ class AudioTranscriptionError(AudioError):
 class AudioFileSizeError(AudioError):
     """Raised when audio file is too large or too small"""
 
-    def __init__(
-        self, file_size: int, max_size: int | None = None, min_size: int | None = None
-    ):
+    def __init__(self, file_size: int, max_size: int | None = None, min_size: int | None = None):
         self.file_size = file_size
         self.max_size = max_size
         self.min_size = min_size
@@ -219,9 +209,7 @@ def handle_grpc_error(error: Exception, service_name: str) -> ServiceError:
 
     # Handle common gRPC error patterns
     if "UNAVAILABLE" in error_str or "failed to connect" in error_str.lower():
-        return ServiceUnavailableError(
-            service_name, "unknown", {"original_error": error_str}
-        )
+        return ServiceUnavailableError(service_name, "unknown", {"original_error": error_str})
 
     elif "DEADLINE_EXCEEDED" in error_str or "timeout" in error_str.lower():
         return ServiceTimeoutError(service_name, 0, {"original_error": error_str})

@@ -132,7 +132,7 @@ class LogViewer(AdwComponentBase):
     def _on_filter_changed(self, dropdown, param):
         """Handle log level filter changes."""
         selected = dropdown.get_selected()
-        level = self._log_levels[selected]
+        self._log_levels[selected]
         # Implement log level filtering logic here
         pass
 
@@ -145,9 +145,7 @@ class LogViewer(AdwComponentBase):
         """Handle export button click."""
         self.emit("export-requested")
 
-    def append_log(
-        self, message: str, level: str = "INFO", timestamp: str | None = None
-    ):
+    def append_log(self, message: str, level: str = "INFO", timestamp: str | None = None):
         """Add a log message."""
         # Format log message
         if timestamp:

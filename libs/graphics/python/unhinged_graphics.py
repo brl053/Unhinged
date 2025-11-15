@@ -7,8 +7,8 @@ This provides a basic interface for Alpine Linux to use the native graphics
 library for framebuffer rendering.
 """
 
-import os
 import ctypes
+import os
 from pathlib import Path
 
 
@@ -96,9 +96,8 @@ class UnhingedGraphics:
 
     def initialize_framebuffer(self):
         """Initialize framebuffer for direct rendering"""
-        if not self.initialized:
-            if not self.initialize():
-                return False
+        if not self.initialized and not self.initialize():
+            return False
 
         # Check if framebuffer device exists
         fb_devices = ["/dev/fb0", "/dev/fb1"]

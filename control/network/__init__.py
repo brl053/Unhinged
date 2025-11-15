@@ -4,8 +4,8 @@
 """
 
 from .service_registry import (
-    ServiceRegistry,
     ServiceEndpoint,
+    ServiceRegistry,
     ServiceStatus,
     get_service_registry,
 )

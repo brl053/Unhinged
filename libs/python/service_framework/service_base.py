@@ -171,9 +171,7 @@ class ServiceBase(ABC):
 
     # Service discovery and communication
 
-    def register_service_dependency(
-        self, name: str, address: str, stub_class=None
-    ) -> None:
+    def register_service_dependency(self, name: str, address: str, stub_class=None) -> None:
         """Register a service dependency"""
         from .connection_pool import ServiceConfig
 
@@ -184,17 +182,13 @@ class ServiceBase(ABC):
         self, service_name: str, method_name: str, request, timeout: float | None = None
     ):
         """Call another service"""
-        return self.connection_pool.call_service(
-            service_name, method_name, request, timeout
-        )
+        return self.connection_pool.call_service(service_name, method_name, request, timeout)
 
     def stream_service(
         self, service_name: str, method_name: str, request, timeout: float | None = None
     ):
         """Call streaming service method"""
-        return self.connection_pool.stream_service(
-            service_name, method_name, request, timeout
-        )
+        return self.connection_pool.stream_service(service_name, method_name, request, timeout)
 
     # Monitoring and diagnostics
 

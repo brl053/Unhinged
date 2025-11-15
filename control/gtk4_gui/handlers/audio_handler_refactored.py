@@ -16,13 +16,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
-from audio_utils import get_best_format_for_device
-from event_bus import get_event_bus, AudioEvents, Event
-from audio_types import RecordingState, RecordingConfig
 from audio_device_manager import AudioDeviceManager
 from audio_processor import AudioProcessor
 from audio_recorder import AudioRecorder
 from audio_transcriber import AudioTranscriber
+from audio_types import RecordingConfig, RecordingState
+from audio_utils import get_best_format_for_device
+from event_bus import AudioEvents, Event, get_event_bus
 
 try:
     from .audio_monitor import AudioVisualizationBridge
@@ -224,9 +224,7 @@ class AudioHandler:
             self.recorder.start_recording(self._temp_file)
 
             # Wait for completion
-            arecord_code, arecord_stderr, tee_stderr = (
-                self.recorder.wait_for_completion()
-            )
+            arecord_code, arecord_stderr, tee_stderr = self.recorder.wait_for_completion()
 
             # Validate recording
             self.recorder.validate_recording()
@@ -252,9 +250,7 @@ class AudioHandler:
             self._set_state(RecordingState.IDLE)
 
             # Notify UI
-            self._event_bus.emit_simple(
-                AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text}
-            )
+            self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text})
 
             logger.info(f"Transcription completed: {len(result.text)} chars")
 

@@ -17,26 +17,27 @@ Date: 2025-10-27
 """
 
 import logging
-import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
+
+import yaml
 
 
 class GTK4CSSGenerator:
     """
     Generates GTK4-compatible CSS from semantic design tokens.
-    
+
     Follows designer specifications:
     - Semantic tokens as CSS custom properties
     - Light/dark theme variants
     - Selective overrides over Libadwaita base
     - WCAG contrast validation preserved
     """
-    
+
     def __init__(self, tokens_dir: Path, output_dir: Path):
         self.tokens_dir = tokens_dir
         self.output_dir = output_dir
-        self.tokens: Dict[str, Any] = {}
+        self.tokens: dict[str, Any] = {}
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def resolve_token(self, token_path: str, context: str = "light") -> str:
@@ -50,21 +51,21 @@ class GTK4CSSGenerator:
         Returns:
             Actual CSS value (e.g., "#0066CC", "8px")
         """
-        parts = token_path.split('.')
+        parts = token_path.split(".")
         category = parts[0]  # 'colors', 'spacing', 'elevation'
 
         # Handle theme-aware color tokens
-        if category == 'colors':
+        if category == "colors":
             # Try theme-aware resolution first: tokens['colors']['themes'][context][...]
             try:
-                value = self.tokens['colors']['themes'][context]
+                value = self.tokens["colors"]["themes"][context]
                 for part in parts[1:]:
                     value = value[part]
                 return str(value)
             except (KeyError, TypeError):
                 # Fall back to base color value: tokens['colors']['colors'][...]
                 try:
-                    value = self.tokens['colors']['colors']
+                    value = self.tokens["colors"]["colors"]
                     for part in parts[1:]:
                         value = value[part]
                     return str(value)
@@ -82,24 +83,24 @@ class GTK4CSSGenerator:
         except (KeyError, TypeError) as e:
             self.logger.error(f"Failed to resolve token {token_path}: {e}")
             raise
-        
+
     def load_tokens(self) -> None:
         """Load all semantic token files"""
         token_files = [
-            'colors.yaml',
-            'typography.yaml',
-            'spacing.yaml',
-            'elevation.yaml',
-            'motion.yaml',
-            'components.yaml'
+            "colors.yaml",
+            "typography.yaml",
+            "spacing.yaml",
+            "elevation.yaml",
+            "motion.yaml",
+            "components.yaml",
         ]
 
         for token_file in token_files:
             token_path = self.tokens_dir / token_file
             if token_path.exists():
                 try:
-                    with open(token_path, 'r', encoding='utf-8') as f:
-                        token_name = token_file.replace('.yaml', '')
+                    with open(token_path, encoding="utf-8") as f:
+                        token_name = token_file.replace(".yaml", "")
                         self.tokens[token_name] = yaml.safe_load(f)
                         self.logger.debug(f"Loaded tokens from {token_file}")
                 except Exception as e:
@@ -107,8 +108,8 @@ class GTK4CSSGenerator:
                     raise
             else:
                 self.logger.warning(f"Token file not found: {token_path}")
-    
-    def generate_css(self) -> Dict[str, str]:
+
+    def generate_css(self) -> dict[str, str]:
         """Generate CSS files for GTK4"""
         css_files = {}
 
@@ -119,11 +120,11 @@ class GTK4CSSGenerator:
 
         # Component styles (depend on tokens and themes) - generate for light theme
         self.logger.debug("Generating component CSS with resolved semantic tokens")
-        css_files['components.css'] = self._generate_component_css('light')
+        css_files["components.css"] = self._generate_component_css("light")
 
         self.logger.info(f"Generated {len(css_files)} CSS files for GTK4 with resolved tokens")
         return css_files
-    
+
     def _generate_base_css(self) -> str:
         """Generate base CSS with semantic token definitions"""
         css_lines = [
@@ -132,41 +133,41 @@ class GTK4CSSGenerator:
             "/* Semantic tokens as CSS custom properties */",
             "",
             ":root {",
-            "  /* === SEMANTIC COLOR TOKENS === */"
+            "  /* === SEMANTIC COLOR TOKENS === */",
         ]
-        
+
         # Colors - semantic structure
-        if 'colors' in self.tokens:
-            colors = self.tokens['colors']['colors']
+        if "colors" in self.tokens:
+            colors = self.tokens["colors"]["colors"]
             css_lines.extend(self._generate_color_properties(colors))
             css_lines.append("")
-        
+
         # Typography - 5 type sizes
-        if 'typography' in self.tokens:
+        if "typography" in self.tokens:
             css_lines.append("  /* === TYPOGRAPHY TOKENS === */")
             css_lines.extend(self._generate_typography_properties())
             css_lines.append("")
-        
+
         # Spacing - 10 spacing values
-        if 'spacing' in self.tokens:
+        if "spacing" in self.tokens:
             css_lines.append("  /* === SPACING TOKENS === */")
             css_lines.extend(self._generate_spacing_properties())
             css_lines.append("")
-        
+
         # Elevation - 4 shadow depths
-        if 'elevation' in self.tokens:
+        if "elevation" in self.tokens:
             css_lines.append("  /* === ELEVATION TOKENS === */")
             css_lines.extend(self._generate_elevation_properties())
             css_lines.append("")
-        
+
         css_lines.append("}")
-        
+
         return "\n".join(css_lines)
-    
-    def _generate_color_properties(self, colors: Dict[str, Any]) -> List[str]:
+
+    def _generate_color_properties(self, colors: dict[str, Any]) -> list[str]:
         """Generate CSS custom properties for semantic colors"""
         properties = []
-        
+
         for category, color_group in colors.items():
             if isinstance(color_group, dict):
                 properties.append(f"  /* {category.title()} Colors */")
@@ -178,110 +179,120 @@ class GTK4CSSGenerator:
                         # Nested color structure (like action.primary.hover)
                         for sub_name, sub_value in color_value.items():
                             if isinstance(sub_value, str):
-                                properties.append(f"  --color-{category}-{color_name}-{sub_name}: {sub_value};")
-        
+                                properties.append(
+                                    f"  --color-{category}-{color_name}-{sub_name}: {sub_value};"
+                                )
+
         return properties
-    
-    def _generate_typography_properties(self) -> List[str]:
+
+    def _generate_typography_properties(self) -> list[str]:
         """Generate CSS custom properties for typography tokens"""
         properties = []
-        
-        typography = self.tokens['typography']['typography']
-        
+
+        typography = self.tokens["typography"]["typography"]
+
         # Font families
-        if 'families' in typography:
+        if "families" in typography:
             properties.append("  /* Font Families */")
-            for family_name, family_stack in typography['families'].items():
+            for family_name, family_stack in typography["families"].items():
                 if isinstance(family_stack, list):
-                    family_value = ', '.join(f'"{font}"' if ' ' in font else font for font in family_stack)
+                    family_value = ", ".join(
+                        f'"{font}"' if " " in font else font for font in family_stack
+                    )
                     properties.append(f"  --font-family-{family_name}: {family_value};")
-        
+
         # Type scale (5 sizes)
-        if 'scale' in typography:
+        if "scale" in typography:
             properties.append("  /* Type Scale (5 sizes) */")
-            for size_name, size_props in typography['scale'].items():
+            for size_name, size_props in typography["scale"].items():
                 if isinstance(size_props, dict):
                     # Font size
-                    if 'size' in size_props:
+                    if "size" in size_props:
                         properties.append(f"  --font-size-{size_name}: {size_props['size']};")
                     # Line height
-                    if 'line_height' in size_props:
-                        line_height = typography.get('line_heights', {}).get(size_props['line_height'], size_props['line_height'])
+                    if "line_height" in size_props:
+                        line_height = typography.get("line_heights", {}).get(
+                            size_props["line_height"], size_props["line_height"]
+                        )
                         properties.append(f"  --line-height-{size_name}: {line_height};")
                     # Font weight
-                    if 'weight' in size_props:
-                        weight = typography.get('weights', {}).get(size_props['weight'], size_props['weight'])
+                    if "weight" in size_props:
+                        weight = typography.get("weights", {}).get(
+                            size_props["weight"], size_props["weight"]
+                        )
                         properties.append(f"  --font-weight-{size_name}: {weight};")
                     # Letter spacing
-                    if 'letter_spacing' in size_props:
-                        spacing = typography.get('letter_spacing', {}).get(size_props['letter_spacing'], size_props['letter_spacing'])
+                    if "letter_spacing" in size_props:
+                        spacing = typography.get("letter_spacing", {}).get(
+                            size_props["letter_spacing"], size_props["letter_spacing"]
+                        )
                         properties.append(f"  --letter-spacing-{size_name}: {spacing};")
-        
+
         return properties
-    
-    def _generate_spacing_properties(self) -> List[str]:
+
+    def _generate_spacing_properties(self) -> list[str]:
         """Generate CSS custom properties for spacing tokens"""
         properties = []
-        
-        spacing = self.tokens['spacing']['spacing']
-        
-        if 'scale' in spacing:
+
+        spacing = self.tokens["spacing"]["spacing"]
+
+        if "scale" in spacing:
             properties.append("  /* Spacing Scale (10 values, 4px base unit) */")
-            for space_name, space_value in spacing['scale'].items():
+            for space_name, space_value in spacing["scale"].items():
                 # Convert sp_1_5 to sp-1-5 for CSS
-                css_name = space_name.replace('_', '-')
+                css_name = space_name.replace("_", "-")
                 properties.append(f"  --spacing-{css_name}: {space_value};")
-        
+
         return properties
-    
-    def _generate_elevation_properties(self) -> List[str]:
+
+    def _generate_elevation_properties(self) -> list[str]:
         """Generate CSS custom properties for elevation tokens"""
         properties = []
 
-        elevation = self.tokens['elevation']['elevation']
+        elevation = self.tokens["elevation"]["elevation"]
 
         # Shadows (4 depths) - GTK4 compatible format
-        if 'shadows' in elevation:
+        if "shadows" in elevation:
             properties.append("  /* Elevation Shadows (GTK4 compatible) */")
-            for shadow_level, shadow_props in elevation['shadows'].items():
+            for shadow_level, shadow_props in elevation["shadows"].items():
                 if isinstance(shadow_props, dict):
                     # Convert to GTK4-compatible shadow format
                     gtk4_shadow = self._convert_shadow_to_gtk4_format(shadow_props)
                     properties.append(f"  --elevation-{shadow_level}: {gtk4_shadow};")
-        
+
         # Z-index layers
-        if 'layers' in elevation:
+        if "layers" in elevation:
             properties.append("  /* Z-Index Layers */")
-            for layer_name, layer_value in elevation['layers'].items():
+            for layer_name, layer_value in elevation["layers"].items():
                 properties.append(f"  --z-index-{layer_name}: {layer_value};")
-        
+
         # Border radius (4 values)
-        if 'radius' in elevation:
+        if "radius" in elevation:
             properties.append("  /* Border Radius (4 values) */")
-            for radius_name, radius_value in elevation['radius'].items():
+            for radius_name, radius_value in elevation["radius"].items():
                 properties.append(f"  --radius-{radius_name}: {radius_value};")
-        
+
         # Border width (3 values)
-        if 'border' in elevation:
+        if "border" in elevation:
             properties.append("  /* Border Width (3 values) */")
-            for border_name, border_value in elevation['border'].items():
+            for border_name, border_value in elevation["border"].items():
                 properties.append(f"  --border-{border_name}: {border_value};")
-        
+
         return properties
 
-    def _convert_shadow_to_gtk4_format(self, shadow_props: Dict) -> str:
+    def _convert_shadow_to_gtk4_format(self, shadow_props: dict) -> str:
         """Convert shadow properties to GTK4-compatible format."""
         # GTK4 has limited box-shadow support, use simple format
-        offset = shadow_props.get('offset', '2px').replace('px', '')
-        blur = shadow_props.get('blur', '4px').replace('px', '')
+        offset = shadow_props.get("offset", "2px").replace("px", "")
+        blur = shadow_props.get("blur", "4px").replace("px", "")
 
         # Convert rgba to alpha() function for GTK4
-        color = shadow_props.get('color', 'rgba(0,0,0,0.1)')
-        if 'rgba' in color:
+        color = shadow_props.get("color", "rgba(0,0,0,0.1)")
+        if "rgba" in color:
             # Extract alpha value and convert to GTK4 alpha() format
             try:
                 # Parse rgba(r, g, b, a) format
-                rgba_parts = color.replace('rgba(', '').replace(')', '').split(',')
+                rgba_parts = color.replace("rgba(", "").replace(")", "").split(",")
                 if len(rgba_parts) == 4:
                     alpha = float(rgba_parts[3].strip())
                     return f"0 {offset}px {blur}px alpha(black, {alpha})"
@@ -290,7 +301,7 @@ class GTK4CSSGenerator:
 
         # Fallback to simple shadow
         return f"0 {offset}px {blur}px alpha(black, 0.1)"
-    
+
     def _generate_theme_css(self, theme_name: str) -> str:
         """Generate theme-specific CSS overrides"""
         css_lines = [
@@ -301,22 +312,24 @@ class GTK4CSSGenerator:
             f"/* Apply {theme_name} theme */",
             f"[data-theme='{theme_name}'], .theme-{theme_name} {{",
         ]
-        
+
         # Theme-specific color overrides
-        if 'colors' in self.tokens and 'themes' in self.tokens['colors']:
-            theme_colors = self.tokens['colors']['themes'].get(theme_name, {})
+        if "colors" in self.tokens and "themes" in self.tokens["colors"]:
+            theme_colors = self.tokens["colors"]["themes"].get(theme_name, {})
             if theme_colors:
                 css_lines.append(f"  /* {theme_name.title()} Theme Colors */")
                 for category, color_group in theme_colors.items():
                     if isinstance(color_group, dict):
                         for color_name, color_value in color_group.items():
                             if isinstance(color_value, str):
-                                css_lines.append(f"  --color-{category}-{color_name}: {color_value};")
-        
+                                css_lines.append(
+                                    f"  --color-{category}-{color_name}: {color_value};"
+                                )
+
         css_lines.append("}")
-        
+
         return "\n".join(css_lines)
-    
+
     def _generate_component_css(self, context: str = "light") -> str:
         """Generate component CSS using resolved semantic tokens"""
         css_lines = [
@@ -326,33 +339,39 @@ class GTK4CSSGenerator:
             "",
         ]
 
-        if 'components' in self.tokens:
-            components = self.tokens['components']['components']
+        if "components" in self.tokens:
+            components = self.tokens["components"]["components"]
 
             # Button component
-            if 'button' in components:
-                css_lines.extend(self._generate_button_css(components['button'], context))
+            if "button" in components:
+                css_lines.extend(self._generate_button_css(components["button"], context))
                 css_lines.append("")
 
             # Form field component
-            if 'form_field' in components:
-                css_lines.extend(self._generate_form_field_css(components['form_field'], context))
+            if "form_field" in components:
+                css_lines.extend(self._generate_form_field_css(components["form_field"], context))
                 css_lines.append("")
 
             # Card component
-            if 'card' in components:
-                css_lines.extend(self._generate_card_css(components['card'], context))
+            if "card" in components:
+                css_lines.extend(self._generate_card_css(components["card"], context))
                 css_lines.append("")
 
         return "\n".join(css_lines)
-    
-    def _generate_button_css(self, button_config: Dict[str, Any], context: str = "light") -> List[str]:
+
+    def _generate_button_css(
+        self, button_config: dict[str, Any], context: str = "light"
+    ) -> list[str]:
         """Generate button CSS using resolved semantic tokens"""
         # Resolve tokens to actual values
-        vertical_padding = self.resolve_token(f"spacing.scale.{button_config['padding']['vertical']}", context)
-        horizontal_padding = self.resolve_token(f"spacing.scale.{button_config['padding']['horizontal']}", context)
+        vertical_padding = self.resolve_token(
+            f"spacing.scale.{button_config['padding']['vertical']}", context
+        )
+        horizontal_padding = self.resolve_token(
+            f"spacing.scale.{button_config['padding']['horizontal']}", context
+        )
         # Strip 'radius_' prefix from border_radius shorthand
-        radius_key = button_config['border_radius'].replace('radius_', '')
+        radius_key = button_config["border_radius"].replace("radius_", "")
         border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
         action_primary = self.resolve_token("colors.action.primary", context)
         text_inverse = self.resolve_token("colors.text.inverse", context)
@@ -386,22 +405,28 @@ class GTK4CSSGenerator:
             f"  background-color: {action_disabled};",
             f"  color: {text_disabled};",
             "  opacity: 0.5;",
-            "}"
+            "}",
         ]
         return css
-    
-    def _generate_form_field_css(self, field_config: Dict[str, Any], context: str = "light") -> List[str]:
+
+    def _generate_form_field_css(
+        self, field_config: dict[str, Any], context: str = "light"
+    ) -> list[str]:
         """Generate form field CSS using resolved semantic tokens"""
         # Resolve tokens to actual values
-        vertical_padding = self.resolve_token(f"spacing.scale.{field_config['padding']['vertical']}", context)
-        horizontal_padding = self.resolve_token(f"spacing.scale.{field_config['padding']['horizontal']}", context)
+        vertical_padding = self.resolve_token(
+            f"spacing.scale.{field_config['padding']['vertical']}", context
+        )
+        horizontal_padding = self.resolve_token(
+            f"spacing.scale.{field_config['padding']['horizontal']}", context
+        )
         # Strip 'radius_' prefix from border_radius shorthand
-        radius_key = field_config['border_radius'].replace('radius_', '')
+        radius_key = field_config["border_radius"].replace("radius_", "")
         border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
         border_default = self.resolve_token("colors.border.default", context)
         surface_default = self.resolve_token("colors.surface.default", context)
         text_primary = self.resolve_token("colors.text.primary", context)
-        text_tertiary = self.resolve_token("colors.text.tertiary", context)
+        self.resolve_token("colors.text.tertiary", context)
 
         css = [
             "/* Form Field Component - Resolved Semantic Tokens */",
@@ -418,16 +443,16 @@ class GTK4CSSGenerator:
             "input:focus, textarea:focus, select:focus {",
             "  border-width: 2px;",
             "  outline: none;",
-            "}"
+            "}",
         ]
         return css
-    
-    def _generate_card_css(self, card_config: Dict[str, Any], context: str = "light") -> List[str]:
+
+    def _generate_card_css(self, card_config: dict[str, Any], context: str = "light") -> list[str]:
         """Generate card CSS using resolved semantic tokens"""
         # Resolve tokens to actual values
         padding = self.resolve_token(f"spacing.scale.{card_config['padding']}", context)
         # Strip 'radius_' prefix from border_radius shorthand
-        radius_key = card_config['border_radius'].replace('radius_', '')
+        radius_key = card_config["border_radius"].replace("radius_", "")
         border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
         surface_elevated = self.resolve_token("colors.surface.elevated", context)
         border_subtle = self.resolve_token("colors.border.subtle", context)
@@ -443,6 +468,6 @@ class GTK4CSSGenerator:
             "",
             ".card:hover {",
             "  opacity: 0.95;",
-            "}"
+            "}",
         ]
         return css

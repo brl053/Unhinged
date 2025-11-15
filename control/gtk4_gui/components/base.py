@@ -79,9 +79,7 @@ class ComponentBase(GObject.Object):
         try:
             # Path to design system tokens
             project_root = Path(__file__).parent.parent.parent.parent
-            tokens_path = (
-                project_root / "libs" / "design_system" / "tokens" / "semantic.yaml"
-            )
+            tokens_path = project_root / "libs" / "design_system" / "tokens" / "semantic.yaml"
 
             if tokens_path.exists() and YAML_AVAILABLE:
                 with open(tokens_path) as f:

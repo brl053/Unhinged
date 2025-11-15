@@ -8,7 +8,6 @@ Eliminates need for passing 25+ parameters to functions.
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 
 class RecordingState(Enum):
@@ -61,7 +60,7 @@ class RecordingMetrics:
     """Metrics for a recording session."""
 
     start_time: float
-    end_time: Optional[float] = None
+    end_time: float | None = None
     total_chunks: int = 0
     total_samples: int = 0
     peak_amplitude: float = 0.0
@@ -97,7 +96,7 @@ class TranscriptionResult:
     confidence: float
     duration_seconds: float
     language: str
-    error: Optional[str] = None
+    error: str | None = None
 
     @property
     def success(self) -> bool:

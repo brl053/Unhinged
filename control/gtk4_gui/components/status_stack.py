@@ -66,9 +66,7 @@ class StatusStack:
         """
         self.max_messages = max(3, min(5, max_messages))
         self.messages: deque = deque(maxlen=self.max_messages)
-        self.session_history: list[
-            tuple[str, str, str]
-        ] = []  # (timestamp, type, message)
+        self.session_history: list[tuple[str, str, str]] = []  # (timestamp, type, message)
 
         # UI Components
         self.container = None
@@ -129,14 +127,10 @@ class StatusStack:
 
         # Add messages in reverse order (newest first)
         for timestamp, status_type, message in reversed(list(self.messages)):
-            message_widget = self._create_message_widget(
-                timestamp, status_type, message
-            )
+            message_widget = self._create_message_widget(timestamp, status_type, message)
             self.message_box.append(message_widget)
 
-    def _create_message_widget(
-        self, timestamp: str, status_type: str, message: str
-    ) -> Gtk.Widget:
+    def _create_message_widget(self, timestamp: str, status_type: str, message: str) -> Gtk.Widget:
         """
         Create a single message widget.
 

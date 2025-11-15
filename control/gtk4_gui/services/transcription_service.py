@@ -53,9 +53,7 @@ class TranscriptionService:
             self._client = create_audio_client(self.address)
         return self._client
 
-    def transcribe_audio_file(
-        self, audio_file_path: str, timeout: float = 30
-    ) -> dict[str, Any]:
+    def transcribe_audio_file(self, audio_file_path: str, timeout: float = 30) -> dict[str, Any]:
         """
         Transcribe an audio file using the speech-to-text service.
 
@@ -97,17 +95,13 @@ class TranscriptionService:
                 yield chunk
 
             # Send to speech-to-text service
-            response = self.client.SpeechToText(
-                generate_audio_chunks(), timeout=timeout
-            )
+            response = self.client.SpeechToText(generate_audio_chunks(), timeout=timeout)
 
             return {
                 "success": response.response.success,
                 "transcript": response.transcript.strip(),
                 "confidence": response.confidence,
-                "error": response.response.message
-                if not response.response.success
-                else None,
+                "error": response.response.message if not response.response.success else None,
             }
 
         except Exception as e:
@@ -131,7 +125,7 @@ class TranscriptionService:
         """
         try:
             # Try to create a client and test basic connectivity
-            client = create_audio_client(self.address)
+            create_audio_client(self.address)
 
             # For now, just check if we can create the client
             # In the future, we could add a health check call

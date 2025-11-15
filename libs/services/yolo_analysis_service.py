@@ -18,9 +18,9 @@ This hybrid approach is efficient and accurate for GUI analysis.
 """
 
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class HybridGUIAnalysisService:
     def __init__(
         self,
         model_size: str = "m",
-        output_dir: Optional[Path] = None,
+        output_dir: Path | None = None,
         use_opencv: bool = True,
         use_yolo: bool = True,
     ):
@@ -73,7 +73,7 @@ class HybridGUIAnalysisService:
         logger.info(f"YOLOv8 model size: {model_size}")
         logger.info(f"Output directory: {self.output_dir}")
 
-    def _detect_gui_elements_opencv(self, image_path: Path) -> List[Dict[str, Any]]:
+    def _detect_gui_elements_opencv(self, image_path: Path) -> list[dict[str, Any]]:
         """
         Detect GUI elements using OpenCV (fast, rule-based approach).
 
@@ -107,9 +107,7 @@ class HybridGUIAnalysisService:
             edges = cv2.Canny(gray, 50, 150)
 
             # Find contours (potential UI elements)
-            contours, _ = cv2.findContours(
-                edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-            )
+            contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             detections = []
 
@@ -201,9 +199,7 @@ class HybridGUIAnalysisService:
             logger.error(f"Failed to load YOLO model: {e}")
             raise
 
-    def analyze_screenshot(
-        self, image_path: str, confidence: float = 0.5
-    ) -> Dict[str, Any]:
+    def analyze_screenshot(self, image_path: str, confidence: float = 0.5) -> dict[str, Any]:
         """
         Analyze screenshot using hybrid approach (OpenCV + YOLOv8).
 
@@ -233,7 +229,7 @@ class HybridGUIAnalysisService:
             start_time = time.time()
 
             detections = []
-            element_counts = {cls: 0 for cls in self.ELEMENT_CLASSES.keys()}
+            element_counts = dict.fromkeys(self.ELEMENT_CLASSES.keys(), 0)
             detection_sources = {"opencv": 0, "yolo": 0}
             image_data = None
 
@@ -321,15 +317,12 @@ class HybridGUIAnalysisService:
             logger.error(f"Screenshot analysis failed: {e}")
             raise
 
-    def _draw_annotations(
-        self, image_path: Path, detections: List[Dict], output_path: Path
-    ):
+    def _draw_annotations(self, image_path: Path, detections: list[dict], output_path: Path):
         """Draw bounding boxes on image and save."""
         try:
-            import cv2
             from PIL import Image, ImageDraw
         except ImportError:
-            logger.warning("Could not draw annotations (PIL/OpenCV not available)")
+            logger.warning("Could not draw annotations (PIL not available)")
             return
 
         try:
@@ -343,9 +336,7 @@ class HybridGUIAnalysisService:
                 x1, y1, x2, y2 = bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]
 
                 # Get color for element type
-                color_tuple = self.ELEMENT_CLASSES.get(det["type"], {}).get(
-                    "color", (255, 0, 0)
-                )
+                color_tuple = self.ELEMENT_CLASSES.get(det["type"], {}).get("color", (255, 0, 0))
                 color = tuple(int(c) for c in color_tuple)
 
                 # Draw rectangle

@@ -16,8 +16,6 @@ try:
     from .exceptions import (
         AudioFileSizeError,
         AudioTranscriptionError,
-        ServiceResponseError,
-        ServiceTimeoutError,
         ServiceUnavailableError,
         handle_grpc_error,
     )
@@ -42,9 +40,7 @@ class ServiceConnector:
         self._health_status: dict[str, bool] = {}
         self._last_health_check: dict[str, float] = {}
 
-    def check_service_health(
-        self, service_name: str, force_check: bool = False
-    ) -> bool:
+    def check_service_health(self, service_name: str, force_check: bool = False) -> bool:
         """Check if a service is healthy and available
 
         Args:
@@ -134,16 +130,12 @@ class ServiceConnector:
                 logger.warning(f"Transcription attempt {attempt + 1} failed: {e}")
 
                 if attempt < app_config.max_retry_attempts - 1:
-                    time.sleep(
-                        app_config.retry_delay * (attempt + 1)
-                    )  # Exponential backoff
+                    time.sleep(app_config.retry_delay * (attempt + 1))  # Exponential backoff
                 else:
                     # Convert to our error hierarchy
                     if "grpc" in str(type(e)).lower():
                         service_error = handle_grpc_error(e, service_name)
-                        raise AudioTranscriptionError(
-                            str(service_error), str(audio_file_path)
-                        )
+                        raise AudioTranscriptionError(str(service_error), str(audio_file_path))
                     else:
                         raise AudioTranscriptionError(str(e), str(audio_file_path))
 
@@ -160,7 +152,7 @@ class ServiceConnector:
                 sys.path.insert(0, str(protobuf_path))
 
             import grpc
-            from unhinged_proto_clients import audio_pb2, audio_pb2_grpc, common_pb2
+            from unhinged_proto_clients import audio_pb2_grpc, common_pb2
 
             # Get service endpoint
             endpoint = service_config.get_endpoint("speech_to_text")
@@ -191,9 +183,7 @@ class ServiceConnector:
                         yield chunk
 
                 # Make streaming gRPC call with timeout
-                response = client.SpeechToText(
-                    generate_chunks(), timeout=app_config.grpc_timeout
-                )
+                response = client.SpeechToText(generate_chunks(), timeout=app_config.grpc_timeout)
 
                 # Check response and extract transcript
                 if response and hasattr(response, "transcript"):
@@ -260,9 +250,7 @@ class ServiceConnector:
             "llm",
             "persistence",
         ]:
-            results[service_name] = self.check_service_health(
-                service_name, force_check=True
-            )
+            results[service_name] = self.check_service_health(service_name, force_check=True)
 
         return results
 

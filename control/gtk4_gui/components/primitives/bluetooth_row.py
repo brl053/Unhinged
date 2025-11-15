@@ -153,9 +153,7 @@ class BluetoothRow(HardwareInfoRow):
         if self.device_info.connected:
             self.connection_button = Gtk.Button()
             self.connection_button.set_label("Disconnect")
-            self.connection_button.set_icon_name(
-                "network-wireless-disconnected-symbolic"
-            )
+            self.connection_button.set_icon_name("network-wireless-disconnected-symbolic")
             self.connection_button.add_css_class("destructive-action")
             self.connection_button.connect("clicked", self._on_disconnect_clicked)
         elif self.device_info.paired:
@@ -212,9 +210,7 @@ class BluetoothRow(HardwareInfoRow):
 
         from bluetooth_monitor import BluetoothMonitor
 
-        logger.info(
-            f"🔵 Connecting to {self.device_info.name} ({self.device_info.address})"
-        )
+        logger.info(f"🔵 Connecting to {self.device_info.name} ({self.device_info.address})")
 
         # Disable button during operation
         button.set_sensitive(False)
@@ -248,9 +244,7 @@ class BluetoothRow(HardwareInfoRow):
 
         from bluetooth_monitor import BluetoothMonitor
 
-        logger.info(
-            f"🔵 Disconnecting from {self.device_info.name} ({self.device_info.address})"
-        )
+        logger.info(f"🔵 Disconnecting from {self.device_info.name} ({self.device_info.address})")
 
         # Disable button during operation
         button.set_sensitive(False)
@@ -261,9 +255,7 @@ class BluetoothRow(HardwareInfoRow):
             success = monitor.disconnect_device(self.device_info.address)
 
             if success:
-                logger.info(
-                    f"✅ Successfully disconnected from {self.device_info.name}"
-                )
+                logger.info(f"✅ Successfully disconnected from {self.device_info.name}")
                 # Update device info to reflect disconnected state
                 self.device_info.connected = False
                 self.update_device_data(self.device_info)
@@ -286,9 +278,7 @@ class BluetoothRow(HardwareInfoRow):
 
         from bluetooth_monitor import BluetoothMonitor
 
-        logger.info(
-            f"🔵 Pairing with {self.device_info.name} ({self.device_info.address})"
-        )
+        logger.info(f"🔵 Pairing with {self.device_info.name} ({self.device_info.address})")
 
         # Disable button during operation
         button.set_sensitive(False)
@@ -340,10 +330,7 @@ class BluetoothRow(HardwareInfoRow):
             self._main_row.set_subtitle(subtitle)
 
         # Update styling if connection status changed
-        if (
-            old_connected != new_device_info.connected
-            or old_paired != new_device_info.paired
-        ):
+        if old_connected != new_device_info.connected or old_paired != new_device_info.paired:
             # Remove old status classes
             self.remove_css_class("bluetooth-connected")
             self.remove_css_class("bluetooth-paired")
@@ -367,9 +354,7 @@ class BluetoothRow(HardwareInfoRow):
 
         if self.device_info.connected:
             self.connection_button.set_label("Disconnect")
-            self.connection_button.set_icon_name(
-                "network-wireless-disconnected-symbolic"
-            )
+            self.connection_button.set_icon_name("network-wireless-disconnected-symbolic")
             self.connection_button.remove_css_class("suggested-action")
             self.connection_button.add_css_class("destructive-action")
         elif self.device_info.paired:

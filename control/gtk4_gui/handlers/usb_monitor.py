@@ -40,9 +40,7 @@ class USBMonitor:
             self.last_basic_output = result["output"]
             return result["output"]
         else:
-            error_msg = (
-                result["error"] or f"lsusb failed with code {result['returncode']}"
-            )
+            error_msg = result["error"] or f"lsusb failed with code {result['returncode']}"
             logger.error(error_msg)
             return error_msg
 
@@ -59,9 +57,7 @@ class USBMonitor:
             self.last_verbose_output = result["output"]
             return result["output"]
         else:
-            error_msg = (
-                result["error"] or f"lsusb -v failed with code {result['returncode']}"
-            )
+            error_msg = result["error"] or f"lsusb -v failed with code {result['returncode']}"
             logger.warning(error_msg)
             return error_msg
 

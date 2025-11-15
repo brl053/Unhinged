@@ -40,7 +40,7 @@ class QEMULauncher:
     def check_iommu_enabled(self):
         """Check if IOMMU is enabled"""
         try:
-            with open("/proc/cmdline", "r") as f:
+            with open("/proc/cmdline") as f:
                 cmdline = f.read()
 
             if "intel_iommu=on" in cmdline or "amd_iommu=on" in cmdline:
@@ -71,9 +71,7 @@ class QEMULauncher:
                 return False
 
             # Backup and modify GRUB
-            subprocess.run(
-                ["sudo", "cp", "/etc/default/grub", "/etc/default/grub.backup"]
-            )
+            subprocess.run(["sudo", "cp", "/etc/default/grub", "/etc/default/grub.backup"])
 
             # Add IOMMU parameter
             grub_cmd = f'sudo sed -i \'s/GRUB_CMDLINE_LINUX_DEFAULT="\\([^"]*\\)"/GRUB_CMDLINE_LINUX_DEFAULT="\\1 {iommu_param}"/\' /etc/default/grub'
@@ -365,9 +363,7 @@ class QEMULauncher:
 
         # Install QEMU packages if needed
         try:
-            subprocess.run(
-                ["which", "qemu-system-x86_64"], check=True, capture_output=True
-            )
+            subprocess.run(["which", "qemu-system-x86_64"], check=True, capture_output=True)
         except subprocess.CalledProcessError:
             print("📦 Installing QEMU for Alpine Linux...")
             if not self.install_qemu_packages():
@@ -443,12 +439,8 @@ class QEMULauncher:
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="QEMU VM Launcher for Unhinged Alpine Linux"
-    )
-    parser.add_argument(
-        "--install", action="store_true", help="Launch Alpine installation mode"
-    )
+    parser = argparse.ArgumentParser(description="QEMU VM Launcher for Unhinged Alpine Linux")
+    parser.add_argument("--install", action="store_true", help="Launch Alpine installation mode")
     parser.add_argument(
         "--custom-iso",
         action="store_true",

@@ -8,9 +8,10 @@ per event and type-safe event handling.
 Eliminates 50+ lines of duplicate callback management code.
 """
 
-from typing import Callable, Dict, List, Any, Optional
-from dataclasses import dataclass
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +37,11 @@ class EventBus:
 
     def __init__(self):
         """Initialize event bus."""
-        self._subscribers: Dict[str, List[Callable]] = {}
-        self._event_history: List[Event] = []
+        self._subscribers: dict[str, list[Callable]] = {}
+        self._event_history: list[Event] = []
         self._max_history = 100
 
-    def subscribe(
-        self, event_type: str, callback: Callable[[Event], None]
-    ) -> Callable[[], None]:
+    def subscribe(self, event_type: str, callback: Callable[[Event], None]) -> Callable[[], None]:
         """
         Subscribe to an event type.
 
@@ -60,10 +59,7 @@ class EventBus:
 
         # Return unsubscribe function
         def unsubscribe():
-            if (
-                event_type in self._subscribers
-                and callback in self._subscribers[event_type]
-            ):
+            if event_type in self._subscribers and callback in self._subscribers[event_type]:
                 self._subscribers[event_type].remove(callback)
 
         return unsubscribe
@@ -79,10 +75,7 @@ class EventBus:
         Returns:
             True if callback was found and removed, False otherwise
         """
-        if (
-            event_type in self._subscribers
-            and callback in self._subscribers[event_type]
-        ):
+        if event_type in self._subscribers and callback in self._subscribers[event_type]:
             self._subscribers[event_type].remove(callback)
             return True
         return False
@@ -130,7 +123,7 @@ class EventBus:
         """
         return len(self._subscribers.get(event_type, []))
 
-    def get_event_history(self, event_type: Optional[str] = None) -> List[Event]:
+    def get_event_history(self, event_type: str | None = None) -> list[Event]:
         """
         Get event history.
 
@@ -148,7 +141,7 @@ class EventBus:
         """Clear event history."""
         self._event_history.clear()
 
-    def clear_subscribers(self, event_type: Optional[str] = None) -> None:
+    def clear_subscribers(self, event_type: str | None = None) -> None:
         """
         Clear subscribers.
 
@@ -163,7 +156,7 @@ class EventBus:
 
 
 # Global event bus instance
-_global_event_bus: Optional[EventBus] = None
+_global_event_bus: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:

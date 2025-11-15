@@ -27,10 +27,10 @@ Makefile targets "behind the scenes". Preserves Makefile as core build system.
 
 import subprocess
 import sys
-import time
-from pathlib import Path
-from datetime import datetime
 import threading
+import time
+from datetime import datetime
+from pathlib import Path
 
 # Import enhanced launcher
 try:
@@ -184,10 +184,7 @@ class UnhingedLauncher:
             # Give VM time to start
             time.sleep(2)
 
-            if (
-                self.vm_launcher.vm_process
-                and self.vm_launcher.vm_process.poll() is None
-            ):
+            if self.vm_launcher.vm_process and self.vm_launcher.vm_process.poll() is None:
                 self.log_status("Enhanced VM launched successfully", "SUCCESS")
                 return True
             else:
@@ -219,10 +216,7 @@ class UnhingedLauncher:
                 time.sleep(1)
 
                 # Check if VM is still running
-                if (
-                    self.vm_launcher.vm_process
-                    and self.vm_launcher.vm_process.poll() is not None
-                ):
+                if self.vm_launcher.vm_process and self.vm_launcher.vm_process.poll() is not None:
                     break
 
         except KeyboardInterrupt:

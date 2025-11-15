@@ -172,9 +172,7 @@ class DocumentRegistry:
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
         edit_btn = Gtk.Button(label="Edit")
-        edit_btn.connect(
-            "clicked", lambda b: self.on_edit(doc_id) if self.on_edit else None
-        )
+        edit_btn.connect("clicked", lambda b: self.on_edit(doc_id) if self.on_edit else None)
         button_box.append(edit_btn)
 
         delete_btn = Gtk.Button(label="Delete")

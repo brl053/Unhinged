@@ -72,9 +72,7 @@ class SystemStatus(AdwComponentBase):
 
         # Calculate overall status
         total_services = len(services_data)
-        running_services = sum(
-            1 for data in services_data.values() if data.get("running")
-        )
+        running_services = sum(1 for data in services_data.values() if data.get("running"))
 
         # Update status card
         if running_services == total_services:

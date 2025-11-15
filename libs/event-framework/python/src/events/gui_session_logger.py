@@ -21,12 +21,12 @@ and writes it to timestamped log files in /build/tmp/ directory.
 
 import sys
 import threading
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional, Callable
+from collections.abc import Callable
 from contextlib import contextmanager
+from datetime import UTC, datetime
+from pathlib import Path
 
-from .event_logger import LogLevel, EventLoggerConfig, create_logger
+from .event_logger import EventLoggerConfig, LogLevel, create_logger
 
 
 class GUISessionLogger:
@@ -38,13 +38,13 @@ class GUISessionLogger:
     noise reduction and error grouping capabilities.
     """
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
         self.log_dir = self.project_root / "build" / "tmp"
         # TBD: Session ID will be updated when chat session is persisted to persistence platform
         # At app startup, we use TBD as placeholder since the real session ID doesn't exist yet
         self.session_id = "TBD"
-        self.session_start = datetime.now(timezone.utc)
+        self.session_start = datetime.now(UTC)
         self.log_file_path = None
         self.log_file = None
         self.lock = threading.Lock()
@@ -137,7 +137,7 @@ class GUISessionLogger:
 
         with self.lock:
             try:
-                timestamp = datetime.now(timezone.utc).isoformat()
+                timestamp = datetime.now(UTC).isoformat()
                 log_entry = f"[{timestamp}] [{source}] {message}\n"
                 self.log_file.write(log_entry)
                 self.log_file.flush()
@@ -178,7 +178,7 @@ class GUISessionLogger:
         """Check if output should be suppressed due to noise reduction"""
         # Suppress duplicate lines within a short time window
         output_hash = hash(output)
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
 
         if output_hash in self.duplicate_suppression:
             last_time = self.duplicate_suppression[output_hash]
@@ -188,17 +188,14 @@ class GUISessionLogger:
         self.duplicate_suppression[output_hash] = current_time
         return False
 
-    def _process_platform_output(self, output: str) -> Optional[str]:
+    def _process_platform_output(self, output: str) -> str | None:
         """Process output with error grouping and noise reduction"""
         # Handle compilation errors
         if self._is_compilation_error(output):
             return self._handle_compilation_error(output)
 
         # Handle sudo permission errors
-        if (
-            "sudo: a terminal is required" in output
-            or "sudo: a password is required" in output
-        ):
+        if "sudo: a terminal is required" in output or "sudo: a password is required" in output:
             return self._handle_sudo_error(output)
 
         # Handle DRM/graphics errors
@@ -222,14 +219,9 @@ class GUISessionLogger:
         """Simplified source classification (3-4 categories instead of 7+)"""
         if any(keyword in output.lower() for keyword in ["error", "failed", "❌"]):
             return "ERROR"
-        elif any(
-            keyword in output.lower() for keyword in ["success", "✅", "completed"]
-        ):
+        elif any(keyword in output.lower() for keyword in ["success", "✅", "completed"]):
             return "SUCCESS"
-        elif any(
-            keyword in output.lower()
-            for keyword in ["gui_event", "button", "status_change"]
-        ):
+        elif any(keyword in output.lower() for keyword in ["gui_event", "button", "status_change"]):
             return "GUI"
         else:
             return "SYSTEM"
@@ -258,28 +250,28 @@ class GUISessionLogger:
             ]
         )
 
-    def _handle_compilation_error(self, output: str) -> Optional[str]:
+    def _handle_compilation_error(self, output: str) -> str | None:
         """Handle compilation errors with grouping"""
         if not self.compilation_errors_logged:
             self.compilation_errors_logged = True
             return "❌ Compilation failed: C graphics library build errors (DRM headers missing)"
         return None  # Suppress subsequent compilation errors
 
-    def _handle_sudo_error(self, output: str) -> Optional[str]:
+    def _handle_sudo_error(self, output: str) -> str | None:
         """Handle sudo permission errors with grouping"""
         if not self.sudo_errors_logged:
             self.sudo_errors_logged = True
             return "❌ Permission error: sudo requires terminal access for dependency installation"
         return None  # Suppress subsequent sudo errors
 
-    def _handle_drm_error(self, output: str) -> Optional[str]:
+    def _handle_drm_error(self, output: str) -> str | None:
         """Handle DRM graphics errors with grouping"""
         if not self.drm_errors_logged:
             self.drm_errors_logged = True
             return "❌ Graphics error: DRM/graphics headers not available"
         return None  # Suppress subsequent DRM errors
 
-    def _handle_vm_error(self, output: str) -> Optional[str]:
+    def _handle_vm_error(self, output: str) -> str | None:
         """Handle VM-related errors"""
         if "Failed to get" in output and "lock" in output:
             return "❌ VM error: Image file locked by another process"
@@ -311,9 +303,7 @@ class GUISessionLogger:
         elif len(failed_components) == len(self.platform_components):
             return "❌ Platform failed to start"
         else:
-            return (
-                f"⚠️ Platform partially started (failed: {', '.join(failed_components)})"
-            )
+            return f"⚠️ Platform partially started (failed: {', '.join(failed_components)})"
 
     def log_session_event(self, event: str, details: str = ""):
         """Log session-level events (start, stop, error, etc.)"""
@@ -365,7 +355,7 @@ class GUISessionLogger:
                         self.log_file.close()
 
                         # Read current file content
-                        with open(self.log_file_path, "r", encoding="utf-8") as f:
+                        with open(self.log_file_path, encoding="utf-8") as f:
                             content = f.read()
 
                         # Replace old session ID with new one in the header
@@ -393,9 +383,7 @@ class GUISessionLogger:
 
                         # Update path and reopen for appending
                         self.log_file_path = new_log_file_path
-                        self.log_file = open(
-                            self.log_file_path, "a", encoding="utf-8", buffering=1
-                        )
+                        self.log_file = open(self.log_file_path, "a", encoding="utf-8", buffering=1)
 
                     except Exception:
                         pass  # Log file update failed, continue with current file
@@ -436,7 +424,7 @@ class GUISessionLogger:
                 self.log_output(f"Final platform status: {final_status}", "SYSTEM")
 
                 # Write session footer with summary
-                end_time = datetime.now(timezone.utc)
+                end_time = datetime.now(UTC)
                 duration = end_time - self.session_start
 
                 # Count error suppression statistics
@@ -492,7 +480,7 @@ class GUIOutputCapture:
     def __init__(
         self,
         session_logger: GUISessionLogger,
-        gui_callback: Optional[Callable[[str], None]] = None,
+        gui_callback: Callable[[str], None] | None = None,
     ):
         self.session_logger = session_logger
         self.gui_callback = gui_callback
@@ -520,7 +508,7 @@ class GUIOutputCapture:
             self.gui_callback(output)
 
 
-def create_gui_session_logger(project_root: Optional[Path] = None) -> GUISessionLogger:
+def create_gui_session_logger(project_root: Path | None = None) -> GUISessionLogger:
     """
     Create a new GUI session logger
 
@@ -534,7 +522,7 @@ def create_gui_session_logger(project_root: Optional[Path] = None) -> GUISession
 
 
 @contextmanager
-def gui_session_context(project_root: Optional[Path] = None):
+def gui_session_context(project_root: Path | None = None):
     """
     Context manager for GUI session logging
 

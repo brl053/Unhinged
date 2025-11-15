@@ -20,7 +20,7 @@ from gi.repository import GLib, Gtk
 
 # Add utils to path for event_bus import
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from event_bus import get_event_bus, AudioEvents, Event
+from event_bus import AudioEvents, Event, get_event_bus
 
 
 class VisualizationMode(Enum):
@@ -104,9 +104,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
             # Emit event via event bus
             state = "recording" if recording else "idle"
             self._event_bus.emit_simple(
-                AudioEvents.RECORDING_STARTED
-                if recording
-                else AudioEvents.RECORDING_STOPPED,
+                AudioEvents.RECORDING_STARTED if recording else AudioEvents.RECORDING_STOPPED,
                 {"state": state},
             )
 
@@ -162,9 +160,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         """Connect state change callback (DEPRECATED: use event_bus instead)"""
         self.state_callback = callback
 
-    def subscribe_to_state_changes(
-        self, callback: Callable[[Event], None]
-    ) -> Callable[[], None]:
+    def subscribe_to_state_changes(self, callback: Callable[[Event], None]) -> Callable[[], None]:
         """Subscribe to state changes via event bus
 
         Args:
@@ -195,9 +191,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         # Only use simulated data if we're not receiving real audio data
         if self.is_recording and not self.use_real_audio:
             # Create realistic voice-like waveform using multiple frequencies
-            fundamental = 0.4 * math.sin(
-                self.animation_time * 4
-            )  # Base voice frequency
+            fundamental = 0.4 * math.sin(self.animation_time * 4)  # Base voice frequency
             harmonic1 = 0.2 * math.sin(self.animation_time * 8)  # First harmonic
             harmonic2 = 0.1 * math.sin(self.animation_time * 12)  # Second harmonic
             noise = 0.05 * math.sin(self.animation_time * 25)  # High frequency detail
@@ -278,9 +272,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
             # Enhanced amplitude scaling for better visual contrast
             # Stretch the amplitude range and add more pronounced peaks/dips
             normalized_amp = (amplitude - 0.5) * 2  # Convert to -1 to 1 range
-            enhanced_amp = normalized_amp * abs(
-                normalized_amp
-            )  # Square for more contrast
+            enhanced_amp = normalized_amp * abs(normalized_amp)  # Square for more contrast
             wave_height = enhanced_amp * height * 0.4  # Reduced height for better fit
             y = center_y + wave_height
 

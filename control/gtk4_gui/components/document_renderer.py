@@ -20,7 +20,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from gi.repository import Gtk
 
@@ -32,7 +33,7 @@ class DocumentRenderer:
         self,
         document: dict[str, Any],
         document_type: str = "document",
-        custom_renderer: Optional[Callable] = None,
+        custom_renderer: Callable | None = None,
     ):
         """
         Initialize document renderer

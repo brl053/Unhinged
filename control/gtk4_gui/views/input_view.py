@@ -18,7 +18,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from audio_utils import get_capture_devices
-
 from gi.repository import Adw, Gtk
 
 
@@ -89,9 +88,7 @@ class InputView:
         if self.current_device:
             status_row = Adw.ActionRow()
             status_row.set_title("Active Input Device")
-            status_row.set_subtitle(
-                f"{self.current_device.get('name', 'Unknown Device')}"
-            )
+            status_row.set_subtitle(f"{self.current_device.get('name', 'Unknown Device')}")
 
             # Active icon
             active_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
@@ -188,9 +185,7 @@ class InputView:
         """Get the current default input device from the system."""
         try:
             # Try to get default source from wpctl (PipeWire)
-            result = subprocess.run(
-                ["wpctl", "status"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["wpctl", "status"], capture_output=True, text=True, timeout=5)
 
             if result.returncode == 0:
                 # Parse wpctl output to find default source
@@ -213,9 +208,7 @@ class InputView:
                                     "name": device_name,
                                     "source": "wpctl",
                                 }
-                    elif in_sources_section and (
-                        "Sinks:" in line or line.strip() == ""
-                    ):
+                    elif in_sources_section and ("Sinks:" in line or line.strip() == ""):
                         # End of sources section
                         break
 
@@ -230,10 +223,7 @@ class InputView:
             return False
 
         # Match by name (for PipeWire devices)
-        if device["name"] in self.current_device.get("name", ""):
-            return True
-
-        return False
+        return device["name"] in self.current_device.get("name", "")
 
     def _on_refresh_clicked(self, button):
         """Handle refresh button click."""

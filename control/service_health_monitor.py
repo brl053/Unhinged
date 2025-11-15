@@ -9,17 +9,20 @@ failed containers to ensure the voice/AI pipeline is fully operational.
 
 import logging
 import subprocess
-import time
-import requests
-from pathlib import Path
-from typing import Dict, Optional, Tuple
-from dataclasses import dataclass
 
 # Import ServiceRegistry for unified service configuration
 import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+import requests
 
 sys.path.append(str(Path(__file__).parent))
-from network.service_registry import ServiceRegistry, ServiceEndpoint
+import builtins
+import contextlib
+
+from network.service_registry import ServiceEndpoint, ServiceRegistry
 
 # Import gRPC health checking (optional)
 try:
@@ -37,7 +40,7 @@ class ServiceConfig:
 
     name: str
     container_name: str
-    health_url: Optional[str]
+    health_url: str | None
     health_port: int
     compose_service: str
     compose_file: str
@@ -74,7 +77,7 @@ class ServiceHealthMonitor:
             "database": "unhinged-postgres",
         }
 
-    def _load_service_configs(self) -> Dict[str, ServiceConfig]:
+    def _load_service_configs(self) -> dict[str, ServiceConfig]:
         """Load service configurations"""
         return {
             "llm": ServiceConfig(
@@ -119,7 +122,7 @@ class ServiceHealthMonitor:
             ),
         }
 
-    def check_service_health(self, service_id: str) -> Tuple[bool, str]:
+    def check_service_health(self, service_id: str) -> tuple[bool, str]:
         """
         Enhanced health checking with protocol awareness.
 
@@ -151,7 +154,7 @@ class ServiceHealthMonitor:
         else:  # tcp_port
             return self._check_tcp_health(endpoint)
 
-    def _check_grpc_health(self, endpoint: ServiceEndpoint) -> Tuple[bool, str]:
+    def _check_grpc_health(self, endpoint: ServiceEndpoint) -> tuple[bool, str]:
         """Check health using gRPC health.proto"""
         if not GRPC_HEALTH_AVAILABLE:
             return False, "gRPC health checking not available (missing proto clients)"
@@ -176,12 +179,10 @@ class ServiceHealthMonitor:
         except Exception as e:
             return False, f"gRPC health check error: {e}"
         finally:
-            try:
+            with contextlib.suppress(builtins.BaseException):
                 channel.close()
-            except:
-                pass
 
-    def _check_http_health(self, endpoint: ServiceEndpoint) -> Tuple[bool, str]:
+    def _check_http_health(self, endpoint: ServiceEndpoint) -> tuple[bool, str]:
         """Check health using HTTP endpoint"""
         try:
             response = requests.get(endpoint.full_health_url, timeout=10)
@@ -192,7 +193,7 @@ class ServiceHealthMonitor:
         except requests.exceptions.RequestException as e:
             return False, f"HTTP health check failed: {e}"
 
-    def _check_tcp_health(self, endpoint: ServiceEndpoint) -> Tuple[bool, str]:
+    def _check_tcp_health(self, endpoint: ServiceEndpoint) -> tuple[bool, str]:
         """Check health using TCP port connectivity"""
         is_healthy = self._check_tcp_port(endpoint.port)
         return is_healthy, "TCP port check"
@@ -235,7 +236,7 @@ class ServiceHealthMonitor:
         except Exception:
             return False
 
-    def restart_service(self, service_id: str) -> Tuple[bool, str]:
+    def restart_service(self, service_id: str) -> tuple[bool, str]:
         """Restart a failed service"""
         if service_id not in self.services:
             return False, f"Unknown service: {service_id}"
@@ -322,7 +323,7 @@ class ServiceHealthMonitor:
         except Exception as e:
             return False, f"Error restarting service: {e}"
 
-    def monitor_and_recover_all(self) -> Dict[str, Dict]:
+    def monitor_and_recover_all(self) -> dict[str, dict]:
         """Monitor all services and auto-recover failed ones"""
         results = {}
 
@@ -344,9 +345,7 @@ class ServiceHealthMonitor:
                 self.logger.warning(f"🔴 {service.name}: {status}")
 
                 if service.critical:
-                    self.logger.info(
-                        f"🔄 Attempting auto-recovery for {service.name}..."
-                    )
+                    self.logger.info(f"🔄 Attempting auto-recovery for {service.name}...")
                     success, message = self.restart_service(service_id)
 
                     if success:
@@ -357,9 +356,7 @@ class ServiceHealthMonitor:
                             "action": "restarted",
                         }
                     else:
-                        self.logger.error(
-                            f"❌ {service.name}: Auto-recovery failed - {message}"
-                        )
+                        self.logger.error(f"❌ {service.name}: Auto-recovery failed - {message}")
                         results[service_id] = {
                             "status": "failed",
                             "message": message,
@@ -374,7 +371,7 @@ class ServiceHealthMonitor:
 
         return results
 
-    def get_service_status_summary(self) -> Dict:
+    def get_service_status_summary(self) -> dict:
         """Get current status of all services without recovery"""
         summary = {
             "healthy": [],
@@ -404,9 +401,7 @@ class ServiceHealthMonitor:
             if service.critical:
                 summary["critical_total"] += 1
 
-        summary["health_percentage"] = (
-            len(summary["healthy"]) / summary["total"]
-        ) * 100
+        summary["health_percentage"] = (len(summary["healthy"]) / summary["total"]) * 100
         summary["critical_health_percentage"] = (
             (summary["critical_healthy"] / summary["critical_total"]) * 100
             if summary["critical_total"] > 0
@@ -420,12 +415,8 @@ def main():
     """CLI interface for service health monitoring"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Service Health Monitor with Auto-Recovery"
-    )
-    parser.add_argument(
-        "--status", action="store_true", help="Show service status only"
-    )
+    parser = argparse.ArgumentParser(description="Service Health Monitor with Auto-Recovery")
+    parser.add_argument("--status", action="store_true", help="Show service status only")
     parser.add_argument(
         "--recover",
         action="store_true",
@@ -436,9 +427,7 @@ def main():
     args = parser.parse_args()
 
     # Setup logging
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     monitor = ServiceHealthMonitor(Path("."))
 

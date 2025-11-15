@@ -7,9 +7,9 @@ Integrates with local TTS engines (gTTS, pyttsx3) and cloud services.
 """
 
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class TTSService:
         "shimmer": {"gender": "female", "accent": "british", "speed": 1.0},
     }
 
-    def __init__(self, output_dir: Optional[Path] = None):
+    def __init__(self, output_dir: Path | None = None):
         """
         Initialize TTS service.
 
@@ -43,7 +43,7 @@ class TTSService:
         voice: str = "nova",
         speed: float = 1.0,
         emotion: str = "neutral",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate voiceover from text.
 
@@ -61,16 +61,13 @@ class TTSService:
                 - metadata: Additional metadata
         """
         if voice not in self.VOICES:
-            raise ValueError(
-                f"Unknown voice: {voice}. Available: {list(self.VOICES.keys())}"
-            )
+            raise ValueError(f"Unknown voice: {voice}. Available: {list(self.VOICES.keys())}")
 
         logger.info(f"Generating voiceover: {len(text)} chars, voice={voice}")
 
         try:
             # Use gTTS (Google Text-to-Speech)
             from gtts import gTTS
-            import soundfile as sf
 
             # Create TTS object
             tts = gTTS(text=text, lang="en", slow=speed < 1.0)
@@ -117,7 +114,7 @@ class TTSService:
         scenes: list,
         voice: str = "nova",
         speed: float = 1.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate voiceovers for multiple scenes.
 

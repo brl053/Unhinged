@@ -35,7 +35,7 @@ Usage:
     store.delete("users", doc.id)
 """
 
-from .document_store import DocumentStore, Document
+from .document_store import Document, DocumentStore
 from .postgres_store import PostgresDocumentStore
 
 __all__ = [

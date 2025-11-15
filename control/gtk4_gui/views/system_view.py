@@ -41,7 +41,7 @@ except ImportError:
 
 
 # Define fallback component classes
-class InfoCard:
+class _FallbackInfoCard:
     def __init__(self, **kwargs):
         self.title = kwargs.get("title", "Info")
         self.data = kwargs.get("data", {})
@@ -50,7 +50,7 @@ class InfoCard:
         return Gtk.Label(label=self.title)
 
 
-class StatusIndicator:
+class _FallbackStatusIndicator:
     def __init__(self, **kwargs):
         pass
 
@@ -60,15 +60,10 @@ class StatusIndicator:
 
 # Try to import real components (optional)
 try:
-    from ..components import (
-        InfoCard as RealInfoCard,
-        StatusIndicator as RealStatusIndicator,
-    )
-
-    InfoCard = RealInfoCard
-    StatusIndicator = RealStatusIndicator
+    from ..components import InfoCard, StatusIndicator
 except ImportError:
-    pass
+    InfoCard = _FallbackInfoCard
+    StatusIndicator = _FallbackStatusIndicator
 
 # Components are always available (we have fallbacks)
 COMPONENTS_AVAILABLE = True
@@ -83,15 +78,9 @@ class SystemInfoView:
         self.project_root = parent_app.project_root
 
         # System info settings
-        self.system_info_auto_refresh = getattr(
-            parent_app, "system_info_auto_refresh", False
-        )
-        self.system_info_refresh_interval = getattr(
-            parent_app, "system_info_refresh_interval", 30
-        )
-        self.realtime_updates_enabled = getattr(
-            parent_app, "realtime_updates_enabled", False
-        )
+        self.system_info_auto_refresh = getattr(parent_app, "system_info_auto_refresh", False)
+        self.system_info_refresh_interval = getattr(parent_app, "system_info_refresh_interval", 30)
+        self.realtime_updates_enabled = getattr(parent_app, "realtime_updates_enabled", False)
 
         # Timer references
         self._auto_refresh_timer_id = None
@@ -167,9 +156,7 @@ class SystemInfoView:
                     print(f"⚠️ Skipping overview section: {e}")
 
                 try:
-                    performance_section = self._create_performance_metrics_section(
-                        system_info
-                    )
+                    performance_section = self._create_performance_metrics_section(system_info)
                     self.system_info_box.append(performance_section)
                 except Exception as e:
                     print(f"⚠️ Skipping performance section: {e}")
@@ -289,9 +276,7 @@ class SystemInfoView:
         # Memory Usage
         memory_row = Adw.ActionRow()
         memory_row.set_title("Memory Usage")
-        memory_row.set_subtitle(
-            f"{system_info.performance.memory_total_gb:.1f} GB total"
-        )
+        memory_row.set_subtitle(f"{system_info.performance.memory_total_gb:.1f} GB total")
 
         if COMPONENTS_AVAILABLE:
             memory_indicator = StatusIndicator(
@@ -346,16 +331,7 @@ class SystemInfoView:
 
         cpu_icon = Gtk.Image.new_from_icon_name("cpu-symbolic")
         cpu_row.add_prefix(cpu_icon)
-
-        if COMPONENTS_AVAILABLE:
-            cpu_details = ActionRow(
-                title="CPU Details",
-                subtitle=f"Cores: {system_info.hardware.cpu_cores}, Threads: {system_info.hardware.cpu_threads}",
-                icon_name="cpu-symbolic",
-            )
-            hardware_group.add(cpu_details.get_widget())
-        else:
-            hardware_group.add(cpu_row)
+        hardware_group.add(cpu_row)
 
         # Memory Information
         memory_row = Adw.ActionRow()
@@ -387,16 +363,7 @@ class SystemInfoView:
 
             gpu_icon = Gtk.Image.new_from_icon_name("video-display-symbolic")
             gpu_row.add_prefix(gpu_icon)
-
-            if COMPONENTS_AVAILABLE:
-                gpu_details = ActionRow(
-                    title="GPU Details",
-                    subtitle=system_info.hardware.gpu_info,
-                    icon_name="video-display-symbolic",
-                )
-                hardware_group.add(gpu_details.get_widget())
-            else:
-                hardware_group.add(gpu_row)
+            hardware_group.add(gpu_row)
 
         return hardware_group
 
@@ -736,9 +703,7 @@ class SystemInfoView:
                     system_info = get_system_info(self.project_root, use_cache=False)
 
                     # Header section with refresh button
-                    header_box = Gtk.Box(
-                        orientation=Gtk.Orientation.HORIZONTAL, spacing=12
-                    )
+                    header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
                     header_box.set_margin_bottom(12)
 
                     title_label = Gtk.Label(label="System Information")
@@ -756,25 +721,19 @@ class SystemInfoView:
 
                     # Add all sections
                     try:
-                        motherboard_section = self._create_motherboard_section(
-                            system_info
-                        )
+                        motherboard_section = self._create_motherboard_section(system_info)
                         self.system_info_box.append(motherboard_section)
                     except Exception as e:
                         print(f"⚠️ Skipping motherboard section: {e}")
 
                     try:
-                        cpu_details_section = self._create_cpu_details_section(
-                            system_info
-                        )
+                        cpu_details_section = self._create_cpu_details_section(system_info)
                         self.system_info_box.append(cpu_details_section)
                     except Exception as e:
                         print(f"⚠️ Skipping CPU details section: {e}")
 
                     try:
-                        gpu_details_section = self._create_gpu_details_section(
-                            system_info
-                        )
+                        gpu_details_section = self._create_gpu_details_section(system_info)
                         self.system_info_box.append(gpu_details_section)
                     except Exception as e:
                         print(f"⚠️ Skipping GPU details section: {e}")
@@ -798,33 +757,25 @@ class SystemInfoView:
                         print(f"⚠️ Skipping network section: {e}")
 
                     try:
-                        overview_section = self._create_system_overview_section(
-                            system_info
-                        )
+                        overview_section = self._create_system_overview_section(system_info)
                         self.system_info_box.append(overview_section)
                     except Exception as e:
                         print(f"⚠️ Skipping overview section: {e}")
 
                     try:
-                        performance_section = self._create_performance_metrics_section(
-                            system_info
-                        )
+                        performance_section = self._create_performance_metrics_section(system_info)
                         self.system_info_box.append(performance_section)
                     except Exception as e:
                         print(f"⚠️ Skipping performance section: {e}")
 
                     try:
-                        hardware_section = self._create_hardware_info_section(
-                            system_info
-                        )
+                        hardware_section = self._create_hardware_info_section(system_info)
                         self.system_info_box.append(hardware_section)
                     except Exception as e:
                         print(f"⚠️ Skipping hardware section: {e}")
 
                     try:
-                        platform_section = self._create_platform_status_section(
-                            system_info
-                        )
+                        platform_section = self._create_platform_status_section(system_info)
                         self.system_info_box.append(platform_section)
                     except Exception as e:
                         print(f"⚠️ Skipping platform section: {e}")
@@ -905,9 +856,7 @@ class SystemInfoView:
         except Exception as e:
             # Log error but continue auto-refresh
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "SYSTEM_INFO_AUTO_REFRESH_ERROR", str(e)
-                )
+                self.app.session_logger.log_gui_event("SYSTEM_INFO_AUTO_REFRESH_ERROR", str(e))
 
         # Return True to continue the timer
         return self.system_info_auto_refresh
@@ -992,6 +941,4 @@ class SystemInfoView:
 
             except Exception as e:
                 if hasattr(self.app, "session_logger") and self.app.session_logger:
-                    self.app.session_logger.log_gui_event(
-                        "SYSTEM_INFO_CLEANUP_ERROR", str(e)
-                    )
+                    self.app.session_logger.log_gui_event("SYSTEM_INFO_CLEANUP_ERROR", str(e))

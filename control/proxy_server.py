@@ -5,12 +5,14 @@
 """
 
 import sys
+import time
 from pathlib import Path
+
 import uvicorn
+import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import time
 
 # Add control system to path
 sys.path.append(str(Path(__file__).parent))
@@ -87,7 +89,6 @@ async def start_service_tier(tier: str, request: Request):
     @llm-future This HTTP endpoint will become: int sys_start_tier(tier_id_t tier)
     @llm-kernel-design Service tiers are fundamental OS abstractions in Unhinged
     """
-    client_ip = request.client.host
     try:
         result = await system_controller.start_service_tier(tier)
 
@@ -134,7 +135,6 @@ async def stop_service_tier(tier: str, request: Request):
 
     @llm-future This becomes the foundation for Unhinged process lifecycle management
     """
-    client_ip = request.client.host
     try:
         result = await system_controller.stop_service_tier(tier)
 
@@ -173,9 +173,7 @@ async def get_system_status():
             "failed_services": status.failed_services,
             "resource_usage": status.resource_usage,
             "uptime": status.uptime,
-            "last_operation": status.last_operation.to_dict()
-            if status.last_operation
-            else None,
+            "last_operation": status.last_operation.to_dict() if status.last_operation else None,
             "virtualization_metadata": {
                 "future_syscall": "sys_get_system_info()",
                 "kernel_version": "unhinged-0.1.0-alpha",
@@ -258,9 +256,7 @@ async def get_deployment_status():
         orchestrator = UnhingedDeploymentOrchestrator(project_root, "development")
         status = orchestrator.get_deployment_status()
 
-        return JSONResponse(
-            {"status": "success", "data": status, "timestamp": time.time()}
-        )
+        return JSONResponse({"status": "success", "data": status, "timestamp": time.time()})
     except Exception as e:
         events.error("Deployment status error", exception=e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -289,9 +285,7 @@ async def get_health_status():
                 "timestamp": result.timestamp.isoformat(),
             }
 
-        return JSONResponse(
-            {"status": "success", "data": health_data, "timestamp": time.time()}
-        )
+        return JSONResponse({"status": "success", "data": health_data, "timestamp": time.time()})
     except Exception as e:
         events.error("Health status error", exception=e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -305,12 +299,10 @@ async def get_service_registry():
         registry_file = project_root / "control" / "config" / "service-registry.yml"
 
         if registry_file.exists():
-            with open(registry_file, "r") as f:
+            with open(registry_file) as f:
                 registry = yaml.safe_load(f)
 
-            return JSONResponse(
-                {"status": "success", "data": registry, "timestamp": time.time()}
-            )
+            return JSONResponse({"status": "success", "data": registry, "timestamp": time.time()})
         else:
             raise HTTPException(status_code=404, detail="Service registry not found")
     except Exception as e:
@@ -320,14 +312,10 @@ async def get_service_registry():
 
 def main():
     """Main entry point for the virtualization boundary server"""
-    logger.info("🎯 Starting Unhinged Virtualization Boundary Server")
-    logger.info(
-        "📋 This server represents the future Unhinged OS system call interface"
-    )
+    events.info("Starting Unhinged Virtualization Boundary Server")
+    events.info("This server represents the future Unhinged OS system call interface")
 
-    uvicorn.run(
-        "proxy_server:app", host="0.0.0.0", port=9000, reload=True, log_level="info"
-    )
+    uvicorn.run("proxy_server:app", host="0.0.0.0", port=9000, reload=True, log_level="info")
 
 
 if __name__ == "__main__":

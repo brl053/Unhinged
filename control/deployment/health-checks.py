@@ -6,15 +6,15 @@
 """
 
 import asyncio
-from unhinged_events import create_service_logger
+import socket
 import time
-import yaml
-from pathlib import Path
-from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+
 import requests
-import socket
+import yaml
+from unhinged_events import create_service_logger
 
 # Initialize event logger
 events = create_service_logger("health-checks", "1.0.0")
@@ -27,7 +27,7 @@ class HealthCheckResult:
     service_name: str
     status: str  # healthy, unhealthy, unknown
     response_time: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -41,7 +41,7 @@ class ServiceHealth:
 
     service_name: str
     current_status: str
-    last_healthy: Optional[datetime]
+    last_healthy: datetime | None
     consecutive_failures: int
     total_checks: int
     success_rate: float
@@ -63,8 +63,8 @@ class UnhingedHealthMonitor:
         self.health_config = self.service_registry.get("health_checks", {})
 
         # Health tracking
-        self.health_history: Dict[str, List[HealthCheckResult]] = {}
-        self.service_health: Dict[str, ServiceHealth] = {}
+        self.health_history: dict[str, list[HealthCheckResult]] = {}
+        self.service_health: dict[str, ServiceHealth] = {}
 
         # Configuration
         self.global_timeout = self.health_config.get("global_timeout", 30)
@@ -72,11 +72,11 @@ class UnhingedHealthMonitor:
         self.retry_delay = self.health_config.get("retry_delay", 5)
         self.failure_threshold = self.health_config.get("failure_threshold", 3)
 
-    def _load_service_registry(self) -> Dict:
+    def _load_service_registry(self) -> dict:
         """Load service registry configuration"""
         registry_file = self.control_root / "config" / "service-registry.yml"
         try:
-            with open(registry_file, "r") as f:
+            with open(registry_file) as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
             events.warn(
@@ -156,7 +156,7 @@ class UnhingedHealthMonitor:
             )
 
     async def check_service_health(
-        self, service_name: str, service_config: Dict
+        self, service_name: str, service_config: dict
     ) -> HealthCheckResult:
         """Check health of a single service"""
         health_check_url = service_config.get("health_check", "")
@@ -177,7 +177,7 @@ class UnhingedHealthMonitor:
             error_message="Unsupported health check type",
         )
 
-    async def check_all_services(self) -> Dict[str, HealthCheckResult]:
+    async def check_all_services(self) -> dict[str, HealthCheckResult]:
         """Check health of all registered services"""
         services = self.service_registry.get("services", {})
         results = {}
@@ -240,9 +240,7 @@ class UnhingedHealthMonitor:
         # Calculate metrics
         success_rate = (healthy_count / total_count) * 100 if total_count > 0 else 0
         avg_response_time = (
-            sum(r.response_time for r in recent_results) / total_count
-            if total_count > 0
-            else 0
+            sum(r.response_time for r in recent_results) / total_count if total_count > 0 else 0
         )
 
         # Count consecutive failures
@@ -273,7 +271,7 @@ class UnhingedHealthMonitor:
             average_response_time=avg_response_time,
         )
 
-    def get_unhealthy_services(self) -> List[str]:
+    def get_unhealthy_services(self) -> list[str]:
         """Get list of currently unhealthy services"""
         return [
             name
@@ -281,7 +279,7 @@ class UnhingedHealthMonitor:
             if health.current_status != "healthy"
         ]
 
-    def get_critical_services(self) -> List[str]:
+    def get_critical_services(self) -> list[str]:
         """Get services that have exceeded failure threshold"""
         return [
             name
@@ -338,12 +336,8 @@ async def main():
     parser.add_argument(
         "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
     )
-    parser.add_argument(
-        "--continuous", action="store_true", help="Run continuous monitoring"
-    )
-    parser.add_argument(
-        "--interval", type=int, default=60, help="Monitoring interval in seconds"
-    )
+    parser.add_argument("--continuous", action="store_true", help="Run continuous monitoring")
+    parser.add_argument("--interval", type=int, default=60, help="Monitoring interval in seconds")
     parser.add_argument("--report", action="store_true", help="Generate health report")
 
     args = parser.parse_args()
@@ -357,10 +351,8 @@ async def main():
             try:
                 results = await monitor.check_all_services()
 
-                healthy_count = sum(
-                    1 for r in results.values() if r.status == "healthy"
-                )
-                total_count = len(results)
+                sum(1 for r in results.values() if r.status == "healthy")
+                len(results)
 
                 # Check for critical services
                 critical_services = monitor.get_critical_services()
@@ -387,14 +379,14 @@ async def main():
 
     elif args.report:
         results = await monitor.check_all_services()
-        report = monitor.generate_health_report()
+        monitor.generate_health_report()
 
     else:
         # Single health check
         results = await monitor.check_all_services()
 
-        for service_name, result in results.items():
-            status_icon = "✅" if result.status == "healthy" else "❌"
+        for _service_name, _result in results.items():
+            pass
 
 
 if __name__ == "__main__":

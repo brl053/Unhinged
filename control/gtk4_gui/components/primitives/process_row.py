@@ -53,7 +53,9 @@ class ProcessRow(HardwareInfoRow):
 
         # Create title and subtitle
         title = f"{self.name} (PID: {self.pid})"
-        subtitle = f"User: {self.user} | CPU: {self.cpu_percent:.1f}% | Memory: {self.memory_percent:.1f}%"
+        subtitle = (
+            f"User: {self.user} | CPU: {self.cpu_percent:.1f}% | Memory: {self.memory_percent:.1f}%"
+        )
 
         # Initialize with process-specific settings
         super().__init__(
@@ -191,9 +193,7 @@ class ProcessRow(HardwareInfoRow):
         action_group.add_action(kill_action)
 
         # Force kill action
-        force_kill_action = Gio.SimpleAction.new(
-            "force_kill", GLib.VariantType.new("s")
-        )
+        force_kill_action = Gio.SimpleAction.new("force_kill", GLib.VariantType.new("s"))
         force_kill_action.connect("activate", self._on_force_kill_process)
         action_group.add_action(force_kill_action)
 
@@ -202,7 +202,7 @@ class ProcessRow(HardwareInfoRow):
 
     def _on_show_details(self, action, parameter):
         """Show process details dialog."""
-        pid = int(parameter.get_string())
+        int(parameter.get_string())
 
         dialog = Adw.MessageDialog()
         dialog.set_heading(f"Process Details - {self.name}")
@@ -233,13 +233,11 @@ Command: {self.command[:100]}{"..." if len(self.command) > 100 else ""}"""
 
     def _on_kill_process(self, action, parameter):
         """Show kill process confirmation."""
-        pid = int(parameter.get_string())
+        int(parameter.get_string())
 
         dialog = Adw.MessageDialog()
         dialog.set_heading("Terminate Process")
-        dialog.set_body(
-            f"Are you sure you want to terminate '{self.name}' (PID: {self.pid})?"
-        )
+        dialog.set_body(f"Are you sure you want to terminate '{self.name}' (PID: {self.pid})?")
 
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("terminate", "Terminate")
@@ -257,7 +255,7 @@ Command: {self.command[:100]}{"..." if len(self.command) > 100 else ""}"""
 
     def _on_force_kill_process(self, action, parameter):
         """Show force kill confirmation."""
-        pid = int(parameter.get_string())
+        int(parameter.get_string())
 
         dialog = Adw.MessageDialog()
         dialog.set_heading("Force Kill Process")
@@ -308,10 +306,7 @@ Command: {self.command[:100]}{"..." if len(self.command) > 100 else ""}"""
         self._update_indicators()
 
         # Highlight if changed significantly
-        if (
-            abs(self.cpu_percent - old_cpu) > 1.0
-            or abs(self.memory_percent - old_memory) > 1.0
-        ):
+        if abs(self.cpu_percent - old_cpu) > 1.0 or abs(self.memory_percent - old_memory) > 1.0:
             self._highlight_update()
 
     def _update_indicators(self):

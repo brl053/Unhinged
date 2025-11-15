@@ -15,14 +15,16 @@ FUTURE: Will add 'image' type for image generation UI, which will require
 renaming the /image slash command in OS Chatroom to avoid naming collision.
 """
 
-import gi
 import time
+
+import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from typing import Any, Optional
-from gi.repository import Gtk, GObject, GLib
+from typing import Any
+
+from gi.repository import GLib, GObject, Gtk
 
 from .base import ComponentBase
 
@@ -58,15 +60,15 @@ class FormInput(ComponentBase):
         disabled: bool = False,
         readonly: bool = False,
         min_length: int = 0,
-        max_length: Optional[int] = None,
+        max_length: int | None = None,
         rows: int = 4,
-        options: Optional[list] = None,
+        options: list | None = None,
         enable_voice: bool = False,
         voice_language: str = "en-US",
         voice_mode: str = "append",
         show_visualizer: bool = True,
         visualizer_width: int = 250,
-        audio_handler: Optional[object] = None,
+        audio_handler: object | None = None,
         **kwargs,
     ):
         self.input_type = input_type
@@ -337,16 +339,12 @@ class FormInput(ComponentBase):
 
                     # Subscribe to amplitude updates (which includes transcripts)
                     # Store the unsubscribe function for cleanup in _stop_recording()
-                    self._audio_event_unsubscribe = (
-                        self.audio_handler.subscribe_to_events(
-                            AudioEvents.AMPLITUDE_UPDATED, self._on_audio_event
-                        )
+                    self._audio_event_unsubscribe = self.audio_handler.subscribe_to_events(
+                        AudioEvents.AMPLITUDE_UPDATED, self._on_audio_event
                     )
                     # Also subscribe to errors
-                    self._audio_error_unsubscribe = (
-                        self.audio_handler.subscribe_to_events(
-                            AudioEvents.ERROR, self._on_audio_error
-                        )
+                    self._audio_error_unsubscribe = self.audio_handler.subscribe_to_events(
+                        AudioEvents.ERROR, self._on_audio_error
                     )
 
                 # Now start recording
@@ -444,9 +442,7 @@ class FormInput(ComponentBase):
         elif self.input_type == "textarea":
             if self._input_widget:
                 buffer = self._input_widget.get_buffer()
-                return buffer.get_text(
-                    buffer.get_start_iter(), buffer.get_end_iter(), False
-                )
+                return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
             return ""
         return ""
 
@@ -498,10 +494,7 @@ class FormInput(ComponentBase):
     def append_transcript(self, text: str):
         """Append transcribed text to existing value."""
         current = self.get_value()
-        if current.strip():
-            new_value = f"{current} {text}"
-        else:
-            new_value = text
+        new_value = f"{current} {text}" if current.strip() else text
         self.set_value(new_value)
         self.emit("transcription-completed", text)
 

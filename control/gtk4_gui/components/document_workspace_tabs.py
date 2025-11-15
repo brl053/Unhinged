@@ -21,18 +21,18 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from collections.abc import Callable
-from typing import Any, List, Dict, Optional
+from typing import Any
 
 from gi.repository import Adw, Gtk
 
 try:
-    from .document_list_simple import DocumentListSimple
     from .document_detail_simple import DocumentDetailSimple
+    from .document_list_simple import DocumentListSimple
     from .document_manager import DocumentManager
 except ImportError:
     # Fallback for direct execution
-    from document_list_simple import DocumentListSimple
     from document_detail_simple import DocumentDetailSimple
+    from document_list_simple import DocumentListSimple
     from document_manager import DocumentManager
 
 
@@ -75,11 +75,11 @@ class DocumentWorkspaceTabs:
         self.metrics_page = None
 
         # Document management components
-        self.document_list: Optional[DocumentListSimple] = None
-        self.document_detail: Optional[DocumentDetailSimple] = None
+        self.document_list: DocumentListSimple | None = None
+        self.document_detail: DocumentDetailSimple | None = None
         self.document_manager = DocumentManager()
-        self.documents: List[Dict[str, Any]] = []
-        self.selected_document: Optional[Dict[str, Any]] = None
+        self.documents: list[dict[str, Any]] = []
+        self.selected_document: dict[str, Any] | None = None
 
         self._create_ui()
         self._load_documents()
@@ -211,7 +211,7 @@ class DocumentWorkspaceTabs:
         if self.document_list:
             self.document_list.set_documents(self.documents)
 
-    def set_documents(self, documents: List[Dict[str, Any]]):
+    def set_documents(self, documents: list[dict[str, Any]]):
         """Set list of documents to display"""
         self.documents = documents
         if self.document_list:

@@ -5,10 +5,11 @@
 """
 
 import asyncio
-import time
-from typing import List, Dict, Any, Optional
-from pathlib import Path
 import sys
+import time
+from pathlib import Path
+from typing import Any
+
 from unhinged_events import create_service_logger
 
 # Add build system to path
@@ -18,8 +19,8 @@ from .operation_result import OperationResult, SystemStatus
 
 # Import build system components
 try:
-    from orchestrator import BuildOrchestrator
     from config.build_config import BuildConfig
+    from orchestrator import BuildOrchestrator
 except ImportError:
     # Build system import failed, using mock implementation
     BuildOrchestrator = None
@@ -37,19 +38,16 @@ class SystemController:
     @llm-virtualization This class will evolve into the primary OS interface
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         self.events = create_service_logger("system-controller", "1.0.0")
-        self.operation_log: List[OperationResult] = []
+        self.operation_log: list[OperationResult] = []
         self.start_time = time.time()
 
         # Initialize build system integration
         if BuildOrchestrator and BuildConfig:
             try:
                 config_file = config_path or str(
-                    Path(__file__).parent.parent.parent
-                    / "build"
-                    / "config"
-                    / "build-config.yml"
+                    Path(__file__).parent.parent.parent / "build" / "config" / "build-config.yml"
                 )
                 self.build_config = BuildConfig.from_file(config_file)
                 self.build_orchestrator = BuildOrchestrator(self.build_config)
@@ -90,7 +88,9 @@ class SystemController:
         """
         operation_name = f"start_tier_{tier}"
         if tier not in self.tier_mappings:
-            error_msg = f"Unknown service tier: {tier}. Available: {list(self.tier_mappings.keys())}"
+            error_msg = (
+                f"Unknown service tier: {tier}. Available: {list(self.tier_mappings.keys())}"
+            )
             self.events.error(error_msg)
             result = OperationResult(
                 operation=operation_name,
@@ -110,12 +110,8 @@ class SystemController:
             if self.build_system_available:
                 # Use build system
                 build_target = tier_config["build_target"]
-                build_results = await self.build_orchestrator.build_targets(
-                    [build_target]
-                )
-                result = OperationResult.from_build_results(
-                    operation_name, build_results
-                )
+                build_results = await self.build_orchestrator.build_targets([build_target])
+                result = OperationResult.from_build_results(operation_name, build_results)
             else:
                 # Fallback to direct Docker commands
                 result = await self._execute_docker_command(operation_name, tier_config)
@@ -201,7 +197,7 @@ class SystemController:
             return result
 
     async def _execute_docker_command(
-        self, operation: str, tier_config: Dict[str, Any]
+        self, operation: str, tier_config: dict[str, Any]
     ) -> OperationResult:
         """
         Execute Docker command as fallback when build system unavailable
@@ -294,11 +290,11 @@ class SystemController:
                 uptime=time.time() - self.start_time,
             )
 
-    def get_operation_history(self) -> List[OperationResult]:
+    def get_operation_history(self) -> list[OperationResult]:
         """Get history of all operations for analysis"""
         return self.operation_log.copy()
 
-    def get_operation_patterns(self) -> Dict[str, Any]:
+    def get_operation_patterns(self) -> dict[str, Any]:
         """
         Analyze operation patterns for future OS design insights
 
@@ -323,9 +319,7 @@ class SystemController:
 
         # Calculate success rates and average times
         for op_type in operations_by_type:
-            type_ops = [
-                op for op in self.operation_log if op.operation.startswith(op_type)
-            ]
+            type_ops = [op for op in self.operation_log if op.operation.startswith(op_type)]
             successful = sum(1 for op in type_ops if op.success)
             operations_by_type[op_type]["success_rate"] = successful / len(type_ops)
             operations_by_type[op_type]["avg_time"] = sum(
@@ -343,7 +337,7 @@ class SystemController:
             else None,
         }
 
-    def get_resource_insights(self) -> Dict[str, Any]:
+    def get_resource_insights(self) -> dict[str, Any]:
         """Get resource usage insights for OS design"""
         return {
             "uptime": time.time() - self.start_time,
@@ -351,15 +345,13 @@ class SystemController:
             / ((time.time() - self.start_time) / 60)
             if self.operation_log
             else 0,
-            "average_operation_time": sum(
-                op.execution_time for op in self.operation_log
-            )
+            "average_operation_time": sum(op.execution_time for op in self.operation_log)
             / len(self.operation_log)
             if self.operation_log
             else 0,
         }
 
-    def get_os_design_insights(self) -> Dict[str, Any]:
+    def get_os_design_insights(self) -> dict[str, Any]:
         """Generate insights for future Unhinged OS design"""
         patterns = self.get_operation_patterns()
         resources = self.get_resource_insights()

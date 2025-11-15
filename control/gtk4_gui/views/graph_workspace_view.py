@@ -22,9 +22,7 @@ from gi.repository import Gtk
 # Add proto clients to path
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"
-    ),
+    str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"),
 )
 
 # Import graph canvas component
@@ -290,9 +288,7 @@ class GraphWorkspaceView:
         """Handle node moved"""
         self._update_status(f"Moved node {node_id} to ({x:.0f}, {y:.0f})")
 
-    def _on_edge_created(
-        self, canvas, edge_id: str, source: str, target: str, handle: str
-    ):
+    def _on_edge_created(self, canvas, edge_id: str, source: str, target: str, handle: str):
         """Handle edge created"""
         self._update_status(f"Created edge from {source} to {target}")
 

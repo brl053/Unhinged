@@ -175,9 +175,7 @@ class TextEditor(AdwComponentBase):
         """Show/hide placeholder based on content."""
         if self._placeholder_label:
             has_content = bool(self.content.strip())
-            self._placeholder_label.set_visible(
-                not has_content and not self._is_focused
-            )
+            self._placeholder_label.set_visible(not has_content and not self._is_focused)
 
     def set_content(self, content: str):
         """Set text editor content."""

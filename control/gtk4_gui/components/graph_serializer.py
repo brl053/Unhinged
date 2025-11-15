@@ -13,9 +13,7 @@ from typing import Any
 # Add generated proto clients to path
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"
-    ),
+    str(Path(__file__).parent.parent.parent.parent / "generated" / "python" / "clients"),
 )
 
 try:
@@ -130,9 +128,7 @@ class GraphSerializer:
 
         # Map graph type
         graph_type_str = graph_type.lower()
-        graph.type = GraphSerializer.GRAPH_TYPE_MAP.get(
-            graph_type_str, graph_service_pb2.DAG
-        )
+        graph.type = GraphSerializer.GRAPH_TYPE_MAP.get(graph_type_str, graph_service_pb2.DAG)
 
         # Add nodes and edges
         graph.nodes.extend(proto_nodes)
@@ -193,7 +189,7 @@ class GraphSerializer:
         return nodes, edges, metadata
 
     @staticmethod
-    def json_to_struct(data: dict[str, Any]) -> "google.protobuf.Struct":
+    def json_to_struct(data: dict[str, Any]) -> Any:
         """Convert Python dict to protobuf Struct."""
         struct = common_pb2.Struct()
         if data:
@@ -201,6 +197,6 @@ class GraphSerializer:
         return struct
 
     @staticmethod
-    def struct_to_json(struct: "google.protobuf.Struct") -> dict[str, Any]:
+    def struct_to_json(struct: Any) -> dict[str, Any]:
         """Convert protobuf Struct to Python dict."""
         return dict(struct) if struct else {}

@@ -100,9 +100,7 @@ class ActionController:
 
         # Close session logging
         if hasattr(self.app, "session_logger") and self.app.session_logger:
-            self.app.session_logger.log_session_event(
-                "APP_QUIT", "Application quit requested"
-            )
+            self.app.session_logger.log_session_event("APP_QUIT", "Application quit requested")
             self.app.session_logger.close_session()
 
         self.app.quit()
@@ -119,9 +117,7 @@ class ActionController:
         # Get selected mode
         mode_names = ["Enhanced", "Simple", "QoL", "Custom ISO"]
         selected_mode = self.app.mode_dropdown.get_selected()
-        mode_name = (
-            mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
-        )
+        mode_name = mode_names[selected_mode] if selected_mode < len(mode_names) else "Enhanced"
 
         # Log GUI events
         if hasattr(self.app, "session_logger") and self.app.session_logger:
@@ -135,14 +131,10 @@ class ActionController:
 
         # Start platform using handler
         if hasattr(self.app, "platform_handler") and self.app.platform_handler:
-            thread = threading.Thread(
-                target=self.app.platform_handler.start_platform, daemon=True
-            )
+            thread = threading.Thread(target=self.app.platform_handler.start_platform, daemon=True)
             thread.start()
         else:
-            self.app.show_error_dialog(
-                "Platform Error", "Platform handler not available"
-            )
+            self.app.show_error_dialog("Platform Error", "Platform handler not available")
 
     def on_stop_clicked(self, button):
         """Handle stop button click using PlatformHandler"""
@@ -155,9 +147,7 @@ class ActionController:
 
         # Log GUI event
         if hasattr(self.app, "session_logger") and self.app.session_logger:
-            self.app.session_logger.log_gui_event(
-                "STOP_BUTTON_CLICKED", "User clicked stop button"
-            )
+            self.app.session_logger.log_gui_event("STOP_BUTTON_CLICKED", "User clicked stop button")
 
         # Stop platform using handler
         if hasattr(self.app, "platform_handler") and self.app.platform_handler:
@@ -190,9 +180,7 @@ class ActionController:
                         self.app.record_and_transcribe_voice()
                     else:
                         # Fallback: show message
-                        GLib.idle_add(
-                            self.app.show_toast, "Voice recording not available"
-                        )
+                        GLib.idle_add(self.app.show_toast, "Voice recording not available")
 
                 except Exception as e:
                     print(f"❌ Voice recording error: {e}")
@@ -267,9 +255,7 @@ class ActionController:
                             f"Set default output to {device['name']}",
                         )
                 else:
-                    self.app.show_toast(
-                        f"Failed to set default output: {result.stderr}"
-                    )
+                    self.app.show_toast(f"Failed to set default output: {result.stderr}")
 
         except FileNotFoundError:
             self.app.show_toast("PulseAudio tools not available")

@@ -7,16 +7,16 @@ Orchestrates: script parsing → TTS → visual generation → video composition
 """
 
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime
 import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
+from .image_generation_service import ImageGenerationService
+from .quality_tiers import get_quality_config
 from .script_parser_service import ScriptParserService
 from .tts_service import TTSService
-from .image_generation_service import ImageGenerationService
 from .video_generation_service import VideoGenerationService
-from .quality_tiers import get_quality_config
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class ShortFormVideoService:
         },
     }
 
-    def __init__(self, output_dir: Optional[Path] = None):
+    def __init__(self, output_dir: Path | None = None):
         """
         Initialize short-form video service.
 
@@ -67,9 +67,7 @@ class ShortFormVideoService:
         # Initialize sub-services
         self.script_parser = ScriptParserService()
         self.tts = TTSService(output_dir)
-        self.image_gen = ImageGenerationService(
-            model="stable-diffusion", output_dir=output_dir
-        )
+        self.image_gen = ImageGenerationService(model="stable-diffusion", output_dir=output_dir)
         self.video_gen = VideoGenerationService(output_dir)
 
         logger.info("Short-Form Video Service initialized")
@@ -82,8 +80,8 @@ class ShortFormVideoService:
         voice: str = "nova",
         style: str = "cinematic",
         quality: str = "standard",
-        music: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        music: str | None = None,
+    ) -> dict[str, Any]:
         """
         Generate short-form video from text script.
 
@@ -196,7 +194,7 @@ class ShortFormVideoService:
             logger.error(f"Video generation failed: {e}")
             raise
 
-    def _create_visual_prompt(self, scene: Dict[str, Any], style: str) -> str:
+    def _create_visual_prompt(self, scene: dict[str, Any], style: str) -> str:
         """Create visual prompt from scene"""
         text = scene.get("text", "")
         visual_cue = scene.get("visual_cue", "general")
@@ -225,9 +223,9 @@ class ShortFormVideoService:
         scenes: list,
         voiceovers: list,
         visuals: list,
-        platform_spec: Dict[str, Any],
-        music: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        platform_spec: dict[str, Any],
+        music: str | None = None,
+    ) -> dict[str, Any]:
         """Compose final video from components with audio sync"""
         logger.info("Composing video from components...")
 
@@ -304,9 +302,7 @@ class ShortFormVideoService:
         total_duration = len(frames) / fps
 
         logger.info(f"Video saved: {video_path}")
-        logger.info(
-            f"Duration: {total_duration:.1f}s, Frames: {len(frames)}, FPS: {fps}"
-        )
+        logger.info(f"Duration: {total_duration:.1f}s, Frames: {len(frames)}, FPS: {fps}")
 
         return {
             "video_path": str(video_path),

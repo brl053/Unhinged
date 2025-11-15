@@ -6,8 +6,8 @@ across different views and components.
 """
 
 import subprocess
-import time
 import sys
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -78,9 +78,7 @@ class AudioDeviceManager:
         """Get the current default input device from the system."""
         try:
             # Try to get default source from wpctl (PipeWire)
-            result = subprocess.run(
-                ["wpctl", "status"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["wpctl", "status"], capture_output=True, text=True, timeout=5)
 
             if result.returncode == 0:
                 # Parse wpctl output to find default source
@@ -113,9 +111,7 @@ class AudioDeviceManager:
                                     is_default=True,
                                     is_active=True,
                                 )
-                    elif in_sources_section and (
-                        "Sinks:" in line or line.strip() == ""
-                    ):
+                    elif in_sources_section and ("Sinks:" in line or line.strip() == ""):
                         # End of sources section
                         break
 
@@ -220,13 +216,7 @@ ctl.!default {{
             return True
 
         # Match by card/device ID (for ALSA devices)
-        if (
-            device1.card_id == device2.card_id
-            and device1.device_id == device2.device_id
-        ):
-            return True
-
-        return False
+        return bool(device1.card_id == device2.card_id and device1.device_id == device2.device_id)
 
 
 # Global manager instance

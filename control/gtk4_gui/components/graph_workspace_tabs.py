@@ -100,9 +100,7 @@ class GraphWorkspaceTabs:
             title.add_css_class("title-2")
             box.append(title)
 
-            desc = Gtk.Label(
-                label="Browse and manage available node types and saved graphs"
-            )
+            desc = Gtk.Label(label="Browse and manage available node types and saved graphs")
             desc.add_css_class("dim-label")
             desc.set_wrap(True)
             box.append(desc)

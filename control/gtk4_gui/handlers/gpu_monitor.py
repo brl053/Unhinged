@@ -40,9 +40,7 @@ class GPUMonitor:
             self.last_basic_output = result["output"]
             return result["output"]
         else:
-            error_msg = (
-                result["error"] or f"nvidia-smi failed with code {result['returncode']}"
-            )
+            error_msg = result["error"] or f"nvidia-smi failed with code {result['returncode']}"
             logger.error(error_msg)
             return error_msg
 
@@ -61,8 +59,7 @@ class GPUMonitor:
             return result["output"]
         else:
             error_msg = (
-                result["error"]
-                or f"nvidia-smi --query-gpu failed with code {result['returncode']}"
+                result["error"] or f"nvidia-smi --query-gpu failed with code {result['returncode']}"
             )
             logger.warning(error_msg)
             return error_msg

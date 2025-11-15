@@ -242,9 +242,7 @@ class ImageGenerationPanel(BaseComponent):
             height=int(self.height_spin.get_value()),
             steps=int(self.steps_spin.get_value()),
             guidance=self.guidance_spin.get_value(),
-            seed=int(self.seed_entry.get_text())
-            if self.seed_entry.get_text()
-            else None,
+            seed=int(self.seed_entry.get_text()) if self.seed_entry.get_text() else None,
         )
 
         # Start generation

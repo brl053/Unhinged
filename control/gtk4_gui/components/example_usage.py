@@ -115,9 +115,7 @@ class ComponentExampleApp(Adw.Application):
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
 
         # Primary button
-        primary_btn = ActionButton(
-            label="Primary", style="primary", icon_name="emblem-ok-symbolic"
-        )
+        primary_btn = ActionButton(label="Primary", style="primary", icon_name="emblem-ok-symbolic")
         primary_btn.connect("clicked", lambda b: print("Primary clicked"))
         button_box.append(primary_btn.get_widget())
 
@@ -158,9 +156,7 @@ class ComponentExampleApp(Adw.Application):
         progress_row.set_title("Progress Indicator")
         progress_row.set_subtitle("Progress with percentage")
 
-        progress = ProgressIndicator(
-            progress=0.65, text="Processing...", show_percentage=True
-        )
+        progress = ProgressIndicator(progress=0.65, text="Processing...", show_percentage=True)
         progress_row.add_suffix(progress.get_widget())
         group.add(progress_row)
 
@@ -182,9 +178,7 @@ class ComponentExampleApp(Adw.Application):
         )
 
         # Add action button to card
-        refresh_btn = ActionButton(
-            label="Refresh", style="flat", icon_name="view-refresh-symbolic"
-        )
+        refresh_btn = ActionButton(label="Refresh", style="flat", icon_name="view-refresh-symbolic")
         status_card.add_action_button(refresh_btn.get_widget())
 
         group.add(status_card.get_widget())
@@ -264,9 +258,7 @@ class ComponentExampleApp(Adw.Application):
         """Create examples of new components: ChatBubble, LoadingDots, CopyButton."""
         group = Adw.PreferencesGroup()
         group.set_title("New Components")
-        group.set_description(
-            "Chat bubbles, loading animations, and copy-paste functionality"
-        )
+        group.set_description("Chat bubbles, loading animations, and copy-paste functionality")
 
         # Chat Bubble Examples
         chat_row = Adw.ActionRow()
@@ -339,9 +331,7 @@ class ComponentExampleApp(Adw.Application):
         # Copy Button Examples
         copy_row = Adw.ActionRow()
         copy_row.set_title("Copy Functionality")
-        copy_row.set_subtitle(
-            "Generic copy-paste components with different content sources"
-        )
+        copy_row.set_subtitle("Generic copy-paste components with different content sources")
 
         copy_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         copy_container.set_margin_top(12)

@@ -100,9 +100,7 @@ class BluetoothTable(AdwComponentBase):
 
         self.type_filter_dropdown = Gtk.DropDown()
         self.type_filter_dropdown.set_tooltip_text("Filter by device type")
-        self.type_filter_dropdown.connect(
-            "notify::selected", self._on_type_filter_changed
-        )
+        self.type_filter_dropdown.connect("notify::selected", self._on_type_filter_changed)
 
         type_filter_box.append(type_label)
         type_filter_box.append(self.type_filter_dropdown)
@@ -262,9 +260,7 @@ class BluetoothTable(AdwComponentBase):
 
         # Apply type filter
         if self.filter_type and self.filter_type != "All":
-            filtered = [
-                d for d in filtered if d.device_type == self.filter_type.lower()
-            ]
+            filtered = [d for d in filtered if d.device_type == self.filter_type.lower()]
 
         return filtered
 
@@ -276,9 +272,7 @@ class BluetoothTable(AdwComponentBase):
         reverse = self.sort_column in ["rssi"]  # Higher RSSI is better
 
         try:
-            return sorted(
-                devices, key=lambda d: getattr(d, self.sort_column, ""), reverse=reverse
-            )
+            return sorted(devices, key=lambda d: getattr(d, self.sort_column, ""), reverse=reverse)
         except (AttributeError, TypeError):
             return devices
 
@@ -310,7 +304,7 @@ class BluetoothTable(AdwComponentBase):
             return
 
         # Get unique device types
-        types = sorted(set(d.device_type.title() for d in self.current_devices))
+        types = sorted({d.device_type.title() for d in self.current_devices})
         types.insert(0, "All")  # Add "All" option
 
         # Create string list model
@@ -368,9 +362,7 @@ class BluetoothTable(AdwComponentBase):
                     self.status_label.set_text("Discovering devices...")
 
                     # Refresh after starting discovery
-                    GLib.timeout_add(
-                        2000, self._refresh_device_list
-                    )  # Refresh after 2 seconds
+                    GLib.timeout_add(2000, self._refresh_device_list)  # Refresh after 2 seconds
 
         except Exception as e:
             self.status_label.set_text(f"Discovery error: {e}")

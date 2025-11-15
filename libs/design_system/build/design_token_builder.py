@@ -11,29 +11,36 @@ import logging
 import shutil
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
+from typing import Any
 
 # Import build system components
 try:
     import sys
+
     sys.path.append(str(Path(__file__).parent.parent.parent.parent / "build" / "modules"))
-    from __init__ import BuildModule, BuildContext, BuildModuleResult, BuildUtils, BuildArtifact
+    from __init__ import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
 except ImportError:
     # Fallback for development/testing
     print("Warning: Build system modules not available, using fallback classes")
+
     class BuildModule:
         def __init__(self, context):
             self.context = context
+
     class BuildContext:
         def __init__(self):
             self.project_root = Path.cwd()
+
     class BuildModuleResult:
         def __init__(self, success, artifacts, build_time, message):
             self.success = success
             self.artifacts = artifacts
             self.build_time = build_time
             self.message = message
-    class BuildUtils: pass
+
+    class BuildUtils:
+        pass
+
     class BuildArtifact:
         def __init__(self, path, type, platform, description):
             self.path = path
@@ -41,15 +48,15 @@ except ImportError:
             self.platform = platform
             self.description = description
 
+
 # Import GTK4 generator
 from generators.gtk4_generator import GTK4CSSGenerator
 
 
 class DesignTokenBuilder(BuildModule):
     """
-@llm-type config.build
-@llm-does design token generation following protoclientbuilder arch...
-"""
+    @llm-type config.build
+    @llm-does design token generation following protoclientbuilder arch..."""
 
     def __init__(self, context: BuildContext):
         super().__init__(context)
@@ -58,34 +65,36 @@ class DesignTokenBuilder(BuildModule):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # Primary platform (following designer specifications)
-        self.primary_platform = 'gtk4'
-        self.supported_platforms = ['gtk4']  # Start with GTK4, expand later
+        self.primary_platform = "gtk4"
+        self.supported_platforms = ["gtk4"]  # Start with GTK4, expand later
 
         # Token files to process (designer's constraint system)
         self.token_files = [
-            'colors.yaml',      # 16 semantic color roles
-            'typography.yaml',  # 5 type sizes, 3 weights, 2 families
-            'spacing.yaml',     # 10 spacing values, 4px base unit
-            'elevation.yaml',   # 4 shadow depths, relative z-index
-            'motion.yaml',      # Interaction states system
-            'components.yaml'   # Component composition primitives
+            "colors.yaml",  # 16 semantic color roles
+            "typography.yaml",  # 5 type sizes, 3 weights, 2 families
+            "spacing.yaml",  # 10 spacing values, 4px base unit
+            "elevation.yaml",  # 4 shadow depths, relative z-index
+            "motion.yaml",  # Interaction states system
+            "components.yaml",  # Component composition primitives
         ]
 
         # Initialize GTK4 generator
-        self.gtk4_generator = GTK4CSSGenerator(
-            self.tokens_dir,
-            self.output_base / "gtk4"
-        )
-    
+        self.gtk4_generator = GTK4CSSGenerator(self.tokens_dir, self.output_base / "gtk4")
+
     def can_handle(self, target_name: str) -> bool:
         """Check if this module can handle design token generation targets"""
         design_targets = {
-            'design-tokens', 'design-tokens-all', 'design-tokens-gtk4',
-            'design-system', 'styling', 'tokens', 'css-tokens'
+            "design-tokens",
+            "design-tokens-all",
+            "design-tokens-gtk4",
+            "design-system",
+            "styling",
+            "tokens",
+            "css-tokens",
         }
-        return target_name in design_targets or 'design-token' in target_name
+        return target_name in design_targets or "design-token" in target_name
 
-    def get_dependencies(self, target_name: str) -> List[str]:
+    def get_dependencies(self, target_name: str) -> list[str]:
         """Get design token file dependencies for caching"""
         dependencies = []
 
@@ -104,7 +113,7 @@ class DesignTokenBuilder(BuildModule):
 
         return dependencies
 
-    def validate_tokens(self) -> Tuple[bool, List[str]]:
+    def validate_tokens(self) -> tuple[bool, list[str]]:
         """Validate semantic tokens against designer constraints"""
         errors = []
 
@@ -113,73 +122,73 @@ class DesignTokenBuilder(BuildModule):
         tokens = self.gtk4_generator.tokens
 
         # Validate color system (16 semantic roles)
-        if 'colors' in tokens:
-            color_errors = self._validate_color_system(tokens['colors'])
+        if "colors" in tokens:
+            color_errors = self._validate_color_system(tokens["colors"])
             errors.extend(color_errors)
 
         # Validate typography system (5 type sizes)
-        if 'typography' in tokens:
-            typo_errors = self._validate_typography_system(tokens['typography'])
+        if "typography" in tokens:
+            typo_errors = self._validate_typography_system(tokens["typography"])
             errors.extend(typo_errors)
 
         # Validate spacing system (10 spacing values)
-        if 'spacing' in tokens:
-            spacing_errors = self._validate_spacing_system(tokens['spacing'])
+        if "spacing" in tokens:
+            spacing_errors = self._validate_spacing_system(tokens["spacing"])
             errors.extend(spacing_errors)
 
         return len(errors) == 0, errors
 
-    def _validate_color_system(self, colors: Dict[str, Any]) -> List[str]:
+    def _validate_color_system(self, colors: dict[str, Any]) -> list[str]:
         """Validate color system follows designer constraints"""
         errors = []
 
-        required_categories = ['action', 'feedback', 'surface', 'text', 'border', 'interactive']
-        if 'colors' in colors:
-            color_system = colors['colors']
+        required_categories = ["action", "feedback", "surface", "text", "border", "interactive"]
+        if "colors" in colors:
+            color_system = colors["colors"]
             for category in required_categories:
                 if category not in color_system:
                     errors.append(f"Missing required color category: {category}")
 
         return errors
 
-    def _validate_typography_system(self, typography: Dict[str, Any]) -> List[str]:
+    def _validate_typography_system(self, typography: dict[str, Any]) -> list[str]:
         """Validate typography system follows designer constraints"""
         errors = []
 
-        if 'typography' in typography:
-            typo_system = typography['typography']
+        if "typography" in typography:
+            typo_system = typography["typography"]
 
             # Check for 5 type sizes
-            if 'scale' in typo_system:
-                required_sizes = ['display', 'heading', 'body', 'caption', 'code']
-                scale = typo_system['scale']
+            if "scale" in typo_system:
+                required_sizes = ["display", "heading", "body", "caption", "code"]
+                scale = typo_system["scale"]
                 for size in required_sizes:
                     if size not in scale:
                         errors.append(f"Missing required type size: {size}")
 
             # Check for 2 font families maximum
-            if 'families' in typo_system:
-                families = typo_system['families']
+            if "families" in typo_system:
+                families = typo_system["families"]
                 if len(families) > 2:
                     errors.append(f"Too many font families: {len(families)} (maximum 2 allowed)")
 
         return errors
 
-    def _validate_spacing_system(self, spacing: Dict[str, Any]) -> List[str]:
+    def _validate_spacing_system(self, spacing: dict[str, Any]) -> list[str]:
         """Validate spacing system follows designer constraints"""
         errors = []
 
-        if 'spacing' in spacing:
-            spacing_system = spacing['spacing']
+        if "spacing" in spacing:
+            spacing_system = spacing["spacing"]
 
             # Check for 10 spacing values
-            if 'scale' in spacing_system:
-                scale = spacing_system['scale']
+            if "scale" in spacing_system:
+                scale = spacing_system["scale"]
                 if len(scale) != 10:
                     errors.append(f"Incorrect spacing scale size: {len(scale)} (expected 10)")
 
         return errors
-    
+
     def build(self, target_name: str) -> BuildModuleResult:
         """Build design tokens for specified target following ProtoClientBuilder pattern"""
         start_time = time.time()
@@ -192,7 +201,7 @@ class DesignTokenBuilder(BuildModule):
                     success=False,
                     duration=time.time() - start_time,
                     artifacts=[],
-                    error_message=f"Token validation failed: {'; '.join(validation_errors)}"
+                    error_message=f"Token validation failed: {'; '.join(validation_errors)}",
                 )
 
             # Determine target platforms
@@ -221,8 +230,10 @@ class DesignTokenBuilder(BuildModule):
                     "css_files_generated": len(artifacts),
                     "total_css_size_bytes": total_css_size,
                     "avg_generation_time_per_platform": avg_generation_time,
-                    "tokens_per_second": len(self.token_files) / build_time if build_time > 0 else 0
-                }
+                    "tokens_per_second": len(self.token_files) / build_time
+                    if build_time > 0
+                    else 0,
+                },
             )
 
         except Exception as e:
@@ -230,32 +241,32 @@ class DesignTokenBuilder(BuildModule):
                 success=False,
                 duration=time.time() - start_time,
                 artifacts=[],
-                error_message=f"Design token generation failed: {e}"
+                error_message=f"Design token generation failed: {e}",
             )
-    
-    def _get_target_platforms(self, target_name: str) -> List[str]:
+
+    def _get_target_platforms(self, target_name: str) -> list[str]:
         """Determine which platforms to generate for based on target"""
-        if target_name in ['design-tokens-all', 'design-tokens', 'design-system']:
+        if target_name in ["design-tokens-all", "design-tokens", "design-system"]:
             return self.supported_platforms
-        elif target_name == 'design-tokens-gtk4':
-            return ['gtk4']
+        elif target_name == "design-tokens-gtk4":
+            return ["gtk4"]
         else:
             # Default to primary platform
             return [self.primary_platform]
 
-    def _generate_platform_artifacts(self, platform: str) -> List[BuildArtifact]:
+    def _generate_platform_artifacts(self, platform: str) -> list[BuildArtifact]:
         """Generate design token artifacts for a specific platform"""
         artifacts = []
 
-        if platform == 'gtk4':
+        if platform == "gtk4":
             artifacts.extend(self._generate_gtk4_css())
         # Future platform implementations can be added here
 
         return artifacts
 
-    def _generate_gtk4_css(self) -> List[BuildArtifact]:
+    def _generate_gtk4_css(self) -> list[BuildArtifact]:
         """Generate GTK4 CSS artifacts using the GTK4CSSGenerator"""
-        artifacts: List[BuildArtifact] = []
+        artifacts: list[BuildArtifact] = []
 
         try:
             # Ensure output directory exists
@@ -275,11 +286,11 @@ class DesignTokenBuilder(BuildModule):
                 output_path = output_dir / filename
 
                 # Write CSS file
-                with open(output_path, 'w') as f:
+                with open(output_path, "w") as f:
                     f.write(css_content)
 
                 # Create build artifact with checksum
-                with open(output_path, 'rb') as f:
+                with open(output_path, "rb") as f:
                     checksum = hashlib.md5(f.read()).hexdigest()
 
                 artifact = BuildArtifact(
@@ -291,8 +302,8 @@ class DesignTokenBuilder(BuildModule):
                         "platform": "gtk4",
                         "description": f"GTK4 {filename} - Generated from semantic design tokens",
                         "generator": "DesignTokenBuilder",
-                        "semantic_tokens": True
-                    }
+                        "semantic_tokens": True,
+                    },
                 )
                 artifacts.append(artifact)
 
@@ -301,13 +312,13 @@ class DesignTokenBuilder(BuildModule):
             raise
 
         return artifacts
-    
+
     def calculate_cache_key(self, target_name: str) -> str:
         """Calculate cache key for build caching (BuildModule interface requirement)"""
         dependencies = self.get_dependencies(target_name)
 
         # Create hash from all dependency file modification times
-        cache_data: List[str] = []
+        cache_data: list[str] = []
 
         for dep_path in dependencies:
             path = Path(dep_path)
@@ -339,7 +350,7 @@ class DesignTokenBuilder(BuildModule):
         current_key = self.calculate_cache_key(target_name)
         return current_key == cache_key
 
-    def get_build_info(self) -> Dict[str, Any]:
+    def get_build_info(self) -> dict[str, Any]:
         """Get build information for debugging and monitoring"""
         return {
             "module": "DesignTokenBuilder",
@@ -355,8 +366,8 @@ class DesignTokenBuilder(BuildModule):
                 "font_families_max": 2,
                 "spacing_values": 10,
                 "shadow_depths": 4,
-                "base_unit": "4px"
-            }
+                "base_unit": "4px",
+            },
         }
 
 
@@ -377,15 +388,23 @@ if __name__ == "__main__":
         def __init__(self):
             self.project_root = Path(__file__).parent.parent.parent.parent
 
-    parser = argparse.ArgumentParser(description='Design Token Builder CLI')
-    parser.add_argument('--validate', action='store_true',
-                       help='Validate semantic tokens against designer constraints')
-    parser.add_argument('--clean', action='store_true',
-                       help='Clean generated design system artifacts')
-    parser.add_argument('--build', choices=['design-tokens', 'design-tokens-gtk4'],
-                       help='Build design tokens for specified target')
-    parser.add_argument('--info', action='store_true',
-                       help='Show build information and constraints')
+    parser = argparse.ArgumentParser(description="Design Token Builder CLI")
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Validate semantic tokens against designer constraints",
+    )
+    parser.add_argument(
+        "--clean", action="store_true", help="Clean generated design system artifacts"
+    )
+    parser.add_argument(
+        "--build",
+        choices=["design-tokens", "design-tokens-gtk4"],
+        help="Build design tokens for specified target",
+    )
+    parser.add_argument(
+        "--info", action="store_true", help="Show build information and constraints"
+    )
 
     args = parser.parse_args()
 
@@ -406,7 +425,7 @@ if __name__ == "__main__":
 
     elif args.clean:
         print("🧹 Cleaning design system artifacts...")
-        success = builder.clean('design-tokens')
+        success = builder.clean("design-tokens")
         if success:
             print("✅ Design system artifacts cleaned")
             sys.exit(0)
@@ -434,7 +453,7 @@ if __name__ == "__main__":
         print(f"📁 Tokens directory: {info['tokens_dir']}")
         print(f"📁 Output directory: {info['output_base']}")
         print("🎨 Designer constraints:")
-        for constraint, value in info['designer_constraints'].items():
+        for constraint, value in info["designer_constraints"].items():
             print(f"  - {constraint}: {value}")
         sys.exit(0)
 
@@ -452,7 +471,7 @@ if __name__ == "__main__":
                 print(f"  - {error}")
 
         # Test build
-        result = builder.build('design-tokens-gtk4')
+        result = builder.build("design-tokens-gtk4")
         print(f"Build result: {'SUCCESS' if result.success else 'FAILED'}")
         print(f"Duration: {result.duration:.2f}s")
         print(f"Artifacts: {len(result.artifacts)}")

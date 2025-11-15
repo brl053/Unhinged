@@ -3,10 +3,10 @@
 @llm-does operation result data model for system control
 """
 
-from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import json
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -20,12 +20,12 @@ class OperationResult:
 
     operation: str
     success: bool
-    affected_services: List[str]
+    affected_services: list[str]
     system_state_change: str
     execution_time: float
     timestamp: datetime = None
-    error_message: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    error_message: str | None = None
+    metadata: dict[str, Any] = None
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -33,7 +33,7 @@ class OperationResult:
         if self.metadata is None:
             self.metadata = {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return {
             "operation": self.operation,
@@ -51,9 +51,7 @@ class OperationResult:
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_build_results(
-        cls, operation: str, build_results: List[Any]
-    ) -> "OperationResult":
+    def from_build_results(cls, operation: str, build_results: list[Any]) -> "OperationResult":
         """
         Create OperationResult from build system results
 
@@ -73,12 +71,8 @@ class OperationResult:
         if success:
             state_change = f"Operation {operation} completed successfully"
         else:
-            failed_targets = [
-                r.target for r in build_results if not getattr(r, "success", True)
-            ]
-            state_change = (
-                f"Operation {operation} failed for targets: {', '.join(failed_targets)}"
-            )
+            failed_targets = [r.target for r in build_results if not getattr(r, "success", True)]
+            state_change = f"Operation {operation} failed for targets: {', '.join(failed_targets)}"
 
         # Collect error messages
         error_messages = [
@@ -86,9 +80,7 @@ class OperationResult:
             for r in build_results
             if not getattr(r, "success", True)
         ]
-        error_message = (
-            "; ".join(filter(None, error_messages)) if error_messages else None
-        )
+        error_message = "; ".join(filter(None, error_messages)) if error_messages else None
 
         return cls(
             operation=operation,
@@ -113,19 +105,17 @@ class SystemStatus:
     @llm-future This will become the Unhinged OS system information structure
     """
 
-    running_services: List[str]
-    failed_services: List[str]
-    resource_usage: Dict[str, float]
+    running_services: list[str]
+    failed_services: list[str]
+    resource_usage: dict[str, float]
     uptime: float
-    last_operation: Optional[OperationResult] = None
+    last_operation: OperationResult | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "running_services": self.running_services,
             "failed_services": self.failed_services,
             "resource_usage": self.resource_usage,
             "uptime": self.uptime,
-            "last_operation": self.last_operation.to_dict()
-            if self.last_operation
-            else None,
+            "last_operation": self.last_operation.to_dict() if self.last_operation else None,
         }

@@ -6,11 +6,11 @@
 
 import json
 import time
-import requests
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
+from pathlib import Path
+
+import requests
 
 
 class ServiceStatus(Enum):
@@ -37,12 +37,12 @@ class ServiceEndpoint:
     host: str
     port: int
     protocol: str  # "grpc", "http", "tcp", "postgresql"
-    health_url: Optional[str] = None  # For HTTP services only
+    health_url: str | None = None  # For HTTP services only
     description: str = ""
     required: bool = False
-    tags: List[str] = None
+    tags: list[str] = None
     # gRPC-specific configuration
-    grpc_port: Optional[int] = None  # If different from main port
+    grpc_port: int | None = None  # If different from main port
     implements_health_proto: bool = False  # Uses health.proto gRPC service
 
     def __post_init__(self):
@@ -60,7 +60,7 @@ class ServiceEndpoint:
         return f"{self.host}:{self.port}"
 
     @property
-    def grpc_endpoint(self) -> Optional[str]:
+    def grpc_endpoint(self) -> str | None:
         """Get gRPC endpoint for health.proto checking."""
         if self.protocol == "grpc" and self.grpc_port:
             return f"{self.host}:{self.grpc_port}"
@@ -94,10 +94,10 @@ class ServiceRegistry:
     and health monitoring across all system components.
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         self.config_path = config_path or Path("control/network/services.json")
-        self.services: Dict[str, ServiceEndpoint] = {}
-        self.health_cache: Dict[str, Tuple[ServiceStatus, float]] = {}
+        self.services: dict[str, ServiceEndpoint] = {}
+        self.health_cache: dict[str, tuple[ServiceStatus, float]] = {}
         self.cache_ttl = 30  # seconds
 
         self._load_service_definitions()
@@ -173,7 +173,7 @@ class ServiceRegistry:
         # Load from file if exists, otherwise use defaults
         if self.config_path.exists():
             try:
-                with open(self.config_path, "r") as f:
+                with open(self.config_path) as f:
                     config_data = json.load(f)
 
                 for service_id, service_data in config_data.items():
@@ -205,21 +205,19 @@ class ServiceRegistry:
         self.services[service_id] = endpoint
         self._save_service_definitions()
 
-    def get_service(self, service_id: str) -> Optional[ServiceEndpoint]:
+    def get_service(self, service_id: str) -> ServiceEndpoint | None:
         """Get service endpoint by ID."""
         return self.services.get(service_id)
 
-    def get_services_by_tag(self, tag: str) -> List[Tuple[str, ServiceEndpoint]]:
+    def get_services_by_tag(self, tag: str) -> list[tuple[str, ServiceEndpoint]]:
         """Get all services with specific tag."""
         return [(sid, svc) for sid, svc in self.services.items() if tag in svc.tags]
 
-    def get_all_services(self) -> Dict[str, ServiceEndpoint]:
+    def get_all_services(self) -> dict[str, ServiceEndpoint]:
         """Get all registered services."""
         return self.services.copy()
 
-    def check_service_health(
-        self, service_id: str, force_refresh: bool = False
-    ) -> ServiceStatus:
+    def check_service_health(self, service_id: str, force_refresh: bool = False) -> ServiceStatus:
         """Check health status of a service."""
         service = self.get_service(service_id)
         if not service:
@@ -254,7 +252,7 @@ class ServiceRegistry:
         except Exception:
             return ServiceStatus.UNKNOWN
 
-    def get_service_status_report(self) -> Dict[str, Dict]:
+    def get_service_status_report(self) -> dict[str, dict]:
         """Get comprehensive status report for all services."""
         report = {}
 
@@ -271,7 +269,7 @@ class ServiceRegistry:
 
         return report
 
-    def get_healthy_services(self) -> List[Tuple[str, ServiceEndpoint]]:
+    def get_healthy_services(self) -> list[tuple[str, ServiceEndpoint]]:
         """Get all currently healthy services."""
         healthy = []
         for service_id, service in self.services.items():
@@ -279,7 +277,7 @@ class ServiceRegistry:
                 healthy.append((service_id, service))
         return healthy
 
-    def get_required_services_status(self) -> Tuple[bool, List[str]]:
+    def get_required_services_status(self) -> tuple[bool, list[str]]:
         """Check if all required services are healthy."""
         failed_required = []
 
@@ -311,25 +309,23 @@ def main():
     parser = argparse.ArgumentParser(description="Service Registry Management")
     parser.add_argument("--status", action="store_true", help="Show service status")
     parser.add_argument("--health-check", help="Check health of specific service")
-    parser.add_argument(
-        "--list-services", action="store_true", help="List all services"
-    )
+    parser.add_argument("--list-services", action="store_true", help="List all services")
 
     args = parser.parse_args()
 
     registry = get_service_registry()
 
     if args.status:
-        report = registry.get_service_status_report()
+        registry.get_service_status_report()
 
     elif args.health_check:
-        status = registry.check_service_health(args.health_check, force_refresh=True)
+        registry.check_service_health(args.health_check, force_refresh=True)
         service = registry.get_service(args.health_check)
         if service:
             pass
 
     elif args.list_services:
-        services = registry.get_all_services()
+        registry.get_all_services()
 
     else:
         parser.print_help()

@@ -6,12 +6,13 @@
 """
 
 import argparse
+import logging
 import subprocess
 import time
-import yaml
 from pathlib import Path
-from typing import Dict, List, Optional
+
 import requests
+import yaml
 from unhinged_events import create_service_logger
 
 # Initialize event logger
@@ -38,37 +39,31 @@ class UnhingedDeploymentOrchestrator:
         self.deployed_services = []
         self.failed_services = []
 
-    def _load_environment_config(self) -> Dict:
+    def _load_environment_config(self) -> dict:
         """Load environment-specific configuration"""
-        config_file = (
-            self.control_root / "config" / "environments" / f"{self.environment}.yml"
-        )
+        config_file = self.control_root / "config" / "environments" / f"{self.environment}.yml"
         try:
-            with open(config_file, "r") as f:
+            with open(config_file) as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            events.warn(
-                "Environment config not found", {"config_file": str(config_file)}
-            )
+            events.warn("Environment config not found", {"config_file": str(config_file)})
             return {}
 
-    def _load_service_registry(self) -> Dict:
+    def _load_service_registry(self) -> dict:
         """Load service registry configuration"""
         registry_file = self.control_root / "config" / "service-registry.yml"
         try:
-            with open(registry_file, "r") as f:
+            with open(registry_file) as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            events.warn(
-                "Service registry not found", {"registry_file": str(registry_file)}
-            )
+            events.warn("Service registry not found", {"registry_file": str(registry_file)})
             return {}
 
-    def _load_port_allocation(self) -> Dict:
+    def _load_port_allocation(self) -> dict:
         """Load port allocation configuration"""
         port_file = self.control_root / "config" / "port-allocation.yml"
         try:
-            with open(port_file, "r") as f:
+            with open(port_file) as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
             events.warn(
@@ -82,9 +77,7 @@ class UnhingedDeploymentOrchestrator:
 
         # Check Docker availability
         try:
-            result = subprocess.run(
-                ["docker", "--version"], capture_output=True, text=True
-            )
+            result = subprocess.run(["docker", "--version"], capture_output=True, text=True)
             if result.returncode != 0:
                 events.error(
                     "Docker not available",
@@ -130,7 +123,7 @@ class UnhingedDeploymentOrchestrator:
 
         return True
 
-    def deploy_services(self, services: Optional[List[str]] = None) -> bool:
+    def deploy_services(self, services: list[str] | None = None) -> bool:
         """Deploy services with health validation"""
 
         if not self.validate_environment():
@@ -155,11 +148,9 @@ class UnhingedDeploymentOrchestrator:
 
             if services:
                 cmd.extend(services)
-                logger.info(f"🎯 Deploying specific services: {services}")
+                events.info(f"🎯 Deploying specific services: {services}")
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, cwd=self.project_root
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
 
             if result.returncode != 0:
                 events.error(
@@ -169,26 +160,24 @@ class UnhingedDeploymentOrchestrator:
                 return False
 
             # Wait for services to start
-            logger.info("⏳ Waiting for services to start...")
+            events.info("⏳ Waiting for services to start...")
             time.sleep(10)
 
             # Validate service health
             if self.validate_service_health():
-                logger.info("🎉 Deployment completed successfully!")
+                events.info("🎉 Deployment completed successfully!")
                 return True
             else:
-                logger.error("❌ Health validation failed")
+                events.error("❌ Health validation failed")
                 return False
 
         except Exception as e:
-            events.error(
-                "Deployment error", exception=e, metadata={"service": "deployment"}
-            )
+            events.error("Deployment error", exception=e, metadata={"service": "deployment"})
             return False
 
     def validate_service_health(self) -> bool:
         """Validate health of deployed services"""
-        logger.info("🏥 Validating service health...")
+        events.info("🏥 Validating service health...")
 
         services = self.service_registry.get("services", {})
         healthy_services = 0
@@ -204,36 +193,32 @@ class UnhingedDeploymentOrchestrator:
             try:
                 response = requests.get(health_check_url, timeout=5)
                 if response.status_code == 200:
-                    logger.info(f"✅ {service_name}: Healthy")
+                    events.info(f"✅ {service_name}: Healthy")
                     healthy_services += 1
                     self.deployed_services.append(service_name)
                 else:
-                    logger.warning(
-                        f"⚠️ {service_name}: Unhealthy (HTTP {response.status_code})"
-                    )
+                    events.warning(f"⚠️ {service_name}: Unhealthy (HTTP {response.status_code})")
                     self.failed_services.append(service_name)
             except requests.RequestException as e:
-                logger.warning(f"⚠️ {service_name}: Health check failed - {e}")
+                events.warning(f"⚠️ {service_name}: Health check failed - {e}")
                 self.failed_services.append(service_name)
 
-        health_percentage = (
-            (healthy_services / total_services * 100) if total_services > 0 else 0
-        )
-        logger.info(
+        health_percentage = (healthy_services / total_services * 100) if total_services > 0 else 0
+        events.info(
             f"📊 Health status: {healthy_services}/{total_services} services healthy ({health_percentage:.1f}%)"
         )
 
         return health_percentage >= 80  # Require 80% health for success
 
-    def stop_services(self, services: Optional[List[str]] = None) -> bool:
+    def stop_services(self, services: list[str] | None = None) -> bool:
         """Stop deployed services"""
-        logger.info("🛑 Stopping services...")
+        events.info("🛑 Stopping services...")
 
         deployment_config = self.env_config.get("deployment", {})
         compose_file = deployment_config.get("compose_file")
 
         if not compose_file:
-            logger.error("❌ No compose file specified")
+            events.error("❌ No compose file specified")
             return False
 
         compose_path = self.project_root / compose_file
@@ -245,22 +230,20 @@ class UnhingedDeploymentOrchestrator:
                 # Stop specific services
                 cmd = ["docker", "compose", "-f", str(compose_path), "stop"] + services
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, cwd=self.project_root
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
 
             if result.returncode != 0:
-                logger.error(f"❌ Stop failed: {result.stderr}")
+                events.error(f"❌ Stop failed: {result.stderr}")
                 return False
 
-            logger.info("✅ Services stopped successfully")
+            events.info("✅ Services stopped successfully")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Stop error: {e}")
+            events.error(f"❌ Stop error: {e}")
             return False
 
-    def get_deployment_status(self) -> Dict:
+    def get_deployment_status(self) -> dict:
         """Get current deployment status"""
         return {
             "environment": self.environment,
@@ -293,26 +276,22 @@ def main():
 
     # Deploy command
     deploy_parser = subparsers.add_parser("deploy", help="Deploy services")
-    deploy_parser.add_argument(
-        "--services", nargs="*", help="Specific services to deploy"
-    )
+    deploy_parser.add_argument("--services", nargs="*", help="Specific services to deploy")
 
     # Stop command
     stop_parser = subparsers.add_parser("stop", help="Stop services")
     stop_parser.add_argument("--services", nargs="*", help="Specific services to stop")
 
     # Status command
-    status_parser = subparsers.add_parser("status", help="Get deployment status")
+    subparsers.add_parser("status", help="Get deployment status")
 
     # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate environment")
+    subparsers.add_parser("validate", help="Validate environment")
 
     args = parser.parse_args()
 
     # Configure logging
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     orchestrator = UnhingedDeploymentOrchestrator(args.project_root, args.environment)
 
@@ -323,7 +302,7 @@ def main():
         success = orchestrator.stop_services(args.services)
         exit(0 if success else 1)
     elif args.command == "status":
-        status = orchestrator.get_deployment_status()
+        orchestrator.get_deployment_status()
     elif args.command == "validate":
         success = orchestrator.validate_environment()
         exit(0 if success else 1)

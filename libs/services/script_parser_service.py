@@ -8,9 +8,9 @@ Prepares scripts for video generation pipeline.
 
 import logging
 import re
-from typing import Optional, Dict, Any, List
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +47,7 @@ class ScriptParserService:
     def __init__(self):
         logger.info("Script Parser Service initialized")
 
-    def parse_script(
-        self, script: str, target_duration: Optional[int] = None
-    ) -> Dict[str, Any]:
+    def parse_script(self, script: str, target_duration: int | None = None) -> dict[str, Any]:
         """
         Parse script into scenes.
 
@@ -99,7 +97,7 @@ class ScriptParserService:
             },
         }
 
-    def _split_into_sentences(self, script: str) -> List[str]:
+    def _split_into_sentences(self, script: str) -> list[str]:
         """Split script into sentences"""
         # Split on sentence boundaries
         sentences = re.split(r"(?<=[.!?])\s+", script)
@@ -107,7 +105,7 @@ class ScriptParserService:
         sentences = [s.strip() for s in sentences if s.strip()]
         return sentences
 
-    def _group_into_scenes(self, sentences: List[str]) -> List[SceneSegment]:
+    def _group_into_scenes(self, sentences: list[str]) -> list[SceneSegment]:
         """Group sentences into scenes"""
         scenes = []
         current_scene_text = []
@@ -121,10 +119,7 @@ class ScriptParserService:
             estimated_duration = word_count / self.WORDS_PER_SECOND
 
             # Create scene if it's long enough or if it's the last sentence
-            if (
-                estimated_duration >= self.MIN_SCENE_DURATION
-                or sentence == sentences[-1]
-            ):
+            if estimated_duration >= self.MIN_SCENE_DURATION or sentence == sentences[-1]:
                 scene_text = " ".join(current_scene_text)
 
                 # Extract visual cue from text
@@ -148,7 +143,7 @@ class ScriptParserService:
 
         return scenes
 
-    def _calculate_timing(self, scenes: List[SceneSegment]) -> List[SceneSegment]:
+    def _calculate_timing(self, scenes: list[SceneSegment]) -> list[SceneSegment]:
         """Calculate start/end times for each scene"""
         current_time = 0
 
@@ -160,8 +155,8 @@ class ScriptParserService:
         return scenes
 
     def _adjust_to_duration(
-        self, scenes: List[SceneSegment], target_duration: int
-    ) -> List[SceneSegment]:
+        self, scenes: list[SceneSegment], target_duration: int
+    ) -> list[SceneSegment]:
         """Adjust scene durations to fit target duration"""
         current_total = scenes[-1].end_time if scenes else 0
 
@@ -209,9 +204,7 @@ class ScriptParserService:
         """Detect emotion/tone from text"""
         text_lower = text.lower()
 
-        if any(
-            word in text_lower for word in ["!", "amazing", "awesome", "incredible"]
-        ):
+        if any(word in text_lower for word in ["!", "amazing", "awesome", "incredible"]):
             return "excited"
         elif any(word in text_lower for word in ["?", "wonder", "curious"]):
             return "curious"

@@ -161,10 +161,7 @@ class BluetoothMonitor:
             List of BluetoothDevice objects
         """
         try:
-            if self._bus:
-                devices = self._get_devices_dbus()
-            else:
-                devices = self._get_devices_bluetoothctl()
+            devices = self._get_devices_dbus() if self._bus else self._get_devices_bluetoothctl()
 
             # If include_unpaired is True, also get discovered devices
             if include_unpaired:
@@ -387,7 +384,7 @@ class BluetoothMonitor:
 
             objects = manager.GetManagedObjects()
 
-            for path, interfaces in objects.items():
+            for _path, interfaces in objects.items():
                 if "org.bluez.Device1" in interfaces:
                     props = interfaces["org.bluez.Device1"]
 
@@ -782,13 +779,7 @@ if __name__ == "__main__":
     print(f"✅ Found {len(devices)} device(s)")
 
     for device in devices:
-        status = (
-            "Connected"
-            if device.connected
-            else "Paired"
-            if device.paired
-            else "Discovered"
-        )
+        status = "Connected" if device.connected else "Paired" if device.paired else "Discovered"
         print(f"  🔵 {device.name} ({device.address})")
         print(f"     Type: {device.device_type}, Status: {status}")
 

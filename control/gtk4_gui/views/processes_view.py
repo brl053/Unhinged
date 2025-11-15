@@ -41,9 +41,7 @@ class ProcessesView:
             # Create header section
             header_group = Adw.PreferencesGroup()
             header_group.set_title("Process Monitor")
-            header_group.set_description(
-                "Live process monitoring with aux/top command equivalence"
-            )
+            header_group.set_description("Live process monitoring with aux/top command equivalence")
 
             # Add header info row
             info_row = Adw.ActionRow()
@@ -51,9 +49,7 @@ class ProcessesView:
             info_row.set_subtitle("View, sort, filter, and manage running processes")
 
             # Add process monitor icon
-            monitor_icon = Gtk.Image.new_from_icon_name(
-                "utilities-system-monitor-symbolic"
-            )
+            monitor_icon = Gtk.Image.new_from_icon_name("utilities-system-monitor-symbolic")
             monitor_icon.set_icon_size(Gtk.IconSize.LARGE)
             monitor_icon.add_css_class("accent")
             info_row.add_prefix(monitor_icon)
@@ -126,9 +122,7 @@ class ProcessesView:
 
             # Log refresh
             if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "PROCESSES_REFRESH", "Process list refreshed"
-                )
+                self.app.session_logger.log_gui_event("PROCESSES_REFRESH", "Process list refreshed")
 
         except Exception as e:
             if hasattr(self.app, "session_logger") and self.app.session_logger:

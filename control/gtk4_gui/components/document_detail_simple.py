@@ -13,8 +13,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, GObject
-from typing import Optional, Dict, Any
+from typing import Any
+
+from gi.repository import GObject, Gtk
 
 
 class DocumentDetailSimple(Gtk.Box):
@@ -33,7 +34,7 @@ class DocumentDetailSimple(Gtk.Box):
         self.set_margin_start(12)
         self.set_margin_end(12)
 
-        self.current_document: Optional[Dict[str, Any]] = None
+        self.current_document: dict[str, Any] | None = None
 
         self._create_ui()
 
@@ -92,7 +93,7 @@ class DocumentDetailSimple(Gtk.Box):
         empty_label.add_css_class("title-3")
         self.properties_box.append(empty_label)
 
-    def set_document(self, document: Optional[Dict[str, Any]]):
+    def set_document(self, document: dict[str, Any] | None):
         """Set document to display"""
         self.current_document = document
 

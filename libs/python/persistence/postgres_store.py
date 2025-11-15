@@ -21,10 +21,10 @@ Schema:
     CREATE INDEX idx_documents_data ON documents USING GIN(data);
 """
 
-import os
 import logging
-from typing import Any, Dict, List, Optional
+import os
 from datetime import datetime
+from typing import Any
 
 try:
     import psycopg2
@@ -32,7 +32,7 @@ try:
 except ImportError:
     raise ImportError("psycopg2 is required. Install with: pip install psycopg2-binary")
 
-from .document_store import DocumentStore, Document
+from .document_store import Document, DocumentStore
 
 logger = logging.getLogger(__name__)
 
@@ -89,13 +89,13 @@ class PostgresDocumentStore(DocumentStore):
             # Create indexes
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_documents_collection 
+                CREATE INDEX IF NOT EXISTS idx_documents_collection
                 ON documents(collection);
             """
             )
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_documents_data 
+                CREATE INDEX IF NOT EXISTS idx_documents_data
                 ON documents USING GIN(data);
             """
             )
@@ -108,7 +108,7 @@ class PostgresDocumentStore(DocumentStore):
             logger.error(f"Failed to initialize schema: {e}")
             raise
 
-    def create(self, collection: str, data: Dict[str, Any]) -> Document:
+    def create(self, collection: str, data: dict[str, Any]) -> Document:
         """Create a new document."""
         doc = Document.create(collection, data)
 
@@ -140,7 +140,7 @@ class PostgresDocumentStore(DocumentStore):
             logger.error(f"Failed to create document: {e}")
             raise
 
-    def read(self, collection: str, doc_id: str) -> Optional[Document]:
+    def read(self, collection: str, doc_id: str) -> Document | None:
         """Read a document by ID."""
         try:
             conn = self._get_connection()
@@ -171,9 +171,7 @@ class PostgresDocumentStore(DocumentStore):
             logger.error(f"Failed to read document: {e}")
             raise
 
-    def update(
-        self, collection: str, doc_id: str, data: Dict[str, Any]
-    ) -> Optional[Document]:
+    def update(self, collection: str, doc_id: str, data: dict[str, Any]) -> Document | None:
         """Update a document (merge with existing)."""
         try:
             conn = self._get_connection()
@@ -200,7 +198,7 @@ class PostgresDocumentStore(DocumentStore):
             # Update document
             cursor.execute(
                 """
-                UPDATE documents 
+                UPDATE documents
                 SET data = %s, updated_at = %s, version = version + 1
                 WHERE id = %s AND collection = %s
                 RETURNING *
@@ -251,8 +249,8 @@ class PostgresDocumentStore(DocumentStore):
             raise
 
     def query(
-        self, collection: str, filters: Dict[str, Any] = None, limit: int = 100
-    ) -> List[Document]:
+        self, collection: str, filters: dict[str, Any] = None, limit: int = 100
+    ) -> list[Document]:
         """Query documents in a collection."""
         try:
             conn = self._get_connection()
@@ -294,15 +292,13 @@ class PostgresDocumentStore(DocumentStore):
             logger.error(f"Failed to query documents: {e}")
             raise
 
-    def list_collections(self) -> List[str]:
+    def list_collections(self) -> list[str]:
         """List all collections."""
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute(
-                "SELECT DISTINCT collection FROM documents ORDER BY collection"
-            )
+            cursor.execute("SELECT DISTINCT collection FROM documents ORDER BY collection")
             collections = [row[0] for row in cursor.fetchall()]
             cursor.close()
             conn.close()

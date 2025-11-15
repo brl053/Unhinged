@@ -144,8 +144,7 @@ class ServiceConfig:
                 is_valid = (
                     1 <= endpoint.port <= 65535
                     and endpoint.host
-                    and endpoint.protocol
-                    in ["grpc", "http", "https", "redis", "postgres"]
+                    and endpoint.protocol in ["grpc", "http", "https", "redis", "postgres"]
                 )
                 validation_results[service] = is_valid
 
@@ -212,9 +211,7 @@ def validate_all_services() -> bool:
     all_valid = all(validation_results.values())
 
     if not all_valid:
-        failed_services = [
-            name for name, valid in validation_results.items() if not valid
-        ]
+        failed_services = [name for name, valid in validation_results.items() if not valid]
         logger.error(f"Configuration validation failed for services: {failed_services}")
 
     return all_valid

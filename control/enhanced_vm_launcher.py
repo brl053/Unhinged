@@ -24,13 +24,15 @@ communication capabilities while maintaining the same reliability.
 @llm-culture Independence through enhanced but reliable communication
 """
 
+import builtins
+import contextlib
+import json
+import os
+import socket
 import subprocess
 import sys
-import os
-import time
-import json
-import socket
 import threading
+import time
 from pathlib import Path
 
 # Import the simple launcher as base
@@ -151,12 +153,10 @@ class EnhancedVMLauncher(SimpleVMLauncher):
 
         def connect_monitor():
             # Wait for QEMU to create the socket
-            for attempt in range(10):
+            for _attempt in range(10):
                 try:
                     if os.path.exists(self.monitor_socket_path):
-                        self.monitor_socket = socket.socket(
-                            socket.AF_UNIX, socket.SOCK_STREAM
-                        )
+                        self.monitor_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                         self.monitor_socket.connect(self.monitor_socket_path)
                         print("✅ Monitor connection established (Host → VM)")
 
@@ -308,10 +308,8 @@ class EnhancedVMLauncher(SimpleVMLauncher):
 
         # Close monitor socket
         if self.monitor_socket:
-            try:
+            with contextlib.suppress(builtins.BaseException):
                 self.monitor_socket.close()
-            except:
-                pass
 
         # Clean up socket file
         self.cleanup_monitor_socket()

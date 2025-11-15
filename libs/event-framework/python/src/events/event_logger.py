@@ -7,9 +7,9 @@ import sys
 import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import yaml
 
@@ -63,11 +63,11 @@ class LogEvent:
     level: LogLevel
     message: str
     service_id: str
-    trace_id: Optional[str] = None
-    span_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    exception: Optional[Exception] = None
-    context_data: Dict[str, Any] = field(default_factory=dict)
+    trace_id: str | None = None
+    span_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    exception: Exception | None = None
+    context_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -80,24 +80,24 @@ class EventLoggerConfig:
     min_log_level: LogLevel = LogLevel.INFO
     output_format: OutputFormat = OutputFormat.YAML
     include_stack_trace: bool = True
-    context_data: Dict[str, Any] = field(default_factory=dict)
+    context_data: dict[str, Any] = field(default_factory=dict)
 
 
 class EventLogger(ABC):
     """Abstract base class for event loggers"""
 
     @abstractmethod
-    def debug(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def debug(self, message: str, metadata: dict[str, Any] | None = None) -> None:
         """Log a debug event (level 0)"""
         pass
 
     @abstractmethod
-    def info(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def info(self, message: str, metadata: dict[str, Any] | None = None) -> None:
         """Log an info event (level 1)"""
         pass
 
     @abstractmethod
-    def warn(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def warn(self, message: str, metadata: dict[str, Any] | None = None) -> None:
         """Log a warning event (level 2)"""
         pass
 
@@ -105,8 +105,8 @@ class EventLogger(ABC):
     def error(
         self,
         message: str,
-        exception: Optional[Exception] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        exception: Exception | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Log an error event (level 3)"""
         pass
@@ -117,7 +117,7 @@ class EventLogger(ABC):
         pass
 
     @abstractmethod
-    def with_context(self, additional_context: Dict[str, Any]) -> "EventLogger":
+    def with_context(self, additional_context: dict[str, Any]) -> "EventLogger":
         """Create a child logger with additional context"""
         pass
 
@@ -133,30 +133,30 @@ class DefaultEventLogger(EventLogger):
     def __init__(
         self,
         config: EventLoggerConfig,
-        context_data: Optional[Dict[str, Any]] = None,
-        trace_context: Optional[Dict[str, str]] = None,
+        context_data: dict[str, Any] | None = None,
+        trace_context: dict[str, str] | None = None,
     ):
         self.config = config
         self.context_data = context_data or {}
         self.trace_context = trace_context
 
-    def debug(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def debug(self, message: str, metadata: dict[str, Any] | None = None) -> None:
         if self.is_enabled(LogLevel.DEBUG):
             self._emit_event(LogLevel.DEBUG, message, metadata or {})
 
-    def info(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def info(self, message: str, metadata: dict[str, Any] | None = None) -> None:
         if self.is_enabled(LogLevel.INFO):
             self._emit_event(LogLevel.INFO, message, metadata or {})
 
-    def warn(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def warn(self, message: str, metadata: dict[str, Any] | None = None) -> None:
         if self.is_enabled(LogLevel.WARN):
             self._emit_event(LogLevel.WARN, message, metadata or {})
 
     def error(
         self,
         message: str,
-        exception: Optional[Exception] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        exception: Exception | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         if self.is_enabled(LogLevel.ERROR):
             self._emit_event(LogLevel.ERROR, message, metadata or {}, exception)
@@ -164,7 +164,7 @@ class DefaultEventLogger(EventLogger):
     def is_enabled(self, level: LogLevel) -> bool:
         return level.value >= self.config.min_log_level.value
 
-    def with_context(self, additional_context: Dict[str, Any]) -> EventLogger:
+    def with_context(self, additional_context: dict[str, Any]) -> EventLogger:
         merged_context = {**self.context_data, **additional_context}
         return DefaultEventLogger(self.config, merged_context, self.trace_context)
 
@@ -176,14 +176,14 @@ class DefaultEventLogger(EventLogger):
         self,
         level: LogLevel,
         message: str,
-        metadata: Dict[str, Any],
-        exception: Optional[Exception] = None,
+        metadata: dict[str, Any],
+        exception: Exception | None = None,
     ) -> None:
         """Emit a log event"""
         current_trace = self._get_current_trace_context()
 
         event = LogEvent(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             level=level,
             message=message,
             service_id=self.config.service_id,
@@ -203,7 +203,7 @@ class DefaultEventLogger(EventLogger):
         print(output, file=sys.stdout)
         sys.stdout.flush()
 
-    def _get_current_trace_context(self) -> Optional[Dict[str, str]]:
+    def _get_current_trace_context(self) -> dict[str, str] | None:
         """Get current trace context from OpenTelemetry or explicit context"""
         # First check if we have explicit trace context
         if self.trace_context:
@@ -235,7 +235,7 @@ class DefaultEventLogger(EventLogger):
         event_dict = self._build_event_dict(event)
         return json.dumps(event_dict, indent=2, default=str)
 
-    def _build_event_dict(self, event: LogEvent) -> Dict[str, Any]:
+    def _build_event_dict(self, event: LogEvent) -> dict[str, Any]:
         """Build event dictionary for serialization"""
         event_dict = {
             "timestamp": event.timestamp.isoformat(),

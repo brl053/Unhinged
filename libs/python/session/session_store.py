@@ -79,9 +79,7 @@ class SessionStore:
 
             # Test Redis connection
             self.redis_client.ping()
-            self.logger.info(
-                f"Redis connected: {self.config.redis_host}:{self.config.redis_port}"
-            )
+            self.logger.info(f"Redis connected: {self.config.redis_host}:{self.config.redis_port}")
 
         except Exception as e:
             self.logger.error(f"Failed to connect to Redis: {e}")

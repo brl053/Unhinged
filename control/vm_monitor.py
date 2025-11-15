@@ -4,12 +4,12 @@ VM Communication Monitor
 Monitors communication between QEMU VM and host system
 """
 
-import sys
-import time
 import json
-from pathlib import Path
-import threading
 import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
 
 
 class VMMonitor:
@@ -40,9 +40,7 @@ class VMMonitor:
 
         # Start monitoring threads
         serial_thread = threading.Thread(target=self.monitor_serial_log, daemon=True)
-        vm_messages_thread = threading.Thread(
-            target=self.monitor_vm_messages, daemon=True
-        )
+        vm_messages_thread = threading.Thread(target=self.monitor_vm_messages, daemon=True)
 
         serial_thread.start()
         vm_messages_thread.start()
@@ -65,7 +63,7 @@ class VMMonitor:
         print("📺 Monitoring serial console...")
 
         # Follow the log file
-        with open(self.serial_log, "r") as f:
+        with open(self.serial_log) as f:
             # Go to end of file
             f.seek(0, 2)
 
@@ -100,7 +98,7 @@ class VMMonitor:
 
                     if current_size > last_size:
                         # New content available
-                        with open(self.vm_to_host, "r") as f:
+                        with open(self.vm_to_host) as f:
                             f.seek(last_size)
                             new_content = f.read()
 

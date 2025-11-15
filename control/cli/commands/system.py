@@ -40,15 +40,11 @@ def start():
     if not check_file_exists("control/service_launcher.py", "Service launcher"):
         return 1
 
-    result = run_command(
-        [python_cmd, "control/service_launcher.py", "--timeout", "120"]
-    )
+    result = run_command([python_cmd, "control/service_launcher.py", "--timeout", "120"])
     if result == 0:
         log_success("Essential services started")
     else:
-        log_warning(
-            "Some services failed to start - continuing with available services"
-        )
+        log_warning("Some services failed to start - continuing with available services")
 
     log_success("Unhinged system started")
     return 0

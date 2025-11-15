@@ -38,9 +38,7 @@ project_root = Path(__file__).parent.parent.parent
 
 # Use build/python/venv as single source of truth for all dependencies
 # See: build/requirements-unified.txt and LLM_MASTER_PROMPT.md
-venv_packages = (
-    project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
-)
+venv_packages = project_root / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"
 protobuf_clients = project_root / "generated" / "python" / "clients"
 
 if venv_packages.exists():
@@ -56,39 +54,17 @@ try:
     # Try relative imports first
     try:
         from .config import (
-            app_config,
-            get_service_endpoint,
             log_configuration,
-            service_config,
             validate_all_services,
         )
-        from .exceptions import (
-            AudioRecordingError,
-            AudioTranscriptionError,
-            ServiceUnavailableError,
-            UnhingedError,
-            get_user_friendly_message,
-        )
-        from .handlers.audio_handler import AudioHandler, RecordingState
-        from .service_connector import service_connector, service_registry
+        from .handlers.audio_handler import AudioHandler
     except ImportError:
         # Fallback to absolute imports for script execution
         from config import (
-            app_config,
-            get_service_endpoint,
             log_configuration,
-            service_config,
             validate_all_services,
         )
-        from exceptions import (
-            AudioRecordingError,
-            AudioTranscriptionError,
-            ServiceUnavailableError,
-            UnhingedError,
-            get_user_friendly_message,
-        )
-        from handlers.audio_handler import AudioHandler, RecordingState
-        from service_connector import service_connector, service_registry
+        from handlers.audio_handler import AudioHandler
     ARCHITECTURE_AVAILABLE = True
 except ImportError:
     ARCHITECTURE_AVAILABLE = False
@@ -96,39 +72,14 @@ except ImportError:
 # Import component library
 try:
     sys.path.append(str(Path(__file__).parent))
-    from components import (
-        AbstractWindow,
-        AudioTable,
-        BluetoothTable,
-        ChatBubble,
-        CopyButton,
-        HardwareInfoRow,
-        LoadingDots,
-        PerformanceIndicator,
-        ProcessTable,
-        StatusCard,
-        StatusLabel,
-        SystemInfoCard,
-        SystemStatusGrid,
-    )
-
+    # Components are imported dynamically when needed
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
 
 # Import system information collection
 try:
-    from realtime_system_info import (
-        get_realtime_manager,
-        start_realtime_updates,
-        stop_realtime_updates,
-    )
-    from system_info import (
-        SystemInfoCollector,
-        get_performance_summary,
-        get_system_info,
-    )
-
+    # System info modules are imported dynamically when needed
     SYSTEM_INFO_AVAILABLE = True
 except ImportError:
     SYSTEM_INFO_AVAILABLE = False
@@ -138,16 +89,8 @@ SESSION_LOGGING_AVAILABLE = False
 try:
     # Try multiple possible paths for the event framework
     event_paths = [
-        str(
-            Path(__file__).parent.parent.parent
-            / "libs"
-            / "event-framework"
-            / "python"
-            / "src"
-        ),
-        str(
-            Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"
-        ),
+        str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"),
+        str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"),
         str(
             Path(__file__).parent.parent.parent
             / "build"
@@ -224,9 +167,7 @@ class UnhingedDesktopApp(Adw.Application):
         if SESSION_LOGGING_AVAILABLE:
             try:
                 self.session_logger = create_gui_session_logger(self.project_root)
-                self.output_capture = GUIOutputCapture(
-                    self.session_logger, self._gui_log_callback
-                )
+                self.output_capture = GUIOutputCapture(self.session_logger, self._gui_log_callback)
                 self.session_logger.log_session_event(
                     "APP_INIT", "GTK4 desktop app with system info integration"
                 )
@@ -321,9 +262,7 @@ class UnhingedDesktopApp(Adw.Application):
 
         # Log application activation
         if self.session_logger:
-            self.session_logger.log_gui_event(
-                "APP_ACTIVATE", "Main window created and presented"
-            )
+            self.session_logger.log_gui_event("APP_ACTIVATE", "Main window created and presented")
 
         self.window.present()
 
@@ -332,9 +271,9 @@ class UnhingedDesktopApp(Adw.Application):
         if hasattr(self, "ui_controller") and self.ui_controller:
             # Set title based on mode
             if self.dev_mode:
-                title = "Unhinged - Development Mode"
+                pass
             else:
-                title = "Unhinged - Native Graphics Platform"
+                pass
 
             # Toast stack management
             self.toast_stack = []
@@ -436,9 +375,7 @@ class UnhingedDesktopApp(Adw.Application):
             widget = input_view.render()
 
             if self.session_logger:
-                self.session_logger.log_gui_event(
-                    "INPUT_TAB_CREATED", "Input tab created"
-                )
+                self.session_logger.log_gui_event("INPUT_TAB_CREATED", "Input tab created")
 
             return widget
 
@@ -545,9 +482,7 @@ class UnhingedDesktopApp(Adw.Application):
                 )
 
             # Update UI based on state - minimal feedback
-            if state.name == "RECORDING":
-                pass  # Visual feedback handled by button state
-            elif state.name == "PROCESSING":
+            if state.name == "RECORDING" or state.name == "PROCESSING":
                 pass  # Visual feedback handled by button state
             elif state.name == "IDLE":
                 pass  # Will be handled by result or error callback
@@ -709,9 +644,7 @@ class UnhingedDesktopApp(Adw.Application):
         try:
             from .views.document_workspace_view import DocumentWorkspaceView
 
-            self.document_workspace_view = DocumentWorkspaceView(
-                self, document_type="document"
-            )
+            self.document_workspace_view = DocumentWorkspaceView(self, document_type="document")
             return self.document_workspace_view.create_content()
         except Exception as e:
             print(f"❌ Error creating documents view: {e}")
@@ -857,7 +790,7 @@ class UnhingedDesktopApp(Adw.Application):
             # Manage toast stack - remove oldest if at max capacity
             if len(self.toast_stack) >= self.max_toast_stack:
                 # Remove oldest toast from stack
-                oldest_toast = self.toast_stack.pop(0)
+                self.toast_stack.pop(0)
                 # Note: Adwaita automatically manages toast removal, we just track them
 
             # Add to stack tracking
@@ -885,9 +818,7 @@ class UnhingedDesktopApp(Adw.Application):
                 toast.connect("dismissed", lambda t: on_toast_dismissed())
             except:
                 # Fallback: use timeout to clean up stack
-                GLib.timeout_add_seconds(
-                    max(timeout, 3), lambda: on_toast_dismissed() or False
-                )
+                GLib.timeout_add_seconds(max(timeout, 3), lambda: on_toast_dismissed() or False)
 
         GLib.idle_add(show_toast_ui)
 
@@ -895,15 +826,9 @@ class UnhingedDesktopApp(Adw.Application):
         """Reset button states (now handled by StatusView)"""
         # Button state management now handled by StatusView
         if hasattr(self, "status_view") and self.status_view:
-            if (
-                hasattr(self.status_view, "start_button")
-                and self.status_view.start_button
-            ):
+            if hasattr(self.status_view, "start_button") and self.status_view.start_button:
                 self.status_view.start_button.set_sensitive(True)
-            if (
-                hasattr(self.status_view, "stop_button")
-                and self.status_view.stop_button
-            ):
+            if hasattr(self.status_view, "stop_button") and self.status_view.stop_button:
                 self.status_view.stop_button.set_sensitive(False)
         return False
 

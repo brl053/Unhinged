@@ -163,9 +163,7 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         self.add_controller(click_controller)
 
         # Scroll events
-        scroll_controller = Gtk.EventControllerScroll.new(
-            Gtk.EventControllerScrollFlags.VERTICAL
-        )
+        scroll_controller = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.VERTICAL)
         scroll_controller.connect("scroll", self._on_scroll)
         self.add_controller(scroll_controller)
 
@@ -255,12 +253,8 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
         for edge in self.edges:
             # Find source and target nodes
-            source_node = next(
-                (n for n in self.nodes if n.get("id") == edge.get("source")), None
-            )
-            target_node = next(
-                (n for n in self.nodes if n.get("id") == edge.get("target")), None
-            )
+            source_node = next((n for n in self.nodes if n.get("id") == edge.get("source")), None)
+            target_node = next((n for n in self.nodes if n.get("id") == edge.get("target")), None)
 
             if source_node and target_node:
                 # Get node positions in canvas space
@@ -308,16 +302,10 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         for node in self.nodes:
             self._draw_node(context, node, width, height)
 
-    def _draw_node(
-        self, context: cairo.Context, node: dict[str, Any], width: int, height: int
-    ):
+    def _draw_node(self, context: cairo.Context, node: dict[str, Any], width: int, height: int):
         """Draw a single node with enhanced visuals."""
-        x = (
-            node.get("position", {}).get("x", 0) - self.viewport.x
-        ) * self.viewport.zoom
-        y = (
-            node.get("position", {}).get("y", 0) - self.viewport.y
-        ) * self.viewport.zoom
+        x = (node.get("position", {}).get("x", 0) - self.viewport.x) * self.viewport.zoom
+        y = (node.get("position", {}).get("y", 0) - self.viewport.y) * self.viewport.zoom
         node_width = 100
         node_height = 60
         corner_radius = 4
@@ -384,9 +372,7 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
         # Draw node label
         context.set_source_rgb(1.0, 1.0, 1.0)
-        context.select_font_face(
-            "Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
-        )
+        context.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         context.set_font_size(12)
         label = node.get("label", "Node")
 
@@ -452,9 +438,7 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         factor = 1.1 if dy < 0 else 0.9
         self.viewport.zoom_at(factor, x, y)
 
-        self.emit(
-            "viewport-changed", self.viewport.x, self.viewport.y, self.viewport.zoom
-        )
+        self.emit("viewport-changed", self.viewport.x, self.viewport.y, self.viewport.zoom)
         self.queue_draw()
         return True
 
@@ -505,9 +489,7 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         # Pan the viewport
         if self._is_panning and self._pan_start:
             self.viewport.pan(-dx / self.viewport.zoom, -dy / self.viewport.zoom)
-            self.emit(
-                "viewport-changed", self.viewport.x, self.viewport.y, self.viewport.zoom
-            )
+            self.emit("viewport-changed", self.viewport.x, self.viewport.y, self.viewport.zoom)
             self.queue_draw()
 
     def _on_drag_end(self, controller, x: float, y: float):
@@ -519,18 +501,12 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
     def _point_in_node(self, x: float, y: float, node: dict[str, Any]) -> bool:
         """Check if a point is inside a node."""
-        node_x = (
-            node.get("position", {}).get("x", 0) - self.viewport.x
-        ) * self.viewport.zoom
-        node_y = (
-            node.get("position", {}).get("y", 0) - self.viewport.y
-        ) * self.viewport.zoom
+        node_x = (node.get("position", {}).get("x", 0) - self.viewport.x) * self.viewport.zoom
+        node_y = (node.get("position", {}).get("y", 0) - self.viewport.y) * self.viewport.zoom
         node_width = 100
         node_height = 60
 
-        return (
-            node_x <= x <= node_x + node_width and node_y <= y <= node_y + node_height
-        )
+        return node_x <= x <= node_x + node_width and node_y <= y <= node_y + node_height
 
     def set_nodes(self, nodes: list[dict[str, Any]]):
         """Set the nodes to display."""
@@ -545,7 +521,5 @@ class GraphCanvasWidget(Gtk.DrawingArea):
     def reset_viewport(self):
         """Reset viewport to default position and zoom."""
         self.viewport = Viewport()
-        self.emit(
-            "viewport-changed", self.viewport.x, self.viewport.y, self.viewport.zoom
-        )
+        self.emit("viewport-changed", self.viewport.x, self.viewport.y, self.viewport.zoom)
         self.queue_draw()

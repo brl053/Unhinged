@@ -21,18 +21,17 @@ affecting the rest of the application.
 **Cache**: Global module-level `_FORMAT_CACHE` dictionary. Single-process only.
 """
 
-import struct
-import math
-import subprocess
 import logging
-from typing import Optional, List, Dict
+import math
+import struct
+import subprocess
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 # Global cache for format detection results
 # Maps device_id -> list of supported formats
-_FORMAT_CACHE: Dict[str, List[str]] = {}
+_FORMAT_CACHE: dict[str, list[str]] = {}
 
 
 @dataclass
@@ -82,7 +81,7 @@ def calculate_rms_amplitude(audio_data: bytes) -> float:
         return 0.0
 
 
-def parse_audio_device_line(line: str, device_type: str) -> Optional[AudioDevice]:
+def parse_audio_device_line(line: str, device_type: str) -> AudioDevice | None:
     """
     Parse a single device line from arecord/aplay output.
 
@@ -129,7 +128,7 @@ def parse_audio_device_line(line: str, device_type: str) -> Optional[AudioDevice
         return None
 
 
-def get_playback_devices() -> List[AudioDevice]:
+def get_playback_devices() -> list[AudioDevice]:
     """
     Get list of audio playback devices using aplay.
 
@@ -138,9 +137,7 @@ def get_playback_devices() -> List[AudioDevice]:
     """
     devices = []
     try:
-        result = subprocess.run(
-            ["aplay", "-l"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["aplay", "-l"], capture_output=True, text=True, timeout=5)
 
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
@@ -160,7 +157,7 @@ def get_playback_devices() -> List[AudioDevice]:
     return devices
 
 
-def get_capture_devices() -> List[AudioDevice]:
+def get_capture_devices() -> list[AudioDevice]:
     """
     Get list of audio capture devices using arecord.
 
@@ -169,9 +166,7 @@ def get_capture_devices() -> List[AudioDevice]:
     """
     devices = []
     try:
-        result = subprocess.run(
-            ["arecord", "-l"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["arecord", "-l"], capture_output=True, text=True, timeout=5)
 
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
@@ -191,7 +186,7 @@ def get_capture_devices() -> List[AudioDevice]:
     return devices
 
 
-def get_audio_devices(device_type: str = "capture") -> List[AudioDevice]:
+def get_audio_devices(device_type: str = "capture") -> list[AudioDevice]:
     """
     Get audio devices of specified type.
 
@@ -210,7 +205,7 @@ def get_audio_devices(device_type: str = "capture") -> List[AudioDevice]:
         return []
 
 
-def detect_supported_formats(device_id: str, use_cache: bool = True) -> List[str]:
+def detect_supported_formats(device_id: str, use_cache: bool = True) -> list[str]:
     """
     Detect supported audio formats for a device.
 
@@ -281,9 +276,7 @@ def detect_supported_formats(device_id: str, use_cache: bool = True) -> List[str
 
     # If no formats detected, return defaults
     if not supported_formats:
-        logger.warning(
-            f"Could not detect formats for device {device_id}, using defaults"
-        )
+        logger.warning(f"Could not detect formats for device {device_id}, using defaults")
         supported_formats = ["S16_LE", "S24_3LE"]
 
     # Cache the result
@@ -320,7 +313,7 @@ def get_best_format_for_device(device_id: str, preferred_format: str = "S16_LE")
     return "S16_LE"
 
 
-def clear_format_cache(device_id: Optional[str] = None) -> None:
+def clear_format_cache(device_id: str | None = None) -> None:
     """
     Clear cached format detection results.
 

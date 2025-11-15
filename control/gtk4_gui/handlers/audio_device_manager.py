@@ -39,9 +39,7 @@ class AudioDeviceManager:
 
     def _parse_device_line(self, line: str) -> tuple[str, str] | None:
         """Parse arecord device line. Returns (device_id, display_name) or None."""
-        match = re.match(
-            r"card (\d+): (.+?) \[(.+?)\], device (\d+): (.+?) \[(.+?)\]", line
-        )
+        match = re.match(r"card (\d+): (.+?) \[(.+?)\], device (\d+): (.+?) \[(.+?)\]", line)
         if not match:
             return None
 
@@ -67,9 +65,7 @@ class AudioDeviceManager:
         devices = {}
 
         try:
-            result = subprocess.run(
-                ["arecord", "-l"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["arecord", "-l"], capture_output=True, text=True, timeout=5)
 
             if result.returncode == 0:
                 self._add_parsed_devices(devices, result.stdout)
@@ -136,14 +132,10 @@ class AudioDeviceManager:
                 str(test_file),
             ]
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=duration + 5
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=duration + 5)
 
             success = (
-                result.returncode == 0
-                and test_file.exists()
-                and test_file.stat().st_size > 44
+                result.returncode == 0 and test_file.exists() and test_file.stat().st_size > 44
             )
 
             if test_file.exists():

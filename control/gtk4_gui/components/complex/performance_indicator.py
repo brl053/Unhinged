@@ -93,9 +93,7 @@ class PerformanceIndicator(AdwComponentBase):
         self.add_css_class(f"metric-{self.metric_type}")
 
         # Apply initial status styling
-        percentage = (
-            (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
-        )
+        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
         if percentage >= self.error_threshold:
             self.add_css_class("status-error")
         elif percentage >= self.warning_threshold:
@@ -172,9 +170,7 @@ class PerformanceIndicator(AdwComponentBase):
     def _update_display(self):
         """Update the display with current values."""
         # Calculate percentage
-        percentage = (
-            (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
-        )
+        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
 
         # Update progress bar
         self._progress_bar.set_fraction(min(percentage / 100, 1.0))
@@ -233,9 +229,7 @@ class PerformanceIndicator(AdwComponentBase):
 
     def get_status(self) -> str:
         """Get current status based on thresholds."""
-        percentage = (
-            (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
-        )
+        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
 
         if percentage >= self.error_threshold:
             return "error"
