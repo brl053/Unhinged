@@ -14,7 +14,15 @@ from control.cli.utils import (
 
 @click.group()
 def dev():
-    """Development commands for building, testing, and linting."""
+    """Development commands: build, test, lint, static-analysis.
+
+    Health Check Order:
+      1. ./unhinged dev static-analysis  (ruff: imports, style, unused)
+      2. ./unhinged dev test             (unit tests)
+      3. ./unhinged dev lint             (architecture: size, complexity)
+
+    All three must pass for project to be healthy.
+    """
     pass
 
 
@@ -110,10 +118,16 @@ def format(file):
     return result.returncode
 
 
-@dev.command()
-@click.argument("module", required=False, default="control")
-def analyze(module):
-    """Run static analysis on module (only if changed)."""
+@dev.command(name="static-analysis")
+def static_analysis():
+    """Run static analysis on all modules (ruff).
+
+    Checks: imports, unused variables, style issues.
+    Auto-fixes violations.
+    Runs on all changed files.
+
+    BLOCKING: Project is unhealthy if this fails.
+    """
     try:
         from build.static_analysis_manager import StaticAnalysisManager
     except ImportError:
@@ -121,24 +135,42 @@ def analyze(module):
         return 1
 
     sam = StaticAnalysisManager()
+    modules = ["control", "libs"]
 
-    if not sam.should_run_analysis(module):
-        log_info(f"No changes in {module}, skipping analysis")
-        return 0
+    total_errors = 0
+    total_fixed = 0
+    failed_modules = []
 
-    log_info(f"Running static analysis on {module}...")
-    result = sam.run_analysis(module, auto_fix=True)
+    for module in modules:
+        if not sam.should_run_analysis(module):
+            log_info(f"No changes in {module}, skipping")
+            continue
 
-    if result.passed:
-        log_success(f"Analysis passed ({result.fixed_count} auto-fixed)")
-        return 0
-    else:
-        log_error(f"Analysis failed: {len(result.errors)} errors")
-        for error in result.errors[:5]:
-            click.echo(f"  - {error}")
-        if len(result.errors) > 5:
-            click.echo(f"  ... and {len(result.errors) - 5} more")
+        log_info(f"Analyzing {module}...")
+        result = sam.run_analysis(module, auto_fix=True)
+
+        total_fixed += result.fixed_count
+        total_errors += len(result.errors)
+
+        if not result.passed:
+            failed_modules.append((module, result.errors))
+
+    if failed_modules:
+        log_error(f"Static analysis FAILED ({total_errors} errors)")
+        for module, errors in failed_modules:
+            log_error(f"  {module}: {len(errors)} errors")
+            for error in errors[:3]:
+                click.echo(f"    - {error}")
+            if len(errors) > 3:
+                click.echo(f"    ... and {len(errors) - 3} more")
         return 1
+
+    if total_fixed > 0:
+        log_success(f"Static analysis passed ({total_fixed} auto-fixed)")
+    else:
+        log_success("Static analysis passed (no issues)")
+
+    return 0
 
 
 @dev.command()
