@@ -5,12 +5,8 @@ import subprocess
 import click
 
 from control.cli.utils import (
-    check_file_exists,
     get_python,
-    log_error,
     log_info,
-    log_success,
-    log_warning,
 )
 
 
@@ -35,7 +31,7 @@ def list():
 
 
 @services.command()
-def check():
+def health():
     """Health check all services."""
     log_info("Checking service health...")
     python_cmd = get_python()
@@ -79,7 +75,7 @@ def check():
 
 
 @preflight.command()
-def status():
+def status_check():
     """Show detailed preflight status."""
     log_info("Showing preflight status...")
     python_cmd = get_python()
@@ -100,4 +96,3 @@ def force_clean():
     log_info("Force cleaning...")
     python_cmd = get_python()
     subprocess.run([python_cmd, "build/preflight_check.py", "force-clean"])
-
