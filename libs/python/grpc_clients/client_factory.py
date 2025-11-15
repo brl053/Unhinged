@@ -81,8 +81,7 @@ class GrpcClientFactory:
 
         except ImportError as e:
             raise RuntimeError(
-                f"Failed to import audio protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
+                f"Failed to import audio protobuf clients: {e}. " f"Make sure protobuf clients are generated."
             )
 
     def create_llm_client(self, address: str = "localhost:9092"):
@@ -103,8 +102,7 @@ class GrpcClientFactory:
 
         except ImportError as e:
             raise RuntimeError(
-                f"Failed to import LLM protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
+                f"Failed to import LLM protobuf clients: {e}. " f"Make sure protobuf clients are generated."
             )
 
     def create_vision_client(self, address: str = "localhost:9093"):
@@ -125,8 +123,7 @@ class GrpcClientFactory:
 
         except ImportError as e:
             raise RuntimeError(
-                f"Failed to import Vision protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
+                f"Failed to import Vision protobuf clients: {e}. " f"Make sure protobuf clients are generated."
             )
 
     def create_chat_client(self, address: str = "localhost:9095"):
@@ -147,8 +144,7 @@ class GrpcClientFactory:
 
         except ImportError as e:
             raise RuntimeError(
-                f"Failed to import Chat protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
+                f"Failed to import Chat protobuf clients: {e}. " f"Make sure protobuf clients are generated."
             )
 
     def create_image_generation_client(self, address: str = "localhost:9094"):
@@ -199,8 +195,7 @@ class GrpcClientFactory:
 
         except ImportError as e:
             raise RuntimeError(
-                f"Failed to import Health protobuf clients: {e}. "
-                f"Make sure protobuf clients are generated."
+                f"Failed to import Health protobuf clients: {e}. " f"Make sure protobuf clients are generated."
             )
 
     def close_all_connections(self):
@@ -297,7 +292,7 @@ def initialize_service_framework():
         if service_framework_path.exists():
             sys.path.insert(0, str(service_framework_path.parent))
 
-        from service_framework import get_global_pool, register_service
+        from service_framework import register_service
 
         # Register common services with the global connection pool
         # Service timeouts are configurable via environment variables: {SERVICE_NAME}_TIMEOUT
@@ -327,9 +322,7 @@ def initialize_service_framework():
                 timeout=180.0,
             )
         except ImportError:
-            register_service(
-                "image_generation", "localhost:9094", timeout=180.0
-            )  # Fallback without stub
+            register_service("image_generation", "localhost:9094", timeout=180.0)  # Fallback without stub
 
         # Vision service - standard timeout
         try:
@@ -355,9 +348,7 @@ def initialize_service_framework():
                 timeout=600.0,
             )
         except ImportError:
-            register_service(
-                "speech_to_text", "localhost:1191", timeout=600.0
-            )  # Fallback without stub
+            register_service("speech_to_text", "localhost:1191", timeout=600.0)  # Fallback without stub
 
         # Text-to-speech service - standard timeout
         try:
@@ -370,9 +361,7 @@ def initialize_service_framework():
                 timeout=120.0,
             )
         except ImportError:
-            register_service(
-                "text_to_speech", "localhost:9092", timeout=120.0
-            )  # Fallback without stub
+            register_service("text_to_speech", "localhost:9092", timeout=120.0)  # Fallback without stub
 
         print("✅ Service framework initialized with hardware-aware resource management")
         return True

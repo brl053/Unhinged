@@ -135,6 +135,7 @@ class ServiceBase(ABC):
         """Override to control gRPC server startup"""
         return False
 
+    @abstractmethod
     async def start_grpc_server(self) -> None:
         """Start gRPC server (override in subclasses)"""
         pass
@@ -145,9 +146,7 @@ class ServiceBase(ABC):
         """Register custom health check"""
         self.health_manager.register_health_check(name, check_func)
 
-    def register_dependency(
-        self, name: str, type_: str, endpoint: str, check_func: Callable
-    ) -> None:
+    def register_dependency(self, name: str, type_: str, endpoint: str, check_func: Callable) -> None:
         """Register dependency for monitoring"""
         self.health_manager.register_dependency(name, type_, endpoint, check_func)
 
@@ -178,15 +177,11 @@ class ServiceBase(ABC):
         config = ServiceConfig(name=name, address=address, stub_class=stub_class)
         self.connection_pool.register_service(config)
 
-    def call_service(
-        self, service_name: str, method_name: str, request, timeout: float | None = None
-    ):
+    def call_service(self, service_name: str, method_name: str, request, timeout: float | None = None):
         """Call another service"""
         return self.connection_pool.call_service(service_name, method_name, request, timeout)
 
-    def stream_service(
-        self, service_name: str, method_name: str, request, timeout: float | None = None
-    ):
+    def stream_service(self, service_name: str, method_name: str, request, timeout: float | None = None):
         """Call streaming service method"""
         return self.connection_pool.stream_service(service_name, method_name, request, timeout)
 

@@ -16,7 +16,6 @@ import yaml
 # Optional OpenTelemetry import
 try:
     from opentelemetry import trace
-    from opentelemetry.trace import Span
 
     OPENTELEMETRY_AVAILABLE = True
 except ImportError:
