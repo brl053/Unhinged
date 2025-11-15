@@ -443,7 +443,8 @@ def main():
             f"Overall Health: {summary['health_percentage']:.1f}% ({len(summary['healthy'])}/{summary['total']})"
         )
         print(
-            f"Critical Services: {summary['critical_health_percentage']:.1f}% ({summary['critical_healthy']}/{summary['critical_total']})"
+            f"Critical Services: {summary['critical_health_percentage']:.1f}% "
+            f"({summary['critical_healthy']}/{summary['critical_total']})"
         )
 
         print("\n🟢 HEALTHY SERVICES:")

@@ -16,8 +16,9 @@ exclude = [
 # Target Python 3.12
 target-version = "py312"
 
-# Line length to match black
-line-length = 100
+# Line length - 120 is more practical for modern development
+# Allows for descriptive variable names and f-strings without excessive wrapping
+line-length = 120
 
 [lint]
 # Enable comprehensive rule sets

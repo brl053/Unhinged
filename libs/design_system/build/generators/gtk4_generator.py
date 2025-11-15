@@ -113,7 +113,8 @@ class GTK4CSSGenerator:
         """Generate CSS files for GTK4"""
         css_files = {}
 
-        # NOTE: We do NOT generate design-tokens.css or theme-*.css files because GTK4 does not support CSS custom properties.
+        # NOTE: We do NOT generate design-tokens.css or theme-*.css files because GTK4 does not
+        # support CSS custom properties.
         # All tokens are resolved at generation time in component CSS files.
         # These files would only contain CSS variables which GTK4 rejects.
         # Theme switching can be implemented via Python code or by regenerating CSS for different themes.

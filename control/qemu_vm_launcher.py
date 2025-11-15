@@ -74,7 +74,10 @@ class QEMULauncher:
             subprocess.run(["sudo", "cp", "/etc/default/grub", "/etc/default/grub.backup"])
 
             # Add IOMMU parameter
-            grub_cmd = f'sudo sed -i \'s/GRUB_CMDLINE_LINUX_DEFAULT="\\([^"]*\\)"/GRUB_CMDLINE_LINUX_DEFAULT="\\1 {iommu_param}"/\' /etc/default/grub'
+            grub_cmd = (
+                f'sudo sed -i \'s/GRUB_CMDLINE_LINUX_DEFAULT="\\([^"]*\\)"/'
+                f'GRUB_CMDLINE_LINUX_DEFAULT="\\1 {iommu_param}"/\' /etc/default/grub'
+            )
             subprocess.run(grub_cmd, shell=True)
 
             # Update GRUB

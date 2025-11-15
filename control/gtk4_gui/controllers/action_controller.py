@@ -63,7 +63,8 @@ class ActionController:
         about.set_copyright("© 2025 Unhinged Team")
         about.set_license_type(Gtk.License.MIT_X11)
         about.set_comments(
-            "Native Graphics Platform with VM Communication\n\nIndependent graphics rendering with reliable communication pipeline."
+            "Native Graphics Platform with VM Communication\n\n"
+            "Independent graphics rendering with reliable communication pipeline."
         )
         about.present()
 

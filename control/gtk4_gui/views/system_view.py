@@ -573,7 +573,8 @@ class SystemInfoView:
                 swap_row = Adw.ActionRow()
                 swap_row.set_title("Swap")
                 swap_row.set_subtitle(
-                    f"{system_info.memory.swap_total_gb:.1f} GB ({system_info.memory.swap_used_gb:.1f} GB used, {system_info.memory.swap_percent:.0f}%)"
+                    f"{system_info.memory.swap_total_gb:.1f} GB "
+                    f"({system_info.memory.swap_used_gb:.1f} GB used, {system_info.memory.swap_percent:.0f}%)"
                 )
                 memory_group.add(swap_row)
         else:

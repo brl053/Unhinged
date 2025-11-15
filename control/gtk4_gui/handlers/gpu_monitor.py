@@ -51,7 +51,10 @@ class GPUMonitor:
         Returns:
             String containing nvidia-smi --query-gpu output
         """
-        query = "index,name,driver_version,memory.total,memory.used,memory.free,temperature.gpu,utilization.gpu,utilization.memory"
+        query = (
+            "index,name,driver_version,memory.total,memory.used,memory.free,"
+            "temperature.gpu,utilization.gpu,utilization.memory"
+        )
         result = self.runner.run_nvidia_smi(query=query)
 
         if result["success"]:
