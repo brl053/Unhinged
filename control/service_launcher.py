@@ -339,9 +339,9 @@ class ServiceLauncher:
 
             # Set up environment
             env = os.environ.copy()
-            env[
-                "PYTHONPATH"
-            ] = f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
+            env["PYTHONPATH"] = (
+                f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
+            )
 
             # Start the service in background
             command = service["start_command"].split()
