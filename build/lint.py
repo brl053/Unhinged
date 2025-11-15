@@ -211,6 +211,38 @@ def check_cyclomatic_complexity(file_path: str) -> tuple[int, list[str]]:
     return (exit_code, issues)
 
 
+def check_parameter_count(file_path: str) -> tuple[int, list[str]]:
+    """Check function parameter counts. Returns (exit_code, messages)."""
+    issues = []
+    try:
+        with open(file_path) as f:
+            content = f.read()
+    except Exception:
+        return (0, [])
+
+    # Match function definitions
+    pattern = r'def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*?)\):'
+    for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
+        func_name = match.group(1)
+        params_str = match.group(2)
+
+        # Count parameters (basic, doesn't handle multiline perfectly)
+        if not params_str.strip():
+            param_count = 0
+        else:
+            # Split by comma, filter out empty strings
+            params = [p.strip() for p in params_str.split(',') if p.strip()]
+            param_count = len(params)
+
+        if param_count > 7:
+            issues.append(f"❌ Function '{func_name}' has {param_count} parameters (limit: 7)")
+        elif param_count > 5:
+            issues.append(f"⚠️  Function '{func_name}' has {param_count} parameters (target: <5)")
+
+    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    return (exit_code, issues)
+
+
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
@@ -305,6 +337,12 @@ def lint_file(file_path: str) -> int:
     for msg in complexity_messages:
         print(msg)
     exit_code = max(exit_code, complexity_exit_code)
+
+    # Check parameter count
+    param_exit_code, param_messages = check_parameter_count(file_path)
+    for msg in param_messages:
+        print(msg)
+    exit_code = max(exit_code, param_exit_code)
 
     # Run ruff linter
     for linter in config.get('linters', []):
