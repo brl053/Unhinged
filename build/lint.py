@@ -81,6 +81,57 @@ def check_wildcard_imports(file_path: str) -> tuple[int, list[str]]:
     return (exit_code, issues)
 
 
+def check_function_length(file_path: str) -> tuple[int, list[str]]:
+    """Check function lengths. Returns (exit_code, messages)."""
+    issues = []
+    try:
+        with open(file_path) as f:
+            lines = f.readlines()
+    except Exception:
+        return (0, [])
+
+    in_function = False
+    func_name = None
+    func_start = 0
+    indent_level = 0
+
+    for i, line in enumerate(lines, 1):
+        # Detect function definition
+        if match := re.match(r'^(\s*)def\s+([a-zA-Z_][a-zA-Z0-9_]*)', line):
+            if in_function:
+                # Previous function ended
+                length = i - func_start
+                if length > 100:
+                    issues.append(f"❌ Function '{func_name}' is {length} lines (limit: 100)")
+                elif length > 50:
+                    issues.append(f"⚠️  Function '{func_name}' is {length} lines (target: <50)")
+
+            in_function = True
+            func_name = match.group(2)
+            func_start = i
+            indent_level = len(match.group(1))
+
+        # Detect end of function (dedent or EOF)
+        elif in_function and line.strip() and not line.startswith(' ' * (indent_level + 1)):
+            length = i - func_start
+            if length > 100:
+                issues.append(f"❌ Function '{func_name}' is {length} lines (limit: 100)")
+            elif length > 50:
+                issues.append(f"⚠️  Function '{func_name}' is {length} lines (target: <50)")
+            in_function = False
+
+    # Check last function if file ends while in function
+    if in_function:
+        length = len(lines) - func_start + 1
+        if length > 100:
+            issues.append(f"❌ Function '{func_name}' is {length} lines (limit: 100)")
+        elif length > 50:
+            issues.append(f"⚠️  Function '{func_name}' is {length} lines (target: <50)")
+
+    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    return (exit_code, issues)
+
+
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
@@ -157,6 +208,12 @@ def lint_file(file_path: str) -> int:
     for msg in wildcard_messages:
         print(msg)
     exit_code = max(exit_code, wildcard_exit_code)
+
+    # Check function length
+    func_exit_code, func_messages = check_function_length(file_path)
+    for msg in func_messages:
+        print(msg)
+    exit_code = max(exit_code, func_exit_code)
 
     # Run ruff linter
     for linter in config.get('linters', []):
