@@ -111,15 +111,14 @@ def print_summary(violations, verbose=False):
             continue
         
         print(f"{CYAN}📁 {top_dir}/{NC} ({dir_fatal} fatal, {dir_warn} warnings)")
-        
+
         for filepath in sorted(files.keys()):
             issues = files[filepath]
             if not issues['fatal'] and not issues['warning']:
                 continue
-            
-            # Show file with counts
-            file_name = filepath.split('/')[-1]
-            print(f"  📄 {file_name}")
+
+            # Show file with full path from repo root
+            print(f"  📄 {filepath}")
             
             # Show violations
             if verbose:
@@ -141,8 +140,8 @@ def print_summary(violations, verbose=False):
         print()
 
 if __name__ == '__main__':
-    verbose = len(sys.argv) > 1 and sys.argv[1] == 'True'
-    
+    verbose = len(sys.argv) > 1 and sys.argv[1].lower() == 'true'
+
     output = run_lint()
     violations = parse_violations(output)
     print_summary(violations, verbose)
