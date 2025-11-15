@@ -10,6 +10,7 @@ Usage:
 """
 
 import sys
+import re
 import subprocess
 from pathlib import Path
 
@@ -40,6 +41,44 @@ def check_file_length(file_path: str) -> tuple[int, str | None]:
         return (0, f"⚠️  WARNING: {file_path} is {line_count} lines (target: <500)")
 
     return (0, None)
+
+
+def check_import_count(file_path: str) -> tuple[int, str | None]:
+    """Check number of import statements. Returns (exit_code, message)."""
+    try:
+        with open(file_path) as f:
+            lines = f.readlines()
+    except Exception:
+        return (0, None)
+
+    import_count = 0
+    for line in lines[:100]:  # Only check top of file
+        if line.strip().startswith(('import ', 'from ')):
+            import_count += 1
+
+    if import_count > 20:
+        return (1, f"❌ FATAL: {file_path} has {import_count} imports (limit: 20)")
+    elif import_count > 15:
+        return (0, f"⚠️  WARNING: {file_path} has {import_count} imports (target: <15)")
+
+    return (0, None)
+
+
+def check_wildcard_imports(file_path: str) -> tuple[int, list[str]]:
+    """Detect wildcard imports. Returns (exit_code, messages)."""
+    issues = []
+    try:
+        with open(file_path) as f:
+            lines = f.readlines()
+    except Exception:
+        return (0, [])
+
+    for i, line in enumerate(lines, 1):
+        if re.search(r'^\s*from\s+\S+\s+import\s+\*', line):
+            issues.append(f"❌ Line {i}: wildcard import (use explicit imports)")
+
+    exit_code = 1 if issues else 0
+    return (exit_code, issues)
 
 
 def get_linter_config(file_path: str) -> dict:
@@ -99,14 +138,27 @@ def lint_file(file_path: str) -> int:
     if config.get('skip'):
         return 0
 
-    # Check file length FIRST (architectural constraint)
+    exit_code = 0
+
+    # Check file length (architectural constraint)
     length_exit_code, length_message = check_file_length(file_path)
     if length_message:
         print(length_message)
-    if length_exit_code != 0:
-        return length_exit_code  # Stop immediately on file too long
+    exit_code = max(exit_code, length_exit_code)
 
-    exit_code = 0
+    # Check import count
+    import_exit_code, import_message = check_import_count(file_path)
+    if import_message:
+        print(import_message)
+    exit_code = max(exit_code, import_exit_code)
+
+    # Check wildcard imports
+    wildcard_exit_code, wildcard_messages = check_wildcard_imports(file_path)
+    for msg in wildcard_messages:
+        print(msg)
+    exit_code = max(exit_code, wildcard_exit_code)
+
+    # Run ruff linter
     for linter in config.get('linters', []):
         if linter == 'ruff':
             args = config.get('ruff_args', [])
