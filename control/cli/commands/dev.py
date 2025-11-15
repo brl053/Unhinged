@@ -63,7 +63,7 @@ def lint(verbose):
 def fix(file):
     """Auto-fix linting violations."""
     log_info("Auto-fixing violations...")
-    
+
     if file:
         result = subprocess.run(
             ["build/python/venv/bin/ruff", "check", "--fix", file]
@@ -73,10 +73,32 @@ def fix(file):
             ["build/python/venv/bin/ruff", "check", "--fix", "control/", "libs/",
              "--exclude", "build/python/venv"]
         )
-    
+
     if result.returncode == 0:
         log_success("Auto-fixed violations. Run 'lint' to verify.")
-    
+
+    return result.returncode
+
+
+@dev.command()
+@click.argument("file", required=False, default="")
+def format(file):
+    """Format code with ruff."""
+    log_info("Formatting code...")
+
+    if file:
+        result = subprocess.run(
+            ["build/python/venv/bin/ruff", "format", file]
+        )
+    else:
+        result = subprocess.run(
+            ["build/python/venv/bin/ruff", "format", "control/", "libs/",
+             "--exclude", "build/python/venv"]
+        )
+
+    if result.returncode == 0:
+        log_success("Code formatted.")
+
     return result.returncode
 
 
