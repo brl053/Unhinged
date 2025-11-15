@@ -15,6 +15,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from audio_utils import get_best_format_for_device
 from event_bus import get_event_bus, AudioEvents, Event
@@ -122,15 +123,19 @@ class AudioHandler:
         """Connect voice visualizer for real-time feedback."""
         self._visualization_bridge.set_voice_visualizer(visualizer)
 
+    def _get_sample_width(self, format_str: str) -> int:
+        """Get sample width for audio format (backward compatibility)."""
+        return self.device_manager.get_sample_width(format_str)
+
     def _set_state(self, state: RecordingState) -> None:
         """Set recording state and notify listeners."""
         self._state = state
         if self._state_callback:
             self._state_callback(state)
-        self._event_bus.emit_simple(
-            AudioEvents.STATE_CHANGED,
-            {"state": state.value}
-        )
+        if state == RecordingState.RECORDING:
+            self._event_bus.emit_simple(AudioEvents.RECORDING_STARTED)
+        elif state == RecordingState.IDLE:
+            self._event_bus.emit_simple(AudioEvents.RECORDING_STOPPED)
 
     def _handle_error(self, error: Exception) -> None:
         """Handle errors and notify UI."""
