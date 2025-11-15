@@ -123,7 +123,7 @@ class UIController:
                 import traceback
 
                 traceback.print_exc()
-                raise Exception(f"Page creation failed for {title}: {e}")
+                raise Exception(f"Page creation failed for {title}: {e}") from e
 
         # Aggregate output
         print(f"✅ UI pages initialized ({created}/{len(pages)} pages)")

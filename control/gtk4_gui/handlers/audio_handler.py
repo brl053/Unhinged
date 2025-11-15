@@ -214,7 +214,7 @@ class AudioHandler:
 
         except Exception as e:
             self._cleanup()
-            raise AudioRecordingError(f"Failed to start recording: {e}")
+            raise AudioRecordingError(f"Failed to start recording: {e}") from e
 
     def stop_recording(self) -> None:
         """Stop current recording."""
