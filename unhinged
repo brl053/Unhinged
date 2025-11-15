@@ -130,6 +130,15 @@ ${YELLOW}PREFLIGHT COMMANDS:${NC}
   preflight force-clean       Force clean restart preparation
   preflight checksums         Manage code change detection
 
+${YELLOW}LINTING COMMANDS:${NC}
+  lint check [file]           Check file(s) for violations
+  lint fix [file]             Auto-fix violations in file(s)
+  lint format [file]          Format code with ruff
+  lint hooks install          Install pre-commit hooks
+  lint hooks run              Run all pre-commit hooks
+  lint hooks run-file [file]  Run hooks on specific file
+  lint rules                  Show all linting rules
+
 ${YELLOW}EXAMPLES:${NC}
   unhinged                    # Normal user: just start the system
   unhinged dev                # Power user: development mode
@@ -585,6 +594,117 @@ cmd_preflight() {
     esac
 }
 
+# Linting command handler
+cmd_lint() {
+    local subcmd="${1:-help}"
+    shift || true
+
+    case "$subcmd" in
+        check)
+            if [ -z "$1" ]; then
+                log_info "Checking all Python files..."
+                find control libs -name "*.py" -type f | xargs python3 build/lint.py
+            else
+                log_info "Checking: $@"
+                python3 build/lint.py "$@"
+            fi
+            ;;
+        fix)
+            if [ -z "$1" ]; then
+                log_info "Auto-fixing all Python files..."
+                ./build/python/venv/bin/ruff check --fix control/ libs/
+            else
+                log_info "Auto-fixing: $@"
+                ./build/python/venv/bin/ruff check --fix "$@"
+            fi
+            ;;
+        format)
+            if [ -z "$1" ]; then
+                log_info "Formatting all Python files..."
+                ./build/python/venv/bin/ruff format control/ libs/
+            else
+                log_info "Formatting: $@"
+                ./build/python/venv/bin/ruff format "$@"
+            fi
+            ;;
+        hooks)
+            local action="${1:-help}"
+            shift || true
+            case "$action" in
+                install)
+                    log_info "Installing pre-commit hooks..."
+                    ./build/python/venv/bin/pre-commit install
+                    log_success "Pre-commit hooks installed"
+                    ;;
+                run)
+                    log_info "Running all pre-commit hooks..."
+                    ./build/python/venv/bin/pre-commit run --all-files
+                    ;;
+                run-file)
+                    if [ -z "$1" ]; then
+                        log_error "Please specify a file"
+                        exit 1
+                    fi
+                    log_info "Running hooks on: $1"
+                    ./build/python/venv/bin/pre-commit run --files "$1"
+                    ;;
+                *)
+                    echo "Pre-commit hook commands:"
+                    echo "  unhinged lint hooks install    Install hooks"
+                    echo "  unhinged lint hooks run        Run all hooks"
+                    echo "  unhinged lint hooks run-file   Run hooks on file"
+                    ;;
+            esac
+            ;;
+        rules)
+            cat << 'RULES'
+Linting Rules Enforced:
+
+File Length:
+  ⚠️  WARNING: >500 lines
+  ❌ FATAL: >1000 lines
+
+Function Length:
+  ⚠️  WARNING: >50 lines
+  ❌ FATAL: >100 lines
+
+Function Branches (Complexity):
+  ⚠️  WARNING: >7 branches
+  ❌ FATAL: >10 branches
+
+Function Parameters:
+  ⚠️  WARNING: >5 parameters
+  ❌ FATAL: >7 parameters
+
+Class Size:
+  ⚠️  WARNING: >300 lines
+  ❌ FATAL: >500 lines
+
+Nesting Depth:
+  ⚠️  WARNING: >4 levels
+  ❌ FATAL: >5 levels
+
+Import Count:
+  ⚠️  WARNING: >20 statements
+  ❌ FATAL: >25 statements
+
+Wildcard Imports:
+  ❌ FATAL: Always forbidden
+RULES
+            ;;
+        help|*)
+            echo "Linting commands:"
+            echo "  unhinged lint check [file]      Check file(s) for violations"
+            echo "  unhinged lint fix [file]        Auto-fix violations"
+            echo "  unhinged lint format [file]     Format code"
+            echo "  unhinged lint hooks install     Install pre-commit hooks"
+            echo "  unhinged lint hooks run         Run all hooks"
+            echo "  unhinged lint hooks run-file    Run hooks on specific file"
+            echo "  unhinged lint rules             Show all linting rules"
+            ;;
+    esac
+}
+
 # Main command dispatcher
 main() {
     local command="${1:-start}"
@@ -621,6 +741,9 @@ main() {
 
         # Preflight commands
         preflight)      cmd_preflight "$@" ;;
+
+        # Linting commands
+        lint)           cmd_lint "$@" ;;
 
         # Help and unknown commands
         help|--help|-h) show_help ;;
