@@ -8,30 +8,26 @@
 🔴 TESTS: BROKEN (sys.exit in test_components.py)
 ```
 
-## Commands You Need
+## Health Check Commands
 
 ```bash
-# See all violations (custom linter)
-./unhinged dev lint -v
+# 1. Static Analysis (ruff: imports, style, unused)
+./unhinged dev static-analysis
 
-# Run static analysis (ruff, change-aware)
-./unhinged dev analyze control
-
-# Auto-fix what you can
-./unhinged dev fix
-
-# Format code
-./unhinged dev format
-
-# Run tests
+# 2. Unit Tests
 ./unhinged dev test
+
+# 3. Architecture Linter (size, complexity)
+./unhinged dev lint
+
+# All three must pass for project to be healthy
 ```
 
-## Workflow with Static Analysis
+## Healing Workflow
 
 ```bash
-# 1. Check what changed
-./unhinged dev analyze control
+# 1. Run static analysis
+./unhinged dev static-analysis
 
 # 2. Auto-fix violations
 ./unhinged dev fix
@@ -42,8 +38,12 @@
 # 4. Run tests
 ./unhinged dev test
 
-# 5. Check custom linter
+# 5. Check architecture
 ./unhinged dev lint -v
+
+# 6. Commit when all pass
+git add .
+git commit -m "refactor: fix violations"
 ```
 
 ## Files to Fix (Priority Order)

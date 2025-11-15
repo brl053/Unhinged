@@ -20,52 +20,34 @@
 4. **Auto-fix** - Can automatically fix violations
 5. **Module-level** - Analyzes by module (control/, libs/, etc)
 
-## Proposed Workflow Integration
+## Workflow Integration
 
-### Add to CLI
-
-```python
-# control/cli/commands/dev.py - add new command
-
-@dev.command()
-@click.argument("module", required=False, default="control")
-def analyze(module):
-    """Run static analysis on module (only if changed)."""
-    from build.static_analysis_manager import StaticAnalysisManager
-    
-    sam = StaticAnalysisManager()
-    if not sam.should_run_analysis(module):
-        log_info(f"No changes in {module}, skipping analysis")
-        return 0
-    
-    log_info(f"Running static analysis on {module}...")
-    result = sam.run_analysis(module, auto_fix=True)
-    
-    if result.passed:
-        log_success(f"Analysis passed ({result.fixed_count} auto-fixed)")
-    else:
-        log_error(f"Analysis failed: {len(result.errors)} errors")
-        for error in result.errors[:5]:
-            print(f"  - {error}")
-    
-    return 0 if result.passed else 1
-```
-
-### Updated Workflow
+### Command
 
 ```bash
-# Check what changed
-./unhinged dev analyze control
+./unhinged dev static-analysis
+```
 
-# Only runs if control/ has changes
-# Auto-fixes violations
-# Caches results
+**What it does:**
+- Runs on ALL modules (control, libs)
+- Only if files changed (via checksums)
+- Auto-fixes violations
+- Caches results
+- BLOCKING: Project unhealthy if fails
 
-# Run on all modules
-./unhinged dev analyze
+### Health Check Order
 
-# Run on specific module
-./unhinged dev analyze control/gtk4_gui
+```bash
+# 1. Static Analysis (ruff: imports, style, unused)
+./unhinged dev static-analysis
+
+# 2. Unit Tests
+./unhinged dev test
+
+# 3. Architecture Linter (size, complexity)
+./unhinged dev lint
+
+# All three must pass
 ```
 
 ## Integration Points
