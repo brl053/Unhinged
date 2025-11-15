@@ -3,19 +3,17 @@ repos:
     hooks:
       - id: unhinged-lint
         name: Unhinged Linter (Ruff)
-        entry: /build/python/venv/bin/python /build/lint.py
+        entry: python3 build/lint.py
         language: system
         types: [python]
         pass_filenames: true
-        stages: [commit]
 
       - id: llmdocs-validator
         name: LLMDocs Validator
-        entry: /build/python/venv/bin/python /build/validators/llmdocs_validator.py
+        entry: python3 build/validators/llmdocs_validator.py
         language: system
         types: [python]
         pass_filenames: true
-        stages: [commit]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
