@@ -243,6 +243,54 @@ def check_parameter_count(file_path: str) -> tuple[int, list[str]]:
     return (exit_code, issues)
 
 
+def check_class_size(file_path: str) -> tuple[int, list[str]]:
+    """Check class sizes. Returns (exit_code, messages)."""
+    issues = []
+    try:
+        with open(file_path) as f:
+            lines = f.readlines()
+    except Exception:
+        return (0, [])
+
+    in_class = False
+    class_name = None
+    class_start = 0
+    indent_level = 0
+
+    for i, line in enumerate(lines, 1):
+        if match := re.match(r'^(\s*)class\s+([a-zA-Z_][a-zA-Z0-9_]*)', line):
+            if in_class:
+                length = i - class_start
+                if length > 500:
+                    issues.append(f"❌ Class '{class_name}' is {length} lines (limit: 500)")
+                elif length > 300:
+                    issues.append(f"⚠️  Class '{class_name}' is {length} lines (target: <300)")
+
+            in_class = True
+            class_name = match.group(2)
+            class_start = i
+            indent_level = len(match.group(1))
+
+        elif in_class and line.strip() and not line.startswith(' ' * (indent_level + 1)):
+            length = i - class_start
+            if length > 500:
+                issues.append(f"❌ Class '{class_name}' is {length} lines (limit: 500)")
+            elif length > 300:
+                issues.append(f"⚠️  Class '{class_name}' is {length} lines (target: <300)")
+            in_class = False
+
+    # Check last class if file ends while in class
+    if in_class:
+        length = len(lines) - class_start + 1
+        if length > 500:
+            issues.append(f"❌ Class '{class_name}' is {length} lines (limit: 500)")
+        elif length > 300:
+            issues.append(f"⚠️  Class '{class_name}' is {length} lines (target: <300)")
+
+    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    return (exit_code, issues)
+
+
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
@@ -343,6 +391,12 @@ def lint_file(file_path: str) -> int:
     for msg in param_messages:
         print(msg)
     exit_code = max(exit_code, param_exit_code)
+
+    # Check class size
+    class_exit_code, class_messages = check_class_size(file_path)
+    for msg in class_messages:
+        print(msg)
+    exit_code = max(exit_code, class_exit_code)
 
     # Run ruff linter
     for linter in config.get('linters', []):
