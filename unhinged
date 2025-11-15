@@ -601,9 +601,41 @@ cmd_lint() {
 
     case "$subcmd" in
         check)
+            local verbose=false
+            if [ "$1" = "-v" ] || [ "$1" = "--verbose" ]; then
+                verbose=true
+                shift || true
+            fi
+
             if [ -z "$1" ]; then
                 log_info "Checking all Python files..."
-                find control libs -name "*.py" -type f | xargs python3 build/lint.py
+                local output=$(find control libs -name "*.py" -type f | xargs python3 build/lint.py 2>&1)
+                local fatal_count=$(echo "$output" | grep -c "❌" || true)
+                local warn_count=$(echo "$output" | grep -c "⚠️" || true)
+
+                if [ "$verbose" = true ]; then
+                    echo "$output"
+                else
+                    if [ "$fatal_count" -gt 0 ]; then
+                        log_error "Found $fatal_count FATAL violations:"
+                        echo "$output" | grep "❌" | head -20
+                        if [ "$fatal_count" -gt 20 ]; then
+                            echo "... and $((fatal_count - 20)) more"
+                        fi
+                    fi
+
+                    if [ "$warn_count" -gt 0 ]; then
+                        log_warning "Found $warn_count warnings:"
+                        echo "$output" | grep "⚠️" | head -10
+                        if [ "$warn_count" -gt 10 ]; then
+                            echo "... and $((warn_count - 10)) more"
+                        fi
+                    fi
+
+                    if [ "$fatal_count" -eq 0 ] && [ "$warn_count" -eq 0 ]; then
+                        log_success "All checks passed!"
+                    fi
+                fi
             else
                 log_info "Checking: $@"
                 python3 build/lint.py "$@"
@@ -694,7 +726,7 @@ RULES
             ;;
         help|*)
             echo "Linting commands:"
-            echo "  unhinged lint check [file]      Check file(s) for violations"
+            echo "  unhinged lint check [-v] [file] Check file(s) for violations (-v for verbose)"
             echo "  unhinged lint fix [file]        Auto-fix violations"
             echo "  unhinged lint format [file]     Format code"
             echo "  unhinged lint hooks install     Install pre-commit hooks"
