@@ -26,6 +26,22 @@ def find_tool(name: str) -> str:
     return name  # Assume it's in PATH
 
 
+def check_file_length(file_path: str) -> tuple[int, str | None]:
+    """Check file line count. Returns (exit_code, message)."""
+    try:
+        with open(file_path) as f:
+            line_count = sum(1 for _ in f)
+    except Exception as e:
+        return (0, None)  # Skip if can't read
+
+    if line_count > 1000:
+        return (1, f"❌ FATAL: {file_path} is {line_count} lines (limit: 1000)")
+    elif line_count > 500:
+        return (0, f"⚠️  WARNING: {file_path} is {line_count} lines (target: <500)")
+
+    return (0, None)
+
+
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
@@ -79,17 +95,24 @@ def run_ruff(file_path: str, args: list) -> int:
 def lint_file(file_path: str) -> int:
     """Lint a single file. Returns 0 if OK, 1 if violations found."""
     config = get_linter_config(file_path)
-    
+
     if config.get('skip'):
         return 0
-    
+
+    # Check file length FIRST (architectural constraint)
+    length_exit_code, length_message = check_file_length(file_path)
+    if length_message:
+        print(length_message)
+    if length_exit_code != 0:
+        return length_exit_code  # Stop immediately on file too long
+
     exit_code = 0
     for linter in config.get('linters', []):
         if linter == 'ruff':
             args = config.get('ruff_args', [])
             code = run_ruff(file_path, args)
             exit_code = max(exit_code, code)
-    
+
     return exit_code
 
 
