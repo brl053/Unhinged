@@ -83,7 +83,7 @@ class SessionStore:
 
         except Exception as e:
             self.logger.error(f"Failed to connect to Redis: {e}")
-            raise SessionStoreError(f"Redis connection failed: {e}")
+            raise SessionStoreError(f"Redis connection failed: {e}") from e
 
         try:
             # Document store connection
@@ -94,7 +94,7 @@ class SessionStore:
 
         except Exception as e:
             self.logger.error(f"Failed to connect to document store: {e}")
-            raise SessionStoreError(f"Document store connection failed: {e}")
+            raise SessionStoreError(f"Document store connection failed: {e}") from e
 
     def write(self, key: str, value: Any) -> bool:
         """
