@@ -32,6 +32,32 @@ def run_lint():
     
     return result.stdout + result.stderr
 
+def extract_rule_name(line):
+    """Extract rule name from violation line."""
+    import re
+
+    # Extract rule name from various formats
+    # "❌ FATAL: path/to/file.py is 1720 lines (limit: 1000)" -> "file length"
+    # "⚠️  Function 'name' is 80 lines (target: <50)" -> "function length"
+    # "⚠️  Line 123: nesting depth 5 (target: <4)" -> "nesting depth"
+
+    if 'is ' in line and ' lines ' in line:
+        return 'file length'
+    elif 'Function' in line and 'lines' in line:
+        return 'function length'
+    elif 'nesting depth' in line:
+        return 'nesting depth'
+    elif 'branches' in line:
+        return 'cyclomatic complexity'
+    elif 'parameters' in line:
+        return 'function parameters'
+    elif 'import' in line.lower():
+        return 'import count'
+    elif 'wildcard' in line.lower():
+        return 'wildcard imports'
+    else:
+        return 'unknown'
+
 def parse_violations(output):
     """Parse violations and group by file and directory."""
     violations = defaultdict(lambda: {'fatal': [], 'warning': []})
@@ -41,10 +67,6 @@ def parse_violations(output):
             continue
 
         # Extract file path from violation lines
-        # Format: "❌ FATAL: path/to/file.py is X lines"
-        # or "⚠️  Function 'name' in path/to/file.py is X lines"
-        # or "❌ Line 123: nesting depth 6 in path/to/file.py"
-
         if '❌' in line or '⚠️' in line:
             # Try to extract filepath
             filepath = None
@@ -63,10 +85,16 @@ def parse_violations(output):
                     filepath = match.group(1)
 
             if filepath:
+                rule = extract_rule_name(line)
+                violation_data = {
+                    'line': line.strip(),
+                    'rule': rule
+                }
+
                 if '❌' in line:
-                    violations[filepath]['fatal'].append(line.strip())
+                    violations[filepath]['fatal'].append(violation_data)
                 elif '⚠️' in line:
-                    violations[filepath]['warning'].append(line.strip())
+                    violations[filepath]['warning'].append(violation_data)
 
     return violations
 
@@ -123,19 +151,39 @@ def print_summary(violations, verbose=False):
             # Show violations
             if verbose:
                 for violation in issues['fatal'][:5]:
-                    print(f"    {violation}")
+                    rule = violation.get('rule', 'unknown')
+                    # Extract just the message part (after the rule indicator)
+                    msg = violation['line']
+                    # Remove the emoji and severity prefix
+                    if '❌' in msg:
+                        msg = msg.split('❌', 1)[1].strip()
+                    print(f"    {RED}❌ [{rule}]{NC} {msg}")
                 if len(issues['fatal']) > 5:
                     print(f"    ... and {len(issues['fatal']) - 5} more fatal")
-                
+
                 for violation in issues['warning'][:3]:
-                    print(f"    {violation}")
+                    rule = violation.get('rule', 'unknown')
+                    # Extract just the message part
+                    msg = violation['line']
+                    if '⚠️' in msg:
+                        msg = msg.split('⚠️', 1)[1].strip()
+                    print(f"    {YELLOW}⚠️  [{rule}]{NC} {msg}")
                 if len(issues['warning']) > 3:
                     print(f"    ... and {len(issues['warning']) - 3} more warnings")
             else:
-                if issues['fatal']:
-                    print(f"    {RED}❌ {len(issues['fatal'])} fatal{NC}")
-                if issues['warning']:
-                    print(f"    {YELLOW}⚠️  {len(issues['warning'])} warnings{NC}")
+                # Group by rule for summary
+                fatal_by_rule = defaultdict(int)
+                warn_by_rule = defaultdict(int)
+
+                for v in issues['fatal']:
+                    fatal_by_rule[v.get('rule', 'unknown')] += 1
+                for v in issues['warning']:
+                    warn_by_rule[v.get('rule', 'unknown')] += 1
+
+                for rule, count in sorted(fatal_by_rule.items()):
+                    print(f"    {RED}❌ [{rule}]{NC} {count}")
+                for rule, count in sorted(warn_by_rule.items()):
+                    print(f"    {YELLOW}⚠️  [{rule}]{NC} {count}")
         
         print()
 
