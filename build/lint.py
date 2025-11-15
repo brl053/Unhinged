@@ -132,6 +132,31 @@ def check_function_length(file_path: str) -> tuple[int, list[str]]:
     return (exit_code, issues)
 
 
+def check_nesting_depth(file_path: str) -> tuple[int, list[str]]:
+    """Check indentation depth. Returns (exit_code, messages)."""
+    issues = []
+    try:
+        with open(file_path) as f:
+            lines = f.readlines()
+    except Exception:
+        return (0, [])
+
+    for i, line in enumerate(lines, 1):
+        if not line.strip():
+            continue
+
+        indent = len(line) - len(line.lstrip())
+        depth = indent // 4
+
+        if depth > 5:
+            issues.append(f"❌ Line {i}: nesting depth {depth} (limit: 5)")
+        elif depth > 4:
+            issues.append(f"⚠️  Line {i}: nesting depth {depth} (target: <4)")
+
+    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    return (exit_code, issues)
+
+
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
@@ -214,6 +239,12 @@ def lint_file(file_path: str) -> int:
     for msg in func_messages:
         print(msg)
     exit_code = max(exit_code, func_exit_code)
+
+    # Check nesting depth
+    nesting_exit_code, nesting_messages = check_nesting_depth(file_path)
+    for msg in nesting_messages:
+        print(msg)
+    exit_code = max(exit_code, nesting_exit_code)
 
     # Run ruff linter
     for linter in config.get('linters', []):
