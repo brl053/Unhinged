@@ -17,15 +17,15 @@ logger = logging.getLogger(__name__)
 
 
 class AudioTranscriber:
-    """Handles audio transcription via service connector."""
+    """Handles audio transcription via direct TranscriptionService."""
 
-    def __init__(self, service_connector=None):
+    def __init__(self, transcription_service=None):
         """Initialize transcriber.
 
         Args:
-            service_connector: Service connector instance (injected for testing)
+            transcription_service: TranscriptionService instance (injected for testing)
         """
-        self.service_connector = service_connector
+        self.transcription_service = transcription_service
 
     def _validate_audio_file(self, audio_file: Path) -> bool:
         """Validate audio file exists and has content.
@@ -71,10 +71,8 @@ class AudioTranscriber:
             # Validate file
             self._validate_audio_file(audio_file)
 
-            # Call service
-            transcript = self.service_connector.transcribe_audio(
-                audio_file, timeout=timeout_seconds
-            )
+            # Call direct transcription service
+            transcript = self.transcription_service.transcribe_audio(audio_file)
 
             # Parse result
             result = TranscriptionResult(

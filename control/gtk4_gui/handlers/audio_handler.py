@@ -28,13 +28,20 @@ from event_bus import AudioEvents, Event, get_event_bus
 try:
     from .audio_monitor import AudioVisualizationBridge
     from .config import app_config
-    from .exceptions import AudioRecordingError, ServiceUnavailableError
-    from .service_connector import service_connector
+    from .exceptions import AudioRecordingError
 except ImportError:
     from audio_monitor import AudioVisualizationBridge
     from config import app_config
-    from exceptions import AudioRecordingError, ServiceUnavailableError
-    from service_connector import service_connector
+    from exceptions import AudioRecordingError
+
+# Import direct transcription service
+import sys
+from pathlib import Path as PathlibPath
+
+project_root = PathlibPath(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from libs.services import TranscriptionService
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +70,8 @@ class AudioHandler:
         # Delegated components
         self.device_manager = AudioDeviceManager()
         self.processor = AudioProcessor()
-        self.transcriber = AudioTranscriber(service_connector)
+        self.transcription_service = TranscriptionService(model_size="base")
+        self.transcriber = AudioTranscriber(self.transcription_service)
         self.recorder: AudioRecorder | None = None
 
         # Audio format detection
@@ -177,8 +185,7 @@ class AudioHandler:
         if self.is_busy:
             raise AudioRecordingError("Already recording or processing")
 
-        if not service_connector.check_service_health("speech_to_text"):
-            raise ServiceUnavailableError("speech_to_text", "unknown")
+        # No health check needed - direct service call
 
         try:
             # Create temp file
