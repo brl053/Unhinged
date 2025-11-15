@@ -23,6 +23,15 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Get Python command from venv or system
+get_python() {
+    if [ -f "build/python/venv/bin/python" ]; then
+        echo "build/python/venv/bin/python"
+    else
+        echo "python3"
+    fi
+}
+
 # Logging functions
 log_info() {
     echo -e "${CYAN}ℹ️  $1${NC}"
@@ -92,7 +101,6 @@ ${YELLOW}DEVELOPMENT COMMANDS:${NC}
   dev                         Start development mode with enhanced tools
   dev-clean                   Clean development artifacts and caches
   dev-watch                   Watch files and rebuild on changes
-  dev-shell                   Open development shell with environment
 
 ${YELLOW}GRAPHICS COMMANDS:${NC}
   graphics build              Build native C graphics library
@@ -114,8 +122,6 @@ ${YELLOW}ADMIN COMMANDS:${NC}
 
 ${YELLOW}DEBUG COMMANDS:${NC}
   debug status                Show detailed system state
-  debug vm-shell              Access Alpine VM shell
-  debug trace [component]     Enable debug tracing
   debug logs [component]      Show component-specific logs
 
 ${YELLOW}VM COMMANDS:${NC}
@@ -177,11 +183,7 @@ cmd_start() {
 
     # Phase 1: Essential services via service launcher
     log_info "🚀 Launching services..."
-    if [ -f "build/python/venv/bin/python" ]; then
-        PYTHON_CMD="build/python/venv/bin/python"
-    else
-        PYTHON_CMD="python3"
-    fi
+    local PYTHON_CMD=$(get_python)
 
     if $PYTHON_CMD control/service_launcher.py --timeout 120; then
         log_success "Essential services started"
@@ -219,25 +221,7 @@ cmd_status() {
 
     # Service status via service launcher
     log_info "📊 Service Status:"
-    python3 control/service_launcher.py --status
-
-    # Overall system status via Makefile
-    echo ""
-    log_info "🖥️  System Status:"
-    exec make status "$@"
-}
-
-cmd_status() {
-    log_info "Checking Unhinged system status..."
-    cd "$PROJECT_ROOT"
-
-    # Service status via service launcher
-    log_info "📊 Service Status:"
-    if [ -f "build/python/venv/bin/python" ]; then
-        build/python/venv/bin/python control/service_launcher.py --status
-    else
-        python3 control/service_launcher.py --status
-    fi
+    $(get_python) control/service_launcher.py --status
 
     # Overall system status via Makefile
     echo ""
@@ -275,13 +259,6 @@ cmd_dev_watch() {
     log_info "Starting file watcher for continuous building..."
     cd "$PROJECT_ROOT"
     exec make watch "$@"
-}
-
-cmd_dev_shell() {
-    log_info "Opening development shell..."
-    cd "$PROJECT_ROOT"
-    # TODO: Implement development shell with environment
-    exec bash
 }
 
 cmd_graphics() {
@@ -427,17 +404,6 @@ cmd_debug() {
             cd "$PROJECT_ROOT"
             exec make status "$@"
             ;;
-        vm-shell)
-            log_info "Accessing Alpine VM shell..."
-            # TODO: Implement VM shell access
-            log_warning "VM shell access not yet implemented"
-            ;;
-        trace)
-            local component="${1:-system}"
-            log_info "Enabling debug tracing for: $component"
-            # TODO: Implement debug tracing
-            log_warning "Debug tracing not yet implemented"
-            ;;
         logs)
             local component="${1:-all}"
             log_info "Showing logs for: $component"
@@ -447,8 +413,6 @@ cmd_debug() {
         help|*)
             echo "Debug commands:"
             echo "  unhinged debug status           Detailed system state"
-            echo "  unhinged debug vm-shell         Access VM shell"
-            echo "  unhinged debug trace [comp]     Enable debug tracing"
             echo "  unhinged debug logs [comp]      Component logs"
             ;;
     esac
@@ -725,13 +689,7 @@ RULES
 # Test command handler
 cmd_test() {
     local pattern="${1:-}"
-
-    # Use venv python if available
-    if [ -f "build/python/venv/bin/python" ]; then
-        PYTHON_CMD="build/python/venv/bin/python"
-    else
-        PYTHON_CMD="python3"
-    fi
+    local PYTHON_CMD=$(get_python)
 
     if [ -z "$pattern" ]; then
         log_info "Running all tests..."
