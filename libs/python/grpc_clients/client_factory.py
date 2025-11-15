@@ -40,7 +40,7 @@ class GrpcClientFactory:
     def create_channel(self, address: str, options: list | None = None):
         """Create a gRPC channel with proper cleanup and increased message size limits."""
         # Default options for large message support (256MB for long audio recordings)
-        MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+        MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # noqa: N806 (constant)
         default_options = [
             ("grpc.max_receive_message_length", MAX_MESSAGE_SIZE),
             ("grpc.max_send_message_length", MAX_MESSAGE_SIZE),
@@ -63,7 +63,7 @@ class GrpcClientFactory:
 
             if address not in self._clients_cache:
                 # Create channel with large message size support
-                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # noqa: N806 (constant)
                 options = [
                     ("grpc.max_receive_message_length", MAX_MESSAGE_SIZE),
                     ("grpc.max_send_message_length", MAX_MESSAGE_SIZE),
@@ -154,7 +154,7 @@ class GrpcClientFactory:
 
             if address not in self._clients_cache:
                 # Create channel with large message size support for images
-                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # 1GB
+                MAX_MESSAGE_SIZE = 1024 * 1024 * 1024  # noqa: N806 (constant)
                 options = [
                     ("grpc.max_receive_message_length", MAX_MESSAGE_SIZE),
                     ("grpc.max_send_message_length", MAX_MESSAGE_SIZE),

@@ -262,9 +262,7 @@ class SystemInfoCollector:
 
         # Log collection summary
         if system_info.collection_errors:
-            logger.warning(
-                f"⚠️  System information collected with {len(system_info.collection_errors)} errors"
-            )
+            logger.warning(f"⚠️  System information collected with {len(system_info.collection_errors)} errors")
             for error in system_info.collection_errors:
                 logger.warning(f"  - {error}")
         else:
@@ -409,9 +407,9 @@ class SystemInfoCollector:
                         cores_per_socket = int(line.split(":", 1)[1].strip())
                         # Get socket count
                         socket_count = 1
-                        for l in output.split("\n"):
-                            if "Socket(s):" in l:
-                                socket_count = int(l.split(":", 1)[1].strip())
+                        for line in output.split("\n"):
+                            if "Socket(s):" in line:
+                                socket_count = int(line.split(":", 1)[1].strip())
                                 break
                         cpu_info.cores = cores_per_socket * socket_count
                     except:
@@ -430,9 +428,7 @@ class SystemInfoCollector:
                         "aes",
                         "fma",
                     ]
-                    cpu_info.features = [
-                        f for f in flags if any(feat in f.lower() for feat in interesting_features)
-                    ]
+                    cpu_info.features = [f for f in flags if any(feat in f.lower() for feat in interesting_features)]
 
         return cpu_info
 
@@ -475,9 +471,7 @@ class SystemInfoCollector:
                     memory_info.usage_percent = (memory_info.used_gb / memory_info.total_gb) * 100
 
                 if memory_info.swap_total_gb > 0:
-                    memory_info.swap_percent = (
-                        memory_info.swap_used_gb / memory_info.swap_total_gb
-                    ) * 100
+                    memory_info.swap_percent = (memory_info.swap_used_gb / memory_info.swap_total_gb) * 100
 
             except Exception as e:
                 logger.warning(f"Failed to read /proc/meminfo: {e}")
@@ -519,9 +513,7 @@ class SystemInfoCollector:
                     continue
         else:
             # Fallback to lsblk command
-            success, output = self._run_command(
-                ["lsblk", "-J", "-o", "NAME,SIZE,MOUNTPOINT,FSTYPE"]
-            )
+            success, output = self._run_command(["lsblk", "-J", "-o", "NAME,SIZE,MOUNTPOINT,FSTYPE"])
             if success:
                 try:
                     data = json.loads(output)
@@ -796,9 +788,7 @@ class SystemInfoCollector:
                 logger.debug(f"Service health monitor not available: {e}")
 
                 # Fallback to Docker container checking
-                success, output = self._run_command(
-                    ["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}"]
-                )
+                success, output = self._run_command(["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}"])
                 if success:
                     lines = output.split("\n")[1:]  # Skip header
                     for line in lines:
@@ -892,9 +882,7 @@ class SystemInfoCollector:
             return {
                 "cpu_usage": system_info.cpu.usage_percent,
                 "memory_usage": system_info.memory.usage_percent,
-                "storage_usage": (
-                    system_info.storage.total_used_gb / system_info.storage.total_storage_gb * 100
-                )
+                "storage_usage": (system_info.storage.total_used_gb / system_info.storage.total_storage_gb * 100)
                 if system_info.storage.total_storage_gb > 0
                 else 0,
                 "services_count": len(system_info.platform.services_running),

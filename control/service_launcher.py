@@ -192,9 +192,7 @@ class ServiceLauncher:
         started_count = 0
         for service in to_start:
             if service["required"] or self._should_start_service(service):
-                success = self._start_service(
-                    service, min(timeout, 30)
-                )  # Cap individual service timeout
+                success = self._start_service(service, min(timeout, 30))  # Cap individual service timeout
                 if service["required"] and not success:
                     failed_required.append(service["name"])
                     events.error("Required service failed to start", {"service": service["name"]})
@@ -206,17 +204,13 @@ class ServiceLauncher:
             print("   Continuing with available services")
             return True
 
-        print(
-            f"✅ Services initialized ({len(running) + started_count}/{len(self.ESSENTIAL_SERVICES)} running)"
-        )
+        print(f"✅ Services initialized ({len(running) + started_count}/{len(self.ESSENTIAL_SERVICES)} running)")
         return True
 
     def _check_docker(self) -> bool:
         """Check if Docker is available"""
         try:
-            result = subprocess.run(
-                ["docker", "--version"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["docker", "--version"], capture_output=True, text=True, timeout=5)
             return result.returncode == 0
         except Exception:
             return False
@@ -250,11 +244,8 @@ class ServiceLauncher:
     def _should_start_service(self, service: dict) -> bool:
         """Determine if a service should be started"""
         # All services marked as required MUST be started
-        if service["required"]:
-            return True
-
         # Optional services are skipped in non-interactive mode
-        return False
+        return service["required"]
 
     def _start_service(self, service: dict, timeout: int) -> bool:
         """Start a specific service"""
@@ -339,9 +330,9 @@ class ServiceLauncher:
 
             # Set up environment
             env = os.environ.copy()
-            env["PYTHONPATH"] = (
-                f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
-            )
+            env[
+                "PYTHONPATH"
+            ] = f"{self.project_root}/build/python/venv/lib/python3.12/site-packages:{env.get('PYTHONPATH', '')}"
 
             # Start the service in background
             command = service["start_command"].split()

@@ -91,15 +91,7 @@ try:
     event_paths = [
         str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"),
         str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"),
-        str(
-            Path(__file__).parent.parent.parent
-            / "build"
-            / "python"
-            / "venv"
-            / "lib"
-            / "python3.12"
-            / "site-packages"
-        ),
+        str(Path(__file__).parent.parent.parent / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"),
     ]
 
     for path in event_paths:
@@ -168,9 +160,7 @@ class UnhingedDesktopApp(Adw.Application):
             try:
                 self.session_logger = create_gui_session_logger(self.project_root)
                 self.output_capture = GUIOutputCapture(self.session_logger, self._gui_log_callback)
-                self.session_logger.log_session_event(
-                    "APP_INIT", "GTK4 desktop app with system info integration"
-                )
+                self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with system info integration")
             except Exception:
                 self.session_logger = None
                 self.output_capture = None
@@ -433,9 +423,7 @@ class UnhingedDesktopApp(Adw.Application):
             self.show_toast("Recording... (click to stop)")
 
             if self.session_logger:
-                self.session_logger.log_gui_event(
-                    "TOGGLE_RECORDING_START", "Started toggle recording"
-                )
+                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started toggle recording")
 
         except Exception as e:
             print(f"❌ Start toggle recording error: {e}")
@@ -477,9 +465,7 @@ class UnhingedDesktopApp(Adw.Application):
         """Handle recording state changes from AudioHandler"""
         try:
             if hasattr(self, "session_logger") and self.session_logger:
-                self.session_logger.log_gui_event(
-                    "RECORDING_STATE_CHANGED", f"Recording state: {state}"
-                )
+                self.session_logger.log_gui_event("RECORDING_STATE_CHANGED", f"Recording state: {state}")
 
             # Update UI based on state - minimal feedback
             if state.name == "RECORDING" or state.name == "PROCESSING":
@@ -504,9 +490,7 @@ class UnhingedDesktopApp(Adw.Application):
 
                 # Log successful transcription
                 if hasattr(self, "session_logger") and self.session_logger:
-                    self.session_logger.log_gui_event(
-                        "TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}"
-                    )
+                    self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}")
             else:
                 self.show_toast("No transcription received")
 
@@ -561,9 +545,7 @@ class UnhingedDesktopApp(Adw.Application):
                 self.show_toast("Processing recording...")
 
                 if self.session_logger:
-                    self.session_logger.log_gui_event(
-                        "TOGGLE_RECORDING_STOP", "Stopped toggle recording"
-                    )
+                    self.session_logger.log_gui_event("TOGGLE_RECORDING_STOP", "Stopped toggle recording")
             else:
                 print("⚠️ AudioHandler not available")
 
@@ -834,9 +816,8 @@ class UnhingedDesktopApp(Adw.Application):
 
     def is_voice_service_available(self):
         """Check if voice service is available using AudioHandler"""
-        if hasattr(self, "audio_handler") and self.audio_handler:
-            return True  # AudioHandler handles service availability
-        return False
+        # AudioHandler handles service availability
+        return hasattr(self, "audio_handler") and bool(self.audio_handler)
 
     def _on_set_default_input_device(self, button, device):
         """Set default input device using ActionController"""

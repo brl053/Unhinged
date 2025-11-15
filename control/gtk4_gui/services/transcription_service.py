@@ -21,7 +21,7 @@ except ImportError:
     # Fallback: create a simple mock client for testing
     def create_audio_client(address):
         class MockClient:
-            def SpeechToText(self, chunks, timeout=30):
+            def SpeechToText(self, chunks, timeout=30):  # noqa: N802 (gRPC method name)
                 class MockResponse:
                     def __init__(self):
                         self.response = type(

@@ -90,7 +90,7 @@ class GUISessionLogger:
         self.log_file_path = self.log_dir / filename
 
         try:
-            self.log_file = open(self.log_file_path, "w", encoding="utf-8", buffering=1)
+            self.log_file = open(self.log_file_path, "w", encoding="utf-8", buffering=1)  # noqa: SIM115
             self.active = True
 
             # Write session header
@@ -294,9 +294,7 @@ class GUISessionLogger:
 
     def _get_platform_status(self) -> str:
         """Get accurate platform status based on component states"""
-        failed_components = [
-            name for name, status in self.platform_components.items() if not status
-        ]
+        failed_components = [name for name, status in self.platform_components.items() if not status]
 
         if not failed_components:
             return "✅ Platform started successfully"
@@ -366,9 +364,7 @@ class GUISessionLogger:
 
                         # Generate new filename with real session ID
                         old_filename = self.log_file_path.name
-                        new_filename = old_filename.replace(
-                            f"-{old_session_id}.log", f"-{new_session_id}.log"
-                        )
+                        new_filename = old_filename.replace(f"-{old_session_id}.log", f"-{new_session_id}.log")
                         new_log_file_path = self.log_dir / new_filename
 
                         # Write updated content to new file
@@ -383,7 +379,7 @@ class GUISessionLogger:
 
                         # Update path and reopen for appending
                         self.log_file_path = new_log_file_path
-                        self.log_file = open(self.log_file_path, "a", encoding="utf-8", buffering=1)
+                        self.log_file = open(self.log_file_path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115
 
                     except Exception:
                         pass  # Log file update failed, continue with current file
