@@ -157,6 +157,60 @@ def check_nesting_depth(file_path: str) -> tuple[int, list[str]]:
     return (exit_code, issues)
 
 
+def check_cyclomatic_complexity(file_path: str) -> tuple[int, list[str]]:
+    """Check cyclomatic complexity via branch counting. Returns (exit_code, messages)."""
+    issues = []
+    try:
+        with open(file_path) as f:
+            lines = f.readlines()
+    except Exception:
+        return (0, [])
+
+    in_function = False
+    func_name = None
+    func_start = 0
+    branch_count = 0
+    indent_level = 0
+
+    for i, line in enumerate(lines, 1):
+        if match := re.match(r'^(\s*)def\s+([a-zA-Z_][a-zA-Z0-9_]*)', line):
+            if in_function:
+                # Check previous function
+                if branch_count > 10:
+                    issues.append(f"❌ Function '{func_name}' has {branch_count} branches (limit: 10)")
+                elif branch_count > 7:
+                    issues.append(f"⚠️  Function '{func_name}' has {branch_count} branches (target: <7)")
+
+            in_function = True
+            func_name = match.group(2)
+            func_start = i
+            branch_count = 1  # Function itself counts as 1
+            indent_level = len(match.group(1))
+
+        elif in_function:
+            # Count branches
+            if re.search(r'\b(if|elif|for|while|except|and|or)\b', line):
+                branch_count += 1
+
+            # Detect function end
+            if line.strip() and not line.startswith(' ' * (indent_level + 1)):
+                if branch_count > 10:
+                    issues.append(f"❌ Function '{func_name}' has {branch_count} branches (limit: 10)")
+                elif branch_count > 7:
+                    issues.append(f"⚠️  Function '{func_name}' has {branch_count} branches (target: <7)")
+                in_function = False
+
+    # Check last function if file ends while in function
+    if in_function:
+        if branch_count > 10:
+            issues.append(f"❌ Function '{func_name}' has {branch_count} branches (limit: 10)")
+        elif branch_count > 7:
+            issues.append(f"⚠️  Function '{func_name}' has {branch_count} branches (target: <7)")
+
+    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    return (exit_code, issues)
+
+
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
@@ -245,6 +299,12 @@ def lint_file(file_path: str) -> int:
     for msg in nesting_messages:
         print(msg)
     exit_code = max(exit_code, nesting_exit_code)
+
+    # Check cyclomatic complexity
+    complexity_exit_code, complexity_messages = check_cyclomatic_complexity(file_path)
+    for msg in complexity_messages:
+        print(msg)
+    exit_code = max(exit_code, complexity_exit_code)
 
     # Run ruff linter
     for linter in config.get('linters', []):
