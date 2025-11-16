@@ -35,9 +35,9 @@ class TextGenerationService:
         logger.info(f"TextGenerationService initialized (model: {model}, provider: {provider})")
 
     def _check_ollama_health(self) -> bool:
-        """Check if Ollama service is available at localhost:11434."""
+        """Check if Ollama service is available at localhost:1500 (external port)."""
         try:
-            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            response = requests.get("http://localhost:1500/api/tags", timeout=2)
             return response.status_code == 200
         except (requests.ConnectionError, requests.Timeout, Exception):
             return False
@@ -52,9 +52,10 @@ class TextGenerationService:
                 install_url="https://ollama.com/download",
             )
 
-        import ollama
+        from ollama import Client
 
-        self.client = ollama
+        # Connect to Ollama on external port 1500 (mapped from internal 11434)
+        self.client = Client(host="http://localhost:1500")
         logger.info(f"Ollama client initialized for model: {self.model}")
 
     def _load_openai_client(self) -> None:
