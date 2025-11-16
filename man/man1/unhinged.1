@@ -1,0 +1,69 @@
+.TH UNHINGED 1 "November 2025" "Unhinged 1.0" "User Commands"
+.SH NAME
+unhinged \- Native Graphics Platform with Dual-System Architecture
+.SH SYNOPSIS
+.B unhinged
+[\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR]...
+.SH DESCRIPTION
+Unhinged is a native graphics platform with dual-system architecture, providing
+headless content generation (text, images, audio) and system management capabilities.
+.SH COMMANDS
+.TP
+.B generate
+Generate content: text, images, audio.
+.br
+See \fBunhinged-generate\fR(1) for details.
+.TP
+.B transcribe
+Transcribe audio: speech-to-text conversion.
+.br
+See \fBunhinged-transcribe\fR(1) for details.
+.TP
+.B image
+Generate images from text prompts.
+.br
+See \fBunhinged-image\fR(1) for details.
+.TP
+.B voice
+Generate voice/audio from text.
+.br
+See \fBunhinged-voice\fR(1) for details.
+.TP
+.B system
+System commands for Unhinged dual-system architecture.
+.TP
+.B admin
+Admin and debug commands.
+.TP
+.B vm
+Virtual machine commands.
+.TP
+.B dev
+Development commands: build, test, lint, static-analysis.
+.SH OPTIONS
+.TP
+.B \-\-help
+Show help message and exit.
+.SH EXAMPLES
+.TP
+Generate text from a prompt:
+.B unhinged generate text "write a haiku about the moon"
+.TP
+Transcribe audio file:
+.B unhinged transcribe audio speech.wav
+.TP
+Generate an image:
+.B unhinged image generate "a sunset over mountains"
+.TP
+Generate voice audio:
+.B unhinged voice generate "hello world"
+.SH SEE ALSO
+.BR unhinged-generate (1),
+.BR unhinged-transcribe (1),
+.BR unhinged-image (1),
+.BR unhinged-voice (1)
+.SH AUTHOR
+Unhinged Development Team
+.SH BUGS
+Report bugs to the project repository.
+
