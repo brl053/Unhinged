@@ -59,9 +59,7 @@ def test_transcribe_audio_with_model(cli_runner, mock_transcription_service, tem
     mock_transcription_service.assert_called_once_with(model_size="large")
 
 
-def test_transcribe_audio_with_output_file(
-    cli_runner, mock_transcription_service, temp_audio_file
-):
+def test_transcribe_audio_with_output_file(cli_runner, mock_transcription_service, temp_audio_file):
     """Test transcription with output file."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         output_file = f.name
@@ -75,9 +73,7 @@ def test_transcribe_audio_with_output_file(
         Path(output_file).unlink()
 
 
-def test_transcribe_audio_with_metadata(
-    cli_runner, mock_transcription_service, temp_audio_file
-):
+def test_transcribe_audio_with_metadata(cli_runner, mock_transcription_service, temp_audio_file):
     """Test transcription with metadata."""
     result = cli_runner.invoke(audio, ["--metadata", temp_audio_file])
 
@@ -115,4 +111,3 @@ def test_transcribe_audio_model_choices(cli_runner, mock_transcription_service, 
     # Invalid model should fail
     result = cli_runner.invoke(audio, ["-m", "invalid", temp_audio_file])
     assert result.exit_code != 0
-

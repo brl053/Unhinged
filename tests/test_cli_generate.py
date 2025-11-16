@@ -119,4 +119,3 @@ def test_generate_text_service_error(cli_runner, mock_text_generation_service):
 
     assert result.exit_code == 1
     assert "Text generation failed" in result.output
-

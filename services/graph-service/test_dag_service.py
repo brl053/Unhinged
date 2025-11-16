@@ -13,14 +13,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
 
 try:
-    from unhinged_proto_clients import graph_service_pb2
     from google.protobuf import struct_pb2
+    from unhinged_proto_clients import graph_service_pb2
 except ImportError as e:
     print(f"❌ Proto clients not found: {e}")
     print("Run 'make generate' to generate proto clients")
     sys.exit(1)
 
 from graph_executor import GraphExecutor
+
 
 async def test_voice_pipeline_graph():
     """Test the voice pipeline Graph"""
@@ -42,10 +43,7 @@ async def test_voice_pipeline_graph():
     stt_node.name = "Speech to Text"
     stt_node.type = graph_service_pb2.SPEECH_TO_TEXT
     stt_config = struct_pb2.Struct()
-    stt_config.update({
-        "model": "whisper-large-v3",
-        "service_endpoint": "localhost:9091"
-    })
+    stt_config.update({"model": "whisper-large-v3", "service_endpoint": "localhost:9091"})
     stt_node.config.CopyFrom(stt_config)
 
     llm_node = graph.nodes.add()
@@ -53,10 +51,7 @@ async def test_voice_pipeline_graph():
     llm_node.name = "LLM Processing"
     llm_node.type = graph_service_pb2.LLM_CHAT
     llm_config = struct_pb2.Struct()
-    llm_config.update({
-        "model": "llama3.1:8b",
-        "service_endpoint": "localhost:9095"
-    })
+    llm_config.update({"model": "llama3.1:8b", "service_endpoint": "localhost:9095"})
     llm_node.config.CopyFrom(llm_config)
 
     tts_node = graph.nodes.add()
@@ -64,10 +59,7 @@ async def test_voice_pipeline_graph():
     tts_node.name = "Text to Speech"
     tts_node.type = graph_service_pb2.TEXT_TO_SPEECH
     tts_config = struct_pb2.Struct()
-    tts_config.update({
-        "voice": "nova",
-        "service_endpoint": "localhost:9092"
-    })
+    tts_config.update({"voice": "nova", "service_endpoint": "localhost:9092"})
     tts_node.config.CopyFrom(tts_config)
 
     # Create edges
@@ -128,6 +120,7 @@ async def test_voice_pipeline_graph():
         print(f"❌ Test failed: {e}")
         raise
 
+
 async def test_simple_graph():
     """Test a simple data transformation Graph"""
     print("\n🧪 Testing Simple Data Transform Graph...")
@@ -147,9 +140,7 @@ async def test_simple_graph():
     transform_node.name = "Data Transform"
     transform_node.type = graph_service_pb2.DATA_TRANSFORM
     transform_config = struct_pb2.Struct()
-    transform_config.update({
-        "transform_type": "passthrough"
-    })
+    transform_config.update({"transform_type": "passthrough"})
     transform_node.config.CopyFrom(transform_config)
 
     try:
@@ -173,9 +164,11 @@ async def test_simple_graph():
 
     except Exception as e:
         import traceback
+
         print(f"❌ Simple Graph test failed: {e}")
         traceback.print_exc()
         raise
+
 
 async def main():
     """Run all tests"""
@@ -188,9 +181,11 @@ async def main():
 
     except Exception as e:
         import traceback
+
         print(f"\n❌ Graph service tests failed: {e}")
         traceback.print_exc()
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(main())

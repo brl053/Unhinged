@@ -31,6 +31,7 @@ def test_text_generation_service_ollama(text_gen_service):
 
         # Mock the import of ollama
         import sys
+
         sys.modules["ollama"] = mock_ollama
 
         try:
@@ -50,6 +51,7 @@ def test_text_generation_service_openai():
         mock_openai_module.OpenAI = MagicMock()
 
         import sys
+
         sys.modules["openai"] = mock_openai_module
 
         try:
@@ -68,6 +70,7 @@ def test_text_generation_service_anthropic():
         mock_anthropic_module.Anthropic = MagicMock()
 
         import sys
+
         sys.modules["anthropic"] = mock_anthropic_module
 
         try:
@@ -172,4 +175,3 @@ def test_lazy_loading(text_gen_service):
         assert text_gen_service.model_loaded is True
     finally:
         del sys.modules["ollama"]
-
