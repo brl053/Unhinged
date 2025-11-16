@@ -389,6 +389,26 @@ class GUISessionLogger:
                 "SESSION_ID_UPDATED",
                 f"Session ID updated from TBD to persisted chat session: {new_session_id}",
             )
+
+            # Emit session info to event logger (which writes to /build/tmp)
+            self.event_logger.info(
+                "Session ID persisted",
+                metadata={
+                    "session_id": new_session_id,
+                    "log_file": str(self.log_file_path),
+                },
+            )
+
+            # Emit session info to stdout for CLI visibility
+            print()
+            print("=" * 80)
+            print("📋 Session Information")
+            print("=" * 80)
+            print(f"Session ID:  {new_session_id}")
+            print(f"Log File:    {self.log_file_path}")
+            print("=" * 80)
+            print()
+            sys.stdout.flush()
         except Exception as e:
             print(f"❌ Failed to update session ID: {e}")
 

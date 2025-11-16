@@ -23,7 +23,7 @@ from audio_recorder import AudioRecorder
 from audio_transcriber import AudioTranscriber
 from audio_types import RecordingConfig, RecordingState
 from audio_utils import get_best_format_for_device
-from event_bus import AudioEvents, Event, get_event_bus
+from event_bus import AudioEvents, Event, EventBus
 
 try:
     from .audio_monitor import AudioVisualizationBridge
@@ -54,7 +54,7 @@ class AudioHandler:
     - Event Framework: Persistent logging via GUISessionLogger
     """
 
-    def __init__(self, session_logger=None):
+    def __init__(self, event_bus: EventBus, session_logger=None):
         """Initialize handler with component delegation."""
         self._state = RecordingState.IDLE
         self._temp_file: Path | None = None
@@ -62,13 +62,13 @@ class AudioHandler:
         self._start_time: float | None = None
 
         # Event bus for UI updates
-        self._event_bus = get_event_bus()
+        self._event_bus = event_bus
 
         # Session logger for persistent event logging (event framework integration)
         self._session_logger = session_logger
 
         # Real-time audio visualization
-        self._visualization_bridge = AudioVisualizationBridge()
+        self._visualization_bridge = AudioVisualizationBridge(event_bus)
 
         # Legacy callback support
         self._state_callback: Callable[[RecordingState], None] | None = None
@@ -346,10 +346,6 @@ class AudioHandler:
             # Note: AMPLITUDE_UPDATED was misused for transcription data
             # Use TRANSCRIPTION_LEGACY for backward compat, TRANSCRIPTION_COMPLETED for new code
             self._event_bus.emit_simple(AudioEvents.TRANSCRIPTION_LEGACY, {"transcript": result.text})
-
-            # Legacy callback for backward compatibility (DEPRECATED)
-            if self._result_callback:
-                self._result_callback(result.text)
 
             logger.info(f"Transcription completed: {len(result.text)} chars")
 

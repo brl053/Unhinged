@@ -68,6 +68,12 @@ try:
 except ImportError:
     ARCHITECTURE_AVAILABLE = False
 
+# Import event bus factory for dependency injection
+try:
+    from ..utils.event_bus import create_event_bus
+except ImportError:
+    from utils.event_bus import create_event_bus
+
 # Import desktop app modules
 from .handlers import RecordingControl, RecordingHandlers
 from .tabs import TabContentFactory
@@ -167,6 +173,9 @@ class UnhingedDesktopApp(Adw.Application):
         # Development mode detection
         self.dev_mode = os.environ.get("DEV_MODE", "0") == "1"
 
+        # Shared event bus for audio and UI components
+        self.event_bus = create_event_bus(max_history=100)
+
         # Initialize session logging (optional)
         self._init_session_logging()
 
@@ -201,18 +210,7 @@ class UnhingedDesktopApp(Adw.Application):
         if ARCHITECTURE_AVAILABLE:
             try:
                 # Pass session logger for persistent event logging (event framework integration)
-                self.audio_handler = AudioHandler(session_logger=self.session_logger)
-
-                # Only set result_callback if FormInput is NOT available
-                # FormInput handles transcription via event bus subscription
-                # This prevents duplicate transcripts
-                result_callback = None if COMPONENTS_AVAILABLE else self._on_transcription_result
-
-                self.audio_handler.set_callbacks(
-                    state_callback=self._on_recording_state_changed,
-                    result_callback=result_callback,
-                    error_callback=self._on_audio_error,
-                )
+                self.audio_handler = AudioHandler(event_bus=self.event_bus, session_logger=self.session_logger)
 
                 if self.dev_mode:
                     log_configuration()
@@ -390,10 +388,6 @@ class UnhingedDesktopApp(Adw.Application):
     def _on_recording_state_changed(self, state):
         """Delegate to RecordingHandlers."""
         RecordingHandlers.on_recording_state_changed(self, state)
-
-    def _on_transcription_result(self, transcript):
-        """Delegate to RecordingHandlers."""
-        RecordingHandlers.on_transcription_result(self, transcript)
 
     def _on_audio_error(self, error_data):
         """Delegate to RecordingHandlers."""

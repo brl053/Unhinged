@@ -278,8 +278,13 @@ class FormInput(ComponentBase):
             try:
                 from .voice_visualizer import VoiceVisualizerFactory
 
+                event_bus = None
+                if self.audio_handler is not None and hasattr(self.audio_handler, "_event_bus"):
+                    event_bus = self.audio_handler._event_bus
+
                 visualizer = VoiceVisualizerFactory.create_waveform_display(
-                    width=self.visualizer_width
+                    width=self.visualizer_width,
+                    event_bus=event_bus,
                 )
                 visualizer.set_hexpand(True)
                 controls_row.append(visualizer)

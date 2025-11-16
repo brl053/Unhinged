@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from audio_utils import calculate_rms_amplitude
-from event_bus import AudioEvents, Event, get_event_bus
+from event_bus import AudioEvents, Event, EventBus, create_event_bus
 
 try:
     from ..models.audio_types import AudioDevice, AudioDeviceType
@@ -68,13 +68,13 @@ except ImportError:
 class AudioLevelMonitor:
     """Real-time audio level monitor using native ALSA tools"""
 
-    def __init__(self):
+    def __init__(self, event_bus: EventBus):
         self.is_monitoring = False
         self.monitor_thread: threading.Thread | None = None
         self.monitor_process: subprocess.Popen | None = None
 
         # Event bus for amplitude updates (replaces callbacks)
-        self._event_bus = get_event_bus()
+        self._event_bus = event_bus
 
         # Legacy callback for backward compatibility
         self.amplitude_callback: Callable[[float], None] | None = None
@@ -255,8 +255,9 @@ class AudioLevelMonitor:
 class AudioVisualizationBridge:
     """Bridge between AudioHandler and VoiceVisualizer for real-time feedback"""
 
-    def __init__(self):
-        self.audio_monitor = AudioLevelMonitor()
+    def __init__(self, event_bus: EventBus):
+        self._event_bus = event_bus
+        self.audio_monitor = AudioLevelMonitor(event_bus)
         self.voice_visualizer = None
         self.is_recording = False
 
@@ -294,7 +295,9 @@ def test_audio_monitoring():
         bar = "█" * bar_length + "░" * (50 - bar_length)
         print(f"\rAmplitude: {amplitude:.3f} |{bar}|", end="", flush=True)
 
-    monitor = AudioLevelMonitor()
+    # Standalone test uses its own event bus instance
+    event_bus = create_event_bus()
+    monitor = AudioLevelMonitor(event_bus)
     monitor.set_amplitude_callback(amplitude_callback)
 
     print("Starting monitoring (speak into microphone)...")

@@ -36,7 +36,14 @@ Usage:
 """
 
 from .document_store import Document, DocumentStore
-from .postgres_store import PostgresDocumentStore
+
+# Try to import PostgreSQL store, but make it optional for testing
+try:
+    from .postgres_store import PostgresDocumentStore
+    _POSTGRES_AVAILABLE = True
+except ImportError:
+    PostgresDocumentStore = None
+    _POSTGRES_AVAILABLE = False
 
 __all__ = [
     "DocumentStore",
@@ -58,10 +65,18 @@ def get_document_store(connection_string: str = None) -> DocumentStore:
 
     Returns:
         DocumentStore instance (PostgreSQL-backed)
+
+    Raises:
+        ImportError: If PostgreSQL dependencies are not installed
     """
     global _default_store
 
     if _default_store is None:
+        if not _POSTGRES_AVAILABLE:
+            raise ImportError(
+                "PostgreSQL dependencies not available. "
+                "Install with: pip install psycopg2-binary"
+            )
         _default_store = PostgresDocumentStore(connection_string)
 
     return _default_store

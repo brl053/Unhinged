@@ -20,7 +20,7 @@ from gi.repository import GLib, Gtk
 
 # Add utils to path for event_bus import
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from event_bus import AudioEvents, Event, get_event_bus
+from event_bus import AudioEvents, Event, EventBus
 
 
 class VisualizationMode(Enum):
@@ -40,6 +40,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         mode: VisualizationMode = VisualizationMode.PULSE,
         width: int = 200,
         height: int = 60,
+        event_bus: EventBus | None = None,
     ):
         """Initialize voice visualizer
 
@@ -67,7 +68,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         self.bars_data = [0.0] * 8  # 8 frequency bars
 
         # Event bus for state updates (replaces callbacks)
-        self._event_bus = get_event_bus()
+        self._event_bus = event_bus
 
         # Legacy callback for backward compatibility
         self.state_callback: Callable[[str], None] | None = None
@@ -103,10 +104,11 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
             # Emit event via event bus
             state = "recording" if recording else "idle"
-            self._event_bus.emit_simple(
-                AudioEvents.RECORDING_STARTED if recording else AudioEvents.RECORDING_STOPPED,
-                {"state": state},
-            )
+            if self._event_bus is not None:
+                self._event_bus.emit_simple(
+                    AudioEvents.RECORDING_STARTED if recording else AudioEvents.RECORDING_STOPPED,
+                    {"state": state},
+                )
 
             # Legacy callback support
             if self.state_callback:
@@ -126,7 +128,8 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
             # Emit event via event bus (use correct event type for state changes)
             state = "processing" if processing else "idle"
-            self._event_bus.emit_simple(AudioEvents.VISUALIZATION_STATE_CHANGED, {"state": state})
+            if self._event_bus is not None:
+                self._event_bus.emit_simple(AudioEvents.VISUALIZATION_STATE_CHANGED, {"state": state})
 
             # Legacy callback support
             if self.state_callback:
@@ -169,6 +172,8 @@ class VoiceVisualizer(Gtk.DrawingArea):
         Returns:
             Unsubscribe function
         """
+        if self._event_bus is None:
+            raise RuntimeError("VoiceVisualizer has no event bus configured")
         return self._event_bus.subscribe(AudioEvents.VISUALIZATION_STATE_CHANGED, callback)
 
     def _start_animation(self) -> None:
@@ -345,23 +350,24 @@ class VoiceVisualizerFactory:
     """Factory for creating voice visualizer components"""
 
     @staticmethod
-    def create_recording_indicator(compact: bool = False) -> VoiceVisualizer:
+    def create_recording_indicator(compact: bool = False, event_bus: EventBus | None = None) -> VoiceVisualizer:
         """Create a recording indicator visualizer"""
         if compact:
-            return VoiceVisualizer(mode=VisualizationMode.MINIMAL, width=24, height=24)
+            return VoiceVisualizer(mode=VisualizationMode.MINIMAL, width=24, height=24, event_bus=event_bus)
         else:
-            return VoiceVisualizer(mode=VisualizationMode.PULSE, width=60, height=60)
+            return VoiceVisualizer(mode=VisualizationMode.PULSE, width=60, height=60, event_bus=event_bus)
 
     @staticmethod
-    def create_waveform_display(width: int = 300) -> VoiceVisualizer:
+    def create_waveform_display(width: int = 300, event_bus: EventBus | None = None) -> VoiceVisualizer:
         """Create a horizontal waveform display visualizer for voice recording"""
         return VoiceVisualizer(
             mode=VisualizationMode.WAVEFORM,
             width=width,
             height=50,  # Slightly taller for better visibility
+            event_bus=event_bus,
         )
 
     @staticmethod
-    def create_frequency_bars() -> VoiceVisualizer:
+    def create_frequency_bars(event_bus: EventBus | None = None) -> VoiceVisualizer:
         """Create a frequency bars visualizer"""
-        return VoiceVisualizer(mode=VisualizationMode.BARS, width=120, height=50)
+        return VoiceVisualizer(mode=VisualizationMode.BARS, width=120, height=50, event_bus=event_bus)

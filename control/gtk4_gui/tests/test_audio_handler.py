@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from handlers.audio_handler import AudioHandler, RecordingState
 from utils.audio_utils import clear_format_cache
+from utils.event_bus import create_event_bus
 
 
 class TestAudioHandlerCallbacks(unittest.TestCase):
@@ -28,7 +29,7 @@ class TestAudioHandlerCallbacks(unittest.TestCase):
 
     def test_callbacks_initialize_to_none(self):
         """Verify callback attributes initialize to None."""
-        handler = AudioHandler()
+        handler = AudioHandler(event_bus=create_event_bus())
 
         self.assertIsNone(handler._state_callback)
         self.assertIsNone(handler._error_callback)
@@ -36,7 +37,7 @@ class TestAudioHandlerCallbacks(unittest.TestCase):
 
     def test_state_callback_can_be_set(self):
         """Verify state callback can be set and invoked."""
-        handler = AudioHandler()
+        handler = AudioHandler(event_bus=create_event_bus())
         callback_invoked = []
 
         def test_callback(state):
@@ -53,7 +54,7 @@ class TestAudioHandlerCallbacks(unittest.TestCase):
 
     def test_error_callback_can_be_set(self):
         """Verify error callback can be set and invoked."""
-        handler = AudioHandler()
+        handler = AudioHandler(event_bus=create_event_bus())
         errors_caught = []
 
         def test_callback(error):
@@ -70,7 +71,7 @@ class TestAudioHandlerCallbacks(unittest.TestCase):
 
     def test_progress_callback_can_be_set(self):
         """Verify progress callback can be set without errors."""
-        handler = AudioHandler()
+        handler = AudioHandler(event_bus=create_event_bus())
         progress_values = []
 
         def test_callback(elapsed):
@@ -91,7 +92,7 @@ class TestAudioHandlerFormatDetection(unittest.TestCase):
 
     def test_format_detected_during_init(self):
         """Verify format is detected during initialization."""
-        handler = AudioHandler()
+        handler = AudioHandler(event_bus=create_event_bus())
 
         # Format should be detected
         self.assertIsNotNone(handler._detected_format)
@@ -99,7 +100,7 @@ class TestAudioHandlerFormatDetection(unittest.TestCase):
 
     def test_sample_width_mapping(self):
         """Verify sample width mapping is correct."""
-        handler = AudioHandler()
+        handler = AudioHandler(event_bus=create_event_bus())
 
         # Test known formats
         self.assertEqual(handler._get_sample_width("S16_LE"), 2)
@@ -110,11 +111,11 @@ class TestAudioHandlerFormatDetection(unittest.TestCase):
     def test_format_cache_prevents_repeated_detection(self):
         """Verify format cache prevents repeated detection."""
         # First handler triggers detection
-        handler1 = AudioHandler()
+        handler1 = AudioHandler(event_bus=create_event_bus())
         format1 = handler1._detected_format
 
         # Second handler should use cache (instant)
-        handler2 = AudioHandler()
+        handler2 = AudioHandler(event_bus=create_event_bus())
         format2 = handler2._detected_format
 
         # Formats should match

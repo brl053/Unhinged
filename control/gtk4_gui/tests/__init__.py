@@ -10,7 +10,7 @@ Provides comprehensive testing for all components, monitors, and integrations.
 
 # Test suite imports - explicit imports only
 try:
-    from .test_components import TestApp
+    from .test_components import ComponentTestApp
     from .test_monitors import SystemInfoProductionTester
     # test_integration has no test classes currently
 except ImportError:

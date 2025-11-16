@@ -108,15 +108,13 @@ class RecordingControl:
 
     @staticmethod
     def init_audio_handler(app):
-        """Initialize the AudioHandler with callbacks."""
+        """Initialize the AudioHandler."""
         try:
-            from .handlers.audio_handler import AudioHandler
+            from ..handlers.audio_handler import AudioHandler
 
-            app.audio_handler = AudioHandler()
-            app.audio_handler.set_callbacks(
-                state_callback=lambda state: RecordingHandlers.on_recording_state_changed(app, state),
-                result_callback=lambda transcript: RecordingHandlers.on_transcription_result(app, transcript),
-                error_callback=lambda error: RecordingHandlers.on_audio_error(app, error),
+            app.audio_handler = AudioHandler(
+                event_bus=app.event_bus,
+                session_logger=getattr(app, "session_logger", None),
             )
 
         except Exception as e:
