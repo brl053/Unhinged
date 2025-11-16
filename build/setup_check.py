@@ -43,7 +43,8 @@ class SetupChecker:
             print("❌ Man pages directory not found")
             return False
 
-        man_files = list(man_dir.glob("unhinged-*.1"))
+        # Count both main unhinged.1 and subcommand pages
+        man_files = list(man_dir.glob("unhinged*.1"))
         if not man_files:
             print("❌ No man pages found")
             return False
