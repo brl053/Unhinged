@@ -5,6 +5,7 @@ Hardware-aware thread pooling and resource limits based on expert feedback.
 Optimized for local deployment rather than distributed systems.
 """
 
+import contextlib
 import logging
 import threading
 import time
@@ -164,9 +165,7 @@ class ResourceManager:
         """Submit image generation task with memory pressure checking"""
         memory = psutil.virtual_memory()
         if memory.percent > 80.0:
-            self.logger.warning(
-                f"High memory usage ({memory.percent:.1f}%), delaying image generation"
-            )
+            self.logger.warning(f"High memory usage ({memory.percent:.1f}%), delaying image generation")
             time.sleep(1.0)  # Significant backpressure for memory-intensive tasks
 
         return self.get_image_pool().submit(func, *args, **kwargs)
@@ -186,10 +185,9 @@ class ResourceManager:
         def refill():
             while self._monitoring:
                 time.sleep(1.0 / max_per_second)
-                try:
+                with contextlib.suppress(BaseException):
+                    # Bucket is full
                     self._rate_limits[name].put_nowait(True)
-                except:
-                    pass  # Bucket is full
 
         thread = threading.Thread(target=refill, daemon=True)
         thread.start()
@@ -236,9 +234,7 @@ class ResourceManager:
                         # Reduce image generation concurrency under memory pressure
                         current_workers = self._image_pool._max_workers
                         if current_workers > 1:
-                            self.logger.warning(
-                                "Reducing image generation concurrency due to memory pressure"
-                            )
+                            self.logger.warning("Reducing image generation concurrency due to memory pressure")
                             # Note: ThreadPoolExecutor doesn't support dynamic resizing
                             # In a production system, we'd implement a custom pool
 

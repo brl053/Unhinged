@@ -151,12 +151,12 @@ class SystemInfoCollector:
         self._last_collection = 0.0
 
         # Import collectors
-        from .system_info_cpu import CPUCollector
-        from .system_info_memory import MemoryCollector
-        from .system_info_storage import StorageCollector
-        from .system_info_gpu import GPUCollector
-        from .system_info_network import NetworkCollector
-        from .system_info_platform import PlatformStatusCollector
+        from .collectors.cpu import CPUCollector
+        from .collectors.memory import MemoryCollector
+        from .collectors.storage import StorageCollector
+        from .collectors.gpu import GPUCollector
+        from .collectors.network import NetworkCollector
+        from .collectors.platform import PlatformStatusCollector
 
         self.cpu_collector = CPUCollector()
         self.memory_collector = MemoryCollector()

@@ -18,7 +18,7 @@ from typing import Any
 
 # Import system info collection
 try:
-    from system_info import SystemInfoCollector
+    from .system_info import SystemInfoCollector
 
     SYSTEM_INFO_AVAILABLE = True
 except ImportError:
@@ -265,7 +265,7 @@ class RealTimeSystemInfoManager:
         """Collect current Bluetooth data for monitoring."""
         try:
             # Import Bluetooth monitor
-            from bluetooth_monitor import get_bluetooth_adapters, get_bluetooth_devices
+            from .bluetooth import BluetoothMonitor
 
             # Get devices and adapters
             devices = get_bluetooth_devices(include_unpaired=True)

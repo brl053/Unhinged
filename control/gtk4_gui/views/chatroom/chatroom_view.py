@@ -17,12 +17,12 @@ from gi.repository import GLib, Gtk
 from ..components import FormInput
 
 # Chatroom handlers
-from .chat_image_handler import ChatImageHandler
-from .chat_input_handler import ChatInputHandler
-from .chat_message_display import ChatMessageDisplay
-from .chat_voice_handler import ChatVoiceHandler
-from .chatroom_session import SessionManager
-from .chatroom_llm import LLMInteraction
+from .handlers.image_handler import ChatImageHandler
+from .handlers.input_handler import ChatInputHandler
+from .handlers.message_display import ChatMessageDisplay
+from .handlers.voice_handler import ChatVoiceHandler
+from .session import SessionManager
+from .llm import LLMInteraction
 
 # Framework availability - NO FALLBACK
 COMPONENTS_AVAILABLE = True

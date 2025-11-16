@@ -219,12 +219,15 @@ class UIController:
         """Handle sidebar navigation selection with lifecycle management"""
         if row and hasattr(row, "item_id"):
             # Cleanup previous view if it has lifecycle hooks
-            if hasattr(self.app, "current_view") and self.app.current_view:
-                if hasattr(self.app.current_view, "on_cleanup"):
-                    try:
-                        self.app.current_view.on_cleanup()
-                    except Exception as e:
-                        print(f"⚠️ Error during view cleanup: {e}")
+            if (
+                hasattr(self.app, "current_view")
+                and self.app.current_view
+                and hasattr(self.app.current_view, "on_cleanup")
+            ):
+                try:
+                    self.app.current_view.on_cleanup()
+                except Exception as e:
+                    print(f"⚠️ Error during view cleanup: {e}")
 
             # Switch to selected page
             self.app.content_stack.set_visible_child_name(row.item_id)

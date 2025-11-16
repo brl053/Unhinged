@@ -10,13 +10,14 @@ Base classes providing common functionality for all components:
 - Accessibility support
 """
 
+import contextlib
+from pathlib import Path
+from typing import Any
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-
-from pathlib import Path
-from typing import Any
 
 from gi.repository import GObject, Gtk
 
@@ -110,10 +111,9 @@ class ComponentBase(GObject.Object):
 
     def _setup_accessibility(self):
         """Setup accessibility features for the component."""
-        if self.widget:
+        if self.widget and not self.widget.get_accessible_role():
             # Set accessible name if not already set
-            if not self.widget.get_accessible_role():
-                self.widget.set_accessible_role(Gtk.AccessibleRole.WIDGET)
+            self.widget.set_accessible_role(Gtk.AccessibleRole.WIDGET)
 
     def _apply_design_system(self):
         """Apply design system styling to the component."""
@@ -172,10 +172,8 @@ class ComponentBase(GObject.Object):
         if hasattr(self, "_signal_handlers"):
             for handler_id, widget in self._signal_handlers:
                 if widget and handler_id:
-                    try:
+                    with contextlib.suppress(BaseException):
                         widget.disconnect(handler_id)
-                    except:
-                        pass  # Widget may already be destroyed
             self._signal_handlers.clear()
 
         # Clear widget reference

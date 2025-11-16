@@ -115,9 +115,7 @@ class LogViewer(AdwComponentBase):
         toolbar.append(self._auto_scroll_toggle)
 
         # Export button
-        self._export_button = ActionButton(
-            label="Export", style="flat", icon_name="document-save-symbolic"
-        )
+        self._export_button = ActionButton(label="Export", style="flat", icon_name="document-save-symbolic")
         self._export_button.connect("clicked", self._on_export_clicked)
         toolbar.append(self._export_button.get_widget())
 
@@ -148,10 +146,7 @@ class LogViewer(AdwComponentBase):
     def append_log(self, message: str, level: str = "INFO", timestamp: str | None = None):
         """Add a log message."""
         # Format log message
-        if timestamp:
-            formatted_message = f"[{timestamp}] {level}: {message}"
-        else:
-            formatted_message = f"{level}: {message}"
+        formatted_message = f"[{timestamp}] {level}: {message}" if timestamp else f"{level}: {message}"
 
         # Add to log container - with error handling
         try:

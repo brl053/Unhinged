@@ -203,12 +203,7 @@ class BluetoothRow(HardwareInfoRow):
 
     def _on_connect_clicked(self, button):
         """Handle connect button click."""
-        import sys
-        from pathlib import Path
-
-        sys.path.append(str(Path(__file__).parent.parent))
-
-        from bluetooth_monitor import BluetoothMonitor
+        from ...bluetooth import BluetoothMonitor
 
         logger.info(f"🔵 Connecting to {self.device_info.name} ({self.device_info.address})")
 
@@ -271,12 +266,7 @@ class BluetoothRow(HardwareInfoRow):
 
     def _on_pair_clicked(self, button):
         """Handle pair button click."""
-        import sys
-        from pathlib import Path
-
-        sys.path.append(str(Path(__file__).parent.parent))
-
-        from bluetooth_monitor import BluetoothMonitor
+        from ...bluetooth import BluetoothMonitor
 
         logger.info(f"🔵 Pairing with {self.device_info.name} ({self.device_info.address})")
 

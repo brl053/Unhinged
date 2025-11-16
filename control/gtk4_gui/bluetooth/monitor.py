@@ -22,10 +22,10 @@ except ImportError:
     DBUS_AVAILABLE = False
 
 # Import specialized managers
-from .bluetooth_adapter import AdapterManager
-from .bluetooth_device_enum import DeviceEnumerator
-from .bluetooth_device_ops import DeviceOperations
-from .bluetooth_discovery import DiscoveryManager
+from .adapter import AdapterManager
+from .device_enum import DeviceEnumerator
+from .device_ops import DeviceOperations
+from .discovery import DiscoveryManager
 
 logger = logging.getLogger(__name__)
 

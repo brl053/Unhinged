@@ -91,9 +91,7 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
     edges = GObject.Property(type=object, nick="Edges", blurb="Array of edge objects")
 
-    grid_size = GObject.Property(
-        type=int, default=20, nick="Grid Size", blurb="Grid cell size in pixels"
-    )
+    grid_size = GObject.Property(type=int, default=20, nick="Grid Size", blurb="Grid cell size in pixels")
 
     snap_to_grid = GObject.Property(
         type=bool,
@@ -258,18 +256,10 @@ class GraphCanvasWidget(Gtk.DrawingArea):
 
             if source_node and target_node:
                 # Get node positions in canvas space
-                x1 = (
-                    source_node.get("position", {}).get("x", 0) - self.viewport.x
-                ) * self.viewport.zoom + 50
-                y1 = (
-                    source_node.get("position", {}).get("y", 0) - self.viewport.y
-                ) * self.viewport.zoom + 30
-                x2 = (
-                    target_node.get("position", {}).get("x", 0) - self.viewport.x
-                ) * self.viewport.zoom
-                y2 = (
-                    target_node.get("position", {}).get("y", 0) - self.viewport.y
-                ) * self.viewport.zoom + 30
+                x1 = (source_node.get("position", {}).get("x", 0) - self.viewport.x) * self.viewport.zoom + 50
+                y1 = (source_node.get("position", {}).get("y", 0) - self.viewport.y) * self.viewport.zoom + 30
+                x2 = (target_node.get("position", {}).get("x", 0) - self.viewport.x) * self.viewport.zoom
+                y2 = (target_node.get("position", {}).get("y", 0) - self.viewport.y) * self.viewport.zoom + 30
 
                 # Determine edge color based on status
                 status = edge.get("status", "idle")
@@ -450,11 +440,10 @@ class GraphCanvasWidget(Gtk.DrawingArea):
         # Check if dragging a selected node
         if self._selected_node:
             for node in self.nodes:
-                if node.get("id") == self._selected_node:
-                    if self._point_in_node(x, y, node):
-                        self._dragging_node = self._selected_node
-                        self._drag_start = (x, y)
-                        return
+                if node.get("id") == self._selected_node and self._point_in_node(x, y, node):
+                    self._dragging_node = self._selected_node
+                    self._drag_start = (x, y)
+                    return
 
         # Otherwise, start panning
         self._pan_start = (x, y)

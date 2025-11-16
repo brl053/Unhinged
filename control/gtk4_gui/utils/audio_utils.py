@@ -108,10 +108,7 @@ def parse_audio_device_line(line: str, device_type: str) -> AudioDevice | None:
         # Extract device name (between brackets)
         name_start = line.rfind("[")
         name_end = line.rfind("]")
-        if name_start != -1 and name_end != -1:
-            device_name = line[name_start + 1 : name_end]
-        else:
-            device_name = "Unknown"
+        device_name = line[name_start + 1 : name_end] if name_start != -1 and name_end != -1 else "Unknown"
 
         device_id = f"hw:{card_number},{device_number}"
 
@@ -221,9 +218,7 @@ def detect_supported_formats(device_id: str, use_cache: bool = True) -> list[str
     # Return cached result if available
     if use_cache and device_id in _FORMAT_CACHE:
         cached_formats = _FORMAT_CACHE[device_id]
-        logger.info(
-            f"Audio format detection: device={device_id} cache_hit=true formats={cached_formats}"
-        )
+        logger.info(f"Audio format detection: device={device_id} cache_hit=true formats={cached_formats}")
         return cached_formats
 
     # Common formats to test, in order of preference
@@ -281,9 +276,7 @@ def detect_supported_formats(device_id: str, use_cache: bool = True) -> list[str
 
     # Cache the result
     _FORMAT_CACHE[device_id] = supported_formats
-    logger.info(
-        f"Audio format detection: device={device_id} cache_hit=false formats={supported_formats}"
-    )
+    logger.info(f"Audio format detection: device={device_id} cache_hit=false formats={supported_formats}")
 
     return supported_formats
 

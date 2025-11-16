@@ -8,8 +8,6 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
     from .chatroom_view import ChatroomView
 
 
-
-
 class ChatInputHandler:
     """Handle text input, send button, and focus events for ChatroomView."""
 

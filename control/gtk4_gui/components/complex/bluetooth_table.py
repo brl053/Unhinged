@@ -196,11 +196,7 @@ class BluetoothTable(AdwComponentBase):
         """Refresh the Bluetooth device list."""
         try:
             # Import Bluetooth monitor
-            import sys
-            from pathlib import Path
-
-            sys.path.append(str(Path(__file__).parent.parent))
-            from bluetooth_monitor import BluetoothMonitor
+            from ...bluetooth import BluetoothMonitor
 
             # Show loading state
             self.discovery_button.set_sensitive(False)

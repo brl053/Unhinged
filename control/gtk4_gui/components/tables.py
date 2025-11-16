@@ -8,13 +8,15 @@ Reusable table foundation components following design system patterns
 for structured data display with sorting, filtering, and accessibility.
 """
 
+import contextlib
+from collections.abc import Callable
+from enum import Enum
+from typing import Any
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from collections.abc import Callable
-from enum import Enum
-from typing import Any
 
 from gi.repository import Gtk, Pango
 
@@ -172,9 +174,7 @@ class GenericTable(Gtk.Box):
         # Toggle sort direction if same column, otherwise set ascending
         if self.sort_column == column.name:
             self.sort_direction = (
-                SortDirection.DESCENDING
-                if self.sort_direction == SortDirection.ASCENDING
-                else SortDirection.ASCENDING
+                SortDirection.DESCENDING if self.sort_direction == SortDirection.ASCENDING else SortDirection.ASCENDING
             )
         else:
             self.sort_column = column.name
@@ -269,13 +269,9 @@ class GenericTable(Gtk.Box):
         """Apply current sort to filtered data"""
         if self.sort_column and self.filtered_data:
             reverse = self.sort_direction == SortDirection.DESCENDING
-            try:
-                self.filtered_data.sort(
-                    key=lambda item: getattr(item, self.sort_column, 0), reverse=reverse
-                )
-            except (AttributeError, TypeError):
+            with contextlib.suppress(AttributeError, TypeError):
                 # Fallback for items without the sort attribute
-                pass
+                self.filtered_data.sort(key=lambda item: getattr(item, self.sort_column, 0), reverse=reverse)
 
     def _refresh_rows(self):
         """Refresh table rows with current data"""
@@ -299,9 +295,7 @@ class GenericTable(Gtk.Box):
             self.list_box.append(list_row)
 
         # Update accessibility
-        self.set_tooltip_text(
-            f"Data table with {len(self.filtered_data)} rows, {len(self.columns)} columns"
-        )
+        self.set_tooltip_text(f"Data table with {len(self.filtered_data)} rows, {len(self.columns)} columns")
 
     def get_selected_data(self) -> Any | None:
         """Get data for currently selected row"""

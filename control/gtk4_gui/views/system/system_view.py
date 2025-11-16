@@ -41,11 +41,11 @@ except ImportError:
 
 
 # Import section handlers
-from .system_view_cpu import CPUSectionHandler
-from .system_view_storage import StorageSectionHandler
-from .system_view_memory import MemorySectionHandler
-from .system_view_motherboard import OverviewSectionHandler
-from .system_view_platform import PlatformSectionHandler
+from .sections.cpu import CPUSectionHandler
+from .sections.storage import StorageSectionHandler
+from .sections.memory import MemorySectionHandler
+from .sections.motherboard import OverviewSectionHandler
+from .sections.platform import PlatformSectionHandler
 
 COMPONENTS_AVAILABLE = True
 

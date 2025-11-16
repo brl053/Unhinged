@@ -83,10 +83,7 @@ class UniversalEventEmitter:
             event_metadata["correlation_id"] = correlation_id
 
         # Create logger with trace context if available
-        if trace_id and span_id:
-            logger = self.event_logger.with_trace(trace_id, span_id)
-        else:
-            logger = self.event_logger
+        logger = self.event_logger.with_trace(trace_id, span_id) if trace_id and span_id else self.event_logger
 
         # Emit as structured log event
         logger.info(f"Universal event: {event_type}", event_metadata)

@@ -48,16 +48,16 @@ if protobuf_clients.exists():
     sys.path.insert(0, str(protobuf_clients))
 
 # Import design system
-from .design_system import load_design_system_css
+from ..design_system import load_design_system_css
 
 # Import new architecture components
 try:
     try:
-        from .config import (
+        from ..config import (
             log_configuration,
             validate_all_services,
         )
-        from .handlers.audio_handler import AudioHandler
+        from ..handlers.audio_handler import AudioHandler
     except ImportError:
         from config import (
             log_configuration,
@@ -69,9 +69,9 @@ except ImportError:
     ARCHITECTURE_AVAILABLE = False
 
 # Import desktop app modules
-from .desktop_app_handlers import RecordingControl, RecordingHandlers
-from .desktop_app_tabs import TabContentFactory
-from .desktop_app_ui import UIUtilities
+from .handlers import RecordingControl, RecordingHandlers
+from .tabs import TabContentFactory
+from .ui import UIUtilities
 
 # Import component library
 try:
