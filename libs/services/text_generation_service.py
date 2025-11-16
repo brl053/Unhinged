@@ -29,7 +29,7 @@ class TextGenerationService:
         """
         self.model = model
         self.provider = provider
-        self.client = None
+        self.client: Any = None
         self.model_loaded = False
 
         logger.info(f"TextGenerationService initialized (model: {model}, provider: {provider})")
@@ -126,13 +126,14 @@ class TextGenerationService:
         try:
             logger.info(f"Generating text with {self.provider}/{self.model}")
 
+            text: str = ""
             if self.provider == "ollama":
                 response = self.client.generate(
                     model=self.model,
                     prompt=prompt,
                     stream=False,
                 )
-                text = response.get("response", "").strip()
+                text = str(response.get("response", "")).strip()
 
             elif self.provider == "openai":
                 response = self.client.chat.completions.create(
@@ -142,7 +143,7 @@ class TextGenerationService:
                     temperature=temperature,
                     top_p=top_p,
                 )
-                text = response.choices[0].message.content.strip()
+                text = str(response.choices[0].message.content).strip()
 
             elif self.provider == "anthropic":
                 response = self.client.messages.create(
@@ -151,7 +152,7 @@ class TextGenerationService:
                     messages=[{"role": "user", "content": prompt}],
                     temperature=temperature,
                 )
-                text = response.content[0].text.strip()
+                text = str(response.content[0].text).strip()
 
             logger.info(f"Generation complete: {len(text)} characters")
             return text
