@@ -11,6 +11,8 @@ from typing import Any
 
 import requests  # type: ignore
 
+from libs.services.errors import ServiceNotRunningError
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,13 +45,12 @@ class TextGenerationService:
     def _load_ollama_client(self) -> None:
         """Load Ollama client with health check."""
         if not self._check_ollama_health():
-            error_msg = (
-                "Ollama service is not running. "
-                "Please start Ollama with: ollama serve\n"
-                "Or install from: https://ollama.com/download"
+            logger.error("Ollama service is not running")
+            raise ServiceNotRunningError(
+                service_name="Ollama",
+                port=11434,
+                install_url="https://ollama.com/download",
             )
-            logger.error(error_msg)
-            raise RuntimeError(error_msg)
 
         import ollama
 

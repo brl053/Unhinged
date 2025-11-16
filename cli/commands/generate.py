@@ -10,7 +10,9 @@ from cli.utils import log_error, log_info, log_success
 # Import service - handle both direct and pytest imports
 try:
     from libs.services import TextGenerationService
+    from libs.services.errors import ServiceNotRunningError
 except ImportError:
+    from libs.services.errors import ServiceNotRunningError
     from libs.services.text_generation_service import TextGenerationService
 
 
@@ -110,6 +112,10 @@ def text(prompt, model, provider, tokens, temperature, file):
         click.echo(result)
         log_success(f"Generated {len(result)} characters")
 
+    except ServiceNotRunningError as e:
+        log_error(str(e))
+        log_info("💡 Tip: Start services with: unhinged vm services up")
+        sys.exit(1)
     except Exception as e:
         log_error(f"Text generation failed: {e}")
         sys.exit(1)
