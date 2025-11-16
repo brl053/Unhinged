@@ -6,7 +6,7 @@ Consolidated from control/cli/main.py for unified CLI interface.
 
 import click
 
-from cli.commands import admin, dev, generate, image, system, transcribe, vm, voice
+from cli.commands import admin, chat, dev, generate, image, parse, shortform, system, transcribe, video, vm, voice
 
 
 @click.group(invoke_without_command=True)
@@ -31,6 +31,10 @@ cli.add_command(generate)
 cli.add_command(transcribe)
 cli.add_command(image)
 cli.add_command(voice)
+cli.add_command(video)
+cli.add_command(parse)
+cli.add_command(shortform)
+cli.add_command(chat)
 
 
 if __name__ == "__main__":

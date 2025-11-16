@@ -67,7 +67,7 @@ class ShortFormVideoService:
         # Initialize sub-services
         self.script_parser = ScriptParserService()
         self.tts = TTSService(output_dir)
-        self.image_gen = ImageGenerationService(model="stable-diffusion", output_dir=output_dir)
+        self.image_gen = ImageGenerationService(output_dir=output_dir)
         self.video_gen = VideoGenerationService(output_dir)
 
         logger.info("Short-Form Video Service initialized")
@@ -106,11 +106,9 @@ class ShortFormVideoService:
 
         # Get quality configuration
         try:
-            quality_config = get_quality_config(quality)
+            quality_config = get_quality_config(quality)  # type: ignore[arg-type]
         except ValueError as e:
-            raise ValueError(
-                f"Invalid quality tier: {quality}. Available: draft, standard, ultra"
-            ) from e
+            raise ValueError(f"Invalid quality tier: {quality}. Available: draft, standard, ultra") from e
 
         logger.info(f"Generating short-form video for {platform}")
         logger.info(f"Quality: {quality} ({quality_config.inference_steps} steps)")
@@ -144,8 +142,8 @@ class ShortFormVideoService:
 
                 image_result = self.image_gen.generate_image(
                     prompt=visual_prompt,
-                    quality=quality,
                     num_inference_steps=quality_config.inference_steps,
+                    guidance_scale=quality_config.guidance_scale,
                     width=quality_config.generation_width,
                     height=quality_config.generation_height,
                 )

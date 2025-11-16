@@ -1,9 +1,18 @@
 """Code analysis commands: analyze upstream/downstream, usages, imports."""
 
+import json
+import sys
+from pathlib import Path
 
 import click
 
-from cli.utils import log_error, log_success
+from cli.utils import log_error, log_info, log_success
+
+# Import GUI analysis service
+try:
+    from libs.services import HybridGUIAnalysisService
+except ImportError:
+    from libs.services.yolo_analysis_service import HybridGUIAnalysisService
 
 
 @click.group()
@@ -168,3 +177,74 @@ def _print_imports_result(result):
             for item in imp["items"]:
                 click.echo(f"    • {item}")
     click.echo()
+
+
+@analyze.command()
+@click.argument("image_file", type=click.Path(exists=True))
+@click.option(
+    "-m",
+    "--model",
+    type=click.Choice(["nano", "small", "medium", "large", "xlarge"]),
+    default="medium",
+    help="YOLOv8 model size (default: medium)",
+)
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(),
+    help="Save analysis results to file (default: stdout)",
+)
+@click.option(
+    "--annotate",
+    is_flag=True,
+    help="Save annotated image with detected elements",
+)
+def gui(image_file, model, output, annotate):
+    """Analyze image and detect GUI elements.
+
+    Detects buttons, text fields, panels, icons, labels, menus, etc.
+
+    Examples:
+      unhinged analyze gui screenshot.png
+      unhinged analyze gui screenshot.png -o elements.json
+      unhinged analyze gui screenshot.png --model large --annotate
+    """
+    try:
+        image_path = Path(image_file)
+
+        if not image_path.exists():
+            log_error(f"Image file not found: {image_file}")
+            sys.exit(1)
+
+        log_info(f"Analyzing image: {image_file}")
+
+        # Initialize service
+        service = HybridGUIAnalysisService(model_size=model[0])
+
+        # Analyze image
+        result = service.analyze_screenshot(str(image_path))
+
+        # Format output
+        output_data = {
+            "image": str(image_path),
+            "detections": result.get("detections", []),
+            "total_detections": result.get("total_detections", 0),
+            "element_counts": result.get("element_counts", {}),
+            "detection_sources": result.get("detection_sources", {}),
+            "analysis_time": result.get("analysis_time", 0),
+        }
+
+        output_text = json.dumps(output_data, indent=2)
+
+        # Output result
+        if output:
+            Path(output).write_text(output_text)
+            log_success(f"Analysis saved to: {output}")
+        else:
+            click.echo(output_text)
+
+        log_success(f"Analysis complete: {result.get('total_detections', 0)} elements detected")
+
+    except Exception as e:
+        log_error(f"GUI analysis failed: {e}")
+        sys.exit(1)

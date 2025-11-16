@@ -199,7 +199,7 @@ class HybridGUIAnalysisService:
             logger.error(f"Failed to load YOLO model: {e}")
             raise
 
-    def analyze_screenshot(self, image_path: str, confidence: float = 0.5) -> dict[str, Any]:
+    def analyze_screenshot(self, image_path: str | Path, confidence: float = 0.5) -> dict[str, Any]:
         """
         Analyze screenshot using hybrid approach (OpenCV + YOLOv8).
 
@@ -221,11 +221,11 @@ class HybridGUIAnalysisService:
         from pathlib import Path
 
         try:
-            image_path = Path(image_path)
-            if not image_path.exists():
+            image_path_obj: Path = Path(image_path)
+            if not image_path_obj.exists():
                 raise FileNotFoundError(f"Image not found: {image_path}")
 
-            logger.info(f"Analyzing screenshot (hybrid): {image_path}")
+            logger.info(f"Analyzing screenshot (hybrid): {image_path_obj}")
             start_time = time.time()
 
             detections = []
@@ -236,7 +236,7 @@ class HybridGUIAnalysisService:
             # Step 1: OpenCV detection (fast, rule-based)
             if self.use_opencv:
                 logger.info("Running OpenCV GUI detection...")
-                opencv_detections = self._detect_gui_elements_opencv(image_path)
+                opencv_detections = self._detect_gui_elements_opencv(image_path_obj)
                 detections.extend(opencv_detections)
                 detection_sources["opencv"] = len(opencv_detections)
                 for det in opencv_detections:
@@ -248,7 +248,7 @@ class HybridGUIAnalysisService:
                 logger.info("Running YOLOv8 detection...")
                 self._load_model()
 
-                results = self.model(str(image_path), conf=confidence, verbose=False)
+                results = self.model(str(image_path_obj), conf=confidence, verbose=False)  # type: ignore[misc]
                 image_data = results[0] if results and len(results) > 0 else None
 
                 if results and len(results) > 0:
@@ -288,7 +288,7 @@ class HybridGUIAnalysisService:
             annotated_path = self.output_dir / annotated_filename
 
             # Draw annotations on image
-            self._draw_annotations(image_path, detections, annotated_path)
+            self._draw_annotations(image_path_obj, detections, annotated_path)
 
             logger.info(
                 f"Analysis complete: {len(detections)} elements detected "
@@ -296,7 +296,7 @@ class HybridGUIAnalysisService:
             )
 
             return {
-                "image_path": str(image_path),
+                "image_path": str(image_path_obj),
                 "annotated_image_path": str(annotated_path),
                 "detections": detections,
                 "total_detections": len(detections),
@@ -337,7 +337,7 @@ class HybridGUIAnalysisService:
 
                 # Get color for element type
                 color_tuple = self.ELEMENT_CLASSES.get(det["type"], {}).get("color", (255, 0, 0))
-                color = tuple(int(c) for c in color_tuple)
+                color = tuple(int(c) for c in color_tuple)  # type: ignore[attr-defined]
 
                 # Draw rectangle
                 draw.rectangle([x1, y1, x2, y2], outline=color, width=2)

@@ -145,7 +145,7 @@ class ScriptParserService:
 
     def _calculate_timing(self, scenes: list[SceneSegment]) -> list[SceneSegment]:
         """Calculate start/end times for each scene"""
-        current_time = 0
+        current_time: float = 0.0
 
         for scene in scenes:
             scene.start_time = current_time
@@ -154,9 +154,7 @@ class ScriptParserService:
 
         return scenes
 
-    def _adjust_to_duration(
-        self, scenes: list[SceneSegment], target_duration: int
-    ) -> list[SceneSegment]:
+    def _adjust_to_duration(self, scenes: list[SceneSegment], target_duration: int) -> list[SceneSegment]:
         """Adjust scene durations to fit target duration"""
         current_total = scenes[-1].end_time if scenes else 0
 
@@ -167,7 +165,7 @@ class ScriptParserService:
         scale_factor = target_duration / current_total
 
         # Adjust each scene
-        current_time = 0
+        current_time: float = 0.0
         for scene in scenes:
             scene.duration *= scale_factor
             scene.start_time = current_time
