@@ -21,14 +21,15 @@ real-time updates, component library integration, and professional design system
 @llm-culture Independence through accessible graphical interface
 """
 
+import contextlib
+import os
+import sys
+from pathlib import Path
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-
-import os
-import sys
-from pathlib import Path
 
 from gi.repository import Adw, GLib, Gtk
 
@@ -51,7 +52,6 @@ from .design_system import load_design_system_css
 
 # Import new architecture components
 try:
-    # Try relative imports first
     try:
         from .config import (
             log_configuration,
@@ -59,7 +59,6 @@ try:
         )
         from .handlers.audio_handler import AudioHandler
     except ImportError:
-        # Fallback to absolute imports for script execution
         from config import (
             log_configuration,
             validate_all_services,
@@ -69,17 +68,20 @@ try:
 except ImportError:
     ARCHITECTURE_AVAILABLE = False
 
+# Import desktop app modules
+from .desktop_app_handlers import RecordingControl, RecordingHandlers
+from .desktop_app_tabs import TabContentFactory
+from .desktop_app_ui import UIUtilities
+
 # Import component library
 try:
     sys.path.append(str(Path(__file__).parent))
-    # Components are imported dynamically when needed
     COMPONENTS_AVAILABLE = True
 except ImportError:
     COMPONENTS_AVAILABLE = False
 
 # Import system information collection
 try:
-    # System info modules are imported dynamically when needed
     SYSTEM_INFO_AVAILABLE = True
 except ImportError:
     SYSTEM_INFO_AVAILABLE = False
@@ -154,6 +156,22 @@ class UnhingedDesktopApp(Adw.Application):
         self.dev_mode = os.environ.get("DEV_MODE", "0") == "1"
 
         # Initialize session logging (optional)
+        self._init_session_logging()
+
+        # Control module availability
+        self.control_available = CONTROL_MODULES_AVAILABLE
+
+        # Initialize new architecture components
+        self._init_audio_handler_startup()
+
+        # Design system CSS provider (for delayed loading)
+        self._pending_css_provider = None
+
+        # Initialize controllers
+        self._init_controllers()
+
+    def _init_session_logging(self):
+        """Initialize session logging."""
         self.session_logger = None
         self.output_capture = None
         if SESSION_LOGGING_AVAILABLE:
@@ -165,14 +183,11 @@ class UnhingedDesktopApp(Adw.Application):
                 self.session_logger = None
                 self.output_capture = None
 
-        # Control module availability
-        self.control_available = CONTROL_MODULES_AVAILABLE
-
-        # Initialize new architecture components
+    def _init_audio_handler_startup(self):
+        """Initialize audio handler at startup."""
         self.audio_handler = None
         if ARCHITECTURE_AVAILABLE:
             try:
-                # Initialize audio handler
                 self.audio_handler = AudioHandler()
                 self.audio_handler.set_callbacks(
                     state_callback=self._on_recording_state_changed,
@@ -180,21 +195,13 @@ class UnhingedDesktopApp(Adw.Application):
                     error_callback=self._on_audio_error,
                 )
 
-                # Log configuration for debugging
                 if self.dev_mode:
                     log_configuration()
 
-                # Validate service configuration
                 if not validate_all_services():
-                    pass  # Services not properly configured, continue anyway
+                    pass
             except Exception:
                 self.audio_handler = None
-
-        # Design system CSS provider (for delayed loading)
-        self._pending_css_provider = None
-
-        # Initialize controllers
-        self._init_controllers()
 
     def _init_controllers(self):
         """Initialize all controllers"""
@@ -227,10 +234,9 @@ class UnhingedDesktopApp(Adw.Application):
             print("ℹ️ Skipping design system CSS loading")
             return
 
-        try:
+        with contextlib.suppress(Exception):
+            # CSS loading is optional
             load_design_system_css(self)
-        except Exception:
-            pass  # CSS loading is optional
 
     def do_activate(self):
         """Application activation - create and show main window"""
@@ -293,157 +299,53 @@ class UnhingedDesktopApp(Adw.Application):
     # Main tab removed - functionality migrated to enhanced Status tab
 
     def create_status_tab_content(self):
-        """Create the status tab content using extracted StatusView."""
-        try:
-            from .views.status_view import StatusView
-
-            self.status_view = StatusView(self)
-            content = self.status_view.create_content()
-            return content
-        except Exception as e:
-            print(f"❌ CRITICAL: Status creation failed: {e}")
-            import traceback
-
-            traceback.print_exc()
-            raise
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_status_tab(self)
 
     def create_system_info_tab_content(self):
-        """Create the system info tab content using extracted SystemInfoView"""
-        try:
-            from .views.system_view import SystemInfoView
-
-            self.system_info_view = SystemInfoView(self)
-            content = self.system_info_view.create_content()
-            return content
-        except Exception as e:
-            print(f"❌ CRITICAL: System Info creation failed: {e}")
-            import traceback
-
-            traceback.print_exc()
-            raise
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_system_info_tab(self)
 
     def create_processes_tab_content(self):
-        """Create the processes tab content using extracted ProcessesView."""
-        try:
-            from .views.processes_view import ProcessesView
-
-            # Create processes view
-            self.processes_view = ProcessesView(self)
-            return self.processes_view.create_content()
-
-        except ImportError as e:
-            print(f"⚠️ ProcessesView not available, using fallback: {e}")
-            return self._create_processes_fallback()
-        except Exception as e:
-            print(f"❌ Error creating processes view: {e}")
-            return self._create_processes_fallback()
-
-    def _create_fallback(self, title: str):
-        """Create a generic fallback widget for unavailable features"""
-        container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        container.set_margin_top(16)
-        container.set_margin_bottom(16)
-        container.set_margin_start(16)
-        container.set_margin_end(16)
-
-        label = Gtk.Label(label=f"{title} functionality temporarily unavailable")
-        label.add_css_class("dim-label")
-        container.append(label)
-
-        return container
-
-    def _create_processes_fallback(self):
-        """Fallback processes implementation"""
-        return self._create_fallback("Process monitoring")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_processes_tab(self)
 
     def create_input_tab_content(self):
-        """Create the Input tab content using InputView."""
-        try:
-            from .views.input_view import InputView
-
-            input_view = InputView()
-            widget = input_view.render()
-
-            if self.session_logger:
-                self.session_logger.log_gui_event("INPUT_TAB_CREATED", "Input tab created")
-
-            return widget
-
-        except Exception as e:
-            print(f"❌ Error creating input view: {e}")
-            return self._create_input_fallback()
-
-    def _create_input_fallback(self):
-        """Fallback input implementation"""
-        return self._create_fallback("Input")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_input_tab(self)
 
     def create_chatroom_tab_content(self):
-        """Create the OS Chatroom tab content using extracted ChatroomView"""
-        try:
-            from .views.chatroom_view import ChatroomView
-
-            self.chatroom_view = ChatroomView(self)
-            content = self.chatroom_view.create_content()
-
-            # Automatically create a session on app launch (headless)
-            # Schedule session creation after UI is ready
-            GLib.idle_add(self._auto_create_session)
-
-            return content
-        except Exception as e:
-            print(f"❌ CRITICAL: OS Chatroom creation failed: {e}")
-            import traceback
-
-            traceback.print_exc()
-            raise
+        """Delegate to TabContentFactory."""
+        content = TabContentFactory.create_chatroom_tab(self)
+        GLib.idle_add(self._auto_create_session)
+        return content
 
     def _auto_create_session(self):
         """Automatically create a session on app launch (headless)"""
         try:
-            if hasattr(self, "chatroom_view") and self.chatroom_view:
+            if (
+                hasattr(self, "chatroom_view")
+                and self.chatroom_view
+                and self.chatroom_view._session_status == "no_session"
+            ):
                 # Check if session already exists
-                if self.chatroom_view._session_status == "no_session":
-                    self.chatroom_view._create_new_session()
-                    if self.session_logger:
-                        self.session_logger.log_gui_event(
-                            "AUTO_SESSION_CREATED",
-                            "Session automatically created on app launch (headless)",
-                        )
+                self.chatroom_view._create_new_session()
+                if self.session_logger:
+                    self.session_logger.log_gui_event(
+                        "AUTO_SESSION_CREATED",
+                        "Session automatically created on app launch (headless)",
+                    )
         except Exception:
             pass  # Auto-session creation failed, continue
         return False  # Don't repeat
 
     def _start_toggle_recording(self):
-        """Start toggle recording using AudioHandler"""
-        try:
-            if not hasattr(self, "audio_handler"):
-                self._init_audio_handler()
-
-            self.audio_handler.start_recording()
-            self.show_toast("Recording... (click to stop)")
-
-            if self.session_logger:
-                self.session_logger.log_gui_event("TOGGLE_RECORDING_START", "Started toggle recording")
-
-        except Exception as e:
-            print(f"❌ Start toggle recording error: {e}")
-            self.show_toast(f"Recording failed: {e}")
+        """Delegate to RecordingControl."""
+        RecordingControl.start_recording(self)
 
     def _init_audio_handler(self):
-        """Initialize the AudioHandler with callbacks"""
-        try:
-            from .handlers.audio_handler import AudioHandler
-
-            self.audio_handler = AudioHandler()
-            self.audio_handler.set_callbacks(
-                state_callback=self._on_recording_state_changed,
-                result_callback=self._on_transcription_result,
-                error_callback=self._on_audio_error,
-            )
-
-        except Exception as e:
-            print(f"⚠️ Failed to initialize AudioHandler: {e}")
-            self.audio_handler = None
+        """Delegate to RecordingControl."""
+        RecordingControl.init_audio_handler(self)
 
     def _init_platform_handler(self):
         """Initialize the PlatformHandler with callbacks"""
@@ -462,192 +364,44 @@ class UnhingedDesktopApp(Adw.Application):
             self.platform_handler = None
 
     def _on_recording_state_changed(self, state):
-        """Handle recording state changes from AudioHandler"""
-        try:
-            if hasattr(self, "session_logger") and self.session_logger:
-                self.session_logger.log_gui_event("RECORDING_STATE_CHANGED", f"Recording state: {state}")
-
-            # Update UI based on state - minimal feedback
-            if state.name == "RECORDING" or state.name == "PROCESSING":
-                pass  # Visual feedback handled by button state
-            elif state.name == "IDLE":
-                pass  # Will be handled by result or error callback
-
-        except Exception as e:
-            print(f"❌ Recording state change error: {e}")
+        """Delegate to RecordingHandlers."""
+        RecordingHandlers.on_recording_state_changed(self, state)
 
     def _on_transcription_result(self, transcript):
-        """Handle transcription results from AudioHandler"""
-        try:
-            if transcript:
-                # Route to chatroom if it's active
-                if hasattr(self, "chatroom_view") and self.chatroom_view:
-                    self.chatroom_view.add_voice_transcript(transcript)
-                    # No toast needed - user can see transcript was added
-                else:
-                    # Fallback: show in toast
-                    self.show_toast(f"Transcript: {transcript}")
-
-                # Log successful transcription
-                if hasattr(self, "session_logger") and self.session_logger:
-                    self.session_logger.log_gui_event("TRANSCRIPTION_SUCCESS", f"Transcript: {transcript}")
-            else:
-                self.show_toast("No transcription received")
-
-        except Exception as e:
-            print(f"❌ Transcription result error: {e}")
-            self.show_toast(f"Transcription error: {e}")
+        """Delegate to RecordingHandlers."""
+        RecordingHandlers.on_transcription_result(self, transcript)
 
     def _on_audio_error(self, error_data):
-        """Handle audio errors from AudioHandler
-
-        Receives error_data dict with full diagnostic information:
-        - error: string representation
-        - type: exception class name
-        - message: detailed message
-        - device: audio device that failed
-        - details: dict with stderr output and other context
-        """
-        try:
-            # Handle both old string format and new dict format for backward compatibility
-            if isinstance(error_data, dict):
-                error_msg = error_data.get("error", "Unknown error")
-                device = error_data.get("device", "unknown")
-                details = error_data.get("details", {})
-                stderr_output = details.get("arecord_stderr", "")
-
-                # Build comprehensive error message
-                if stderr_output:
-                    # Include stderr for device/format errors
-                    full_msg = f"Audio error on {device}: {error_msg}\n\nDetails: {stderr_output}"
-                else:
-                    full_msg = f"Audio error on {device}: {error_msg}"
-            else:
-                # Fallback for old string format
-                full_msg = f"Audio error: {str(error_data)}"
-
-            # Show user-friendly toast (truncated)
-            toast_msg = full_msg.split("\n")[0][:100]  # First line, max 100 chars
-            self.show_toast(toast_msg)
-
-            # Log full diagnostic information to session
-            if hasattr(self, "session_logger") and self.session_logger:
-                self.session_logger.log_gui_event("AUDIO_ERROR", full_msg)
-
-        except Exception as e:
-            print(f"❌ Audio error handler error: {e}")
+        """Delegate to RecordingHandlers."""
+        RecordingHandlers.on_audio_error(self, error_data)
 
     def _stop_toggle_recording(self):
-        """Stop toggle recording using AudioHandler"""
-        try:
-            if hasattr(self, "audio_handler") and self.audio_handler:
-                self.audio_handler.stop_recording()
-                self.show_toast("Processing recording...")
-
-                if self.session_logger:
-                    self.session_logger.log_gui_event("TOGGLE_RECORDING_STOP", "Stopped toggle recording")
-            else:
-                print("⚠️ AudioHandler not available")
-
-        except Exception as e:
-            print(f"❌ Stop toggle recording error: {e}")
-            self.show_toast(f"Stop recording failed: {e}")
+        """Delegate to RecordingControl."""
+        RecordingControl.stop_recording(self)
 
     def create_bluetooth_tab_content(self):
-        """Create the Bluetooth tab content using extracted BluetoothView."""
-        try:
-            from .views.bluetooth_view import BluetoothView
-
-            # Create bluetooth view
-            self.bluetooth_view = BluetoothView(self)
-            return self.bluetooth_view.create_content()
-
-        except ImportError as e:
-            print(f"⚠️ BluetoothView not available, using fallback: {e}")
-            return self._create_bluetooth_fallback()
-        except Exception as e:
-            print(f"❌ Error creating bluetooth view: {e}")
-            return self._create_bluetooth_fallback()
-
-    def _create_bluetooth_fallback(self):
-        """Fallback bluetooth implementation"""
-        return self._create_fallback("Bluetooth")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_bluetooth_tab(self)
 
     def create_output_tab_content(self):
-        """Create the Output tab content using extracted OutputView"""
-        try:
-            from .views.output_view import OutputView
-
-            self.output_view = OutputView(self)
-            return self.output_view.create_content()
-        except Exception as e:
-            print(f"❌ Error creating output view: {e}")
-            return self._create_fallback("Audio output")
-
-    def _create_output_fallback(self):
-        """Fallback output implementation"""
-        return self._create_fallback("Audio output")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_output_tab(self)
 
     def create_usb_tab_content(self):
-        """Create the USB tab content using extracted USBView"""
-        try:
-            from .views.usb_view import USBView
-
-            self.usb_view = USBView(self)
-            return self.usb_view.create_content()
-        except Exception as e:
-            print(f"❌ Error creating USB view: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return self._create_fallback("USB Devices")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_usb_tab(self)
 
     def create_graph_tab_content(self):
-        """Create the Graph Editor tab content using GraphWorkspaceView"""
-        try:
-            from .views.graph_workspace_view import GraphWorkspaceView
-
-            self.graph_workspace_view = GraphWorkspaceView(self)
-            content = self.graph_workspace_view.create_content()
-
-            # Load sample graph for demonstration
-            self.graph_workspace_view.load_sample_graph()
-
-            return content
-        except Exception as e:
-            print(f"❌ Error creating graph editor view: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return self._create_fallback("Graph Editor")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_graph_tab(self)
 
     def create_documents_tab_content(self):
-        """Create the Documents tab content using DocumentWorkspaceView"""
-        try:
-            from .views.document_workspace_view import DocumentWorkspaceView
-
-            self.document_workspace_view = DocumentWorkspaceView(self, document_type="document")
-            return self.document_workspace_view.create_content()
-        except Exception as e:
-            print(f"❌ Error creating documents view: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return self._create_fallback("Documents")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_documents_tab(self)
 
     def create_gpu_drivers_tab_content(self):
-        """Create the GPU tab content using GPUView"""
-        try:
-            from .views.gpu_view import GPUView
-
-            self.gpu_view = GPUView(self)
-            return self.gpu_view.create_content()
-        except Exception as e:
-            print(f"❌ Error creating GPU view: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return self._create_fallback("GPU")
+        """Delegate to TabContentFactory."""
+        return TabContentFactory.create_gpu_tab(self)
 
     def setup_actions(self):
         """Setup application actions using ActionController"""
@@ -674,45 +428,15 @@ class UnhingedDesktopApp(Adw.Application):
             self.quit()
 
     def update_status(self, message, progress=None):
-        """Update status label and progress bar"""
-        GLib.idle_add(self._update_status_ui, message, progress)
-
-    def _update_status_ui(self, message, progress):
-        """Update UI elements from main thread (now delegates to StatusView)"""
-        # Delegate to StatusView if available
-        if hasattr(self, "status_view") and self.status_view:
-            self.status_view._update_platform_status(message, progress)
-
-        # Log status change
-        if self.session_logger:
-            self.session_logger.log_status_change("Previous", message)
-
-        return False
+        """Delegate to UIUtilities."""
+        UIUtilities.update_status(self, message, progress)
 
     def append_log(self, message):
-        """Append message to log (now delegates to StatusView)"""
-        GLib.idle_add(self._append_log_ui, message)
-
-    def _append_log_ui(self, message):
-        """Append to log from main thread (now delegates to StatusView)"""
-        # Delegate to StatusView if available
-        if hasattr(self, "status_view") and self.status_view:
-            self.status_view._append_platform_log(message)
-
-        # Log to session file with noise reduction
-        if self.session_logger:
-            self.session_logger.log_platform_output(message)
-
-            # Check for platform status claims and verify accuracy
-            if "Platform started successfully" in message:
-                self.session_logger.log_platform_status_update(message)
-
-        return False
+        """Delegate to UIUtilities."""
+        UIUtilities.append_log(self, message)
 
     def _gui_log_callback(self, message):
         """Callback for GUI output capture - this is called by the session logger"""
-        # This method is called by the output capture system
-        # The message is already being logged to file, just display in GUI
         pass
 
     def on_start_clicked(self, button):
@@ -750,69 +474,16 @@ class UnhingedDesktopApp(Adw.Application):
             self.operation_loading_row.set_visible(False)
 
     def show_error_dialog(self, title, message):
-        """Show error dialog to user"""
-
-        def show_dialog():
-            dialog = Adw.MessageDialog(transient_for=self.window)
-            dialog.set_heading(title)
-            dialog.set_body(message)
-            dialog.add_response("ok", "OK")
-            dialog.set_default_response("ok")
-            dialog.present()
-
-        GLib.idle_add(show_dialog)
+        """Delegate to UIUtilities."""
+        UIUtilities.show_error_dialog(self, title, message)
 
     def show_toast(self, message, timeout=3):
-        """Show toast notification with visual stack management"""
-
-        def show_toast_ui():
-            # Create new toast
-            toast = Adw.Toast.new(message)
-
-            # Manage toast stack - remove oldest if at max capacity
-            if len(self.toast_stack) >= self.max_toast_stack:
-                # Remove oldest toast from stack
-                self.toast_stack.pop(0)
-                # Note: Adwaita automatically manages toast removal, we just track them
-
-            # Add to stack tracking
-            self.toast_stack.append(toast)
-
-            # Set timeout based on position in stack
-            stack_position = len(self.toast_stack) - 1
-            if stack_position == 0:  # Most recent (top)
-                toast.set_timeout(1)  # 1s for top toast
-            elif stack_position == 1:  # Second toast
-                toast.set_timeout(2)  # 2s for second toast
-            else:  # Third toast (standard)
-                toast.set_timeout(timeout)  # Standard duration
-
-            # Add toast to overlay
-            self.toast_overlay.add_toast(toast)
-
-            # Clean up stack tracking when toast is dismissed
-            def on_toast_dismissed():
-                if toast in self.toast_stack:
-                    self.toast_stack.remove(toast)
-
-            # Connect to toast dismissed signal if available
-            try:
-                toast.connect("dismissed", lambda t: on_toast_dismissed())
-            except:
-                # Fallback: use timeout to clean up stack
-                GLib.timeout_add_seconds(max(timeout, 3), lambda: on_toast_dismissed() or False)
-
-        GLib.idle_add(show_toast_ui)
+        """Delegate to UIUtilities."""
+        UIUtilities.show_toast(self, message, timeout)
 
     def _reset_buttons(self):
-        """Reset button states (now handled by StatusView)"""
-        # Button state management now handled by StatusView
-        if hasattr(self, "status_view") and self.status_view:
-            if hasattr(self.status_view, "start_button") and self.status_view.start_button:
-                self.status_view.start_button.set_sensitive(True)
-            if hasattr(self.status_view, "stop_button") and self.status_view.stop_button:
-                self.status_view.stop_button.set_sensitive(False)
-        return False
+        """Delegate to UIUtilities."""
+        return UIUtilities.reset_buttons(self)
 
     def is_voice_service_available(self):
         """Check if voice service is available using AudioHandler"""
