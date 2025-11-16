@@ -236,7 +236,7 @@ class DefaultEventLogger(EventLogger):
 
     def _build_event_dict(self, event: LogEvent) -> dict[str, Any]:
         """Build event dictionary for serialization"""
-        event_dict = {
+        event_dict: dict[str, Any] = {
             "timestamp": event.timestamp.isoformat(),
             "level": event.level.name,
             "level_value": event.level.value,

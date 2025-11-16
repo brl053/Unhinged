@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any, Optional
 
 import requests
 
@@ -77,7 +78,7 @@ class ServiceLauncher:
 
     # Essential services for GUI functionality
     # ALL SERVICES ARE ESSENTIAL - the system requires complete service availability
-    ESSENTIAL_SERVICES = [
+    ESSENTIAL_SERVICES: list[dict[str, Any]] = [
         {
             "name": "Database",
             "compose_service": "database",
@@ -152,7 +153,7 @@ class ServiceLauncher:
         },
     ]
 
-    def __init__(self, project_root: Path = None):
+    def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path.cwd()
         self.compose_file = self.project_root / "build/orchestration/docker-compose.production.yml"
         self.running_services: list[str] = []
@@ -195,7 +196,7 @@ class ServiceLauncher:
                 success = self._start_service(service, min(timeout, 30))  # Cap individual service timeout
                 if service["required"] and not success:
                     failed_required.append(service["name"])
-                    events.error("Required service failed to start", {"service": service["name"]})
+                    events.error("Required service failed to start", None, {"service": service["name"]})
                 elif success:
                     started_count += 1
 
@@ -278,6 +279,7 @@ class ServiceLauncher:
                 print(f"      ❌ Docker start failed: {result.stderr.strip()}")
                 events.error(
                     "Failed to start service",
+                    None,
                     {"service": service["name"], "error": result.stderr},
                 )
                 return False
@@ -360,7 +362,8 @@ class ServiceLauncher:
         except Exception as e:
             events.error(
                 "Failed to start direct service",
-                {"service": service["name"], "error": str(e)},
+                e,
+                {"service": service["name"]},
             )
             return False
 

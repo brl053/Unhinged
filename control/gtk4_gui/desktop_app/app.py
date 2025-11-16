@@ -51,22 +51,26 @@ if protobuf_clients.exists():
 from ..design_system import load_design_system_css
 
 # Import new architecture components
+ARCHITECTURE_AVAILABLE = False
 try:
+    from ..config import (
+        log_configuration,
+        validate_all_services,
+    )
+    from ..handlers.audio_handler import AudioHandler
+
+    ARCHITECTURE_AVAILABLE = True
+except ImportError:
     try:
-        from ..config import (
-            log_configuration,
-            validate_all_services,
-        )
-        from ..handlers.audio_handler import AudioHandler
-    except ImportError:
         from config import (
             log_configuration,
             validate_all_services,
         )
         from handlers.audio_handler import AudioHandler
-    ARCHITECTURE_AVAILABLE = True
-except ImportError:
-    ARCHITECTURE_AVAILABLE = False
+
+        ARCHITECTURE_AVAILABLE = True
+    except ImportError:
+        pass
 
 # Import event bus factory for dependency injection
 try:

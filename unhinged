@@ -1,5 +1,6 @@
 #!/bin/bash
 # Unhinged CLI - Bash shim to Python Click app
+# Delegates to consolidated CLI in libs.cli.core via control.cli.__main__
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,6 +13,6 @@ else
     PYTHON="python3"
 fi
 
-# Execute the Python CLI
+# Execute the Python CLI (delegates to libs.cli.core)
 exec $PYTHON -m control.cli "$@"
 

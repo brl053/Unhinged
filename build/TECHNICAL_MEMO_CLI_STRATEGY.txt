@@ -1,0 +1,208 @@
+================================================================================
+MEMORANDUM
+================================================================================
+TO:      Engineering Team, Unhinged Project
+FROM:    Architecture Review - CLI & Code Analysis Strategy
+DATE:    16 November 2025
+RE:      Headless-First Development & CLI Consolidation Plan
+================================================================================
+
+EXECUTIVE SUMMARY
+
+Four strategic initiatives proposed:
+
+1. CODE ANALYSIS: Integrate libcst for upstream/downstream tracking
+2. CLI CONSOLIDATION: Move control/cli → libs/cli (unified interface)
+3. HEADLESS-FIRST: Archive GTK4, focus on libs + CLI development
+4. DISTRIBUTION: Clarify ./unhinged vs unhinged command semantics
+
+================================================================================
+
+1. CODE ANALYSIS LIBRARY INTEGRATION
+
+QUESTION: Should we use custom AST scripts or mature library?
+
+ANSWER: Use libcst (industry standard)
+
+RATIONALE:
+- Ruff uses libcst internally (proven in production)
+- Preserves formatting/comments (unlike raw ast module)
+- Semantic analysis capabilities for refactoring
+- Used by Meta, Google, Stripe for code transformation
+- Better than custom AST for complex symbol tracking
+
+IMPLEMENTATION:
+  ./unhinged dev analyze upstream-downstream build/modules/dual_system_builder.py/DualSystemBuilder
+  ./unhinged dev analyze usages BuildUtils
+  ./unhinged dev analyze imports control/cli/main.py
+
+CUSTOM SCRIPTS FATE:
+  - Keep build/find_usages.py as reference implementation
+  - Migrate logic to libs/cli/commands/analyze.py
+  - Use libcst backend for production
+
+================================================================================
+
+2. CLI CONSOLIDATION: control/cli → libs/cli
+
+CURRENT STATE (SCATTERED):
+  control/cli/              - Main Click app
+  control/conversation_cli.py - Separate CLI
+  build/cli.py              - Build system CLI
+  build/orchestrator.py     - Orchestration logic
+
+PROBLEM: CLI logic scattered across 4+ locations, hard to maintain
+
+SOLUTION: Consolidate to libs/cli/ (single source of truth)
+
+STRUCTURE:
+  libs/cli/
+  ├── core/
+  │   ├── app.py            # Main Click app
+  │   ├── context.py        # CLI state/context
+  │   └── decorators.py     # Shared decorators
+  ├── commands/
+  │   ├── dev.py            # Development
+  │   ├── build.py          # Build system
+  │   ├── system.py         # System operations
+  │   ├── analyze.py        # NEW: Code analysis
+  │   └── chat.py           # Conversation CLI
+  └── utils/
+      ├── output.py         # Formatting
+      ├── process.py        # Subprocess
+      └── paths.py          # Path resolution
+
+MIGRATION PATH:
+  1. Create libs/cli/ structure
+  2. Move control/cli/ → libs/cli/core/
+  3. Update control/__main__.py imports
+  4. Consolidate build/cli.py into libs/cli/commands/build.py
+  5. Merge conversation_cli.py into libs/cli/commands/chat.py
+  6. Update ./unhinged shim to reference new location
+
+BENEFIT: Single CLI interface, easier testing, better code reuse
+
+================================================================================
+
+3. HEADLESS-FIRST DEVELOPMENT STRATEGY
+
+SHIFT: GTK4 GUI → Pure libs/cli development
+
+RATIONALE:
+- GTK4 adds complexity without core value
+- CLI is more testable, scriptable, automatable
+- Linux kernel integration requires headless approach
+- Strong foundation for future GUI (if needed)
+
+IMPLEMENTATION:
+  1. Archive control/gtk4_gui/ (don't delete, keep for reference)
+  2. Focus development on libs/ (data contracts, business logic)
+  3. Wire libs to CLI commands (libs/cli/)
+  4. Build comprehensive test coverage
+  5. GUI becomes optional visualization layer (Phase 2+)
+
+DEVELOPMENT LOOP:
+  Define (proto/) → Implement (libs/) → Test (unit tests)
+  → CLI (libs/cli/) → Verify (CLI tests) → GUI (optional)
+
+BENEFIT: Stronger foundation, better testability, Linux-native approach
+
+================================================================================
+
+4. ./unhinged vs unhinged COMMAND
+
+QUESTION: Why ./unhinged? Can we just use unhinged?
+
+ANSWER: Different use cases require different approaches
+
+CURRENT: ./unhinged (relative path)
+  - Works in development (project directory)
+  - Requires ./ prefix
+  - Not suitable for system-wide distribution
+
+DISTRIBUTION OPTIONS:
+
+Option A: Install to /usr/local/bin
+  - Requires absolute path in shim
+  - System-wide availability
+  - Needs installation step
+  - Not ideal for development
+
+Option B: Python Entry Point (RECOMMENDED)
+  - Most Pythonic approach
+  - Works after: pip install -e .
+  - Automatic PATH integration
+  - Best for distribution
+  - Can coexist with ./unhinged for development
+
+Option C: User-level Symlink
+  - ln -s /path/to/unhinged ~/.local/bin/unhinged
+  - User-level installation
+  - Requires PATH setup
+  - Good for personal machines
+
+RECOMMENDATION:
+  - Keep ./unhinged for development (relative path)
+  - Add Python entry point for distribution
+  - Document both approaches in README
+
+IMPLEMENTATION:
+  pyproject.toml:
+    [project.scripts]
+    unhinged = "control.cli:main"
+
+  Then: pip install -e .
+  Result: unhinged command available system-wide
+
+================================================================================
+
+5. MAN PAGE ENHANCEMENT
+
+CURRENT STATE:
+  man/man1/unhinged-generate.1 (only one page)
+
+PLAN:
+  man/man1/
+  ├── unhinged.1            # Main command
+  ├── unhinged-dev.1        # Dev subcommand
+  ├── unhinged-build.1      # Build subcommand
+  ├── unhinged-system.1     # System subcommand
+  ├── unhinged-analyze.1    # NEW: Analysis
+  └── unhinged-generate.1   # Generate
+
+AUTO-GENERATION:
+  Use click-man library to generate from Click docstrings
+  Ensures man pages stay in sync with CLI
+
+AESTHETIC STANDARD:
+  - Proper man page format (groff)
+  - Clear SYNOPSIS, DESCRIPTION, OPTIONS, EXAMPLES
+  - Cross-references between pages
+  - Consistent formatting
+
+================================================================================
+
+IMPLEMENTATION PRIORITY
+
+Phase 1 (Week 1): Add libcst analysis to ./unhinged dev analyze
+Phase 2 (Week 2): Consolidate CLI to libs/cli/
+Phase 3 (Week 3): Archive GTK4, shift to headless-first
+Phase 4 (Week 4): Generate comprehensive man pages
+Phase 5 (Week 5): Create Python package entry point
+
+================================================================================
+
+CONCLUSION
+
+This strategy provides:
+- Strong headless foundation (libs + CLI)
+- Unified CLI interface (libs/cli/)
+- Production-ready code analysis (libcst)
+- Clear distribution path (Python entry point)
+- Professional documentation (man pages)
+
+Execution of this plan positions Unhinged for sustainable, Linux-native
+development with strong testing and automation capabilities.
+
+================================================================================
+

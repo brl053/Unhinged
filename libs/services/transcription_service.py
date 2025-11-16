@@ -72,6 +72,9 @@ class TranscriptionService:
         # Lazy load model
         self._load_model()
 
+        if self.model is None:
+            raise RuntimeError("Whisper model failed to load")
+
         try:
             logger.info(f"Transcribing audio: {audio_path}")
 
@@ -128,6 +131,9 @@ class TranscriptionService:
         # Lazy load model
         self._load_model()
 
+        if self.model is None:
+            raise RuntimeError("Whisper model failed to load")
+
         try:
             logger.info(f"Transcribing audio with metadata: {audio_path}")
 
@@ -144,4 +150,3 @@ class TranscriptionService:
         except Exception as e:
             logger.error(f"Transcription failed: {e}")
             raise RuntimeError(f"Failed to transcribe audio: {e}") from e
-

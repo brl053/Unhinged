@@ -134,14 +134,14 @@ class ServiceConfig:
         Returns:
             Dictionary mapping service names to validation status
         """
-        validation_results = {}
+        validation_results: dict[str, bool] = {}
         required_services = ["speech_to_text", "llm", "persistence"]
 
         for service in required_services:
             try:
                 endpoint = self.get_endpoint(service)
                 # Basic validation - check that port is reasonable
-                is_valid = (
+                is_valid = bool(
                     1 <= endpoint.port <= 65535
                     and endpoint.host
                     and endpoint.protocol in ["grpc", "http", "https", "redis", "postgres"]
@@ -175,9 +175,7 @@ class AppConfig:
         self.recording_duration = int(os.environ.get("RECORDING_DURATION", "10"))
 
         # gRPC settings
-        self.grpc_max_message_size = int(
-            os.environ.get("GRPC_MAX_MESSAGE_SIZE", str(1024 * 1024 * 1024))
-        )  # 1GB
+        self.grpc_max_message_size = int(os.environ.get("GRPC_MAX_MESSAGE_SIZE", str(1024 * 1024 * 1024)))  # 1GB
         self.grpc_timeout = int(os.environ.get("GRPC_TIMEOUT", "30"))
 
         # UI settings
@@ -224,10 +222,6 @@ def log_configuration() -> None:
         logger.info(f"{name}: {endpoint.protocol}://{endpoint.address}")
 
     logger.info("=== App Configuration ===")
-    logger.info(
-        f"Audio: {app_config.audio_sample_rate}Hz, {app_config.audio_channels}ch, {app_config.audio_format}"
-    )
-    logger.info(
-        f"gRPC: max_message_size={app_config.grpc_max_message_size}, timeout={app_config.grpc_timeout}s"
-    )
+    logger.info(f"Audio: {app_config.audio_sample_rate}Hz, {app_config.audio_channels}ch, {app_config.audio_format}")
+    logger.info(f"gRPC: max_message_size={app_config.grpc_max_message_size}, timeout={app_config.grpc_timeout}s")
     logger.info(f"Debug mode: {app_config.enable_debug_mode}")

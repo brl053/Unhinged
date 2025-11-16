@@ -35,14 +35,17 @@ Usage:
     store.delete("users", doc.id)
 """
 
+from typing import Any, Optional
+
 from .document_store import Document, DocumentStore
 
 # Try to import PostgreSQL store, but make it optional for testing
 try:
     from .postgres_store import PostgresDocumentStore
+
     _POSTGRES_AVAILABLE = True
 except ImportError:
-    PostgresDocumentStore = None
+    PostgresDocumentStore = None  # type: ignore
     _POSTGRES_AVAILABLE = False
 
 __all__ = [
@@ -55,7 +58,7 @@ __all__ = [
 _default_store = None
 
 
-def get_document_store(connection_string: str = None) -> DocumentStore:
+def get_document_store(connection_string: Optional[str] = None) -> DocumentStore:
     """
     Get the default document store instance.
 
@@ -73,10 +76,7 @@ def get_document_store(connection_string: str = None) -> DocumentStore:
 
     if _default_store is None:
         if not _POSTGRES_AVAILABLE:
-            raise ImportError(
-                "PostgreSQL dependencies not available. "
-                "Install with: pip install psycopg2-binary"
-            )
+            raise ImportError("PostgreSQL dependencies not available. " "Install with: pip install psycopg2-binary")
         _default_store = PostgresDocumentStore(connection_string)
 
     return _default_store

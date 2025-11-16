@@ -25,6 +25,7 @@ from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from .event_logger import EventLoggerConfig, LogLevel, create_logger
 
@@ -52,11 +53,11 @@ class GUISessionLogger:
         self.active = False
 
         # Error grouping and noise reduction state
-        self.error_groups = {}
+        self.error_groups: dict[str, Any] = {}
         self.compilation_errors_logged = False
         self.sudo_errors_logged = False
         self.drm_errors_logged = False
-        self.duplicate_suppression = {}
+        self.duplicate_suppression: dict[int, datetime] = {}
 
         # Platform state tracking for accurate status reporting
         self.platform_components = {
@@ -134,6 +135,9 @@ class GUISessionLogger:
             source: Source of the message (GUI, VM, MAKE, etc.)
         """
         if not self.active:
+            return
+
+        if self.log_file is None:
             return
 
         with self.lock:

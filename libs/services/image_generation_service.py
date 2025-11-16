@@ -12,6 +12,8 @@ Then benchmark and allow users to choose larger models later.
 import logging
 from datetime import datetime
 from pathlib import Path
+
+# Type imports for annotations
 from typing import Any
 
 import torch
@@ -47,7 +49,7 @@ class ImageGenerationService:
         logger.info(f"Output directory: {self.output_dir}")
 
         # Benchmark tracking
-        self.generation_times = []
+        self.generation_times: list[float] = []
         self.total_generations = 0
 
     def _load_pipeline(self):
@@ -111,6 +113,9 @@ class ImageGenerationService:
             # Load pipeline if not already loaded
             self._load_pipeline()
 
+            if self.pipeline is None:
+                raise RuntimeError("Failed to load Stable Diffusion pipeline")
+
             # Set seed for reproducibility
             if seed is not None:
                 torch.manual_seed(seed)
@@ -160,8 +165,7 @@ class ImageGenerationService:
                 "timestamp": timestamp,
                 "metadata": {
                     "total_generations": self.total_generations,
-                    "average_generation_time": sum(self.generation_times)
-                    / len(self.generation_times)
+                    "average_generation_time": sum(self.generation_times) / len(self.generation_times)
                     if self.generation_times
                     else 0,
                 },

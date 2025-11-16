@@ -24,7 +24,7 @@ Schema:
 import logging
 import os
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 try:
     import psycopg2
@@ -45,7 +45,7 @@ class PostgresDocumentStore(DocumentStore):
     providing both flexibility and queryability.
     """
 
-    def __init__(self, connection_string: str = None):
+    def __init__(self, connection_string: Optional[str] = None):
         """
         Initialize PostgreSQL document store.
 
@@ -55,9 +55,7 @@ class PostgresDocumentStore(DocumentStore):
                              or default "postgresql://localhost/unhinged"
         """
         if connection_string is None:
-            connection_string = os.environ.get(
-                "POSTGRES_CONNECTION_STRING", "postgresql://localhost/unhinged"
-            )
+            connection_string = os.environ.get("POSTGRES_CONNECTION_STRING", "postgresql://localhost/unhinged")
 
         self.connection_string = connection_string
         self._init_schema()
@@ -248,9 +246,7 @@ class PostgresDocumentStore(DocumentStore):
             logger.error(f"Failed to delete document: {e}")
             raise
 
-    def query(
-        self, collection: str, filters: dict[str, Any] = None, limit: int = 100
-    ) -> list[Document]:
+    def query(self, collection: str, filters: Optional[dict[str, Any]] = None, limit: int = 100) -> list[Document]:
         """Query documents in a collection."""
         try:
             conn = self._get_connection()
@@ -259,7 +255,7 @@ class PostgresDocumentStore(DocumentStore):
             if filters:
                 # Build WHERE clause for JSONB filters
                 where_parts = ["collection = %s"]
-                params = [collection]
+                params: list[Any] = [collection]
 
                 for key, value in filters.items():
                     where_parts.append(f"data->'{key}' = %s")

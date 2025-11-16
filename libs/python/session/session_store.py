@@ -21,6 +21,7 @@ try:
 except ImportError as e:
     print(f"⚠️ Session store dependencies not available: {e}")
     print("💡 Install with: pip install redis psycopg2-binary")
+    redis = None  # type: ignore
 
 
 @dataclass
@@ -57,8 +58,8 @@ class SessionStore:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # Clients
-        self.redis_client = None
-        self.document_store = None
+        self.redis_client: Any = None
+        self.document_store: Any = None
 
         # Initialize connections
         self._initialize_connections()
@@ -107,6 +108,10 @@ class SessionStore:
         Returns:
             True if both writes succeed, False otherwise
         """
+        if self.redis_client is None:
+            self.logger.error("Redis client not initialized")
+            return False
+
         try:
             # Serialize value
             json_value = json.dumps(value, default=str)
@@ -118,6 +123,10 @@ class SessionStore:
                 return False
 
             # Write to document store synchronously
+            if self.document_store is None:
+                self.logger.error("Document store not initialized")
+                return False
+
             try:
                 # Try to update existing document
                 doc = self.document_store.read("sessions", key)
@@ -133,9 +142,7 @@ class SessionStore:
             except Exception as e:
                 # If document store write fails, remove from Redis to maintain consistency
                 self.redis_client.delete(key)
-                self.logger.error(
-                    f"Document store write failed for key {key}, removed from Redis: {e}"
-                )
+                self.logger.error(f"Document store write failed for key {key}, removed from Redis: {e}")
                 return False
 
         except Exception as e:
@@ -152,6 +159,10 @@ class SessionStore:
         Returns:
             Session data or None if not found
         """
+        if self.redis_client is None:
+            self.logger.error("Redis client not initialized")
+            return None
+
         try:
             # Try Redis first
             redis_value = self.redis_client.get(key)
@@ -160,6 +171,10 @@ class SessionStore:
                 return json.loads(redis_value)
 
             # Cache miss - read from document store
+            if self.document_store is None:
+                self.logger.error("Document store not initialized")
+                return None
+
             doc = self.document_store.read("sessions", key)
             if doc is None:
                 self.logger.debug(f"Key not found in document store: {key}")
@@ -186,6 +201,10 @@ class SessionStore:
         Returns:
             True if deletion succeeds from both stores
         """
+        if self.redis_client is None or self.document_store is None:
+            self.logger.error("Redis client or document store not initialized")
+            return False
+
         try:
             # Delete from Redis
             redis_deleted = self.redis_client.delete(key)
@@ -194,9 +213,7 @@ class SessionStore:
             doc_deleted = self.document_store.delete("sessions", key)
 
             success = redis_deleted > 0 or doc_deleted
-            self.logger.debug(
-                f"Delete operation for key {key}: Redis={redis_deleted}, DocStore={doc_deleted}"
-            )
+            self.logger.debug(f"Delete operation for key {key}: Redis={redis_deleted}, DocStore={doc_deleted}")
             return success
 
         except Exception as e:
@@ -213,6 +230,10 @@ class SessionStore:
         Returns:
             True if key exists in either store
         """
+        if self.redis_client is None or self.document_store is None:
+            self.logger.error("Redis client or document store not initialized")
+            return False
+
         try:
             # Check Redis first
             if self.redis_client.exists(key):
@@ -236,6 +257,10 @@ class SessionStore:
         Returns:
             List of matching keys
         """
+        if self.redis_client is None:
+            self.logger.error("Redis client not initialized")
+            return []
+
         try:
             # Use Redis for fast key listing
             keys = self.redis_client.keys(pattern)
@@ -259,7 +284,7 @@ class SessionStore:
         Returns:
             Dict with health status for Redis and document store
         """
-        health = {
+        health: dict[str, Any] = {
             "redis": {"status": "unknown", "latency_ms": None},
             "document_store": {"status": "unknown", "latency_ms": None},
         }

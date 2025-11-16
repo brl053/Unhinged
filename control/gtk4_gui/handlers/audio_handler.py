@@ -35,10 +35,7 @@ except ImportError:
     from exceptions import AudioRecordingError
 
 # Import direct transcription service
-import sys
-from pathlib import Path as PathlibPath
-
-project_root = PathlibPath(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from libs.services import TranscriptionService
@@ -197,8 +194,7 @@ class AudioHandler:
         # Log to event framework (persistent audit trail)
         if self._session_logger:
             self._session_logger.log_gui_event(
-                "TRANSCRIPTION_ERROR",
-                f"Transcription error: {error_data['type']} - {error_data['message']}"
+                "TRANSCRIPTION_ERROR", f"Transcription error: {error_data['type']} - {error_data['message']}"
             )
 
         # Emit granular transcription error event (preferred)
@@ -315,10 +311,7 @@ class AudioHandler:
 
             # Log to event framework
             if self._session_logger:
-                self._session_logger.log_gui_event(
-                    "TRANSCRIPTION_STARTED",
-                    "Audio transcription started"
-                )
+                self._session_logger.log_gui_event("TRANSCRIPTION_STARTED", "Audio transcription started")
 
             result = self.transcriber.transcribe(self._temp_file)
 
@@ -332,14 +325,13 @@ class AudioHandler:
                 {
                     "transcript": result.text,
                     "duration": time.time(),  # Timestamp for audit trail
-                }
+                },
             )
 
             # Log to event framework (persistent audit trail)
             if self._session_logger:
                 self._session_logger.log_gui_event(
-                    "TRANSCRIPTION_COMPLETED",
-                    f"Transcription completed: {len(result.text)} characters"
+                    "TRANSCRIPTION_COMPLETED", f"Transcription completed: {len(result.text)} characters"
                 )
 
             # Legacy event for backward compatibility (DEPRECATED)

@@ -32,6 +32,7 @@ mypy>=1.4.0                   # Type checking
 pytest>=7.4.0                 # Testing framework
 pytest-asyncio>=0.21.0        # Async testing
 pytest-cov>=4.1.0             # Coverage reporting
+libcst>=0.4.0                 # Concrete Syntax Tree (code analysis)
 
 # CLI and Configuration
 click>=8.1.0                  # CLI framework

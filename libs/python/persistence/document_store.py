@@ -13,7 +13,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -119,9 +119,7 @@ class DocumentStore(ABC):
         pass
 
     @abstractmethod
-    def query(
-        self, collection: str, filters: dict[str, Any] = None, limit: int = 100
-    ) -> list[Document]:
+    def query(self, collection: str, filters: Optional[dict[str, Any]] = None, limit: int = 100) -> list[Document]:
         """
         Query documents in a collection.
 

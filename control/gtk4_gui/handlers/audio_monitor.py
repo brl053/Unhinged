@@ -159,6 +159,9 @@ class AudioLevelMonitor:
             while self.is_monitoring and self.monitor_process:
                 try:
                     # Read audio chunk
+                    if self.monitor_process.stdout is None:
+                        break
+
                     audio_data = self.monitor_process.stdout.read(chunk_size)
 
                     if not audio_data:
@@ -168,9 +171,7 @@ class AudioLevelMonitor:
                     amplitude = self._calculate_amplitude(audio_data)
 
                     # Emit amplitude event via event bus
-                    self._event_bus.emit_simple(
-                        AudioEvents.AMPLITUDE_UPDATED, {"amplitude": amplitude}
-                    )
+                    self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"amplitude": amplitude})
 
                     # Legacy callback support
                     if self.amplitude_callback:

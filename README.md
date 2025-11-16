@@ -199,8 +199,8 @@ Comprehensive documentation available in `/docs/` directory.
 ./unhinged system restart     # Restart system
 
 # Development Commands
-./unhinged dev lint           # Run linting
-./unhinged dev static-analysis # Run static analysis
+./unhinged dev lint           # Run linting (architecture: size, complexity)
+./unhinged dev static-analysis # Run static analysis (mypy: type checking)
 ./unhinged dev build          # Build project
 
 # Admin Commands
