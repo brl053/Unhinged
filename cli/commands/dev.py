@@ -46,10 +46,8 @@ def test(pattern):
     else:
         log_info(f"Running tests matching: {pattern}")
 
-    # Run individual test files
-    result = subprocess.run(
-        [python_cmd, "-m", "pytest", "control/gtk4_gui/tests/", "-v"] + (["-k", pattern] if pattern else [])
-    )
+    # Run pytest on all test files
+    result = subprocess.run([python_cmd, "-m", "pytest", ".", "-v"] + (["-k", pattern] if pattern else []))
     return result.returncode
 
 

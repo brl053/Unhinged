@@ -8,21 +8,23 @@ Usage:
     python3 package_manager.py list
 """
 
-import os
 import sys
-import yaml
-import subprocess
 from pathlib import Path
 
-# Add control/gtk4_gui/utils to path for subprocess_utils import
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "control" / "gtk4_gui" / "utils"))
+import yaml
 
-from subprocess_utils import SubprocessRunner
+# Import subprocess utilities
+try:
+    from subprocess_utils import SubprocessRunner
+except ImportError:
+    # Fallback if subprocess_utils not available
+    SubprocessRunner = None
+
 
 class UbuntuPackageManager:
     def __init__(self):
         self.config_path = Path(__file__).parent / "dependencies.yaml"
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             self.config = yaml.safe_load(f)
 
     def _run_command(self, command: str) -> bool:
@@ -30,10 +32,10 @@ class UbuntuPackageManager:
         print(f"🔧 {command}")
 
         # Check if we need sudo for apt-get commands
-        if command.startswith('apt-get'):
+        if command.startswith("apt-get"):
             # Try to run with sudo
             command = f"sudo {command}"
-        elif command.startswith('build/python/venv/bin/pip'):
+        elif command.startswith("build/python/venv/bin/pip"):
             # Handle Python venv pip commands - ensure venv exists first
             venv_path = Path("build/python/venv")
             if not venv_path.exists():
@@ -56,17 +58,17 @@ class UbuntuPackageManager:
 
     def install_package(self, package_name: str) -> bool:
         """Install a package"""
-        packages = self.config.get('packages', {})
+        packages = self.config.get("packages", {})
         package_info = packages.get(package_name)
 
         if not package_info:
             print(f"❌ Package not found: {package_name}")
             return False
 
-        if package_info.get('optional') and not self._confirm(f"Install optional package {package_name}?"):
+        if package_info.get("optional") and not self._confirm(f"Install optional package {package_name}?"):
             return True
 
-        install_cmd = package_info.get('install')
+        install_cmd = package_info.get("install")
         if not install_cmd:
             print(f"❌ No install command for {package_name}")
             return False
@@ -75,7 +77,7 @@ class UbuntuPackageManager:
 
     def install_group(self, group_name: str) -> bool:
         """Install a group of packages"""
-        groups = self.config.get('groups', {})
+        groups = self.config.get("groups", {})
         group_packages = groups.get(group_name)
 
         if not group_packages:
@@ -93,21 +95,22 @@ class UbuntuPackageManager:
     def list_packages(self):
         """List available packages"""
         print("📦 Available Packages:")
-        packages = self.config.get('packages', {})
+        packages = self.config.get("packages", {})
         for name, info in packages.items():
-            desc = info.get('description', '')
-            optional = " (optional)" if info.get('optional') else ""
+            desc = info.get("description", "")
+            optional = " (optional)" if info.get("optional") else ""
             print(f"  {name} - {desc}{optional}")
 
         print("\n📦 Groups:")
-        groups = self.config.get('groups', {})
+        groups = self.config.get("groups", {})
         for name, packages in groups.items():
             print(f"  {name} - {', '.join(packages)}")
 
     def _confirm(self, message: str) -> bool:
         """Ask user for confirmation"""
         response = input(f"{message} [y/N]: ").lower()
-        return response in ['y', 'yes']
+        return response in ["y", "yes"]
+
 
 def main():
     if len(sys.argv) < 2:
@@ -135,6 +138,7 @@ def main():
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

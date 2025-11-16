@@ -91,16 +91,3 @@ def restart():
     time.sleep(2)
     start()
     return 0
-
-
-@system.command()
-def gui():
-    """Launch the GTK4 GUI application."""
-    log_info("🖥️  Launching Unhinged GTK4 GUI...")
-
-    python_cmd = get_python()
-    if not check_file_exists("control/gtk4_gui/launch.py", "GUI launcher"):
-        return 1
-
-    result = run_command([python_cmd, "control/gtk4_gui/launch.py"])
-    return result

@@ -9,8 +9,8 @@ Usage:
     from build.static_analysis_manager import StaticAnalysisManager
 
     sam = StaticAnalysisManager()
-    if sam.should_run_analysis("control/gtk4_gui"):
-        results = sam.run_analysis("control/gtk4_gui")
+    if sam.should_run_analysis("cli"):
+        results = sam.run_analysis("cli")
         if not results.passed:
             print("❌ Static analysis failed")
 """
@@ -93,7 +93,7 @@ class StaticAnalysisManager:
         """Check if static analysis should run for module
 
         Args:
-            module_path: Path to module directory (e.g., "control/gtk4_gui")
+            module_path: Path to module directory (e.g., "cli", "libs/python")
 
         Returns:
             True if analysis should run (Python files changed)
@@ -184,11 +184,7 @@ class StaticAnalysisManager:
                         try:
                             parts = line.split()
                             for i, part in enumerate(parts):
-                                if (
-                                    part.isdigit()
-                                    and i + 1 < len(parts)
-                                    and "fixed" in parts[i + 1]
-                                ):
+                                if part.isdigit() and i + 1 < len(parts) and "fixed" in parts[i + 1]:
                                     fixed_count += int(part)
                         except:
                             pass
@@ -208,11 +204,7 @@ class StaticAnalysisManager:
                     cwd=self.project_root,
                 )
                 total_issues = len(
-                    [
-                        line
-                        for line in check_result.stdout.split("\n")
-                        if line.strip() and not line.startswith("Found")
-                    ]
+                    [line for line in check_result.stdout.split("\n") if line.strip() and not line.startswith("Found")]
                 )
             else:
                 total_issues = 0
@@ -239,9 +231,7 @@ class StaticAnalysisManager:
 
         return result
 
-    def run_analysis_on_changed_modules(
-        self, modules: list[str], auto_fix: bool = True
-    ) -> dict[str, AnalysisResult]:
+    def run_analysis_on_changed_modules(self, modules: list[str], auto_fix: bool = True) -> dict[str, AnalysisResult]:
         """Run analysis on multiple modules that have changes
 
         Args:
@@ -343,7 +333,7 @@ if __name__ == "__main__":
 
     if not args.modules:
         # Default modules to check
-        args.modules = ["control/gtk4_gui", "libs/python", "services"]
+        args.modules = ["cli", "libs/python", "services", "control"]
 
     auto_fix = not args.no_fix
 

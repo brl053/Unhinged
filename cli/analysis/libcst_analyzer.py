@@ -1,7 +1,7 @@
 """Libcst-based code analysis for upstream/downstream tracking."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import libcst as cst
 
@@ -189,8 +189,8 @@ class SymbolVisitor(cst.CSTVisitor):
         """Initialize visitor."""
         self.symbol = symbol
         self.found = False
-        self.upstream = []
-        self.downstream = []
+        self.upstream: list[str] = []
+        self.downstream: list[str] = []
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         """Visit class definitions."""
@@ -209,7 +209,7 @@ class UsageVisitor(cst.CSTVisitor):
     def __init__(self, symbol: str, source: str = ""):
         """Initialize visitor."""
         self.symbol = symbol
-        self.usages = []
+        self.usages: list[tuple[int, str]] = []
         self.source_lines = source.split("\n") if source else []
         self.current_line = 1
 
@@ -231,6 +231,15 @@ class ImportVisitor(cst.CSTVisitor):
         """Initialize visitor."""
         self.imports = []
 
+    @staticmethod
+    def _get_name(node: Any) -> str:
+        """Extract name from node."""
+        if isinstance(node, cst.Name):
+            return cast(str, node.value)
+        elif isinstance(node, cst.Attribute):
+            return f"{ImportVisitor._get_name(node.value)}.{node.attr.value}"
+        return str(node)
+
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
         """Visit from...import statements."""
         module = node.module
@@ -251,12 +260,3 @@ class ImportVisitor(cst.CSTVisitor):
         for name in node.names:
             if isinstance(name, cst.ImportAlias):
                 self.imports.append({"type": "import", "module": name.name.value, "items": []})
-
-    @staticmethod
-    def _get_name(node: Any) -> str:
-        """Extract name from node."""
-        if isinstance(node, cst.Name):
-            return node.value
-        elif isinstance(node, cst.Attribute):
-            return f"{LibcstAnalyzer._get_name(node.value)}.{node.attr.value}"
-        return str(node)

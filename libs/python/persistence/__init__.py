@@ -58,7 +58,7 @@ __all__ = [
 _default_store = None
 
 
-def get_document_store(connection_string: Optional[str] = None) -> DocumentStore:
+def get_document_store(connection_string: str | None = None) -> DocumentStore:
     """
     Get the default document store instance.
 

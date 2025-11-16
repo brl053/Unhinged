@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -153,7 +153,7 @@ class ServiceLauncher:
         },
     ]
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
         self.compose_file = self.project_root / "build/orchestration/docker-compose.production.yml"
         self.running_services: list[str] = []

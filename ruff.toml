@@ -59,6 +59,12 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 "control/gtk4_gui/**/*.py" = ["E402"]
 "control/service_launcher.py" = ["E402"]
 
+# libcst visitor methods require specific naming (visit_ClassName)
+# N802 errors are expected and required by the libcst library pattern
+"cli/analysis/libcst_analyzer.py" = ["N802"]
+"build/find_usages.py" = ["N802"]
+"build/find_usages_recursive.py" = ["N802"]
+
 [format]
 # Use black-compatible formatting
 quote-style = "double"

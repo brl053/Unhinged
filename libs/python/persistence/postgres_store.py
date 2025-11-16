@@ -24,7 +24,7 @@ Schema:
 import logging
 import os
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 try:
     import psycopg2
@@ -45,7 +45,7 @@ class PostgresDocumentStore(DocumentStore):
     providing both flexibility and queryability.
     """
 
-    def __init__(self, connection_string: Optional[str] = None):
+    def __init__(self, connection_string: str | None = None):
         """
         Initialize PostgreSQL document store.
 
@@ -246,7 +246,7 @@ class PostgresDocumentStore(DocumentStore):
             logger.error(f"Failed to delete document: {e}")
             raise
 
-    def query(self, collection: str, filters: Optional[dict[str, Any]] = None, limit: int = 100) -> list[Document]:
+    def query(self, collection: str, filters: dict[str, Any] | None = None, limit: int = 100) -> list[Document]:
         """Query documents in a collection."""
         try:
             conn = self._get_connection()
