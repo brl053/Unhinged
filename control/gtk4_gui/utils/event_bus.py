@@ -249,17 +249,27 @@ def create_event_bus(max_history: int = 100) -> EventBus:
 class AudioEvents:
     """Audio-related event types."""
 
+    # Recording lifecycle
     RECORDING_STARTED = "audio:recording_started"
     RECORDING_STOPPED = "audio:recording_stopped"
-    AMPLITUDE_UPDATED = "audio:amplitude_updated"
     DEVICE_CHANGED = "audio:device_changed"
     ERROR = "audio:error"
+
+    # Real-time audio level monitoring
+    AMPLITUDE_UPDATED = "audio:amplitude_updated"  # Emitted by AudioLevelMonitor with {"amplitude": float}
+
+    # Visualization state changes
+    VISUALIZATION_STATE_CHANGED = "audio:visualization_state_changed"  # Emitted by VoiceVisualizer with {"state": str}
 
     # Granular transcription events (preferred over callbacks)
     TRANSCRIPTION_STARTED = "audio:transcription_started"
     TRANSCRIPTION_PROGRESS = "audio:transcription_progress"
     TRANSCRIPTION_COMPLETED = "audio:transcription_completed"
     TRANSCRIPTION_ERROR = "audio:transcription_error"
+
+    # DEPRECATED: AMPLITUDE_UPDATED was misused for transcription data
+    # Use TRANSCRIPTION_COMPLETED instead
+    TRANSCRIPTION_LEGACY = "audio:amplitude_updated"  # Backward compat only
 
 
 class SystemEvents:

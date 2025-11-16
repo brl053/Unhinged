@@ -343,7 +343,9 @@ class AudioHandler:
                 )
 
             # Legacy event for backward compatibility (DEPRECATED)
-            self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text})
+            # Note: AMPLITUDE_UPDATED was misused for transcription data
+            # Use TRANSCRIPTION_LEGACY for backward compat, TRANSCRIPTION_COMPLETED for new code
+            self._event_bus.emit_simple(AudioEvents.TRANSCRIPTION_LEGACY, {"transcript": result.text})
 
             # Legacy callback for backward compatibility (DEPRECATED)
             if self._result_callback:

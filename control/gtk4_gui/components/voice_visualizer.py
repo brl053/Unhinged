@@ -124,9 +124,9 @@ class VoiceVisualizer(Gtk.DrawingArea):
 
             self.queue_draw()
 
-            # Emit event via event bus
+            # Emit event via event bus (use correct event type for state changes)
             state = "processing" if processing else "idle"
-            self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"state": state})
+            self._event_bus.emit_simple(AudioEvents.VISUALIZATION_STATE_CHANGED, {"state": state})
 
             # Legacy callback support
             if self.state_callback:
@@ -169,7 +169,7 @@ class VoiceVisualizer(Gtk.DrawingArea):
         Returns:
             Unsubscribe function
         """
-        return self._event_bus.subscribe(AudioEvents.AMPLITUDE_UPDATED, callback)
+        return self._event_bus.subscribe(AudioEvents.VISUALIZATION_STATE_CHANGED, callback)
 
     def _start_animation(self) -> None:
         """Start animation timer"""
