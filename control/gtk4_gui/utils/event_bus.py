@@ -188,6 +188,12 @@ class AudioEvents:
     DEVICE_CHANGED = "audio:device_changed"
     ERROR = "audio:error"
 
+    # Granular transcription events (preferred over callbacks)
+    TRANSCRIPTION_STARTED = "audio:transcription_started"
+    TRANSCRIPTION_PROGRESS = "audio:transcription_progress"
+    TRANSCRIPTION_COMPLETED = "audio:transcription_completed"
+    TRANSCRIPTION_ERROR = "audio:transcription_error"
+
 
 class SystemEvents:
     """System-related event types."""

@@ -100,9 +100,7 @@ class AudioHandler:
         """Check if handler is busy."""
         return self._state in [RecordingState.RECORDING, RecordingState.PROCESSING]
 
-    def subscribe_to_events(
-        self, event_type: str, callback: Callable[[Event], None]
-    ) -> Callable[[], None]:
+    def subscribe_to_events(self, event_type: str, callback: Callable[[Event], None]) -> Callable[[], None]:
         """Subscribe to audio events via event bus."""
         return self._event_bus.subscribe(event_type, callback)
 
@@ -115,12 +113,27 @@ class AudioHandler:
     ) -> None:
         """Set legacy callbacks for recording state, results, and errors.
 
+        DEPRECATED: Use event bus subscriptions instead.
+
+        Migration path:
+        - RECORDING_STARTED/STOPPED events replace state_callback
+        - TRANSCRIPTION_COMPLETED event replaces result_callback
+        - TRANSCRIPTION_ERROR event replaces error_callback
+        - TRANSCRIPTION_PROGRESS event replaces progress_callback
+
+        Callbacks will be removed in a future version when COMPONENTS_AVAILABLE
+        becomes permanently true and all consumers migrate to event bus.
+
         Args:
-            state_callback: Called when recording state changes
-            result_callback: Called when transcription completes with transcript text
-            error_callback: Called when an error occurs
-            progress_callback: Called with progress updates (0.0 to 1.0)
+            state_callback: Called when recording state changes (DEPRECATED)
+            result_callback: Called when transcription completes with transcript text (DEPRECATED)
+            error_callback: Called when an error occurs (DEPRECATED)
+            progress_callback: Called with progress updates (0.0 to 1.0) (DEPRECATED)
         """
+        logger.warning(
+            "set_callbacks() is deprecated. Use event bus subscriptions instead. "
+            "See AudioEvents.TRANSCRIPTION_* for replacement events."
+        )
         self._state_callback = state_callback
         self._result_callback = result_callback
         self._error_callback = error_callback
@@ -129,12 +142,8 @@ class AudioHandler:
     def _initialize_audio_format(self) -> None:
         """Initialize audio format detection."""
         try:
-            self._detected_format = get_best_format_for_device(
-                app_config.audio_device, app_config.audio_format
-            )
-            self._detected_sample_width = self.device_manager.get_sample_width(
-                self._detected_format
-            )
+            self._detected_format = get_best_format_for_device(app_config.audio_device, app_config.audio_format)
+            self._detected_sample_width = self.device_manager.get_sample_width(self._detected_format)
             logger.info(
                 f"Audio handler initialized: device={app_config.audio_device} "
                 f"format={self._detected_format} "
@@ -169,9 +178,6 @@ class AudioHandler:
         self._cleanup()
         self._set_state(RecordingState.ERROR)
 
-        if self._error_callback:
-            self._error_callback(error)
-
         error_data = {
             "error": str(error),
             "type": error.__class__.__name__,
@@ -179,7 +185,16 @@ class AudioHandler:
             "device": getattr(error, "device", None),
             "details": getattr(error, "details", {}),
         }
+
+        # Emit granular transcription error event (preferred)
+        self._event_bus.emit_simple(AudioEvents.TRANSCRIPTION_ERROR, error_data)
+
+        # Legacy error event for backward compatibility (DEPRECATED)
         self._event_bus.emit_simple(AudioEvents.ERROR, error_data)
+
+        # Legacy callback for backward compatibility (DEPRECATED)
+        if self._error_callback:
+            self._error_callback(error)
 
     def _cleanup(self) -> None:
         """Clean up resources."""
@@ -224,9 +239,7 @@ class AudioHandler:
             self.recorder = AudioRecorder(config)
 
             # Start recording in background thread
-            self._recording_thread = threading.Thread(
-                target=self._record_and_transcribe, daemon=True
-            )
+            self._recording_thread = threading.Thread(target=self._record_and_transcribe, daemon=True)
             self._set_state(RecordingState.RECORDING)
             self._start_time = time.time()
             self._recording_thread.start()
@@ -283,16 +296,26 @@ class AudioHandler:
 
             # Start transcription
             self._set_state(RecordingState.PROCESSING)
+            self._event_bus.emit_simple(AudioEvents.TRANSCRIPTION_STARTED, {})
             result = self.transcriber.transcribe(self._temp_file)
 
             # Clean up
             self._cleanup()
             self._set_state(RecordingState.IDLE)
 
-            # Notify UI via event bus
+            # Emit granular transcription event (preferred)
+            self._event_bus.emit_simple(
+                AudioEvents.TRANSCRIPTION_COMPLETED,
+                {
+                    "transcript": result.text,
+                    "duration": time.time(),  # Timestamp for audit trail
+                }
+            )
+
+            # Legacy event for backward compatibility (DEPRECATED)
             self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text})
 
-            # Notify via legacy callback if set
+            # Legacy callback for backward compatibility (DEPRECATED)
             if self._result_callback:
                 self._result_callback(result.text)
 

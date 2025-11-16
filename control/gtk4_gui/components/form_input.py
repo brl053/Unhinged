@@ -333,18 +333,17 @@ class FormInput(ComponentBase):
                     self._audio_error_unsubscribe = None
 
                 # Subscribe to transcription completion BEFORE starting
-                # Audio handler emits transcript via AMPLITUDE_UPDATED event
                 if hasattr(self.audio_handler, "subscribe_to_events"):
                     from ..utils.event_bus import AudioEvents
 
-                    # Subscribe to amplitude updates (which includes transcripts)
+                    # Subscribe to transcription completion (preferred event)
                     # Store the unsubscribe function for cleanup in _stop_recording()
                     self._audio_event_unsubscribe = self.audio_handler.subscribe_to_events(
-                        AudioEvents.AMPLITUDE_UPDATED, self._on_audio_event
+                        AudioEvents.TRANSCRIPTION_COMPLETED, self._on_audio_event
                     )
-                    # Also subscribe to errors
+                    # Also subscribe to transcription errors
                     self._audio_error_unsubscribe = self.audio_handler.subscribe_to_events(
-                        AudioEvents.ERROR, self._on_audio_error
+                        AudioEvents.TRANSCRIPTION_ERROR, self._on_audio_error
                     )
 
                 # Now start recording
