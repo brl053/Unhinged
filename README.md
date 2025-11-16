@@ -191,19 +191,28 @@ Comprehensive documentation available in `/docs/` directory.
 
 ```bash
 # Normal User Commands
-./unhinged                    # Start complete system
-./unhinged stop               # Graceful shutdown
+./unhinged                    # Start services + launch GUI (default)
+./unhinged system gui         # Launch GUI only
+./unhinged system start       # Start services only
+./unhinged system stop        # Graceful shutdown
+./unhinged system status      # Check system health
+./unhinged system restart     # Restart system
 
-# Power User Commands
-./unhinged dev                # Development mode
-./unhinged graphics build     # Build graphics subsystem
-./unhinged build generate     # Generate design artifacts
-./unhinged admin services     # Manage services
-./unhinged debug status       # Debug system state
+# Development Commands
+./unhinged dev lint           # Run linting
+./unhinged dev static-analysis # Run static analysis
+./unhinged dev build          # Build project
 
-# Legacy Commands (deprecated)
-make start               # Use './unhinged' instead
-make clean               # Use './unhinged build clean' instead
+# Admin Commands
+./unhinged admin services list    # List running services
+./unhinged admin services health  # Check service health
+./unhinged admin preflight check  # Run preflight checks
+./unhinged admin debug status     # Show system state
+
+# VM Commands
+./unhinged vm win10           # Launch Windows 10 VM
+./unhinged vm templeos        # Launch TempleOS VM
+./unhinged vm stop            # Stop running VM
 ```
 
 ---
