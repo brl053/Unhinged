@@ -1,0 +1,39 @@
+# =============================================================================
+# Model Downloader Dockerfile
+# =============================================================================
+#
+# Downloads Stable Diffusion models for offline use
+# Run once to populate model cache
+#
+
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install huggingface-hub transformers diffusers
+
+# Create directories
+RUN mkdir -p /models /scripts
+
+# Copy download script
+COPY build/tools/download-models.py /scripts/download-models.py
+
+# Make script executable
+RUN chmod +x /scripts/download-models.py
+
+# Set working directory
+WORKDIR /scripts
+
+# Default command
+CMD ["python", "download-models.py"]

@@ -90,10 +90,20 @@ except ImportError:
 SESSION_LOGGING_AVAILABLE = False
 try:
     # Try multiple possible paths for the event framework
+    # app.py is at: /project_root/control/gtk4_gui/desktop_app/app.py
+    # So we need to go up 4 levels to get to project_root
     event_paths = [
+        str(Path(__file__).parent.parent.parent.parent / "libs" / "event-framework" / "python" / "src"),
         str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"),
-        str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"),
-        str(Path(__file__).parent.parent.parent / "build" / "python" / "venv" / "lib" / "python3.12" / "site-packages"),
+        str(
+            Path(__file__).parent.parent.parent.parent
+            / "build"
+            / "python"
+            / "venv"
+            / "lib"
+            / "python3.12"
+            / "site-packages"
+        ),
     ]
 
     for path in event_paths:
@@ -127,7 +137,9 @@ class UnhingedDesktopApp(Adw.Application):
 
     def __init__(self):
         super().__init__(application_id="com.unhinged.platform.gtk4")
-        self.project_root = Path(__file__).parent.parent.parent  # Updated path
+        # app.py is at: /project_root/control/gtk4_gui/desktop_app/app.py
+        # So we need to go up 4 levels to get to project_root
+        self.project_root = Path(__file__).parent.parent.parent.parent
         self.window = None
         # UI elements moved to StatusView
         self.process = None
@@ -189,9 +201,14 @@ class UnhingedDesktopApp(Adw.Application):
         if ARCHITECTURE_AVAILABLE:
             try:
                 self.audio_handler = AudioHandler()
+                # Only set result_callback if FormInput is NOT available
+                # FormInput handles transcription via event bus subscription
+                # This prevents duplicate transcripts
+                result_callback = None if COMPONENTS_AVAILABLE else self._on_transcription_result
+
                 self.audio_handler.set_callbacks(
                     state_callback=self._on_recording_state_changed,
-                    result_callback=self._on_transcription_result,
+                    result_callback=result_callback,
                     error_callback=self._on_audio_error,
                 )
 
@@ -335,8 +352,13 @@ class UnhingedDesktopApp(Adw.Application):
                         "AUTO_SESSION_CREATED",
                         "Session automatically created on app launch (headless)",
                     )
-        except Exception:
-            pass  # Auto-session creation failed, continue
+        except Exception as e:
+            print(f"⚠️ Auto-session creation failed: {e}")
+            if self.session_logger:
+                self.session_logger.log_gui_event(
+                    "AUTO_SESSION_FAILED",
+                    f"Auto-session creation failed: {e}",
+                )
         return False  # Don't repeat
 
     def _start_toggle_recording(self):

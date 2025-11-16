@@ -304,9 +304,7 @@ desktop/dist/
 desktop/__pycache__/
 
 # Build system work-in-progress and backups
-build/backup/
-build/ci/
-build/dual-system/
+build/tmp
 
 # BFG cleanup reports and Git LFS artifacts
 ..bfg-report/

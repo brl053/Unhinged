@@ -1,0 +1,109 @@
+# @llm-type config.app
+# @llm-does ci/cd pipeline configuration integrating with enhanced build
+version: "1.0"
+name: "unhinged-ci-cd"
+description: "CI/CD infrastructure for Unhinged platform with enhanced build integration"
+
+# CI Configuration
+ci:
+  # Test execution settings
+  testing:
+    parallel: true
+    timeout: 1800  # 30 minutes
+    retry_count: 2
+    cache_enabled: true
+    
+  # Build verification settings
+  build_verification:
+    enable_parallel: true
+    cache_validation: true
+    dependency_check: true
+    documentation_sync: true
+    
+  # Code quality settings
+  quality:
+    linting: true
+    type_checking: true
+    security_scanning: true
+    documentation_validation: true
+    
+  # Integration test settings
+  integration:
+    vm_testing: true
+    service_testing: true
+    gui_testing: false  # Requires display
+    performance_testing: true
+
+# CD Configuration
+cd:
+  # Deployment settings
+  deployment:
+    staging_auto: true
+    production_manual: true
+    rollback_enabled: true
+    health_checks: true
+    
+  # Release settings
+  release:
+    semantic_versioning: true
+    changelog_generation: true
+    documentation_update: true
+    docker_publishing: true
+    
+  # Environment configurations
+  environments:
+    staging:
+      auto_deploy: true
+      health_check_timeout: 300
+      rollback_threshold: 0.95
+    production:
+      manual_approval: true
+      health_check_timeout: 600
+      rollback_threshold: 0.99
+
+# Integration with existing build system
+build_integration:
+  orchestrator_path: "build/orchestrator.py"
+  config_path: "build/config/build-config.yml"
+  cache_path: "build/cache"
+  docs_path: "build/docs-generation"
+  
+  # Build targets for CI
+  ci_targets:
+    - "service-discovery"
+    - "mobile-ui"
+    - "protobuf-generation"
+    - "backend-services"
+    - "documentation"
+    - "c-graphics-build"
+    - "dual-system-desktop"
+    - "conversation-cli"
+    
+  # Test targets
+  test_targets:
+    - "unit-tests"
+    - "integration-tests"
+    - "performance-tests"
+    - "documentation-tests"
+    - "c-graphics-test"
+    - "conversation-cli-test"
+    - "dual-system-integration-test"
+
+# Notification settings
+notifications:
+  slack:
+    enabled: false
+    webhook_url: ""
+    channels:
+      - "#unhinged-ci"
+      - "#unhinged-releases"
+  email:
+    enabled: false
+    recipients: []
+
+# Performance monitoring
+monitoring:
+  build_metrics: true
+  test_metrics: true
+  deployment_metrics: true
+  cache_hit_rate: true

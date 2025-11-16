@@ -43,10 +43,10 @@ class SessionManager:
             from libs.services.chat_service import ChatService
 
             service = ChatService()
-            session_id = service.create_session(session_name)
+            conversation = service.create_conversation(metadata={"title": session_name})
 
-            if session_id:
-                self._on_session_created(session_id)
+            if conversation and conversation.conversation_id:
+                self._on_session_created(conversation.conversation_id)
             else:
                 self._on_session_creation_failed("Failed to create session via gRPC")
 
@@ -68,6 +68,15 @@ class SessionManager:
         self.chatroom_view._session_status = "active"
 
         logger.info(f"✅ Session created: {session_id}")
+
+        # Update session logger with persisted chat session ID
+        # This replaces the TBD placeholder with the real persisted session ID
+        if hasattr(self.chatroom_view.app, "session_logger") and self.chatroom_view.app.session_logger:
+            self.chatroom_view.app.session_logger.update_session_id(session_id)
+
+        # Update session ID display in Status tab
+        if hasattr(self.chatroom_view.app, "status_view") and self.chatroom_view.app.status_view:
+            self.chatroom_view.app.status_view.update_session_id(session_id)
 
         if hasattr(self.chatroom_view.app, "session_logger") and self.chatroom_view.app.session_logger:
             self.chatroom_view.app.session_logger.log_gui_event(
@@ -107,4 +116,3 @@ class SessionManager:
 
         if self.chatroom_view._recording_status_label:
             self.chatroom_view._recording_status_label.set_text("No active session")
-

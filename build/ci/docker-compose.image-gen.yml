@@ -1,0 +1,88 @@
+# Image Generation Service Docker Compose
+# Optimized for RTX 5070 Ti with 16GB VRAM
+
+version: '3.8'
+
+services:
+  image-generation:
+    build:
+      context: ../..
+      dockerfile: build/ci/Dockerfile.image-gen
+    container_name: sovereign-image-gen
+    ports:
+      - "9094:9094"  # Image generation gRPC service
+    volumes:
+      - /models/image-gen:/models:ro  # Pre-downloaded models (read-only)
+      - ./output:/output              # Generated images output
+      - ./logs:/app/logs              # Service logs
+    environment:
+      - CUDA_VISIBLE_DEVICES=0       # Use first GPU
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+      - HUGGINGFACE_HUB_CACHE=/models/.cache
+      - TRANSFORMERS_CACHE=/models/.cache
+      - DIFFUSERS_CACHE=/models/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 20G  # 16GB VRAM + 4GB system RAM buffer
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Model downloader service (run once to download models)
+  model-downloader:
+    build:
+      context: ../..
+      dockerfile: build/ci/Dockerfile.model-downloader
+    container_name: model-downloader
+    volumes:
+      - /models/image-gen:/models
+    environment:
+      - HUGGINGFACE_HUB_CACHE=/models/.cache
+    profiles:
+      - setup  # Only run when explicitly requested
+    command: |
+      bash -c "
+        echo '📥 Downloading Stable Diffusion XL models...'
+        python -c '
+        from huggingface_hub import snapshot_download
+        import os
+        
+        models = [
+            \"stabilityai/stable-diffusion-xl-base-1.0\",
+            \"runwayml/stable-diffusion-v1-5\"
+        ]
+        
+        for model in models:
+            print(f\"Downloading {model}...\")
+            snapshot_download(
+                repo_id=model,
+                cache_dir=\"/models/.cache\",
+                local_dir=f\"/models/{model.replace(\"/\", \"_\")}\",
+                local_dir_use_symlinks=False
+            )
+            print(f\"✅ Downloaded {model}\")
+        
+        print(\"🎉 All models downloaded successfully!\")
+        '
+      "
+
+volumes:
+  model-cache:
+    driver: local
+  output-images:
+    driver: local
+
+networks:
+  default:
+    name: unhinged-network
+    external: true

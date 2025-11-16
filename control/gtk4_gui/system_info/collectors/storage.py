@@ -12,13 +12,14 @@ import logging
 # Import psutil with fallback
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
 
 from subprocess_utils import SubprocessRunner
 
-from .system_info import StorageDevice, StorageInfo
+from ..system_info import StorageDevice, StorageInfo
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class StorageCollector:
 
     def _parse_lsblk_device(self, device: dict, storage_info):
         """Parse lsblk device information recursively"""
-        from .system_info import StorageDevice
+        from ..system_info import StorageDevice
 
         if device.get("mountpoint") and device.get("size"):
             mountpoint = device["mountpoint"]
@@ -140,4 +141,3 @@ class StorageCollector:
                 return float(size_str) / (1024**3)
             except ValueError:
                 return 0.0
-

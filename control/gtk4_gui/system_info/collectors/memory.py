@@ -11,6 +11,7 @@ import logging
 # Import psutil with fallback
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -23,7 +24,7 @@ class MemoryCollector:
 
     def collect_memory_info(self):
         """Collect memory information"""
-        from .system_info import MemoryInfo
+        from ..system_info import MemoryInfo
 
         memory_info = MemoryInfo()
 
@@ -45,4 +46,3 @@ class MemoryCollector:
                 logger.debug(f"Failed to get swap info: {e}")
 
         return memory_info
-

@@ -27,10 +27,10 @@ sys.path.insert(
 
 # Import graph canvas component
 try:
-    from ..components import GraphCanvasWidget, GraphWorkspaceTabs
-    from ..components.document_store_client import DocumentStoreClient
-    from ..components.graph_serializer import GraphSerializer
-    from ..components.graph_service_client import GraphServiceClient
+    from components import GraphCanvasWidget, GraphWorkspaceTabs
+    from components.document_store_client import DocumentStoreClient
+    from components.graph_serializer import GraphSerializer
+    from components.graph_service_client import GraphServiceClient
 
     GRAPH_CANVAS_AVAILABLE = True
 except ImportError as e:
@@ -386,9 +386,7 @@ class GraphWorkspaceView:
 
         # Serialize to protobuf
         try:
-            graph = self.serializer.serialize_graph(
-                nodes=nodes, edges=edges, graph_name="My Graph", graph_type="dag"
-            )
+            graph = self.serializer.serialize_graph(nodes=nodes, edges=edges, graph_name="My Graph", graph_type="dag")
 
             # Save asynchronously
             asyncio.create_task(self._save_graph_async(graph))
@@ -490,22 +488,14 @@ class GraphWorkspaceView:
         elif event_type == "NODE_FAILED":
             # Update node status to failed
             self._update_node_status(node_id, "failed")
-            error_msg = (
-                event.event_data.get("error", "Unknown error")
-                if event.event_data
-                else "Unknown error"
-            )
+            error_msg = event.event_data.get("error", "Unknown error") if event.event_data else "Unknown error"
             self._update_status(f"❌ Failed node: {node_id} - {error_msg}")
 
         elif event_type == "EXECUTION_COMPLETED":
             self._update_status("✅ Execution completed")
 
         elif event_type == "EXECUTION_FAILED":
-            error_msg = (
-                event.event_data.get("error", "Unknown error")
-                if event.event_data
-                else "Unknown error"
-            )
+            error_msg = event.event_data.get("error", "Unknown error") if event.event_data else "Unknown error"
             self._update_status(f"❌ Execution failed: {error_msg}")
 
         elif event_type == "EXECUTION_CANCELLED":

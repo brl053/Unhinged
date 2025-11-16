@@ -4,7 +4,7 @@ from .cpu import CPUCollector
 from .gpu import GPUCollector
 from .memory import MemoryCollector
 from .network import NetworkCollector
-from .platform import PlatformCollector
+from .platform import PlatformStatusCollector
 from .storage import StorageCollector
 
 __all__ = [
@@ -12,7 +12,6 @@ __all__ = [
     "GPUCollector",
     "MemoryCollector",
     "NetworkCollector",
-    "PlatformCollector",
+    "PlatformStatusCollector",
     "StorageCollector",
 ]
-

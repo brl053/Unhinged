@@ -1,0 +1,282 @@
+name: Unhinged Platform CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  JAVA_VERSION: '17'
+
+jobs:
+  # Build verification using enhanced build system
+  build-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential protobuf-compiler
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r build/requirements.txt
+    
+    - name: Cache build artifacts
+      uses: actions/cache@v3
+      with:
+        path: |
+          build/cache
+          ~/.gradle/caches
+          ~/.npm
+        key: ${{ runner.os }}-build-${{ hashFiles('**/build-config.yml', '**/package*.json', '**/build.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-build-
+    
+    - name: Run enhanced build verification
+      run: |
+        python build/ci/scripts/build-verification.py
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: build-artifacts
+        path: |
+          build/cache
+          generated/
+          build/logs/
+        retention-days: 7
+
+  # Code quality checks
+  code-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install quality tools
+      run: |
+        pip install -r build/ci/requirements-quality.txt
+    
+    - name: Run code quality checks
+      run: |
+        python build/ci/scripts/quality-checks.py
+    
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quality-reports
+        path: build/ci/reports/
+        retention-days: 30
+
+  # Integration tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: build-verification
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install -r build/ci/requirements-test.txt
+    
+    - name: Run integration tests
+      run: |
+        python build/ci/scripts/integration-tests.py
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: |
+          build/ci/test-results/
+          build/ci/coverage/
+        retention-days: 30
+
+  # Documentation validation
+  documentation-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install documentation tools
+      run: |
+        pip install -r build/docs-generation/requirements.txt
+    
+    - name: Validate documentation sync
+      run: |
+        python build/ci/scripts/docs-validation.py
+    
+    - name: Generate documentation
+      run: |
+        python build/docs-generation/generate_docs.py
+    
+    - name: Upload documentation
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: generated/docs/
+        retention-days: 30
+
+  # Security scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run security scan
+      run: |
+        python build/ci/scripts/security-scan.py
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: build/ci/security/
+        retention-days: 90
+
+  # Deployment (CD)
+  deploy-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [build-verification, code-quality, integration-tests, documentation-validation]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+    
+    - name: Deploy to staging
+      run: |
+        python build/cd/scripts/deploy-staging.py
+      env:
+        STAGING_TOKEN: ${{ secrets.STAGING_TOKEN }}
+    
+    - name: Run deployment tests
+      run: |
+        python build/cd/scripts/deployment-tests.py staging
+    
+    - name: Notify deployment
+      run: |
+        python build/ci/scripts/notify-deployment.py staging success
+
+  # Production deployment
+  deploy-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [build-verification, code-quality, integration-tests, documentation-validation]
+    if: github.event_name == 'release'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+    
+    - name: Deploy to production
+      run: |
+        python build/cd/scripts/deploy-production.py
+      env:
+        PRODUCTION_TOKEN: ${{ secrets.PRODUCTION_TOKEN }}
+    
+    - name: Run deployment tests
+      run: |
+        python build/cd/scripts/deployment-tests.py production
+    
+    - name: Notify deployment
+      run: |
+        python build/ci/scripts/notify-deployment.py production success

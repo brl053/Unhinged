@@ -14,6 +14,7 @@ from subprocess_utils import SubprocessRunner
 # Import psutil with fallback
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -29,7 +30,7 @@ class NetworkCollector:
 
     def collect_network_info(self):
         """Collect network information"""
-        from .system_info import NetworkInfo, NetworkInterface
+        from ..system_info import NetworkInfo, NetworkInterface
 
         network_info = NetworkInfo()
         network_info.hostname = platform.node()
@@ -90,4 +91,3 @@ class NetworkCollector:
                             current_interface.mac_address = parts[1]
 
         return network_info
-

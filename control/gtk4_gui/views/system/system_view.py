@@ -15,7 +15,7 @@ from gi.repository import Adw, GLib, Gtk
 
 # Import system info components
 try:
-    from ..system_info import get_system_info
+    from system_info import get_system_info
 
     SYSTEM_INFO_AVAILABLE = True
 except ImportError as e:
@@ -24,7 +24,7 @@ except ImportError as e:
 
 # Import realtime updates
 try:
-    from ..realtime_system_info import (
+    from realtime_system_info import (
         start_realtime_updates,
         stop_realtime_updates,
     )
@@ -250,7 +250,7 @@ class SystemInfoView:
         if SYSTEM_INFO_AVAILABLE:
             try:
                 # Clear cache and collect fresh data
-                from ..system_info import SystemInfoCollector
+                from system_info import SystemInfoCollector
 
                 collector = SystemInfoCollector(self.project_root)
                 collector.clear_cache()
@@ -401,7 +401,7 @@ class SystemInfoView:
         try:
             if SYSTEM_INFO_AVAILABLE:
                 # Clear cache and collect fresh data
-                from ..system_info import SystemInfoCollector
+                from system_info import SystemInfoCollector
 
                 collector = SystemInfoCollector(self.project_root)
                 collector.clear_cache()
@@ -482,7 +482,7 @@ class SystemInfoView:
             try:
                 # Clear system info cache
                 if SYSTEM_INFO_AVAILABLE:
-                    from ..system_info import SystemInfoCollector
+                    from system_info import SystemInfoCollector
 
                     collector = SystemInfoCollector(self.project_root)
                     collector.clear_cache()

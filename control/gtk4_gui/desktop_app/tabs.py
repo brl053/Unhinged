@@ -6,9 +6,14 @@
 Tab content creation for all application tabs.
 """
 
+import sys
 import traceback
+from pathlib import Path
 
 from gi.repository import Gtk
+
+# Add gtk4_gui to path for absolute imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TabContentFactory:
@@ -33,7 +38,7 @@ class TabContentFactory:
     def create_status_tab(app):
         """Create the status tab content using extracted StatusView."""
         try:
-            from .views.status_view import StatusView
+            from views.status_view import StatusView
 
             app.status_view = StatusView(app)
             return app.status_view.create_content()
@@ -46,7 +51,7 @@ class TabContentFactory:
     def create_system_info_tab(app):
         """Create the system info tab content using extracted SystemInfoView."""
         try:
-            from .views.system_view import SystemInfoView
+            from views.system.system_view import SystemInfoView
 
             app.system_info_view = SystemInfoView(app)
             return app.system_info_view.create_content()
@@ -59,7 +64,7 @@ class TabContentFactory:
     def create_processes_tab(app):
         """Create the processes tab content using extracted ProcessesView."""
         try:
-            from .views.processes_view import ProcessesView
+            from views.processes_view import ProcessesView
 
             app.processes_view = ProcessesView(app)
             return app.processes_view.create_content()
@@ -74,7 +79,7 @@ class TabContentFactory:
     def create_input_tab(app):
         """Create the Input tab content using InputView."""
         try:
-            from .views.input_view import InputView
+            from views.input_view import InputView
 
             input_view = InputView()
             widget = input_view.render()
@@ -91,7 +96,7 @@ class TabContentFactory:
     def create_chatroom_tab(app):
         """Create the OS Chatroom tab content using extracted ChatroomView."""
         try:
-            from .views.chatroom_view import ChatroomView
+            from views.chatroom.chatroom_view import ChatroomView
 
             app.chatroom_view = ChatroomView(app)
             return app.chatroom_view.create_content()
@@ -104,7 +109,7 @@ class TabContentFactory:
     def create_bluetooth_tab(app):
         """Create the Bluetooth tab content using extracted BluetoothView."""
         try:
-            from .views.bluetooth_view import BluetoothView
+            from views.bluetooth_view import BluetoothView
 
             app.bluetooth_view = BluetoothView(app)
             return app.bluetooth_view.create_content()
@@ -119,7 +124,7 @@ class TabContentFactory:
     def create_output_tab(app):
         """Create the Output tab content using extracted OutputView."""
         try:
-            from .views.output_view import OutputView
+            from views.output_view import OutputView
 
             app.output_view = OutputView(app)
             return app.output_view.create_content()
@@ -131,7 +136,7 @@ class TabContentFactory:
     def create_usb_tab(app):
         """Create the USB tab content using extracted USBView."""
         try:
-            from .views.usb_view import USBView
+            from views.usb_view import USBView
 
             app.usb_view = USBView(app)
             return app.usb_view.create_content()
@@ -144,7 +149,7 @@ class TabContentFactory:
     def create_graph_tab(app):
         """Create the Graph Editor tab content using GraphWorkspaceView."""
         try:
-            from .views.graph_workspace_view import GraphWorkspaceView
+            from views.graph_workspace_view import GraphWorkspaceView
 
             app.graph_workspace_view = GraphWorkspaceView(app)
             content = app.graph_workspace_view.create_content()
@@ -159,7 +164,7 @@ class TabContentFactory:
     def create_documents_tab(app):
         """Create the Documents tab content using DocumentWorkspaceView."""
         try:
-            from .views.document_workspace_view import DocumentWorkspaceView
+            from views.document_workspace_view import DocumentWorkspaceView
 
             app.document_workspace_view = DocumentWorkspaceView(app, document_type="document")
             return app.document_workspace_view.create_content()
@@ -172,7 +177,7 @@ class TabContentFactory:
     def create_gpu_tab(app):
         """Create the GPU tab content using GPUView."""
         try:
-            from .views.gpu_view import GPUView
+            from views.gpu_view import GPUView
 
             app.gpu_view = GPUView(app)
             return app.gpu_view.create_content()

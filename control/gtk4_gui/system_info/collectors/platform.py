@@ -18,6 +18,7 @@ from subprocess_utils import SubprocessRunner
 # Import psutil with fallback
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -34,7 +35,7 @@ class PlatformStatusCollector:
 
     def collect_system_status(self):
         """Collect system status information"""
-        from .system_info import SystemStatus
+        from ..system_info import SystemStatus
 
         system_status = SystemStatus()
 
@@ -75,7 +76,7 @@ class PlatformStatusCollector:
 
     def collect_platform_status(self):
         """Collect Unhinged platform-specific status"""
-        from .system_info import PlatformStatus
+        from ..system_info import PlatformStatus
 
         platform_status = PlatformStatus()
 
@@ -177,4 +178,3 @@ class PlatformStatusCollector:
             platform_status.services_failed = [f"Collection error: {str(e)}"]
 
         return platform_status
-

@@ -1,0 +1,85 @@
+# =============================================================================
+# Sovereign Image Generation Service Dockerfile
+# =============================================================================
+#
+# Optimized for RTX 5070 Ti with 16GB VRAM
+# Provides direct metal image generation without corporate wrapper bullshit
+#
+
+FROM nvidia/cuda:12.8-devel-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    git \
+    curl \
+    wget \
+    build-essential \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY build/requirements-core.txt /app/requirements-core.txt
+COPY build/requirements-image-gen-core.txt /app/requirements-image-gen.txt
+
+# Create virtual environment and install dependencies
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
+# Install core dependencies
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install -r requirements-core.txt
+RUN pip install -r requirements-image-gen.txt
+
+# Install PyTorch with CUDA support (specific version for compatibility)
+RUN pip install torch==2.9.0 torchvision==0.24.0 --index-url https://download.pytorch.org/whl/cu128
+
+# Try to install xformers (may fail, but that's okay)
+RUN pip install xformers --no-build-isolation || echo "⚠️ xformers installation failed, continuing without it"
+
+# Copy application code
+COPY build/modules/image_generation.py /app/modules/image_generation.py
+COPY build/config/image_gen_config.yml /app/config/image_gen_config.yml
+COPY services/image-generation/ /app/service/
+COPY libs/python/grpc/ /app/libs/python/grpc/
+COPY libs/event-framework/python/ /app/libs/event-framework/python/
+
+# Create necessary directories
+RUN mkdir -p /app/modules /app/config /app/logs /output /models
+
+# Set permissions
+RUN chmod +x /app/service/main.py
+
+# Install gRPC health check tool
+RUN pip install grpcio-health-checking
+
+# Health check using gRPC
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import grpc; from grpc_health.v1 import health_pb2_grpc, health_pb2; \
+        channel = grpc.insecure_channel('localhost:9094'); \
+        stub = health_pb2_grpc.HealthStub(channel); \
+        response = stub.Check(health_pb2.HealthCheckRequest()); \
+        exit(0 if response.status == health_pb2.HealthCheckResponse.SERVING else 1)"
+
+# Expose gRPC port
+EXPOSE 9094
+
+# Start the gRPC service
+WORKDIR /app/service
+CMD ["python", "main.py"]

@@ -21,7 +21,7 @@ class GPUCollector:
 
     def collect_gpu_info(self):
         """Collect GPU information"""
-        from .system_info import GPUInfo
+        from ..system_info import GPUInfo
 
         gpu_info = GPUInfo()
 
@@ -66,4 +66,3 @@ class GPUCollector:
                         break
 
         return gpu_info
-

@@ -38,9 +38,9 @@ class DocumentWorkspaceView(ViewBase):
     def create_content(self):
         """Create the document workspace content"""
         try:
-            from ..components import DocumentWorkspaceTabs
-            from ..components.document_registry import DocumentRegistry
-            from ..components.document_store_client import DocumentStoreClient
+            from components import DocumentWorkspaceTabs
+            from components.document_registry import DocumentRegistry
+            from components.document_store_client import DocumentStoreClient
 
             # Create main container
             main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -55,15 +55,11 @@ class DocumentWorkspaceView(ViewBase):
             self.doc_store_client = DocumentStoreClient()
 
             # Create workspace tabs
-            self.tabs = DocumentWorkspaceTabs(
-                document_type=self.document_type, doc_store_client=self.doc_store_client
-            )
+            self.tabs = DocumentWorkspaceTabs(document_type=self.document_type, doc_store_client=self.doc_store_client)
             self.tabs.on_workspace_changed = self._on_workspace_changed
 
             # Create registry for this document type
-            registry = DocumentRegistry(
-                document_type=self.document_type, doc_store_client=self.doc_store_client
-            )
+            registry = DocumentRegistry(document_type=self.document_type, doc_store_client=self.doc_store_client)
             registry.on_create = self._on_create_document
             registry.on_edit = self._on_edit_document
             registry.on_delete = self._on_delete_document

@@ -17,6 +17,7 @@ from subprocess_utils import SubprocessRunner
 # Import psutil with fallback
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -113,7 +114,7 @@ class CPUCollector:
 
     def collect_cpu_info(self):
         """Collect CPU information from multiple sources"""
-        from .system_info import CPUInfo
+        from ..system_info import CPUInfo
 
         cpu_info = CPUInfo()
         cpu_info.architecture = platform.machine()
@@ -153,9 +154,16 @@ class CPUCollector:
                 elif "Flags:" in line:
                     flags = line.split(":", 1)[1].strip().split()
                     interesting_features = [
-                        "avx", "avx2", "sse", "sse2", "sse3", "sse4_1", "sse4_2", "aes", "fma",
+                        "avx",
+                        "avx2",
+                        "sse",
+                        "sse2",
+                        "sse3",
+                        "sse4_1",
+                        "sse4_2",
+                        "aes",
+                        "fma",
                     ]
                     cpu_info.features = [f for f in flags if any(feat in f.lower() for feat in interesting_features)]
 
         return cpu_info
-

@@ -10,10 +10,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk
-
 # Import component library - FRAMEWORK ONLY
-from ..components import FormInput
+from components import FormInput
+from gi.repository import Gtk
 
 # Chatroom handlers
 from .handlers.image_handler import ChatImageHandler
@@ -30,7 +29,7 @@ COMPONENTS_AVAILABLE = True
 
 # Import voice visualizer separately
 try:
-    from ..components import voice_visualizer  # noqa: F401
+    from components import voice_visualizer  # noqa: F401
 
     VOICE_VISUALIZER_AVAILABLE = True
 except ImportError as e:

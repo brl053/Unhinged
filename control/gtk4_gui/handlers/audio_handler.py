@@ -64,6 +64,7 @@ class AudioHandler:
 
         # Legacy callback support
         self._state_callback: Callable[[RecordingState], None] | None = None
+        self._result_callback: Callable[[str], None] | None = None
         self._error_callback: Callable[[Exception], None] | None = None
         self._progress_callback: Callable[[float], None] | None = None
 
@@ -104,6 +105,26 @@ class AudioHandler:
     ) -> Callable[[], None]:
         """Subscribe to audio events via event bus."""
         return self._event_bus.subscribe(event_type, callback)
+
+    def set_callbacks(
+        self,
+        state_callback: Callable[[RecordingState], None] | None = None,
+        result_callback: Callable[[str], None] | None = None,
+        error_callback: Callable[[Exception], None] | None = None,
+        progress_callback: Callable[[float], None] | None = None,
+    ) -> None:
+        """Set legacy callbacks for recording state, results, and errors.
+
+        Args:
+            state_callback: Called when recording state changes
+            result_callback: Called when transcription completes with transcript text
+            error_callback: Called when an error occurs
+            progress_callback: Called with progress updates (0.0 to 1.0)
+        """
+        self._state_callback = state_callback
+        self._result_callback = result_callback
+        self._error_callback = error_callback
+        self._progress_callback = progress_callback
 
     def _initialize_audio_format(self) -> None:
         """Initialize audio format detection."""
@@ -268,8 +289,12 @@ class AudioHandler:
             self._cleanup()
             self._set_state(RecordingState.IDLE)
 
-            # Notify UI
+            # Notify UI via event bus
             self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text})
+
+            # Notify via legacy callback if set
+            if self._result_callback:
+                self._result_callback(result.text)
 
             logger.info(f"Transcription completed: {len(result.text)} chars")
 
