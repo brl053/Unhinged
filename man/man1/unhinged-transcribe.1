@@ -1,0 +1,132 @@
+.TH UNHINGED-TRANSCRIBE 1 "November 2025" "Unhinged" "User Commands"
+.SH NAME
+unhinged-transcribe \- Speech-to-text transcription for Unhinged platform
+
+.SH SYNOPSIS
+.B unhinged transcribe audio
+\fIAUDIO_FILE\fR [\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The
+.B unhinged transcribe
+command provides headless speech-to-text transcription using OpenAI Whisper.
+Designed to be layered with GTK4 UI later, this command works standalone
+for scripting and automation.
+
+.SH SUBCOMMANDS
+
+.SS AUDIO TRANSCRIPTION
+.B unhinged transcribe audio
+\fIAUDIO_FILE\fR [\fIOPTIONS\fR]
+
+Transcribe audio file to text using Whisper model.
+
+.B Supported Formats:
+WAV, MP3, FLAC, OGG, M4A
+
+.B Audio Transcription Options:
+.RS
+.TP
+.B -m, --model \fIMODEL\fR
+Whisper model size: tiny, base, small, medium, large (default: base)
+.TP
+.B -o, --output \fIPATH\fR
+Save transcript to file (default: stdout)
+.TP
+.B --metadata
+Include metadata (language, segments, duration)
+.RE
+
+.SH EXAMPLES
+
+Transcribe audio file with default settings:
+.RS
+.B unhinged transcribe audio recording.wav
+.RE
+
+Transcribe with large model for better accuracy:
+.RS
+.B unhinged transcribe audio meeting.mp3 -m large
+.RE
+
+Save transcript to file:
+.RS
+.B unhinged transcribe audio speech.wav -o transcript.txt
+.RE
+
+Include metadata in output:
+.RS
+.B unhinged transcribe audio audio.wav --metadata
+.RE
+
+.SH OUTPUT
+
+By default, transcript is printed to stdout. Use -o/--output to save to file.
+
+With --metadata flag, output includes:
+.RS
+.TP
+.B text
+The transcribed text
+.TP
+.B language
+Detected language code (e.g., "en", "es", "fr")
+.TP
+.B segments
+Detailed segments with timestamps
+.TP
+.B duration
+Estimated audio duration in seconds
+.RE
+
+.SH PERFORMANCE
+
+.B Model Sizes and Performance:
+.RS
+.TP
+.B tiny
+~39M parameters, fastest, lower accuracy
+.TP
+.B base
+~74M parameters, good balance (default)
+.TP
+.B small
+~244M parameters, better accuracy
+.TP
+.B medium
+~769M parameters, high accuracy
+.TP
+.B large
+~1550M parameters, highest accuracy, slowest
+.RE
+
+.B Memory Requirements:
+.RS
+.TP
+tiny: ~1GB VRAM
+.TP
+base: ~2GB VRAM
+.TP
+small: ~3GB VRAM
+.TP
+medium: ~5GB VRAM
+.TP
+large: ~10GB VRAM
+.RE
+
+.SH ENVIRONMENT VARIABLES
+
+.TP
+.B CUDA_VISIBLE_DEVICES
+Specify which GPU to use (e.g., "0" for first GPU)
+
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-generate (1)
+
+.SH AUTHOR
+Unhinged Team
+
+.SH BUGS
+Report bugs at: https://github.com/brl053/Unhinged/issues
+

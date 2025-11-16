@@ -1,8 +1,11 @@
 .TH UNHINGED-GENERATE 1 "November 2025" "Unhinged" "User Commands"
 .SH NAME
-unhinged-generate \- Headless image and video generation for Unhinged platform
+unhinged-generate \- Headless content generation (text, images, video) for Unhinged platform
 
 .SH SYNOPSIS
+.B unhinged generate text
+[\fIPROMPT\fR] [\fIOPTIONS\fR]
+.br
 .B unhinged generate image
 [\fIMODEL\fR] [\fIPROMPT\fR] [\fIOPTIONS\fR]
 .br
@@ -12,11 +15,47 @@ unhinged-generate \- Headless image and video generation for Unhinged platform
 .SH DESCRIPTION
 The
 .B unhinged generate
-command provides headless generation of images and videos using GPU-accelerated
+command provides headless generation of text, images, and videos using LLM and GPU-accelerated
 models. Designed to be layered with GTK4 UI later, this command works standalone
 for scripting and automation.
 
 .SH SUBCOMMANDS
+
+.SS TEXT GENERATION
+.B unhinged generate text
+[\fIPROMPT\fR] [\fIOPTIONS\fR]
+
+Generate text from prompts using LLM models. Prompt can be provided as:
+.RS
+.TP
+.B Command argument:
+unhinged generate text "write a haiku about the moon"
+.TP
+.B File:
+unhinged generate text -f prompt.txt
+.TP
+.B Stdin:
+echo "write a haiku" | unhinged generate text
+.RE
+
+.B Text Generation Options:
+.RS
+.TP
+.B -m, --model \fIMODEL\fR
+LLM model to use (default: llama2)
+.TP
+.B -p, --provider \fIPROVIDER\fR
+LLM provider: ollama, openai, anthropic (default: ollama)
+.TP
+.B -t, --tokens \fINUM\fR
+Maximum tokens to generate (default: 512)
+.TP
+.B --temperature \fFLOAT\fR
+Sampling temperature 0.0-1.0 (default: 0.7)
+.TP
+.B -f, --file \fIPATH\fR
+Read prompt from file instead of argument
+.RE
 
 .SS IMAGE GENERATION
 .B unhinged generate image
@@ -92,6 +131,32 @@ Output format: json or text (default: text)
 .RE
 
 .SH EXAMPLES
+
+.SS Text Generation
+Generate a haiku about the moon:
+.RS
+.B unhinged generate text "write me a haiku about the moon on an autumn night"
+.RE
+
+Generate with Mistral model:
+.RS
+.B unhinged generate text -m mistral "explain quantum computing in simple terms"
+.RE
+
+Generate with OpenAI GPT-4:
+.RS
+.B unhinged generate text -p openai -m gpt-4 "write a short poem about the sea"
+.RE
+
+Generate from file:
+.RS
+.B unhinged generate text -f prompt.txt
+.RE
+
+Generate from stdin:
+.RS
+.B cat prompt.txt | unhinged generate text
+.RE
 
 .SS Image Generation
 Generate a landscape with default settings:
