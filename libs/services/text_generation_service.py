@@ -9,6 +9,8 @@ Direct Python implementation - no gRPC overhead.
 import logging
 from typing import Any
 
+import requests  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,27 +32,56 @@ class TextGenerationService:
 
         logger.info(f"TextGenerationService initialized (model: {model}, provider: {provider})")
 
-    def _load_client(self):
+    def _check_ollama_health(self) -> bool:
+        """Check if Ollama service is available at localhost:11434."""
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            return response.status_code == 200
+        except (requests.ConnectionError, requests.Timeout, Exception):
+            return False
+
+    def _load_ollama_client(self) -> None:
+        """Load Ollama client with health check."""
+        if not self._check_ollama_health():
+            error_msg = (
+                "Ollama service is not running. "
+                "Please start Ollama with: ollama serve\n"
+                "Or install from: https://ollama.com/download"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+
+        import ollama
+
+        self.client = ollama
+        logger.info(f"Ollama client initialized for model: {self.model}")
+
+    def _load_openai_client(self) -> None:
+        """Load OpenAI client."""
+        from openai import OpenAI
+
+        self.client = OpenAI()
+        logger.info("OpenAI client initialized")
+
+    def _load_anthropic_client(self) -> None:
+        """Load Anthropic client."""
+        from anthropic import Anthropic
+
+        self.client = Anthropic()
+        logger.info("Anthropic client initialized")
+
+    def _load_client(self) -> None:
         """Load LLM client (lazy loading)"""
         if self.model_loaded:
             return
 
         try:
             if self.provider == "ollama":
-                import ollama
-
-                self.client = ollama
-                logger.info(f"Ollama client initialized for model: {self.model}")
+                self._load_ollama_client()
             elif self.provider == "openai":
-                from openai import OpenAI
-
-                self.client = OpenAI()
-                logger.info("OpenAI client initialized")
+                self._load_openai_client()
             elif self.provider == "anthropic":
-                from anthropic import Anthropic
-
-                self.client = Anthropic()
-                logger.info("Anthropic client initialized")
+                self._load_anthropic_client()
             else:
                 raise ValueError(f"Unknown provider: {self.provider}")
 
@@ -123,6 +154,12 @@ class TextGenerationService:
             logger.info(f"Generation complete: {len(text)} characters")
             return text
 
+        except ConnectionError as e:
+            error_msg = (
+                f"Connection error with {self.provider}: {e}\n" "Please ensure the service is running and accessible."
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
         except Exception as e:
             logger.error(f"Text generation failed: {e}")
             raise RuntimeError(f"Failed to generate text: {e}") from e

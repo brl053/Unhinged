@@ -1,0 +1,127 @@
+================================================================================
+MEMORANDUM
+================================================================================
+
+TO:      Software Engineering Team
+FROM:    Augment Agent (Senior Reviewer)
+DATE:    2025-11-16
+RE:      OrbStack Migration Assessment - Docker to OrbStack Transition
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+Unhinged currently uses Docker Compose for container orchestration. A migration
+to OrbStack (https://orbstack.dev/) is proposed. This memo assesses the scope,
+risks, and technical implications.
+
+================================================================================
+CURRENT STATE: DOCKER-BASED ARCHITECTURE
+================================================================================
+
+1. ORCHESTRATION LAYER
+   - Docker Compose files: build/orchestration/docker-compose.{production,development}.yml
+   - Services: LLM (Ollama), Vision AI, Speech-to-Text, Persistence Platform
+   - Port mapping: 1100-1299 range for services
+   - Network: unhinged-network (Docker bridge network)
+
+2. SERVICE STARTUP FLOW
+   - ./unhinged CLI (bash shim) → Python Click app (control.cli)
+   - Services NOT auto-started with CLI
+   - Manual startup: docker compose up -d OR make up
+   - Service launcher (control/service_launcher.py) manages Docker Compose calls
+
+3. CURRENT DEPENDENCIES
+   - Docker daemon required
+   - docker-compose CLI tool
+   - Health checks via HTTP/gRPC
+   - Volume management for persistent data (llm-models, postgres-data, redis-data)
+
+================================================================================
+ORBSTACK: WHAT IT IS
+================================================================================
+
+OrbStack is a lightweight container runtime for macOS/Linux that:
+- Replaces Docker Desktop (macOS) or Docker Engine (Linux)
+- Provides native container execution without VM overhead
+- Supports Docker Compose syntax (backward compatible)
+- Offers better resource efficiency than Docker
+- Includes built-in Kubernetes support (optional)
+
+KEY DIFFERENCE: OrbStack is a container runtime, NOT a container orchestrator.
+It executes containers but doesn't replace Compose for multi-container workflows.
+
+================================================================================
+MIGRATION SCOPE & IMPACT
+================================================================================
+
+MINIMAL CHANGES REQUIRED:
+✓ Docker Compose files remain unchanged (OrbStack supports Compose syntax)
+✓ Port mappings work identically
+✓ Volume management compatible
+✓ Health checks unchanged
+✓ Network configuration compatible
+
+MODERATE CHANGES REQUIRED:
+- Installation: Replace Docker with OrbStack
+- CLI commands: docker → orbctl (or docker compatibility layer)
+- Environment setup: Update build/setup_check.py to detect OrbStack
+- Documentation: Update README with OrbStack setup instructions
+
+POTENTIAL ISSUES:
+- Linux support: OrbStack is primarily macOS-focused (Linux support emerging)
+- Compatibility: Verify all Dockerfiles work with OrbStack runtime
+- Networking: OrbStack networking model differs slightly from Docker
+- Performance: Benchmark resource usage vs Docker
+
+================================================================================
+TECHNICAL ASSESSMENT
+================================================================================
+
+RISK LEVEL: MEDIUM
+
+Rationale:
+- Compose files are portable (low risk)
+- Runtime differences may cause subtle issues (medium risk)
+- Linux support is not production-ready (high risk if Linux-primary)
+- Rollback path exists (Docker still available)
+
+EFFORT ESTIMATE: 2-3 days
+- 4 hours: Environment detection & setup scripts
+- 4 hours: Testing all services with OrbStack
+- 4 hours: Documentation & troubleshooting
+- 4 hours: Contingency & rollback procedures
+
+================================================================================
+DECISION REQUIRED
+================================================================================
+
+1. Is Unhinged Linux-primary or macOS-primary?
+   → OrbStack Linux support is experimental
+   → Docker remains more stable on Linux
+
+2. What is the motivation for migration?
+   → Resource efficiency? (OrbStack wins)
+   → Licensing? (OrbStack is open-source)
+   → Simplicity? (Marginal improvement)
+
+3. Timeline constraints?
+   → Can we afford 2-3 day migration window?
+   → Do we need rollback capability?
+
+================================================================================
+RECOMMENDATION
+================================================================================
+
+PROCEED WITH CAUTION:
+1. Verify OrbStack Linux support meets production requirements
+2. Create isolated test environment for migration
+3. Maintain Docker setup as fallback during transition
+4. Migrate incrementally (dev environment first, then production)
+5. Document all changes for team knowledge base
+
+ALTERNATIVE: Defer migration until OrbStack Linux support is stable.
+Current Docker setup is functional and well-understood.
+
+================================================================================
+
