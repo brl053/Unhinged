@@ -21,6 +21,8 @@ from .chat_image_handler import ChatImageHandler
 from .chat_input_handler import ChatInputHandler
 from .chat_message_display import ChatMessageDisplay
 from .chat_voice_handler import ChatVoiceHandler
+from .chatroom_session import SessionManager
+from .chatroom_llm import LLMInteraction
 
 # Framework availability - NO FALLBACK
 COMPONENTS_AVAILABLE = True
@@ -67,12 +69,14 @@ class ChatroomView:
         self.input_handler = ChatInputHandler(self)
         self.voice_handler = ChatVoiceHandler(self)
         self.image_handler = ChatImageHandler(self)
+        self.session_manager = SessionManager(self)
+        self.llm_interaction = LLMInteraction(self)
 
         self._recording_status_label = None
 
         # Session management state
         self._current_session_id = None
-        self._session_status = "no_session"  # no_session, creating, active
+        self._session_status = "no_session"
 
     def create_content(self):
         """Create the OS Chatroom tab content with design system layout utilities."""
@@ -184,63 +188,12 @@ class ChatroomView:
         return chatroom_container
 
     def _create_new_session(self):
-        """Create a new chat session using gRPC ChatService"""
-        try:
-            # Prevent multiple session creation requests
-            if self._session_status != "no_session":
-                print(f"⚠️ Session creation already in progress or session exists (status: {self._session_status})")
-                return
-
-            # Clear old messages from previous session
-            self._clear_message_container()
-
-            # Update session status to creating
-            self._session_status = "creating"
-
-            # Create session in background thread
-            import threading
-
-            thread = threading.Thread(target=self._create_session_grpc, daemon=True)
-            thread.start()
-
-        except Exception as e:
-            print(f"❌ Create session error: {e}")
-            self._session_status = "no_session"
-
-    def _create_session_grpc(self):
-        """Create session using direct ChatService (no gRPC overhead)"""
-        from libs.services import ChatService
-
-        try:
-            # Create chat service instance
-            if not hasattr(self, "_chat_service"):
-                self._chat_service = ChatService()
-
-            # Create new conversation
-            conversation = self._chat_service.create_conversation(
-                metadata={
-                    "title": f"OS Chatroom Session {self._get_timestamp()}",
-                    "description": "Desktop OS Chatroom conversation session",
-                    "model": "llama3.2",
-                    "temperature": 0.7,
-                    "max_tokens": 2048,
-                }
-            )
-
-            # Notify UI on main thread
-            GLib.idle_add(self._on_session_created, conversation.conversation_id)
-
-        except Exception as e:
-            print(f"❌ Session creation error: {e}")
-            GLib.idle_add(self._on_session_creation_failed, f"Failed to create session: {e}")
-
-    # SIMULATION REMOVED - FRAMEWORK ONLY
+        """Delegate to SessionManager."""
+        self.session_manager.create_new_session()
 
     def _get_timestamp(self):
         """Get current timestamp for session naming"""
-        import datetime
-
-        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return self.session_manager._get_timestamp()
 
     def _on_session_created(self, session_id):
         """Handle successful session creation"""
@@ -467,202 +420,44 @@ class ChatroomView:
             self._add_error_message(f"Failed to display image: {e}")
 
     def _send_to_llm_with_session(self, message):
-        """Send message to LLM with session context and archival"""
-        try:
-            # Log message with session context
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event(
-                    "CHAT_MESSAGE_SENT",
-                    f"Session {self._current_session_id}: {message[:50]}...",
-                )
-
-            # Send message if session is active
-            if self._current_session_id:
-                # Check for image generation request
-                image_request = self._detect_image_generation_request(message)
-                if image_request:
-                    self._handle_image_generation_request(image_request, message)
-                else:
-                    # Use framework-only text chat
-                    self._send_text_message_framework(message)
-            else:
-                # This shouldn't happen due to UI controls, but handle gracefully
-                print("⚠️ Attempting to send message without active session")
-                if hasattr(self.app, "show_toast"):
-                    self.app.show_toast("No active session - please create a session first")
-
-        except Exception as e:
-            print(f"❌ Send message with session error: {e}")
-            # NO FALLBACK - FRAMEWORK ONLY
+        """Delegate to LLMInteraction."""
+        self.llm_interaction.send_to_llm_with_session(message)
 
     def _detect_image_generation_request(self, message_text):
-        """Detect image generation requests using framework-only intent detection"""
-        # DISABLED - Use /image command instead
-        # The gRPC image generation service is not running
-        # Users should use: /image <prompt>
-        return None
+        """Delegate to LLMInteraction."""
+        return self.llm_interaction._detect_image_generation_request(message_text)
 
     def _handle_image_generation_request(self, image_request, original_message):
-        """Handle image generation using FRAMEWORK ONLY - DISABLED
-
-        The gRPC image generation service is not running.
-        Use /image command instead for local GPU-accelerated generation.
-        """
-        # This method is disabled - use /image command instead
-        pass
+        """Delegate to LLMInteraction."""
+        self.llm_interaction._handle_image_generation_request(image_request, original_message)
 
     def _image_generation_with_framework(self, image_request, thinking_box, original_message):
-        """Hardware-aware image generation using service framework - DISABLED
-
-        The gRPC image generation service is not running.
-        Use /image command instead for local GPU-accelerated generation.
-        """
-        # This method is disabled - use /image command instead
-        pass
+        """Delegate to LLMInteraction."""
+        self.llm_interaction._image_generation_with_framework(image_request, thinking_box, original_message)
 
     def _add_error_message(self, error_msg):
         """Delegate to message_display handler"""
         return self.message_display.add_error_message(error_msg)
 
     def _send_text_message_framework(self, message):
-        """Send text message using FRAMEWORK ONLY - NO LEGACY"""
-        # FRAMEWORK ONLY - NO LEGACY LLM METHOD
-        import sys
-        from pathlib import Path as PathlibPath
-
-        project_root = PathlibPath(__file__).parent.parent.parent
-        grpc_lib_path = project_root / "libs" / "python" / "grpc"
-        if grpc_lib_path.exists():
-            sys.path.insert(0, str(grpc_lib_path.parent))
-
-        from service_framework import ResourceManager
-
-        # Get resource manager for hardware-aware processing
-        resource_manager = ResourceManager("chatroom_view")
-
-        # Add thinking indicator
-        thinking_box = self._add_thinking_indicator()
-
-        # Submit to I/O thread pool for text processing
-        future = resource_manager.submit_io_task(self._text_chat_framework_thread, message, thinking_box)
-
-        # Store future for potential cancellation
-        thinking_box.chat_future = future
+        """Delegate to LLMInteraction."""
+        self.llm_interaction._send_text_message_framework(message)
 
     def _add_thinking_indicator(self):
         """Delegate to message_display handler"""
         return self.message_display.add_thinking_indicator()
 
     def _text_chat_framework_thread(self, message, thinking_box):
-        """Handle text chat using direct ChatService + Ollama LLM"""
-        try:
-            import requests
-            from gi.repository import GLib
-
-            # Step 1: Send user message to chat service (store it)
-            try:
-                self._chat_service.send_message(self._current_session_id, "user", message)
-            except Exception as e:
-                GLib.idle_add(
-                    self._handle_text_error,
-                    f"Chat service error: {e}",
-                    thinking_box,
-                )
-                return
-
-            # Step 2: Call Ollama LLM to generate response
-            try:
-                ollama_response = requests.post(
-                    "http://localhost:1500/api/generate",
-                    json={
-                        "model": "llama2",  # Default model
-                        "prompt": message,
-                        "stream": False,
-                        "temperature": 0.7,
-                    },
-                    timeout=120.0,
-                )
-                ollama_response.raise_for_status()
-
-                response_data = ollama_response.json()
-                assistant_response = response_data.get("response", "No response from LLM")
-            except requests.exceptions.ConnectionError:
-                assistant_response = "Error: LLM service not available at localhost:1500"
-            except requests.exceptions.Timeout:
-                assistant_response = "Error: LLM service timeout (took longer than 120 seconds)"
-            except Exception as e:
-                assistant_response = f"Error: LLM generation failed: {str(e)}"
-
-            # Step 3: Send assistant response to chat service (store it)
-            if not assistant_response.startswith("Error:"):
-                try:
-                    self._chat_service.send_message(self._current_session_id, "assistant", assistant_response)
-                except Exception as e:
-                    print(f"⚠️ Failed to store assistant response: {e}")
-
-            # Step 4: Update UI on main thread
-            GLib.idle_add(self._handle_text_response, assistant_response, thinking_box)
-
-        except Exception as e:
-            from gi.repository import GLib
-
-            GLib.idle_add(self._handle_text_error, f"Text chat failed: {e}", thinking_box)
+        """Delegate to LLMInteraction."""
+        self.llm_interaction._text_chat_framework_thread(message, thinking_box)
 
     def _handle_text_response(self, response, thinking_box):
-        """Handle text response using framework patterns"""
-        try:
-            # Remove thinking indicator
-            if thinking_box and thinking_box.get_parent():
-                self._messages_container.remove(thinking_box)
-
-            # Add assistant response
-            self._add_chat_message("Assistant", response, "assistant")
-
-            # Log the interaction
-            if hasattr(self.app, "session_logger") and self.app.session_logger:
-                self.app.session_logger.log_gui_event("TEXT_RESPONSE_RECEIVED", f"Response length: {len(response)}")
-
-            # Re-enable send button only if there's content AND active session
-            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
-                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
-            else:
-                buffer = self._chat_input.get_buffer()
-                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
-            has_session = self._session_status == "active"
-            self._chatroom_send_button.set_sensitive(has_content and has_session)
-
-        except Exception as e:
-            print(f"❌ Handle text response error: {e}")
+        """Delegate to LLMInteraction."""
+        self.llm_interaction._handle_text_response(response, thinking_box)
 
     def _handle_text_error(self, error_msg, thinking_box):
-        """Handle text chat error using framework patterns"""
-        try:
-            # Remove thinking indicator
-            if thinking_box and thinking_box.get_parent():
-                self._messages_container.remove(thinking_box)
-
-            # Add error message
-            self._add_chat_message("System", f"Framework Error: {error_msg}", "error")
-
-            # Re-enable send button only if there's content AND active session
-            if COMPONENTS_AVAILABLE and isinstance(self._chat_input, FormInput):
-                has_content = self._chat_input.get_value() and str(self._chat_input.get_value()).strip()
-            elif COMPONENTS_AVAILABLE and hasattr(self._chat_input, "get_content"):
-                has_content = self._chat_input.get_content() and self._chat_input.get_content().strip()
-            else:
-                buffer = self._chat_input.get_buffer()
-                has_content = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False).strip()
-            has_session = self._session_status == "active"
-            self._chatroom_send_button.set_sensitive(has_content and has_session)
-
-            # Show toast
-            if hasattr(self.app, "show_toast"):
-                self.app.show_toast(error_msg)
-
-        except Exception as e:
-            print(f"❌ Handle text error: {e}")
+        """Delegate to LLMInteraction."""
+        self.llm_interaction._handle_text_error(error_msg, thinking_box)
 
     def _on_tts_button_clicked(self, button, text):
         """Delegate to message_display handler"""
