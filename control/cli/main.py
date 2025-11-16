@@ -1,5 +1,6 @@
 """Unhinged CLI - Main entry point."""
 
+import os
 import subprocess
 
 import click
@@ -25,6 +26,20 @@ def cli(ctx):
         result = subprocess.run([python_cmd, "control/service_launcher.py", "--timeout", "120"])
         if result.returncode != 0:
             log_info("⚠️  Some services failed to start - continuing with available services")
+
+        # Initialize session before launching GUI
+        log_info("📋 Initializing chat session...")
+        from control.service_launcher import ServiceLauncher
+
+        launcher = ServiceLauncher()
+        session_id = launcher.initialize_session(timeout=30)
+
+        if session_id:
+            log_info(f"✅ Session initialized: {session_id}")
+            # Pass session_id to GUI via environment variable
+            os.environ["UNHINGED_SESSION_ID"] = session_id
+        else:
+            log_info("⚠️  Session initialization failed - GUI will create session on startup")
 
         log_info("📺 Launching GUI...")
         subprocess.run([python_cmd, "control/gtk4_gui/launch.py"])
