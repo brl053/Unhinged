@@ -47,9 +47,14 @@ logger = logging.getLogger(__name__)
 
 
 class AudioHandler:
-    """Coordinates audio recording and transcription operations."""
+    """Coordinates audio recording and transcription operations.
 
-    def __init__(self):
+    Integrates with both:
+    - Event Bus: Real-time UI updates via TRANSCRIPTION_* events
+    - Event Framework: Persistent logging via GUISessionLogger
+    """
+
+    def __init__(self, session_logger=None):
         """Initialize handler with component delegation."""
         self._state = RecordingState.IDLE
         self._temp_file: Path | None = None
@@ -58,6 +63,9 @@ class AudioHandler:
 
         # Event bus for UI updates
         self._event_bus = get_event_bus()
+
+        # Session logger for persistent event logging (event framework integration)
+        self._session_logger = session_logger
 
         # Real-time audio visualization
         self._visualization_bridge = AudioVisualizationBridge()
@@ -186,6 +194,13 @@ class AudioHandler:
             "details": getattr(error, "details", {}),
         }
 
+        # Log to event framework (persistent audit trail)
+        if self._session_logger:
+            self._session_logger.log_gui_event(
+                "TRANSCRIPTION_ERROR",
+                f"Transcription error: {error_data['type']} - {error_data['message']}"
+            )
+
         # Emit granular transcription error event (preferred)
         self._event_bus.emit_simple(AudioEvents.TRANSCRIPTION_ERROR, error_data)
 
@@ -297,6 +312,14 @@ class AudioHandler:
             # Start transcription
             self._set_state(RecordingState.PROCESSING)
             self._event_bus.emit_simple(AudioEvents.TRANSCRIPTION_STARTED, {})
+
+            # Log to event framework
+            if self._session_logger:
+                self._session_logger.log_gui_event(
+                    "TRANSCRIPTION_STARTED",
+                    "Audio transcription started"
+                )
+
             result = self.transcriber.transcribe(self._temp_file)
 
             # Clean up
@@ -311,6 +334,13 @@ class AudioHandler:
                     "duration": time.time(),  # Timestamp for audit trail
                 }
             )
+
+            # Log to event framework (persistent audit trail)
+            if self._session_logger:
+                self._session_logger.log_gui_event(
+                    "TRANSCRIPTION_COMPLETED",
+                    f"Transcription completed: {len(result.text)} characters"
+                )
 
             # Legacy event for backward compatibility (DEPRECATED)
             self._event_bus.emit_simple(AudioEvents.AMPLITUDE_UPDATED, {"transcript": result.text})

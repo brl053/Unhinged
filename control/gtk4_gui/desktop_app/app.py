@@ -200,7 +200,9 @@ class UnhingedDesktopApp(Adw.Application):
         self.audio_handler = None
         if ARCHITECTURE_AVAILABLE:
             try:
-                self.audio_handler = AudioHandler()
+                # Pass session logger for persistent event logging (event framework integration)
+                self.audio_handler = AudioHandler(session_logger=self.session_logger)
+
                 # Only set result_callback if FormInput is NOT available
                 # FormInput handles transcription via event bus subscription
                 # This prevents duplicate transcripts
