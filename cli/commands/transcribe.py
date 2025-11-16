@@ -6,7 +6,12 @@ from pathlib import Path
 import click
 
 from cli.utils import log_error, log_info, log_success
-from libs.services.transcription_service import TranscriptionService
+
+# Import service - handle both direct and pytest imports
+try:
+    from libs.services import TranscriptionService
+except ImportError:
+    from libs.services.transcription_service import TranscriptionService
 
 
 @click.group()

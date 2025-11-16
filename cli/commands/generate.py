@@ -6,7 +6,12 @@ from pathlib import Path
 import click
 
 from cli.utils import log_error, log_info, log_success
-from libs.services.text_generation_service import TextGenerationService
+
+# Import service - handle both direct and pytest imports
+try:
+    from libs.services import TextGenerationService
+except ImportError:
+    from libs.services.text_generation_service import TextGenerationService
 
 
 @click.group()
