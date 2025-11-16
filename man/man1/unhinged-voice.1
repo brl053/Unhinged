@@ -1,0 +1,145 @@
+.TH UNHINGED-VOICE 1 "November 2025" "Unhinged" "User Commands"
+.SH NAME
+unhinged-voice \- Text-to-speech voice generation for Unhinged platform
+
+.SH SYNOPSIS
+.B unhinged voice generate
+\fITEXT\fR [\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The
+.B unhinged voice
+command provides text-to-speech voice generation with multiple voice options.
+Designed to be layered with GTK4 UI later, this command works standalone
+for scripting and automation.
+
+.SH SUBCOMMANDS
+
+.SS VOICE GENERATION
+.B unhinged voice generate
+\fITEXT\fR [\fIOPTIONS\fR]
+
+Generate voice/audio from text using TTS engine.
+
+.B Voice Generation Options:
+.RS
+.TP
+.B -v, --voice \fIVOICE\fR
+Voice to use: nova, echo, sage, shimmer (default: nova)
+.TP
+.B --speed \fISPEED\fR
+Speech speed 0.5-2.0 (default: 1.0)
+.TP
+.B -e, --emotion \fIEMOTION\fR
+Emotion/tone: neutral, happy, sad, angry (default: neutral)
+.TP
+.B -o, --output \fIPATH\fR
+Save audio to file (default: stdout path)
+.TP
+.B -f, --file \fIPATH\fR
+Read text from file instead of argument
+.RE
+
+.SH VOICE DESCRIPTIONS
+
+.TP
+.B nova
+Female voice, American accent, natural speed
+.TP
+.B echo
+Male voice, American accent, natural speed
+.TP
+.B sage
+Male voice, American accent, slightly slower
+.TP
+.B shimmer
+Female voice, British accent, natural speed
+
+.SH EXAMPLES
+
+Generate voice with default settings:
+.RS
+.B unhinged voice generate "Hello world"
+.RE
+
+Generate with different voice:
+.RS
+.B unhinged voice generate "Hello world" -v echo
+.RE
+
+Generate with faster speech:
+.RS
+.B unhinged voice generate "Hello world" --speed 1.5
+.RE
+
+Generate with emotion:
+.RS
+.B unhinged voice generate "I love this!" -e happy
+.RE
+
+Save audio to file:
+.RS
+.B unhinged voice generate "Hello world" -o greeting.mp3
+.RE
+
+Read text from file:
+.RS
+.B unhinged voice generate -f script.txt
+.RE
+
+Pipe text from stdin:
+.RS
+.B echo "Hello world" | unhinged voice generate
+.RE
+
+.SH OUTPUT
+
+Generated audio files are saved to:
+.RS
+.B /build/tmp/generated/
+.RE
+
+Audio format: MP3 (default)
+Sample rate: 24000 Hz
+
+.SH SPEED SETTINGS
+
+.TP
+.B 0.5x
+Very slow, good for emphasis
+.TP
+.B 1.0x
+Normal speed (default)
+.TP
+.B 1.5x
+Fast, good for quick delivery
+.TP
+.B 2.0x
+Very fast, maximum speed
+
+.SH EMOTION SETTINGS
+
+.TP
+.B neutral
+Standard, professional tone
+.TP
+.B happy
+Upbeat, enthusiastic tone
+.TP
+.B sad
+Somber, melancholic tone
+.TP
+.B angry
+Intense, forceful tone
+
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-generate (1),
+.BR unhinged-image (1)
+
+.SH AUTHOR
+Unhinged Team
+
+.SH BUGS
+Report bugs at: https://github.com/brl053/Unhinged/issues
+

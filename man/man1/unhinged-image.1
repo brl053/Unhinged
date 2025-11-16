@@ -1,0 +1,135 @@
+.TH UNHINGED-IMAGE 1 "November 2025" "Unhinged" "User Commands"
+.SH NAME
+unhinged-image \- GPU-accelerated image generation for Unhinged platform
+
+.SH SYNOPSIS
+.B unhinged image generate
+\fIPROMPT\fR [\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The
+.B unhinged image
+command provides GPU-accelerated image generation using Stable Diffusion.
+Designed to be layered with GTK4 UI later, this command works standalone
+for scripting and automation.
+
+.SH SUBCOMMANDS
+
+.SS IMAGE GENERATION
+.B unhinged image generate
+\fIPROMPT\fR [\fIOPTIONS\fR]
+
+Generate image from text prompt using Stable Diffusion.
+
+.B Image Generation Options:
+.RS
+.TP
+.B -w, --width \fIWIDTH\fR
+Image width in pixels (default: 512)
+.TP
+.B -h, --height \fIHEIGHT\fR
+Image height in pixels (default: 512)
+.TP
+.B --steps \fISTEPS\fR
+Inference steps 20-50, lower=faster (default: 20)
+.TP
+.B --guidance \fIGUIDANCE\fR
+Guidance scale 1.0-20.0, higher=stricter (default: 7.5)
+.TP
+.B -o, --output \fIPATH\fR
+Save image to file (default: stdout path)
+.TP
+.B -f, --file \fIPATH\fR
+Read prompt from file instead of argument
+.RE
+
+.SH EXAMPLES
+
+Generate image with default settings:
+.RS
+.B unhinged image generate "a sunset over mountains"
+.RE
+
+Generate larger image:
+.RS
+.B unhinged image generate "a cat" -w 768 -h 768
+.RE
+
+Generate with more inference steps for better quality:
+.RS
+.B unhinged image generate "a dog" --steps 30
+.RE
+
+Generate with higher guidance scale:
+.RS
+.B unhinged image generate "a landscape" --guidance 8.0
+.RE
+
+Save image to file:
+.RS
+.B unhinged image generate "a portrait" -o output.png
+.RE
+
+Read prompt from file:
+.RS
+.B unhinged image generate -f prompt.txt
+.RE
+
+.SH PERFORMANCE
+
+.B Inference Steps and Speed:
+.RS
+.TP
+.B 20 steps
+Fastest, lower quality (default)
+.TP
+.B 30 steps
+Good balance
+.TP
+.B 40-50 steps
+Highest quality, slowest
+.RE
+
+.B GPU Requirements:
+.RS
+.TP
+.B NVIDIA RTX 3060+
+Recommended for real-time generation
+.TP
+.B NVIDIA RTX 4070+
+Optimal for batch generation
+.TP
+.B CPU
+Supported but very slow (10+ minutes per image)
+.RE
+
+.SH ENVIRONMENT VARIABLES
+
+.TP
+.B CUDA_VISIBLE_DEVICES
+Specify which GPU to use (e.g., "0" for first GPU)
+
+.TP
+.B HF_HOME
+Hugging Face cache directory for models
+
+.SH OUTPUT
+
+Generated images are saved to:
+.RS
+.B /build/tmp/generated_images/
+.RE
+
+Each image is timestamped: generated_YYYYMMDD_HHMMSS.png
+
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-generate (1),
+.BR unhinged-voice (1)
+
+.SH AUTHOR
+Unhinged Team
+
+.SH BUGS
+Report bugs at: https://github.com/brl053/Unhinged/issues
+
