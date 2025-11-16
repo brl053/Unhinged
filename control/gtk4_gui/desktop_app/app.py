@@ -31,7 +31,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gtk
 
 # Add virtual environment packages to path for gRPC support
 # Calculate project root correctly (control/gtk4_gui/desktop_app.py -> project root)
@@ -197,7 +197,10 @@ class UnhingedDesktopApp(Adw.Application):
         self.output_capture = None
         if SESSION_LOGGING_AVAILABLE:
             try:
-                self.session_logger = create_gui_session_logger(self.project_root)
+                # Get session_id from environment (set by service launcher)
+                # If not available, GUISessionLogger will use TBD (legacy fallback)
+                session_id = os.environ.get("UNHINGED_SESSION_ID")
+                self.session_logger = create_gui_session_logger(self.project_root, session_id=session_id)
                 self.output_capture = GUIOutputCapture(self.session_logger, self._gui_log_callback)
                 self.session_logger.log_session_event("APP_INIT", "GTK4 desktop app with system info integration")
             except Exception:
@@ -333,33 +336,7 @@ class UnhingedDesktopApp(Adw.Application):
 
     def create_chatroom_tab_content(self):
         """Delegate to TabContentFactory."""
-        content = TabContentFactory.create_chatroom_tab(self)
-        GLib.idle_add(self._auto_create_session)
-        return content
-
-    def _auto_create_session(self):
-        """Automatically create a session on app launch (headless)"""
-        try:
-            if (
-                hasattr(self, "chatroom_view")
-                and self.chatroom_view
-                and self.chatroom_view._session_status == "no_session"
-            ):
-                # Check if session already exists
-                self.chatroom_view._create_new_session()
-                if self.session_logger:
-                    self.session_logger.log_gui_event(
-                        "AUTO_SESSION_CREATED",
-                        "Session automatically created on app launch (headless)",
-                    )
-        except Exception as e:
-            print(f"⚠️ Auto-session creation failed: {e}")
-            if self.session_logger:
-                self.session_logger.log_gui_event(
-                    "AUTO_SESSION_FAILED",
-                    f"Auto-session creation failed: {e}",
-                )
-        return False  # Don't repeat
+        return TabContentFactory.create_chatroom_tab(self)
 
     def _start_toggle_recording(self):
         """Delegate to RecordingControl."""

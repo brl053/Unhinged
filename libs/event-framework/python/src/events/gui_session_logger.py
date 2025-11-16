@@ -38,12 +38,13 @@ class GUISessionLogger:
     noise reduction and error grouping capabilities.
     """
 
-    def __init__(self, project_root: Path | None = None):
+    def __init__(self, project_root: Path | None = None, session_id: str | None = None):
         self.project_root = project_root or Path.cwd()
         self.log_dir = self.project_root / "build" / "tmp"
-        # TBD: Session ID will be updated when chat session is persisted to persistence platform
-        # At app startup, we use TBD as placeholder since the real session ID doesn't exist yet
-        self.session_id = "TBD"
+        # Session ID: either provided at init (from service launcher) or TBD (legacy)
+        # If provided, session is already persisted and log file uses real ID
+        # If TBD, session will be created later and log file will be renamed
+        self.session_id = session_id or "TBD"
         self.session_start = datetime.now(UTC)
         self.log_file_path = None
         self.log_file = None

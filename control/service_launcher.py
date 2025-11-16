@@ -499,6 +499,28 @@ class ServiceLauncher:
 
         return status
 
+    def initialize_session(self, timeout: int = 30) -> str | None:
+        """
+        Initialize a chat session after services are ready.
+
+        Returns:
+            session_id: UUID of created session, or None if initialization fails
+        """
+        try:
+            from libs.python.session.session_initialization import (
+                SessionInitializationService,
+            )
+
+            events.info("Initializing chat session...")
+            service = SessionInitializationService(timeout=timeout)
+            session_id = service.create_session()
+            events.info(f"Session initialized: {session_id}")
+            return session_id
+
+        except Exception as e:
+            events.error(f"Session initialization failed: {e}")
+            return None
+
     def stop_services(self):
         """Stop services that were started by this launcher"""
         if not self.running_services:
