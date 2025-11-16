@@ -104,13 +104,16 @@ build/requirements-unified.txt
 *_temp
 *_tmp
 demo_*
-test_*
 *_demo
 *_test
 working_*
 simple_*
 temp_*
 tmp_*
+
+# Allow test files in tests/ directory
+!tests/
+!tests/test_*.py
 
 # Auto-generated scripts and fixes
 final-fix.sh
