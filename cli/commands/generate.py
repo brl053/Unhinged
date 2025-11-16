@@ -27,7 +27,7 @@ def generate():
 
 
 @generate.command()
-@click.argument("prompt", required=False, default="")
+@click.argument("prompt", nargs=-1, required=False)
 @click.option(
     "-m",
     "--model",
@@ -63,14 +63,15 @@ def text(prompt, model, provider, tokens, temperature, file):
     """Generate text from a prompt.
 
     PROMPT can be provided as:
-      - Command argument: unhinged generate text "write a haiku"
+      - Command arguments (joined with spaces): unhinged generate text write a haiku
+      - Quoted argument: unhinged generate text "write a haiku about the moon"
       - File: unhinged generate text -f prompt.txt
       - Stdin: echo "write a haiku" | unhinged generate text
 
     Examples:
-      unhinged generate text "write me a haiku about the moon on an autumn night"
-      unhinged generate text -m mistral "explain quantum computing"
-      unhinged generate text -p openai -m gpt-4 "write a poem"
+      unhinged generate text write me a haiku about the moon on an autumn night
+      unhinged generate text -m mistral explain quantum computing
+      unhinged generate text -p openai -m gpt-4 write a poem
       cat prompt.txt | unhinged generate text
     """
     try:
@@ -80,8 +81,8 @@ def text(prompt, model, provider, tokens, temperature, file):
             prompt_text = Path(file).read_text().strip()
             log_info(f"Reading prompt from: {file}")
         elif prompt:
-            # Use command argument
-            prompt_text = prompt
+            # Join all arguments with spaces (varargs pattern)
+            prompt_text = " ".join(prompt)
         else:
             # Try to read from stdin
             if not sys.stdin.isatty():

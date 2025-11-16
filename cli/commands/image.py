@@ -27,7 +27,7 @@ def image():
 
 
 @image.command()
-@click.argument("prompt", required=False, default="")
+@click.argument("prompt", nargs=-1, required=False)
 @click.option(
     "-w",
     "--width",
@@ -67,26 +67,36 @@ def image():
     help="Read prompt from file instead of argument",
 )
 def generate(prompt, width, height, steps, guidance, output, file):
-    """Generate image from a text prompt."""
+    """Generate image from a text prompt.
+
+    PROMPT can be provided as:
+      - Command arguments (joined with spaces): unhinged image generate a sunset over mountains
+      - Quoted argument: unhinged image generate "a sunset over mountains"
+      - File: unhinged image generate -f prompt.txt
+      - Stdin: echo "a sunset" | unhinged image generate
+    """
     try:
         # Get prompt from file or argument or stdin
         if file:
-            prompt = Path(file).read_text().strip()
-        elif not prompt:
-            prompt = click.get_text_stream("stdin").read().strip()
+            prompt_text = Path(file).read_text().strip()
+        elif prompt:
+            # Join all arguments with spaces (varargs pattern)
+            prompt_text = " ".join(prompt)
+        else:
+            prompt_text = click.get_text_stream("stdin").read().strip()
 
-        if not prompt:
+        if not prompt_text:
             log_error("Prompt cannot be empty")
             sys.exit(1)
 
-        log_info(f"Generating image: {prompt[:50]}...")
+        log_info(f"Generating image: {prompt_text[:50]}...")
 
         # Initialize service
         service = ImageGenerationService()
 
         # Generate image
         result = service.generate_image(
-            prompt=prompt,
+            prompt=prompt_text,
             width=width,
             height=height,
             num_inference_steps=steps,
@@ -107,7 +117,7 @@ def generate(prompt, width, height, steps, guidance, output, file):
         else:
             log_success(f"Image generated: {image_path}")
             log_info(f"Generation time: {generation_time:.2f}s")
-            log_info(f"Prompt: {prompt}")
+            log_info(f"Prompt: {prompt_text}")
 
     except Exception as e:
         log_error(f"Image generation failed: {e}")

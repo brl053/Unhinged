@@ -49,6 +49,13 @@ gtts>=2.3.0                    # Google Text-to-Speech
 pydub>=0.25.0                  # Audio manipulation
 
 # ============================================================================
+# LLM PROVIDER DEPENDENCIES
+# ============================================================================
+ollama>=0.1.0                  # Ollama Python client for local LLMs
+anthropic>=0.7.0               # Anthropic Claude API client
+openai>=1.0.0                  # OpenAI API client
+
+# ============================================================================
 # DEVELOPMENT AND TESTING DEPENDENCIES
 # ============================================================================
 pytest>=7.4.0                  # Testing framework

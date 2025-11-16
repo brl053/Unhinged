@@ -28,7 +28,7 @@ def voice():
 
 
 @voice.command()
-@click.argument("text", required=False, default="")
+@click.argument("text", nargs=-1, required=False)
 @click.option(
     "-v",
     "--voice",
@@ -62,19 +62,29 @@ def voice():
     help="Read text from file instead of argument",
 )
 def generate(text, voice, speed, emotion, output, file):
-    """Generate voice/audio from text."""
+    """Generate voice/audio from text.
+
+    TEXT can be provided as:
+      - Command arguments (joined with spaces): unhinged voice generate hello world
+      - Quoted argument: unhinged voice generate "hello world"
+      - File: unhinged voice generate -f script.txt
+      - Stdin: echo "hello world" | unhinged voice generate
+    """
     try:
         # Get text from file or argument or stdin
         if file:
-            text = Path(file).read_text().strip()
-        elif not text:
-            text = click.get_text_stream("stdin").read().strip()
+            text_content = Path(file).read_text().strip()
+        elif text:
+            # Join all arguments with spaces (varargs pattern)
+            text_content = " ".join(text)
+        else:
+            text_content = click.get_text_stream("stdin").read().strip()
 
-        if not text:
+        if not text_content:
             log_error("Text cannot be empty")
             sys.exit(1)
 
-        log_info(f"Generating voice: {text[:50]}...")
+        log_info(f"Generating voice: {text_content[:50]}...")
 
         # Initialize service
         service = TTSService()
