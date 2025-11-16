@@ -267,9 +267,11 @@ class RealTimeSystemInfoManager:
             # Import Bluetooth monitor
             from .bluetooth import BluetoothMonitor
 
+            monitor = BluetoothMonitor()
+
             # Get devices and adapters
-            devices = get_bluetooth_devices(include_unpaired=True)
-            adapters = get_bluetooth_adapters()
+            devices = monitor.get_devices(include_unpaired=True)
+            adapters = monitor.get_adapters()
 
             # Convert devices to dict keyed by address
             device_dict = {device.address: device for device in devices}

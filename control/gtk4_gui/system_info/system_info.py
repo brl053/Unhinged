@@ -152,11 +152,11 @@ class SystemInfoCollector:
 
         # Import collectors
         from .collectors.cpu import CPUCollector
-        from .collectors.memory import MemoryCollector
-        from .collectors.storage import StorageCollector
         from .collectors.gpu import GPUCollector
+        from .collectors.memory import MemoryCollector
         from .collectors.network import NetworkCollector
         from .collectors.platform import PlatformStatusCollector
+        from .collectors.storage import StorageCollector
 
         self.cpu_collector = CPUCollector()
         self.memory_collector = MemoryCollector()

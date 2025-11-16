@@ -9,14 +9,16 @@ Storage device and filesystem information collection using psutil and lsblk.
 import json
 import logging
 
-from subprocess_utils import SubprocessRunner
-
 # Import psutil with fallback
 try:
     import psutil
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
+
+from subprocess_utils import SubprocessRunner
+
+from .system_info import StorageDevice, StorageInfo
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +31,6 @@ class StorageCollector:
 
     def collect_storage_info(self):
         """Collect storage information"""
-        from .system_info import StorageInfo, StorageDevice
-
         storage_info = StorageInfo()
 
         if PSUTIL_AVAILABLE:

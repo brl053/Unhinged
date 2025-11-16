@@ -143,9 +143,9 @@ class CPUCollector:
                     try:
                         cores_per_socket = int(line.split(":", 1)[1].strip())
                         socket_count = 1
-                        for l in result["output"].split("\n"):
-                            if "Socket(s):" in l:
-                                socket_count = int(l.split(":", 1)[1].strip())
+                        for line_item in result["output"].split("\n"):
+                            if "Socket(s):" in line_item:
+                                socket_count = int(line_item.split(":", 1)[1].strip())
                                 break
                         cpu_info.cores = cores_per_socket * socket_count
                     except:

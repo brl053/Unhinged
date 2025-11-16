@@ -19,18 +19,18 @@ class AdapterManager:
         """Initialize adapter manager."""
         self._bus = bus
 
-    def get_adapters_dbus(self, BluetoothAdapter) -> list:
+    def get_adapters_dbus(self, bluetooth_adapter) -> list:
         """Get adapters using D-Bus."""
         adapters = []
 
         try:
-            return self.get_adapters_bluetoothctl(BluetoothAdapter)
+            return self.get_adapters_bluetoothctl(bluetooth_adapter)
         except Exception as e:
             logger.error(f"D-Bus adapter enumeration failed: {e}")
 
         return adapters
 
-    def get_adapters_bluetoothctl(self, BluetoothAdapter) -> list:
+    def get_adapters_bluetoothctl(self, bluetooth_adapter) -> list:
         """Get adapters using bluetoothctl fallback."""
         adapters = []
 
@@ -89,7 +89,7 @@ class AdapterManager:
                 adapters.append(current_adapter)
 
             return [
-                BluetoothAdapter(
+                bluetooth_adapter(
                     address=a["address"],
                     name=a["name"],
                     alias=a["alias"],

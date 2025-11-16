@@ -10,8 +10,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-
-from gi.repository import GLib, Gtk
+from gi.repository import Gtk
 
 # Import component library - FRAMEWORK ONLY
 from ..components import FormInput
@@ -21,8 +20,8 @@ from .handlers.image_handler import ChatImageHandler
 from .handlers.input_handler import ChatInputHandler
 from .handlers.message_display import ChatMessageDisplay
 from .handlers.voice_handler import ChatVoiceHandler
-from .session import SessionManager
 from .llm import LLMInteraction
+from .session import SessionManager
 
 # Framework availability - NO FALLBACK
 COMPONENTS_AVAILABLE = True

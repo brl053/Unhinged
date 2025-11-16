@@ -90,7 +90,7 @@ class DiscoveryManager:
 
         return success
 
-    def get_discovered_devices(self, bus, BluetoothDevice):
+    def get_discovered_devices(self, bus, bluetooth_device):
         """Get discovered devices from D-Bus."""
         devices = []
 
@@ -107,11 +107,11 @@ class DiscoveryManager:
 
             objects = manager.GetManagedObjects()
 
-            for path, interfaces in objects.items():
+            for _path, interfaces in objects.items():
                 if "org.bluez.Device1" in interfaces:
                     props = interfaces["org.bluez.Device1"]
 
-                    device = BluetoothDevice(
+                    device = bluetooth_device(
                         address=str(props.get("Address", "")),
                         name=str(props.get("Name", "")),
                         alias=str(props.get("Alias", "")),

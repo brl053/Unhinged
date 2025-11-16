@@ -20,7 +20,7 @@ class DeviceEnumerator:
         """Initialize device enumerator."""
         self._bus = bus
 
-    def get_devices_dbus(self, BluetoothDevice) -> list:
+    def get_devices_dbus(self, bluetooth_device) -> list:
         """Get devices using D-Bus."""
         devices = []
 
@@ -37,11 +37,11 @@ class DeviceEnumerator:
 
             objects = manager.GetManagedObjects()
 
-            for path, interfaces in objects.items():
+            for _path, interfaces in objects.items():
                 if "org.bluez.Device1" in interfaces:
                     props = interfaces["org.bluez.Device1"]
 
-                    device = BluetoothDevice(
+                    device = bluetooth_device(
                         address=str(props.get("Address", "")),
                         name=str(props.get("Name", "")),
                         alias=str(props.get("Alias", "")),
@@ -64,7 +64,7 @@ class DeviceEnumerator:
 
         return devices
 
-    def get_devices_bluetoothctl(self, BluetoothDevice) -> list:
+    def get_devices_bluetoothctl(self, bluetooth_device) -> list:
         """Get devices using bluetoothctl fallback."""
         devices = []
 
@@ -85,7 +85,7 @@ class DeviceEnumerator:
                 if not line or not line.startswith("Device"):
                     continue
 
-                device = self._parse_bluetoothctl_device(line, BluetoothDevice)
+                device = self._parse_bluetoothctl_device(line, bluetooth_device)
                 if device:
                     devices.append(device)
 
@@ -95,7 +95,7 @@ class DeviceEnumerator:
         return devices
 
     @staticmethod
-    def _parse_bluetoothctl_device(line: str, BluetoothDevice):
+    def _parse_bluetoothctl_device(line: str, bluetooth_device):
         """Parse a device line from bluetoothctl output."""
         try:
             parts = line.split()
@@ -105,7 +105,7 @@ class DeviceEnumerator:
             address = parts[1]
             name = " ".join(parts[2:])
 
-            return BluetoothDevice(
+            return bluetooth_device(
                 address=address,
                 name=name,
                 alias=name,

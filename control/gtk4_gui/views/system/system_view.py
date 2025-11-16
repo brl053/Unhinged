@@ -42,10 +42,10 @@ except ImportError:
 
 # Import section handlers
 from .sections.cpu import CPUSectionHandler
-from .sections.storage import StorageSectionHandler
 from .sections.memory import MemorySectionHandler
 from .sections.motherboard import OverviewSectionHandler
 from .sections.platform import PlatformSectionHandler
+from .sections.storage import StorageSectionHandler
 
 COMPONENTS_AVAILABLE = True
 

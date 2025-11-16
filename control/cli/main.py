@@ -1,9 +1,11 @@
 """Unhinged CLI - Main entry point."""
 
+import subprocess
+
 import click
 
 from control.cli.commands import admin, dev, system, vm
-from control.cli.utils import log_info
+from control.cli.utils import get_python, log_info
 
 
 @click.group(invoke_without_command=True)
@@ -17,9 +19,15 @@ def cli(ctx):
     # If no command provided, start the complete system with GUI
     if ctx.invoked_subcommand is None:
         log_info("🚀 Starting Unhinged complete system...")
-        ctx.invoke(system.start)
+        python_cmd = get_python()
+
+        # Start services
+        result = subprocess.run([python_cmd, "control/service_launcher.py", "--timeout", "120"])
+        if result.returncode != 0:
+            log_info("⚠️  Some services failed to start - continuing with available services")
+
         log_info("📺 Launching GUI...")
-        ctx.invoke(system.gui)
+        subprocess.run([python_cmd, "control/gtk4_gui/launch.py"])
 
 
 # Add command groups
