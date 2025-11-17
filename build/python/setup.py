@@ -171,6 +171,44 @@ class UnhingedPythonSetup:
         logger.info("✅ Installation verification completed")
         return True
     
+    def download_llm_models(self) -> bool:
+        """Download LLM models for local inference (Ollama).
+
+        This is optional - if Ollama is not running, we skip with a warning.
+        Models are required for reasoning engine to work.
+        """
+        try:
+            import subprocess
+
+            # Check if Ollama is running
+            result = subprocess.run(
+                ["curl", "-s", "http://localhost:1500/api/tags"],
+                capture_output=True,
+                timeout=5,
+            )
+
+            if result.returncode != 0:
+                logger.warning("⚠️  Ollama service not running at localhost:1500")
+                logger.warning("   Models will be downloaded when Ollama starts")
+                logger.warning("   Start with: docker-compose up llm")
+                return True  # Not a fatal error
+
+            # Ollama is running, download recommended models
+            logger.info("📥 Downloading LLM models to Ollama...")
+
+            script_path = Path(__file__).parent.parent / "tools" / "download-llm-models.py"
+            result = subprocess.run(
+                [sys.executable, str(script_path), "--recommended"],
+                capture_output=False,
+            )
+
+            return result.returncode == 0
+
+        except Exception as e:
+            logger.warning(f"⚠️  Could not download LLM models: {e}")
+            logger.warning("   This is optional - reasoning engine will work with fallback")
+            return True  # Not a fatal error
+
     def create_jupyter_config(self) -> bool:
         """Create Jupyter configuration for ML/AI development"""
         jupyter_dir = self.project_root / ".jupyter"
@@ -201,7 +239,7 @@ c.ServerApp.jpserver_extensions = {
     def setup_environment(self) -> bool:
         """Complete environment setup process"""
         logger.info("🚀 Starting Unhinged Python environment setup")
-        
+
         steps = [
             ("Checking Python version", self.check_python_version),
             ("Creating virtual environment", self.create_virtual_environment),
@@ -209,14 +247,15 @@ c.ServerApp.jpserver_extensions = {
             ("Installing dependencies", self.install_dependencies),
             ("Verifying installation", self.verify_installation),
             ("Creating Jupyter config", self.create_jupyter_config),
+            ("Downloading LLM models", self.download_llm_models),
         ]
-        
+
         for step_name, step_func in steps:
             logger.info(f"📋 {step_name}...")
             if not step_func():
                 logger.error(f"❌ Failed at step: {step_name}")
                 return False
-        
+
         logger.info("🎉 Python environment setup completed successfully!")
         logger.info("")
         logger.info("🎯 Next steps:")
@@ -231,7 +270,8 @@ c.ServerApp.jpserver_extensions = {
         logger.info("   • Big data processing (Polars, Dask, PyArrow)")
         logger.info("   • Database clients (PostgreSQL, Redis, Cassandra)")
         logger.info("   • Jupyter Lab for interactive development")
-        
+        logger.info("   • Local LLM inference (Ollama + Mistral)")
+
         return True
 
 
