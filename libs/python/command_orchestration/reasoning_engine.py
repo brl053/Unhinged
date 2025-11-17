@@ -1,0 +1,304 @@
+"""Reasoning Engine for command orchestration.
+
+@llm-type library.command_orchestration.reasoning_engine
+@llm-does provide LLM-backed reasoning for command selection, DAG edges, and result interpretation
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import dataclass
+from typing import Any, cast
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ExecutionTrace:
+    """Complete reasoning trace for command orchestration pipeline."""
+
+    query: str
+    intent_reasoning: str
+    command_selection_reasoning: dict[str, str]
+    dag_edge_reasoning: dict[tuple[str, str], str]
+    execution_result_reasoning: dict[str, str]
+    summary: str
+
+
+class ReasoningEngine:
+    """Generate LLM-backed reasoning for command orchestration.
+
+    Provides reasoning at three critical points:
+    1. Command Selection: Why specific commands were chosen
+    2. DAG Edge Reasoning: How data flows through pipeline
+    3. Result Interpretation: What execution results mean
+
+    Uses large reasoning models (Claude 3.5 Sonnet by default) with
+    lazy-loaded LLM clients for performance.
+    """
+
+    def __init__(
+        self,
+        model: str = "claude-3-5-sonnet-20241022",
+        provider: str = "anthropic",
+    ):
+        """Initialize reasoning engine.
+
+        Parameters
+        ----------
+        model : str
+            LLM model to use (default: Claude 3.5 Sonnet for reasoning).
+        provider : str
+            LLM provider (anthropic, openai, ollama).
+        """
+        self.model = model
+        self.provider = provider
+        self._client: Any = None
+
+    def _get_command_selection_prompt(self) -> str:
+        """System prompt for command selection reasoning."""
+        return """You are an expert at explaining why specific Linux commands are relevant to a user's problem.
+
+Given a user query and a list of selected commands, generate a brief explanation for each command
+explaining why it was chosen and what information it provides.
+
+Consider:
+- How the command relates to the user's problem
+- What information the command provides
+- How it contributes to solving the problem
+
+Format: Return ONLY valid JSON with no markdown or explanation:
+{
+  "command_name": "Brief one-sentence explanation of why this command was chosen"
+}
+
+Example:
+{
+  "pactl": "Lists audio sinks and their volume levels to diagnose system audio output",
+  "amixer": "Shows ALSA mixer controls for additional volume and mute diagnostics"
+}
+"""
+
+    def _get_dag_edge_prompt(self) -> str:
+        """System prompt for DAG edge reasoning."""
+        return """You are an expert at explaining data flow in command pipelines.
+
+Given two commands connected by a pipe (stdout → stdin), explain why command B follows command A,
+what data is being passed, and what transformation occurs.
+
+Format: Return ONLY valid JSON with no markdown:
+{
+  "reasoning": "One sentence explaining the data flow relationship"
+}
+
+Example for 'pactl list sinks | grep -i volume':
+{
+  "reasoning": "grep filters pactl output to show only lines containing 'volume' for focused diagnostics"
+}
+"""
+
+    def _get_result_interpretation_prompt(self) -> str:
+        """System prompt for result interpretation."""
+        return """You are an expert at interpreting Linux command output.
+
+Given a command, its exit code, stdout, and stderr, generate a brief interpretation of what
+the result means and what it tells us about the system state.
+
+Format: Return ONLY valid JSON:
+{
+  "interpretation": "One sentence summarizing the result's significance"
+}
+
+Example:
+{
+  "interpretation": "PipeWire is running as the audio server, handling audio routing and mixing"
+}
+"""
+
+    def _load_client(self) -> Any:
+        """Lazy-load LLM client based on provider."""
+        if self.provider == "anthropic":
+            from anthropic import Anthropic
+
+            return Anthropic()
+        elif self.provider == "openai":
+            from openai import OpenAI
+
+            return OpenAI()
+        elif self.provider == "ollama":
+            from ollama import Client
+
+            return Client(host="http://localhost:11434")
+        else:
+            raise ValueError(f"Unknown provider: {self.provider}")
+
+    async def _call_llm(self, system_prompt: str, user_message: str) -> str:
+        """Call LLM with system prompt and return response text."""
+        if self._client is None:
+            self._client = self._load_client()
+
+        if self.provider == "anthropic":
+            response = self._client.messages.create(
+                model=self.model,
+                max_tokens=512,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_message}],
+            )
+            return cast(str, response.content[0].text)
+
+        elif self.provider == "openai":
+            response = self._client.chat.completions.create(
+                model=self.model,
+                max_tokens=512,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+            )
+            return cast(str, response.choices[0].message.content)
+
+        elif self.provider == "ollama":
+            response = self._client.generate(
+                model=self.model,
+                prompt=f"{system_prompt}\n\nUser message: {user_message}",
+                stream=False,
+            )
+            response_text = response.get("response", "")
+            return cast(str, response_text.strip() if isinstance(response_text, str) else "")
+
+        else:
+            raise ValueError(f"Unknown provider: {self.provider}")
+
+    async def reason_command_selection(
+        self,
+        query: str,
+        commands: list[str],
+        similarity_scores: list[float] | None = None,
+    ) -> dict[str, str]:
+        """Generate reasoning for why commands were selected.
+
+        Parameters
+        ----------
+        query : str
+            User's natural language query
+        commands : List[str]
+            List of selected commands
+        similarity_scores : Optional[List[float]]
+            Optional similarity scores for each command
+
+        Returns
+        -------
+        Dict[str, str]
+            Mapping of command name to reasoning text
+        """
+        try:
+            commands_str = "\n".join(f"- {cmd}" for cmd in commands)
+            user_message = f"""User query: {query}
+
+Selected commands:
+{commands_str}
+
+Generate reasoning for why each command was selected."""
+
+            system_prompt = self._get_command_selection_prompt()
+            response_text = await self._call_llm(system_prompt, user_message)
+            result = json.loads(response_text)
+
+            if not isinstance(result, dict):
+                raise ValueError(f"Expected dict, got {type(result)}")
+
+            return result
+
+        except json.JSONDecodeError as exc:
+            logger.error(f"Failed to parse command selection reasoning: {exc}")
+            return {cmd: "Command selected for diagnostics" for cmd in commands}
+        except Exception as exc:
+            logger.error(f"Command selection reasoning failed: {exc}")
+            return {cmd: "Command selected for diagnostics" for cmd in commands}
+
+    async def reason_dag_edge(
+        self,
+        from_command: str,
+        to_command: str,
+        data_flow: str = "stdout → stdin",
+    ) -> str:
+        """Generate reasoning for DAG edge (data flow).
+
+        Parameters
+        ----------
+        from_command : str
+            Source command
+        to_command : str
+            Destination command
+        data_flow : str
+            Description of data flow (default: "stdout → stdin")
+
+        Returns
+        -------
+        str
+            Reasoning for the edge
+        """
+        try:
+            user_message = f"""From command: {from_command}
+To command: {to_command}
+Data flow: {data_flow}
+
+Explain why {to_command} follows {from_command} and what transformation occurs."""
+
+            system_prompt = self._get_dag_edge_prompt()
+            response_text = await self._call_llm(system_prompt, user_message)
+            result = json.loads(response_text)
+
+            reasoning = result.get("reasoning", "Data flows from one command to the next")
+            return cast(str, reasoning)
+
+        except Exception as exc:
+            logger.error(f"DAG edge reasoning failed: {exc}")
+            return f"{to_command} processes output from {from_command}"
+
+    async def reason_execution_result(
+        self,
+        command: str,
+        exit_code: int,
+        stdout: str,
+        stderr: str,
+    ) -> str:
+        """Generate interpretation of execution result.
+
+        Parameters
+        ----------
+        command : str
+            Command that was executed
+        exit_code : int
+            Exit code from command
+        stdout : str
+            Standard output
+        stderr : str
+            Standard error
+
+        Returns
+        -------
+        str
+            Interpretation of the result
+        """
+        try:
+            output_preview = stdout[:500] if stdout else "(no output)"
+            user_message = f"""Command: {command}
+Exit code: {exit_code}
+Output: {output_preview}
+
+Interpret what this result tells us about the system state."""
+
+            system_prompt = self._get_result_interpretation_prompt()
+            response_text = await self._call_llm(system_prompt, user_message)
+            result = json.loads(response_text)
+
+            interpretation = result.get("interpretation", "Command executed successfully")
+            return cast(str, interpretation)
+
+        except Exception as exc:
+            logger.error(f"Result interpretation failed: {exc}")
+            status = "succeeded" if exit_code == 0 else "failed"
+            return f"Command {status} with exit code {exit_code}"
+

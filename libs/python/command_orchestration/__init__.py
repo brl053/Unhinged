@@ -21,6 +21,9 @@ from command_orchestration.executor import CommandExecutor
 from command_orchestration.man_page_indexer import ManPageEntry, ManPageIndexer
 from command_orchestration.semantic_search import SearchResult, SemanticSearchEngine
 
+# Import reasoning engine from local module
+from libs.python.command_orchestration.reasoning_engine import ExecutionTrace, ReasoningEngine
+
 __all__ = [
     "ManPageIndexer",
     "ManPageEntry",
@@ -31,6 +34,8 @@ __all__ = [
     "CommandNode",
     "CommandExecutor",
     "DocumentLoader",
+    "ReasoningEngine",
+    "ExecutionTrace",
     "dag_builder",
     "document_loader",
     "executor",
