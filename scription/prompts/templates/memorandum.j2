@@ -1,0 +1,42 @@
+{# IBM 1970s Style Memorandum Template #}
+{% include 'fragments/headers.j2' %}
+
+{% if executive_summary %}
+## EXECUTIVE SUMMARY
+
+{{ executive_summary }}
+
+{% endif %}
+{% if sections %}
+{% for section in sections %}
+## {{ section.title | upper }}
+
+{{ section.content }}
+
+{% if section.get('list_items') %}
+{% for item in section.list_items %}
+- {{ item }}
+{% endfor %}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if findings %}
+## FINDINGS
+
+{% for finding in findings %}
+**{{ finding.title }}:**
+{{ finding.content }}
+
+{% endfor %}
+{% endif %}
+{% if recommendations %}
+## RECOMMENDATIONS
+
+{% for rec in recommendations %}
+- {{ rec }}
+{% endfor %}
+
+{% endif %}
+{% include 'fragments/signoff.j2' %}
+

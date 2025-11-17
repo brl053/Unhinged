@@ -141,6 +141,7 @@ enum NodeType {
   // Integration
   HTTP_REQUEST = 20;         // External API calls
   CUSTOM_SERVICE = 21;       // Generic service integration
+  COMMAND_ORCHESTRATION = 22; // Linux command orchestration with DAG
 }
 
 // ============================================================================

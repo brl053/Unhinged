@@ -13,9 +13,7 @@ from typing import Any
 import grpc
 
 # Add generated proto clients to path
-sys.path.insert(
-    0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
 
 try:
     from unhinged_proto_clients import (
@@ -41,9 +39,7 @@ class NodeExecutor(ABC):
     """Abstract base class for node executors"""
 
     @abstractmethod
-    async def execute(
-        self, node: graph_service_pb2.Node, input_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute the node and return output data"""
         pass
 
@@ -51,17 +47,11 @@ class NodeExecutor(ABC):
 class SpeechToTextExecutor(NodeExecutor):
     """Executor for speech-to-text nodes"""
 
-    async def execute(
-        self, node: graph_service_pb2.Node, input_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute speech-to-text conversion"""
         try:
             # Extract configuration
-            config = (
-                json.loads(node.config)
-                if isinstance(node.config, str)
-                else dict(node.config)
-            )
+            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
             service_endpoint = config.get("service_endpoint", "localhost:9091")
 
             # Create gRPC channel
@@ -79,9 +69,7 @@ class SpeechToTextExecutor(NodeExecutor):
                     "STT node executed",
                     {
                         "node_id": node.id,
-                        "transcript_length": len(response.transcript)
-                        if response.transcript
-                        else 0,
+                        "transcript_length": len(response.transcript) if response.transcript else 0,
                     },
                 )
 
@@ -91,26 +79,18 @@ class SpeechToTextExecutor(NodeExecutor):
                 }
 
         except Exception as e:
-            events.error(
-                "STT node execution failed", exception=e, metadata={"node_id": node.id}
-            )
+            events.error("STT node execution failed", exception=e, metadata={"node_id": node.id})
             raise
 
 
 class TextToSpeechExecutor(NodeExecutor):
     """Executor for text-to-speech nodes"""
 
-    async def execute(
-        self, node: graph_service_pb2.Node, input_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute text-to-speech conversion"""
         try:
             # Extract configuration
-            config = (
-                json.loads(node.config)
-                if isinstance(node.config, str)
-                else dict(node.config)
-            )
+            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
             service_endpoint = config.get("service_endpoint", "localhost:9092")
 
             # Create gRPC channel
@@ -142,26 +122,18 @@ class TextToSpeechExecutor(NodeExecutor):
                 }
 
         except Exception as e:
-            events.error(
-                "TTS node execution failed", exception=e, metadata={"node_id": node.id}
-            )
+            events.error("TTS node execution failed", exception=e, metadata={"node_id": node.id})
             raise
 
 
 class LLMChatExecutor(NodeExecutor):
     """Executor for LLM chat nodes"""
 
-    async def execute(
-        self, node: graph_service_pb2.Node, input_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute LLM chat completion"""
         try:
             # Extract configuration
-            config = (
-                json.loads(node.config)
-                if isinstance(node.config, str)
-                else dict(node.config)
-            )
+            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
             service_endpoint = config.get("service_endpoint", "localhost:9095")
 
             # Create gRPC channel
@@ -170,9 +142,7 @@ class LLMChatExecutor(NodeExecutor):
 
                 # Prepare request
                 request = chat_pb2.SendMessageRequest()
-                request.content = input_data.get(
-                    "text", input_data.get("transcript", "")
-                )
+                request.content = input_data.get("text", input_data.get("transcript", ""))
                 request.role = chat_pb2.USER
 
                 # Call service
@@ -183,19 +153,13 @@ class LLMChatExecutor(NodeExecutor):
                     {
                         "node_id": node.id,
                         "input_length": len(request.content),
-                        "response_length": len(response.message.content)
-                        if response.message
-                        else 0,
+                        "response_length": len(response.message.content) if response.message else 0,
                     },
                 )
 
                 return {
-                    "response_text": response.message.content
-                    if response.message
-                    else "",
-                    "message_id": response.message.message_id
-                    if response.message
-                    else "",
+                    "response_text": response.message.content if response.message else "",
+                    "message_id": response.message.message_id if response.message else "",
                 }
 
         except Exception as e:
@@ -210,17 +174,11 @@ class LLMChatExecutor(NodeExecutor):
 class DataTransformExecutor(NodeExecutor):
     """Executor for data transformation nodes"""
 
-    async def execute(
-        self, node: graph_service_pb2.Node, input_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute data transformation"""
         try:
             # Extract configuration
-            config = (
-                json.loads(node.config)
-                if isinstance(node.config, str)
-                else dict(node.config)
-            )
+            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
             transform_type = config.get("transform_type", "passthrough")
 
             if transform_type == "passthrough":
@@ -248,17 +206,11 @@ class DataTransformExecutor(NodeExecutor):
 class CustomServiceExecutor(NodeExecutor):
     """Executor for custom service nodes"""
 
-    async def execute(
-        self, node: graph_service_pb2.Node, input_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute custom service call"""
         try:
             # Extract configuration
-            config = (
-                json.loads(node.config)
-                if isinstance(node.config, str)
-                else dict(node.config)
-            )
+            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
             service_endpoint = config.get("service_endpoint", "localhost:9090")
             method = config.get("method", "Process")
 
@@ -285,6 +237,81 @@ class CustomServiceExecutor(NodeExecutor):
             raise
 
 
+class CommandOrchestrationExecutor(NodeExecutor):
+    """Executor for command orchestration nodes"""
+
+    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Execute command orchestration workflow"""
+        try:
+            from libs.python.command_orchestration import (
+                CommandExecutor,
+                DAGBuilder,
+                ManPageIndexer,
+                SemanticSearchEngine,
+            )
+
+            # Extract configuration
+            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
+            prompt = config.get("prompt", "")
+
+            # Step 1: Index man pages
+            indexer = ManPageIndexer()
+            entries = indexer.build_index()
+
+            # Step 2: Search for relevant commands
+            search_engine = SemanticSearchEngine(entries)
+            search_results = search_engine.search(prompt, limit=5)
+
+            # Step 3: Build DAG from commands
+            commands = [r.command for r in search_results]
+            dag_builder = DAGBuilder()
+            dag = dag_builder.build_from_commands(commands)
+
+            # Step 4: Execute DAG
+            executor = CommandExecutor()
+            execution_result = await executor.execute_dag(dag)
+
+            events.info(
+                "Command orchestration executed",
+                {
+                    "node_id": node.id,
+                    "prompt": prompt,
+                    "commands": len(commands),
+                    "success": execution_result.success,
+                },
+            )
+
+            return {
+                "prompt": prompt,
+                "commands": commands,
+                "search_results": [
+                    {
+                        "command": r.command,
+                        "similarity": r.similarity,
+                        "reasoning": r.reasoning,
+                    }
+                    for r in search_results
+                ],
+                "execution_success": execution_result.success,
+                "execution_results": {
+                    node_id: {
+                        "returncode": result.returncode,
+                        "stdout": result.stdout[:500],
+                        "stderr": result.stderr[:500],
+                    }
+                    for node_id, result in execution_result.results.items()
+                },
+            }
+
+        except Exception as e:
+            events.error(
+                "Command orchestration execution failed",
+                exception=e,
+                metadata={"node_id": node.id},
+            )
+            raise
+
+
 class NodeExecutorFactory:
     """Factory for creating node executors"""
 
@@ -296,6 +323,7 @@ class NodeExecutorFactory:
             graph_service_pb2.LLM_COMPLETION: LLMChatExecutor(),  # Reuse chat executor
             graph_service_pb2.DATA_TRANSFORM: DataTransformExecutor(),
             graph_service_pb2.CUSTOM_SERVICE: CustomServiceExecutor(),
+            graph_service_pb2.COMMAND_ORCHESTRATION: CommandOrchestrationExecutor(),
         }
 
         events.info(

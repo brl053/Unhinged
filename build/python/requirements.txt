@@ -69,6 +69,12 @@ ruff>=0.1.0                    # Fast Python linter
 mypy>=1.7.0                    # Static type checker
 
 # ============================================================================
+# VECTOR DATABASE & SEMANTIC SEARCH DEPENDENCIES
+# ============================================================================
+weaviate-client>=4.0.0         # Weaviate vector DB client
+sentence-transformers>=2.2.0   # Sentence embeddings
+
+# ============================================================================
 # UTILITY DEPENDENCIES
 # ============================================================================
 pydantic>=2.0.0                # Data validation

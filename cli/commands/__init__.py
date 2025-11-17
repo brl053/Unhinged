@@ -5,7 +5,10 @@ from cli.commands.chat import chat
 from cli.commands.dev import dev
 from cli.commands.generate import generate
 from cli.commands.image import image
+from cli.commands.orchestrate import orchestrate
 from cli.commands.parse import parse
+from cli.commands.prompt import prompt
+from cli.commands.query import query
 from cli.commands.shortform import shortform
 from cli.commands.system import system
 from cli.commands.transcribe import transcribe
@@ -26,4 +29,7 @@ __all__ = [
     "video",
     "parse",
     "shortform",
+    "orchestrate",
+    "prompt",
+    "query",
 ]

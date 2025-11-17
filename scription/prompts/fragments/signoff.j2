@@ -1,0 +1,16 @@
+{# Standard Memorandum Signoff Fragment #}
+---
+
+{% if disposition %}**DISPOSITION:** {{ disposition }}
+{% endif %}
+{% if distribution %}**Distribution:** {{ distribution }}
+{% endif %}
+{% if classification %}**Classification:** {{ classification }}
+{% endif %}
+{% if tracking %}**Tracking:** {{ tracking }}
+{% endif %}
+
+---
+
+*{{ footer_text | default('Systems Architecture Division') }}*
+
