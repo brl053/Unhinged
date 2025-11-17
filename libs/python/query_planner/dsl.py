@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -68,7 +68,7 @@ class PlanEdge:
 
     from_node: str
     to_node: str
-    pipe_output: Optional[str] = None
+    pipe_output: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data: dict[str, Any] = {
@@ -109,7 +109,8 @@ class QueryPlan:
     def to_yaml(self) -> str:
         """Serialize plan to YAML (canonical format)."""
 
-        return yaml.safe_dump(self.to_dict(), sort_keys=False, default_flow_style=False)
+        result = yaml.safe_dump(self.to_dict(), sort_keys=False, default_flow_style=False)
+        return str(result) if result is not None else ""
 
     def to_json_compatible(self) -> dict[str, Any]:
         """Return JSON-serialisable representation of the plan."""

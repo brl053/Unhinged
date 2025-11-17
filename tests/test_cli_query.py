@@ -77,3 +77,64 @@ def test_query_unsupported_intent_returns_error(cli_runner: CliRunner) -> None:
 
     assert result.exit_code != 0
     assert "Only audio volume diagnostics" in result.output
+
+
+def test_query_with_explain_flag_plan_only(cli_runner: CliRunner) -> None:
+    """Query with --explain flag produces plan with reasoning."""
+
+    result = cli_runner.invoke(query, ["--explain", "my headphone volume is too low"])
+
+    assert result.exit_code == 0
+    # Extract YAML from output (skip log lines that start with ℹ️)
+    output = result.output
+    lines = output.split("\n")
+    # Find the first line that starts with "query:" (YAML content)
+    yaml_lines: list[str] = []
+    for line in lines:
+        if line.startswith("query:") or yaml_lines:
+            yaml_lines.append(line)
+    yaml_content = "\n".join(yaml_lines)
+    assert yaml_content, "Could not find YAML output in result"
+    data = yaml.safe_load(yaml_content)
+
+    assert isinstance(data, dict)
+    assert data["query"]
+    assert data["plan"]["domain"] == "audio/headphone_volume"
+    assert data["plan"]["intent"] == "volume_low"
+    # Verify reasoning is present
+    assert "reasoning" in data
+    assert "plan_nodes" in data["reasoning"]
+    # Verify plan node reasoning is populated
+    plan_nodes_reasoning = data["reasoning"]["plan_nodes"]
+    assert isinstance(plan_nodes_reasoning, dict)
+    assert len(plan_nodes_reasoning) > 0
+
+
+def test_query_with_explain_flag_execute_dry_run(cli_runner: CliRunner) -> None:
+    """Query with --explain and --execute --dry-run produces graph with plan reasoning."""
+
+    result = cli_runner.invoke(
+        query,
+        ["--explain", "--execute", "--dry-run", "--output", "json", "headphone volume too low"],
+    )
+
+    assert result.exit_code == 0
+
+    # Extract JSON from output
+    output = result.output
+    json_start = output.find("{")
+    assert json_start != -1
+    data = json.loads(output[json_start:])
+
+    assert data["plan"]["domain"] == "audio/headphone_volume"
+    # Verify reasoning is present
+    assert "reasoning" in data
+    assert "plan_nodes" in data["reasoning"]
+    # Verify plan node reasoning is populated
+    plan_nodes_reasoning = data["reasoning"]["plan_nodes"]
+    assert isinstance(plan_nodes_reasoning, dict)
+    assert len(plan_nodes_reasoning) > 0
+    execution = data.get("execution")
+    assert execution
+    assert execution["dry_run"] is True
+    assert "graph" in execution
