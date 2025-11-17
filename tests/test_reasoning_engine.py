@@ -196,32 +196,29 @@ class TestReasoningEngine:
             # Should return fallback
             assert "cmd1" in result
 
-    def test_load_client_anthropic(self) -> None:
-        """Test loading Anthropic client."""
-        engine = ReasoningEngine(provider="anthropic")
-        with patch("anthropic.Anthropic"):
-            client = engine._load_client()
-            assert client is not None
+    def test_load_service_ollama(self) -> None:
+        """Test loading TextGenerationService with Ollama."""
+        engine = ReasoningEngine(provider="ollama", model="mistral")
+        with patch("libs.services.text_generation_service.TextGenerationService"):
+            service = engine._load_service()
+            assert service is not None
 
-    def test_load_client_openai(self) -> None:
-        """Test loading OpenAI client."""
-        engine = ReasoningEngine(provider="openai")
-        with patch("openai.OpenAI"):
-            client = engine._load_client()
-            assert client is not None
+    def test_load_service_caches_instance(self) -> None:
+        """Test that _load_service caches the service instance."""
+        engine = ReasoningEngine(provider="ollama", model="mistral")
+        with patch("libs.services.text_generation_service.TextGenerationService"):
+            service1 = engine._load_service()
+            service2 = engine._load_service()
+            # Should return the same cached instance
+            assert service1 is service2
 
-    def test_load_client_ollama(self) -> None:
-        """Test loading Ollama client."""
-        engine = ReasoningEngine(provider="ollama")
-        with patch("ollama.Client"):
-            client = engine._load_client()
-            assert client is not None
-
-    def test_load_client_unknown_provider(self) -> None:
-        """Test error handling for unknown provider."""
-        engine = ReasoningEngine(provider="unknown")
-        with pytest.raises(ValueError, match="Unknown provider"):
-            engine._load_client()
+    def test_load_service_with_custom_model(self) -> None:
+        """Test loading service with custom model."""
+        engine = ReasoningEngine(provider="ollama", model="neural-chat")
+        with patch("libs.python.command_orchestration.reasoning_engine.TextGenerationService") as mock_service:
+            engine._load_service()
+            # Verify TextGenerationService was called with correct params
+            mock_service.assert_called_once_with(model="neural-chat", provider="ollama")
 
     def test_execution_trace_dataclass(self) -> None:
         """Test ExecutionTrace dataclass creation."""

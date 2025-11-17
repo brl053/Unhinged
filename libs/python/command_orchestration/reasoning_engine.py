@@ -2,6 +2,7 @@
 
 @llm-type library.command_orchestration.reasoning_engine
 @llm-does provide LLM-backed reasoning for command selection, DAG edges, and result interpretation
+Uses local Ollama service (on-premise, no external API calls)
 """
 
 from __future__ import annotations
@@ -10,6 +11,8 @@ import json
 import logging
 from dataclasses import dataclass
 from typing import Any, cast
+
+from libs.services.text_generation_service import TextGenerationService
 
 logger = logging.getLogger(__name__)
 
@@ -34,27 +37,27 @@ class ReasoningEngine:
     2. DAG Edge Reasoning: How data flows through pipeline
     3. Result Interpretation: What execution results mean
 
-    Uses large reasoning models (Claude 3.5 Sonnet by default) with
-    lazy-loaded LLM clients for performance.
+    Uses local Ollama service (on-premise, no external API calls).
+    Defaults to Mistral model for reasoning.
     """
 
     def __init__(
         self,
-        model: str = "claude-3-5-sonnet-20241022",
-        provider: str = "anthropic",
+        model: str = "mistral",
+        provider: str = "ollama",
     ):
         """Initialize reasoning engine.
 
         Parameters
         ----------
         model : str
-            LLM model to use (default: Claude 3.5 Sonnet for reasoning).
+            LLM model to use (default: mistral for local Ollama).
         provider : str
-            LLM provider (anthropic, openai, ollama).
+            LLM provider (default: ollama for on-premise deployment).
         """
         self.model = model
         self.provider = provider
-        self._client: Any = None
+        self._service: TextGenerationService | None = None
 
     def _get_command_selection_prompt(self) -> str:
         """System prompt for command selection reasoning."""
@@ -116,59 +119,29 @@ Example:
 }
 """
 
-    def _load_client(self) -> Any:
-        """Lazy-load LLM client based on provider."""
-        if self.provider == "anthropic":
-            from anthropic import Anthropic
-
-            return Anthropic()
-        elif self.provider == "openai":
-            from openai import OpenAI
-
-            return OpenAI()
-        elif self.provider == "ollama":
-            from ollama import Client
-
-            return Client(host="http://localhost:11434")
-        else:
-            raise ValueError(f"Unknown provider: {self.provider}")
+    def _load_service(self) -> TextGenerationService:
+        """Lazy-load TextGenerationService for on-premise LLM access."""
+        if self._service is None:
+            self._service = TextGenerationService(model=self.model, provider=self.provider)
+        return self._service
 
     async def _call_llm(self, system_prompt: str, user_message: str) -> str:
-        """Call LLM with system prompt and return response text."""
-        if self._client is None:
-            self._client = self._load_client()
+        """Call LLM with system prompt and return response text.
 
-        if self.provider == "anthropic":
-            response = self._client.messages.create(
-                model=self.model,
-                max_tokens=512,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            return cast(str, response.content[0].text)
+        Uses local TextGenerationService (Ollama) for on-premise deployment.
+        No external API calls.
+        """
+        service = self._load_service()
 
-        elif self.provider == "openai":
-            response = self._client.chat.completions.create(
-                model=self.model,
-                max_tokens=512,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message},
-                ],
-            )
-            return cast(str, response.choices[0].message.content)
+        # Combine system prompt and user message for Ollama
+        full_prompt = f"{system_prompt}\n\nUser: {user_message}\n\nResponse:"
 
-        elif self.provider == "ollama":
-            response = self._client.generate(
-                model=self.model,
-                prompt=f"{system_prompt}\n\nUser message: {user_message}",
-                stream=False,
-            )
-            response_text = response.get("response", "")
-            return cast(str, response_text.strip() if isinstance(response_text, str) else "")
-
-        else:
-            raise ValueError(f"Unknown provider: {self.provider}")
+        try:
+            response_text = service.generate(prompt=full_prompt, max_tokens=512)
+            return response_text
+        except Exception as exc:
+            logger.error(f"LLM call failed: {exc}")
+            raise
 
     async def reason_command_selection(
         self,
