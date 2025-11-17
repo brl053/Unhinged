@@ -55,8 +55,8 @@ class CommandExecutorWithReasoning:
         self,
         executor: CommandExecutor | None = None,
         reasoning_engine: ReasoningEngine | None = None,
-        model: str = "claude-3-5-sonnet-20241022",
-        provider: str = "anthropic",
+        model: str = "mistral",
+        provider: str = "ollama",
     ):
         """Initialize wrapper with executor and reasoning engine.
 
@@ -67,9 +67,9 @@ class CommandExecutorWithReasoning:
         reasoning_engine : Optional[ReasoningEngine]
             Optional pre-configured reasoning engine. If None, creates new one.
         model : str
-            LLM model to use (default: Claude 3.5 Sonnet)
+            LLM model to use (default: mistral for local Ollama)
         provider : str
-            LLM provider (anthropic, openai, ollama)
+            LLM provider (default: ollama for on-premise deployment)
         """
         self.executor = executor or CommandExecutor()
         self.reasoning_engine = reasoning_engine or ReasoningEngine(
