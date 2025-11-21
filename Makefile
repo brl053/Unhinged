@@ -42,7 +42,7 @@ DB_NAME := unhinged_db
 DB_USER := postgres
 
 # Universal Python Runner - Use unified build/python/venv (single source of truth)
-# See: build/requirements-unified.txt and LLM_MASTER_PROMPT.md
+# See: build/python/requirements.txt and LLM_MASTER_PROMPT.md
 PYTHON_RUN := ./build/python/venv/bin/python3
 
 # Native GUI
@@ -354,7 +354,7 @@ setup-python: ## Setup Python virtual environment with static analysis
 		echo "$(YELLOW)📦 Creating build/python/venv (unified environment)...$(RESET)"; \
 		python3 -m venv build/python/venv; \
 		./build/python/venv/bin/pip install --upgrade pip; \
-		./build/python/venv/bin/pip install -r build/requirements-unified.txt; \
+		./build/python/venv/bin/pip install -r build/python/requirements.txt; \
 		echo "$(GREEN)✅ build/python/venv created with unified dependencies$(RESET)"; \
 	else \
 		echo "$(GREEN)✅ build/python/venv already exists$(RESET)"; \
@@ -363,9 +363,9 @@ setup-python: ## Setup Python virtual environment with static analysis
 	$(call log_success,Unified Python environment ready)
 
 python-deps: ## Install/update Python dependencies
-	$(call log_info,📦 Installing Python dependencies from build/requirements-unified.txt...)
+	$(call log_info,📦 Installing Python dependencies from build/python/requirements.txt...)
 	@test -d build/python/venv || (echo "$(RED)❌ Run 'make setup-python' first$(RESET)" && exit 1)
-	@./build/python/venv/bin/pip install -r build/requirements-unified.txt
+	@./build/python/venv/bin/pip install -r build/python/requirements.txt
 	$(call log_success,Python dependencies installed)
 
 # ============================================================================

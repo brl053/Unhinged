@@ -1,0 +1,171 @@
+================================================================================
+MEMORANDUM
+================================================================================
+
+TO:      Engineering Team
+FROM:    Senior Implementation Engineer
+DATE:    2025-11-21
+RE:      Repository Cleanup Plan - Cruft Removal and Consolidation
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+Repository analysis reveals significant cruft accumulation from LLM-assisted
+development. This memo outlines systematic cleanup to improve maintainability
+while preserving ongoing graph logic work.
+
+SCOPE: Low-hanging fruit cleanup, dependency consolidation, documentation pruning
+TIMELINE: Immediate execution
+RISK: Low (no functional code changes, only cleanup)
+
+================================================================================
+FINDINGS: REPOSITORY STATE ANALYSIS
+================================================================================
+
+1. MARKDOWN DOCUMENTATION PROLIFERATION
+   - 87 markdown files in /build directory alone
+   - 3,607 total lines of markdown in /build/*.md
+   - Multiple completion summaries (PHASE_2, PHASE3, PHASE4)
+   - Deprecated notices (PROTOBUF_DEPRECATION_NOTICE.md)
+   - Assessment documents (ORBSTACK_MIGRATION_ASSESSMENT.txt)
+   
+2. PYTHON DEPENDENCY FRAGMENTATION
+   - /build/python/requirements.txt (85 lines, centralized)
+   - /build/requirements-core.txt (46 lines, duplicate)
+   - /build/requirements-unified.txt (132 lines, duplicate)
+   - /build/requirements-image-gen.txt (39 lines, subset)
+   - /services/text-to-speech/requirements.txt (29 lines, service-specific)
+   - /services/vision-ai/requirements.txt (28 lines, service-specific)
+   - /libs/event-framework/python/pyproject.toml (isolated)
+   
+3. KOTLIN REMNANTS (POST-MIGRATION)
+   - /platforms/persistence/ contains 20 Kotlin files
+   - build.gradle.kts still present
+   - No active Kotlin compilation in build system
+   - Marked for removal per Python consolidation phase
+   
+4. PROTOBUF/GRPC DEPRECATION (STAGED FOR REMOVAL)
+   - /proto directory deleted in working tree (git status shows 'D')
+   - PROTOBUF_DEPRECATION_NOTICE.md documents migration complete
+   - Services migrated to /libs/services pattern
+   
+5. TEMPORARY FILE ACCUMULATION
+   - /build/tmp/ directory: 14GB of accumulated data
+   - 6,068 .pyc files throughout repository
+   - Session logs, generated images, ISO files
+   
+6. DOCUMENTATION DUPLICATION
+   - /build/docs-generation/docs/ mirrors /docs/
+   - Multiple README.md files with overlapping content
+   - LLM-generated summaries not integrated into main docs
+
+================================================================================
+CLEANUP ACTIONS - PRIORITIZED
+================================================================================
+
+PRIORITY 1: DEPENDENCY CONSOLIDATION
+Action: Merge all Python requirements into single source of truth
+Target: /build/python/requirements.txt (already most comprehensive)
+Remove: requirements-core.txt, requirements-unified.txt, requirements-image-gen.txt
+Rationale: Axiom 8 - centralized Python environment at /build/python/requirements.txt
+
+PRIORITY 2: KOTLIN REMOVAL
+Action: Remove /platforms/persistence/ directory entirely
+Rationale: Python consolidation phase complete, Kotlin deprecated
+Verification: No imports from platforms.persistence in codebase
+
+PRIORITY 3: MARKDOWN PRUNING
+Action: Archive completion summaries and assessment documents
+Target: Move to /build/archive/docs/
+Keep: README.md, TECHNICAL_MEMO_CLI_STRATEGY.txt (active reference)
+Remove: PHASE_2/3/4_COMPLETION_SUMMARY.md, ORBSTACK_MIGRATION_ASSESSMENT.txt
+
+PRIORITY 4: TEMPORARY FILE CLEANUP
+Action: Purge /build/tmp/ contents (preserve directory structure)
+Action: Add .pyc files to .gitignore if not already present
+Rationale: 14GB of cruft, 6,068 compiled Python files
+
+PRIORITY 5: PROTOBUF CLEANUP
+Action: Remove PROTOBUF_DEPRECATION_NOTICE.md (migration complete)
+Rationale: /proto already deleted, notice no longer needed
+
+PRIORITY 6: SERVICE-SPECIFIC REQUIREMENTS
+Action: Remove /services/*/requirements.txt files
+Rationale: Services use centralized /build/python/venv per Axiom 8
+
+================================================================================
+EXECUTION PLAN
+================================================================================
+
+PHASE 1: DEPENDENCY CONSOLIDATION (15 minutes)
+1. Verify /build/python/requirements.txt contains all dependencies
+2. Remove duplicate requirements files
+3. Update any scripts referencing old requirements files
+4. Commit: "chore: consolidate Python dependencies to single source"
+
+PHASE 2: KOTLIN REMOVAL (10 minutes)
+1. Verify no imports from platforms.persistence
+2. Remove /platforms/persistence/ directory
+3. Commit: "chore: remove deprecated Kotlin persistence platform"
+
+PHASE 3: DOCUMENTATION CLEANUP (20 minutes)
+1. Create /build/archive/docs/ directory
+2. Move completion summaries and assessments
+3. Remove PROTOBUF_DEPRECATION_NOTICE.md
+4. Commit: "chore: archive historical documentation"
+
+PHASE 4: TEMPORARY FILE PURGE (5 minutes)
+1. Clean /build/tmp/ (preserve structure)
+2. Verify .gitignore covers .pyc files
+3. Commit: "chore: purge temporary files and build artifacts"
+
+TOTAL ESTIMATED TIME: 50 minutes
+
+================================================================================
+RISK MITIGATION
+================================================================================
+
+1. NO FUNCTIONAL CODE CHANGES
+   - Only removing deprecated/duplicate files
+   - No changes to active Python modules
+   
+2. ONGOING GRAPH WORK PROTECTED
+   - /libs/python/graph/ untouched
+   - /libs/python/query_planner/ untouched
+   - Active development in cli/commands/query.py preserved
+   
+3. ROLLBACK CAPABILITY
+   - All changes committed separately
+   - Git history preserves deleted files
+   - Can cherry-pick revert if needed
+
+================================================================================
+POST-CLEANUP VERIFICATION
+================================================================================
+
+1. Run pre-commit hooks: ./unhinged dev lint
+2. Run type checking: ./unhinged dev static-analysis
+3. Run test suite: pytest
+4. Verify man pages: man unhinged
+5. Check build system: make help
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+1. ESTABLISH DOCUMENTATION POLICY
+   - LLM-generated summaries go to /build/tmp/
+   - Only human-reviewed docs in /build/ or /docs/
+   - Archive historical docs after 30 days
+   
+2. ENFORCE SINGLE PYTHON ENVIRONMENT
+   - Block PRs adding new requirements.txt files
+   - Pre-commit hook to detect duplicate dependencies
+   
+3. AUTOMATE CLEANUP
+   - Weekly cron job to purge /build/tmp/
+   - Pre-commit hook to remove .pyc files
+
+================================================================================
+
