@@ -30,6 +30,7 @@ Expected Behavior:
 """
 
 import argparse
+import logging
 import subprocess
 import sys
 import time
@@ -41,12 +42,10 @@ sys.path.append(str(project_root))
 sys.path.append(str(project_root / "libs" / "event-framework" / "python" / "src"))
 
 try:
-    from events import create_service_logger
+    from events import EventLogger, create_service_logger
 
-    logger = create_service_logger("service-startup", "1.0.0")
+    logger: EventLogger | logging.Logger = create_service_logger("service-startup", "1.0.0")
 except ImportError:
-    import logging
-
     logger = logging.getLogger("service-startup")
 
 
@@ -94,7 +93,7 @@ class UnhingedServiceStartup:
             },
         }
 
-        self.running_processes = []
+        self.running_processes: list[subprocess.Popen[bytes]] = []
 
     def start_all_services(self) -> bool:
         """Start all services in the correct order."""
@@ -110,7 +109,11 @@ class UnhingedServiceStartup:
                     logger.error(f"❌ Required service {service_name} failed to start")
                     success = False
                 else:
-                    logger.warning(f"⚠️ Optional service {service_name} failed to start")
+                    # Use warn() for EventLogger, warning() for stdlib Logger
+                    if hasattr(logger, "warn"):
+                        logger.warn(f"⚠️ Optional service {service_name} failed to start")
+                    else:
+                        logger.warning(f"⚠️ Optional service {service_name} failed to start")
 
         if success:
             logger.info("✅ All required services started successfully!")

@@ -40,8 +40,10 @@ try:
     from .simple_vm_launcher import SimpleVMLauncher
 except ImportError:
     # Handle direct execution
-    sys.path.append(str(Path(__file__).parent))
-    from simple_vm_launcher import SimpleVMLauncher
+    control_dir = Path(__file__).parent
+    if str(control_dir) not in sys.path:
+        sys.path.append(str(control_dir))
+    from simple_vm_launcher import SimpleVMLauncher  # type: ignore[no-redef]
 
 
 class EnhancedVMLauncher(SimpleVMLauncher):

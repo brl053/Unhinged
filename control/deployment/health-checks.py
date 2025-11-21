@@ -28,9 +28,9 @@ class HealthCheckResult:
     status: str  # healthy, unhealthy, unknown
     response_time: float
     error_message: str | None = None
-    timestamp: datetime = None
+    timestamp: datetime | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now()
 

@@ -11,6 +11,7 @@ Launches essential services before starting the native GUI.
 Provides cohesive integration between `make start` and service composition.
 """
 
+import logging
 import subprocess
 import sys
 import time
@@ -24,15 +25,13 @@ sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / 
 sys.path.append(str(Path(__file__).parent.parent / "generated/python/clients"))
 
 try:
-    from events import create_service_logger
+    from events import EventLogger, create_service_logger
 
     # Initialize event logger
-    events = create_service_logger("service-launcher", "1.0.0")
+    events: EventLogger | logging.Logger = create_service_logger("service-launcher", "1.0.0")
     USING_EVENT_FRAMEWORK = True
 except ImportError:
     # Fallback to basic logging if event framework not available
-    import logging
-
     events = logging.getLogger("service-launcher")
     USING_EVENT_FRAMEWORK = False
 

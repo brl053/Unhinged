@@ -23,11 +23,11 @@ class OperationResult:
     affected_services: list[str]
     system_state_change: str
     execution_time: float
-    timestamp: datetime = None
+    timestamp: datetime | None = None
     error_message: str | None = None
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now()
         if self.metadata is None:

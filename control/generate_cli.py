@@ -24,20 +24,22 @@ sys.path.insert(0, str(PROJECT_ROOT / "libs"))
 
 try:
     from libs.services import (
+        HybridGUIAnalysisService,
         ImageGenerationService,
         ScriptParserService,
         ShortFormVideoService,
         TTSService,
         VideoGenerationService,
-        YOLOAnalysisService,
     )
+
+    YOLOAnalysisService = HybridGUIAnalysisService  # Backward compatibility alias
 except ImportError as e:
-    ImageGenerationService = None
-    YOLOAnalysisService = None
-    VideoGenerationService = None
-    ScriptParserService = None
-    TTSService = None
-    ShortFormVideoService = None
+    ImageGenerationService = None  # type: ignore[assignment,misc]
+    YOLOAnalysisService = None  # type: ignore[assignment]
+    VideoGenerationService = None  # type: ignore[assignment,misc]
+    ScriptParserService = None  # type: ignore[assignment]
+    TTSService = None  # type: ignore[assignment]
+    ShortFormVideoService = None  # type: ignore[assignment]
     IMPORT_ERROR = str(e)
 
 

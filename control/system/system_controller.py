@@ -126,7 +126,7 @@ class SystemController:
             result = OperationResult(
                 operation=operation_name,
                 success=False,
-                affected_services=tier_config["services"],
+                affected_services=list(tier_config["services"]),
                 system_state_change=f"Failed to start tier {tier}",
                 execution_time=time.time() - start_time,
                 error_message=error_msg,
@@ -158,7 +158,8 @@ class SystemController:
 
         try:
             # For now, use Docker compose down
-            docker_cmd = tier_config["docker_command"].replace("up -d", "down")
+            docker_cmd_str = str(tier_config["docker_command"])
+            docker_cmd = docker_cmd_str.replace("up -d", "down")
 
             # Execute command (simplified for now)
             process = await asyncio.create_subprocess_shell(
@@ -172,7 +173,7 @@ class SystemController:
             result = OperationResult(
                 operation=operation_name,
                 success=success,
-                affected_services=tier_config["services"],
+                affected_services=list(tier_config["services"]),
                 system_state_change=f"Tier {tier} {'stopped' if success else 'stop failed'}",
                 execution_time=time.time() - start_time,
                 error_message=stderr.decode() if stderr else None,
@@ -186,7 +187,7 @@ class SystemController:
             result = OperationResult(
                 operation=operation_name,
                 success=False,
-                affected_services=tier_config["services"],
+                affected_services=list(tier_config["services"]),
                 system_state_change=f"Failed to stop tier {tier}",
                 execution_time=time.time() - start_time,
                 error_message=error_msg,
@@ -317,8 +318,8 @@ class SystemController:
         for op_type in operations_by_type:
             type_ops = [op for op in self.operation_log if op.operation.startswith(op_type)]
             successful = sum(1 for op in type_ops if op.success)
-            operations_by_type[op_type]["success_rate"] = successful / len(type_ops)
-            operations_by_type[op_type]["avg_time"] = sum(op.execution_time for op in type_ops) / len(type_ops)
+            operations_by_type[op_type]["success_rate"] = float(successful) / len(type_ops)
+            operations_by_type[op_type]["avg_time"] = float(sum(op.execution_time for op in type_ops)) / len(type_ops)
 
         return {
             "total_operations": total_operations,

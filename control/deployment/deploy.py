@@ -10,6 +10,7 @@ import logging
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 import requests
 import yaml
@@ -36,10 +37,10 @@ class UnhingedDeploymentOrchestrator:
         self.port_allocation = self._load_port_allocation()
 
         # Deployment state
-        self.deployed_services = []
-        self.failed_services = []
+        self.deployed_services: list[str] = []
+        self.failed_services: list[str] = []
 
-    def _load_environment_config(self) -> dict:
+    def _load_environment_config(self) -> dict[str, Any]:
         """Load environment-specific configuration"""
         config_file = self.control_root / "config" / "environments" / f"{self.environment}.yml"
         try:
@@ -49,22 +50,24 @@ class UnhingedDeploymentOrchestrator:
             events.warn("Environment config not found", {"config_file": str(config_file)})
             return {}
 
-    def _load_service_registry(self) -> dict:
+    def _load_service_registry(self) -> dict[str, Any]:
         """Load service registry configuration"""
         registry_file = self.control_root / "config" / "service-registry.yml"
         try:
             with open(registry_file) as f:
-                return yaml.safe_load(f)
+                result = yaml.safe_load(f)
+                return result if isinstance(result, dict) else {}
         except FileNotFoundError:
             events.warn("Service registry not found", {"registry_file": str(registry_file)})
             return {}
 
-    def _load_port_allocation(self) -> dict:
+    def _load_port_allocation(self) -> dict[str, Any]:
         """Load port allocation configuration"""
         port_file = self.control_root / "config" / "port-allocation.yml"
         try:
             with open(port_file) as f:
-                return yaml.safe_load(f)
+                result = yaml.safe_load(f)
+                return result if isinstance(result, dict) else {}
         except FileNotFoundError:
             events.warn(
                 "Port allocation not found",

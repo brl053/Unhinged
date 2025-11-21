@@ -40,12 +40,12 @@ class ServiceEndpoint:
     health_url: str | None = None  # For HTTP services only
     description: str = ""
     required: bool = False
-    tags: list[str] = None
+    tags: list[str] | None = None
     # gRPC-specific configuration
     grpc_port: int | None = None  # If different from main port
     implements_health_proto: bool = False  # Uses health.proto gRPC service
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.tags is None:
             self.tags = []
         # Set grpc_port to main port if not specified for gRPC services
