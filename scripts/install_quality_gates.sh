@@ -1,10 +1,9 @@
 #!/bin/bash
 #
 # @llm-type build.script
-# @llm-does install quality gate enforcement as Git pre-commit hook
+# @llm-does install quality gate enforcement via Git config
 #
-# This script installs the quality gate enforcement system that CANNOT be bypassed.
-# It replaces the standard pre-commit hook with our custom enforcement.
+# This script configures Git to use the centralized hooks in libs/python/drivers/git/hooks
 #
 # Usage:
 #   ./scripts/install_quality_gates.sh
@@ -12,19 +11,31 @@
 set -e
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-GIT_HOOKS_DIR="$REPO_ROOT/.git/hooks"
-PRE_COMMIT_HOOK="$GIT_HOOKS_DIR/pre-commit"
 
 echo "=================================="
 echo "Installing Quality Gate Enforcement"
 echo "=================================="
 echo ""
 
-# Create hooks directory if it doesn't exist
-mkdir -p "$GIT_HOOKS_DIR"
+# Configure Git to use centralized hooks directory
+cd "$REPO_ROOT"
+git config --local core.hooksPath libs/python/drivers/git/hooks
 
-# Create the pre-commit hook
-cat > "$PRE_COMMIT_HOOK" << 'EOF'
+echo "✅ Git configured to use centralized hooks"
+echo ""
+echo "Hooks directory: libs/python/drivers/git/hooks"
+echo "Configuration: git config --local core.hooksPath"
+echo ""
+echo "Verification:"
+git config --local --get core.hooksPath
+echo ""
+
+exit 0
+
+# OLD APPROACH - DEPRECATED
+# This was creating hooks in .git/hooks/ which is not version controlled
+# New approach uses git config core.hooksPath to point to version-controlled hooks
+cat > /dev/null << 'EOF'
 #!/bin/bash
 #
 # Unhinged Quality Gate Enforcement

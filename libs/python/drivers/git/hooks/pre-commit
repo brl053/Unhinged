@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Unhinged Quality Gate Enforcement
+# Located in: libs/python/drivers/git/hooks/pre-commit
+# Activated via: git config core.hooksPath libs/python/drivers/git/hooks
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [[ "$*" == *"--no-verify"* ]]; then
+    echo ""
+    echo "🚫 --no-verify DETECTED - Quality gates cannot be bypassed"
+    exit 1
+fi
+
+if [[ -n "$SKIP" ]]; then
+    echo ""
+    echo "🚫 SKIP DETECTED: $SKIP - Quality gates cannot be bypassed"
+    exit 1
+fi
+
+python3 "$REPO_ROOT/libs/python/drivers/git/quality_gates.py"
+exit $?
+
