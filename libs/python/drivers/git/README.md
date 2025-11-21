@@ -44,12 +44,21 @@ cat .git/hooks/pre-commit
 
 ## Configuration
 
-The `pre-commit-config.yaml` defines the standard pre-commit hooks:
+The `pre-commit-config.yaml` in this directory is the source of truth for
+pre-commit hook configuration. It must be copied to repo root `.pre-commit-config.yaml`
+for the pre-commit framework to find it.
+
+The configuration defines:
 - `unhinged-lint` - Custom linter (build/lint.py)
 - `llmdocs-validator` - LLMDocs validation
 - `ruff` - Linter with auto-fix
 - `ruff-format` - Code formatter
 - `mypy` - Type checker
+
+When updating pre-commit configuration:
+1. Edit `libs/python/drivers/git/pre-commit-config.yaml`
+2. Copy to repo root: `cp libs/python/drivers/git/pre-commit-config.yaml .pre-commit-config.yaml`
+3. Commit both files
 
 ## Architecture
 
