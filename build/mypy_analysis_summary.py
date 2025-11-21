@@ -24,7 +24,7 @@ def run_mypy_analysis():
     result = subprocess.run(
         [
             "build/python/venv/bin/mypy",
-            "--config-file=ruff.toml",
+            "--config-file=mypy.ini",
             "control",
             "libs",
         ],
