@@ -6,9 +6,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from typing import Any, cast
+from typing import cast
 
 from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
 from libs.python.command_orchestration.semantic_search import (
@@ -47,9 +46,7 @@ class SemanticSearchWithReasoning:
             LLM provider (default: ollama for on-premise deployment)
         """
         self.search_engine = search_engine
-        self.reasoning_engine = reasoning_engine or ReasoningEngine(
-            model=model, provider=provider
-        )
+        self.reasoning_engine = reasoning_engine or ReasoningEngine(model=model, provider=provider)
 
     async def search_with_reasoning(
         self,
@@ -98,9 +95,7 @@ class SemanticSearchWithReasoning:
                         result.reasoning = command_reasoning[result.command]
 
             except Exception as exc:
-                logger.warning(
-                    f"LLM reasoning failed, using static reasoning: {exc}"
-                )
+                logger.warning(f"LLM reasoning failed, using static reasoning: {exc}")
                 # Fall back to static reasoning (already in results)
 
             return cast(list[SearchResult], results)
@@ -151,4 +146,3 @@ class SemanticSearchWithReasoning:
             limit=limit,
             use_llm_reasoning=True,
         )
-

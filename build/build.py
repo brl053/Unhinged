@@ -7,7 +7,6 @@
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add the build directory to Python path
@@ -16,7 +15,9 @@ sys.path.insert(0, str(build_dir))
 
 # Import v1 build system
 try:
-    from cli import BuildCLI, main as cli_main
+    from cli import BuildCLI
+    from cli import main as cli_main
+
     BUILD_SYSTEM_AVAILABLE = True
 except ImportError as e:
     print(f"❌ Build system not available: {e}")
@@ -24,9 +25,11 @@ except ImportError as e:
     print("  pip install pyyaml psutil")
     BUILD_SYSTEM_AVAILABLE = False
 
+
 def show_help():
     """Show help for v1 build system"""
-    print("""
+    print(
+        """
 🚀 Unhinged Build System (v1)
 
 USAGE:
@@ -64,15 +67,15 @@ EXAMPLES:
     python build/build.py clean --smart
 
 For more information, see: build/README.md
-""")
-
+"""
+    )
 
 
 def main():
     """Main entry point for v1 build system"""
 
     # Handle help requests
-    if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] in ['-h', '--help', 'help']):
+    if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] in ["-h", "--help", "help"]):
         show_help()
         return 0
 
@@ -90,12 +93,12 @@ def main():
             command = args[0]
 
             # Map convenient shortcuts to full commands
-            if command == 'dev':
+            if command == "dev":
                 # Convert 'dev' to 'build dev-fast'
-                sys.argv = ['build.py', 'build', 'dev-fast', '--parallel']
-            elif command == 'test':
+                sys.argv = ["build.py", "build", "dev-fast", "--parallel"]
+            elif command == "test":
                 # Convert 'test' to 'build test-fast'
-                sys.argv = ['build.py', 'build', 'test-fast', '--parallel']
+                sys.argv = ["build.py", "build", "test-fast", "--parallel"]
             # For other commands, pass through to CLI
 
         return cli_main()
@@ -105,5 +108,6 @@ def main():
         print("Try running with --verbose for more details")
         return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

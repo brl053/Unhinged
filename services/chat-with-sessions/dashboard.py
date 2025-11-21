@@ -78,12 +78,8 @@ def get_latest_metrics():
 
                         # Extract service status
                         session_metrics = data.get("current_session_metrics", {})
-                        metrics["services"]["redis"] = session_metrics.get(
-                            "redis_status", "unknown"
-                        )
-                        metrics["services"]["crdb"] = session_metrics.get(
-                            "crdb_status", "unknown"
-                        )
+                        metrics["services"]["redis"] = session_metrics.get("redis_status", "unknown")
+                        metrics["services"]["crdb"] = session_metrics.get("crdb_status", "unknown")
                         break
         except Exception as e:
             metrics["monitor"]["status"] = f"error: {e}"
@@ -96,9 +92,9 @@ def format_duration(seconds):
     if seconds < 60:
         return f"{seconds:.1f}s"
     elif seconds < 3600:
-        return f"{seconds/60:.1f}m"
+        return f"{seconds / 60:.1f}m"
     else:
-        return f"{seconds/3600:.1f}h"
+        return f"{seconds / 3600:.1f}h"
 
 
 def format_number(num):
@@ -212,9 +208,7 @@ def display_dashboard(metrics):
 
             print(f"Redis Lat:  {redis_lat:.2f}ms")
             print(f"CRDB Lat:   {crdb_lat:.2f}ms")
-            print(
-                f"Sessions:   {format_number(total_sessions)} total, {format_number(active_sessions)} active"
-            )
+            print(f"Sessions:   {format_number(total_sessions)} total, {format_number(active_sessions)} active")
 
         # Usage patterns
         patterns = data.get("usage_patterns", {})
@@ -222,9 +216,7 @@ def display_dashboard(metrics):
             trend = patterns.get("latency_trend", "unknown")
             growth = patterns.get("session_growth_rate_per_minute", 0)
 
-            trend_icon = {"increasing": "📈", "decreasing": "📉", "stable": "➡️"}.get(
-                trend, "❓"
-            )
+            trend_icon = {"increasing": "📈", "decreasing": "📉", "stable": "➡️"}.get(trend, "❓")
             print(f"Trend:      {trend_icon} {trend}")
             print(f"Growth:     {growth:.2f} sessions/min")
 

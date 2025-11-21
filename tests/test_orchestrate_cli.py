@@ -139,11 +139,13 @@ class TestOrchestrateAsync:
     @pytest.mark.asyncio
     async def test_orchestrate_without_reasoning(self) -> None:
         """Test orchestration without LLM reasoning."""
-        with patch("cli.commands.orchestrate.ManPageIndexer") as mock_indexer_class, patch(
-            "cli.commands.orchestrate.DocumentLoader"
-        ) as mock_loader_class, patch("cli.commands.orchestrate.SemanticSearchEngine") as mock_search_class, patch(
-            "cli.commands.orchestrate.DAGBuilder"
-        ) as mock_dag_class, patch("cli.commands.orchestrate.CommandExecutor") as mock_exec_class:
+        with (
+            patch("cli.commands.orchestrate.ManPageIndexer") as mock_indexer_class,
+            patch("cli.commands.orchestrate.DocumentLoader") as mock_loader_class,
+            patch("cli.commands.orchestrate.SemanticSearchEngine") as mock_search_class,
+            patch("cli.commands.orchestrate.DAGBuilder") as mock_dag_class,
+            patch("cli.commands.orchestrate.CommandExecutor") as mock_exec_class,
+        ):
             # Setup mocks
             mock_indexer = MagicMock()
             mock_indexer.build_index.return_value = {}
@@ -188,13 +190,15 @@ class TestOrchestrateAsync:
     @pytest.mark.asyncio
     async def test_orchestrate_with_reasoning(self) -> None:
         """Test orchestration with LLM reasoning."""
-        with patch("cli.commands.orchestrate.ManPageIndexer") as mock_indexer_class, patch(
-            "cli.commands.orchestrate.DocumentLoader"
-        ) as mock_loader_class, patch("cli.commands.orchestrate.SemanticSearchEngine") as mock_search_class, patch(
-            "cli.commands.orchestrate.SemanticSearchWithReasoning"
-        ) as mock_search_wrapper_class, patch("cli.commands.orchestrate.DAGBuilder") as mock_dag_class, patch(
-            "cli.commands.orchestrate.CommandExecutor"
-        ) as mock_exec_class, patch("cli.commands.orchestrate.CommandExecutorWithReasoning") as mock_exec_wrapper_class:
+        with (
+            patch("cli.commands.orchestrate.ManPageIndexer") as mock_indexer_class,
+            patch("cli.commands.orchestrate.DocumentLoader") as mock_loader_class,
+            patch("cli.commands.orchestrate.SemanticSearchEngine") as mock_search_class,
+            patch("cli.commands.orchestrate.SemanticSearchWithReasoning") as mock_search_wrapper_class,
+            patch("cli.commands.orchestrate.DAGBuilder") as mock_dag_class,
+            patch("cli.commands.orchestrate.CommandExecutor") as mock_exec_class,
+            patch("cli.commands.orchestrate.CommandExecutorWithReasoning") as mock_exec_wrapper_class,
+        ):
             # Setup mocks
             mock_indexer = MagicMock()
             mock_indexer.build_index.return_value = {}

@@ -88,9 +88,7 @@ class SystemController:
         """
         operation_name = f"start_tier_{tier}"
         if tier not in self.tier_mappings:
-            error_msg = (
-                f"Unknown service tier: {tier}. Available: {list(self.tier_mappings.keys())}"
-            )
+            error_msg = f"Unknown service tier: {tier}. Available: {list(self.tier_mappings.keys())}"
             self.events.error(error_msg)
             result = OperationResult(
                 operation=operation_name,
@@ -196,9 +194,7 @@ class SystemController:
             self.operation_log.append(result)
             return result
 
-    async def _execute_docker_command(
-        self, operation: str, tier_config: dict[str, Any]
-    ) -> OperationResult:
+    async def _execute_docker_command(self, operation: str, tier_config: dict[str, Any]) -> OperationResult:
         """
         Execute Docker command as fallback when build system unavailable
 
@@ -322,17 +318,13 @@ class SystemController:
             type_ops = [op for op in self.operation_log if op.operation.startswith(op_type)]
             successful = sum(1 for op in type_ops if op.success)
             operations_by_type[op_type]["success_rate"] = successful / len(type_ops)
-            operations_by_type[op_type]["avg_time"] = sum(
-                op.execution_time for op in type_ops
-            ) / len(type_ops)
+            operations_by_type[op_type]["avg_time"] = sum(op.execution_time for op in type_ops) / len(type_ops)
 
         return {
             "total_operations": total_operations,
             "overall_success_rate": successful_operations / total_operations,
             "operations_by_type": operations_by_type,
-            "most_common_operation": max(
-                operations_by_type.keys(), key=lambda k: operations_by_type[k]["count"]
-            )
+            "most_common_operation": max(operations_by_type.keys(), key=lambda k: operations_by_type[k]["count"])
             if operations_by_type
             else None,
         }
@@ -341,12 +333,10 @@ class SystemController:
         """Get resource usage insights for OS design"""
         return {
             "uptime": time.time() - self.start_time,
-            "operations_per_minute": len(self.operation_log)
-            / ((time.time() - self.start_time) / 60)
+            "operations_per_minute": len(self.operation_log) / ((time.time() - self.start_time) / 60)
             if self.operation_log
             else 0,
-            "average_operation_time": sum(op.execution_time for op in self.operation_log)
-            / len(self.operation_log)
+            "average_operation_time": sum(op.execution_time for op in self.operation_log) / len(self.operation_log)
             if self.operation_log
             else 0,
         }

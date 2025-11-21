@@ -9,14 +9,14 @@ Usage:
     python /build/lint.py <file1> <file2> ...
 """
 
-import sys
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 # Venv-aware tool discovery
 BUILD_DIR = Path(__file__).parent
-VENV_BIN = BUILD_DIR / 'python' / 'venv' / 'bin'
+VENV_BIN = BUILD_DIR / "python" / "venv" / "bin"
 
 
 def find_tool(name: str) -> str:
@@ -32,7 +32,7 @@ def check_file_length(file_path: str) -> tuple[int, str | None]:
     try:
         with open(file_path) as f:
             line_count = sum(1 for _ in f)
-    except Exception as e:
+    except Exception:
         return (0, None)  # Skip if can't read
 
     if line_count > 1000:
@@ -55,7 +55,7 @@ def check_import_count(file_path: str) -> tuple[int, str | None]:
     for line in lines[:100]:  # Only check top of file
         stripped = line.strip()
         # Count import statements, not individual imports from same line
-        if stripped.startswith(('import ', 'from ')):
+        if stripped.startswith(("import ", "from ")):
             import_count += 1
 
     # Limit: 25 import statements (not individual imports)
@@ -77,7 +77,7 @@ def check_wildcard_imports(file_path: str) -> tuple[int, list[str]]:
         return (0, [])
 
     for i, line in enumerate(lines, 1):
-        if re.search(r'^\s*from\s+\S+\s+import\s+\*', line):
+        if re.search(r"^\s*from\s+\S+\s+import\s+\*", line):
             issues.append(f"❌ Line {i}: wildcard import (use explicit imports)")
 
     exit_code = 1 if issues else 0
@@ -100,7 +100,7 @@ def check_function_length(file_path: str) -> tuple[int, list[str]]:
 
     for i, line in enumerate(lines, 1):
         # Detect function definition
-        if match := re.match(r'^(\s*)def\s+([a-zA-Z_][a-zA-Z0-9_]*)', line):
+        if match := re.match(r"^(\s*)def\s+([a-zA-Z_][a-zA-Z0-9_]*)", line):
             if in_function:
                 # Previous function ended
                 length = i - func_start
@@ -115,7 +115,7 @@ def check_function_length(file_path: str) -> tuple[int, list[str]]:
             indent_level = len(match.group(1))
 
         # Detect end of function (dedent or EOF)
-        elif in_function and line.strip() and not line.startswith(' ' * (indent_level + 1)):
+        elif in_function and line.strip() and not line.startswith(" " * (indent_level + 1)):
             length = i - func_start
             if length > 100:
                 issues.append(f"❌ Function '{func_name}' is {length} lines (limit: 100)")
@@ -131,7 +131,7 @@ def check_function_length(file_path: str) -> tuple[int, list[str]]:
         elif length > 50:
             issues.append(f"⚠️  Function '{func_name}' is {length} lines (target: <50)")
 
-    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    exit_code = 1 if any("❌" in msg for msg in issues) else 0
     return (exit_code, issues)
 
 
@@ -156,7 +156,7 @@ def check_nesting_depth(file_path: str) -> tuple[int, list[str]]:
         elif depth > 4:
             issues.append(f"⚠️  Line {i}: nesting depth {depth} (target: <4)")
 
-    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    exit_code = 1 if any("❌" in msg for msg in issues) else 0
     return (exit_code, issues)
 
 
@@ -176,7 +176,7 @@ def check_cyclomatic_complexity(file_path: str) -> tuple[int, list[str]]:
     indent_level = 0
 
     for i, line in enumerate(lines, 1):
-        if match := re.match(r'^(\s*)def\s+([a-zA-Z_][a-zA-Z0-9_]*)', line):
+        if match := re.match(r"^(\s*)def\s+([a-zA-Z_][a-zA-Z0-9_]*)", line):
             if in_function:
                 # Check previous function
                 if branch_count > 10:
@@ -192,11 +192,11 @@ def check_cyclomatic_complexity(file_path: str) -> tuple[int, list[str]]:
 
         elif in_function:
             # Count branches
-            if re.search(r'\b(if|elif|for|while|except|and|or)\b', line):
+            if re.search(r"\b(if|elif|for|while|except|and|or)\b", line):
                 branch_count += 1
 
             # Detect function end
-            if line.strip() and not line.startswith(' ' * (indent_level + 1)):
+            if line.strip() and not line.startswith(" " * (indent_level + 1)):
                 if branch_count > 10:
                     issues.append(f"❌ Function '{func_name}' has {branch_count} branches (limit: 10)")
                 elif branch_count > 7:
@@ -210,7 +210,7 @@ def check_cyclomatic_complexity(file_path: str) -> tuple[int, list[str]]:
         elif branch_count > 7:
             issues.append(f"⚠️  Function '{func_name}' has {branch_count} branches (target: <7)")
 
-    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    exit_code = 1 if any("❌" in msg for msg in issues) else 0
     return (exit_code, issues)
 
 
@@ -224,13 +224,13 @@ def check_parameter_count(file_path: str) -> tuple[int, list[str]]:
         return (0, [])
 
     # Match function definitions (single line only to avoid dict literals)
-    pattern = r'def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):'
+    pattern = r"def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):"
     for match in re.finditer(pattern, content, re.MULTILINE):
         func_name = match.group(1)
         params_str = match.group(2)
 
         # Skip if params contain newlines (multiline, likely false positive)
-        if '\n' in params_str:
+        if "\n" in params_str:
             continue
 
         # Count parameters (basic, doesn't handle multiline perfectly)
@@ -238,7 +238,7 @@ def check_parameter_count(file_path: str) -> tuple[int, list[str]]:
             param_count = 0
         else:
             # Split by comma, filter out empty strings
-            params = [p.strip() for p in params_str.split(',') if p.strip()]
+            params = [p.strip() for p in params_str.split(",") if p.strip()]
             param_count = len(params)
 
         if param_count > 7:
@@ -246,7 +246,7 @@ def check_parameter_count(file_path: str) -> tuple[int, list[str]]:
         elif param_count > 5:
             issues.append(f"⚠️  Function '{func_name}' has {param_count} parameters (target: <5)")
 
-    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    exit_code = 1 if any("❌" in msg for msg in issues) else 0
     return (exit_code, issues)
 
 
@@ -265,7 +265,7 @@ def check_class_size(file_path: str) -> tuple[int, list[str]]:
     indent_level = 0
 
     for i, line in enumerate(lines, 1):
-        if match := re.match(r'^(\s*)class\s+([a-zA-Z_][a-zA-Z0-9_]*)', line):
+        if match := re.match(r"^(\s*)class\s+([a-zA-Z_][a-zA-Z0-9_]*)", line):
             if in_class:
                 length = i - class_start
                 if length > 500:
@@ -278,7 +278,7 @@ def check_class_size(file_path: str) -> tuple[int, list[str]]:
             class_start = i
             indent_level = len(match.group(1))
 
-        elif in_class and line.strip() and not line.startswith(' ' * (indent_level + 1)):
+        elif in_class and line.strip() and not line.startswith(" " * (indent_level + 1)):
             length = i - class_start
             if length > 500:
                 issues.append(f"❌ Class '{class_name}' is {length} lines (limit: 500)")
@@ -294,57 +294,45 @@ def check_class_size(file_path: str) -> tuple[int, list[str]]:
         elif length > 300:
             issues.append(f"⚠️  Class '{class_name}' is {length} lines (target: <300)")
 
-    exit_code = 1 if any('❌' in msg for msg in issues) else 0
+    exit_code = 1 if any("❌" in msg for msg in issues) else 0
     return (exit_code, issues)
 
 
 def get_linter_config(file_path: str) -> dict:
     """Determine linter configuration based on file location and type."""
     path = Path(file_path)
-    
+
     # Skip non-Python files
-    if path.suffix != '.py':
-        return {'skip': True, 'reason': 'Not a Python file'}
-    
+    if path.suffix != ".py":
+        return {"skip": True, "reason": "Not a Python file"}
+
     # Skip generated files
-    if 'proto' in path.parts or path.name.startswith('pb2_'):
-        return {'skip': True, 'reason': 'Generated code'}
-    
+    if "proto" in path.parts or path.name.startswith("pb2_"):
+        return {"skip": True, "reason": "Generated code"}
+
     # Skip test files (different rules)
-    if 'test' in path.parts or path.name.startswith('test_'):
-        return {
-            'linters': ['ruff'],
-            'ruff_args': ['--select', 'E,W,F', '--ignore', 'E501'],
-            'type': 'test'
-        }
-    
+    if "test" in path.parts or path.name.startswith("test_"):
+        return {"linters": ["ruff"], "ruff_args": ["--select", "E,W,F", "--ignore", "E501"], "type": "test"}
+
     # Build infrastructure (stricter)
-    if 'build' in path.parts:
-        return {
-            'linters': ['ruff'],
-            'ruff_args': ['--select', 'E,W,F,C901'],
-            'type': 'build'
-        }
+    if "build" in path.parts:
+        return {"linters": ["ruff"], "ruff_args": ["--select", "E,W,F,C901"], "type": "build"}
 
     # Default: standard Python code
-    return {
-        'linters': ['ruff'],
-        'ruff_args': ['--select', 'E,W,F,C901'],
-        'type': 'standard'
-    }
+    return {"linters": ["ruff"], "ruff_args": ["--select", "E,W,F,C901"], "type": "standard"}
 
 
 def run_ruff(file_path: str, args: list) -> int:
     """Run ruff linter on file."""
-    ruff_cmd = find_tool('ruff')
-    cmd = [ruff_cmd, 'check', file_path] + args
+    ruff_cmd = find_tool("ruff")
+    cmd = [ruff_cmd, "check", file_path] + args
     result = subprocess.run(cmd, capture_output=True, text=True)
-    
+
     if result.stdout:
-        print(result.stdout, end='')
+        print(result.stdout, end="")
     if result.stderr:
-        print(result.stderr, end='', file=sys.stderr)
-    
+        print(result.stderr, end="", file=sys.stderr)
+
     return result.returncode
 
 
@@ -352,7 +340,7 @@ def lint_file(file_path: str) -> int:
     """Lint a single file. Returns 0 if OK, 1 if violations found."""
     config = get_linter_config(file_path)
 
-    if config.get('skip'):
+    if config.get("skip"):
         return 0
 
     exit_code = 0
@@ -406,9 +394,9 @@ def lint_file(file_path: str) -> int:
     exit_code = max(exit_code, class_exit_code)
 
     # Run ruff linter
-    for linter in config.get('linters', []):
-        if linter == 'ruff':
-            args = config.get('ruff_args', [])
+    for linter in config.get("linters", []):
+        if linter == "ruff":
+            args = config.get("ruff_args", [])
             code = run_ruff(file_path, args)
             exit_code = max(exit_code, code)
 
@@ -420,17 +408,16 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python /build/lint.py <file1> <file2> ...")
         sys.exit(1)
-    
+
     files = sys.argv[1:]
     exit_code = 0
-    
+
     for file_path in files:
         code = lint_file(file_path)
         exit_code = max(exit_code, code)
-    
+
     sys.exit(exit_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

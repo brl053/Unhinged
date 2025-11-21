@@ -143,9 +143,7 @@ class ImageGenerationServicer(
                 "Starting image generation",
                 {
                     "generation_id": generation_id,
-                    "prompt": request.prompt[:50] + "..."
-                    if len(request.prompt) > 50
-                    else request.prompt,
+                    "prompt": request.prompt[:50] + "..." if len(request.prompt) > 50 else request.prompt,
                     "width": request.width,
                     "height": request.height,
                     "steps": request.num_inference_steps,
@@ -201,9 +199,7 @@ class ImageGenerationServicer(
             )
 
             # Save images
-            saved_paths = self.generator.save_result(
-                result, self.output_dir, "grpc_generated"
-            )
+            saved_paths = self.generator.save_result(result, self.output_dir, "grpc_generated")
 
             # Send saving progress
             yield self._create_progress_chunk(
@@ -282,7 +278,7 @@ class ImageGenerationServicer(
                     batch_id,
                     image_generation_pb2.GENERATION_STAGE_DENOISING,
                     progress,
-                    f"Generating image {i+1}/{total_prompts}: {prompt[:30]}...",
+                    f"Generating image {i + 1}/{total_prompts}: {prompt[:30]}...",
                 )
 
                 # Generate single image
@@ -300,9 +296,7 @@ class ImageGenerationServicer(
                 all_results.append(result)
 
                 # Save result
-                saved_paths = self.generator.save_result(
-                    result, self.output_dir, f"batch_{i}"
-                )
+                saved_paths = self.generator.save_result(result, self.output_dir, f"batch_{i}")
 
             # Send completion
             yield self._create_batch_completion_chunk(batch_id, all_results)
@@ -348,15 +342,9 @@ class ImageGenerationServicer(
             # Add statistics
             if self.generator:
                 stats = self.generator.get_stats()
-                response.statistics.total_generations = stats.get(
-                    "total_generations", 0
-                )
-                response.statistics.successful_generations = stats.get(
-                    "total_generations", 0
-                )
-                response.statistics.average_generation_time = stats.get(
-                    "average_time", 0.0
-                )
+                response.statistics.total_generations = stats.get("total_generations", 0)
+                response.statistics.successful_generations = stats.get("total_generations", 0)
+                response.statistics.average_generation_time = stats.get("average_time", 0.0)
 
             return response
 
@@ -369,9 +357,7 @@ class ImageGenerationServicer(
     # Health Check Implementation
     # ========================================================================
 
-    def Check(
-        self, request: health_pb2.HealthCheckRequest, context
-    ) -> health_pb2.HealthCheckResponse:
+    def Check(self, request: health_pb2.HealthCheckRequest, context) -> health_pb2.HealthCheckResponse:
         """Health check implementation."""
         response = health_pb2.HealthCheckResponse()
 
@@ -382,9 +368,7 @@ class ImageGenerationServicer(
 
         return response
 
-    def Watch(
-        self, request: health_pb2.HealthCheckRequest, context
-    ) -> Iterator[health_pb2.HealthCheckResponse]:
+    def Watch(self, request: health_pb2.HealthCheckRequest, context) -> Iterator[health_pb2.HealthCheckResponse]:
         """Health check watch implementation."""
         while True:
             response = health_pb2.HealthCheckResponse()
@@ -455,9 +439,7 @@ class ImageGenerationServicer(
 
         return chunk
 
-    def _create_batch_completion_chunk(
-        self, batch_id: str, results: list
-    ) -> common_pb2.StreamChunk:
+    def _create_batch_completion_chunk(self, batch_id: str, results: list) -> common_pb2.StreamChunk:
         """Create a batch completion chunk."""
         chunk = common_pb2.StreamChunk()
         chunk.stream_id = batch_id
@@ -489,9 +471,7 @@ def serve():
     servicer = ImageGenerationServicer()
 
     # Register both image generation and health services
-    image_generation_pb2_grpc.add_ImageGenerationServiceServicer_to_server(
-        servicer, server
-    )
+    image_generation_pb2_grpc.add_ImageGenerationServiceServicer_to_server(servicer, server)
     health_pb2_grpc.add_HealthServiceServicer_to_server(servicer, server)
 
     listen_addr = "[::]:9094"  # Use port 9094 for image generation

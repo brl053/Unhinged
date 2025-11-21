@@ -63,10 +63,16 @@ pytest-asyncio>=0.21.0         # Async testing
 pytest-cov>=4.1.0              # Coverage reporting
 black>=23.0.0                  # Code formatting
 flake8>=6.0.0                  # Linting
-mypy>=1.4.0                    # Type checking
+mypy>=1.7.0                    # Static type checker
 isort>=5.12.0                  # Import sorting
 ruff>=0.1.0                    # Fast Python linter
-mypy>=1.7.0                    # Static type checker
+
+# Type stubs for mypy
+types-requests>=2.31.0         # Type stubs for requests
+types-psutil>=5.9.0            # Type stubs for psutil
+types-psycopg2>=2.9.0          # Type stubs for psycopg2
+types-grpcio>=1.56.0           # Type stubs for grpc
+types-grpcio-health-checking>=1.56.0  # Type stubs for grpc health
 
 # ============================================================================
 # VECTOR DATABASE & SEMANTIC SEARCH DEPENDENCIES

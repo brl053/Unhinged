@@ -9,13 +9,13 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
-from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
+from libs.python.command_orchestration.dag_builder import CommandDAG
 from libs.python.command_orchestration.executor import (
     CommandExecutor,
-    ExecutionResult,
     DAGExecutionResult,
+    ExecutionResult,
 )
-from libs.python.command_orchestration.dag_builder import CommandDAG
+from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +33,7 @@ class DAGExecutionResultWithInterpretation:
     """DAG execution result with LLM-backed interpretations"""
 
     dag_result: DAGExecutionResult
-    result_interpretations: dict[str, ExecutionResultWithInterpretation] = field(
-        default_factory=dict
-    )
+    result_interpretations: dict[str, ExecutionResultWithInterpretation] = field(default_factory=dict)
 
     def get_interpretation(self, node_id: str) -> str | None:
         """Get interpretation for a specific node result."""
@@ -72,9 +70,7 @@ class CommandExecutorWithReasoning:
             LLM provider (default: ollama for on-premise deployment)
         """
         self.executor = executor or CommandExecutor()
-        self.reasoning_engine = reasoning_engine or ReasoningEngine(
-            model=model, provider=provider
-        )
+        self.reasoning_engine = reasoning_engine or ReasoningEngine(model=model, provider=provider)
 
     async def execute_dag_with_interpretation(
         self,
@@ -98,15 +94,13 @@ class CommandExecutorWithReasoning:
         try:
             # Execute DAG
             dag_result = await self.executor.execute_dag(dag)
-            result_with_interp = DAGExecutionResultWithInterpretation(
-                dag_result=dag_result
-            )
+            result_with_interp = DAGExecutionResultWithInterpretation(dag_result=dag_result)
 
             if not use_llm_interpretation or not dag_result.results:
                 # Wrap results without interpretation
                 for node_id, exec_result in dag_result.results.items():
-                    result_with_interp.result_interpretations[node_id] = (
-                        ExecutionResultWithInterpretation(result=exec_result)
+                    result_with_interp.result_interpretations[node_id] = ExecutionResultWithInterpretation(
+                        result=exec_result
                     )
                 return result_with_interp
 
@@ -120,19 +114,15 @@ class CommandExecutorWithReasoning:
                         stderr=exec_result.stderr,
                     )
 
-                    result_with_interp.result_interpretations[node_id] = (
-                        ExecutionResultWithInterpretation(
-                            result=exec_result,
-                            interpretation=interpretation,
-                        )
+                    result_with_interp.result_interpretations[node_id] = ExecutionResultWithInterpretation(
+                        result=exec_result,
+                        interpretation=interpretation,
                     )
 
                 except Exception as exc:
-                    logger.warning(
-                        f"Failed to generate interpretation for {node_id}: {exc}"
-                    )
-                    result_with_interp.result_interpretations[node_id] = (
-                        ExecutionResultWithInterpretation(result=exec_result)
+                    logger.warning(f"Failed to generate interpretation for {node_id}: {exc}")
+                    result_with_interp.result_interpretations[node_id] = ExecutionResultWithInterpretation(
+                        result=exec_result
                     )
 
             return result_with_interp
@@ -155,4 +145,3 @@ class CommandExecutorWithReasoning:
             Execution results without interpretation
         """
         return await self.executor.execute_dag(dag)
-

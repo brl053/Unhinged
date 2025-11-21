@@ -11,8 +11,6 @@ Default: Mistral 7B (3.5GB quantized)
 
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, List
 
 
 class OllamaModelManager:
@@ -20,7 +18,7 @@ class OllamaModelManager:
 
     def __init__(self):
         self.ollama_host = "http://localhost:1500"
-        
+
         # Models optimized for different device classes
         # All quantized to fit 4GB RAM minimum (Pixel 9XL)
         self.models = {
@@ -116,7 +114,7 @@ class OllamaModelManager:
     def pull_recommended(self) -> bool:
         """Pull recommended models for mobile deployment."""
         print("🚀 Pulling recommended models for mobile deployment...\n")
-        
+
         if not self.check_ollama_running():
             print("❌ Ollama service not running at localhost:1500")
             print("   Start with: docker-compose up llm")
@@ -135,18 +133,10 @@ def main():
     """CLI entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Download LLM models for Unhinged (on-premise)"
-    )
-    parser.add_argument(
-        "--list", action="store_true", help="List available models"
-    )
-    parser.add_argument(
-        "--model", help="Download specific model by key"
-    )
-    parser.add_argument(
-        "--recommended", action="store_true", help="Download recommended models"
-    )
+    parser = argparse.ArgumentParser(description="Download LLM models for Unhinged (on-premise)")
+    parser.add_argument("--list", action="store_true", help="List available models")
+    parser.add_argument("--model", help="Download specific model by key")
+    parser.add_argument("--recommended", action="store_true", help="Download recommended models")
 
     args = parser.parse_args()
     manager = OllamaModelManager()
@@ -168,4 +158,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

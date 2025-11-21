@@ -59,9 +59,7 @@ class QEMULauncher:
 
         # Detect CPU vendor
         try:
-            result = subprocess.run(
-                ["grep", "vendor_id", "/proc/cpuinfo"], capture_output=True, text=True
-            )
+            result = subprocess.run(["grep", "vendor_id", "/proc/cpuinfo"], capture_output=True, text=True)
             if "Intel" in result.stdout:
                 iommu_param = "intel_iommu=on"
             elif "AMD" in result.stdout:

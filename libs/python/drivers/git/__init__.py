@@ -13,4 +13,3 @@ from .hooks import GitHookManager
 from .quality_gates import QualityGateEnforcer
 
 __all__ = ["GitHookManager", "QualityGateEnforcer"]
-

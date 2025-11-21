@@ -3,14 +3,16 @@
 @llm-type component
 @llm-does system component
 """
+
 """
 Complete System Test for Unhinged Alpine VM
 Tests the entire voice-first GUI experience with Alpine VM rendering
 """
 
 import sys
-import requests
 from pathlib import Path
+
+import requests
 
 # Add control/gtk4_gui/utils to path for subprocess_utils import
 sys.path.insert(
@@ -99,9 +101,7 @@ class UnhingedSystemTest:
 
         # Test native hello_world
         if Path("libs/graphics/build/examples/hello_world").exists():
-            result = self.run_command(
-                "timeout 5s libs/graphics/build/examples/hello_world", check=False
-            )
+            result = self.run_command("timeout 5s libs/graphics/build/examples/hello_world", check=False)
             if result["returncode"] in [
                 0,
                 124,
@@ -152,9 +152,7 @@ class UnhingedSystemTest:
                 voice_working = False
         except requests.exceptions.RequestException:
             self.log("Whisper service: NOT RUNNING", "WARNING")
-            self.log(
-                "💡 Start with: python3 services/speech-to-text/simple_whisper_server.py"
-            )
+            self.log("💡 Start with: python3 services/speech-to-text/simple_whisper_server.py")
             voice_working = False
 
         self.test_results["voice_services"] = voice_working

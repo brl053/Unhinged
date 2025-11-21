@@ -403,9 +403,7 @@ class ServiceHealthMonitor:
 
         summary["health_percentage"] = (len(summary["healthy"]) / summary["total"]) * 100
         summary["critical_health_percentage"] = (
-            (summary["critical_healthy"] / summary["critical_total"]) * 100
-            if summary["critical_total"] > 0
-            else 0
+            (summary["critical_healthy"] / summary["critical_total"]) * 100 if summary["critical_total"] > 0 else 0
         )
 
         return summary
@@ -439,9 +437,7 @@ def main():
     elif args.status:
         summary = monitor.get_service_status_summary()
         print("\n🏥 SERVICE HEALTH SUMMARY")
-        print(
-            f"Overall Health: {summary['health_percentage']:.1f}% ({len(summary['healthy'])}/{summary['total']})"
-        )
+        print(f"Overall Health: {summary['health_percentage']:.1f}% ({len(summary['healthy'])}/{summary['total']})")
         print(
             f"Critical Services: {summary['critical_health_percentage']:.1f}% "
             f"({summary['critical_healthy']}/{summary['critical_total']})"

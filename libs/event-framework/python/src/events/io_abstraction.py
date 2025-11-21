@@ -300,17 +300,12 @@ class FileLogHandler(IOHandler):
         """Write event to log file"""
         try:
             # Check if we need to rotate
-            if (
-                self.current_log_file.exists()
-                and self.current_log_file.stat().st_size > self.max_file_size
-            ):
+            if self.current_log_file.exists() and self.current_log_file.stat().st_size > self.max_file_size:
                 self._rotate_log()
 
             # Format log entry
             timestamp = event.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            log_entry = (
-                f"[{timestamp}] [{event.level.value.upper()}] [{event.source}] {event.message}\n"
-            )
+            log_entry = f"[{timestamp}] [{event.level.value.upper()}] [{event.source}] {event.message}\n"
 
             # Write to log file
             with open(self.current_log_file, "a") as f:

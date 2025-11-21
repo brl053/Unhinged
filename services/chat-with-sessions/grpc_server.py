@@ -149,9 +149,7 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             )
             return None
 
-    def _update_session_state(
-        self, conversation_id: str, state_data: dict[str, Any]
-    ) -> bool:
+    def _update_session_state(self, conversation_id: str, state_data: dict[str, Any]) -> bool:
         """Update session state with write-through"""
         try:
             state_key = f"session:{conversation_id}:state"
@@ -248,9 +246,7 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             context.set_details(f"Conversation creation failed: {str(e)}")
             return chat_pb2.CreateConversationResponse()
 
-    def GetConversation(
-        self, request: chat_pb2.GetConversationRequest, context
-    ) -> chat_pb2.GetConversationResponse:
+    def GetConversation(self, request: chat_pb2.GetConversationRequest, context) -> chat_pb2.GetConversationResponse:
         """Get conversation with session validation"""
         try:
             conversation_id = request.conversation_id
@@ -267,9 +263,7 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
                 conversation = self.active_conversations[conversation_id]
             else:
                 # Reconstruct from session data
-                conversation = self._reconstruct_conversation(
-                    conversation_id, session_data
-                )
+                conversation = self._reconstruct_conversation(conversation_id, session_data)
                 self.active_conversations[conversation_id] = conversation
 
             response = chat_pb2.GetConversationResponse()
@@ -285,9 +279,7 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             context.set_details(f"Failed to get conversation: {str(e)}")
             return chat_pb2.GetConversationResponse()
 
-    def SendMessage(
-        self, request: chat_pb2.SendMessageRequest, context
-    ) -> chat_pb2.SendMessageResponse:
+    def SendMessage(self, request: chat_pb2.SendMessageRequest, context) -> chat_pb2.SendMessageResponse:
         """Send message with session state update"""
         try:
             conversation_id = request.conversation_id
@@ -349,9 +341,7 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             context.set_details(f"Failed to send message: {str(e)}")
             return chat_pb2.SendMessageResponse()
 
-    def _reconstruct_conversation(
-        self, conversation_id: str, session_data: dict[str, Any]
-    ) -> chat_pb2.Conversation:
+    def _reconstruct_conversation(self, conversation_id: str, session_data: dict[str, Any]) -> chat_pb2.Conversation:
         """Reconstruct conversation from session data"""
         conversation = chat_pb2.Conversation()
         conversation.metadata.resource_id = conversation_id

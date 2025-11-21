@@ -13,6 +13,6 @@ scription_path = Path(__file__).parent.parent.parent.parent / "scription" / "orc
 if str(scription_path) not in sys.path:
     sys.path.insert(0, str(scription_path))
 
-from command_orchestration.executor import CommandExecutor, ExecutionResult, DAGExecutionResult
+from command_orchestration.executor import CommandExecutor, DAGExecutionResult, ExecutionResult
 
 __all__ = ["CommandExecutor", "ExecutionResult", "DAGExecutionResult"]

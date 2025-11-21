@@ -21,22 +21,23 @@ from command_orchestration.executor import CommandExecutor
 from command_orchestration.man_page_indexer import ManPageEntry, ManPageIndexer
 from command_orchestration.semantic_search import SearchResult, SemanticSearchEngine
 
+from libs.python.command_orchestration.dag_builder_wrapper import (
+    CommandDAGWithReasoning,
+    DAGBuilderWithReasoning,
+    DAGEdgeReasoning,
+)
+from libs.python.command_orchestration.executor_wrapper import (
+    CommandExecutorWithReasoning,
+    DAGExecutionResultWithInterpretation,
+    ExecutionResultWithInterpretation,
+)
+
 # Import reasoning engine from local module
 from libs.python.command_orchestration.reasoning_engine import ExecutionTrace, ReasoningEngine
 
 # Import wrappers for integration with existing components
 from libs.python.command_orchestration.semantic_search_wrapper import (
     SemanticSearchWithReasoning,
-)
-from libs.python.command_orchestration.dag_builder_wrapper import (
-    DAGBuilderWithReasoning,
-    DAGEdgeReasoning,
-    CommandDAGWithReasoning,
-)
-from libs.python.command_orchestration.executor_wrapper import (
-    CommandExecutorWithReasoning,
-    ExecutionResultWithInterpretation,
-    DAGExecutionResultWithInterpretation,
 )
 
 __all__ = [

@@ -93,9 +93,7 @@ class UnhingedDeploymentOrchestrator:
 
         # Check Docker Compose availability
         try:
-            result = subprocess.run(
-                ["docker", "compose", "version"], capture_output=True, text=True
-            )
+            result = subprocess.run(["docker", "compose", "version"], capture_output=True, text=True)
             if result.returncode != 0:
                 events.error(
                     "Docker Compose not available",
@@ -268,9 +266,7 @@ def main():
         choices=["development", "staging", "production"],
         help="Deployment environment",
     )
-    parser.add_argument(
-        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
-    )
+    parser.add_argument("--project-root", type=Path, default=Path.cwd(), help="Project root directory")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

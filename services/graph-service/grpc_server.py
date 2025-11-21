@@ -12,9 +12,7 @@ from pathlib import Path
 import grpc
 
 # Add generated proto clients to path
-sys.path.insert(
-    0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
 
 try:
     from unhinged_proto_clients import (
@@ -51,9 +49,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             response.response.message = "Graph created successfully"
             response.id = graph_id
 
-            events.info(
-                "Graph created", {"graph_id": graph_id, "name": request.graph.name}
-            )
+            events.info("Graph created", {"graph_id": graph_id, "name": request.graph.name})
             return response
 
         except Exception as e:
@@ -76,9 +72,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error(
-                "Failed to get Graph", exception=e, metadata={"id": request.id}
-            )
+            events.error("Failed to get Graph", exception=e, metadata={"id": request.id})
             response = graph_service_pb2.GetGraphResponse()
             response.response.success = False
             response.response.message = f"Failed to get Graph: {str(e)}"
@@ -87,9 +81,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
     async def ListGraphs(self, request, context):
         """List all Graph definitions"""
         try:
-            graphs = await self.executor.list_graphs(
-                request.pagination, request.filters, request.graph_type
-            )
+            graphs = await self.executor.list_graphs(request.pagination, request.filters, request.graph_type)
 
             response = graph_service_pb2.ListGraphsResponse()
             response.response.success = True
@@ -118,9 +110,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error(
-                "Failed to delete Graph", exception=e, metadata={"id": request.id}
-            )
+            events.error("Failed to delete Graph", exception=e, metadata={"id": request.id})
             response = graph_service_pb2.DeleteGraphResponse()
             response.response.success = False
             response.response.message = f"Failed to delete Graph: {str(e)}"
@@ -129,9 +119,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
     async def ExecuteGraph(self, request, context):
         """Execute a Graph"""
         try:
-            execution_id = await self.executor.execute_graph(
-                request.id, request.input_data, request.execution_id
-            )
+            execution_id = await self.executor.execute_graph(request.id, request.input_data, request.execution_id)
 
             response = graph_service_pb2.ExecuteGraphResponse()
             response.response.success = True
@@ -146,9 +134,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
             return response
 
         except Exception as e:
-            events.error(
-                "Failed to execute Graph", exception=e, metadata={"id": request.id}
-            )
+            events.error("Failed to execute Graph", exception=e, metadata={"id": request.id})
             response = graph_service_pb2.ExecuteGraphResponse()
             response.response.success = False
             response.response.message = f"Failed to execute Graph: {str(e)}"
@@ -223,9 +209,7 @@ class GraphServiceImpl(graph_service_pb2_grpc.GraphServiceServicer):
 def serve():
     """Start the gRPC server"""
     server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
-    graph_service_pb2_grpc.add_GraphServiceServicer_to_server(
-        GraphServiceImpl(), server
-    )
+    graph_service_pb2_grpc.add_GraphServiceServicer_to_server(GraphServiceImpl(), server)
 
     listen_addr = "[::]:9096"
     server.add_insecure_port(listen_addr)

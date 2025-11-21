@@ -2,6 +2,7 @@
 """
 Generate protobuf files for speech-to-text service
 """
+
 import subprocess
 import sys
 from pathlib import Path

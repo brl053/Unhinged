@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Import subprocess utilities
 try:
@@ -42,10 +42,10 @@ class Task:
     task_type: str  # "code_change", "test", "gui_test", "verification"
     instructions: dict[str, Any]
     status: TaskStatus = TaskStatus.PENDING
-    result: Optional[dict[str, Any]] = None
-    error: Optional[str] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -70,13 +70,13 @@ class DevelopmentLoop:
     All tasks and results logged to /build/tmp/development_loop.log
     """
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
         self.log_dir = self.project_root / "build" / "tmp"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.log_file = self.log_dir / "development_loop.log"
         self.tasks: list[Task] = []
-        self.current_task: Optional[Task] = None
+        self.current_task: Task | None = None
 
     def create_task(
         self, task_id: str, name: str, description: str, task_type: str, instructions: dict[str, Any]
@@ -124,7 +124,7 @@ class DevelopmentLoop:
             "tasks": [t.to_dict() for t in self.tasks],
         }
 
-    def execute_shell_command(self, command: str, cwd: Optional[Path] = None) -> dict[str, Any]:
+    def execute_shell_command(self, command: str, cwd: Path | None = None) -> dict[str, Any]:
         """Execute shell command and return result"""
         runner = SubprocessRunner(timeout=300)
         result = runner.run_shell(command, cwd=cwd or self.project_root)

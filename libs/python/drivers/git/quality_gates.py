@@ -37,9 +37,9 @@ class CheckResult:
 
 def run_check(name: str, command: list[str], auto_fixable: bool = False, fix_command: str | None = None) -> CheckResult:
     """Run a quality check and capture results."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"🔍 Running: {name}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     result = subprocess.run(
         command,
@@ -70,9 +70,9 @@ def check_for_skip_attempt() -> bool:
     """Check if user is trying to SKIP pre-commit hooks."""
     skip_env = os.environ.get("SKIP", "")
     if skip_env:
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🚫 SKIP DETECTED - THIS IS NOT ALLOWED")
-        print("="*80)
+        print("=" * 80)
         print(f"\nYou attempted to skip: {skip_env}")
         print("\nWHY THIS IS BLOCKED:")
         print("Pre-commit hooks enforce code quality. Skipping them creates technical debt.")
@@ -88,9 +88,9 @@ def check_for_skip_attempt() -> bool:
 
 def main() -> int:
     """Run all quality gates with actionable guidance."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🛡️  UNHINGED QUALITY GATE ENFORCEMENT")
-    print("="*80)
+    print("=" * 80)
     print("\nRunning all quality checks. This CANNOT be skipped.\n")
 
     # Check for SKIP attempt
@@ -138,9 +138,9 @@ def main() -> int:
     manual_fix_checks = [c for c in failed_checks if not c.auto_fixable]
 
     # Print summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("📊 QUALITY GATE SUMMARY")
-    print("="*80)
+    print("=" * 80)
     print(f"\nTotal checks: {len(checks)}")
     print(f"Passed: {len(checks) - len(failed_checks)}")
     print(f"Failed: {len(failed_checks)}")
@@ -152,9 +152,9 @@ def main() -> int:
         return 0
 
     # Provide actionable guidance
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🔧 ACTIONABLE FIX GUIDANCE")
-    print("="*80)
+    print("=" * 80)
 
     if auto_fixable_checks:
         print("\n📦 AUTO-FIXABLE ISSUES:")
@@ -171,9 +171,9 @@ def main() -> int:
             print(f"  - {check.name}")
         print("\nReview the error output above for specific guidance.")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("❌ COMMIT BLOCKED - Fix issues above and try again")
-    print("="*80)
+    print("=" * 80)
     print("\nREMINDER: You CANNOT skip these checks.")
     print("Quality gates exist to prevent technical debt.\n")
 
@@ -182,4 +182,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

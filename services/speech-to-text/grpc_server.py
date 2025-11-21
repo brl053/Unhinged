@@ -71,9 +71,7 @@ def set_current_timestamp(timestamp_field):
 events = create_service_logger("speech-to-text", "1.0.0")
 
 
-class AudioServiceServicer(
-    audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.HealthServiceServicer
-):
+class AudioServiceServicer(audio_pb2_grpc.AudioServiceServicer, health_pb2_grpc.HealthServiceServicer):
     """
     gRPC Audio Service implementation following proto contracts
 
@@ -98,9 +96,7 @@ class AudioServiceServicer(
             self.whisper_model = whisper.load_model("base")
             events.info("Whisper model loaded", {"model": "base"})
         except Exception as e:
-            events.error(
-                "Failed to load Whisper model", exception=e, metadata={"model": "base"}
-            )
+            events.error("Failed to load Whisper model", exception=e, metadata={"model": "base"})
             self.whisper_model = None
 
     def _estimate_duration(self, audio_bytes_length):
@@ -112,9 +108,7 @@ class AudioServiceServicer(
         estimated_seconds = audio_bytes_length / 100000.0
         return max(0.1, estimated_seconds)  # Minimum 0.1 seconds
 
-    def SpeechToText(
-        self, request_iterator: Iterator[common_pb2.StreamChunk], context
-    ) -> audio_pb2.STTResponse:
+    def SpeechToText(self, request_iterator: Iterator[common_pb2.StreamChunk], context) -> audio_pb2.STTResponse:
         """
         Convert speech to text from streaming input
 
@@ -160,9 +154,7 @@ class AudioServiceServicer(
 
                 # Set transcription data
                 response.transcript = result["text"]
-                response.confidence = (
-                    0.9  # Whisper doesn't provide confidence, use default
-                )
+                response.confidence = 0.9  # Whisper doesn't provide confidence, use default
 
                 # Create transcript segments
                 if "segments" in result:
@@ -218,9 +210,7 @@ class AudioServiceServicer(
             response.response.message = f"STT processing failed: {str(e)}"
             return response
 
-    def ProcessAudioFile(
-        self, request: audio_pb2.ProcessAudioRequest, context
-    ) -> audio_pb2.ProcessAudioResponse:
+    def ProcessAudioFile(self, request: audio_pb2.ProcessAudioRequest, context) -> audio_pb2.ProcessAudioResponse:
         """
         Process audio file for batch operations
 
@@ -253,9 +243,7 @@ class AudioServiceServicer(
 
             else:
                 response.response.success = False
-                response.response.message = (
-                    f"Processing type {request.processing_type} not implemented"
-                )
+                response.response.message = f"Processing type {request.processing_type} not implemented"
 
             return response
 
@@ -266,9 +254,7 @@ class AudioServiceServicer(
             response.response.message = f"Processing failed: {str(e)}"
             return response
 
-    def ListVoices(
-        self, request: audio_pb2.ListVoicesRequest, context
-    ) -> audio_pb2.ListVoicesResponse:
+    def ListVoices(self, request: audio_pb2.ListVoicesRequest, context) -> audio_pb2.ListVoicesResponse:
         """
         List available voices
 
@@ -364,9 +350,7 @@ class AudioServiceServicer(
             response.response.message = f"Failed to list voices: {str(e)}"
             return response
 
-    def GetVoice(
-        self, request: audio_pb2.GetVoiceRequest, context
-    ) -> audio_pb2.GetVoiceResponse:
+    def GetVoice(self, request: audio_pb2.GetVoiceRequest, context) -> audio_pb2.GetVoiceResponse:
         """Get specific voice by ID"""
         # Implementation would look up specific voice
         # For now, return first voice from list
@@ -393,27 +377,21 @@ class AudioServiceServicer(
         response.response.message = "Custom voice creation not implemented"
         return response
 
-    def ConvertAudioFormat(
-        self, request: audio_pb2.ConvertAudioRequest, context
-    ) -> audio_pb2.ConvertAudioResponse:
+    def ConvertAudioFormat(self, request: audio_pb2.ConvertAudioRequest, context) -> audio_pb2.ConvertAudioResponse:
         """Convert audio format (not implemented)"""
         response = audio_pb2.ConvertAudioResponse()
         response.response.success = False
         response.response.message = "Audio format conversion not implemented"
         return response
 
-    def AnalyzeAudio(
-        self, request: audio_pb2.AnalyzeAudioRequest, context
-    ) -> audio_pb2.AnalyzeAudioResponse:
+    def AnalyzeAudio(self, request: audio_pb2.AnalyzeAudioRequest, context) -> audio_pb2.AnalyzeAudioResponse:
         """Analyze audio (not implemented)"""
         response = audio_pb2.AnalyzeAudioResponse()
         response.response.success = False
         response.response.message = "Audio analysis not implemented"
         return response
 
-    def Heartbeat(
-        self, request: health_pb2.HeartbeatRequest, context
-    ) -> health_pb2.HeartbeatResponse:
+    def Heartbeat(self, request: health_pb2.HeartbeatRequest, context) -> health_pb2.HeartbeatResponse:
         """Fast heartbeat endpoint (<10ms) - health.proto implementation"""
         try:
             response = health_pb2.HeartbeatResponse()
@@ -421,11 +399,7 @@ class AudioServiceServicer(
             response.timestamp_ms = int(time.time() * 1000)
             response.service_id = "speech-to-text-service"
             response.version = "1.0.0"
-            response.uptime_ms = (
-                int((time.time() - self.start_time) * 1000)
-                if hasattr(self, "start_time")
-                else 0
-            )
+            response.uptime_ms = int((time.time() - self.start_time) * 1000) if hasattr(self, "start_time") else 0
             response.status = (
                 health_pb2.HEALTH_STATUS_HEALTHY
                 if self.whisper_model is not None
@@ -441,9 +415,7 @@ class AudioServiceServicer(
             response.status = health_pb2.HEALTH_STATUS_UNHEALTHY
             return response
 
-    def Diagnostics(
-        self, request: health_pb2.DiagnosticsRequest, context
-    ) -> health_pb2.DiagnosticsResponse:
+    def Diagnostics(self, request: health_pb2.DiagnosticsRequest, context) -> health_pb2.DiagnosticsResponse:
         """Detailed diagnostics endpoint (<1s) - health.proto implementation"""
         try:
             # Get heartbeat first
@@ -454,9 +426,7 @@ class AudioServiceServicer(
 
             # Add metadata if requested
             if request.include_metrics:
-                response.metadata["whisper_model_loaded"] = str(
-                    self.whisper_model is not None
-                )
+                response.metadata["whisper_model_loaded"] = str(self.whisper_model is not None)
                 response.metadata["cuda_available"] = str(torch.cuda.is_available())
                 response.metadata["service_type"] = "speech-to-text"
 
@@ -465,9 +435,7 @@ class AudioServiceServicer(
         except Exception as e:
             # Return minimal response on error
             response = health_pb2.DiagnosticsResponse()
-            response.heartbeat.CopyFrom(
-                self.Heartbeat(health_pb2.HeartbeatRequest(), context)
-            )
+            response.heartbeat.CopyFrom(self.Heartbeat(health_pb2.HeartbeatRequest(), context))
             response.metadata["error"] = str(e)
             response.last_updated.GetCurrentTime()
             return response

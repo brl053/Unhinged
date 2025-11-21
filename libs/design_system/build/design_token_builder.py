@@ -17,8 +17,10 @@ from typing import Any
 try:
     import sys
 
-    sys.path.append(str(Path(__file__).parent.parent.parent.parent / "build" / "modules"))
-    from __init__ import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
+    build_path = Path(__file__).parent.parent.parent.parent / "build"
+    if str(build_path) not in sys.path:
+        sys.path.append(str(build_path))
+    from modules import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
 except ImportError:
     # Fallback for development/testing
     print("Warning: Build system modules not available, using fallback classes")

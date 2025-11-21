@@ -42,9 +42,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    events.info(
-        "Starting image generation service", {"version": "1.0.0", "pid": os.getpid()}
-    )
+    events.info("Starting image generation service", {"version": "1.0.0", "pid": os.getpid()})
 
     # Check environment
     cuda_available = False

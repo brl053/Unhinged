@@ -34,9 +34,7 @@ from events import create_service_logger
 events = create_service_logger("minimal-chat", "1.0.0")
 
 
-class MinimalChatServicer(
-    chat_pb2_grpc.ChatServiceServicer, health_pb2_grpc.HealthServiceServicer
-):
+class MinimalChatServicer(chat_pb2_grpc.ChatServiceServicer, health_pb2_grpc.HealthServiceServicer):
     """Minimal chat service for testing session creation"""
 
     def __init__(self):
@@ -83,9 +81,7 @@ class MinimalChatServicer(
             )
 
             response = chat_pb2.CreateConversationResponse(
-                response=common_pb2.StandardResponse(
-                    success=True, message="Conversation created successfully"
-                ),
+                response=common_pb2.StandardResponse(success=True, message="Conversation created successfully"),
                 conversation=conversation,
             )
 
@@ -95,23 +91,17 @@ class MinimalChatServicer(
         except Exception as e:
             events.error("Failed to create conversation", exception=e)
             return chat_pb2.CreateConversationResponse(
-                response=common_pb2.StandardResponse(
-                    success=False, message=f"Failed to create conversation: {e}"
-                )
+                response=common_pb2.StandardResponse(success=False, message=f"Failed to create conversation: {e}")
             )
 
     def Check(self, request, context):
         """Health check implementation"""
-        return health_pb2.HealthCheckResponse(
-            status=health_pb2.HealthCheckResponse.SERVING
-        )
+        return health_pb2.HealthCheckResponse(status=health_pb2.HealthCheckResponse.SERVING)
 
     def Watch(self, request, context):
         """Health watch implementation"""
         while True:
-            yield health_pb2.HealthCheckResponse(
-                status=health_pb2.HealthCheckResponse.SERVING
-            )
+            yield health_pb2.HealthCheckResponse(status=health_pb2.HealthCheckResponse.SERVING)
             time.sleep(30)
 
 

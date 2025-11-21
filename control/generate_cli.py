@@ -287,15 +287,9 @@ Examples:
         default=None,
         help="Override guidance scale (uses quality preset if not set)",
     )
-    image_parser.add_argument(
-        "--height", type=int, default=None, help="Override image height in pixels"
-    )
-    image_parser.add_argument(
-        "--width", type=int, default=None, help="Override image width in pixels"
-    )
-    image_parser.add_argument(
-        "--seed", type=int, default=None, help="Random seed for reproducibility"
-    )
+    image_parser.add_argument("--height", type=int, default=None, help="Override image height in pixels")
+    image_parser.add_argument("--width", type=int, default=None, help="Override image width in pixels")
+    image_parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
     image_parser.add_argument(
         "--format",
         choices=["json", "text"],
@@ -305,9 +299,7 @@ Examples:
 
     # Video generation command
     video_parser = subparsers.add_parser("video", help="Generate videos")
-    video_parser.add_argument(
-        "approach", choices=["frame-interp", "svd"], help="Video generation approach"
-    )
+    video_parser.add_argument("approach", choices=["frame-interp", "svd"], help="Video generation approach")
     video_parser.add_argument("prompt", help="Video generation prompt")
     video_parser.add_argument(
         "--duration",
@@ -316,12 +308,8 @@ Examples:
         help="Video duration in seconds (default: 30)",
     )
     video_parser.add_argument("--fps", type=int, default=24, help="Frames per second (default: 24)")
-    video_parser.add_argument(
-        "--width", type=int, default=512, help="Video width in pixels (default: 512)"
-    )
-    video_parser.add_argument(
-        "--height", type=int, default=512, help="Video height in pixels (default: 512)"
-    )
+    video_parser.add_argument("--width", type=int, default=512, help="Video width in pixels (default: 512)")
+    video_parser.add_argument("--height", type=int, default=512, help="Video height in pixels (default: 512)")
     video_parser.add_argument(
         "--format",
         choices=["json", "text"],
@@ -352,9 +340,7 @@ Examples:
     )
 
     # Short-form video generation command
-    shortform_parser = subparsers.add_parser(
-        "shortform", help="Generate studio-grade short-form videos"
-    )
+    shortform_parser = subparsers.add_parser("shortform", help="Generate studio-grade short-form videos")
     shortform_parser.add_argument("script", help="Text script for the video")
     shortform_parser.add_argument(
         "--platform",

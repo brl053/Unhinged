@@ -64,7 +64,7 @@ class ConversationCLI:
         self.project_root = Path(__file__).parent.parent
         self.session_logger = None
         self.is_running = False
-        self.conversation_history = []
+        self.conversation_history: list[dict[str, str]] = []
 
         # Initialize session logging
         if SESSION_LOGGING_AVAILABLE and config.session_logging:
@@ -277,15 +277,11 @@ class ConversationCLI:
 
         # Log the response
         if self.session_logger:
-            self.session_logger.log_gui_event(
-                "CONVERSATION_RESPONSE", f"System response: {response}"
-            )
+            self.session_logger.log_gui_event("CONVERSATION_RESPONSE", f"System response: {response}")
 
         # Trim conversation history if too long
         if len(self.conversation_history) > self.config.max_conversation_length:
-            self.conversation_history = self.conversation_history[
-                -self.config.max_conversation_length :
-            ]
+            self.conversation_history = self.conversation_history[-self.config.max_conversation_length :]
 
     async def _generate_response(self, user_input: str) -> str:
         """Generate response to user input"""

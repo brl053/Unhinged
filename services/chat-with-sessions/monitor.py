@@ -168,18 +168,12 @@ class ProductionMonitor:
         recent_metrics = self.session_metrics_history[-60:]  # Last hour
 
         # Calculate averages
-        avg_redis_latency = sum(m.redis_latency_ms for m in recent_metrics) / len(
-            recent_metrics
-        )
-        avg_crdb_latency = sum(m.crdb_latency_ms for m in recent_metrics) / len(
-            recent_metrics
-        )
+        avg_redis_latency = sum(m.redis_latency_ms for m in recent_metrics) / len(recent_metrics)
+        avg_crdb_latency = sum(m.crdb_latency_ms for m in recent_metrics) / len(recent_metrics)
 
         # Session growth rate
         if len(recent_metrics) >= 2:
-            session_growth = (
-                recent_metrics[-1].total_sessions - recent_metrics[0].total_sessions
-            )
+            session_growth = recent_metrics[-1].total_sessions - recent_metrics[0].total_sessions
             session_growth_rate = session_growth / len(recent_metrics)  # per minute
         else:
             session_growth_rate = 0
@@ -216,26 +210,18 @@ class ProductionMonitor:
                 alerts.append(f"High CPU usage: {system_metrics.cpu_percent:.1f}%")
 
             if system_metrics.memory_percent > 85:
-                alerts.append(
-                    f"High memory usage: {system_metrics.memory_percent:.1f}%"
-                )
+                alerts.append(f"High memory usage: {system_metrics.memory_percent:.1f}%")
 
             if system_metrics.memory_available_gb < 5:
-                alerts.append(
-                    f"Low available memory: {system_metrics.memory_available_gb:.1f}GB"
-                )
+                alerts.append(f"Low available memory: {system_metrics.memory_available_gb:.1f}GB")
 
         # Session store alerts
         if session_metrics:
             if session_metrics.redis_latency_ms > 10:
-                alerts.append(
-                    f"High Redis latency: {session_metrics.redis_latency_ms:.2f}ms"
-                )
+                alerts.append(f"High Redis latency: {session_metrics.redis_latency_ms:.2f}ms")
 
             if session_metrics.crdb_latency_ms > 50:
-                alerts.append(
-                    f"High CRDB latency: {session_metrics.crdb_latency_ms:.2f}ms"
-                )
+                alerts.append(f"High CRDB latency: {session_metrics.crdb_latency_ms:.2f}ms")
 
             if session_metrics.redis_status != "healthy":
                 alerts.append(f"Redis unhealthy: {session_metrics.redis_status}")
@@ -251,9 +237,7 @@ class ProductionMonitor:
 
         # Get latest metrics
         latest_system = self.metrics_history[-1] if self.metrics_history else None
-        latest_session = (
-            self.session_metrics_history[-1] if self.session_metrics_history else None
-        )
+        latest_session = self.session_metrics_history[-1] if self.session_metrics_history else None
 
         # Usage patterns
         usage_patterns = self.analyze_usage_patterns()
@@ -265,13 +249,10 @@ class ProductionMonitor:
             "monitoring_summary": {
                 "uptime_hours": round(uptime_hours, 2),
                 "data_points_collected": len(self.metrics_history),
-                "monitoring_healthy": latest_system is not None
-                and latest_session is not None,
+                "monitoring_healthy": latest_system is not None and latest_session is not None,
             },
             "current_system_metrics": asdict(latest_system) if latest_system else None,
-            "current_session_metrics": asdict(latest_session)
-            if latest_session
-            else None,
+            "current_session_metrics": asdict(latest_session) if latest_session else None,
             "usage_patterns": usage_patterns,
             "performance_alerts": alerts,
         }

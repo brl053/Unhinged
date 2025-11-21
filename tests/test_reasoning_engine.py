@@ -64,9 +64,7 @@ class TestReasoningEngine:
         """Test DAG edge reasoning generation."""
         engine = ReasoningEngine(provider="anthropic")
 
-        mock_response = {
-            "reasoning": "grep filters pactl output to show only volume-related lines"
-        }
+        mock_response = {"reasoning": "grep filters pactl output to show only volume-related lines"}
 
         with patch.object(engine, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = json.dumps(mock_response)
@@ -84,9 +82,7 @@ class TestReasoningEngine:
         """Test execution result interpretation for successful command."""
         engine = ReasoningEngine(provider="anthropic")
 
-        mock_response = {
-            "interpretation": "PipeWire is running as the audio server"
-        }
+        mock_response = {"interpretation": "PipeWire is running as the audio server"}
 
         with patch.object(engine, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = json.dumps(mock_response)
@@ -106,9 +102,7 @@ class TestReasoningEngine:
         """Test execution result interpretation for failed command."""
         engine = ReasoningEngine(provider="anthropic")
 
-        mock_response = {
-            "interpretation": "Command failed - audio server not responding"
-        }
+        mock_response = {"interpretation": "Command failed - audio server not responding"}
 
         with patch.object(engine, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = json.dumps(mock_response)
@@ -234,4 +228,3 @@ class TestReasoningEngine:
         assert trace.query == "test query"
         assert trace.intent_reasoning == "diagnose audio"
         assert "pactl" in trace.command_selection_reasoning
-

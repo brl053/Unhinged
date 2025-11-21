@@ -15,7 +15,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -102,7 +102,7 @@ class BuildTarget:
     commands: list[str] = field(default_factory=list)
     inputs: list[str] = field(default_factory=list)  # Files/directories that affect this target
     outputs: list[str] = field(default_factory=list)  # Generated files/directories
-    cache_key: Optional[str] = None
+    cache_key: str | None = None
     parallel_safe: bool = True
     estimated_duration: float = 0.0  # seconds
 
@@ -115,7 +115,7 @@ class BuildResult:
     success: bool
     duration: float
     cache_hit: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
     artifacts: list[str] = field(default_factory=list)
     metrics: dict[str, Any] = field(default_factory=dict)
 
@@ -234,7 +234,7 @@ class BuildCache:
         """Check if build result is cached"""
         return cache_key in self.metadata and (self.cache_dir / cache_key).exists()
 
-    def get_cached_result(self, cache_key: str) -> Optional[BuildResult]:
+    def get_cached_result(self, cache_key: str) -> BuildResult | None:
         """Get cached build result"""
         if not self.is_cached(cache_key):
             return None
@@ -277,7 +277,7 @@ class BuildCache:
 class BuildOrchestrator:
     """Main build orchestration system"""
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         self.project_root = Path(__file__).parent.parent
         self.config_path = config_path or self.project_root / "build" / "config" / "build-config.yml"
         self.config = self._load_config()
@@ -642,7 +642,7 @@ class BuildOrchestrator:
             logger.info(f"📋 Execution plan: {len(execution_groups)} groups")
 
             for i, group in enumerate(execution_groups):
-                logger.info(f"🔄 Group {i+1}/{len(execution_groups)}: {group}")
+                logger.info(f"🔄 Group {i + 1}/{len(execution_groups)}: {group}")
 
                 # Execute group in parallel
                 with ThreadPoolExecutor(max_workers=min(len(group), self.max_workers)) as executor:

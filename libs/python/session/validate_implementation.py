@@ -126,11 +126,7 @@ def validate_session_store_implementation():
     print("-" * 40)
 
     # Check configuration class
-    config_classes = [
-        node.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.ClassDef) and "Config" in node.name
-    ]
+    config_classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and "Config" in node.name]
     if config_classes:
         print(f"✅ Configuration class found: {config_classes}")
     else:
@@ -139,9 +135,7 @@ def validate_session_store_implementation():
 
     # Check error handling
     exception_classes = [
-        node.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.ClassDef) and "Error" in node.name
+        node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and "Error" in node.name
     ]
     if exception_classes:
         print(f"✅ Custom exception class found: {exception_classes}")
@@ -156,9 +150,7 @@ def validate_session_store_implementation():
         return False
 
     # Check health monitoring
-    if "health_check" in [
-        node.name for node in session_store_class.body if isinstance(node, ast.FunctionDef)
-    ]:
+    if "health_check" in [node.name for node in session_store_class.body if isinstance(node, ast.FunctionDef)]:
         print("✅ Health check method implemented")
     else:
         print("❌ Health check method not found")
@@ -168,9 +160,7 @@ def validate_session_store_implementation():
     print("-" * 30)
 
     # Count methods
-    method_count = len(
-        [node for node in session_store_class.body if isinstance(node, ast.FunctionDef)]
-    )
+    method_count = len([node for node in session_store_class.body if isinstance(node, ast.FunctionDef)])
     print(f"Methods implemented: {method_count}")
 
     # Count lines
@@ -196,10 +186,7 @@ def validate_chat_service_integration():
 
     # Check chat service file
     chat_service_path = (
-        Path(__file__).parent.parent.parent.parent
-        / "services"
-        / "chat-with-sessions"
-        / "grpc_server.py"
+        Path(__file__).parent.parent.parent.parent / "services" / "chat-with-sessions" / "grpc_server.py"
     )
     if not chat_service_path.exists():
         print("❌ Chat service with sessions not found")
@@ -251,11 +238,7 @@ def validate_ui_integration():
 
     # Check session management component
     ui_component_path = (
-        Path(__file__).parent.parent.parent.parent
-        / "control"
-        / "gtk4_gui"
-        / "components"
-        / "session_management.py"
+        Path(__file__).parent.parent.parent.parent / "control" / "gtk4_gui" / "components" / "session_management.py"
     )
     if not ui_component_path.exists():
         print("❌ Session management UI component not found")

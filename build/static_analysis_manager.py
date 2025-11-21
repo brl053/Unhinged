@@ -21,7 +21,6 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 try:
     from .checksum_manager import ChecksumManager
@@ -45,7 +44,7 @@ class AnalysisResult:
 class StaticAnalysisManager:
     """Manages static analysis integration with checksum-based change detection"""
 
-    def __init__(self, build_dir: Optional[Path] = None):
+    def __init__(self, build_dir: Path | None = None):
         """Initialize static analysis manager
 
         Args:
@@ -72,7 +71,7 @@ class StaticAnalysisManager:
             current = current.parent
         return Path.cwd()
 
-    def _find_ruff_executable(self) -> Optional[Path]:
+    def _find_ruff_executable(self) -> Path | None:
         """Find ruff executable in various locations"""
         # Check venv-production first
         venv_ruff = self.project_root / "venv-production" / "bin" / "ruff"
@@ -290,7 +289,7 @@ class StaticAnalysisManager:
         except Exception as e:
             print(f"❌ Error saving analysis results: {e}")
 
-    def get_last_results(self, module_path: str) -> Optional[AnalysisResult]:
+    def get_last_results(self, module_path: str) -> AnalysisResult | None:
         """Get last analysis results for module"""
         try:
             if not self.results_file.exists():

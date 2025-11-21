@@ -3,7 +3,6 @@
 Consolidated from control/cli/main.py for unified CLI interface.
 """
 
-
 import click
 
 from cli.commands import (

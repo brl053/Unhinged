@@ -39,9 +39,7 @@ class ServiceConfig:
                     f"Service {self.name} timeout overridden by {env_timeout_key}={self.timeout}s"
                 )
             except ValueError:
-                logging.getLogger(__name__).warning(
-                    f"Invalid timeout value for {env_timeout_key}: {env_timeout}"
-                )
+                logging.getLogger(__name__).warning(f"Invalid timeout value for {env_timeout_key}: {env_timeout}")
 
 
 class ServiceClient:
@@ -86,9 +84,7 @@ class ServiceClient:
                 self._stub = self._channel  # Return channel directly
 
             self._connection_count += 1
-            self.logger.info(
-                f"Connected to {self.config.name} (connection #{self._connection_count})"
-            )
+            self.logger.info(f"Connected to {self.config.name} (connection #{self._connection_count})")
 
         except Exception as e:
             self.logger.error(f"Failed to connect to {self.config.name}: {e}")
@@ -110,13 +106,8 @@ class ServiceClient:
                 return method(request, timeout=call_timeout)
 
             except grpc.RpcError as e:
-                if (
-                    e.code() == grpc.StatusCode.UNAVAILABLE
-                    and attempt < self.config.max_retries - 1
-                ):
-                    self.logger.warning(
-                        f"Service {self.config.name} unavailable, retrying... (attempt {attempt + 1})"
-                    )
+                if e.code() == grpc.StatusCode.UNAVAILABLE and attempt < self.config.max_retries - 1:
+                    self.logger.warning(f"Service {self.config.name} unavailable, retrying... (attempt {attempt + 1})")
                     self._reconnect()
                     time.sleep(0.5 * (attempt + 1))  # Simple backoff
                     continue
@@ -234,16 +225,12 @@ class ConnectionPool:
 
             return self._clients[service_name]
 
-    def call_service(
-        self, service_name: str, method_name: str, request, timeout: float | None = None
-    ) -> Any:
+    def call_service(self, service_name: str, method_name: str, request, timeout: float | None = None) -> Any:
         """Convenience method to call service method"""
         client = self.get_client(service_name)
         return client.call_with_timeout(method_name, request, timeout)
 
-    def stream_service(
-        self, service_name: str, method_name: str, request, timeout: float | None = None
-    ):
+    def stream_service(self, service_name: str, method_name: str, request, timeout: float | None = None):
         """Convenience method to call streaming service method"""
         client = self.get_client(service_name)
         return client.stream_with_timeout(method_name, request, timeout)
@@ -322,9 +309,7 @@ def get_global_pool() -> ConnectionPool:
     return _global_pool
 
 
-def register_service(
-    name: str, address: str, stub_class: type | None = None, timeout: float = 120.0
-) -> None:
+def register_service(name: str, address: str, stub_class: type | None = None, timeout: float = 120.0) -> None:
     """
     Register a service with the global pool.
 

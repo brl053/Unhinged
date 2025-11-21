@@ -57,9 +57,7 @@ def check_helix_vm_health(self):
 
     try:
         # Check if QEMU process is running
-        result = subprocess.run(
-            ["pgrep", "-f", "helix-bf6-vm"], capture_output=True, timeout=5
-        )
+        result = subprocess.run(["pgrep", "-f", "helix-bf6-vm"], capture_output=True, timeout=5)
 
         if result.returncode == 0:
             # Process found

@@ -3,6 +3,7 @@
 @llm-type component
 @llm-does system component
 """
+
 """
 @llm-doc Test Simple VM Communication Pipeline
 @llm-version 1.0.0
@@ -17,7 +18,7 @@ Tests the simplified VM communication pipeline to ensure:
 
 ## Test Scenarios
 - VM boot messages → Host terminal
-- Unhinged status updates → Host terminal  
+- Unhinged status updates → Host terminal
 - Error messages → Host terminal
 - Graceful shutdown → Host terminal
 
@@ -95,9 +96,7 @@ class SimpleCommunicationTest:
         self.log("Testing QEMU availability...", "TEST")
 
         try:
-            result = subprocess.run(
-                ["which", "qemu-system-x86_64"], capture_output=True, text=True
-            )
+            result = subprocess.run(["which", "qemu-system-x86_64"], capture_output=True, text=True)
             if result.returncode == 0:
                 self.log("QEMU is available", "SUCCESS")
                 return True
@@ -119,9 +118,7 @@ class SimpleCommunicationTest:
             return True
 
         # Check for standard ISO
-        standard_iso = (
-            self.project_root / "vm" / "alpine" / "alpine-virt-3.22.2-x86_64.iso"
-        )
+        standard_iso = self.project_root / "vm" / "alpine" / "alpine-virt-3.22.2-x86_64.iso"
         if standard_iso.exists():
             self.log("Standard Alpine ISO found", "SUCCESS")
             return True
@@ -140,7 +137,7 @@ class SimpleCommunicationTest:
             return False
 
         # Check for simple communication target
-        with open(makefile, "r") as f:
+        with open(makefile) as f:
             content = f.read()
 
         if "start-simple:" in content and "SIMPLE_VM_COMMUNICATION" in content:

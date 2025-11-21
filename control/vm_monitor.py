@@ -160,9 +160,7 @@ class VMMonitor:
         """Get current VM status"""
         # Check if QEMU is running
         try:
-            result = subprocess.run(
-                ["pgrep", "-f", "qemu-system-x86_64"], capture_output=True, text=True
-            )
+            result = subprocess.run(["pgrep", "-f", "qemu-system-x86_64"], capture_output=True, text=True)
             qemu_running = result.returncode == 0
         except:
             qemu_running = False

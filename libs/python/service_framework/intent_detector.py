@@ -208,9 +208,7 @@ class IntentDetectorManager:
         """Detect intent using current detector"""
         try:
             result = self._detector.detect(text)
-            self.logger.debug(
-                f"Intent detected: {result.intent_type.value} (confidence: {result.confidence:.2f})"
-            )
+            self.logger.debug(f"Intent detected: {result.intent_type.value} (confidence: {result.confidence:.2f})")
             return result
         except Exception as e:
             self.logger.error(f"Intent detection failed: {e}")
@@ -226,9 +224,7 @@ class IntentDetectorManager:
         """Get information about current detector"""
         return {
             "type": type(self._detector).__name__,
-            "supported_intents": [
-                intent.value for intent in self._detector.get_supported_intents()
-            ],
+            "supported_intents": [intent.value for intent in self._detector.get_supported_intents()],
         }
 
 

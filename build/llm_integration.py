@@ -5,46 +5,48 @@
 @llm-does llm integration for enhanced build system with context generation
 """
 
-import json
-import re
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
 
 @dataclass
 class BuildContext:
     """Build context information for LLM"""
+
     project_name: str
-    build_targets: List[str]
-    languages: List[str]
-    services: List[str]
-    recent_builds: List[Dict[str, Any]]
-    cache_stats: Dict[str, Any]
-    system_info: Dict[str, Any]
+    build_targets: list[str]
+    languages: list[str]
+    services: list[str]
+    recent_builds: list[dict[str, Any]]
+    cache_stats: dict[str, Any]
+    system_info: dict[str, Any]
+
 
 @dataclass
 class BuildError:
     """Build error information for LLM analysis"""
+
     target: str
     error_message: str
     command: str
     exit_code: int
     stdout: str
     stderr: str
-    context: Dict[str, Any]
+    context: dict[str, Any]
+
 
 class LLMBuildIntegration:
     """Integration between build system and LLM documentation"""
-    
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.docs_scripts_dir = project_root / "scripts" / "docs"
-        
-    def generate_build_context(self, targets: List[str] = None) -> str:
+
+    def generate_build_context(self, targets: list[str] = None) -> str:
         """Generate comprehensive build context for LLM assistance"""
         context = self._collect_build_context(targets)
-        
+
         # Generate YAML format similar to existing LLM documentation
         yaml_content = f"""# Enhanced Build System Context for LLM
 
@@ -66,30 +68,30 @@ languages: {context.languages}
 services: {context.services}
 
 available_targets:"""
-        
+
         # Add target information
         for target in context.build_targets:
             target_info = self._get_target_info(target)
             yaml_content += f"""
   - name: {target}
-    description: {target_info.get('description', 'Build target')}
-    estimated_duration: {target_info.get('duration', 60)}s
-    cache_enabled: {target_info.get('cache_enabled', True)}
-    parallel_safe: {target_info.get('parallel_safe', True)}"""
-        
+    description: {target_info.get("description", "Build target")}
+    estimated_duration: {target_info.get("duration", 60)}s
+    cache_enabled: {target_info.get("cache_enabled", True)}
+    parallel_safe: {target_info.get("parallel_safe", True)}"""
+
         yaml_content += f"""
 
 cache_statistics:
-  enabled: {context.cache_stats.get('enabled', True)}
-  entries: {context.cache_stats.get('entries', 0)}
-  hit_rate: {context.cache_stats.get('hit_rate', 0.0)}%
-  total_size_mb: {context.cache_stats.get('total_size_mb', 0.0)}
+  enabled: {context.cache_stats.get("enabled", True)}
+  entries: {context.cache_stats.get("entries", 0)}
+  hit_rate: {context.cache_stats.get("hit_rate", 0.0)}%
+  total_size_mb: {context.cache_stats.get("total_size_mb", 0.0)}
 
 system_info:
-  platform: {context.system_info.get('platform', 'unknown')}
-  cpu_cores: {context.system_info.get('cpu_count', 1)}
-  memory_gb: {context.system_info.get('memory_gb', 0.0):.1f}
-  python_version: {context.system_info.get('python_version', 'unknown')}
+  platform: {context.system_info.get("platform", "unknown")}
+  cpu_cores: {context.system_info.get("cpu_count", 1)}
+  memory_gb: {context.system_info.get("memory_gb", 0.0):.1f}
+  python_version: {context.system_info.get("python_version", "unknown")}
 
 quick_start_commands:
   fast_development: "make build-enhanced"
@@ -105,13 +107,13 @@ common_workflows:
       - "make build-enhanced"
       - "make build-status"
     description: "Fastest way to get development environment running with caching"
-    
+
   - name: "Full Development with Testing"
     commands:
       - "make build-enhanced-full"
       - "python build/build.py build test-fast --parallel"
     description: "Complete development setup with fast testing"
-    
+
   - name: "Production Build"
     commands:
       - "python build/build.py build build-prod"
@@ -134,9 +136,9 @@ integration_points:
   llm_documentation: "Context generation and error explanation"
   existing_workflows: "Full backward compatibility maintained"
 """
-        
+
         return yaml_content
-    
+
     def explain_build_error(self, error: BuildError) -> str:
         """Generate LLM-powered explanation for build errors"""
         explanation = f"""# Build Error Analysis
@@ -153,21 +155,21 @@ integration_points:
 
 ## Likely Causes
 """
-        
+
         # Analyze error patterns
         causes = self._analyze_error_patterns(error)
         for cause in causes:
             explanation += f"- {cause}\n"
-        
-        explanation += f"""
+
+        explanation += """
 ## Suggested Solutions
 """
-        
+
         # Generate solutions based on error type
         solutions = self._generate_error_solutions(error)
         for i, solution in enumerate(solutions, 1):
             explanation += f"{i}. {solution}\n"
-        
+
         explanation += f"""
 ## Debug Commands
 ```bash
@@ -190,58 +192,58 @@ python build/build.py profile {error.target}
 - **Cache Status**: {self._get_cache_status_for_target(error.target)}
 - **Dependencies**: {self._get_target_dependencies(error.target)}
 """
-        
+
         return explanation
-    
-    def suggest_optimizations(self, build_results: List[Dict[str, Any]]) -> List[str]:
+
+    def suggest_optimizations(self, build_results: list[dict[str, Any]]) -> list[str]:
         """Generate AI-powered build optimization suggestions"""
         suggestions = []
-        
+
         # Analyze build performance
-        total_duration = sum(r.get('duration', 0) for r in build_results)
-        cache_hits = sum(1 for r in build_results if r.get('cache_hit', False))
+        total_duration = sum(r.get("duration", 0) for r in build_results)
+        cache_hits = sum(1 for r in build_results if r.get("cache_hit", False))
         cache_hit_rate = cache_hits / len(build_results) if build_results else 0
-        
+
         if cache_hit_rate < 0.5:
             suggestions.append(
                 "Low cache hit rate detected. Consider using 'make build-enhanced' "
                 "for better caching or check if source files are changing unnecessarily."
             )
-        
+
         if total_duration > 300:  # 5 minutes
             suggestions.append(
                 "Build taking longer than expected. Try using parallel builds with "
                 "'--parallel' flag or check system resources with 'make build-status'."
             )
-        
+
         # Check for specific optimization opportunities
         for result in build_results:
-            target = result.get('target', '')
-            duration = result.get('duration', 0)
-            
-            if 'backend' in target and duration > 120:
+            target = result.get("target", "")
+            duration = result.get("duration", 0)
+
+            if "backend" in target and duration > 120:
                 suggestions.append(
                     f"Backend build ({target}) is slow. Consider using incremental "
                     "compilation with 'backend-incremental' target."
                 )
-            
-            if 'frontend' in target and duration > 60:
+
+            if "frontend" in target and duration > 60:
                 suggestions.append(
                     f"Frontend build ({target}) is slow. Check if webpack is using "
                     "parallel processing and consider 'frontend-incremental' target."
                 )
-        
+
         if not suggestions:
             suggestions.append(
                 "Build performance looks good! Consider using watch mode for "
                 "development: 'make build-watch TARGET=<your-target>'"
             )
-        
+
         return suggestions
-    
+
     def generate_onboarding_guide(self) -> str:
         """Generate developer onboarding guide for the build system"""
-        return f"""# Enhanced Build System - Developer Onboarding
+        return """# Enhanced Build System - Developer Onboarding
 
 Welcome to the Unhinged enhanced build system! This guide will help you get started quickly.
 
@@ -340,8 +342,8 @@ The enhanced build system maintains full compatibility:
 
 Happy building! 🚀
 """
-    
-    def _collect_build_context(self, targets: List[str] = None) -> BuildContext:
+
+    def _collect_build_context(self, targets: list[str] = None) -> BuildContext:
         """Collect comprehensive build context"""
         # This would integrate with the existing build system
         # For now, return mock data
@@ -352,29 +354,30 @@ Happy building! 🚀
             services=["backend", "frontend", "whisper-tts", "vision-ai", "context-llm"],
             recent_builds=[],
             cache_stats={"enabled": True, "entries": 0, "hit_rate": 0.0, "total_size_mb": 0.0},
-            system_info={"platform": "linux", "cpu_count": 4, "memory_gb": 8.0, "python_version": "3.9.0"}
+            system_info={"platform": "linux", "cpu_count": 4, "memory_gb": 8.0, "python_version": "3.9.0"},
         )
-    
-    def _get_target_info(self, target: str) -> Dict[str, Any]:
+
+    def _get_target_info(self, target: str) -> dict[str, Any]:
         """Get information about a build target"""
         # This would query the actual build system
         return {
             "description": f"Build target for {target}",
             "duration": 60,
             "cache_enabled": True,
-            "parallel_safe": True
+            "parallel_safe": True,
         }
-    
+
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         from datetime import datetime
+
         return datetime.now().isoformat()
-    
-    def _analyze_error_patterns(self, error: BuildError) -> List[str]:
+
+    def _analyze_error_patterns(self, error: BuildError) -> list[str]:
         """Analyze error patterns to suggest causes"""
         causes = []
         error_text = error.error_message.lower()
-        
+
         if "permission denied" in error_text:
             causes.append("File permission issues")
         if "no such file" in error_text:
@@ -387,14 +390,14 @@ Happy building! 🚀
             causes.append("Build process taking too long")
         if "network" in error_text or "connection" in error_text:
             causes.append("Network connectivity issues")
-        
+
         return causes or ["Unknown error pattern"]
-    
-    def _generate_error_solutions(self, error: BuildError) -> List[str]:
+
+    def _generate_error_solutions(self, error: BuildError) -> list[str]:
         """Generate solutions based on error analysis"""
         solutions = []
         error_text = error.error_message.lower()
-        
+
         if "permission denied" in error_text:
             solutions.append("Check file permissions with 'ls -la' and fix with 'chmod'")
         if "no such file" in error_text:
@@ -405,35 +408,37 @@ Happy building! 🚀
             solutions.append("Close other applications or increase system memory")
         if "timeout" in error_text:
             solutions.append("Check system performance or increase timeout values")
-        
+
         # Always add generic solutions
-        solutions.extend([
-            "Try cleaning and rebuilding: 'python build/build.py clean --smart'",
-            "Check build status: 'make build-status'",
-            "Run with verbose output: 'python build/build.py build <target> --verbose'"
-        ])
-        
+        solutions.extend(
+            [
+                "Try cleaning and rebuilding: 'python build/build.py clean --smart'",
+                "Check build status: 'make build-status'",
+                "Run with verbose output: 'python build/build.py build <target> --verbose'",
+            ]
+        )
+
         return solutions
-    
+
     def _detect_language_from_target(self, target: str) -> str:
         """Detect programming language from target name"""
-        if 'backend' in target or 'kotlin' in target:
+        if "backend" in target or "kotlin" in target:
             return "Kotlin"
-        elif 'frontend' in target or 'typescript' in target:
+        elif "frontend" in target or "typescript" in target:
             return "TypeScript"
-        elif 'python' in target or any(s in target for s in ['whisper-tts', 'vision-ai']):
+        elif "python" in target or any(s in target for s in ["whisper-tts", "vision-ai"]):
             return "Python"
-        elif 'proto' in target:
+        elif "proto" in target:
             return "Protobuf"
         else:
             return "Mixed"
-    
+
     def _get_cache_status_for_target(self, target: str) -> str:
         """Get cache status for a specific target"""
         # This would query the actual cache system
         return "Enabled"
-    
-    def _get_target_dependencies(self, target: str) -> List[str]:
+
+    def _get_target_dependencies(self, target: str) -> list[str]:
         """Get dependencies for a target"""
         # This would query the actual dependency graph
         return []

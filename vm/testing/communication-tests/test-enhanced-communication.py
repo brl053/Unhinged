@@ -3,6 +3,7 @@
 @llm-type component
 @llm-does system component
 """
+
 """
 @llm-doc Test Enhanced VM Communication System
 @llm-version 2.0.0
@@ -24,9 +25,9 @@ Tests both Phase 1 (unidirectional) and Phase 2 (bidirectional) communication.
 @llm-culture Verify independence through comprehensive validation
 """
 
+import json
 import subprocess
 import sys
-import json
 from pathlib import Path
 
 
@@ -123,7 +124,7 @@ class EnhancedCommunicationTest:
             self.log("Makefile not found", "ERROR")
             return False
 
-        with open(makefile, "r") as f:
+        with open(makefile) as f:
             content = f.read()
 
         # Check for all required integration points

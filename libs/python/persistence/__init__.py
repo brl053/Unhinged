@@ -76,7 +76,7 @@ def get_document_store(connection_string: str | None = None) -> DocumentStore:
 
     if _default_store is None:
         if not _POSTGRES_AVAILABLE:
-            raise ImportError("PostgreSQL dependencies not available. " "Install with: pip install psycopg2-binary")
+            raise ImportError("PostgreSQL dependencies not available. Install with: pip install psycopg2-binary")
         _default_store = PostgresDocumentStore(connection_string)
 
     return _default_store

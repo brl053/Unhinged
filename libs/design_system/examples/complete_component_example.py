@@ -199,16 +199,12 @@ class DesignSystemExample(Adw.ApplicationWindow):
 
         # Different text sizes
         display_text = Gtk.Label(label="Display Text (Large)")
-        display_text.set_markup(
-            '<span font_size="x-large" weight="bold">Display Text (Large)</span>'
-        )
+        display_text.set_markup('<span font_size="x-large" weight="bold">Display Text (Large)</span>')
         display_text.set_halign(Gtk.Align.START)
         card.append(display_text)
 
         heading_text = Gtk.Label(label="Heading Text (Medium)")
-        heading_text.set_markup(
-            '<span font_size="large" weight="medium">Heading Text (Medium)</span>'
-        )
+        heading_text.set_markup('<span font_size="large" weight="medium">Heading Text (Medium)</span>')
         heading_text.set_halign(Gtk.Align.START)
         card.append(heading_text)
 
@@ -218,9 +214,7 @@ class DesignSystemExample(Adw.ApplicationWindow):
         card.append(body_text)
 
         caption_text = Gtk.Label(label="Caption text for annotations and metadata")
-        caption_text.set_markup(
-            '<span font_size="small">Caption text for annotations and metadata</span>'
-        )
+        caption_text.set_markup('<span font_size="small">Caption text for annotations and metadata</span>')
         caption_text.set_halign(Gtk.Align.START)
         card.append(caption_text)
 
@@ -299,9 +293,7 @@ class DesignSystemExample(Adw.ApplicationWindow):
             card_title.set_halign(Gtk.Align.START)
             nested_card.append(card_title)
 
-            card_body = Gtk.Label(
-                label="This is an example card using design system tokens for consistent styling."
-            )
+            card_body = Gtk.Label(label="This is an example card using design system tokens for consistent styling.")
             card_body.add_css_class("example-body")
             card_body.set_wrap(True)
             card_body.set_halign(Gtk.Align.START)

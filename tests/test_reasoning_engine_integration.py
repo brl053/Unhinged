@@ -5,18 +5,19 @@
 """
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
-from libs.python.command_orchestration.semantic_search_wrapper import (
-    SemanticSearchWithReasoning,
-)
+import pytest
+
 from libs.python.command_orchestration.dag_builder_wrapper import (
     DAGBuilderWithReasoning,
 )
 from libs.python.command_orchestration.executor_wrapper import (
     CommandExecutorWithReasoning,
+)
+from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
+from libs.python.command_orchestration.semantic_search_wrapper import (
+    SemanticSearchWithReasoning,
 )
 
 
@@ -54,9 +55,7 @@ class TestSemanticSearchWithReasoning:
             "amixer": "amixer shows ALSA mixer controls",
         }
 
-        with patch.object(
-            wrapper.reasoning_engine, "_call_llm", new_callable=AsyncMock
-        ) as mock_llm:
+        with patch.object(wrapper.reasoning_engine, "_call_llm", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = json.dumps(mock_reasoning)
             wrapper.reasoning_engine._client = MagicMock()
 
@@ -106,12 +105,8 @@ class TestDAGBuilderWithReasoning:
 
         mock_reasoning = "pactl outputs audio sink info, grep filters for volume"
 
-        with patch.object(
-            wrapper.reasoning_engine, "_call_llm", new_callable=AsyncMock
-        ) as mock_llm:
-            mock_llm.return_value = json.dumps(
-                {"reasoning": mock_reasoning}
-            )
+        with patch.object(wrapper.reasoning_engine, "_call_llm", new_callable=AsyncMock) as mock_llm:
+            mock_llm.return_value = json.dumps({"reasoning": mock_reasoning})
             wrapper.reasoning_engine._client = MagicMock()
 
             result = await wrapper.parse_pipeline_with_reasoning(
@@ -124,7 +119,7 @@ class TestDAGBuilderWithReasoning:
             assert len(result.dag.edges) == 1
             assert len(result.edge_reasoning) == 1
 
-            edge_key = (list(result.dag.edges)[0])
+            edge_key = list(result.dag.edges)[0]
             edge_reasoning = result.edge_reasoning[edge_key]
             assert edge_reasoning.reasoning == mock_reasoning
 
@@ -164,12 +159,8 @@ class TestCommandExecutorWithReasoning:
 
         mock_interpretation = "Command executed successfully and produced output"
 
-        with patch.object(
-            wrapper.reasoning_engine, "_call_llm", new_callable=AsyncMock
-        ) as mock_llm:
-            mock_llm.return_value = json.dumps(
-                {"interpretation": mock_interpretation}
-            )
+        with patch.object(wrapper.reasoning_engine, "_call_llm", new_callable=AsyncMock) as mock_llm:
+            mock_llm.return_value = json.dumps({"interpretation": mock_interpretation})
             wrapper.reasoning_engine._client = MagicMock()
 
             result = await wrapper.execute_dag_with_interpretation(
@@ -179,10 +170,7 @@ class TestCommandExecutorWithReasoning:
 
             assert result.dag_result.success
             assert "cmd_0" in result.result_interpretations
-            assert (
-                result.result_interpretations["cmd_0"].interpretation
-                == mock_interpretation
-            )
+            assert result.result_interpretations["cmd_0"].interpretation == mock_interpretation
 
 
 class TestIntegrationChain:
@@ -211,4 +199,3 @@ class TestIntegrationChain:
         assert search_wrapper is not None
         assert dag_wrapper is not None
         assert executor_wrapper is not None
-

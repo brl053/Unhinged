@@ -42,8 +42,9 @@ async def test_list_unread_messages_happy_path() -> None:
         execute=lambda: _make_get_response(id)
     )
 
-    with patch("libs.python.connectors.gmail.build", return_value=mock_service), patch(
-        "libs.python.connectors.gmail._get_credentials"
+    with (
+        patch("libs.python.connectors.gmail.build", return_value=mock_service),
+        patch("libs.python.connectors.gmail._get_credentials"),
     ):
         messages = await list_unread_messages(limit=2)
 

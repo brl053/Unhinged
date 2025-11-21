@@ -218,9 +218,7 @@ class StabilityTest:
 
     def _random_operation(self):
         """Perform a random operation for load testing"""
-        operation = random.choice(
-            ["create_session", "retrieve_session", "add_message", "health_check"]
-        )
+        operation = random.choice(["create_session", "retrieve_session", "add_message", "health_check"])
 
         if operation == "create_session":
             if len(self.active_sessions) < self.max_concurrent_sessions:
@@ -240,15 +238,11 @@ class StabilityTest:
     def _update_performance_metrics(self):
         """Update performance metrics"""
         if self.write_latencies:
-            self.metrics.avg_write_latency_ms = sum(self.write_latencies) / len(
-                self.write_latencies
-            )
+            self.metrics.avg_write_latency_ms = sum(self.write_latencies) / len(self.write_latencies)
             self.metrics.max_write_latency_ms = max(self.write_latencies)
 
         if self.read_latencies:
-            self.metrics.avg_read_latency_ms = sum(self.read_latencies) / len(
-                self.read_latencies
-            )
+            self.metrics.avg_read_latency_ms = sum(self.read_latencies) / len(self.read_latencies)
             self.metrics.max_read_latency_ms = max(self.read_latencies)
 
     def _log_progress(self):
@@ -332,9 +326,7 @@ class StabilityTest:
     def _finalize_test(self):
         """Finalize test and generate report"""
         self.metrics.end_time = time.time()
-        self.metrics.duration_hours = (
-            self.metrics.end_time - self.metrics.start_time
-        ) / 3600
+        self.metrics.duration_hours = (self.metrics.end_time - self.metrics.start_time) / 3600
 
         # Final metrics update
         self._update_performance_metrics()
@@ -407,12 +399,8 @@ class StabilityTest:
         print(f"Total Operations: {report['test_summary']['total_operations']:,}")
         print(f"Operations/Hour: {report['test_summary']['operations_per_hour']:,.1f}")
         print(f"Error Rate: {report['test_summary']['error_rate_percent']:.4f}%")
-        print(
-            f"Avg Write Latency: {report['performance_metrics']['avg_write_latency_ms']:.2f}ms"
-        )
-        print(
-            f"Avg Read Latency: {report['performance_metrics']['avg_read_latency_ms']:.2f}ms"
-        )
+        print(f"Avg Write Latency: {report['performance_metrics']['avg_write_latency_ms']:.2f}ms")
+        print(f"Avg Read Latency: {report['performance_metrics']['avg_read_latency_ms']:.2f}ms")
         print(f"Report saved: {report_file}")
         print("=" * 80)
 

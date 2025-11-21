@@ -12,9 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add generated proto clients to path
-sys.path.insert(
-    0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
 
 try:
     from google.protobuf import struct_pb2, timestamp_pb2
@@ -70,9 +68,7 @@ class GraphExecutor:
 
         return self.graphs[graph_id]
 
-    async def list_graphs(
-        self, pagination, filters, graph_type
-    ) -> list[graph_service_pb2.Graph]:
+    async def list_graphs(self, pagination, filters, graph_type) -> list[graph_service_pb2.Graph]:
         """List all Graph definitions"""
         # Simple implementation - return all Graphs
         # TODO: Implement pagination and filtering
@@ -93,21 +89,16 @@ class GraphExecutor:
         running_executions = [
             exec_id
             for exec_id, exec_data in self.executions.items()
-            if exec_data.get("graph_id") == graph_id
-            and exec_data.get("status") == "RUNNING"
+            if exec_data.get("graph_id") == graph_id and exec_data.get("status") == "RUNNING"
         ]
 
         if running_executions:
-            raise ValueError(
-                f"Cannot delete Graph with running executions: {running_executions}"
-            )
+            raise ValueError(f"Cannot delete Graph with running executions: {running_executions}")
 
         del self.graphs[graph_id]
         events.info("Graph deleted", {"graph_id": graph_id})
 
-    async def execute_graph(
-        self, graph_id: str, input_data, execution_id: str | None = None
-    ) -> str:
+    async def execute_graph(self, graph_id: str, input_data, execution_id: str | None = None) -> str:
         """Start Graph execution"""
         if graph_id not in self.graphs:
             raise ValueError(f"Graph not found: {graph_id}")
@@ -140,17 +131,13 @@ class GraphExecutor:
 
         return execution_id
 
-    async def _execute_graph_async(
-        self, graph: graph_service_pb2.Graph, execution_state: dict
-    ):
+    async def _execute_graph_async(self, graph: graph_service_pb2.Graph, execution_state: dict):
         """Execute Graph asynchronously"""
         try:
             execution_id = execution_state["execution_id"]
 
             # Add execution started event
-            await self._add_execution_event(
-                execution_state, "EXECUTION_STARTED", None, {}
-            )
+            await self._add_execution_event(execution_state, "EXECUTION_STARTED", None, {})
 
             # Build execution graph
             node_map = {node.id: node for node in graph.nodes}
@@ -192,9 +179,7 @@ class GraphExecutor:
             # Mark execution as completed
             execution_state["status"] = "COMPLETED"
             execution_state["completed_at"] = datetime.utcnow().isoformat()
-            await self._add_execution_event(
-                execution_state, "EXECUTION_COMPLETED", None, {}
-            )
+            await self._add_execution_event(execution_state, "EXECUTION_COMPLETED", None, {})
 
             events.info("Graph execution completed", {"execution_id": execution_id})
 
@@ -202,9 +187,7 @@ class GraphExecutor:
             execution_state["status"] = "FAILED"
             execution_state["error_message"] = str(e)
             execution_state["completed_at"] = datetime.utcnow().isoformat()
-            await self._add_execution_event(
-                execution_state, "EXECUTION_FAILED", None, {"error": str(e)}
-            )
+            await self._add_execution_event(execution_state, "EXECUTION_FAILED", None, {"error": str(e)})
 
             events.error(
                 "Graph execution failed",
@@ -212,25 +195,19 @@ class GraphExecutor:
                 metadata={"execution_id": execution_state["execution_id"]},
             )
 
-    async def _execute_node(
-        self, node: graph_service_pb2.Node, execution_state: dict, node_map: dict
-    ):
+    async def _execute_node(self, node: graph_service_pb2.Node, execution_state: dict, node_map: dict):
         """Execute a single node"""
         node_id = node.id
 
         try:
             # Add node started event
-            await self._add_execution_event(
-                execution_state, "NODE_STARTED", node_id, {}
-            )
+            await self._add_execution_event(execution_state, "NODE_STARTED", node_id, {})
 
             # Get node executor
             executor = self.node_factory.get_executor(node.type)
 
             # Collect input data from previous nodes
-            input_data = await self._collect_node_inputs(
-                node, execution_state, node_map
-            )
+            input_data = await self._collect_node_inputs(node, execution_state, node_map)
 
             # Execute node
             output_data = await executor.execute(node, input_data)
@@ -244,9 +221,7 @@ class GraphExecutor:
             }
 
             # Add node completed event
-            await self._add_execution_event(
-                execution_state, "NODE_COMPLETED", node_id, output_data
-            )
+            await self._add_execution_event(execution_state, "NODE_COMPLETED", node_id, output_data)
 
             events.info(
                 "Node executed successfully",
@@ -265,14 +240,10 @@ class GraphExecutor:
                 "error_message": str(e),
             }
 
-            await self._add_execution_event(
-                execution_state, "NODE_FAILED", node_id, {"error": str(e)}
-            )
+            await self._add_execution_event(execution_state, "NODE_FAILED", node_id, {"error": str(e)})
             raise e
 
-    async def _collect_node_inputs(
-        self, node: graph_service_pb2.Node, execution_state: dict, node_map: dict
-    ) -> dict:
+    async def _collect_node_inputs(self, node: graph_service_pb2.Node, execution_state: dict, node_map: dict) -> dict:
         """Collect input data for a node from its dependencies"""
         # Simple implementation - return execution input data for now
         # TODO: Implement proper edge-based data flow
@@ -307,9 +278,7 @@ class GraphExecutor:
         }
         execution_state["events"].append(event)
 
-    async def _handle_node_failure(
-        self, node: graph_service_pb2.Node, execution_state: dict, error: Exception
-    ):
+    async def _handle_node_failure(self, node: graph_service_pb2.Node, execution_state: dict, error: Exception):
         """Handle node execution failure"""
         execution_state["status"] = "FAILED"
         execution_state["error_message"] = f"Node {node.id} failed: {str(error)}"
@@ -335,13 +304,9 @@ class GraphExecutor:
         # Validate edges reference existing nodes
         for edge in graph.edges:
             if edge.source_node_id not in node_ids:
-                raise ValueError(
-                    f"Edge references non-existent source node: {edge.source_node_id}"
-                )
+                raise ValueError(f"Edge references non-existent source node: {edge.source_node_id}")
             if edge.target_node_id not in node_ids:
-                raise ValueError(
-                    f"Edge references non-existent target node: {edge.target_node_id}"
-                )
+                raise ValueError(f"Edge references non-existent target node: {edge.target_node_id}")
 
         # Validate based on graph type
         if graph.graph_type == graph_service_pb2.DAG:
@@ -408,9 +373,7 @@ class GraphExecutor:
         # Must not have cycles
         return not self._has_cycle(nodes, edges)
 
-    async def stream_execution(
-        self, execution_id: str
-    ) -> AsyncGenerator[graph_service_pb2.ExecutionEvent, None]:
+    async def stream_execution(self, execution_id: str) -> AsyncGenerator[graph_service_pb2.ExecutionEvent, None]:
         """Stream execution events"""
         if execution_id not in self.executions:
             raise ValueError(f"Execution not found: {execution_id}")
@@ -463,9 +426,7 @@ class GraphExecutor:
             event_data = events_list[i]
             # ... (same event creation logic as above)
 
-    async def get_execution(
-        self, execution_id: str
-    ) -> graph_service_pb2.GetExecutionResponse:
+    async def get_execution(self, execution_id: str) -> graph_service_pb2.GetExecutionResponse:
         """Get execution status and results"""
         if execution_id not in self.executions:
             raise ValueError(f"Execution not found: {execution_id}")
@@ -484,23 +445,17 @@ class GraphExecutor:
             "FAILED": graph_service_pb2.FAILED,
             "CANCELLED": graph_service_pb2.CANCELLED,
         }
-        response.status = status_map.get(
-            execution_state["status"], graph_service_pb2.EXECUTION_STATUS_UNSPECIFIED
-        )
+        response.status = status_map.get(execution_state["status"], graph_service_pb2.EXECUTION_STATUS_UNSPECIFIED)
 
         # Set timestamps
         if execution_state.get("started_at"):
             started_at = timestamp_pb2.Timestamp()
-            started_at.FromDatetime(
-                datetime.fromisoformat(execution_state["started_at"])
-            )
+            started_at.FromDatetime(datetime.fromisoformat(execution_state["started_at"]))
             response.started_at.CopyFrom(started_at)
 
         if execution_state.get("completed_at"):
             completed_at = timestamp_pb2.Timestamp()
-            completed_at.FromDatetime(
-                datetime.fromisoformat(execution_state["completed_at"])
-            )
+            completed_at.FromDatetime(datetime.fromisoformat(execution_state["completed_at"]))
             response.completed_at.CopyFrom(completed_at)
 
         # Set error message if failed
@@ -517,15 +472,11 @@ class GraphExecutor:
         execution_state = self.executions[execution_id]
 
         if execution_state["status"] not in ["RUNNING", "PENDING"]:
-            raise ValueError(
-                f"Cannot cancel execution in status: {execution_state['status']}"
-            )
+            raise ValueError(f"Cannot cancel execution in status: {execution_state['status']}")
 
         execution_state["status"] = "CANCELLED"
         execution_state["completed_at"] = datetime.utcnow().isoformat()
 
-        await self._add_execution_event(
-            execution_state, "EXECUTION_CANCELLED", None, {}
-        )
+        await self._add_execution_event(execution_state, "EXECUTION_CANCELLED", None, {})
 
         events.info("Execution cancelled", {"execution_id": execution_id})

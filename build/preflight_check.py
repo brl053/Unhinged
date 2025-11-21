@@ -21,7 +21,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 try:
     from .checksum_manager import ChecksumManager
@@ -37,7 +36,7 @@ except ImportError:
 class PreflightChecker:
     """Handles pre-flight checks for deterministic application launches"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         """Initialize preflight checker
 
         Args:

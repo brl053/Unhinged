@@ -5,28 +5,25 @@
 @llm-rule all execution must be reproducible and pipeline ready
 """
 
-import os
-import sys
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import List, Optional, Dict
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class UnhingedPythonRunner:
     """
-@llm-type util.executor
-@llm-does centralized python execution engine for ml/ai etl
-@llm-rule python execution must be reproducible, environment-aware, and big data ready
-"""
-    
-    def __init__(self, project_root: Optional[Path] = None):
+    @llm-type util.executor
+    @llm-does centralized python execution engine for ml/ai etl
+    @llm-rule python execution must be reproducible, environment-aware, and big data ready
+    """
+
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self.build_python_dir = self.project_root / "build" / "python"
         # Use centralized virtual environment at build/python/venv
@@ -38,150 +35,151 @@ class UnhingedPythonRunner:
             logger.error(f"❌ Python virtual environment not found at {self.venv_path}")
             logger.info("💡 Run 'python3 build/python/setup.py' to create the environment")
             sys.exit(1)
-    
-    def setup_environment(self) -> Dict[str, str]:
+
+    def setup_environment(self) -> dict[str, str]:
         """Setup environment variables for ML/AI and big data processing"""
         env = os.environ.copy()
-        
+
         # Python path setup - include event framework
-        python_paths = [
-            str(self.project_root),
-            str(self.project_root / "libs" / "event-framework" / "python" / "src")
-        ]
+        python_paths = [str(self.project_root), str(self.project_root / "libs" / "event-framework" / "python" / "src")]
         env["PYTHONPATH"] = os.pathsep.join(python_paths)
-        
+
         # Apache Spark configuration (for our on-premise Spark cluster)
         env["SPARK_HOME"] = "/opt/spark"  # Will be set in containers
         env["PYSPARK_PYTHON"] = str(self.python_executable)
         env["PYSPARK_DRIVER_PYTHON"] = str(self.python_executable)
-        
+
         # Kafka configuration (for our on-premise Kafka cluster)
         env["KAFKA_BOOTSTRAP_SERVERS"] = "localhost:1400"
-        
+
         # Database connections (for our on-premise databases)
         env["DATABASE_URL"] = "postgresql://postgres:password@localhost:1200/unhinged"
         env["REDIS_URL"] = "redis://localhost:1302"
         env["ELASTICSEARCH_URL"] = "http://localhost:1303"
         env["CASSANDRA_HOSTS"] = "localhost:1207"
-        
+
         # Object storage (MinIO S3-compatible)
         env["MINIO_ENDPOINT"] = "localhost:1700"
         env["MINIO_ACCESS_KEY"] = "minioadmin"
         env["MINIO_SECRET_KEY"] = "minioadmin"
-        
+
         # ML/AI model paths
         env["MODELS_DIR"] = str(self.project_root / "models")
         env["DATASETS_DIR"] = str(self.project_root / "datasets")
-        
+
         # Logging configuration
         env["LOG_LEVEL"] = "INFO"
         env["STRUCTURED_LOGGING"] = "true"
-        
+
         # Performance tuning
         env["OMP_NUM_THREADS"] = "4"  # OpenMP threads for NumPy/SciPy
         env["OPENBLAS_NUM_THREADS"] = "4"  # OpenBLAS threads
         env["MKL_NUM_THREADS"] = "4"  # Intel MKL threads
-        
+
         return env
-    
-    def run_script(self, script_path: str, args: Optional[List[str]] = None, 
-                   working_dir: Optional[Path] = None) -> subprocess.CompletedProcess:
+
+    def run_script(
+        self, script_path: str, args: list[str] | None = None, working_dir: Path | None = None
+    ) -> subprocess.CompletedProcess:
         """Run a Python script with proper environment setup"""
-        
+
         # Resolve script path
         if not Path(script_path).is_absolute():
             script_path = str(self.project_root / script_path)
-        
+
         if not Path(script_path).exists():
             logger.error(f"❌ Script not found: {script_path}")
             sys.exit(1)
-        
+
         # Build command
         cmd = [str(self.python_executable), script_path] + (args or [])
-        
+
         # Setup environment
         env = self.setup_environment()
-        
+
         # Set working directory
         cwd = working_dir or self.project_root
-        
+
         logger.info(f"🐍 Running Python script: {script_path}")
         logger.info(f"📁 Working directory: {cwd}")
         logger.info(f"🔧 Python executable: {self.python_executable}")
-        
+
         try:
             result = subprocess.run(
                 cmd,
                 env=env,
                 cwd=cwd,
                 capture_output=False,  # Allow real-time output
-                text=True
+                text=True,
             )
-            
+
             if result.returncode == 0:
                 logger.info(f"✅ Script completed successfully: {script_path}")
             else:
                 logger.error(f"❌ Script failed with exit code {result.returncode}: {script_path}")
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"❌ Error running script {script_path}: {e}")
             sys.exit(1)
-    
-    def run_module(self, module_name: str, args: Optional[List[str]] = None) -> subprocess.CompletedProcess:
+
+    def run_module(self, module_name: str, args: list[str] | None = None) -> subprocess.CompletedProcess:
         """Run a Python module with -m flag"""
         cmd = [str(self.python_executable), "-m", module_name] + (args or [])
         env = self.setup_environment()
-        
+
         logger.info(f"🐍 Running Python module: {module_name}")
-        
+
         try:
-            result = subprocess.run(
-                cmd,
-                env=env,
-                cwd=self.project_root,
-                capture_output=False,
-                text=True
-            )
-            
+            result = subprocess.run(cmd, env=env, cwd=self.project_root, capture_output=False, text=True)
+
             if result.returncode == 0:
                 logger.info(f"✅ Module completed successfully: {module_name}")
             else:
                 logger.error(f"❌ Module failed with exit code {result.returncode}: {module_name}")
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"❌ Error running module {module_name}: {e}")
             sys.exit(1)
-    
+
     def interactive_shell(self) -> None:
         """Start an interactive Python shell with full environment"""
         env = self.setup_environment()
-        
+
         logger.info("🐍 Starting interactive Python shell with ML/AI and big data environment")
         logger.info("📊 Available: Kafka, Spark, Flink, Cassandra, Elasticsearch, ML libraries")
-        
+
         subprocess.run([str(self.python_executable)], env=env, cwd=self.project_root)
-    
+
     def jupyter_lab(self) -> None:
         """Start Jupyter Lab for interactive ML/AI development"""
         env = self.setup_environment()
-        
+
         logger.info("🔬 Starting Jupyter Lab for ML/AI development")
-        
-        cmd = [str(self.python_executable), "-m", "jupyter", "lab", 
-               "--ip=0.0.0.0", "--port=8888", "--no-browser", 
-               "--allow-root", "--notebook-dir", str(self.project_root)]
-        
+
+        cmd = [
+            str(self.python_executable),
+            "-m",
+            "jupyter",
+            "lab",
+            "--ip=0.0.0.0",
+            "--port=8888",
+            "--no-browser",
+            "--allow-root",
+            "--notebook-dir",
+            str(self.project_root),
+        ]
+
         subprocess.run(cmd, env=env, cwd=self.project_root)
 
 
 def main():
     """CLI entry point for universal Python runner"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Unhinged Universal Python Runner - ML/AI ETL & Big Data",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -189,35 +187,35 @@ def main():
 Examples:
   # Run a service
   python run.py services/speech-to-text/main.py
-  
+
   # Run build system
   python run.py build/build.py build service-discovery
-  
+
   # Run ETL pipeline
   python run.py pipelines/kafka_to_spark_etl.py
-  
+
   # Run module
   python run.py -m pytest tests/
-  
+
   # Interactive shell with ML/AI environment
   python run.py --shell
-  
+
   # Jupyter Lab for ML development
   python run.py --jupyter
-        """
+        """,
     )
-    
+
     parser.add_argument("script", nargs="?", help="Python script to run")
     parser.add_argument("args", nargs="*", help="Arguments to pass to the script")
     parser.add_argument("-m", "--module", help="Run Python module with -m flag")
     parser.add_argument("--shell", action="store_true", help="Start interactive Python shell")
     parser.add_argument("--jupyter", action="store_true", help="Start Jupyter Lab")
     parser.add_argument("--working-dir", type=Path, help="Working directory for script execution")
-    
+
     args = parser.parse_args()
-    
+
     runner = UnhingedPythonRunner()
-    
+
     if args.shell:
         runner.interactive_shell()
     elif args.jupyter:

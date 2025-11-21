@@ -85,9 +85,7 @@ class UnhingedHealthMonitor:
             )
             return {}
 
-    async def check_http_health(
-        self, service_name: str, url: str, timeout: int = 5
-    ) -> HealthCheckResult:
+    async def check_http_health(self, service_name: str, url: str, timeout: int = 5) -> HealthCheckResult:
         """Perform HTTP health check"""
         start_time = time.time()
 
@@ -118,9 +116,7 @@ class UnhingedHealthMonitor:
                 error_message=str(e),
             )
 
-    async def check_tcp_health(
-        self, service_name: str, host: str, port: int, timeout: int = 5
-    ) -> HealthCheckResult:
+    async def check_tcp_health(self, service_name: str, host: str, port: int, timeout: int = 5) -> HealthCheckResult:
         """Perform TCP health check"""
         start_time = time.time()
 
@@ -155,9 +151,7 @@ class UnhingedHealthMonitor:
                 error_message=str(e),
             )
 
-    async def check_service_health(
-        self, service_name: str, service_config: dict
-    ) -> HealthCheckResult:
+    async def check_service_health(self, service_name: str, service_config: dict) -> HealthCheckResult:
         """Check health of a single service"""
         health_check_url = service_config.get("health_check", "")
 
@@ -239,9 +233,7 @@ class UnhingedHealthMonitor:
 
         # Calculate metrics
         success_rate = (healthy_count / total_count) * 100 if total_count > 0 else 0
-        avg_response_time = (
-            sum(r.response_time for r in recent_results) / total_count if total_count > 0 else 0
-        )
+        avg_response_time = sum(r.response_time for r in recent_results) / total_count if total_count > 0 else 0
 
         # Count consecutive failures
         consecutive_failures = 0
@@ -273,11 +265,7 @@ class UnhingedHealthMonitor:
 
     def get_unhealthy_services(self) -> list[str]:
         """Get list of currently unhealthy services"""
-        return [
-            name
-            for name, health in self.service_health.items()
-            if health.current_status != "healthy"
-        ]
+        return [name for name, health in self.service_health.items() if health.current_status != "healthy"]
 
     def get_critical_services(self) -> list[str]:
         """Get services that have exceeded failure threshold"""
@@ -290,9 +278,7 @@ class UnhingedHealthMonitor:
     def generate_health_report(self) -> str:
         """Generate comprehensive health report"""
         total_services = len(self.service_health)
-        healthy_services = sum(
-            1 for h in self.service_health.values() if h.current_status == "healthy"
-        )
+        healthy_services = sum(1 for h in self.service_health.values() if h.current_status == "healthy")
         unhealthy_services = total_services - healthy_services
 
         lines = [
@@ -333,9 +319,7 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Unhinged Health Monitor")
-    parser.add_argument(
-        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
-    )
+    parser.add_argument("--project-root", type=Path, default=Path.cwd(), help="Project root directory")
     parser.add_argument("--continuous", action="store_true", help="Run continuous monitoring")
     parser.add_argument("--interval", type=int, default=60, help="Monitoring interval in seconds")
     parser.add_argument("--report", action="store_true", help="Generate health report")

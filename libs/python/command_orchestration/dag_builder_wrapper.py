@@ -9,12 +9,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
-from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
 from libs.python.command_orchestration.dag_builder import (
     CommandDAG,
-    CommandNode,
     DAGBuilder,
 )
+from libs.python.command_orchestration.reasoning_engine import ReasoningEngine
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +33,9 @@ class CommandDAGWithReasoning:
     """DAG with LLM-backed edge reasoning"""
 
     dag: CommandDAG
-    edge_reasoning: dict[tuple[str, str], DAGEdgeReasoning] = field(
-        default_factory=dict
-    )
+    edge_reasoning: dict[tuple[str, str], DAGEdgeReasoning] = field(default_factory=dict)
 
-    def get_edge_reasoning(
-        self, from_id: str, to_id: str
-    ) -> DAGEdgeReasoning | None:
+    def get_edge_reasoning(self, from_id: str, to_id: str) -> DAGEdgeReasoning | None:
         """Get reasoning for a specific edge."""
         return self.edge_reasoning.get((from_id, to_id))
 
@@ -73,9 +68,7 @@ class DAGBuilderWithReasoning:
             LLM provider (default: ollama for on-premise deployment)
         """
         self.dag_builder = dag_builder or DAGBuilder()
-        self.reasoning_engine = reasoning_engine or ReasoningEngine(
-            model=model, provider=provider
-        )
+        self.reasoning_engine = reasoning_engine or ReasoningEngine(model=model, provider=provider)
 
     async def parse_pipeline_with_reasoning(
         self,
@@ -127,14 +120,10 @@ class DAGBuilderWithReasoning:
                         reasoning=reasoning,
                     )
 
-                    dag_with_reasoning.edge_reasoning[(from_id, to_id)] = (
-                        edge_reasoning
-                    )
+                    dag_with_reasoning.edge_reasoning[(from_id, to_id)] = edge_reasoning
 
                 except Exception as exc:
-                    logger.warning(
-                        f"Failed to generate reasoning for edge {from_id}→{to_id}: {exc}"
-                    )
+                    logger.warning(f"Failed to generate reasoning for edge {from_id}→{to_id}: {exc}")
 
             return dag_with_reasoning
 
@@ -171,4 +160,3 @@ class DAGBuilderWithReasoning:
             DAG of independent commands
         """
         return self.dag_builder.build_from_commands(commands)
-

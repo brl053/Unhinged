@@ -21,8 +21,9 @@ async def test_post_message_happy_path() -> None:
     mock_response.status_code = 200
     mock_response.json.return_value = {"id": "msg-1", "content": "hello"}
 
-    with patch("libs.python.connectors.discord.requests.post", return_value=mock_response) as mock_post, patch.dict(
-        os.environ, {"UNHINGED_DISCORD_TOKEN": "test-token"}, clear=False
+    with (
+        patch("libs.python.connectors.discord.requests.post", return_value=mock_response) as mock_post,
+        patch.dict(os.environ, {"UNHINGED_DISCORD_TOKEN": "test-token"}, clear=False),
     ):
         result = await post_message("channel-123", "hello")
 
@@ -40,11 +41,12 @@ async def test_post_message_api_error_raises_custom_error() -> None:
     mock_response.status_code = 401
     mock_response.text = "Unauthorized"
 
-    with patch("libs.python.connectors.discord.requests.post", return_value=mock_response), patch.dict(
-        os.environ, {"UNHINGED_DISCORD_TOKEN": "test-token"}, clear=False
+    with (
+        patch("libs.python.connectors.discord.requests.post", return_value=mock_response),
+        patch.dict(os.environ, {"UNHINGED_DISCORD_TOKEN": "test-token"}, clear=False),
+        pytest.raises(DiscordConnectorError) as excinfo,
     ):
-        with pytest.raises(DiscordConnectorError) as excinfo:
-            await post_message("channel-123", "hello")
+        await post_message("channel-123", "hello")
 
     err = excinfo.value
     assert isinstance(err, DiscordConnectorError)

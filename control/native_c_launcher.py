@@ -58,12 +58,8 @@ def main():
             if result.returncode == 1:
                 print("💡 This usually means DRM is in use by desktop environment")
                 print("💡 Native C graphics requires exclusive DRM access")
-                print(
-                    "💡 Try running from a TTY console (Ctrl+Alt+F3) or disable desktop environment"
-                )
-                print(
-                    "💡 The graphics library is working correctly - just can't access display while GUI is running"
-                )
+                print("💡 Try running from a TTY console (Ctrl+Alt+F3) or disable desktop environment")
+                print("💡 The graphics library is working correctly - just can't access display while GUI is running")
 
         return result.returncode
 

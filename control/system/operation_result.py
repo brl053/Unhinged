@@ -75,11 +75,7 @@ class OperationResult:
             state_change = f"Operation {operation} failed for targets: {', '.join(failed_targets)}"
 
         # Collect error messages
-        error_messages = [
-            getattr(r, "error_message", "")
-            for r in build_results
-            if not getattr(r, "success", True)
-        ]
+        error_messages = [getattr(r, "error_message", "") for r in build_results if not getattr(r, "success", True)]
         error_message = "; ".join(filter(None, error_messages)) if error_messages else None
 
         return cls(

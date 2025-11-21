@@ -159,7 +159,7 @@ class TextGenerationService:
 
         except ConnectionError as e:
             error_msg = (
-                f"Connection error with {self.provider}: {e}\n" "Please ensure the service is running and accessible."
+                f"Connection error with {self.provider}: {e}\nPlease ensure the service is running and accessible."
             )
             logger.error(error_msg)
             raise RuntimeError(error_msg) from e

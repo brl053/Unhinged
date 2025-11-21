@@ -3,12 +3,12 @@
 @llm-does build module framework with abstract base classes and registry
 """
 
+import logging
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-import logging
-import sys
+from typing import Any, Dict, List, Optional
 
 # Add control/gtk4_gui/utils to path for subprocess_utils import
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "control" / "gtk4_gui" / "utils"))
@@ -17,36 +17,42 @@ from subprocess_utils import SubprocessRunner
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class BuildContext:
     """Context information for build operations"""
+
     project_root: Path
     target_name: str
-    config: Dict[str, Any]
+    config: dict[str, Any]
     cache_enabled: bool = True
     parallel: bool = True
     incremental: bool = True
     environment: str = "development"  # development, staging, production
 
+
 @dataclass
 class BuildArtifact:
     """Represents a build artifact"""
+
     path: Path
     type: str  # jar, js, py, proto, docker
     size: int
     checksum: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
+
 
 @dataclass
 class BuildModuleResult:
     """Result from a build module operation"""
+
     success: bool
     duration: float
-    artifacts: List[BuildArtifact]
+    artifacts: list[BuildArtifact]
     cache_hit: bool = False
-    error_message: Optional[str] = None
-    warnings: List[str] = None
-    metrics: Dict[str, Any] = None
+    error_message: str | None = None
+    warnings: list[str] = None
+    metrics: dict[str, Any] = None
 
     def __post_init__(self):
         if self.warnings is None:
@@ -54,118 +60,125 @@ class BuildModuleResult:
         if self.metrics is None:
             self.metrics = {}
 
+
 class BuildModule(ABC):
     """Abstract base class for language-specific build modules"""
-    
+
     def __init__(self, context: BuildContext):
         self.context = context
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     @abstractmethod
     def can_handle(self, target_name: str) -> bool:
         """Check if this module can handle the given target"""
         pass
-    
+
     @abstractmethod
-    def get_dependencies(self, target_name: str) -> List[str]:
+    def get_dependencies(self, target_name: str) -> list[str]:
         """Get list of file dependencies for the target"""
         pass
-    
+
     @abstractmethod
     def calculate_cache_key(self, target_name: str) -> str:
         """Calculate cache key for the target"""
         pass
-    
+
     @abstractmethod
     def build(self, target_name: str) -> BuildModuleResult:
         """Execute the build for the target"""
         pass
-    
+
     @abstractmethod
     def clean(self, target_name: str) -> bool:
         """Clean build artifacts for the target"""
         pass
-    
-    def validate_environment(self) -> List[str]:
+
+    def validate_environment(self) -> list[str]:
         """Validate that the build environment is properly configured"""
         return []  # Return list of error messages, empty if valid
-    
+
     def get_estimated_duration(self, target_name: str) -> float:
         """Get estimated build duration in seconds"""
         return 60.0  # Default estimate
-    
+
     def supports_incremental_build(self, target_name: str) -> bool:
         """Check if incremental builds are supported for this target"""
         return False
-    
+
     def supports_parallel_build(self, target_name: str) -> bool:
         """Check if parallel builds are supported for this target"""
         return True
 
+
 class BuildModuleRegistry:
     """Registry for build modules"""
-    
+
     def __init__(self):
-        self.modules: List[BuildModule] = []
-    
+        self.modules: list[BuildModule] = []
+
     def register(self, module: BuildModule):
         """Register a build module"""
         self.modules.append(module)
         logger.info(f"Registered build module: {module.__class__.__name__}")
-    
-    def get_module_for_target(self, target_name: str) -> Optional[BuildModule]:
+
+    def get_module_for_target(self, target_name: str) -> BuildModule | None:
         """Get the appropriate build module for a target"""
         for module in self.modules:
             if module.can_handle(target_name):
                 return module
         return None
-    
-    def get_all_modules(self) -> List[BuildModule]:
+
+    def get_all_modules(self) -> list[BuildModule]:
         """Get all registered modules"""
         return self.modules.copy()
 
+
 # Global registry instance
 registry = BuildModuleRegistry()
+
 
 def register_module(module: BuildModule):
     """Register a build module with the global registry"""
     registry.register(module)
 
-def get_module_for_target(target_name: str) -> Optional[BuildModule]:
+
+def get_module_for_target(target_name: str) -> BuildModule | None:
     """Get the appropriate build module for a target"""
     return registry.get_module_for_target(target_name)
+
 
 # Module-specific utilities
 class BuildUtils:
     """Utility functions for build modules"""
-    
+
     @staticmethod
     def calculate_file_hash(file_path: Path) -> str:
         """Calculate SHA256 hash of a file"""
         import hashlib
+
         hasher = hashlib.sha256()
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     hasher.update(chunk)
             return hasher.hexdigest()
-        except IOError:
+        except OSError:
             return ""
-    
+
     @staticmethod
-    def calculate_directory_hash(dir_path: Path, patterns: List[str] = None) -> str:
+    def calculate_directory_hash(dir_path: Path, patterns: list[str] = None) -> str:
         """Calculate hash of directory contents"""
-        import hashlib
         import fnmatch
-        
+        import hashlib
+
         hasher = hashlib.sha256()
-        
+
         if not dir_path.exists():
             return ""
-        
+
         # Get all files, optionally filtered by patterns
         files = []
-        for file_path in sorted(dir_path.rglob('*')):
+        for file_path in sorted(dir_path.rglob("*")):
             if file_path.is_file():
                 if patterns:
                     # Check if file matches any pattern
@@ -174,27 +187,28 @@ class BuildUtils:
                         files.append(file_path)
                 else:
                     files.append(file_path)
-        
+
         # Hash file paths and contents
         for file_path in files:
             hasher.update(str(file_path.relative_to(dir_path)).encode())
             hasher.update(BuildUtils.calculate_file_hash(file_path).encode())
-        
+
         return hasher.hexdigest()
-    
+
     @staticmethod
     def run_command(command: str, cwd: Path, timeout: int = 300) -> tuple[bool, str, str]:
         """Run a command and return success, stdout, stderr"""
         runner = SubprocessRunner(timeout=timeout)
         result = runner.run_shell(command, cwd=cwd)
         return result["success"], result["output"], result["error"]
-    
+
     @staticmethod
     def check_tool_available(tool_name: str) -> bool:
         """Check if a build tool is available"""
         import shutil
+
         return shutil.which(tool_name) is not None
-    
+
     @staticmethod
     def get_file_size(file_path: Path) -> int:
         """Get file size in bytes"""
@@ -202,9 +216,9 @@ class BuildUtils:
             return file_path.stat().st_size
         except OSError:
             return 0
-    
+
     @staticmethod
-    def create_build_artifact(file_path: Path, artifact_type: str, metadata: Dict[str, Any] = None) -> BuildArtifact:
+    def create_build_artifact(file_path: Path, artifact_type: str, metadata: dict[str, Any] = None) -> BuildArtifact:
         """Create a BuildArtifact from a file"""
         if metadata is None:
             metadata = {}
@@ -214,15 +228,15 @@ class BuildUtils:
             type=artifact_type,
             size=BuildUtils.get_file_size(file_path),
             checksum=BuildUtils.calculate_file_hash(file_path),
-            metadata=metadata
+            metadata=metadata,
         )
 
     @staticmethod
-    def validate_build_patterns(repo_root: Path) -> List[str]:
+    def validate_build_patterns(repo_root: Path) -> list[str]:
         """
-@llm-type config.build
-@llm-does validate build system patterns and cultural commandments
-"""
+        @llm-type config.build
+        @llm-does validate build system patterns and cultural commandments
+        """
         violations = []
 
         try:
@@ -247,70 +261,76 @@ class BuildUtils:
 
         return violations
 
+
 # Auto-register available build modules
 def _auto_register_modules():
     """Automatically register available build modules"""
     # Create dummy context for registration
-    dummy_context = BuildContext(
-        project_root=Path.cwd(),
-        target_name="dummy",
-        config={}
-    )
+    dummy_context = BuildContext(project_root=Path.cwd(), target_name="dummy", config={})
 
     # Try to register each module individually
     modules_to_register = [
-        ('python_builder', 'PythonBuilder'),
-        ('kotlin_builder', 'KotlinBuilder'),
-        ('c_builder', 'CBuilder'),
-        ('dual_system_builder', 'DualSystemBuilder'),
-        ('design_token_builder', 'DesignTokenBuilder'),
-        ('component_build_module', 'ComponentBuildModule'),
+        ("python_builder", "PythonBuilder"),
+        ("kotlin_builder", "KotlinBuilder"),
+        ("c_builder", "CBuilder"),
+        ("dual_system_builder", "DualSystemBuilder"),
+        ("design_token_builder", "DesignTokenBuilder"),
+        ("component_build_module", "ComponentBuildModule"),
     ]
 
     for module_name, class_name in modules_to_register:
         try:
-            if module_name == 'python_builder':
+            if module_name == "python_builder":
                 from .python_builder import PythonBuilder
+
                 register_module(PythonBuilder(dummy_context))
-            elif module_name == 'kotlin_builder':
+            elif module_name == "kotlin_builder":
                 from .kotlin_builder import KotlinBuilder
+
                 register_module(KotlinBuilder(dummy_context))
-            elif module_name == 'c_builder':
+            elif module_name == "c_builder":
                 from .c_builder import CBuilder
+
                 register_module(CBuilder(dummy_context))
-            elif module_name == 'dual_system_builder':
+            elif module_name == "dual_system_builder":
                 from .dual_system_builder import DualSystemBuilder
+
                 register_module(DualSystemBuilder(dummy_context))
-            elif module_name == 'design_token_builder':
+            elif module_name == "design_token_builder":
                 # Import from design system build directory
                 import sys
+
                 design_system_path = dummy_context.project_root / "libs" / "design_system" / "build"
                 sys.path.insert(0, str(design_system_path))
                 from design_token_builder import DesignTokenBuilder
+
                 register_module(DesignTokenBuilder(dummy_context))
-            elif module_name == 'component_build_module':
+            elif module_name == "component_build_module":
                 # Import component build module from design system
                 import sys
+
                 design_system_path = dummy_context.project_root / "libs" / "design_system" / "build"
                 sys.path.insert(0, str(design_system_path))
                 from component_build_module import ComponentBuildModule
+
                 register_module(ComponentBuildModule(dummy_context))
         except (ImportError, AttributeError) as e:
             # Module not available, skip silently
             logger.debug(f"Could not register {class_name}: {e}")
+
 
 # Auto-register modules on import
 _auto_register_modules()
 
 # Export main classes and functions
 __all__ = [
-    'BuildContext',
-    'BuildArtifact',
-    'BuildModuleResult',
-    'BuildModule',
-    'BuildModuleRegistry',
-    'BuildUtils',
-    'register_module',
-    'get_module_for_target',
-    'registry'
+    "BuildContext",
+    "BuildArtifact",
+    "BuildModuleResult",
+    "BuildModule",
+    "BuildModuleRegistry",
+    "BuildUtils",
+    "register_module",
+    "get_module_for_target",
+    "registry",
 ]

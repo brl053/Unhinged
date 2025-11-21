@@ -11,11 +11,9 @@ Wraps existing pre-commit hooks to provide:
 5. LLM-agent friendly structured output
 """
 
-import json
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 
@@ -118,31 +116,31 @@ def format_actionable_error(error: dict[str, Any]) -> str:
     code = error["code"]
     guidance = FIX_GUIDANCE_DB.get(code)
 
-    output = f"\n{'='*80}\n"
+    output = f"\n{'=' * 80}\n"
     output += f"❌ ERROR: {error['message']}\n"
     output += f"   File: {error['file']}:{error['line']}:{error['col']}\n"
     output += f"   Code: {code}\n"
 
     if guidance:
-        output += f"\n   WHY THIS MATTERS:\n"
+        output += "\n   WHY THIS MATTERS:\n"
         output += f"   {guidance.why_it_matters}\n"
 
-        output += f"\n   HOW TO FIX:\n"
+        output += "\n   HOW TO FIX:\n"
         output += f"   {guidance.how_to_fix}\n"
 
         if guidance.auto_fix_command:
             fix_cmd = guidance.auto_fix_command.format(file=error["file"])
-            output += f"\n   AUTOMATED FIX AVAILABLE:\n"
+            output += "\n   AUTOMATED FIX AVAILABLE:\n"
             output += f"   Run: {fix_cmd}\n"
 
         if guidance.learn_more_url:
-            output += f"\n   LEARN MORE:\n"
+            output += "\n   LEARN MORE:\n"
             output += f"   {guidance.learn_more_url}\n"
     else:
         output += f"\n   ⚠️  No automated guidance available for {code}\n"
         output += f"   Consult: https://docs.astral.sh/ruff/rules/{code}\n"
 
-    output += f"{'='*80}\n"
+    output += f"{'=' * 80}\n"
     return output
 
 
@@ -174,13 +172,12 @@ def main() -> int:
     for error in errors:
         print(format_actionable_error(error))
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"SUMMARY: {len(errors)} errors found")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

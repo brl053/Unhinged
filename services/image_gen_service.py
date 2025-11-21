@@ -20,9 +20,7 @@ try:
     from fastapi.responses import FileResponse, JSONResponse
     from pydantic import BaseModel
 except ImportError:
-    print(
-        "⚠️ FastAPI dependencies not available. Install with: pip install fastapi uvicorn"
-    )
+    print("⚠️ FastAPI dependencies not available. Install with: pip install fastapi uvicorn")
     exit(1)
 
 # Import our sovereign image generation module
@@ -156,9 +154,7 @@ async def health_check():
 
 
 @app.post("/generate", response_model=ImageGenerationAPIResponse)
-async def generate_image(
-    request: ImageGenerationAPIRequest, background_tasks: BackgroundTasks
-):
+async def generate_image(request: ImageGenerationAPIRequest, background_tasks: BackgroundTasks):
     """Generate a single image or batch of images."""
     if not generator:
         raise HTTPException(status_code=503, detail="Image generator not initialized")
@@ -194,9 +190,7 @@ async def generate_image(
 
     except Exception as e:
         logging.error(f"❌ Image generation failed: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Image generation failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
 
 
 @app.post("/generate/batch")
@@ -235,9 +229,7 @@ async def generate_batch(request: BatchGenerationRequest):
 
     except Exception as e:
         logging.error(f"❌ Batch generation failed: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Batch generation failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Batch generation failed: {str(e)}")
 
 
 @app.get("/image/{filename}")

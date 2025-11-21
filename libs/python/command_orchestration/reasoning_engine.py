@@ -193,10 +193,10 @@ Generate reasoning for why each command was selected."""
 
         except json.JSONDecodeError as exc:
             logger.error(f"Failed to parse command selection reasoning: {exc}")
-            return {cmd: "Command selected for diagnostics" for cmd in commands}
+            return dict.fromkeys(commands, "Command selected for diagnostics")
         except Exception as exc:
             logger.error(f"Command selection reasoning failed: {exc}")
-            return {cmd: "Command selected for diagnostics" for cmd in commands}
+            return dict.fromkeys(commands, "Command selected for diagnostics")
 
     async def reason_dag_edge(
         self,

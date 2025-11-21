@@ -113,8 +113,7 @@ class ResourceManager:
         self.max_image_threads = min(max_by_memory, 4)  # Cap at 4 for stability
 
         self.logger.info(
-            f"Thread limits - IO: {self.max_io_threads}, "
-            f"CPU: {self.max_cpu_threads}, Image: {self.max_image_threads}"
+            f"Thread limits - IO: {self.max_io_threads}, CPU: {self.max_cpu_threads}, Image: {self.max_image_threads}"
         )
 
     def get_io_pool(self) -> ThreadPoolExecutor:
@@ -223,8 +222,7 @@ class ResourceManager:
                     if self._resource_pressure != old_pressure:
                         if self._resource_pressure:
                             self.logger.warning(
-                                f"Resource pressure detected - "
-                                f"Memory: {memory.percent:.1f}%, CPU: {cpu_percent:.1f}%"
+                                f"Resource pressure detected - Memory: {memory.percent:.1f}%, CPU: {cpu_percent:.1f}%"
                             )
                         else:
                             self.logger.info("Resource pressure relieved")

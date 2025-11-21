@@ -154,9 +154,7 @@ class UnhingedServiceStartup:
                 )
 
                 if result.returncode != 0:
-                    logger.error(
-                        f"❌ Service {service_name} failed with exit code {result.returncode}"
-                    )
+                    logger.error(f"❌ Service {service_name} failed with exit code {result.returncode}")
                     if self.verbose and result.stderr:
                         logger.error(f"Error output: {result.stderr}")
                     return False

@@ -74,9 +74,7 @@ class VideoGenerationService:
             Dict with video generation results and metadata
         """
         if approach not in self.APPROACHES:
-            raise ValueError(
-                f"Unknown approach: {approach}. Available: {list(self.APPROACHES.keys())}"
-            )
+            raise ValueError(f"Unknown approach: {approach}. Available: {list(self.APPROACHES.keys())}")
 
         logger.info(f"Generating video with {approach} approach")
         logger.info(f"Prompt: {prompt[:50]}...")
@@ -218,9 +216,7 @@ class VideoGenerationService:
             logger.error(f"Frame interpolation failed: {e}")
             raise
 
-    def _generate_video_svd(
-        self, prompt: str, duration: int, fps: int, width: int, height: int
-    ) -> dict[str, Any]:
+    def _generate_video_svd(self, prompt: str, duration: int, fps: int, width: int, height: int) -> dict[str, Any]:
         """
         Generate video using Stable Video Diffusion approach.
 
