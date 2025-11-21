@@ -11,9 +11,12 @@ from .dsl import (
     PlanEdge,
     PlanNode,
     QueryPlan,
+    build_audio_volume_hypotheses,
     build_audio_volume_plan,
+    build_audio_volume_plan_with_branching,
     plan_to_graph,
 )
+from .hypothesis import Hypothesis, HypothesisSet
 from .intent_graph import (
     INTENT_NODE_ID,
     INTENT_TAXONOMY,
@@ -26,7 +29,10 @@ __all__ = [
     "PlanEdge",
     "PlanNode",
     "QueryPlan",
+    "Hypothesis",
+    "HypothesisSet",
     "build_audio_volume_plan",
+    "build_audio_volume_hypotheses",
     "plan_to_graph",
     "INTENT_NODE_ID",
     "INTENT_TAXONOMY",

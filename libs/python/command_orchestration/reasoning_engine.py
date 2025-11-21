@@ -130,14 +130,22 @@ Example:
 
         Uses local TextGenerationService (Ollama) for on-premise deployment.
         No external API calls.
+        Runs in executor to avoid blocking async event loop.
         """
+        import asyncio
+
         service = self._load_service()
 
         # Combine system prompt and user message for Ollama
         full_prompt = f"{system_prompt}\n\nUser: {user_message}\n\nResponse:"
 
         try:
-            response_text = service.generate(prompt=full_prompt, max_tokens=512)
+            # Run blocking LLM call in executor to avoid blocking event loop
+            loop = asyncio.get_event_loop()
+            response_text = await loop.run_in_executor(
+                None,
+                lambda: service.generate(prompt=full_prompt, max_tokens=512),
+            )
             return response_text
         except Exception as exc:
             logger.error(f"LLM call failed: {exc}")
@@ -275,3 +283,103 @@ Interpret what this result tells us about the system state."""
             status = "succeeded" if exit_code == 0 else "failed"
             return f"Command {status} with exit code {exit_code}"
 
+    async def reason_remediation(
+        self,
+        query: str,
+        diagnostic_output: str,
+    ) -> dict[str, Any]:
+        """Generate YAML-structured remediation commands.
+
+        @llm-yaml-reasoning: Generate remediation commands in YAML format
+
+        Parameters
+        ----------
+        query : str
+            Original user query
+        diagnostic_output : str
+            Combined diagnostic output from all executed nodes
+
+        Returns
+        -------
+        Dict[str, Any]
+            Parsed remediation data with diagnosis and remediation_commands
+        """
+
+        system_prompt = """Output ONLY valid YAML with this exact structure:
+
+diagnosis: "Brief problem explanation with specific device info"
+remediation_commands:
+  - command: "exact shell command"
+    description: "One sentence what this does"
+    read_only: false
+    confidence: 0.95
+
+CRITICAL:
+- Use specific device identifiers (e.g., 'amixer -c 1' for card 1)
+- Extract card numbers from diagnostic output (look for 'card 1', 'Bus 001 Device 004')
+- Only suggest safe, non-destructive commands
+- Output ONLY the YAML. No markdown. No explanations."""
+
+        user_message = f"""Query: {query}
+
+Diagnostic output:
+{diagnostic_output}
+
+Generate remediation YAML:"""
+
+        try:
+            response_text = await self._call_llm(system_prompt, user_message)
+            return self._parse_and_validate_yaml(response_text)
+        except Exception as exc:
+            logger.error(f"Remediation reasoning failed: {exc}")
+            return {"diagnosis": "", "remediation_commands": []}
+
+    def _parse_and_validate_yaml(self, text: str) -> dict[str, Any]:
+        """Parse YAML response and validate against schema.
+
+        Parameters
+        ----------
+        text : str
+            Raw response text from LLM
+
+        Returns
+        -------
+        Dict[str, Any]
+            Validated remediation data
+        """
+        import re
+
+        import yaml
+
+        # Extract YAML block (remove markdown if present)
+        yaml_text = re.sub(r"```ya?ml\s*|\s*```", "", text)
+
+        # Find YAML content
+        match = re.search(r"(diagnosis:.*?)(?=\n[A-Z]|\Z)", yaml_text, re.DOTALL)
+        if match:
+            yaml_text = match.group(1)
+
+        # Parse YAML
+        try:
+            data = yaml.safe_load(yaml_text)
+        except yaml.YAMLError as e:
+            logger.error(f"YAML parse error: {e}")
+            return {"diagnosis": "", "remediation_commands": []}
+
+        # Validate structure
+        if not isinstance(data, dict):
+            return {"diagnosis": "", "remediation_commands": []}
+
+        if not isinstance(data.get("remediation_commands"), list):
+            data["remediation_commands"] = []
+
+        # Ensure required fields
+        for cmd in data["remediation_commands"]:
+            if not isinstance(cmd, dict):
+                continue
+            cmd.setdefault("confidence", 0.85)
+            cmd.setdefault("read_only", False)
+
+        data.setdefault("diagnosis", "")
+
+        return data

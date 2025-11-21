@@ -43,44 +43,51 @@ class Graph:
 
     The graph is intentionally minimal: it stores nodes and directed edges and
     can produce execution groups suitable for parallel execution.
+
+    Edges can have optional conditions for runtime branching.
     """
 
     def __init__(self) -> None:
         self.nodes: dict[str, GraphNode] = {}
-        self.edges: list[tuple[str, str]] = []
+        self.edges: list[tuple[str, str, Optional[str]]] = []  # (source, target, condition)
 
     def add_node(self, node: GraphNode) -> None:
         if node.id in self.nodes:
             raise ValueError(f"Node with id {node.id!r} already exists")
         self.nodes[node.id] = node
 
-    def add_edge(self, source_id: str, target_id: str) -> None:
+    def add_edge(self, source_id: str, target_id: str, condition: Optional[str] = None) -> None:
         if source_id == target_id:
             raise ValueError("Self-loops are not allowed in DAGs")
         if source_id not in self.nodes:
             raise KeyError(f"Unknown source node {source_id!r}")
         if target_id not in self.nodes:
             raise KeyError(f"Unknown target node {target_id!r}")
-        self.edges.append((source_id, target_id))
+        self.edges.append((source_id, target_id, condition))
 
-    def _build_adjacency(self) -> tuple[dict[str, list[str]], dict[str, int]]:
-        """Return adjacency list and in-degree map for the current graph."""
+    def _build_adjacency(self) -> tuple[dict[str, list[str]], dict[str, int], dict[tuple[str, str], Optional[str]]]:
+        """Return adjacency list, in-degree map, and edge conditions for the current graph."""
         adjacency: dict[str, list[str]] = {node_id: [] for node_id in self.nodes}
         indegree: dict[str, int] = {node_id: 0 for node_id in self.nodes}
+        edge_conditions: dict[tuple[str, str], Optional[str]] = {}
 
-        for src, dst in self.edges:
+        for src, dst, condition in self.edges:
             adjacency[src].append(dst)
             indegree[dst] += 1
+            edge_conditions[(src, dst)] = condition
 
-        return adjacency, indegree
+        return adjacency, indegree, edge_conditions
 
     def topological_groups(self) -> list[list[str]]:
         """Return execution groups for a DAG using Kahn's algorithm.
 
         Each inner list contains node ids that can be executed in parallel.
         Raises ``ValueError`` if the graph contains a cycle.
+
+        Note: Conditional edges are treated as unconditional for topological ordering.
+        Condition evaluation happens at runtime during execution.
         """
-        adjacency, indegree = self._build_adjacency()
+        adjacency, indegree, _ = self._build_adjacency()
         ready = [node_id for node_id, deg in indegree.items() if deg == 0]
         groups: list[list[str]] = []
         processed = 0
@@ -107,6 +114,66 @@ class Graph:
 class GraphExecutor:
     """Execute graphs of ``GraphNode`` instances with parallelism per layer."""
 
+    def _evaluate_condition(self, condition: Optional[str], node_results: dict[str, NodeExecutionResult]) -> bool:
+        """Evaluate a condition expression against node results.
+
+        Supports expressions like:
+        - "user_input.selected_option == 2"
+        - "user_input.confirmed == true"
+        """
+        if condition is None or not condition:
+            return True
+
+        try:
+            # Build a safe namespace with node results
+            namespace: dict[str, Any] = {}
+            for node_id, result in node_results.items():
+                namespace[node_id] = result.output
+
+            # Evaluate the condition
+            return bool(eval(condition, {"__builtins__": {}}, namespace))
+        except Exception:
+            # If condition evaluation fails, skip the edge
+            return False
+
+    def _should_execute_node(
+        self,
+        node_id: str,
+        graph: Graph,
+        node_results: dict[str, NodeExecutionResult],
+    ) -> bool:
+        """Determine if a node should execute based on incoming edge conditions.
+
+        A node executes if:
+        1. It has no incoming edges (source node), OR
+        2. All incoming edges have conditions that evaluate to True, OR
+        3. At least one incoming edge has no condition (unconditional)
+
+        Returns False if all incoming edges have conditions and at least one evaluates to False.
+        """
+        # Find all incoming edges to this node
+        incoming_edges = [(src, dst, cond) for src, dst, cond in graph.edges if dst == node_id]
+
+        if not incoming_edges:
+            # No incoming edges - this is a source node, always execute
+            return True
+
+        # Check each incoming edge
+        has_unconditional = False
+        all_conditions_true = True
+
+        for src, dst, condition in incoming_edges:
+            if condition is None:
+                # Unconditional edge - node should execute
+                has_unconditional = True
+            else:
+                # Conditional edge - evaluate it
+                if not self._evaluate_condition(condition, node_results):
+                    all_conditions_true = False
+
+        # Execute if: has unconditional edge OR all conditions are true
+        return has_unconditional or all_conditions_true
+
     async def execute(
         self,
         graph: Graph,
@@ -117,6 +184,10 @@ class GraphExecutor:
         ``initial_inputs`` can provide per-node input dictionaries. Outputs
         from upstream nodes are automatically routed to downstream nodes via
         the ``"stdin"`` key when present, which matches UNIX piping semantics.
+
+        Conditional edges are evaluated at runtime based on upstream node outputs.
+        Nodes are only executed if all their incoming edges have conditions that
+        evaluate to True (or have no condition).
         """
         initial_inputs = initial_inputs or {}
 
@@ -138,6 +209,11 @@ class GraphExecutor:
         for group in execution_groups:
             tasks: dict[str, asyncio.Task[dict[str, Any]]] = {}
             for node_id in group:
+                # Check if this node should execute based on incoming edge conditions
+                should_execute = self._should_execute_node(node_id, graph, node_results)
+                if not should_execute:
+                    continue
+
                 node = graph.nodes[node_id]
                 input_payload = aggregated_inputs.get(node_id, {})
                 tasks[node_id] = asyncio.create_task(node.execute(input_payload))
@@ -169,12 +245,15 @@ class GraphExecutor:
                     error_message = err or output.get("stderr") or "Node execution failed"
 
                 # Route stdout from this node into stdin of downstream nodes if needed
+                # Only route if the edge condition (if any) evaluates to True
                 stdout_value = output.get("stdout")
                 if stdout_value is not None:
-                    for src, dst in graph.edges:
+                    for src, dst, condition in graph.edges:
                         if src == node_id:
-                            dest_input = aggregated_inputs.setdefault(dst, {})
-                            dest_input.setdefault("stdin", stdout_value)
+                            # Evaluate condition if present
+                            if self._evaluate_condition(condition, node_results):
+                                dest_input = aggregated_inputs.setdefault(dst, {})
+                                dest_input.setdefault("stdin", stdout_value)
 
         return GraphExecutionResult(
             success=success,

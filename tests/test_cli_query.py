@@ -22,7 +22,7 @@ def cli_runner() -> CliRunner:
 def test_query_plan_only_yaml_output(cli_runner: CliRunner) -> None:
     """Plan-only query produces YAML with plan structure."""
 
-    result = cli_runner.invoke(query, ["my headphone volume is too low"])
+    result = cli_runner.invoke(query, ["--hypothesis", "1", "my headphone volume is too low"])
 
     assert result.exit_code == 0
     data = yaml.safe_load(result.output)
@@ -38,7 +38,7 @@ def test_query_execute_dry_run_json_output(cli_runner: CliRunner) -> None:
 
     result = cli_runner.invoke(
         query,
-        ["--execute", "--dry-run", "--output", "json", "headphone volume too low"],
+        ["--hypothesis", "1", "--execute", "--dry-run", "--output", "json", "headphone volume too low"],
     )
 
     assert result.exit_code == 0
@@ -62,7 +62,7 @@ def test_query_browser_audio_volume_supported(cli_runner: CliRunner) -> None:
     """Browser/system audio volume queries are supported in v1."""
 
     query_text = "why is my audio low from youtube and the browser? might be all apps idk"
-    result = cli_runner.invoke(query, [query_text])
+    result = cli_runner.invoke(query, ["--hypothesis", "1", query_text])
 
     assert result.exit_code == 0
     data = yaml.safe_load(result.output)
@@ -82,7 +82,7 @@ def test_query_unsupported_intent_returns_error(cli_runner: CliRunner) -> None:
 def test_query_with_explain_flag_plan_only(cli_runner: CliRunner) -> None:
     """Query with --explain flag produces plan with reasoning."""
 
-    result = cli_runner.invoke(query, ["--explain", "my headphone volume is too low"])
+    result = cli_runner.invoke(query, ["--hypothesis", "1", "--explain", "my headphone volume is too low"])
 
     assert result.exit_code == 0
     # Extract YAML from output (skip log lines that start with ℹ️)
@@ -115,7 +115,7 @@ def test_query_with_explain_flag_execute_dry_run(cli_runner: CliRunner) -> None:
 
     result = cli_runner.invoke(
         query,
-        ["--explain", "--execute", "--dry-run", "--output", "json", "headphone volume too low"],
+        ["--hypothesis", "1", "--explain", "--execute", "--dry-run", "--output", "json", "headphone volume too low"],
     )
 
     assert result.exit_code == 0

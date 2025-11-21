@@ -82,7 +82,7 @@ echo ""
 echo "Running quality gate enforcement..."
 echo ""
 
-python3 "$REPO_ROOT/build/validators/enforce_quality_gates.py"
+python3 "$REPO_ROOT/libs/python/drivers/git/quality_gates.py"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
