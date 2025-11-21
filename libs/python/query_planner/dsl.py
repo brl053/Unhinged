@@ -187,7 +187,7 @@ def build_audio_volume_plan(query: str) -> QueryPlan:
             description=("Check if the user-level audio server (PipeWire/PulseAudio) is running."),
             params={
                 "command": (
-                    "ps aux | grep -E 'pipewire|pulseaudio' | grep -v grep || " "echo 'no audio server process found'"
+                    "ps aux | grep -E 'pipewire|pulseaudio' | grep -v grep || echo 'no audio server process found'"
                 ),
             },
         )
@@ -396,15 +396,14 @@ def build_audio_volume_plan_with_branching(query: str) -> QueryPlan:
     edges: list[PlanEdge] = []
 
     # Initial diagnostic nodes (always run)
+    audio_server_cmd = "ps aux | grep -E 'pipewire|pulseaudio' | grep -v grep || echo 'no audio server process found'"
     nodes.extend(
         [
             PlanNode(
                 id="check_audio_server",
                 type="unix_command",
                 description="Check if the user-level audio server (PipeWire/PulseAudio) is running.",
-                params={
-                    "command": "ps aux | grep -E 'pipewire|pulseaudio' | grep -v grep || echo 'no audio server process found'"
-                },
+                params={"command": audio_server_cmd},
             ),
             PlanNode(
                 id="alsa_mixer",

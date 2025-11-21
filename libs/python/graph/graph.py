@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from .nodes import GraphNode
 
@@ -25,7 +25,7 @@ class NodeExecutionResult:
     node_id: str
     output: dict[str, Any]
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -35,7 +35,7 @@ class GraphExecutionResult:
     success: bool
     node_results: dict[str, NodeExecutionResult] = field(default_factory=dict)
     execution_order: list[list[str]] = field(default_factory=list)
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class Graph:
@@ -49,14 +49,14 @@ class Graph:
 
     def __init__(self) -> None:
         self.nodes: dict[str, GraphNode] = {}
-        self.edges: list[tuple[str, str, Optional[str]]] = []  # (source, target, condition)
+        self.edges: list[tuple[str, str, str | None]] = []  # (source, target, condition)
 
     def add_node(self, node: GraphNode) -> None:
         if node.id in self.nodes:
             raise ValueError(f"Node with id {node.id!r} already exists")
         self.nodes[node.id] = node
 
-    def add_edge(self, source_id: str, target_id: str, condition: Optional[str] = None) -> None:
+    def add_edge(self, source_id: str, target_id: str, condition: str | None = None) -> None:
         if source_id == target_id:
             raise ValueError("Self-loops are not allowed in DAGs")
         if source_id not in self.nodes:
@@ -65,11 +65,11 @@ class Graph:
             raise KeyError(f"Unknown target node {target_id!r}")
         self.edges.append((source_id, target_id, condition))
 
-    def _build_adjacency(self) -> tuple[dict[str, list[str]], dict[str, int], dict[tuple[str, str], Optional[str]]]:
+    def _build_adjacency(self) -> tuple[dict[str, list[str]], dict[str, int], dict[tuple[str, str], str | None]]:
         """Return adjacency list, in-degree map, and edge conditions for the current graph."""
         adjacency: dict[str, list[str]] = {node_id: [] for node_id in self.nodes}
-        indegree: dict[str, int] = {node_id: 0 for node_id in self.nodes}
-        edge_conditions: dict[tuple[str, str], Optional[str]] = {}
+        indegree: dict[str, int] = dict.fromkeys(self.nodes, 0)
+        edge_conditions: dict[tuple[str, str], str | None] = {}
 
         for src, dst, condition in self.edges:
             adjacency[src].append(dst)
@@ -114,7 +114,7 @@ class Graph:
 class GraphExecutor:
     """Execute graphs of ``GraphNode`` instances with parallelism per layer."""
 
-    def _evaluate_condition(self, condition: Optional[str], node_results: dict[str, NodeExecutionResult]) -> bool:
+    def _evaluate_condition(self, condition: str | None, node_results: dict[str, NodeExecutionResult]) -> bool:
         """Evaluate a condition expression against node results.
 
         Supports expressions like:
@@ -162,7 +162,7 @@ class GraphExecutor:
         has_unconditional = False
         all_conditions_true = True
 
-        for src, dst, condition in incoming_edges:
+        for _src, _dst, condition in incoming_edges:
             if condition is None:
                 # Unconditional edge - node should execute
                 has_unconditional = True
@@ -174,10 +174,28 @@ class GraphExecutor:
         # Execute if: has unconditional edge OR all conditions are true
         return has_unconditional or all_conditions_true
 
+    def _route_stdout_to_downstream(
+        self,
+        node_id: str,
+        output: dict[str, Any],
+        edges: list[tuple[str, str, str | None]],
+        node_results: dict[str, NodeExecutionResult],
+        aggregated_inputs: dict[str, dict[str, Any]],
+    ) -> None:
+        """Route stdout from a node to downstream nodes based on edge conditions."""
+        stdout_value = output.get("stdout")
+        if stdout_value is None:
+            return
+
+        for src, dst, condition in edges:
+            if src == node_id and self._evaluate_condition(condition, node_results):
+                dest_input = aggregated_inputs.setdefault(dst, {})
+                dest_input.setdefault("stdin", stdout_value)
+
     async def execute(
         self,
         graph: Graph,
-        initial_inputs: Optional[dict[str, dict[str, Any]]] = None,
+        initial_inputs: dict[str, dict[str, Any]] | None = None,
     ) -> GraphExecutionResult:
         """Execute a graph and return aggregated results.
 
@@ -204,7 +222,7 @@ class GraphExecutor:
         }
         node_results: dict[str, NodeExecutionResult] = {}
         success = True
-        error_message: Optional[str] = None
+        error_message: str | None = None
 
         for group in execution_groups:
             tasks: dict[str, asyncio.Task[dict[str, Any]]] = {}
@@ -220,7 +238,9 @@ class GraphExecutor:
 
             # Wait for all nodes in this group to finish
             completed: Iterable[tuple[str, Any]] = zip(
-                tasks.keys(), await asyncio.gather(*tasks.values(), return_exceptions=True)
+                tasks.keys(),
+                await asyncio.gather(*tasks.values(), return_exceptions=True),
+                strict=True,
             )
 
             for node_id, result in completed:
@@ -245,15 +265,7 @@ class GraphExecutor:
                     error_message = err or output.get("stderr") or "Node execution failed"
 
                 # Route stdout from this node into stdin of downstream nodes if needed
-                # Only route if the edge condition (if any) evaluates to True
-                stdout_value = output.get("stdout")
-                if stdout_value is not None:
-                    for src, dst, condition in graph.edges:
-                        if src == node_id:
-                            # Evaluate condition if present
-                            if self._evaluate_condition(condition, node_results):
-                                dest_input = aggregated_inputs.setdefault(dst, {})
-                                dest_input.setdefault("stdin", stdout_value)
+                self._route_stdout_to_downstream(node_id, output, graph.edges, node_results, aggregated_inputs)
 
         return GraphExecutionResult(
             success=success,

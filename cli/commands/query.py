@@ -10,6 +10,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml
@@ -42,7 +43,7 @@ def _prompt_for_hypothesis_selection(hypothesis_set) -> str:
                 selected = hypothesis_set.hypotheses[idx]
                 hypothesis_set.select_hypothesis(selected.id)
                 log_info(f"Selected hypothesis: {selected.name}")
-                return selected.id
+                return str(selected.id)
             print(f"Please enter a number between 1 and {len(hypothesis_set.hypotheses)}")
         except ValueError:
             print("Invalid input. Please enter a number.")
@@ -109,7 +110,7 @@ def _build_query_result(query_text: str, plan, execute: bool, dry_run: bool) -> 
     if execute:
         graph = plan_to_graph(plan)
         if dry_run:
-            log_info("Dry run: compiled plan into graph; " f"nodes={len(graph.nodes)}, edges={len(graph.edges)}.")
+            log_info(f"Dry run: compiled plan into graph; nodes={len(graph.nodes)}, edges={len(graph.edges)}.")
             edges_list = []
             for src, dst, condition in graph.edges:
                 edge_dict: dict[str, str | None] = {"from": src, "to": dst}
@@ -236,15 +237,6 @@ async def _generate_and_execute_remediation(
         Remediation results with commands executed and their outcomes
     """
 
-    remediation_results: dict[str, Any] = {
-        "commands_generated": [],
-        "commands_executed": [],
-        "success": True,
-    }
-
-    # Collect diagnostic output
-    diagnostic_output = _collect_diagnostic_output(exec_result)
-
     # For now, skip LLM-based remediation due to performance issues
     # TODO: Implement async LLM call with proper timeout handling
     # Use pattern-based detection as primary approach
@@ -359,6 +351,46 @@ async def _execute_remediation_commands(remediation_data: dict[str, Any]) -> dic
     return remediation_results
 
 
+async def _execute_remediation_command(command: str, description: str, remediation_results: dict[str, Any]) -> None:
+    """Execute a single remediation command and update results."""
+    import subprocess
+
+    try:
+        log_info(f"Executing remediation: {description}")
+        loop = asyncio.get_event_loop()
+        result_proc = await loop.run_in_executor(
+            None,
+            lambda cmd=command: subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            ),
+        )
+
+        remediation_results["commands_executed"].append(
+            {
+                "command": command,
+                "description": description,
+                "success": result_proc.returncode == 0,
+                "stdout": result_proc.stdout[:200],
+                "stderr": result_proc.stderr[:200],
+                "returncode": result_proc.returncode,
+            }
+        )
+
+        if result_proc.returncode == 0:
+            log_success(f"✓ {description}")
+        else:
+            log_error(f"✗ {description} (exit code: {result_proc.returncode})")
+            remediation_results["success"] = False
+
+    except Exception as exc:
+        log_error(f"Failed to execute remediation: {exc}")
+        remediation_results["success"] = False
+
+
 async def _pattern_based_remediation(exec_result) -> dict[str, Any]:
     """Pattern-based remediation as fallback when LLM fails.
 
@@ -373,7 +405,6 @@ async def _pattern_based_remediation(exec_result) -> dict[str, Any]:
         Remediation results
     """
     import re
-    import subprocess
 
     remediation_results: dict[str, Any] = {
         "commands_generated": [],
@@ -402,56 +433,20 @@ async def _pattern_based_remediation(exec_result) -> dict[str, Any]:
         # Check if any volume is below 80%
         has_low_volume = any(int(percent_str) < 80 for _, percent_str in matches)
 
-        if has_low_volume:
-            # Try to find which card this is
-            # For now, assume it's card 1 (Logitech) if we see it in USB devices
-            if "Logitech" in usb_output or "PRO X 2" in usb_output:
-                card_num = 1
-                max_level = 74  # From earlier diagnostics
-                command = f"amixer -c {card_num} set PCM {max_level}"
-                description = f"Set Logitech PRO X2 volume to maximum (card {card_num})"
+        if has_low_volume and ("Logitech" in usb_output or "PRO X 2" in usb_output):
+            card_num = 1
+            max_level = 74  # From earlier diagnostics
+            command = f"amixer -c {card_num} set PCM {max_level}"
+            description = f"Set Logitech PRO X2 volume to maximum (card {card_num})"
 
-                remediation_results["commands_generated"].append(
-                    {
-                        "command": command,
-                        "description": description,
-                    }
-                )
+            remediation_results["commands_generated"].append(
+                {
+                    "command": command,
+                    "description": description,
+                }
+            )
 
-                try:
-                    log_info(f"Executing remediation: {description}")
-                    loop = asyncio.get_event_loop()
-                    result_proc = await loop.run_in_executor(
-                        None,
-                        lambda cmd=command: subprocess.run(
-                            cmd,
-                            shell=True,
-                            capture_output=True,
-                            text=True,
-                            timeout=10,
-                        ),
-                    )
-
-                    remediation_results["commands_executed"].append(
-                        {
-                            "command": command,
-                            "description": description,
-                            "success": result_proc.returncode == 0,
-                            "stdout": result_proc.stdout[:200],
-                            "stderr": result_proc.stderr[:200],
-                            "returncode": result_proc.returncode,
-                        }
-                    )
-
-                    if result_proc.returncode == 0:
-                        log_success(f"✓ {description}")
-                    else:
-                        log_error(f"✗ {description} (exit code: {result_proc.returncode})")
-                        remediation_results["success"] = False
-
-                except Exception as exc:
-                    log_error(f"Failed to execute remediation: {exc}")
-                    remediation_results["success"] = False
+            await _execute_remediation_command(command, description, remediation_results)
 
     return remediation_results
 
@@ -482,7 +477,7 @@ async def _query_with_reasoning(query_text: str, execute: bool, dry_run: bool, p
     if execute:
         graph = plan_to_graph(plan)
         if dry_run:
-            log_info("Dry run: compiled plan into graph; " f"nodes={len(graph.nodes)}, edges={len(graph.edges)}.")
+            log_info(f"Dry run: compiled plan into graph; nodes={len(graph.nodes)}, edges={len(graph.edges)}.")
             edges_list = []
             for src, dst, condition in graph.edges:
                 edge_dict: dict[str, str | None] = {"from": src, "to": dst}
