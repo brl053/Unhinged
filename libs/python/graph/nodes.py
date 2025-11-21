@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - import only for type checking
     from .graph import Graph, GraphExecutionResult
@@ -22,7 +22,7 @@ class GraphNode(ABC):
         self.id = node_id
 
     @abstractmethod
-    async def execute(self, input_data: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute the node's work.
 
         Implementations should treat ``input_data`` as immutable input and
@@ -48,7 +48,7 @@ class UnixCommandNode(GraphNode):
         self.command = command
         self.timeout = timeout
 
-    async def execute(self, input_data: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute the configured shell command.
 
         Parameters
@@ -58,7 +58,7 @@ class UnixCommandNode(GraphNode):
             will be sent to the process as standard input. Supported value
             types are ``str`` and ``bytes``.
         """
-        stdin_bytes: Optional[bytes] = None
+        stdin_bytes: bytes | None = None
         if input_data is not None and "stdin" in input_data:
             value = input_data["stdin"]
             if isinstance(value, bytes):
@@ -80,7 +80,7 @@ class UnixCommandNode(GraphNode):
                 process.communicate(stdin_bytes),
                 timeout=self.timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             process.kill()
             await process.communicate()
             return {
@@ -101,6 +101,93 @@ class UnixCommandNode(GraphNode):
         }
 
 
+class UserInputNode(GraphNode):
+    """Graph node that prompts user for input during execution.
+
+    Supports confirmation prompts and alternative route selection.
+    Returns user's choice as output for downstream branching.
+
+    Output keys:
+    - ``user_input``: The user's response (str)
+    - ``confirmed``: Boolean indicating confirmation (for yes/no prompts)
+    - ``selected_option``: Index of selected option (for multiple choice)
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        prompt: str,
+        options: list[str] | None = None,
+        default: str | None = None,
+    ) -> None:
+        super().__init__(node_id)
+        self.prompt = prompt
+        self.options = options or []
+        self.default = default
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Prompt user for input and return their response.
+
+        If input_data contains 'selected_option' or 'user_input', use those instead of prompting.
+        This allows tests and programmatic usage to provide input without stdin.
+        """
+        # If input is already provided (e.g., from tests or programmatic usage), use it
+        if input_data and "selected_option" in input_data:
+            return {
+                "user_input": input_data.get("user_input", ""),
+                "confirmed": input_data.get("confirmed", False),
+                "selected_option": input_data["selected_option"],
+                "success": True,
+            }
+
+        if input_data and "user_input" in input_data:
+            return {
+                "user_input": input_data["user_input"],
+                "confirmed": input_data.get("confirmed", False),
+                "success": True,
+            }
+
+        try:
+            if self.options:
+                # Multiple choice prompt
+                print(f"\n{self.prompt}")
+                for i, option in enumerate(self.options, 1):
+                    print(f"  {i}. {option}")
+
+                while True:
+                    try:
+                        choice = input("Select option (number): ").strip()
+                        idx = int(choice) - 1
+                        if 0 <= idx < len(self.options):
+                            return {
+                                "user_input": self.options[idx],
+                                "selected_option": idx,
+                                "success": True,
+                            }
+                        print(f"Please enter a number between 1 and {len(self.options)}")
+                    except ValueError:
+                        print("Invalid input. Please enter a number.")
+            else:
+                # Yes/no or free-form prompt
+                response = input(f"\n{self.prompt} ").strip()
+                if not response and self.default:
+                    response = self.default
+
+                confirmed = response.lower() in ("yes", "y", "true", "1")
+                return {
+                    "user_input": response,
+                    "confirmed": confirmed,
+                    "success": True,
+                }
+        except (EOFError, KeyboardInterrupt):
+            return {
+                "user_input": None,
+                "confirmed": False,
+                "success": False,
+                "error": "User cancelled input",
+            }
+
+
 class SubgraphNode(GraphNode):
     """Graph node that executes a nested ``Graph`` as a subgraph.
 
@@ -114,13 +201,13 @@ class SubgraphNode(GraphNode):
         self,
         node_id: str,
         subgraph: Graph,
-        stdout_adapter: Optional[Callable[[GraphExecutionResult], str]] = None,
+        stdout_adapter: Callable[[GraphExecutionResult], str] | None = None,
     ) -> None:
         super().__init__(node_id)
         self.subgraph = subgraph
         self._stdout_adapter = stdout_adapter
 
-    async def execute(self, input_data: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         from .graph import GraphExecutor  # Local import to avoid circular import
 
         executor = GraphExecutor()
@@ -146,3 +233,107 @@ class SubgraphNode(GraphNode):
                 output["stdout"] = stdout_value
 
         return output
+
+
+class GmailAPINode(GraphNode):
+    """Graph node that fetches unread Gmail messages via the Gmail connector.
+
+    This node is intentionally minimal and Gmail-specific. It returns a list
+    of message dictionaries under the ``"emails"`` key for downstream
+    processing (for example, LLM-based summarisation).
+    """
+
+    def __init__(self, node_id: str, limit: int = 25) -> None:
+        super().__init__(node_id)
+        self.limit = limit
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Fetch unread messages and expose them for downstream nodes.
+
+        The node currently ignores ``input_data`` and always fetches the most
+        recent unread messages according to the configured limit.
+        """
+
+        # Local import keeps the core graph library decoupled from optional
+        # connector dependencies at import time.
+        from libs.python.connectors.gmail import GmailConnectorError, list_unread_messages
+
+        del input_data  # This node does not yet consume upstream input.
+
+        try:
+            emails = await list_unread_messages(limit=self.limit)
+        except GmailConnectorError as exc:  # pragma: no cover - exercised via mocks
+            return {
+                "success": False,
+                "error": str(exc),
+            }
+
+        return {
+            "success": True,
+            "emails": emails,
+        }
+
+
+class APINode(GraphNode):
+    """Generic graph node that executes operations via the driver registry.
+
+    This node provides a unified interface for external API integrations.
+    It delegates to registered drivers (e.g., google.gmail, social.discord)
+    and exposes their results for downstream processing.
+
+    The node is configured with:
+    - driver_namespace: Dot-separated driver identifier (e.g., "google.gmail")
+    - operation: Driver-specific operation name (e.g., "list_unread", "post_message")
+    - params: Operation-specific parameters (optional, can be overridden by input_data)
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        driver_namespace: str,
+        operation: str,
+        params: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(node_id)
+        self.driver_namespace = driver_namespace
+        self.operation = operation
+        self.params = params or {}
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute driver operation with merged parameters.
+
+        input_data can override or extend the node's configured params.
+        The driver is retrieved from the global registry at execution time.
+        """
+        # Local import to avoid circular dependency and keep registry optional
+        from libs.python.drivers.base import DriverError, get_global_registry
+
+        input_data = input_data or {}
+
+        # Merge params: input_data overrides node params
+        merged_params = {**self.params, **input_data.get("params", {})}
+
+        try:
+            registry = get_global_registry()
+            driver = registry.get(self.driver_namespace)
+            result = await driver.execute(self.operation, merged_params)
+
+            # Driver execute() returns {success, data?, error?}
+            # We pass through the driver result structure
+            return result
+
+        except KeyError:  # Driver not found in registry
+            return {
+                "success": False,
+                "error": f"Driver not registered: {self.driver_namespace}",
+            }
+        except DriverError as exc:  # Driver-specific error
+            return {
+                "success": False,
+                "error": str(exc),
+            }
+        except Exception as exc:  # pragma: no cover - defensive
+            return {
+                "success": False,
+                "error": f"Unexpected error: {exc}",
+            }

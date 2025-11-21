@@ -7,12 +7,15 @@
 from __future__ import annotations
 
 from .graph import Graph, GraphExecutionResult, GraphExecutor, NodeExecutionResult
-from .nodes import GraphNode, SubgraphNode, UnixCommandNode
+from .nodes import APINode, GmailAPINode, GraphNode, SubgraphNode, UnixCommandNode, UserInputNode
 
 __all__ = [
     "GraphNode",
     "SubgraphNode",
     "UnixCommandNode",
+    "UserInputNode",
+    "GmailAPINode",
+    "APINode",
     "Graph",
     "GraphExecutor",
     "NodeExecutionResult",
