@@ -40,6 +40,11 @@ Virtual machine commands.
 .TP
 .B dev
 Development commands: build, test, lint, static-analysis.
+.TP
+.B graph
+Manage graph workflows: create, list, get, update, delete.
+.br
+See \fBunhinged-graph\fR(1) for details.
 .SH OPTIONS
 .TP
 .B \-\-help
@@ -57,11 +62,18 @@ Generate an image:
 .TP
 Generate voice audio:
 .B unhinged voice generate "hello world"
+.TP
+Create a graph workflow:
+.B unhinged graph create workflow.py --name "My Workflow" --tags automation
+.TP
+List all graphs:
+.B unhinged graph list
 .SH SEE ALSO
 .BR unhinged-generate (1),
 .BR unhinged-transcribe (1),
 .BR unhinged-image (1),
-.BR unhinged-voice (1)
+.BR unhinged-voice (1),
+.BR unhinged-graph (1)
 .SH AUTHOR
 Unhinged Development Team
 .SH BUGS

@@ -1,0 +1,138 @@
+.TH UNHINGED-GRAPH 1 "November 2025" "Unhinged" "User Commands"
+.SH NAME
+unhinged-graph \- Manage graph workflows with CRUD operations
+
+.SH SYNOPSIS
+.B unhinged graph create
+\fIFILE_PATH\fR [\fIOPTIONS\fR]
+.br
+.B unhinged graph list
+[\fIOPTIONS\fR]
+.br
+.B unhinged graph get
+\fIGRAPH_ID\fR [\fIOPTIONS\fR]
+.br
+.B unhinged graph update
+\fIGRAPH_ID\fR [\fIOPTIONS\fR]
+.br
+.B unhinged graph delete
+\fIGRAPH_ID\fR [\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The
+.B unhinged graph
+command provides CRUD (Create, Read, Update, Delete) operations for managing
+graph workflows. Graphs are stored in a PostgreSQL document store with support
+for text and binary files, metadata, and tagging.
+
+.SH SUBCOMMANDS
+
+.SS CREATE
+.B unhinged graph create
+\fIFILE_PATH\fR [\fIOPTIONS\fR]
+
+Create a new graph from a file.
+
+.B Options:
+.TP
+.B \-n, \-\-name \fINAME\fR
+Graph name (defaults to filename)
+.TP
+.B \-d, \-\-description \fIDESCRIPTION\fR
+Graph description
+.TP
+.B \-t, \-\-tags \fITAG\fR
+Tags for categorization (can be specified multiple times)
+
+.SS LIST
+.B unhinged graph list
+[\fIOPTIONS\fR]
+
+List all stored graphs.
+
+.B Options:
+.TP
+.B \-t, \-\-tag \fITAG\fR
+Filter by tag
+.TP
+.B \-l, \-\-limit \fINUMBER\fR
+Maximum results (default: 100)
+
+.SS GET
+.B unhinged graph get
+\fIGRAPH_ID\fR [\fIOPTIONS\fR]
+
+Get a graph by ID.
+
+.B Options:
+.TP
+.B \-o, \-\-output \fIFILE_PATH\fR
+Save content to file
+
+.SS UPDATE
+.B unhinged graph update
+\fIGRAPH_ID\fR [\fIOPTIONS\fR]
+
+Update a graph.
+
+.B Options:
+.TP
+.B \-n, \-\-name \fINAME\fR
+Update graph name
+.TP
+.B \-d, \-\-description \fIDESCRIPTION\fR
+Update description
+.TP
+.B \-t, \-\-add-tag \fITAG\fR
+Add tags
+.TP
+.B \-f, \-\-file \fIFILE_PATH\fR
+Update content from file
+
+.SS DELETE
+.B unhinged graph delete
+\fIGRAPH_ID\fR [\fIOPTIONS\fR]
+
+Delete a graph.
+
+.B Options:
+.TP
+.B \-y, \-\-yes
+Skip confirmation
+
+.SH EXAMPLES
+
+.SS Create
+.RS
+.B unhinged graph create workflow.json --name "Email Processor" --tags email
+.RE
+
+.SS List
+.RS
+.B unhinged graph list --tag email
+.RE
+
+.SS Get
+.RS
+.B unhinged graph get abc-123 --output /tmp/workflow.py
+.RE
+
+.SS Update
+.RS
+.B unhinged graph update abc-123 --name "New Name" --add-tag production
+.RE
+
+.SS Delete
+.RS
+.B unhinged graph delete abc-123 --yes
+.RE
+
+.SH STORAGE
+PostgreSQL: postgresql://postgres:password@localhost:1200/unhinged
+
+.SH SEE ALSO
+.BR unhinged (1)
+
+.SH AUTHOR
+Unhinged Development Team
+
