@@ -58,7 +58,7 @@ def _post_message_sync(channel_id: str, content: str) -> dict[str, Any]:
     if not 200 <= response.status_code < 300:
         raise DiscordConnectorError(f"Discord API error: {response.text}", status_code=response.status_code)
 
-    return response.json()
+    return response.json()  # type: ignore[no-any-return]
 
 
 async def post_message(channel_id: str, content: str) -> dict[str, Any]:

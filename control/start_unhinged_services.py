@@ -100,7 +100,8 @@ class UnhingedServiceStartup:
         logger.info("🚀 Starting Unhinged voice-first platform services...")
 
         # Sort services by startup order
-        ordered_services = sorted(self.services.items(), key=lambda x: int(x[1].get("order", 0)))
+        from typing import cast
+        ordered_services = sorted(self.services.items(), key=lambda x: cast(int, x[1].get("order", 0)))
 
         success = True
         for service_name, config in ordered_services:

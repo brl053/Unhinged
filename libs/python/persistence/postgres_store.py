@@ -241,7 +241,7 @@ class PostgresDocumentStore(DocumentStore):
 
             if deleted:
                 logger.info(f"Deleted document {doc_id} from {collection}")
-            return deleted
+            return deleted  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Failed to delete document: {e}")
             raise
@@ -318,7 +318,7 @@ class PostgresDocumentStore(DocumentStore):
 
             if deleted:
                 logger.info(f"Deleted collection {collection}")
-            return deleted
+            return deleted  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Failed to delete collection: {e}")
             raise

@@ -35,11 +35,11 @@ try:
     YOLOAnalysisService = HybridGUIAnalysisService  # Backward compatibility alias
 except ImportError as e:
     ImageGenerationService = None  # type: ignore[assignment,misc]
-    YOLOAnalysisService = None  # type: ignore[assignment]
+    YOLOAnalysisService = None  # type: ignore[assignment,misc]
     VideoGenerationService = None  # type: ignore[assignment,misc]
-    ScriptParserService = None  # type: ignore[assignment]
-    TTSService = None  # type: ignore[assignment]
-    ShortFormVideoService = None  # type: ignore[assignment]
+    ScriptParserService = None  # type: ignore[assignment,misc]
+    TTSService = None  # type: ignore[assignment,misc]
+    ShortFormVideoService = None  # type: ignore[assignment,misc]
     IMPORT_ERROR = str(e)
 
 

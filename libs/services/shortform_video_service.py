@@ -267,7 +267,7 @@ class ShortFormVideoService:
             # Load and resize image
             try:
                 img = Image.open(image_path)
-                img = img.resize((width, height), Image.Resampling.LANCZOS)
+                img = img.resize((width, height), Image.Resampling.LANCZOS)  # type: ignore[assignment]
                 img_array = np.array(img)
             except Exception as e:
                 logger.error(f"Failed to load image {image_path}: {e}")

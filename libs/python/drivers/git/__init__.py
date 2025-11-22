@@ -10,6 +10,6 @@ Git driver encapsulates all Git-specific operations including:
 """
 
 from .hooks import GitHookManager
-from .quality_gates import QualityGateEnforcer
 
-__all__ = ["GitHookManager", "QualityGateEnforcer"]
+# quality_gates.py is a script, not a class - import removed
+__all__ = ["GitHookManager"]

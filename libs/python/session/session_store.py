@@ -214,7 +214,7 @@ class SessionStore:
 
             success = redis_deleted > 0 or doc_deleted
             self.logger.debug(f"Delete operation for key {key}: Redis={redis_deleted}, DocStore={doc_deleted}")
-            return success
+            return success  # type: ignore[no-any-return]
 
         except Exception as e:
             self.logger.error(f"Delete operation failed for key {key}: {e}")
@@ -265,7 +265,7 @@ class SessionStore:
             # Use Redis for fast key listing
             keys = self.redis_client.keys(pattern)
             if keys:
-                return keys
+                return keys  # type: ignore[no-any-return]
 
             # Fallback to document store if Redis is empty
             # Note: Document store doesn't support pattern matching,

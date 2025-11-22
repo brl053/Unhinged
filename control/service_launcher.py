@@ -245,7 +245,7 @@ class ServiceLauncher:
         """Determine if a service should be started"""
         # All services marked as required MUST be started
         # Optional services are skipped in non-interactive mode
-        return service["required"]
+        return service["required"]  # type: ignore[no-any-return]
 
     def _start_service(self, service: dict, timeout: int) -> bool:
         """Start a specific service"""
@@ -299,7 +299,7 @@ class ServiceLauncher:
         except Exception as e:
             print(f"      ❌ Unexpected error: {str(e)}")
             if USING_EVENT_FRAMEWORK:
-                events.error(
+                events.error(  # type: ignore[call-arg]
                     "Error starting service",
                     exception=e,
                     metadata={"service": service["name"]},
@@ -434,7 +434,7 @@ class ServiceLauncher:
             stub = health_pb2_grpc.HealthServiceStub(channel)
             request = health_pb2.HeartbeatRequest()
             response = stub.Heartbeat(request, timeout=5)
-            return response.alive and response.status == 1
+            return response.alive and response.status == 1  # type: ignore[no-any-return]
         except Exception:
             return False
 

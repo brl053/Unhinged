@@ -33,12 +33,17 @@ from datetime import datetime
 from pathlib import Path
 
 # Import enhanced launcher
-try:
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
     from .enhanced_vm_launcher import EnhancedVMLauncher
-except ImportError:
-    # Handle direct execution
-    sys.path.append(str(Path(__file__).parent))
-    from enhanced_vm_launcher import EnhancedVMLauncher
+else:
+    try:
+        from .enhanced_vm_launcher import EnhancedVMLauncher
+    except ImportError:
+        # Handle direct execution
+        sys.path.append(str(Path(__file__).parent))
+        from enhanced_vm_launcher import EnhancedVMLauncher
 
 
 class UnhingedLauncher:

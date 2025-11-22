@@ -164,7 +164,7 @@ class ServiceClient:
 
                     request = health_pb2.HealthCheckRequest()
                     response = self._stub.Check(request, timeout=5.0)
-                    return response.status == health_pb2.HealthCheckResponse.SERVING
+                    return response.status == health_pb2.HealthCheckResponse.SERVING  # type: ignore[no-any-return]
                 except ImportError:
                     pass  # Health check not available
         except:

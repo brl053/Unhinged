@@ -64,7 +64,8 @@ class ConversationCLI:
         self.project_root = Path(__file__).parent.parent
         self.session_logger = None
         self.is_running = False
-        self.conversation_history: list[dict[str, str]] = []
+        from typing import Any
+        self.conversation_history: list[dict[str, Any]] = []
 
         # Initialize session logging
         if SESSION_LOGGING_AVAILABLE and config.session_logging:
