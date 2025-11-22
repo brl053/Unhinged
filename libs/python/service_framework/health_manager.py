@@ -86,7 +86,7 @@ class HealthManager:
         self._dependencies: dict[str, Callable[[], DependencyCheckResult]] = {}
 
         # Metrics collection
-        self._last_metrics: ResourceMetrics | None = None
+        self._last_metrics: dict[str, Any] | None = None
         self._metrics_lock = threading.RLock()
 
         # Register default health checks
@@ -311,4 +311,4 @@ class HealthManager:
     def get_last_metrics(self) -> dict[str, Any] | None:
         """Get last collected resource metrics"""
         with self._metrics_lock:
-            return dict(self._last_metrics) if self._last_metrics else None
+            return self._last_metrics.copy() if self._last_metrics else None
