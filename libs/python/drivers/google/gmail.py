@@ -67,10 +67,10 @@ class GmailDriver(Driver):
         self._credentials = creds
         return creds
 
-    def _list_unread_messages_sync(self, limit: int) -> list[dict[str, Any]]:
-        """Synchronous implementation of list_unread."""
+    def _list_messages_sync(self, query: str, limit: int) -> list[dict[str, Any]]:
+        """Synchronous implementation of list messages with query."""
         service = build("gmail", "v1", credentials=self._get_credentials())
-        response = service.users().messages().list(userId="me", q="is:unread", maxResults=limit).execute()
+        response = service.users().messages().list(userId="me", q=query, maxResults=limit).execute()
         messages = response.get("messages", [])
         results: list[dict[str, Any]] = []
 
@@ -78,7 +78,7 @@ class GmailDriver(Driver):
             detail = (
                 service.users()
                 .messages()
-                .get(userId="me", id=msg["id"], format="metadata", metadataHeaders=["Subject", "From"])
+                .get(userId="me", id=msg["id"], format="metadata", metadataHeaders=["Subject", "From", "Date"])
                 .execute()
             )
             headers = {h["name"].lower(): h["value"] for h in detail.get("payload", {}).get("headers", [])}
@@ -87,6 +87,7 @@ class GmailDriver(Driver):
                     "id": detail.get("id", ""),
                     "subject": headers.get("subject", ""),
                     "from": headers.get("from", ""),
+                    "date": headers.get("date", ""),
                     "snippet": detail.get("snippet", ""),
                 }
             )
@@ -101,15 +102,37 @@ class GmailDriver(Driver):
         """Execute Gmail operation.
 
         Supported operations:
-        - list_unread: params={limit: int}
+        - list_unread: params={limit: int, after_days: int}
+        - list_messages: params={query: str, limit: int}
+
+        Query examples:
+        - "is:unread after:2024/11/20" - Unread after date
+        - "is:unread newer_than:1d" - Last 24 hours
+        - "is:unread newer_than:2d" - Last 48 hours
         """
         params = params or {}
 
         try:
             if operation == "list_unread":
                 limit = params.get("limit", 25)
+                after_days = params.get("after_days")
+
+                # Build query
+                query = "is:unread"
+                if after_days:
+                    query += f" newer_than:{after_days}d"
+
                 loop = asyncio.get_running_loop()
-                emails = await loop.run_in_executor(None, self._list_unread_messages_sync, limit)
+                emails = await loop.run_in_executor(None, self._list_messages_sync, query, limit)
+                return {
+                    "success": True,
+                    "data": {"emails": emails},
+                }
+            elif operation == "list_messages":
+                query = params.get("query", "")
+                limit = params.get("limit", 25)
+                loop = asyncio.get_running_loop()
+                emails = await loop.run_in_executor(None, self._list_messages_sync, query, limit)
                 return {
                     "success": True,
                     "data": {"emails": emails},
