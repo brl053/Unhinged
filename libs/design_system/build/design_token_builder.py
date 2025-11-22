@@ -9,45 +9,52 @@
 import hashlib
 import logging
 import shutil
+import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 # Import build system components
-try:
-    import sys
-
+if TYPE_CHECKING:
+    # Type checking imports - always use the real types
     build_path = Path(__file__).parent.parent.parent.parent / "build"
     if str(build_path) not in sys.path:
         sys.path.append(str(build_path))
     from modules import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
-except ImportError:
-    # Fallback for development/testing
-    print("Warning: Build system modules not available, using fallback classes")
+else:
+    # Runtime imports with fallback
+    try:
+        build_path = Path(__file__).parent.parent.parent.parent / "build"
+        if str(build_path) not in sys.path:
+            sys.path.append(str(build_path))
+        from modules import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
+    except ImportError:
+        # Fallback for development/testing
+        print("Warning: Build system modules not available, using fallback classes")
 
-    class BuildModule:
-        def __init__(self, context):
-            self.context = context
+        class BuildModule:
+            def __init__(self, context):
+                self.context = context
 
-    class BuildContext:
-        def __init__(self):
-            self.project_root = Path.cwd()
+        class BuildContext:
+            def __init__(self):
+                self.project_root = Path.cwd()
 
-    class BuildModuleResult:
-        def __init__(self, success, artifacts, build_time, message):
-            self.success = success
-            self.artifacts = artifacts
-            self.build_time = build_time
-            self.message = message
+        class BuildModuleResult:
+            def __init__(self, success, artifacts, build_time, message):
+                self.success = success
+                self.artifacts = artifacts
+                self.build_time = build_time
+                self.message = message
 
-    class BuildUtils:
-        pass
+        class BuildUtils:
+            pass
 
-    class BuildArtifact:
-        def __init__(self, path, type, platform, description):
-            self.path = path
-            self.type = type
-            self.platform = platform
+        class BuildArtifact:
+            def __init__(self, path, type, platform, description):
+                self.path = path
+                self.type = type
+                self.platform = platform
             self.description = description
 
 

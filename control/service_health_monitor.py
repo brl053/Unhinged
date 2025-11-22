@@ -15,6 +15,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import requests
 
@@ -371,9 +372,9 @@ class ServiceHealthMonitor:
 
         return results
 
-    def get_service_status_summary(self) -> dict:
+    def get_service_status_summary(self) -> dict[str, Any]:
         """Get current status of all services without recovery"""
-        summary = {
+        summary: dict[str, Any] = {
             "healthy": [],
             "unhealthy": [],
             "total": len(self.services),
