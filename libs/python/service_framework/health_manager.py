@@ -228,7 +228,7 @@ class HealthManager:
             cpu_percent = psutil.cpu_percent(interval=0.1)
             disk = psutil.disk_usage("/")
 
-            metrics = {
+            metrics: dict[str, Any] = {
                 "cpu_percent": cpu_percent,
                 "memory_percent": memory.percent,
                 "memory_used_mb": memory.used / (1024 * 1024),

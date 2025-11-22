@@ -164,7 +164,7 @@ class LogHandler(IOHandler):
             IOLevel.WARNING: self.logger.warning,
             IOLevel.ERROR: self.logger.error,
         }
-        handler = level_map.get(IOLevel.INFO)
+        handler = level_map.get(event.level, self.logger.info)
         handler(f"[{event.source}] {event.message}")
 
 
