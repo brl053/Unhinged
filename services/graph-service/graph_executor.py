@@ -1,52 +1,51 @@
 #!/usr/bin/env python3
-"""
+"""Pure-Python Graph execution engine (no gRPC).
+
 @llm-type service.core
-@llm-does Graph execution engine - orchestrates AI service workflows
+@llm-does execute libs.python.models.graph.Graph instances using local services
 """
+
+from __future__ import annotations
 
 import asyncio
 import sys
 import uuid
-from collections.abc import AsyncGenerator
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-# Add generated proto clients to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
-
-try:
-    from google.protobuf import struct_pb2, timestamp_pb2
-    from unhinged_proto_clients import common_pb2, graph_service_pb2
-except ImportError as e:
-    print(f"❌ Proto clients not found: {e}")
-    print("Run 'make generate' to generate proto clients")
-    sys.exit(1)
+# Make libs.python importable when running as a service script
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from events import create_service_logger
 from node_executors import NodeExecutorFactory
 
+from libs.python.models.events.schema import EventKind, GraphEvent, GraphEventType
+from libs.python.models.graph.schema import Edge, ExecutionStatus, Graph, GraphType, Node
+
 # Initialize event logger
-events = create_service_logger("graph-executor", "1.0.0")
+events = create_service_logger("graph-executor", "1.0.0 (models.graph)")
 
 
 class GraphExecutor:
-    """Core Graph execution engine"""
+    """Core Graph execution engine using Python models.
 
-    def __init__(self):
-        self.graphs: dict[str, graph_service_pb2.Graph] = {}
-        self.executions: dict[str, dict] = {}
+    In-memory only: callers are responsible for persistence.
+    """
+
+    def __init__(self) -> None:
+        self.graphs: dict[str, Graph] = {}
+        self.executions: dict[str, dict[str, Any]] = {}
         self.node_factory = NodeExecutorFactory()
-        events.info("Graph executor initialized")
+        events.info("Graph executor initialized (libs.python.models.graph)")
 
-    async def create_graph(self, graph: graph_service_pb2.Graph) -> str:
-        """Create and store a Graph definition"""
+    async def create_graph(self, graph: Graph) -> str:
+        """Create and store a Graph definition."""
+
         if not graph.id:
             graph.id = str(uuid.uuid4())
 
-        # Validate Graph structure
-        await self._validate_graph(graph)
-
-        # Store Graph
+        self._validate_graph(graph)
         self.graphs[graph.id] = graph
 
         events.info(
@@ -59,70 +58,66 @@ class GraphExecutor:
             },
         )
 
-        return graph.id  # type: ignore[no-any-return]
+        return graph.id
 
-    async def get_graph(self, graph_id: str) -> graph_service_pb2.Graph:
-        """Retrieve a Graph definition"""
+    async def get_graph(self, graph_id: str) -> Graph:
+        """Retrieve a Graph definition by id."""
+
         if graph_id not in self.graphs:
             raise ValueError(f"Graph not found: {graph_id}")
-
         return self.graphs[graph_id]
 
-    async def list_graphs(self, pagination, filters, graph_type) -> list[graph_service_pb2.Graph]:
-        """List all Graph definitions"""
-        # Simple implementation - return all Graphs
-        # TODO: Implement pagination and filtering
-        graphs = list(self.graphs.values())
+    async def list_graphs(self) -> list[Graph]:
+        """Return all graphs (callers can filter)."""
 
-        # Filter by graph_type if specified
-        if graph_type and graph_type != graph_service_pb2.GRAPH_TYPE_UNSPECIFIED:
-            graphs = [g for g in graphs if g.graph_type == graph_type]
+        return list(self.graphs.values())
 
-        return graphs
+    async def delete_graph(self, graph_id: str) -> None:
+        """Delete a Graph definition, failing if executions are running."""
 
-    async def delete_graph(self, graph_id: str):
-        """Delete a Graph definition"""
         if graph_id not in self.graphs:
             raise ValueError(f"Graph not found: {graph_id}")
 
-        # Check for running executions
-        running_executions = [
+        running = [
             exec_id
-            for exec_id, exec_data in self.executions.items()
-            if exec_data.get("graph_id") == graph_id and exec_data.get("status") == "RUNNING"
+            for exec_id, data in self.executions.items()
+            if data.get("graph_id") == graph_id
+            and data.get("status") in {ExecutionStatus.RUNNING, ExecutionStatus.PENDING}
         ]
-
-        if running_executions:
-            raise ValueError(f"Cannot delete Graph with running executions: {running_executions}")
+        if running:
+            raise ValueError(f"Cannot delete Graph with running executions: {running}")
 
         del self.graphs[graph_id]
         events.info("Graph deleted", {"graph_id": graph_id})
 
-    async def execute_graph(self, graph_id: str, input_data, execution_id: str | None = None) -> str:
-        """Start Graph execution"""
+    async def execute_graph(
+        self,
+        graph_id: str,
+        input_data: dict[str, Any] | None = None,
+        execution_id: str | None = None,
+    ) -> str:
+        """Start asynchronous execution of a stored graph."""
+
         if graph_id not in self.graphs:
             raise ValueError(f"Graph not found: {graph_id}")
 
-        if not execution_id:
+        if execution_id is None:
             execution_id = str(uuid.uuid4())
 
         graph = self.graphs[graph_id]
 
-        # Initialize execution state
-        execution_state = {
+        state: dict[str, Any] = {
             "execution_id": execution_id,
             "graph_id": graph_id,
-            "status": "RUNNING",
+            "status": ExecutionStatus.RUNNING,
             "started_at": datetime.utcnow().isoformat(),
-            "input_data": input_data,
+            "input_data": input_data or {},
             "node_states": {},
-            "events": [],
+            "events": [],  # list[GraphEvent]
         }
 
-        self.executions[execution_id] = execution_state
-
-        # Start execution in background
-        asyncio.create_task(self._execute_graph_async(graph, execution_state))
+        self.executions[execution_id] = state
+        asyncio.create_task(self._execute_graph_async(graph, state))
 
         events.info(
             "Graph execution initiated",
@@ -131,24 +126,27 @@ class GraphExecutor:
 
         return execution_id
 
-    async def _execute_graph_async(self, graph: graph_service_pb2.Graph, execution_state: dict):
-        """Execute Graph asynchronously"""
+    async def _execute_graph_async(self, graph: Graph, execution_state: dict[str, Any]) -> None:
+        """Execute a graph asynchronously using topological order and events."""
+
         try:
             execution_id = execution_state["execution_id"]
 
             # Add execution started event
-            await self._add_execution_event(execution_state, "EXECUTION_STARTED", None, {})
+            self._add_execution_event(
+                execution_state,
+                event_type=GraphEventType.EXECUTION_STARTED,
+                node_id=None,
+                details={},
+            )
 
-            # Build execution graph
-            node_map = {node.id: node for node in graph.nodes}
+            node_map: dict[str, Node] = {node.id: node for node in graph.nodes}
             edge_map = self._build_edge_map(graph.edges)
 
-            # Execute nodes in topological order
             executed_nodes: set[str] = set()
 
             while len(executed_nodes) < len(graph.nodes):
-                # Find nodes ready to execute (all dependencies satisfied)
-                ready_nodes = []
+                ready_nodes: list[Node] = []
                 for node in graph.nodes:
                     if node.id not in executed_nodes:
                         dependencies = edge_map.get(node.id, [])
@@ -158,70 +156,73 @@ class GraphExecutor:
                 if not ready_nodes:
                     raise RuntimeError("Circular dependency detected or no ready nodes")
 
-                # Execute ready nodes in parallel
-                tasks = []
-                for node in ready_nodes:
-                    task = self._execute_node(node, execution_state, node_map)
-                    tasks.append(task)
-
-                # Wait for all nodes to complete
+                tasks = [self._execute_node(node, execution_state, node_map) for node in ready_nodes]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                # Check for failures
-                for i, result in enumerate(results):
-                    node = ready_nodes[i]
+                for node, result in zip(ready_nodes, results, strict=False):  # type: ignore[arg-type]
                     if isinstance(result, Exception):
                         await self._handle_node_failure(node, execution_state, result)
                         return
-                    else:
-                        executed_nodes.add(node.id)
+                    executed_nodes.add(node.id)
 
-            # Mark execution as completed
-            execution_state["status"] = "COMPLETED"
+            execution_state["status"] = ExecutionStatus.COMPLETED
             execution_state["completed_at"] = datetime.utcnow().isoformat()
-            await self._add_execution_event(execution_state, "EXECUTION_COMPLETED", None, {})
+            self._add_execution_event(
+                execution_state,
+                event_type=GraphEventType.EXECUTION_COMPLETED,
+                node_id=None,
+                details={},
+            )
 
             events.info("Graph execution completed", {"execution_id": execution_id})
 
-        except Exception as e:
-            execution_state["status"] = "FAILED"
-            execution_state["error_message"] = str(e)
+        except Exception as exc:
+            execution_state["status"] = ExecutionStatus.FAILED
+            execution_state["error_message"] = str(exc)
             execution_state["completed_at"] = datetime.utcnow().isoformat()
-            await self._add_execution_event(execution_state, "EXECUTION_FAILED", None, {"error": str(e)})
+            self._add_execution_event(
+                execution_state,
+                event_type=GraphEventType.EXECUTION_FAILED,
+                node_id=None,
+                details={"error": str(exc)},
+            )
 
             events.error(
                 "Graph execution failed",
-                exception=e,
+                exception=exc,
                 metadata={"execution_id": execution_state["execution_id"]},
             )
 
-    async def _execute_node(self, node: graph_service_pb2.Node, execution_state: dict, node_map: dict):
-        """Execute a single node"""
+    async def _execute_node(self, node: Node, execution_state: dict[str, Any], node_map: dict[str, Node]) -> None:
+        """Execute a single node instance from models.graph."""
+
         node_id = node.id
 
         try:
-            # Add node started event
-            await self._add_execution_event(execution_state, "NODE_STARTED", node_id, {})
+            self._add_execution_event(
+                execution_state,
+                event_type=GraphEventType.NODE_STARTED,
+                node_id=node_id,
+                details={},
+            )
 
-            # Get node executor
             executor = self.node_factory.get_executor(node.type)
-
-            # Collect input data from previous nodes
-            input_data = await self._collect_node_inputs(node, execution_state, node_map)
-
-            # Execute node
+            input_data = self._collect_node_inputs(node, execution_state, node_map)
             output_data = await executor.execute(node, input_data)
 
-            # Store node result
             execution_state["node_states"][node_id] = {
-                "status": "COMPLETED",
+                "status": ExecutionStatus.COMPLETED,
                 "started_at": datetime.utcnow().isoformat(),
                 "completed_at": datetime.utcnow().isoformat(),
                 "output_data": output_data,
             }
 
-            # Add node completed event
-            await self._add_execution_event(execution_state, "NODE_COMPLETED", node_id, output_data)
+            self._add_execution_event(
+                execution_state,
+                event_type=GraphEventType.NODE_COMPLETED,
+                node_id=node_id,
+                details=output_data,
+            )
 
             events.info(
                 "Node executed successfully",
@@ -232,24 +233,35 @@ class GraphExecutor:
                 },
             )
 
-        except Exception as e:
+        except Exception as exc:
             execution_state["node_states"][node_id] = {
-                "status": "FAILED",
+                "status": ExecutionStatus.FAILED,
                 "started_at": datetime.utcnow().isoformat(),
                 "completed_at": datetime.utcnow().isoformat(),
-                "error_message": str(e),
+                "error_message": str(exc),
             }
 
-            await self._add_execution_event(execution_state, "NODE_FAILED", node_id, {"error": str(e)})
-            raise e
+            self._add_execution_event(
+                execution_state,
+                event_type=GraphEventType.NODE_FAILED,
+                node_id=node_id,
+                details={"error": str(exc)},
+            )
+            raise
 
-    async def _collect_node_inputs(self, node: graph_service_pb2.Node, execution_state: dict, node_map: dict) -> dict:
-        """Collect input data for a node from its dependencies"""
-        # Simple implementation - return execution input data for now
-        # TODO: Implement proper edge-based data flow
-        return execution_state.get("input_data", {})  # type: ignore[no-any-return]
+    def _collect_node_inputs(
+        self, node: Node, execution_state: dict[str, Any], node_map: dict[str, Node]
+    ) -> dict[str, Any]:
+        """Collect input data for a node from its dependencies.
 
-    def _build_edge_map(self, edges) -> dict[str, list[str]]:
+        For now this simply returns the execution-level input_data. Edge-level
+        data routing can be layered in using the Edge model when needed.
+        """
+
+        del node, node_map  # unused for now
+        return dict(execution_state.get("input_data", {}))
+
+    def _build_edge_map(self, edges: list[Edge]) -> dict[str, list[str]]:
         """Build a map of node dependencies from edges"""
         edge_map: dict[str, list[str]] = {}
         for edge in edges:
@@ -262,37 +274,52 @@ class GraphExecutor:
 
         return edge_map
 
-    async def _add_execution_event(
+    def _add_execution_event(
         self,
-        execution_state: dict,
-        event_type: str,
+        execution_state: dict[str, Any],
+        *,
+        event_type: GraphEventType,
         node_id: str | None,
-        event_data: dict,
-    ):
-        """Add an event to the execution log"""
-        event = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "event_type": event_type,
-            "node_id": node_id or "",
-            "event_data": event_data,
-        }
-        execution_state["events"].append(event)
+        details: dict[str, Any],
+    ) -> None:
+        """Append a GraphEvent to the in-memory execution log."""
 
-    async def _handle_node_failure(self, node: graph_service_pb2.Node, execution_state: dict, error: Exception):
-        """Handle node execution failure"""
-        execution_state["status"] = "FAILED"
-        execution_state["error_message"] = f"Node {node.id} failed: {str(error)}"
+        event = GraphEvent(
+            id=str(uuid.uuid4()),
+            kind=EventKind.GRAPH,
+            created_at=datetime.utcnow(),
+            payload={},
+            stream="graph-execution",
+            correlation_id=execution_state["execution_id"],
+            causation_id=None,
+            event_type=event_type,
+            graph_id=execution_state["graph_id"],
+            node_id=node_id,
+            details=details,
+        )
+        execution_state.setdefault("events", []).append(event)
+
+    async def _handle_node_failure(self, node: Node, execution_state: dict[str, Any], error: Exception) -> None:
+        """Handle node execution failure by marking execution as failed and logging."""
+
+        execution_state["status"] = ExecutionStatus.FAILED
+        execution_state["error_message"] = f"Node {node.id} failed: {error}"  # noqa: EM102
         execution_state["completed_at"] = datetime.utcnow().isoformat()
 
-        await self._add_execution_event(
+        self._add_execution_event(
             execution_state,
-            "EXECUTION_FAILED",
-            None,
-            {"failed_node": node.id, "error": str(error)},
+            event_type=GraphEventType.EXECUTION_FAILED,
+            node_id=None,
+            details={"failed_node": node.id, "error": str(error)},
         )
 
-    async def _validate_graph(self, graph: graph_service_pb2.Graph):
-        """Validate Graph structure based on graph_type"""
+    def _validate_graph(self, graph: Graph) -> None:
+        """Validate Graph structure based on graph_type.
+
+        Mirrors the high-level semantics of the original gRPC contracts but operates
+        purely on the Python models.
+        """
+
         if not graph.nodes:
             raise ValueError("Graph must have at least one node")
 
@@ -309,27 +336,26 @@ class GraphExecutor:
                 raise ValueError(f"Edge references non-existent target node: {edge.target_node_id}")
 
         # Validate based on graph type
-        if graph.graph_type == graph_service_pb2.DAG:
+        if graph.graph_type == GraphType.DAG and self._has_cycle(graph.nodes, graph.edges):
             # DAG validation: detect cycles
-            if self._has_cycle(graph.nodes, graph.edges):
-                raise ValueError("DAG graph type does not allow cycles")
-        elif graph.graph_type == graph_service_pb2.TREE:
+            raise ValueError("DAG graph type does not allow cycles")
+        if graph.graph_type == GraphType.TREE and not self._is_tree(graph.nodes, graph.edges):
             # Tree validation: each node (except root) has exactly one parent
-            if not self._is_tree(graph.nodes, graph.edges):
-                raise ValueError("TREE graph type requires strict tree structure")
-        # CYCLIC, CYCLIC_WITH_BREAKERS, UNRESTRICTED: no additional validation needed
+            raise ValueError("TREE graph type requires strict tree structure")
+        # Other types: no additional structural validation for now
 
-    def _has_cycle(self, nodes, edges) -> bool:
-        """Detect cycles in graph using DFS"""
+    def _has_cycle(self, nodes: list[Node], edges: list[Edge]) -> bool:
+        """Detect cycles in graph using DFS."""
+
         # Build adjacency list
         adj: dict[str, list[str]] = {node.id: [] for node in nodes}
         for edge in edges:
             adj[edge.source_node_id].append(edge.target_node_id)
 
-        visited = set()
-        rec_stack = set()
+        visited: set[str] = set()
+        rec_stack: set[str] = set()
 
-        def dfs(node_id):
+        def dfs(node_id: str) -> bool:
             visited.add(node_id)
             rec_stack.add(node_id)
 
@@ -343,20 +369,16 @@ class GraphExecutor:
             rec_stack.remove(node_id)
             return False
 
-        for node in nodes:
-            if node.id not in visited:
-                if dfs(node.id):
-                    return True
+        return any(node.id not in visited and dfs(node.id) for node in nodes)
 
-        return False
+    def _is_tree(self, nodes: list[Node], edges: list[Edge]) -> bool:
+        """Check if graph is a valid tree structure."""
 
-    def _is_tree(self, nodes, edges) -> bool:
-        """Check if graph is a valid tree structure"""
         if not nodes:
             return True
 
         # Count incoming edges for each node
-        incoming_count = {node.id: 0 for node in nodes}
+        incoming_count: dict[str, int] = {node.id: 0 for node in nodes}
         for edge in edges:
             incoming_count[edge.target_node_id] += 1
 
@@ -373,110 +395,25 @@ class GraphExecutor:
         # Must not have cycles
         return not self._has_cycle(nodes, edges)
 
-    async def stream_execution(self, execution_id: str) -> AsyncGenerator[graph_service_pb2.ExecutionEvent, None]:
-        """Stream execution events"""
-        if execution_id not in self.executions:
-            raise ValueError(f"Execution not found: {execution_id}")
+    async def cancel_execution(self, execution_id: str) -> None:
+        """Cancel a running execution (best-effort, cooperative)."""
 
-        execution_state = self.executions[execution_id]
-        last_event_index = 0
-
-        while execution_state.get("status") in ["RUNNING", "PENDING"]:
-            events_list = execution_state.get("events", [])
-
-            # Yield new events
-            for i in range(last_event_index, len(events_list)):
-                event_data = events_list[i]
-
-                event = graph_service_pb2.ExecutionEvent()
-                event.execution_id = execution_id
-
-                # Convert timestamp
-                timestamp = timestamp_pb2.Timestamp()
-                timestamp.FromDatetime(datetime.fromisoformat(event_data["timestamp"]))
-                event.timestamp.CopyFrom(timestamp)
-
-                # Set event type
-                event_type_map = {
-                    "EXECUTION_STARTED": graph_service_pb2.EXECUTION_STARTED,
-                    "NODE_STARTED": graph_service_pb2.NODE_STARTED,
-                    "NODE_COMPLETED": graph_service_pb2.NODE_COMPLETED,
-                    "NODE_FAILED": graph_service_pb2.NODE_FAILED,
-                    "EXECUTION_COMPLETED": graph_service_pb2.EXECUTION_COMPLETED,
-                    "EXECUTION_FAILED": graph_service_pb2.EXECUTION_FAILED,
-                    "EXECUTION_CANCELLED": graph_service_pb2.EXECUTION_CANCELLED,
-                }
-                event.event_type = event_type_map.get(event_data["event_type"], 0)
-                event.node_id = event_data.get("node_id", "")
-
-                # Convert event data to Struct
-                if event_data.get("event_data"):
-                    struct_data = struct_pb2.Struct()
-                    struct_data.update(event_data["event_data"])
-                    event.event_data.CopyFrom(struct_data)
-
-                yield event
-
-            last_event_index = len(events_list)
-            await asyncio.sleep(0.1)  # Small delay to avoid busy waiting
-
-        # Yield final events if execution completed
-        events_list = execution_state.get("events", [])
-        for i in range(last_event_index, len(events_list)):
-            event_data = events_list[i]
-            # ... (same event creation logic as above)
-
-    async def get_execution(self, execution_id: str) -> graph_service_pb2.GetExecutionResponse:
-        """Get execution status and results"""
         if execution_id not in self.executions:
             raise ValueError(f"Execution not found: {execution_id}")
 
         execution_state = self.executions[execution_id]
 
-        response = graph_service_pb2.GetExecutionResponse()
-        response.execution_id = execution_id
-        response.graph_id = execution_state["graph_id"]
-
-        # Map status
-        status_map = {
-            "PENDING": graph_service_pb2.PENDING,
-            "RUNNING": graph_service_pb2.RUNNING,
-            "COMPLETED": graph_service_pb2.COMPLETED,
-            "FAILED": graph_service_pb2.FAILED,
-            "CANCELLED": graph_service_pb2.CANCELLED,
-        }
-        response.status = status_map.get(execution_state["status"], graph_service_pb2.EXECUTION_STATUS_UNSPECIFIED)
-
-        # Set timestamps
-        if execution_state.get("started_at"):
-            started_at = timestamp_pb2.Timestamp()
-            started_at.FromDatetime(datetime.fromisoformat(execution_state["started_at"]))
-            response.started_at.CopyFrom(started_at)
-
-        if execution_state.get("completed_at"):
-            completed_at = timestamp_pb2.Timestamp()
-            completed_at.FromDatetime(datetime.fromisoformat(execution_state["completed_at"]))
-            response.completed_at.CopyFrom(completed_at)
-
-        # Set error message if failed
-        if execution_state.get("error_message"):
-            response.error_message = execution_state["error_message"]
-
-        return response
-
-    async def cancel_execution(self, execution_id: str):
-        """Cancel a running execution"""
-        if execution_id not in self.executions:
-            raise ValueError(f"Execution not found: {execution_id}")
-
-        execution_state = self.executions[execution_id]
-
-        if execution_state["status"] not in ["RUNNING", "PENDING"]:
+        if execution_state["status"] not in {ExecutionStatus.RUNNING, ExecutionStatus.PENDING}:
             raise ValueError(f"Cannot cancel execution in status: {execution_state['status']}")
 
-        execution_state["status"] = "CANCELLED"
+        execution_state["status"] = ExecutionStatus.CANCELLED
         execution_state["completed_at"] = datetime.utcnow().isoformat()
 
-        await self._add_execution_event(execution_state, "EXECUTION_CANCELLED", None, {})
+        self._add_execution_event(
+            execution_state,
+            event_type=GraphEventType.EXECUTION_CANCELLED,
+            node_id=None,
+            details={},
+        )
 
         events.info("Execution cancelled", {"execution_id": execution_id})

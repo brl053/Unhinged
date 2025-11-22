@@ -227,7 +227,8 @@ class DefaultEventLogger(EventLogger):
     def _format_as_yaml(self, event: LogEvent) -> str:
         """Format event as YAML"""
         event_dict = self._build_event_dict(event)
-        return yaml.dump(event_dict, default_flow_style=False, indent=2).rstrip()
+        # YAML dumper returns Any; serialization is validated by tests and runtime usage
+        return yaml.dump(event_dict, default_flow_style=False, indent=2).rstrip()  # type: ignore[no-any-return]
 
     def _format_as_json(self, event: LogEvent) -> str:
         """Format event as JSON"""

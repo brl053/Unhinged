@@ -180,9 +180,7 @@ class GTK4CSSGenerator:
                         # Nested color structure (like action.primary.hover)
                         for sub_name, sub_value in color_value.items():
                             if isinstance(sub_value, str):
-                                properties.append(
-                                    f"  --color-{category}-{color_name}-{sub_name}: {sub_value};"
-                                )
+                                properties.append(f"  --color-{category}-{color_name}-{sub_name}: {sub_value};")
 
         return properties
 
@@ -197,9 +195,7 @@ class GTK4CSSGenerator:
             properties.append("  /* Font Families */")
             for family_name, family_stack in typography["families"].items():
                 if isinstance(family_stack, list):
-                    family_value = ", ".join(
-                        f'"{font}"' if " " in font else font for font in family_stack
-                    )
+                    family_value = ", ".join(f'"{font}"' if " " in font else font for font in family_stack)
                     properties.append(f"  --font-family-{family_name}: {family_value};")
 
         # Type scale (5 sizes)
@@ -218,9 +214,7 @@ class GTK4CSSGenerator:
                         properties.append(f"  --line-height-{size_name}: {line_height};")
                     # Font weight
                     if "weight" in size_props:
-                        weight = typography.get("weights", {}).get(
-                            size_props["weight"], size_props["weight"]
-                        )
+                        weight = typography.get("weights", {}).get(size_props["weight"], size_props["weight"])
                         properties.append(f"  --font-weight-{size_name}: {weight};")
                     # Letter spacing
                     if "letter_spacing" in size_props:
@@ -297,7 +291,8 @@ class GTK4CSSGenerator:
                 if len(rgba_parts) == 4:
                     alpha = float(rgba_parts[3].strip())
                     return f"0 {offset}px {blur}px alpha(black, {alpha})"
-            except:
+            except ValueError:
+                # If parsing fails, fall back to default shadow below
                 pass
 
         # Fallback to simple shadow
@@ -323,9 +318,7 @@ class GTK4CSSGenerator:
                     if isinstance(color_group, dict):
                         for color_name, color_value in color_group.items():
                             if isinstance(color_value, str):
-                                css_lines.append(
-                                    f"  --color-{category}-{color_name}: {color_value};"
-                                )
+                                css_lines.append(f"  --color-{category}-{color_name}: {color_value};")
 
         css_lines.append("}")
 
@@ -360,17 +353,11 @@ class GTK4CSSGenerator:
 
         return "\n".join(css_lines)
 
-    def _generate_button_css(
-        self, button_config: dict[str, Any], context: str = "light"
-    ) -> list[str]:
+    def _generate_button_css(self, button_config: dict[str, Any], context: str = "light") -> list[str]:
         """Generate button CSS using resolved semantic tokens"""
         # Resolve tokens to actual values
-        vertical_padding = self.resolve_token(
-            f"spacing.scale.{button_config['padding']['vertical']}", context
-        )
-        horizontal_padding = self.resolve_token(
-            f"spacing.scale.{button_config['padding']['horizontal']}", context
-        )
+        vertical_padding = self.resolve_token(f"spacing.scale.{button_config['padding']['vertical']}", context)
+        horizontal_padding = self.resolve_token(f"spacing.scale.{button_config['padding']['horizontal']}", context)
         # Strip 'radius_' prefix from border_radius shorthand
         radius_key = button_config["border_radius"].replace("radius_", "")
         border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)
@@ -410,17 +397,11 @@ class GTK4CSSGenerator:
         ]
         return css
 
-    def _generate_form_field_css(
-        self, field_config: dict[str, Any], context: str = "light"
-    ) -> list[str]:
+    def _generate_form_field_css(self, field_config: dict[str, Any], context: str = "light") -> list[str]:
         """Generate form field CSS using resolved semantic tokens"""
         # Resolve tokens to actual values
-        vertical_padding = self.resolve_token(
-            f"spacing.scale.{field_config['padding']['vertical']}", context
-        )
-        horizontal_padding = self.resolve_token(
-            f"spacing.scale.{field_config['padding']['horizontal']}", context
-        )
+        vertical_padding = self.resolve_token(f"spacing.scale.{field_config['padding']['vertical']}", context)
+        horizontal_padding = self.resolve_token(f"spacing.scale.{field_config['padding']['horizontal']}", context)
         # Strip 'radius_' prefix from border_radius shorthand
         radius_key = field_config["border_radius"].replace("radius_", "")
         border_radius = self.resolve_token(f"elevation.radius.{radius_key}", context)

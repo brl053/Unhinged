@@ -1,5 +1,6 @@
 """Transcribe commands: voice-to-text transcription."""
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -12,6 +13,8 @@ try:
     from libs.services import TranscriptionService
 except ImportError:
     from libs.services.transcription_service import TranscriptionService
+
+from libs.python.drivers.transcription import MicTranscriptionDriver
 
 
 @click.group()
@@ -93,3 +96,107 @@ def audio(audio_file, model, output, metadata):
     except Exception as e:
         log_error(f"Transcription failed: {e}")
         sys.exit(1)
+
+
+@transcribe.command()
+@click.option(
+    "-m",
+    "--model",
+    default="base",
+    type=click.Choice(["tiny", "base", "small", "medium", "large"]),
+    help="Whisper model size (default: base)",
+)
+@click.option(
+    "--chunk-seconds",
+    default=5,
+    show_default=True,
+    type=int,
+    help="Approximate duration of each audio chunk in seconds",
+)
+@click.option(
+    "--max-seconds",
+    default=None,
+    type=int,
+    help="Optional maximum total recording duration in seconds (Ctrl+C to stop earlier)",
+)
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(),
+    help="Save full transcript to file after recording",
+)
+@click.option(
+    "--plain",
+    is_flag=True,
+    help="Print just text lines per chunk (no timestamps)",
+)
+def mic(model, chunk_seconds, max_seconds, output, plain):
+    """Transcribe live microphone input with rolling updates."""
+
+    recorded_chunks: list[str] = []
+
+    async def _run() -> None:
+        """Run the microphone transcription loop."""
+        driver = MicTranscriptionDriver()
+
+        def _on_segment(seg) -> None:
+            text = getattr(seg, "text", "").strip()
+            if not text:
+                return
+            print(f"[mic] Segment {getattr(seg, 'sequence', '?')}: {text}")
+            recorded_chunks.append(text)
+            if plain:
+                click.echo(text)
+            else:
+                click.echo(f"[{seg.start_time:05.1f}-{seg.end_time:05.1f}s] {text}")
+
+        log_info(
+            f"Starting microphone transcription (model={model}, chunk={chunk_seconds}s, max={max_seconds or '\u221e'}s)"
+        )
+        print("[mic] Listening now, speak...")
+
+        try:
+            result = await driver.execute(
+                "mic_stream",
+                {
+                    "chunk_seconds": chunk_seconds,
+                    "max_seconds": max_seconds,
+                    "model_size": model,
+                    "on_segment": _on_segment,
+                },
+            )
+        except Exception as exc:  # Surface driver errors nicely
+            log_error(f"Microphone transcription failed: {exc}")
+            sys.exit(1)
+
+        if not result.get("success"):
+            log_error(f"Microphone transcription failed: {result.get('error')}")
+            sys.exit(1)
+
+        session = result["data"]["session"]
+        print(f"[mic] Recording stopped. Total segments: {len(session.segments)}")
+        full_text = session.text
+        log_success(
+            f"Microphone transcription complete: {len(full_text)} characters across {len(session.segments)} chunks",
+        )
+
+        # At the end, print the whole transcript as one paragraph
+        if full_text:
+            click.echo()
+            click.echo(full_text)
+
+        if output and full_text:
+            output_path = Path(output)
+            output_path.write_text(full_text)
+            log_success(f"Full transcript saved to: {output}")
+
+    try:
+        asyncio.run(_run())
+    except KeyboardInterrupt:
+        # Best-effort: on Ctrl+C, print whatever transcript we have so far
+        if recorded_chunks:
+            partial = " ".join(t.strip() for t in recorded_chunks if t.strip())
+            if partial:
+                click.echo()
+                click.echo(partial)
+        log_info("Stopped microphone transcription by user request")

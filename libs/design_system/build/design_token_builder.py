@@ -55,7 +55,7 @@ else:
                 self.path = path
                 self.type = type
                 self.platform = platform
-            self.description = description
+                self.description = description
 
 
 # Import GTK4 generator
@@ -239,9 +239,7 @@ class DesignTokenBuilder(BuildModule):
                     "css_files_generated": len(artifacts),
                     "total_css_size_bytes": total_css_size,
                     "avg_generation_time_per_platform": avg_generation_time,
-                    "tokens_per_second": len(self.token_files) / build_time
-                    if build_time > 0
-                    else 0,
+                    "tokens_per_second": len(self.token_files) / build_time if build_time > 0 else 0,
                 },
             )
 
@@ -403,17 +401,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Validate semantic tokens against designer constraints",
     )
-    parser.add_argument(
-        "--clean", action="store_true", help="Clean generated design system artifacts"
-    )
+    parser.add_argument("--clean", action="store_true", help="Clean generated design system artifacts")
     parser.add_argument(
         "--build",
         choices=["design-tokens", "design-tokens-gtk4"],
         help="Build design tokens for specified target",
     )
-    parser.add_argument(
-        "--info", action="store_true", help="Show build information and constraints"
-    )
+    parser.add_argument("--info", action="store_true", help="Show build information and constraints")
 
     args = parser.parse_args()
 

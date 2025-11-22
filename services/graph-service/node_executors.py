@@ -1,259 +1,249 @@
 #!/usr/bin/env python3
-"""
+"""Node executors for graph-service using Python services (no gRPC).
+
 @llm-type service.executor
-@llm-does Node executors for different AI service types
+@llm-does execute NodeType-based nodes via local Python service clients
 """
 
-import json
-import sys
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Any
-
-import grpc
-
-# Add generated proto clients to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "generated" / "python" / "clients"))
-
-try:
-    from unhinged_proto_clients import (
-        audio_pb2,
-        audio_pb2_grpc,
-        chat_pb2,
-        chat_pb2_grpc,
-        graph_service_pb2,
-        llm_pb2,
-        llm_pb2_grpc,
-    )
-except ImportError as e:
-    print(f"❌ Proto clients not found: {e}")
-    print("Run 'make generate' to generate proto clients")
 
 from events import create_service_logger
 
-# Initialize event logger
-events = create_service_logger("node-executors", "1.0.0")
+from libs.python.models.graph.schema import Node, NodeType
+from libs.services.text_generation_service import TextGenerationService
+from libs.services.transcription_service import TranscriptionService
+from libs.services.tts_service import TTSService
+
+events = create_service_logger("node-executors", "2.0.0 (python-services)")
 
 
 class NodeExecutor(ABC):
-    """Abstract base class for node executors"""
+    """Abstract base class for node executors."""
 
     @abstractmethod
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute the node and return output data"""
-        pass
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Execute the node and return output data."""
+        ...
 
 
 class SpeechToTextExecutor(NodeExecutor):
-    """Executor for speech-to-text nodes"""
+    """Executor for speech-to-text nodes using TranscriptionService."""
 
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute speech-to-text conversion"""
+    def __init__(self) -> None:
+        self.service = TranscriptionService()
+
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Execute speech-to-text conversion.
+
+        Expected config:
+        - model_size: Whisper model size (optional)
+
+        Expected input_data:
+        - audio_path: path to an audio file, or
+        - audio_bytes: raw audio bytes
+        """
+
         try:
-            # Extract configuration
-            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
-            service_endpoint = config.get("service_endpoint", "localhost:9091")
+            audio_path = input_data.get("audio_path")
+            audio_bytes = input_data.get("audio_bytes")
 
-            # Create gRPC channel
-            async with grpc.aio.insecure_channel(service_endpoint) as channel:
-                stub = audio_pb2_grpc.AudioServiceStub(channel)
+            if audio_path is not None:
+                transcript = self.service.transcribe_audio(audio_path)
+            elif audio_bytes is not None:
+                transcript = self.service.transcribe_audio_data(audio_bytes)
+            else:
+                raise ValueError("SpeechToTextExecutor requires 'audio_path' or 'audio_bytes' in input_data")
 
-                # Prepare request
-                request = audio_pb2.STTRequest()
-                # TODO: Set audio data from input_data
+            events.info(
+                "STT node executed",
+                {
+                    "node_id": node.id,
+                    "transcript_length": len(transcript),
+                },
+            )
 
-                # Call service
-                response = await stub.SpeechToText(request)
+            return {
+                "transcript": transcript,
+            }
 
-                events.info(
-                    "STT node executed",
-                    {
-                        "node_id": node.id,
-                        "transcript_length": len(response.transcript) if response.transcript else 0,
-                    },
-                )
-
-                return {
-                    "transcript": response.transcript,
-                    "confidence": response.confidence,
-                }
-
-        except Exception as e:
-            events.error("STT node execution failed", exception=e, metadata={"node_id": node.id})
+        except Exception as exc:  # pragma: no cover - integration oriented
+            events.error("STT node execution failed", exception=exc, metadata={"node_id": node.id})
             raise
 
 
 class TextToSpeechExecutor(NodeExecutor):
-    """Executor for text-to-speech nodes"""
+    """Executor for text-to-speech nodes using TTSService."""
 
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute text-to-speech conversion"""
+    def __init__(self) -> None:
+        self.service = TTSService()
+
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Execute text-to-speech conversion.
+
+        Expected config keys (optional): voice, speed, emotion.
+        Expected input_data: {"text": str}
+        """
+
+        config = dict(node.config)
+
         try:
-            # Extract configuration
-            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
-            service_endpoint = config.get("service_endpoint", "localhost:9092")
+            text = str(input_data.get("text", ""))
+            if not text:
+                raise ValueError("TextToSpeechExecutor requires 'text' in input_data")
 
-            # Create gRPC channel
-            async with grpc.aio.insecure_channel(service_endpoint) as channel:
-                stub = audio_pb2_grpc.AudioServiceStub(channel)
+            voice = config.get("voice", "nova")
+            speed = float(config.get("speed", 1.0))
+            emotion = config.get("emotion", "neutral")
 
-                # Prepare request
-                request = audio_pb2.TTSRequest()
-                request.text = input_data.get("text", "")
-                request.voice_id = config.get("voice", "nova")
+            result = self.service.generate_voiceover(text=text, voice=voice, speed=speed, emotion=emotion)
 
-                # Call service (streaming response)
-                audio_chunks = []
-                async for chunk in stub.TextToSpeech(request):
-                    audio_chunks.append(chunk)
+            events.info(
+                "TTS node executed",
+                {
+                    "node_id": node.id,
+                    "text_length": len(text),
+                    "audio_path": result.get("audio_path"),
+                },
+            )
 
-                events.info(
-                    "TTS node executed",
-                    {
-                        "node_id": node.id,
-                        "text_length": len(request.text),
-                        "chunks_received": len(audio_chunks),
-                    },
-                )
+            return result
 
-                return {
-                    "audio_chunks": audio_chunks,
-                    "format": config.get("format", "mp3"),
-                }
-
-        except Exception as e:
-            events.error("TTS node execution failed", exception=e, metadata={"node_id": node.id})
+        except Exception as exc:  # pragma: no cover - integration oriented
+            events.error("TTS node execution failed", exception=exc, metadata={"node_id": node.id})
             raise
 
 
 class LLMChatExecutor(NodeExecutor):
-    """Executor for LLM chat nodes"""
+    """Executor for LLM chat nodes using TextGenerationService."""
 
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute LLM chat completion"""
+    def __init__(self) -> None:
+        # Default model/provider are configured in the service itself
+        self.service = TextGenerationService()
+
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Execute LLM chat completion.
+
+        Expected input_data keys (first non-empty is used): text, transcript.
+        """
+
+        config = dict(node.config)
+
         try:
-            # Extract configuration
-            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
-            service_endpoint = config.get("service_endpoint", "localhost:9095")
+            prompt = str(input_data.get("text") or input_data.get("transcript") or "")
+            if not prompt:
+                raise ValueError("LLMChatExecutor requires 'text' or 'transcript' in input_data")
 
-            # Create gRPC channel
-            async with grpc.aio.insecure_channel(service_endpoint) as channel:
-                stub = chat_pb2_grpc.ChatServiceStub(channel)
+            max_tokens = int(config.get("max_tokens", 512))
+            temperature = float(config.get("temperature", 0.7))
 
-                # Prepare request
-                request = chat_pb2.SendMessageRequest()
-                request.content = input_data.get("text", input_data.get("transcript", ""))
-                request.role = chat_pb2.USER
+            response_text = self.service.generate(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
 
-                # Call service
-                response = await stub.SendMessage(request)
+            events.info(
+                "LLM chat node executed",
+                {
+                    "node_id": node.id,
+                    "input_length": len(prompt),
+                    "response_length": len(response_text),
+                },
+            )
 
-                events.info(
-                    "LLM chat node executed",
-                    {
-                        "node_id": node.id,
-                        "input_length": len(request.content),
-                        "response_length": len(response.message.content) if response.message else 0,
-                    },
-                )
+            return {
+                "response_text": response_text,
+            }
 
-                return {
-                    "response_text": response.message.content if response.message else "",
-                    "message_id": response.message.message_id if response.message else "",
-                }
-
-        except Exception as e:
+        except Exception as exc:  # pragma: no cover - integration oriented
             events.error(
                 "LLM chat node execution failed",
-                exception=e,
+                exception=exc,
                 metadata={"node_id": node.id},
             )
             raise
 
 
 class DataTransformExecutor(NodeExecutor):
-    """Executor for data transformation nodes"""
+    """Executor for data transformation nodes."""
 
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute data transformation"""
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Execute data transformation based on simple config-driven rules."""
         try:
-            # Extract configuration
-            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
+            config = dict(node.config)
             transform_type = config.get("transform_type", "passthrough")
 
             if transform_type == "passthrough":
                 return input_data
-            elif transform_type == "extract_field":
+            if transform_type == "extract_field":
                 field_name = config.get("field_name", "text")
                 return {field_name: input_data.get(field_name, "")}
-            elif transform_type == "rename_field":
+            if transform_type == "rename_field":
                 old_name = config.get("old_name", "input")
                 new_name = config.get("new_name", "output")
                 return {new_name: input_data.get(old_name, "")}
-            else:
-                # Custom transformation logic can be added here
-                return input_data
 
-        except Exception as e:
+            # Fallback: no-op
+            return input_data
+
+        except Exception as exc:  # pragma: no cover - config/usage errors
             events.error(
                 "Data transform node execution failed",
-                exception=e,
+                exception=exc,
                 metadata={"node_id": node.id},
             )
             raise
 
 
 class CustomServiceExecutor(NodeExecutor):
-    """Executor for custom service nodes"""
+    """Placeholder executor for custom service nodes.
 
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute custom service call"""
-        try:
-            # Extract configuration
-            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
-            service_endpoint = config.get("service_endpoint", "localhost:9090")
-            method = config.get("method", "Process")
+    Currently this is a stub that simply echoes input and config metadata; it is
+    left as an extension point for bespoke integrations.
+    """
 
-            # For now, return mock data
-            # TODO: Implement generic gRPC client for custom services
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        config = dict(node.config)
+        service_name = config.get("service_name", "custom")
+        operation = config.get("operation", "process")
 
-            events.info(
-                "Custom service node executed",
-                {
-                    "node_id": node.id,
-                    "service_endpoint": service_endpoint,
-                    "method": method,
-                },
-            )
+        events.info(
+            "Custom service node executed (stub)",
+            {
+                "node_id": node.id,
+                "service_name": service_name,
+                "operation": operation,
+            },
+        )
 
-            return {"result": "custom_service_output", "processed": True}
-
-        except Exception as e:
-            events.error(
-                "Custom service node execution failed",
-                exception=e,
-                metadata={"node_id": node.id},
-            )
-            raise
+        return {
+            "service_name": service_name,
+            "operation": operation,
+            "input": input_data,
+        }
 
 
 class CommandOrchestrationExecutor(NodeExecutor):
-    """Executor for command orchestration nodes"""
+    """Executor for command orchestration nodes.
 
-    async def execute(self, node: graph_service_pb2.Node, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Execute command orchestration workflow"""
+    Currently this delegates to the libs.python.command_orchestration helpers.
+    """
+
+    async def execute(self, node: Node, input_data: dict[str, Any]) -> dict[str, Any]:
+        from libs.python.command_orchestration import (
+            CommandExecutor,
+            DAGBuilder,
+            ManPageIndexer,
+            SemanticSearchEngine,
+        )
+
+        config = dict(node.config)
+        prompt = config.get("prompt") or input_data.get("prompt") or ""
+
         try:
-            from libs.python.command_orchestration import (
-                CommandExecutor,
-                DAGBuilder,
-                ManPageIndexer,
-                SemanticSearchEngine,
-            )
-
-            # Extract configuration
-            config = json.loads(node.config) if isinstance(node.config, str) else dict(node.config)
-            prompt = config.get("prompt", "")
-
             # Step 1: Index man pages
             indexer = ManPageIndexer()
             entries = indexer.build_index()
@@ -294,46 +284,45 @@ class CommandOrchestrationExecutor(NodeExecutor):
                 ],
                 "execution_success": execution_result.success,
                 "execution_results": {
-                    node_id: {
+                    cmd_node_id: {
                         "returncode": result.returncode,
                         "stdout": result.stdout[:500],
                         "stderr": result.stderr[:500],
                     }
-                    for node_id, result in execution_result.results.items()
+                    for cmd_node_id, result in execution_result.results.items()
                 },
             }
 
-        except Exception as e:
+        except Exception as exc:  # pragma: no cover - shell/integration heavy
             events.error(
                 "Command orchestration execution failed",
-                exception=e,
+                exception=exc,
                 metadata={"node_id": node.id},
             )
             raise
 
 
 class NodeExecutorFactory:
-    """Factory for creating node executors"""
+    """Factory for creating node executors bound to NodeType values."""
 
-    def __init__(self):
-        self.executors = {
-            graph_service_pb2.SPEECH_TO_TEXT: SpeechToTextExecutor(),
-            graph_service_pb2.TEXT_TO_SPEECH: TextToSpeechExecutor(),
-            graph_service_pb2.LLM_CHAT: LLMChatExecutor(),
-            graph_service_pb2.LLM_COMPLETION: LLMChatExecutor(),  # Reuse chat executor
-            graph_service_pb2.DATA_TRANSFORM: DataTransformExecutor(),
-            graph_service_pb2.CUSTOM_SERVICE: CustomServiceExecutor(),
-            graph_service_pb2.COMMAND_ORCHESTRATION: CommandOrchestrationExecutor(),
+    def __init__(self) -> None:
+        self.executors: dict[NodeType, NodeExecutor] = {
+            NodeType.SPEECH_TO_TEXT: SpeechToTextExecutor(),
+            NodeType.TEXT_TO_SPEECH: TextToSpeechExecutor(),
+            NodeType.LLM_CHAT: LLMChatExecutor(),
+            NodeType.LLM_COMPLETION: LLMChatExecutor(),  # Reuse chat executor
+            NodeType.DATA_TRANSFORM: DataTransformExecutor(),
+            NodeType.CUSTOM_SERVICE: CustomServiceExecutor(),
         }
 
         events.info(
             "Node executor factory initialized",
-            {"supported_types": list(self.executors.keys())},
+            {"supported_types": [t.name for t in self.executors]},
         )
 
-    def get_executor(self, node_type: int) -> NodeExecutor:
-        """Get executor for node type"""
+    def get_executor(self, node_type: NodeType) -> NodeExecutor:
+        """Get executor for node type."""
         if node_type not in self.executors:
             raise ValueError(f"Unsupported node type: {node_type}")
 
-        return self.executors[node_type]  # type: ignore[no-any-return]
+        return self.executors[node_type]

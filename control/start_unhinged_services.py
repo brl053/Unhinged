@@ -101,6 +101,7 @@ class UnhingedServiceStartup:
 
         # Sort services by startup order
         from typing import cast
+
         ordered_services = sorted(self.services.items(), key=lambda x: cast(int, x[1].get("order", 0)))
 
         success = True

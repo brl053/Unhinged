@@ -13,9 +13,9 @@ from typing import Any, TypeGuard
 def is_dict(value: Any) -> TypeGuard[dict[str, Any]]:
     """
     Type guard for dictionary validation.
-    
+
     Use after yaml.safe_load(), json.loads(), or other dynamic parsing.
-    
+
     Example:
         result = yaml.safe_load(f)
         if not is_dict(result):
@@ -28,18 +28,16 @@ def is_dict(value: Any) -> TypeGuard[dict[str, Any]]:
 def is_str_dict(value: Any) -> TypeGuard[dict[str, str]]:
     """
     Type guard for string-only dictionaries.
-    
+
     Validates that all keys and values are strings.
     """
-    return isinstance(value, dict) and all(
-        isinstance(k, str) and isinstance(v, str) for k, v in value.items()
-    )
+    return isinstance(value, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in value.items())
 
 
 def is_list(value: Any) -> TypeGuard[list[Any]]:
     """
     Type guard for list validation.
-    
+
     Use after parsing operations that might return non-list types.
     """
     return isinstance(value, list)
@@ -48,7 +46,7 @@ def is_list(value: Any) -> TypeGuard[list[Any]]:
 def is_str_list(value: Any) -> TypeGuard[list[str]]:
     """
     Type guard for string list validation.
-    
+
     Validates that all elements are strings.
     """
     return isinstance(value, list) and all(isinstance(item, str) for item in value)
@@ -57,9 +55,9 @@ def is_str_list(value: Any) -> TypeGuard[list[str]]:
 def ensure_dict(value: Any, error_msg: str = "Expected dictionary") -> dict[str, Any]:
     """
     Ensure value is a dictionary, raise ValueError if not.
-    
+
     Use for YAML/JSON parsing with clear error messages.
-    
+
     Example:
         config = ensure_dict(yaml.safe_load(f), "Config must be a dictionary")
     """
@@ -80,16 +78,16 @@ def ensure_list(value: Any, error_msg: str = "Expected list") -> list[Any]:
 def safe_dict_get(d: dict[str, Any], key: str, expected_type: type, default: Any = None) -> Any:
     """
     Safely get dictionary value with type checking.
-    
+
     Args:
         d: Dictionary to access
         key: Key to retrieve
         expected_type: Expected type of value
         default: Default value if key missing or wrong type
-    
+
     Returns:
         Value if exists and correct type, otherwise default
-    
+
     Example:
         order = safe_dict_get(config, "order", int, 0)
     """
@@ -122,4 +120,3 @@ __all__ = [
     "SpecDict",
     "MetadataDict",
 ]
-

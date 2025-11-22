@@ -65,6 +65,7 @@ class ConversationCLI:
         self.session_logger = None
         self.is_running = False
         from typing import Any
+
         self.conversation_history: list[dict[str, Any]] = []
 
         # Initialize session logging
