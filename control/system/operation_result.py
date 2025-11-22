@@ -41,7 +41,7 @@ class OperationResult:
             "affected_services": self.affected_services,
             "system_state_change": self.system_state_change,
             "execution_time": self.execution_time,
-            "timestamp": self.timestamp.isoformat(),
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "error_message": self.error_message,
             "metadata": self.metadata,
         }

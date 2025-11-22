@@ -309,8 +309,8 @@ class SystemController:
             if op_type not in operations_by_type:
                 operations_by_type[op_type] = {
                     "count": 0,
-                    "success_rate": 0,
-                    "avg_time": 0,
+                    "success_rate": 0.0,
+                    "avg_time": 0.0,
                 }
             operations_by_type[op_type]["count"] += 1
 

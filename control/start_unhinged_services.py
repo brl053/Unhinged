@@ -93,14 +93,14 @@ class UnhingedServiceStartup:
             },
         }
 
-        self.running_processes: list[subprocess.Popen[bytes]] = []
+        self.running_processes: list[tuple[str, subprocess.Popen[bytes]]] = []
 
     def start_all_services(self) -> bool:
         """Start all services in the correct order."""
         logger.info("🚀 Starting Unhinged voice-first platform services...")
 
         # Sort services by startup order
-        ordered_services = sorted(self.services.items(), key=lambda x: x[1]["order"])
+        ordered_services = sorted(self.services.items(), key=lambda x: int(x[1]["order"]))
 
         success = True
         for service_name, config in ordered_services:

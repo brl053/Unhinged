@@ -118,7 +118,7 @@ class UnhingedDeploymentOrchestrator:
             if not compose_path.exists():
                 events.error(
                     "Compose file not found",
-                    {"compose_path": str(compose_path), "service": "deployment"},
+                    metadata={"compose_path": str(compose_path), "service": "deployment"},
                 )
                 return False
 
@@ -156,7 +156,7 @@ class UnhingedDeploymentOrchestrator:
             if result.returncode != 0:
                 events.error(
                     "Deployment failed",
-                    {"stderr": result.stderr, "service": "deployment"},
+                    metadata={"stderr": result.stderr, "service": "deployment"},
                 )
                 return False
 
@@ -198,10 +198,10 @@ class UnhingedDeploymentOrchestrator:
                     healthy_services += 1
                     self.deployed_services.append(service_name)
                 else:
-                    events.warning(f"⚠️ {service_name}: Unhealthy (HTTP {response.status_code})")
+                    events.warn(f"⚠️ {service_name}: Unhealthy (HTTP {response.status_code})")
                     self.failed_services.append(service_name)
             except requests.RequestException as e:
-                events.warning(f"⚠️ {service_name}: Health check failed - {e}")
+                events.warn(f"⚠️ {service_name}: Health check failed - {e}")
                 self.failed_services.append(service_name)
 
         health_percentage = (healthy_services / total_services * 100) if total_services > 0 else 0
