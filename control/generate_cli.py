@@ -79,15 +79,14 @@ class GenerateCLI:
             print(f"   Resolution: {width}x{height}")
 
         try:
-            service = ImageGenerationService(model=model)
+            service = ImageGenerationService()
 
             result = service.generate_image(
                 prompt=prompt,
-                quality=quality,
-                num_inference_steps=steps,
-                guidance_scale=guidance,
-                height=height,
-                width=width,
+                num_inference_steps=steps or 20,
+                guidance_scale=guidance or 7.5,
+                height=height or 512,
+                width=width or 512,
                 seed=seed,
             )
 

@@ -283,7 +283,7 @@ class ResourceManager:
         # Shutdown thread pools
         for pool in [self._io_pool, self._cpu_pool, self._image_pool]:
             if pool:
-                pool.shutdown(wait=True, timeout=30)
+                pool.shutdown(wait=True)
 
         # Wait for monitor thread
         if self._monitor_thread:

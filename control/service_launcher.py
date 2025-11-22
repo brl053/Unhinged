@@ -298,11 +298,14 @@ class ServiceLauncher:
             return False
         except Exception as e:
             print(f"      ❌ Unexpected error: {str(e)}")
-            events.error(
-                "Error starting service",
-                exception=e,
-                metadata={"service": service["name"]},
-            )
+            if USING_EVENT_FRAMEWORK:
+                events.error(
+                    "Error starting service",
+                    exception=e,
+                    metadata={"service": service["name"]},
+                )
+            else:
+                events.error(f"Error starting service {service['name']}: {e}")
             return False
 
     def _start_direct_service(self, service: dict, timeout: int) -> bool:

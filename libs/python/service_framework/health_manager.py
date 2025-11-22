@@ -136,7 +136,7 @@ class HealthManager:
         include_custom_checks: bool = True,
     ) -> dict[str, Any]:
         """Get detailed diagnostics"""
-        diagnostics = {
+        diagnostics: dict[str, Any] = {
             "heartbeat": self.get_heartbeat(),
             "last_updated": datetime.now(UTC).isoformat(),
         }
@@ -239,8 +239,10 @@ class HealthManager:
             }
 
             # Add load average if available (Unix systems)
+            load_avg: list[float] = []
             if hasattr(psutil, "getloadavg"):
-                metrics["load_average"] = list(psutil.getloadavg())
+                load_avg = list(psutil.getloadavg())
+            metrics["load_average"] = load_avg
 
             with self._metrics_lock:
                 self._last_metrics = metrics
@@ -309,4 +311,4 @@ class HealthManager:
     def get_last_metrics(self) -> dict[str, Any] | None:
         """Get last collected resource metrics"""
         with self._metrics_lock:
-            return self._last_metrics.copy() if self._last_metrics else None
+            return dict(self._last_metrics) if self._last_metrics else None

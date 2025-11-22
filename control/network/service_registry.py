@@ -211,7 +211,7 @@ class ServiceRegistry:
 
     def get_services_by_tag(self, tag: str) -> list[tuple[str, ServiceEndpoint]]:
         """Get all services with specific tag."""
-        return [(sid, svc) for sid, svc in self.services.items() if tag in svc.tags]
+        return [(sid, svc) for sid, svc in self.services.items() if svc.tags and tag in svc.tags]
 
     def get_all_services(self) -> dict[str, ServiceEndpoint]:
         """Get all registered services."""
