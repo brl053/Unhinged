@@ -1464,6 +1464,11 @@ lint-llm: ## Run polyglot linter with LLM-specific rationale
 	@python3 build/tools/polyglot-linter.py . --llm --format=text
 	$(call log_success,LLM-biased linting complete)
 
+type-safety-check: ## Validate type safety patterns (from 179 mypy fixes)
+	$(call log_info,🔍 Validating type safety patterns...)
+	@find control libs -name "*.py" -type f | xargs python3 build/validators/type_safety_validator.py
+	$(call log_success,Type safety validation complete)
+
 lint-json: ## Run polyglot linter with JSON output
 	$(call log_info,📊 Running polyglot linter (JSON output)...)
 	@mkdir -p generated/reports
