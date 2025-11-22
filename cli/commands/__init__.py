@@ -4,6 +4,7 @@ from cli.commands.admin import admin
 from cli.commands.chat import chat
 from cli.commands.dev import dev
 from cli.commands.generate import generate
+from cli.commands.graph import graph
 from cli.commands.image import image
 from cli.commands.orchestrate import orchestrate
 from cli.commands.parse import parse
@@ -32,4 +33,5 @@ __all__ = [
     "orchestrate",
     "prompt",
     "query",
+    "graph",
 ]

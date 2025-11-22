@@ -67,6 +67,9 @@ mypy>=1.7.0                    # Static type checker
 isort>=5.12.0                  # Import sorting
 ruff>=0.1.0                    # Fast Python linter
 
+# Database
+psycopg2-binary>=2.9.0         # PostgreSQL adapter for document store
+
 # Type stubs for mypy
 types-requests>=2.31.0         # Type stubs for requests
 types-psutil>=5.9.0            # Type stubs for psutil

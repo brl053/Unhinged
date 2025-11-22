@@ -10,6 +10,7 @@ from cli.commands import (
     chat,
     dev,
     generate,
+    graph,
     image,
     orchestrate,
     parse,
@@ -53,6 +54,7 @@ cli.add_command(chat)
 cli.add_command(orchestrate)
 cli.add_command(prompt)
 cli.add_command(query)
+cli.add_command(graph)
 
 
 if __name__ == "__main__":
