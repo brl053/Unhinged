@@ -45,7 +45,8 @@ def parse_mypy_output(output):
             continue
 
         # Mypy format: path/to/file.py:line: error: message
-        if "error:" in line or "note:" in line:
+        # Only count actual errors, not notes
+        if "error:" in line:
             # Split on first 3 colons: filepath:line: error/note: message
             parts = line.split(":", 3)
             if len(parts) >= 3:

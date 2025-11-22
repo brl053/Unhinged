@@ -64,7 +64,7 @@ class HybridGUIAnalysisService:
 
         self.use_opencv = use_opencv
         self.use_yolo = use_yolo
-        self.model = None
+        self.model: Any = None
         self.model_loaded = False
 
         logger.info("Hybrid GUI Analysis Service initialized")

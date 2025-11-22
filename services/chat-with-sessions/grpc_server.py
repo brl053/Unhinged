@@ -128,11 +128,12 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
                     {"conversation_id": conversation_id, "session_key": session_key},
                 )
 
-            return success
+            return success  # type: ignore[no-any-return]
 
         except Exception as e:
             events.error(
                 "Session creation failed",
+                None,
                 {"conversation_id": conversation_id, "error": str(e)},
             )
             return False
@@ -141,10 +142,11 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
         """Get session data with Redis-first read"""
         try:
             session_key = f"session:{conversation_id}:metadata"
-            return self.session_store.read(session_key)
+            return self.session_store.read(session_key)  # type: ignore[no-any-return]
         except Exception as e:
             events.error(
                 "Session read failed",
+                None,
                 {"conversation_id": conversation_id, "error": str(e)},
             )
             return None
@@ -153,10 +155,11 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
         """Update session state with write-through"""
         try:
             state_key = f"session:{conversation_id}:state"
-            return self.session_store.write(state_key, state_data)
+            return self.session_store.write(state_key, state_data)  # type: ignore[no-any-return]
         except Exception as e:
             events.error(
                 "Session state update failed",
+                None,
                 {"conversation_id": conversation_id, "error": str(e)},
             )
             return False
@@ -368,10 +371,10 @@ class ChatWithSessionsServicer(chat_pb2_grpc.ChatServiceServicer):
             return False
 
         health_status = self.session_store.health_check()
-        redis_healthy = health_status["redis"]["status"] == "healthy"
-        crdb_healthy = health_status["crdb"]["status"] == "healthy"
+        redis_healthy = health_status["redis"]["status"] == "healthy"  # type: ignore[index]
+        crdb_healthy = health_status["crdb"]["status"] == "healthy"  # type: ignore[index]
 
-        return redis_healthy and crdb_healthy
+        return bool(redis_healthy and crdb_healthy)
 
 
 def serve():

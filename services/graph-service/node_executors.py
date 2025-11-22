@@ -336,4 +336,4 @@ class NodeExecutorFactory:
         if node_type not in self.executors:
             raise ValueError(f"Unsupported node type: {node_type}")
 
-        return self.executors[node_type]
+        return self.executors[node_type]  # type: ignore[no-any-return]

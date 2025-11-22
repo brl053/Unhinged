@@ -39,7 +39,7 @@ class ImageGenerationService:
         self.output_dir = output_dir or Path.cwd() / "build" / "tmp" / "generated_images"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        self.pipeline = None
+        self.pipeline: Any = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.gpu_available = torch.cuda.is_available()
 

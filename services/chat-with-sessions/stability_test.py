@@ -12,6 +12,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 # Add paths
 project_root = Path(__file__).parent.parent.parent
@@ -52,8 +53,8 @@ class StabilityMetrics:
     max_read_latency_ms: float = 0.0
 
     # Resource usage
-    redis_memory_usage: list[float] = None
-    crdb_connection_count: list[int] = None
+    redis_memory_usage: list[float] | None = None
+    crdb_connection_count: list[int] | None = None
 
     def __post_init__(self):
         if self.redis_memory_usage is None:
@@ -76,11 +77,11 @@ class StabilityTest:
         # Test configuration
         self.operations_per_second = 10
         self.max_concurrent_sessions = 100
-        self.active_sessions = {}
+        self.active_sessions: dict[str, dict[str, Any]] = {}
 
         # Performance tracking
-        self.write_latencies = []
-        self.read_latencies = []
+        self.write_latencies: list[float] = []
+        self.read_latencies: list[float] = []
 
         events.info(
             "Stability test initialized",
@@ -111,7 +112,7 @@ class StabilityTest:
             events.error("Failed to initialize session store", exception=e)
             raise
 
-    def _create_test_session(self) -> str:
+    def _create_test_session(self) -> str | None:
         """Create a test session with random data"""
         try:
             start_time = time.time()

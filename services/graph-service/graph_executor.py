@@ -59,7 +59,7 @@ class GraphExecutor:
             },
         )
 
-        return graph.id
+        return graph.id  # type: ignore[no-any-return]
 
     async def get_graph(self, graph_id: str) -> graph_service_pb2.Graph:
         """Retrieve a Graph definition"""
@@ -144,7 +144,7 @@ class GraphExecutor:
             edge_map = self._build_edge_map(graph.edges)
 
             # Execute nodes in topological order
-            executed_nodes = set()
+            executed_nodes: set[str] = set()
 
             while len(executed_nodes) < len(graph.nodes):
                 # Find nodes ready to execute (all dependencies satisfied)
@@ -247,11 +247,11 @@ class GraphExecutor:
         """Collect input data for a node from its dependencies"""
         # Simple implementation - return execution input data for now
         # TODO: Implement proper edge-based data flow
-        return execution_state.get("input_data", {})
+        return execution_state.get("input_data", {})  # type: ignore[no-any-return]
 
     def _build_edge_map(self, edges) -> dict[str, list[str]]:
         """Build a map of node dependencies from edges"""
-        edge_map = {}
+        edge_map: dict[str, list[str]] = {}
         for edge in edges:
             target = edge.target_node_id
             source = edge.source_node_id
@@ -322,7 +322,7 @@ class GraphExecutor:
     def _has_cycle(self, nodes, edges) -> bool:
         """Detect cycles in graph using DFS"""
         # Build adjacency list
-        adj = {node.id: [] for node in nodes}
+        adj: dict[str, list[str]] = {node.id: [] for node in nodes}
         for edge in edges:
             adj[edge.source_node_id].append(edge.target_node_id)
 

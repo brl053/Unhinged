@@ -93,7 +93,7 @@ class ProductionMonitor:
             events.error("Failed to connect to session store", exception=e)
             self.session_store = None
 
-    def collect_system_metrics(self) -> SystemMetrics:
+    def collect_system_metrics(self) -> SystemMetrics | None:
         """Collect system resource metrics"""
         try:
             # CPU and memory
@@ -120,7 +120,7 @@ class ProductionMonitor:
             events.error("Failed to collect system metrics", exception=e)
             return None
 
-    def collect_session_store_metrics(self) -> SessionStoreMetrics:
+    def collect_session_store_metrics(self) -> SessionStoreMetrics | None:
         """Collect session store specific metrics"""
         if not self.session_store:
             return None
