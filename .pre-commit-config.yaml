@@ -38,3 +38,7 @@ repos:
       - id: mypy
         additional_dependencies: [types-requests]
         exclude: ^(generated/|venv/|venv-production/|build/)
+        # BLOCKING: Fail commit if type errors exist
+        # Emergency bypass: git commit --no-verify
+        fail_fast: false  # Show all errors, not just first
+        verbose: true

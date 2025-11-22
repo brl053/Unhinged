@@ -138,18 +138,22 @@ def main() -> int:
         print("\n⚠️  Type Safety Warnings:")
         for warning in all_warnings:
             print(f"  {warning}")
+        print(f"\n💡 See docs/development/TYPE_SAFETY_GUIDE.md for patterns")
 
     if all_errors:
         print("\n❌ Type Safety Errors:")
         for error in all_errors:
             print(f"  {error}")
+        print(f"\n💡 Fix errors or use 'git commit --no-verify' for emergencies")
         return 1
 
+    # BLOCKING: Treat warnings as errors for strict enforcement
     if all_warnings:
-        print(f"\n✅ Validation complete: {len(all_warnings)} warnings")
-    else:
-        print("✅ Type safety validation passed")
+        print(f"\n❌ Commit blocked: {len(all_warnings)} type safety violations")
+        print("💡 Fix violations or use 'git commit --no-verify' for emergencies")
+        return 1
 
+    print("✅ Type safety validation passed")
     return 0
 
 
