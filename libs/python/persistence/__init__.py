@@ -64,19 +64,32 @@ def get_document_store(connection_string: str | None = None) -> DocumentStore:
 
     Args:
         connection_string: PostgreSQL connection string. If None, uses environment
-                          variable POSTGRES_CONNECTION_STRING or default.
+                          variable POSTGRES_CONNECTION_STRING or default Docker container.
 
     Returns:
         DocumentStore instance (PostgreSQL-backed)
 
     Raises:
         ImportError: If PostgreSQL dependencies are not installed
+
+    Default connection (Docker):
+        postgresql://postgres:password@localhost:1200/unhinged
     """
     global _default_store
 
-    if _default_store is None:
-        if not _POSTGRES_AVAILABLE:
-            raise ImportError("PostgreSQL dependencies not available. Install with: pip install psycopg2-binary")
-        _default_store = PostgresDocumentStore(connection_string)
+    if _default_store is not None:
+        return _default_store
 
+    if not _POSTGRES_AVAILABLE:
+        raise ImportError("PostgreSQL dependencies not available. Install with: pip install psycopg2-binary")
+
+    # Default to Docker container if no connection string provided
+    if connection_string is None:
+        import os
+
+        connection_string = os.environ.get(
+            "POSTGRES_CONNECTION_STRING", "postgresql://postgres:password@localhost:1200/unhinged"
+        )
+
+    _default_store = PostgresDocumentStore(connection_string)
     return _default_store
