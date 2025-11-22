@@ -72,12 +72,13 @@ class UnhingedHealthMonitor:
         self.retry_delay = self.health_config.get("retry_delay", 5)
         self.failure_threshold = self.health_config.get("failure_threshold", 3)
 
-    def _load_service_registry(self) -> dict:
+    def _load_service_registry(self) -> dict[Any, Any]:
         """Load service registry configuration"""
         registry_file = self.control_root / "config" / "service-registry.yml"
         try:
             with open(registry_file) as f:
-                return yaml.safe_load(f)
+                result = yaml.safe_load(f)
+                return result if isinstance(result, dict) else {}
         except FileNotFoundError:
             events.warn(
                 "Service registry not found",

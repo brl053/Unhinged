@@ -45,7 +45,8 @@ class UnhingedDeploymentOrchestrator:
         config_file = self.control_root / "config" / "environments" / f"{self.environment}.yml"
         try:
             with open(config_file) as f:
-                return yaml.safe_load(f)
+                result = yaml.safe_load(f)
+                return result if isinstance(result, dict) else {}
         except FileNotFoundError:
             events.warn("Environment config not found", {"config_file": str(config_file)})
             return {}
