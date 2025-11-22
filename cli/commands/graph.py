@@ -326,3 +326,74 @@ def delete(graph_id: str, yes: bool):
     except Exception as e:
         log_error(f"Failed to delete graph: {e}")
         return 1
+
+
+@graph.command(name="run")
+@click.argument("graph_id")
+def run(graph_id: str):
+    """Execute a graph workflow.
+
+    Examples:
+        unhinged graph run abc-123
+    """
+    import sys
+    import tempfile
+
+    try:
+        from libs.python.persistence import get_document_store
+
+        store = get_document_store()
+        doc = store.read("graphs", graph_id)
+
+        if not doc:
+            log_error(f"Graph not found: {graph_id}")
+            return 1
+
+        data = doc.data
+        graph_name = data.get("name", "Unnamed")
+
+        log_info(f"Running graph: {graph_name}")
+
+        # Decode content
+        content = data.get("content", "")
+        content_bytes = base64.b64decode(content) if data.get("encoding") == "base64" else content.encode("utf-8")
+
+        # Write to temp file and execute
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".py", delete=False) as f:
+            f.write(content_bytes)
+            temp_path = f.name
+
+        try:
+            # Execute the Python file
+            import subprocess
+
+            result = subprocess.run([sys.executable, temp_path], capture_output=True, text=True)
+
+            # Show output
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+
+            if result.returncode == 0:
+                log_success("Graph execution complete")
+                return 0
+            else:
+                log_error(f"Graph execution failed (exit code: {result.returncode})")
+                return 1
+
+        finally:
+            # Cleanup temp file
+            import os
+
+            os.unlink(temp_path)
+
+    except ImportError as e:
+        log_error(f"Document store not available: {e}")
+        return 1
+    except Exception as e:
+        log_error(f"Failed to run graph: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
