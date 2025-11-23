@@ -8,9 +8,11 @@ import click
 from cli.commands.analyze import analyze
 from cli.utils import (
     get_python,
+    log_error,
     log_info,
     log_success,
 )
+from libs.python.persistence.event_store import clear_all_events, dump_all_events
 
 
 @click.group()
@@ -144,3 +146,49 @@ def clean():
 
 # Add analyze subcommand group
 dev.add_command(analyze)
+
+
+@dev.group(name="logs", invoke_without_command=True)
+@click.pass_context
+def logs(ctx: click.Context) -> None:
+    """Event log utilities.
+
+    Without subcommands, this dumps all stored event documents from the
+    shared ``events`` collection. Use standard Unix tools (grep, less,
+    etc.) to filter as needed.
+    """
+
+    if ctx.invoked_subcommand is not None:
+        return
+
+    try:
+        events = dump_all_events()
+    except Exception as exc:  # pragma: no cover - defensive
+        log_error(f"Failed to load events: {exc}")
+        sys.exit(1)
+
+    if not events:
+        log_info("No events found in 'events' collection.")
+        return
+
+    import json
+
+    for event in events:
+        click.echo("---")
+        click.echo(json.dumps(event, indent=2, default=str))
+
+
+@logs.command(name="clear")
+def logs_clear() -> None:
+    """Clear all stored event documents from the ``events`` collection."""
+
+    try:
+        deleted = clear_all_events()
+    except Exception as exc:  # pragma: no cover - defensive
+        log_error(f"Failed to clear events: {exc}")
+        sys.exit(1)
+
+    if deleted:
+        log_success("Cleared all events from 'events' collection.")
+    else:
+        log_info("No events to clear in 'events' collection.")

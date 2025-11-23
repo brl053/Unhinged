@@ -2,19 +2,23 @@
 
 import asyncio
 import sys
+import tempfile
+import time
+from contextlib import suppress
 from pathlib import Path
+from uuid import uuid4
 
 import click
 
 from cli.utils import log_error, log_info, log_success
+from libs.python.persistence.event_store import persist_event
+from unhinged_events import create_service_logger
 
 # Import service - handle both direct and pytest imports
 try:
     from libs.services import TranscriptionService
 except ImportError:
     from libs.services.transcription_service import TranscriptionService
-
-from libs.python.drivers.transcription import MicTranscriptionDriver
 
 
 @click.group()
@@ -98,6 +102,202 @@ def audio(audio_file, model, output, metadata):
         sys.exit(1)
 
 
+async def _record_mic_to_file(audio_path: Path, *, max_seconds: int | None) -> int:
+    """Record microphone audio into ``audio_path`` until Enter or timeout.
+
+    Returns the elapsed recording time in seconds.
+    """
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "arecord",
+            "-q",
+            "-f",
+            "cd",
+            "-t",
+            "wav",
+            str(audio_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        log_error("arecord not found. Install 'alsa-utils' or configure a recorder.")
+        sys.exit(1)
+
+    start_time = time.time()
+    stop_event = asyncio.Event()
+
+    async def _ticker() -> None:
+        while not stop_event.is_set():
+            elapsed = int(time.time() - start_time)
+            msg = f"[mic] Recording... {elapsed}s elapsed. Press Enter to stop."
+            sys.stdout.write("\r" + msg)
+            sys.stdout.flush()
+            await asyncio.sleep(1)
+
+        # Clear the line
+        sys.stdout.write("\r" + " " * 80 + "\r")
+        sys.stdout.flush()
+
+    ticker_task = asyncio.create_task(_ticker())
+
+    async def _wait_for_enter() -> None:
+        await asyncio.to_thread(sys.stdin.readline)
+
+    wait_tasks = [asyncio.create_task(_wait_for_enter())]
+    if max_seconds is not None and max_seconds > 0:
+        wait_tasks.append(asyncio.create_task(asyncio.sleep(max_seconds)))
+
+    # Stop when user presses Enter or we hit max_seconds
+    done, pending = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
+    stop_event.set()
+    for task in pending:
+        task.cancel()
+
+    with suppress(asyncio.CancelledError):  # pragma: no cover - defensive
+        await ticker_task
+
+    # Stop the recorder process
+    proc.terminate()
+    try:
+        await asyncio.wait_for(proc.wait(), timeout=5.0)
+    except TimeoutError:  # pragma: no cover - defensive
+        proc.kill()
+        await proc.wait()
+
+    return int(time.time() - start_time)
+
+
+async def _transcribe_recording(
+    *,
+    service: TranscriptionService,
+    audio_path: Path,
+    model: str,
+    max_seconds: int | None,
+    service_id: str,
+    session_id: str,
+    logger,
+) -> tuple[str, int]:
+    """Transcribe the recorded audio and emit events.
+
+    Returns the transcript text and duration.
+    """
+
+    log_info("Transcribing recorded audio...")
+
+    try:
+        full_text = service.transcribe_audio(audio_path)
+    except Exception as exc:  # Surface errors nicely
+        log_error(f"Microphone transcription failed: {exc}")
+        if logger is not None:
+            with suppress(Exception):  # pragma: no cover - best-effort logging
+                logger.error("mic session error", exception=exc)
+        with suppress(Exception):  # pragma: no cover - best-effort persistence
+            persist_event(
+                service_id,
+                "transcription.mic.session.error",
+                {"error": str(exc)},
+                level="ERROR",
+                session_id=session_id,
+            )
+        raise
+
+    return full_text, 0
+
+
+async def _run_mic_session(model: str, max_seconds: int | None, output: str | None) -> None:
+    """Core async implementation for ``mic`` command."""
+
+    service_id = "cli-transcribe-mic"
+    session_id = str(uuid4())
+
+    try:
+        logger = create_service_logger(service_id, version="1.0.0")
+    except Exception:  # pragma: no cover - defensive
+        logger = None
+
+    service = TranscriptionService(model_size=model)
+
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        audio_path = Path(tmp.name)
+
+    log_info(f"Starting microphone recording (model={model}). Press Enter to stop and transcribe.")
+    if logger is not None:
+        with suppress(Exception):  # pragma: no cover - best-effort logging
+            logger.info(
+                "mic session start",
+                {
+                    "model_size": model,
+                    "max_seconds": max_seconds,
+                },
+            )
+
+    with suppress(Exception):  # pragma: no cover - best-effort persistence
+        persist_event(
+            service_id,
+            "transcription.mic.session.start",
+            {
+                "model_size": model,
+                "max_seconds": max_seconds,
+            },
+            level="INFO",
+            session_id=session_id,
+        )
+
+    try:
+        elapsed = await _record_mic_to_file(audio_path, max_seconds=max_seconds)
+        full_text, _ = await _transcribe_recording(
+            service=service,
+            audio_path=audio_path,
+            model=model,
+            max_seconds=max_seconds,
+            service_id=service_id,
+            session_id=session_id,
+            logger=logger,
+        )
+    finally:
+        with suppress(Exception):  # pragma: no cover - best-effort cleanup
+            audio_path.unlink(missing_ok=True)  # type: ignore[arg-type]
+
+    log_success(
+        f"Microphone transcription complete in {elapsed}s: {len(full_text)} characters",
+    )
+
+    if logger is not None:
+        with suppress(Exception):  # pragma: no cover - best-effort logging
+            logger.info(
+                "mic session complete",
+                {
+                    "model_size": model,
+                    "max_seconds": max_seconds,
+                    "duration_seconds": elapsed,
+                    "total_characters": len(full_text),
+                },
+            )
+
+    with suppress(Exception):  # pragma: no cover - best-effort persistence
+        persist_event(
+            service_id,
+            "transcription.mic.session.complete",
+            {
+                "model_size": model,
+                "max_seconds": max_seconds,
+                "duration_seconds": elapsed,
+                "total_characters": len(full_text),
+            },
+            level="INFO",
+            session_id=session_id,
+        )
+
+    click.echo()
+    click.echo(full_text)
+
+    if output and full_text:
+        output_path = Path(output)
+        output_path.write_text(full_text)
+        log_success(f"Full transcript saved to: {output}")
+
+
 @transcribe.command()
 @click.option(
     "-m",
@@ -107,17 +307,10 @@ def audio(audio_file, model, output, metadata):
     help="Whisper model size (default: base)",
 )
 @click.option(
-    "--chunk-seconds",
-    default=5,
-    show_default=True,
-    type=int,
-    help="Approximate duration of each audio chunk in seconds",
-)
-@click.option(
     "--max-seconds",
     default=None,
     type=int,
-    help="Optional maximum total recording duration in seconds (Ctrl+C to stop earlier)",
+    help="Optional maximum recording duration in seconds (press Enter to stop earlier)",
 )
 @click.option(
     "-o",
@@ -125,78 +318,15 @@ def audio(audio_file, model, output, metadata):
     type=click.Path(),
     help="Save full transcript to file after recording",
 )
-@click.option(
-    "--plain",
-    is_flag=True,
-    help="Print just text lines per chunk (no timestamps)",
-)
-def mic(model, chunk_seconds, max_seconds, output, plain):
-    """Transcribe live microphone input with rolling updates."""
+def mic(model, max_seconds, output):
+    """Record a mic session, then transcribe once with full context.
 
-    recorded_chunks: list[str] = []
-
-    async def _run() -> None:
-        """Run the microphone transcription loop."""
-        driver = MicTranscriptionDriver()
-
-        def _on_segment(seg) -> None:
-            text = getattr(seg, "text", "").strip()
-            if not text:
-                return
-            print(f"[mic] Segment {getattr(seg, 'sequence', '?')}: {text}")
-            recorded_chunks.append(text)
-            if plain:
-                click.echo(text)
-            else:
-                click.echo(f"[{seg.start_time:05.1f}-{seg.end_time:05.1f}s] {text}")
-
-        log_info(
-            f"Starting microphone transcription (model={model}, chunk={chunk_seconds}s, max={max_seconds or '\u221e'}s)"
-        )
-        print("[mic] Listening now, speak...")
-
-        try:
-            result = await driver.execute(
-                "mic_stream",
-                {
-                    "chunk_seconds": chunk_seconds,
-                    "max_seconds": max_seconds,
-                    "model_size": model,
-                    "on_segment": _on_segment,
-                },
-            )
-        except Exception as exc:  # Surface driver errors nicely
-            log_error(f"Microphone transcription failed: {exc}")
-            sys.exit(1)
-
-        if not result.get("success"):
-            log_error(f"Microphone transcription failed: {result.get('error')}")
-            sys.exit(1)
-
-        session = result["data"]["session"]
-        print(f"[mic] Recording stopped. Total segments: {len(session.segments)}")
-        full_text = session.text
-        log_success(
-            f"Microphone transcription complete: {len(full_text)} characters across {len(session.segments)} chunks",
-        )
-
-        # At the end, print the whole transcript as one paragraph
-        if full_text:
-            click.echo()
-            click.echo(full_text)
-
-        if output and full_text:
-            output_path = Path(output)
-            output_path.write_text(full_text)
-            log_success(f"Full transcript saved to: {output}")
+    Recording starts immediately. Press Enter to stop recording and begin
+    transcription. This avoids mid-word chunking and gives Whisper the
+    full context of the session.
+    """
 
     try:
-        asyncio.run(_run())
+        asyncio.run(_run_mic_session(model, max_seconds, output))
     except KeyboardInterrupt:
-        # Best-effort: on Ctrl+C, print whatever transcript we have so far
-        if recorded_chunks:
-            partial = " ".join(t.strip() for t in recorded_chunks if t.strip())
-            if partial:
-                click.echo()
-                click.echo(partial)
         log_info("Stopped microphone transcription by user request")
