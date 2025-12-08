@@ -271,9 +271,10 @@ class ECalibrationStep(PipelineStep):
             "message_count": message_count,
         }
 
-        # Store in session
+        # Store in session and emit CDC event
         if session:
             session.set("ecalibration", profile)
+            session.emit(CDCEventType.ECALIBRATION_UPDATED, profile)
 
         # Add tone guidance to context
         guidance = self._generate_tone_guidance(profile)

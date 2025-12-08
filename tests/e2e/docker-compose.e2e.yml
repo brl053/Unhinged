@@ -1,0 +1,48 @@
+# @llm-type config.test.e2e
+# @llm-does e2e test infrastructure with isolated network and tenant
+#
+# E2E Testing Infrastructure
+# - Isolated network (unhinged-e2e-network)
+# - Database uses tenant='test' for data isolation
+# - Minimal services: just database + cli
+# - Designed for OrbStack compatibility
+#
+# Usage:
+#   docker compose -f tests/e2e/docker-compose.e2e.yml up -d
+#   pytest tests/e2e/ -v
+#   docker compose -f tests/e2e/docker-compose.e2e.yml down -v
+
+services:
+  # =============================================================================
+  # E2E Test Database (isolated from dev/prod)
+  # =============================================================================
+  
+  e2e-database:
+    image: postgres:15-alpine
+    container_name: unhinged-e2e-postgres
+    ports:
+      - "1250:5432"  # Different port from dev (1200) and prod
+    environment:
+      - POSTGRES_DB=unhinged_e2e
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=e2e_test_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d unhinged_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unhinged-e2e-network
+    # No restart policy - ephemeral test containers
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  unhinged-e2e-network:
+    driver: bridge
+    name: unhinged-e2e-network
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16  # Different subnet from dev (172.21.x.x)
+

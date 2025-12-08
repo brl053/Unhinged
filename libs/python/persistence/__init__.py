@@ -96,15 +96,18 @@ _default_store: DocumentStore | None = None
 def get_document_store(
     connection_string: str | None = None,
     with_embedding: bool = True,
+    tenant: str = "default",
 ) -> DocumentStore:
     """
-    Get the default document store instance.
+    Get a document store instance.
 
     Args:
         connection_string: PostgreSQL connection string. If None, uses environment
                           variable POSTGRES_CONNECTION_STRING or default Docker container.
         with_embedding: If True and VectorBridge is available, wrap store to auto-embed
                        documents on create/update. Default True.
+        tenant: Tenant identifier for multi-tenancy isolation.
+               Default is 'default'. Use 'test' for e2e tests.
 
     Returns:
         DocumentStore instance (PostgreSQL-backed, optionally with embedding)
@@ -114,10 +117,16 @@ def get_document_store(
 
     Default connection (Docker):
         postgresql://postgres:password@localhost:1200/unhinged
+
+    Multi-tenancy:
+        All documents are scoped to the specified tenant. Tenants are isolated -
+        a store for tenant='test' cannot see or modify tenant='default' data.
+        Use tenant='test' for e2e tests, then call delete_tenant_data() for cleanup.
     """
     global _default_store
 
-    if _default_store is not None:
+    # Only cache default tenant store - test tenants get fresh instances
+    if tenant == "default" and _default_store is not None:
         return _default_store
 
     if not _POSTGRES_AVAILABLE:
@@ -131,12 +140,17 @@ def get_document_store(
             "POSTGRES_CONNECTION_STRING", "postgresql://postgres:password@localhost:1200/unhinged"
         )
 
-    base_store = PostgresDocumentStore(connection_string)
+    base_store = PostgresDocumentStore(connection_string, tenant=tenant)
 
     # Wrap with embedding if available and requested
+    result_store: DocumentStore
     if with_embedding and _EMBEDDING_AVAILABLE and _VECTOR_AVAILABLE:
-        _default_store = EmbeddingDocumentStore(base_store)
+        result_store = EmbeddingDocumentStore(base_store)
     else:
-        _default_store = base_store
+        result_store = base_store
 
-    return _default_store
+    # Only cache default tenant
+    if tenant == "default":
+        _default_store = result_store
+
+    return result_store

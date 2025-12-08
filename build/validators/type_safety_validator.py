@@ -10,7 +10,6 @@ Prevents regression to anti-patterns.
 import ast
 import sys
 from pathlib import Path
-from typing import Any
 
 
 class TypeSafetyValidator(ast.NodeVisitor):
@@ -138,13 +137,13 @@ def main() -> int:
         print("\n⚠️  Type Safety Warnings:")
         for warning in all_warnings:
             print(f"  {warning}")
-        print(f"\n💡 See docs/development/TYPE_SAFETY_GUIDE.md for patterns")
+        print("\n💡 See docs/development/TYPE_SAFETY_GUIDE.md for patterns")
 
     if all_errors:
         print("\n❌ Type Safety Errors:")
         for error in all_errors:
             print(f"  {error}")
-        print(f"\n💡 Fix errors or use 'git commit --no-verify' for emergencies")
+        print("\n💡 Fix errors or use 'git commit --no-verify' for emergencies")
         return 1
 
     # BLOCKING: Treat warnings as errors for strict enforcement
@@ -159,4 +158,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

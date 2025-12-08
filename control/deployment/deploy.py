@@ -14,6 +14,7 @@ from typing import Any
 
 import requests
 import yaml
+
 from unhinged_events import create_service_logger
 
 # Initialize event logger

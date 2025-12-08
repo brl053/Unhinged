@@ -337,8 +337,6 @@ generate: ## Generate all build artifacts (polyglot proto clients, registry) [us
 	@$(PYTHON_RUN) build/build.py build service-discovery $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Service discovery generation failed$(RESET)"
 	@echo "$(YELLOW)📋 Design system tokens and CSS generation$(RESET)"
 	@$(PYTHON_RUN) build/build.py build design-tokens $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Design tokens generation failed$(RESET)"
-	@echo "$(YELLOW)📋 Component generation (GTK4 widgets from design system)$(RESET)"
-	@$(PYTHON_RUN) build/build.py build components $(CACHE_OPTION) || echo "$(YELLOW)⚠️ Component generation failed$(RESET)"
 
 	$(call log_success,Build artifacts generation completed)
 
@@ -374,17 +372,17 @@ python-deps: ## Install/update Python dependencies
 
 check-code: ## Run static analysis on all Python modules
 	$(call log_info,🔍 Running static analysis on Python code...)
-	@./build/python/venv/bin/python3 build/static_analysis_manager.py control/gtk4_gui libs/python services
+	@./build/python/venv/bin/python3 build/static_analysis_manager.py libs/python services cli control
 	$(call log_success,Static analysis completed)
 
 check-code-fix: ## Run static analysis with auto-fix
 	$(call log_info,🔧 Running static analysis with auto-fix...)
-	@./build/python/venv/bin/python3 build/static_analysis_manager.py control/gtk4_gui libs/python services
+	@./build/python/venv/bin/python3 build/static_analysis_manager.py libs/python services cli control
 	$(call log_success,Static analysis with auto-fix completed)
 
 check-code-changed: ## Run static analysis only on changed modules
 	$(call log_info,🔍 Running static analysis on changed modules...)
-	@./build/python/venv/bin/python3 build/static_analysis_manager.py control/gtk4_gui libs/python services --check-changes
+	@./build/python/venv/bin/python3 build/static_analysis_manager.py libs/python services cli control --check-changes
 	$(call log_success,Changed modules analysis completed)
 
 setup-git-hooks: ## Install Git hooks for automatic static analysis
@@ -518,42 +516,28 @@ test-vision: ## Test Vision AI service
 		$(call log_success,Vision AI service healthy) || \
 		$(call log_error,Vision AI service test failed)
 
-test-multimodal: ## Run comprehensive multimodal AI architecture tests
-	$(call log_info,🤖 Running multimodal AI integration tests...)
-	$(call log_info,📋 Testing complete gRPC pipeline: Kotlin ↔ Python services)
-	@$(MAKE) test-multimodal-backend
-	@$(MAKE) test-multimodal-e2e
-	$(call log_success,Multimodal architecture tests completed)
-
-test-multimodal-backend: ## Run multimodal backend integration tests
-	$(call log_info,🧪 Running multimodal backend integration tests...)
-	$(call run_gradle,test --tests "*MultimodalIntegrationTest*")
-	$(call run_gradle,test --tests "*MultimodalControllerTest*")
-	$(call log_success,Backend integration tests completed)
-
-test-multimodal-e2e: ## Run multimodal end-to-end tests with Playwright
-	$(call log_info,🎭 Running multimodal E2E tests...)
-	@cd frontend && npx playwright test multimodal-e2e.spec.ts --reporter=html
-	$(call log_success,End-to-end tests completed)
-
-test-multimodal-full: ## Full multimodal test suite with service startup
-	$(call log_info,🚀 Running full multimodal architecture test suite...)
-	@$(MAKE) multimodal-start
-	@sleep 30  # Wait for services to be ready
-	@$(MAKE) test-multimodal || ($(MAKE) multimodal-stop && exit 1)
-	@$(MAKE) multimodal-stop
-	$(call log_success,Full multimodal test suite completed)
-
-test-multimodal-performance: ## Run multimodal performance benchmarks
-	$(call log_info,⚡ Running multimodal performance benchmarks...)
-	@cd frontend && npx playwright test multimodal-e2e.spec.ts --grep "Performance benchmarking"
-	$(call log_success,Performance benchmarks completed)
-
 test-db: ## Test database connection
 	$(call log_info,🗄️ Testing database connection...)
 	@$(call docker_db_exec,psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT 'Database connection successful!' as status;") && \
 		$(call log_success,Database test successful) || \
 		$(call log_error,Database test failed)
+
+test-e2e: ## Run e2e tests (no database required for basic tests)
+	$(call log_info,🧪 Running e2e tests...)
+	@source build/python/venv/bin/activate && python -m pytest tests/e2e/ -v --tb=short && \
+		$(call log_success,E2E tests passed) || \
+		$(call log_error,E2E tests failed)
+
+test-e2e-full: ## Run e2e tests with database (requires docker-compose up)
+	$(call log_info,🧪 Starting e2e database container...)
+	@docker compose -f tests/e2e/docker-compose.e2e.yml up -d
+	@sleep 3
+	$(call log_info,🧪 Running e2e tests with database...)
+	@source build/python/venv/bin/activate && python -m pytest tests/e2e/ -v --tb=short && \
+		$(call log_success,E2E tests passed) || \
+		$(call log_error,E2E tests failed)
+	$(call log_info,🧹 Stopping e2e database container...)
+	@docker compose -f tests/e2e/docker-compose.e2e.yml down -v
 
 debug-memory: ## Show memory usage for compilation
 	$(call log_info,🧠 Memory Usage Information)
@@ -946,19 +930,10 @@ start-custom-iso: ## Launch custom Alpine ISO (recommended)
 
 build-dual-system: ## Build complete dual-system architecture (CI/CD target)
 	$(call log_info,🔧 Building Dual-System Architecture...)
-	@echo "🎯 Building: Native C Graphics + GTK4 Control Plane + Conversation CLI"
+	@echo "🎯 Building: Native C Graphics + Conversation CLI"
 	@python3 build/build.py build c-graphics-build
-	@python3 build/build.py build dual-system-desktop
 	@python3 build/build.py build conversation-cli
 	@echo "✅ Dual-system architecture build complete"
-
-start-gui: ## Launch enhanced GTK4 desktop application with dual-system architecture
-	$(call log_info,🖥️ Starting Enhanced Unhinged Desktop Application...)
-	@echo "🎯 Dual-System Architecture: GTK4 Control Plane + Alpine Native"
-	@echo "🎙️ Voice Transcription Integrated in Status Tab"
-	@echo "🏔️ Native C Graphics + Session Logging Active"
-	@echo "📊 System Information Page Integrated"
-	@build/python/venv/bin/python3 control/gtk4_gui/launch.py
 
 start-simple: ## Launch VM with simple unidirectional communication (VM → Host)
 	$(call log_info,📺 Launching VM with direct console output...)
@@ -1030,14 +1005,7 @@ design-tokens: ## Generate all design system artifacts from semantic tokens
 	@python3 build/build.py build design-tokens
 	$(call log_success,Design tokens generated)
 
-design-tokens-gtk4: ## Generate GTK4 CSS from semantic design tokens
-	$(call log_info,🎨 Generating GTK4 CSS from semantic tokens...)
-	@python3 build/build.py build design-tokens-gtk4
-	$(call log_success,GTK4 CSS generated)
-
 design-system: design-tokens ## Alias for design-tokens (generate all design system artifacts)
-
-css-tokens: design-tokens-gtk4 ## Alias for design-tokens-gtk4 (generate CSS tokens)
 
 clean-design-tokens: ## Clean generated design system artifacts
 	$(call log_info,🧹 Cleaning design system artifacts...)
@@ -1049,21 +1017,6 @@ validate-design-tokens: ## Validate semantic tokens against designer constraints
 	$(call log_info,✅ Validating design tokens...)
 	@python3 libs/design_system/build/design_token_builder.py --validate
 	$(call log_success,Design tokens validation passed)
-
-validate-gtk4-css: ## Validate GTK4 CSS for compatibility issues
-	$(call log_info,🔍 Validating GTK4 CSS compatibility...)
-	@python3 build/tools/gtk4_css_validator.py generated/design_system/gtk4/
-	$(call log_success,GTK4 CSS validation passed)
-
-components: ## Generate components for all platforms
-	$(call log_info,📦 Generating components...)
-	@python3 build/build.py build components
-	$(call log_success,Components generated)
-
-components-gtk4: ## Generate GTK4 components specifically
-	$(call log_info,📦 Generating GTK4 components...)
-	@python3 build/build.py build components-gtk4
-	$(call log_success,GTK4 components generated)
 
 validate-components: ## Validate component specifications
 	$(call log_info,🔍 Validating components...)

@@ -97,6 +97,7 @@ class CDCEventType(Enum):
 
     # Identity/calibration events
     IDENTITY_HYDRATED = "identity.hydrated"
+    ECALIBRATION_UPDATED = "ecalibration.updated"
 
 
 @dataclass
