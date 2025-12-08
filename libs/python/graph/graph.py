@@ -9,9 +9,12 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .nodes import GraphNode
+
+if TYPE_CHECKING:
+    from .context import SessionContext
 
 
 @dataclass
@@ -112,7 +115,14 @@ class Graph:
 
 
 class GraphExecutor:
-    """Execute graphs of ``GraphNode`` instances with parallelism per layer."""
+    """Execute graphs of ``GraphNode`` instances with parallelism per layer.
+
+    Optionally integrates with SessionContext for CDC event emission.
+    """
+
+    def __init__(self, session_ctx: SessionContext | None = None) -> None:
+        """Initialize executor with optional session context for CDC."""
+        self._session_ctx = session_ctx
 
     def _evaluate_condition(self, condition: str | None, node_results: dict[str, NodeExecutionResult]) -> bool:
         """Evaluate a condition expression against node results.
@@ -192,7 +202,7 @@ class GraphExecutor:
                 dest_input = aggregated_inputs.setdefault(dst, {})
                 dest_input.setdefault("stdin", stdout_value)
 
-    async def execute(
+    async def execute(  # noqa: C901
         self,
         graph: Graph,
         initial_inputs: dict[str, dict[str, Any]] | None = None,
@@ -230,10 +240,19 @@ class GraphExecutor:
                 # Check if this node should execute based on incoming edge conditions
                 should_execute = self._should_execute_node(node_id, graph, node_results)
                 if not should_execute:
+                    # Emit CDC: node skipped
+                    if self._session_ctx:
+                        self._session_ctx.node_skipped(node_id, "edge condition not met")
                     continue
 
                 node = graph.nodes[node_id]
                 input_payload = aggregated_inputs.get(node_id, {})
+
+                # Emit CDC: node start
+                node_type = type(node).__name__
+                if self._session_ctx:
+                    self._session_ctx.node_start(node_id, node_type, input_payload)
+
                 tasks[node_id] = asyncio.create_task(node.execute(input_payload))
 
             # Wait for all nodes in this group to finish
@@ -248,10 +267,20 @@ class GraphExecutor:
                     node_success = False
                     output: dict[str, Any] = {}
                     err = str(result)
+                    # Emit CDC: node failed
+                    if self._session_ctx:
+                        self._session_ctx.node_failed(node_id, err)
                 else:
                     output = result
                     node_success = bool(output.get("success", True))
                     err = None
+                    # Emit CDC: node output and success/failure
+                    if self._session_ctx:
+                        self._session_ctx.node_output(node_id, output)
+                        if node_success:
+                            self._session_ctx.node_success(node_id, output)
+                        else:
+                            self._session_ctx.node_failed(node_id, output.get("stderr", ""))
 
                 node_results[node_id] = NodeExecutionResult(
                     node_id=node_id,
@@ -266,6 +295,17 @@ class GraphExecutor:
 
                 # Route stdout from this node into stdin of downstream nodes if needed
                 self._route_stdout_to_downstream(node_id, output, graph.edges, node_results, aggregated_inputs)
+
+                # Emit CDC: edge transitions
+                if self._session_ctx:
+                    for src, dst, condition in graph.edges:
+                        if src == node_id:
+                            cond_result = self._evaluate_condition(condition, node_results)
+                            self._session_ctx.edge_eval(src, dst, condition, cond_result)
+                            if cond_result:
+                                self._session_ctx.edge_taken(src, dst)
+                            elif condition:
+                                self._session_ctx.edge_blocked(src, dst, condition)
 
         return GraphExecutionResult(
             success=success,

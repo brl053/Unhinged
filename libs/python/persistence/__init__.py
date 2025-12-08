@@ -48,26 +48,66 @@ except ImportError:
     PostgresDocumentStore = None  # type: ignore
     _POSTGRES_AVAILABLE = False
 
+# Vector bridge for semantic recall (optional dependency)
+try:
+    from .vector_bridge import RecallResult, VectorBridge
+
+    _VECTOR_AVAILABLE = True
+except ImportError:
+    VectorBridge = None  # type: ignore
+    RecallResult = None  # type: ignore
+    _VECTOR_AVAILABLE = False
+
+# Embedding store wrapper (optional - requires VectorBridge)
+try:
+    from .embedding_store import (
+        EmbeddingDocumentStore,
+        EmbedEvent,
+        EmbedEventType,
+        EmbedObserver,
+    )
+
+    _EMBEDDING_AVAILABLE = True
+except ImportError:
+    EmbeddingDocumentStore = None  # type: ignore
+    EmbedEvent = None  # type: ignore
+    EmbedEventType = None  # type: ignore
+    EmbedObserver = None  # type: ignore
+    _EMBEDDING_AVAILABLE = False
+
 __all__ = [
     "DocumentStore",
     "Document",
     "PostgresDocumentStore",
     "get_document_store",
+    # Vector bridge
+    "VectorBridge",
+    "RecallResult",
+    # Embedding store + transparency
+    "EmbeddingDocumentStore",
+    "EmbedEvent",
+    "EmbedEventType",
+    "EmbedObserver",
 ]
 
-_default_store = None
+_default_store: DocumentStore | None = None
 
 
-def get_document_store(connection_string: str | None = None) -> DocumentStore:
+def get_document_store(
+    connection_string: str | None = None,
+    with_embedding: bool = True,
+) -> DocumentStore:
     """
     Get the default document store instance.
 
     Args:
         connection_string: PostgreSQL connection string. If None, uses environment
                           variable POSTGRES_CONNECTION_STRING or default Docker container.
+        with_embedding: If True and VectorBridge is available, wrap store to auto-embed
+                       documents on create/update. Default True.
 
     Returns:
-        DocumentStore instance (PostgreSQL-backed)
+        DocumentStore instance (PostgreSQL-backed, optionally with embedding)
 
     Raises:
         ImportError: If PostgreSQL dependencies are not installed
@@ -91,5 +131,12 @@ def get_document_store(connection_string: str | None = None) -> DocumentStore:
             "POSTGRES_CONNECTION_STRING", "postgresql://postgres:password@localhost:1200/unhinged"
         )
 
-    _default_store = PostgresDocumentStore(connection_string)
+    base_store = PostgresDocumentStore(connection_string)
+
+    # Wrap with embedding if available and requested
+    if with_embedding and _EMBEDDING_AVAILABLE and _VECTOR_AVAILABLE:
+        _default_store = EmbeddingDocumentStore(base_store)
+    else:
+        _default_store = base_store
+
     return _default_store

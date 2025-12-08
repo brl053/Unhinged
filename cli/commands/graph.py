@@ -7,7 +7,9 @@ Graph management CLI - Create, Read, Update, Delete graph workflows.
 Graphs are stored in the document store under the "graphs" collection.
 """
 
+import asyncio
 import base64
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -91,6 +93,190 @@ def create(file_path: str, name: str | None, description: str | None, tags: tupl
         return 1
     except Exception as e:
         log_error(f"Failed to create graph: {e}")
+        return 1
+
+
+@graph.command(name="build")
+@click.option("--name", "-n", required=True, help="Graph name")
+@click.option("--description", "-d", default="", help="Graph description")
+@click.option("--tags", "-t", multiple=True, help="Tags for categorization")
+def build(name: str, description: str, tags: tuple[str, ...]):  # noqa: C901
+    """Build a graph interactively from CLI.
+
+    Nodes are execution units. Edges determine flow.
+
+    Examples:
+        unhinged graph build --name "Open Firefox Private"
+        unhinged graph build -n "Email Check" -t email -t automation
+    """
+    import json
+
+    try:
+        from libs.python.persistence import get_document_store
+
+        store = get_document_store()
+
+        print(f"building graph: {name}")
+        print()
+        print("add nodes (empty line when done)")
+        print("format: <node_id> <type> <command_or_config>")
+        print("types: unix, api, input, subgraph")
+        print()
+
+        nodes = []
+        while True:
+            try:
+                line = input("node> ").strip()
+            except EOFError:
+                break
+
+            if not line:
+                break
+
+            parts = line.split(maxsplit=2)
+            if len(parts) < 2:
+                print("  error: need at least <node_id> <type>")
+                continue
+
+            node_id = parts[0]
+            node_type = parts[1].lower()
+            config = parts[2] if len(parts) > 2 else ""
+
+            node = {
+                "id": node_id,
+                "type": node_type,
+            }
+
+            if node_type == "unix":
+                node["command"] = config
+            elif node_type == "api":
+                node["endpoint"] = config
+            elif node_type == "input":
+                node["prompt"] = config
+            else:
+                node["config"] = config
+
+            nodes.append(node)
+            print(f"  added: {node_id} ({node_type})")
+
+        if not nodes:
+            print("no nodes added, aborting")
+            return 1
+
+        print()
+        print("add edges (empty line when done)")
+        print("format: <source> -> <target> [condition]")
+        print()
+
+        edges = []
+        while True:
+            try:
+                line = input("edge> ").strip()
+            except EOFError:
+                break
+
+            if not line:
+                break
+
+            # Parse: source -> target [condition]
+            if "->" not in line:
+                print("  error: use format 'source -> target'")
+                continue
+
+            parts = line.split("->")
+            source = parts[0].strip()
+            rest = parts[1].strip().split(maxsplit=1)
+            target = rest[0]
+            condition = rest[1] if len(rest) > 1 else None
+
+            edge = {"source": source, "target": target}
+            if condition:
+                edge["condition"] = condition
+
+            edges.append(edge)
+            print(f"  added: {source} -> {target}" + (f" [{condition}]" if condition else ""))
+
+        # Build graph document
+        graph_def = {
+            "name": name,
+            "description": description,
+            "tags": list(tags),
+            "nodes": nodes,
+            "edges": edges,
+            "version": "1.0",
+        }
+
+        # Store
+        content = json.dumps(graph_def, indent=2)
+        doc = store.create(
+            "graphs",
+            {
+                "name": name,
+                "description": description,
+                "tags": list(tags),
+                "content": content,
+                "encoding": "json",
+                "node_count": len(nodes),
+                "edge_count": len(edges),
+            },
+        )
+
+        print()
+        print(f"created graph: {doc.id}")
+        print(f"  nodes: {len(nodes)}")
+        print(f"  edges: {len(edges)}")
+
+    except Exception as e:
+        log_error(f"Failed to build graph: {e}")
+        return 1
+
+
+@graph.command(name="quick")
+@click.argument("command_str")
+@click.option("--name", "-n", required=True, help="Graph name")
+@click.option("--tags", "-t", multiple=True, help="Tags")
+def quick(command_str: str, name: str, tags: tuple[str, ...]):
+    """Create a single-node unix command graph.
+
+    Examples:
+        unhinged graph quick "firefox --private-window https://pornhub.com" -n "Firefox Private PH" -t browser
+        unhinged graph quick "ls -la" -n "List Files"
+    """
+    import json
+
+    try:
+        from libs.python.persistence import get_document_store
+
+        store = get_document_store()
+
+        graph_def = {
+            "name": name,
+            "description": f"Quick graph: {command_str[:50]}",
+            "tags": list(tags),
+            "nodes": [{"id": "run", "type": "unix", "command": command_str}],
+            "edges": [],
+            "version": "1.0",
+        }
+
+        doc = store.create(
+            "graphs",
+            {
+                "name": name,
+                "description": graph_def["description"],
+                "tags": list(tags),
+                "content": json.dumps(graph_def, indent=2),
+                "encoding": "json",
+                "node_count": 1,
+                "edge_count": 0,
+            },
+        )
+
+        print(f"created: {doc.id}")
+        print(f"  {name}")
+        print(f"  command: {command_str}")
+
+    except Exception as e:
+        log_error(f"Failed: {e}")
         return 1
 
 
@@ -397,3 +583,53 @@ def run(graph_id: str):
 
         traceback.print_exc()
         return 1
+
+
+# Session command entry point - delegates to graph_session.py
+
+
+@graph.command(name="session")
+def session():
+    """Interactive voice-driven graph session.
+
+    Speak to select and run graphs. Minimal interface.
+
+    Commands:
+        voice, v  - record and transcribe speech
+        list      - show available graphs
+        quit, q   - exit session
+        <text>    - match text to a graph
+
+    Shutdown modes:
+        - Graceful: quit/exit or Ctrl+C - persists session cleanly
+        - Disgraceful: crash/kill - attempts recovery persist
+    """
+    import signal
+    from contextlib import suppress
+
+    from cli.commands.graph_session import attempt_recovery_persist, run_session
+
+    # Register signal handler for disgraceful shutdown
+    original_sigterm = signal.getsignal(signal.SIGTERM)
+
+    def sigterm_handler(signum, frame):
+        attempt_recovery_persist()
+        if callable(original_sigterm):
+            original_sigterm(signum, frame)
+        sys.exit(1)
+
+    with suppress(ValueError):
+        signal.signal(signal.SIGTERM, sigterm_handler)
+
+    try:
+        asyncio.run(run_session())
+    except KeyboardInterrupt:
+        attempt_recovery_persist()
+        print()
+        print("interrupted")
+    except Exception:
+        attempt_recovery_persist()
+        raise
+    finally:
+        with suppress(ValueError):
+            signal.signal(signal.SIGTERM, original_sigterm or signal.SIG_DFL)

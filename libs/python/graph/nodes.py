@@ -274,6 +274,81 @@ class GmailAPINode(GraphNode):
         }
 
 
+class RecallNode(GraphNode):
+    """Graph node that performs semantic recall over persisted sessions.
+
+    Queries the vector store for documents matching the input query.
+    Used for self-reflection, context retrieval, and memory recall.
+
+    Output keys:
+    - ``results``: List of recall results with text, score, document_id
+    - ``top_text``: Text of the highest-scoring result (for easy chaining)
+    - ``success``: Boolean indicating whether recall succeeded
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        collection: str | None = None,
+        limit: int = 5,
+        threshold: float = 0.5,
+    ) -> None:
+        super().__init__(node_id)
+        self.collection = collection
+        self.limit = limit
+        self.threshold = threshold
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute semantic recall with query from input_data.
+
+        Expects input_data to contain:
+        - ``query``: The natural language query string
+        """
+        from libs.python.persistence.vector_bridge import VectorBridge
+
+        input_data = input_data or {}
+        query = input_data.get("query", "")
+
+        if not query:
+            return {
+                "success": False,
+                "error": "No query provided",
+                "results": [],
+                "top_text": "",
+            }
+
+        try:
+            bridge = VectorBridge()
+            results = bridge.recall(
+                query=query,
+                collection=self.collection,
+                limit=self.limit,
+                threshold=self.threshold,
+            )
+
+            return {
+                "success": True,
+                "results": [
+                    {
+                        "document_id": r.document_id,
+                        "collection": r.collection,
+                        "text": r.text,
+                        "score": r.score,
+                    }
+                    for r in results
+                ],
+                "top_text": results[0].text if results else "",
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "results": [],
+                "top_text": "",
+            }
+
+
 class APINode(GraphNode):
     """Generic graph node that executes operations via the driver registry.
 

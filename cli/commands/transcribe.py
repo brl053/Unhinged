@@ -1,6 +1,7 @@
 """Transcribe commands: voice-to-text transcription."""
 
 import asyncio
+import signal
 import sys
 import tempfile
 import time
@@ -10,7 +11,7 @@ from uuid import uuid4
 
 import click
 
-from cli.utils import log_error, log_info, log_success
+from cli.utils import display_transcript, loading_indicator, log_error, log_info, log_success
 from libs.python.persistence.event_store import persist_event
 from unhinged_events import create_service_logger
 
@@ -102,15 +103,36 @@ def audio(audio_file, model, output, metadata):
         sys.exit(1)
 
 
-async def _record_mic_to_file(audio_path: Path, *, max_seconds: int | None) -> int:
+async def _record_mic_to_file(audio_path: Path, *, max_seconds: int | None) -> int:  # noqa: C901
     """Record microphone audio into ``audio_path`` until Enter or timeout.
 
     Returns the elapsed recording time in seconds.
     """
 
+    # Determine the best ALSA device to use.
+    # On PipeWire systems, using 'pipewire' device avoids conflicts with direct hw access.
+    # Fall back to 'default' which works on most systems.
+    import subprocess
+
+    alsa_device = "default"
+    # Check if PipeWire is running and provides an ALSA device
+    try:
+        result = subprocess.run(
+            ["arecord", "-L"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if "pipewire" in result.stdout:
+            alsa_device = "pipewire"
+    except Exception:
+        pass  # Stick with default
+
     try:
         proc = await asyncio.create_subprocess_exec(
             "arecord",
+            "-D",
+            alsa_device,
             "-q",
             "-f",
             "cd",
@@ -157,13 +179,70 @@ async def _record_mic_to_file(audio_path: Path, *, max_seconds: int | None) -> i
     with suppress(asyncio.CancelledError):  # pragma: no cover - defensive
         await ticker_task
 
-    # Stop the recorder process
-    proc.terminate()
-    try:
-        await asyncio.wait_for(proc.wait(), timeout=5.0)
-    except TimeoutError:  # pragma: no cover - defensive
-        proc.kill()
+    # Stop the recorder process (if still running)
+    if proc.returncode is None:
+        # Try a graceful shutdown first (like Ctrl+C)
+        with suppress(ProcessLookupError):
+            proc.send_signal(signal.SIGINT)
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=5.0)
+        except asyncio.TimeoutError:  # pragma: no cover - defensive
+            # Fallback to terminate/kill if the process is still around
+            if proc.returncode is None:
+                with suppress(ProcessLookupError):
+                    proc.terminate()
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=5.0)
+                except asyncio.TimeoutError:  # pragma: no cover - defensive
+                    with suppress(ProcessLookupError):
+                        proc.kill()
+                    await proc.wait()
+    else:
+        # Process already exited; ensure we reap it
         await proc.wait()
+
+    # Capture stderr for diagnostics (if any)
+    stderr_text = ""
+    if proc.stderr is not None:
+        with suppress(Exception):  # pragma: no cover - best-effort diagnostics
+            stderr_bytes = await proc.stderr.read()
+            if stderr_bytes:
+                stderr_text = stderr_bytes.decode(errors="replace").strip()
+
+    # If the recorder failed, surface a clear error instead of letting ffmpeg/Whisper explode.
+    # Treat the common "Interrupted system call" case (when we stop recording) as success.
+    # Also treat exit code 1 with a valid WAV file as success (PipeWire behavior).
+    if proc.returncode not in (0, None):
+        interrupted_by_user = False
+
+        # Check 1: Classic ALSA interruption message
+        if stderr_text:
+            lower_stderr = stderr_text.lower()
+            if "pcm_read" in lower_stderr and "interrupted system call" in lower_stderr:
+                interrupted_by_user = True
+
+        # Check 2: PipeWire-style interruption (exit 1 but valid WAV file created)
+        # This happens when using -D pipewire and the process is interrupted
+        if not interrupted_by_user and proc.returncode == 1:
+            try:
+                # A valid WAV file should be at least ~100 bytes (header + some audio)
+                if audio_path.exists() and audio_path.stat().st_size > 100:
+                    interrupted_by_user = True
+            except Exception:
+                pass  # If we can't check the file, treat as failure
+
+        if interrupted_by_user:
+            # arecord prints a noisy error on Ctrl+C / SIGINT but still writes a valid WAV.
+            # Do not treat this as a hard failure.
+            log_info("Microphone recording stopped by user (arecord interrupted)")
+        else:
+            msg = f"Microphone recording failed (arecord exit code {proc.returncode})."
+            if stderr_text:
+                # Include only the last line to keep output concise
+                last_line = stderr_text.splitlines()[-1]
+                msg = f"{msg} Details: {last_line}"
+            log_error(msg)
+            raise RuntimeError(msg)
 
     return int(time.time() - start_time)
 
@@ -186,7 +265,8 @@ async def _transcribe_recording(
     log_info("Transcribing recorded audio...")
 
     try:
-        full_text = service.transcribe_audio(audio_path)
+        with loading_indicator("Transcribing recorded audio..."):
+            full_text = service.transcribe_audio(audio_path)
     except Exception as exc:  # Surface errors nicely
         log_error(f"Microphone transcription failed: {exc}")
         if logger is not None:
@@ -289,8 +369,8 @@ async def _run_mic_session(model: str, max_seconds: int | None, output: str | No
             session_id=session_id,
         )
 
-    click.echo()
-    click.echo(full_text)
+    # Display the transcript in a visually distinct area
+    display_transcript(full_text, title="Transcription")
 
     if output and full_text:
         output_path = Path(output)
@@ -330,3 +410,7 @@ def mic(model, max_seconds, output):
         asyncio.run(_run_mic_session(model, max_seconds, output))
     except KeyboardInterrupt:
         log_info("Stopped microphone transcription by user request")
+    except RuntimeError as exc:
+        # Surface a clean error for users instead of a full traceback
+        log_error(str(exc))
+        sys.exit(1)
