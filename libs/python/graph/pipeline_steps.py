@@ -6,12 +6,72 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .prompt_pipeline import PipelineStep, PromptPayload, StepOutput, StepResult
 
 if TYPE_CHECKING:
     from .context import SessionContext
+
+
+# =============================================================================
+# STUB: IdentityHydrationStep - TDD implementation pending
+# =============================================================================
+
+
+class IdentityHydrationStep(PipelineStep):
+    """Inject deployment-time identity into system prompt.
+
+    Identity answers: WHO AM I? What role, codebase, capabilities?
+    This is pre-session configuration, not user-specific.
+    """
+
+    def __init__(
+        self,
+        identity_config: dict[str, Any] | None = None,
+        config_path: str | None = None,
+    ) -> None:
+        self._identity_config = identity_config
+        self._config_path = config_path
+
+    @property
+    def step_id(self) -> str:
+        return "identity_hydration"
+
+    def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
+        # STUB: Return ABORT to make tests fail properly
+        return StepOutput(
+            result=StepResult.ABORT,
+            reason="IdentityHydrationStep not implemented",
+            metrics={},
+        )
+
+
+# =============================================================================
+# STUB: ECalibrationStep - TDD implementation pending
+# =============================================================================
+
+
+class ECalibrationStep(PipelineStep):
+    """Calibrate LLM tone to match user communication style.
+
+    E-Calibration: synchronize profanity, formality, pace to signal no hostility.
+    Rule-based v1 (no LLM call).
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    @property
+    def step_id(self) -> str:
+        return "e_calibration"
+
+    def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
+        # STUB: Return minimal metrics to make tests fail properly
+        return StepOutput(
+            result=StepResult.CONTINUE,
+            metrics={"profanity_level": 0.0, "formality": 0.5, "pace": 0.5},
+        )
 
 
 class InjectSystemPromptStep(PipelineStep):
