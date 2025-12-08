@@ -96,11 +96,91 @@ def create(file_path: str, name: str | None, description: str | None, tags: tupl
         return 1
 
 
+def _parse_node_line(line: str) -> dict | None:
+    """Parse a single node input line. Returns node dict or None on error."""
+    parts = line.split(maxsplit=2)
+    if len(parts) < 2:
+        print("  error: need at least <node_id> <type>")
+        return None
+
+    node_id, node_type = parts[0], parts[1].lower()
+    config = parts[2] if len(parts) > 2 else ""
+
+    node = {"id": node_id, "type": node_type}
+    config_keys = {"unix": "command", "api": "endpoint", "input": "prompt"}
+    node[config_keys.get(node_type, "config")] = config
+
+    print(f"  added: {node_id} ({node_type})")
+    return node
+
+
+def _parse_edge_line(line: str) -> dict | None:
+    """Parse a single edge input line. Returns edge dict or None on error."""
+    if "->" not in line:
+        print("  error: use format 'source -> target'")
+        return None
+
+    parts = line.split("->")
+    source = parts[0].strip()
+    rest = parts[1].strip().split(maxsplit=1)
+    target, condition = rest[0], rest[1] if len(rest) > 1 else None
+
+    edge = {"source": source, "target": target}
+    if condition:
+        edge["condition"] = condition
+
+    suffix = f" [{condition}]" if condition else ""
+    print(f"  added: {source} -> {target}{suffix}")
+    return edge
+
+
+def _collect_nodes() -> list[dict]:
+    """Interactively collect nodes from user input."""
+    print("add nodes (empty line when done)")
+    print("format: <node_id> <type> <command_or_config>")
+    print("types: unix, api, input, subgraph")
+    print()
+
+    nodes = []
+    while True:
+        try:
+            line = input("node> ").strip()
+        except EOFError:
+            break
+        if not line:
+            break
+        node = _parse_node_line(line)
+        if node:
+            nodes.append(node)
+    return nodes
+
+
+def _collect_edges() -> list[dict]:
+    """Interactively collect edges from user input."""
+    print()
+    print("add edges (empty line when done)")
+    print("format: <source> -> <target> [condition]")
+    print()
+
+    edges = []
+    while True:
+        try:
+            line = input("edge> ").strip()
+        except EOFError:
+            break
+        if not line:
+            break
+        edge = _parse_edge_line(line)
+        if edge:
+            edges.append(edge)
+    return edges
+
+
 @graph.command(name="build")
 @click.option("--name", "-n", required=True, help="Graph name")
 @click.option("--description", "-d", default="", help="Graph description")
 @click.option("--tags", "-t", multiple=True, help="Tags for categorization")
-def build(name: str, description: str, tags: tuple[str, ...]):  # noqa: C901
+def build(name: str, description: str, tags: tuple[str, ...]):
     """Build a graph interactively from CLI.
 
     Nodes are execution units. Edges determine flow.
@@ -115,88 +195,17 @@ def build(name: str, description: str, tags: tuple[str, ...]):  # noqa: C901
         from libs.python.persistence import get_document_store
 
         store = get_document_store()
-
         print(f"building graph: {name}")
         print()
-        print("add nodes (empty line when done)")
-        print("format: <node_id> <type> <command_or_config>")
-        print("types: unix, api, input, subgraph")
-        print()
 
-        nodes = []
-        while True:
-            try:
-                line = input("node> ").strip()
-            except EOFError:
-                break
-
-            if not line:
-                break
-
-            parts = line.split(maxsplit=2)
-            if len(parts) < 2:
-                print("  error: need at least <node_id> <type>")
-                continue
-
-            node_id = parts[0]
-            node_type = parts[1].lower()
-            config = parts[2] if len(parts) > 2 else ""
-
-            node = {
-                "id": node_id,
-                "type": node_type,
-            }
-
-            if node_type == "unix":
-                node["command"] = config
-            elif node_type == "api":
-                node["endpoint"] = config
-            elif node_type == "input":
-                node["prompt"] = config
-            else:
-                node["config"] = config
-
-            nodes.append(node)
-            print(f"  added: {node_id} ({node_type})")
-
+        nodes = _collect_nodes()
         if not nodes:
             print("no nodes added, aborting")
             return 1
 
-        print()
-        print("add edges (empty line when done)")
-        print("format: <source> -> <target> [condition]")
-        print()
+        edges = _collect_edges()
 
-        edges = []
-        while True:
-            try:
-                line = input("edge> ").strip()
-            except EOFError:
-                break
-
-            if not line:
-                break
-
-            # Parse: source -> target [condition]
-            if "->" not in line:
-                print("  error: use format 'source -> target'")
-                continue
-
-            parts = line.split("->")
-            source = parts[0].strip()
-            rest = parts[1].strip().split(maxsplit=1)
-            target = rest[0]
-            condition = rest[1] if len(rest) > 1 else None
-
-            edge = {"source": source, "target": target}
-            if condition:
-                edge["condition"] = condition
-
-            edges.append(edge)
-            print(f"  added: {source} -> {target}" + (f" [{condition}]" if condition else ""))
-
-        # Build graph document
+        # Store graph
         graph_def = {
             "name": name,
             "description": description,
@@ -205,8 +214,6 @@ def build(name: str, description: str, tags: tuple[str, ...]):  # noqa: C901
             "edges": edges,
             "version": "1.0",
         }
-
-        # Store
         content = json.dumps(graph_def, indent=2)
         doc = store.create(
             "graphs",
@@ -331,6 +338,39 @@ def list_graphs(tag: str | None, limit: int):
         return 1
 
 
+def _display_graph_metadata(doc) -> None:
+    """Display graph document metadata."""
+    data = doc.data
+    log_success(f"Graph: {data.get('name', 'Unnamed')}")
+    print()
+    print(f"  ID: {doc.id}")
+    print(f"  Name: {data.get('name', 'Unnamed')}")
+    if data.get("description"):
+        print(f"  Description: {data['description']}")
+    print(f"  File: {data.get('file_name', 'N/A')}")
+    print(f"  Type: {data.get('content_type', 'unknown')}")
+    print(f"  Encoding: {data.get('encoding', 'unknown')}")
+    if data.get("tags"):
+        print(f"  Tags: {', '.join(data['tags'])}")
+    print(f"  Created: {doc.created_at}")
+    print(f"  Updated: {doc.updated_at}")
+    print()
+
+
+def _output_graph_content(data: dict, content_bytes: bytes, output: str | None) -> None:
+    """Output graph content to file or stdout."""
+    if output:
+        Path(output).write_bytes(content_bytes)
+        log_success(f"Saved to: {output}")
+    elif data.get("content_type") == "text":
+        print("Content:")
+        print("─" * 80)
+        print(data.get("content", ""))
+        print("─" * 80)
+    else:
+        log_warning("Binary content - use --output to save to file")
+
+
 @graph.command(name="get")
 @click.argument("graph_id")
 @click.option("--output", "-o", type=click.Path(), help="Save to file")
@@ -351,42 +391,12 @@ def get(graph_id: str, output: str | None):
             log_error(f"Graph not found: {graph_id}")
             return 1
 
+        _display_graph_metadata(doc)
+
         data = doc.data
-
-        # Display metadata
-        log_success(f"Graph: {data.get('name', 'Unnamed')}")
-        print()
-        print(f"  ID: {doc.id}")
-        print(f"  Name: {data.get('name', 'Unnamed')}")
-        if data.get("description"):
-            print(f"  Description: {data['description']}")
-        print(f"  File: {data.get('file_name', 'N/A')}")
-        print(f"  Type: {data.get('content_type', 'unknown')}")
-        print(f"  Encoding: {data.get('encoding', 'unknown')}")
-        if data.get("tags"):
-            print(f"  Tags: {', '.join(data['tags'])}")
-        print(f"  Created: {doc.created_at}")
-        print(f"  Updated: {doc.updated_at}")
-        print()
-
-        # Decode content
         content = data.get("content", "")
         content_bytes = base64.b64decode(content) if data.get("encoding") == "base64" else content.encode("utf-8")
-
-        # Output to file or stdout
-        if output:
-            output_path = Path(output)
-            output_path.write_bytes(content_bytes)
-            log_success(f"Saved to: {output}")
-        else:
-            # Print content (if text)
-            if data.get("content_type") == "text":
-                print("Content:")
-                print("─" * 80)
-                print(content)
-                print("─" * 80)
-            else:
-                log_warning("Binary content - use --output to save to file")
+        _output_graph_content(data, content_bytes, output)
 
         return 0
 

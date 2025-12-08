@@ -96,22 +96,30 @@ class Graph:
         processed = 0
 
         while ready:
-            # Current layer of nodes that can run in parallel
             group = sorted(ready)
             groups.append(group)
-            ready = []
-
-            for node_id in group:
-                processed += 1
-                for neighbour in adjacency[node_id]:
-                    indegree[neighbour] -= 1
-                    if indegree[neighbour] == 0:
-                        ready.append(neighbour)
+            ready = self._advance_ready_nodes(group, adjacency, indegree)
+            processed += len(group)
 
         if processed != len(self.nodes):
             raise ValueError("Graph contains a cycle; topological order not possible")
 
         return groups
+
+    def _advance_ready_nodes(
+        self,
+        group: list[str],
+        adjacency: dict[str, list[str]],
+        indegree: dict[str, int],
+    ) -> list[str]:
+        """Decrement indegree for neighbours and return newly ready nodes."""
+        ready = []
+        for node_id in group:
+            for neighbour in adjacency[node_id]:
+                indegree[neighbour] -= 1
+                if indegree[neighbour] == 0:
+                    ready.append(neighbour)
+        return ready
 
 
 class GraphExecutor:
@@ -202,6 +210,64 @@ class GraphExecutor:
                 dest_input = aggregated_inputs.setdefault(dst, {})
                 dest_input.setdefault("stdin", stdout_value)
 
+    def _process_node_result(self, node_id: str, result: Any) -> tuple[dict[str, Any], bool, str | None]:
+        """Process a node execution result. Returns (output, success, error)."""
+        if isinstance(result, Exception):
+            err = str(result)
+            if self._session_ctx:
+                self._session_ctx.node_failed(node_id, err)
+            return {}, False, err
+
+        output = result
+        node_success = bool(output.get("success", True))
+        if self._session_ctx:
+            self._session_ctx.node_output(node_id, output)
+            if node_success:
+                self._session_ctx.node_success(node_id, output)
+            else:
+                self._session_ctx.node_failed(node_id, output.get("stderr", ""))
+        return output, node_success, None
+
+    def _emit_edge_cdc(
+        self,
+        node_id: str,
+        edges: list[tuple[str, str, str | None]],
+        node_results: dict[str, NodeExecutionResult],
+    ) -> None:
+        """Emit CDC events for edge transitions from a node."""
+        if not self._session_ctx:
+            return
+
+        for src, dst, condition in edges:
+            if src != node_id:
+                continue
+            cond_result = self._evaluate_condition(condition, node_results)
+            self._session_ctx.edge_eval(src, dst, condition, cond_result)
+            if cond_result:
+                self._session_ctx.edge_taken(src, dst)
+            elif condition:
+                self._session_ctx.edge_blocked(src, dst, condition)
+
+    def _maybe_schedule_node(
+        self,
+        node_id: str,
+        graph: Graph,
+        node_results: dict[str, NodeExecutionResult],
+        aggregated_inputs: dict[str, dict[str, Any]],
+    ) -> asyncio.Task[dict[str, Any]] | None:
+        """Schedule a node for execution if conditions are met. Returns task or None."""
+        should_execute = self._should_execute_node(node_id, graph, node_results)
+        if not should_execute:
+            if self._session_ctx:
+                self._session_ctx.node_skipped(node_id, "edge condition not met")
+            return None
+
+        node = graph.nodes[node_id]
+        input_payload = aggregated_inputs.get(node_id, {})
+        if self._session_ctx:
+            self._session_ctx.node_start(node_id, type(node).__name__, input_payload)
+        return asyncio.create_task(node.execute(input_payload))
+
     async def execute(  # noqa: C901
         self,
         graph: Graph,
@@ -237,23 +303,9 @@ class GraphExecutor:
         for group in execution_groups:
             tasks: dict[str, asyncio.Task[dict[str, Any]]] = {}
             for node_id in group:
-                # Check if this node should execute based on incoming edge conditions
-                should_execute = self._should_execute_node(node_id, graph, node_results)
-                if not should_execute:
-                    # Emit CDC: node skipped
-                    if self._session_ctx:
-                        self._session_ctx.node_skipped(node_id, "edge condition not met")
-                    continue
-
-                node = graph.nodes[node_id]
-                input_payload = aggregated_inputs.get(node_id, {})
-
-                # Emit CDC: node start
-                node_type = type(node).__name__
-                if self._session_ctx:
-                    self._session_ctx.node_start(node_id, node_type, input_payload)
-
-                tasks[node_id] = asyncio.create_task(node.execute(input_payload))
+                task = self._maybe_schedule_node(node_id, graph, node_results, aggregated_inputs)
+                if task:
+                    tasks[node_id] = task
 
             # Wait for all nodes in this group to finish
             completed: Iterable[tuple[str, Any]] = zip(
@@ -263,24 +315,7 @@ class GraphExecutor:
             )
 
             for node_id, result in completed:
-                if isinstance(result, Exception):
-                    node_success = False
-                    output: dict[str, Any] = {}
-                    err = str(result)
-                    # Emit CDC: node failed
-                    if self._session_ctx:
-                        self._session_ctx.node_failed(node_id, err)
-                else:
-                    output = result
-                    node_success = bool(output.get("success", True))
-                    err = None
-                    # Emit CDC: node output and success/failure
-                    if self._session_ctx:
-                        self._session_ctx.node_output(node_id, output)
-                        if node_success:
-                            self._session_ctx.node_success(node_id, output)
-                        else:
-                            self._session_ctx.node_failed(node_id, output.get("stderr", ""))
+                output, node_success, err = self._process_node_result(node_id, result)
 
                 node_results[node_id] = NodeExecutionResult(
                     node_id=node_id,
@@ -293,19 +328,8 @@ class GraphExecutor:
                     success = False
                     error_message = err or output.get("stderr") or "Node execution failed"
 
-                # Route stdout from this node into stdin of downstream nodes if needed
                 self._route_stdout_to_downstream(node_id, output, graph.edges, node_results, aggregated_inputs)
-
-                # Emit CDC: edge transitions
-                if self._session_ctx:
-                    for src, dst, condition in graph.edges:
-                        if src == node_id:
-                            cond_result = self._evaluate_condition(condition, node_results)
-                            self._session_ctx.edge_eval(src, dst, condition, cond_result)
-                            if cond_result:
-                                self._session_ctx.edge_taken(src, dst)
-                            elif condition:
-                                self._session_ctx.edge_blocked(src, dst, condition)
+                self._emit_edge_cdc(node_id, graph.edges, node_results)
 
         return GraphExecutionResult(
             success=success,

@@ -103,56 +103,41 @@ def loading_indicator(message: str, *, delay: float = 0.1) -> Any:
         thread.join()
 
 
+def _wrap_text_lines(text: str, width: int) -> list[str]:
+    """Wrap text to fit within width, preserving paragraph breaks."""
+    import textwrap
+
+    wrapped = []
+    for line in text.split("\n"):
+        wrapped.extend(textwrap.wrap(line, width=width) if line.strip() else [""])
+    return wrapped
+
+
 def display_transcript(text: str, *, title: str = "Transcription") -> None:
     """Display transcription text in a visually distinct boxed area.
-
-    Creates a bordered box around the transcript text for clear presentation.
-    Handles empty text, long lines (with wrapping), and multi-line content.
 
     ASCII-only, no colors per design requirements.
     """
     import shutil
-    import textwrap
 
-    # Get terminal width, default to 80 if not available
     term_width = shutil.get_terminal_size((80, 24)).columns
-    # Box width: leave room for borders and padding
     box_width = min(term_width - 2, 78)
-    content_width = box_width - 4  # 2 for borders, 2 for padding
+    content_width = box_width - 4
 
-    # Handle empty text
-    if not text or not text.strip():
-        text = "(no speech detected)"
+    text = text if text and text.strip() else "(no speech detected)"
+    wrapped_lines = _wrap_text_lines(text, content_width)
 
-    # Wrap text to fit content width
-    wrapped_lines = []
-    for line in text.split("\n"):
-        if line.strip():
-            wrapped_lines.extend(textwrap.wrap(line, width=content_width) or [""])
-        else:
-            wrapped_lines.append("")
-
-    # Build the box (ASCII only)
-    top_border = "+" + "-" * (box_width - 2) + "+"
-    bottom_border = "+" + "-" * (box_width - 2) + "+"
-    separator = "+" + "-" * (box_width - 2) + "+"
-
-    # Title line
+    border = "+" + "-" * (box_width - 2) + "+"
     title_text = f"[ {title} ]"
-    title_padding = content_width - len(title_text)
-    title_line = "| " + title_text + " " * title_padding + " |"
+    title_line = f"| {title_text}{' ' * (content_width - len(title_text))} |"
 
-    # Print the box
     click.echo()
-    click.echo(top_border)
+    click.echo(border)
     click.echo(title_line)
-    click.echo(separator)
-
+    click.echo(border)
     for line in wrapped_lines:
-        padding = content_width - len(line)
-        click.echo("| " + line + " " * padding + " |")
-
-    click.echo(bottom_border)
+        click.echo(f"| {line}{' ' * (content_width - len(line))} |")
+    click.echo(border)
     click.echo()
 
 

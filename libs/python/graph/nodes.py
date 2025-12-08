@@ -148,44 +148,33 @@ class UserInputNode(GraphNode):
             }
 
         try:
-            if self.options:
-                # Multiple choice prompt
-                print(f"\n{self.prompt}")
-                for i, option in enumerate(self.options, 1):
-                    print(f"  {i}. {option}")
-
-                while True:
-                    try:
-                        choice = input("Select option (number): ").strip()
-                        idx = int(choice) - 1
-                        if 0 <= idx < len(self.options):
-                            return {
-                                "user_input": self.options[idx],
-                                "selected_option": idx,
-                                "success": True,
-                            }
-                        print(f"Please enter a number between 1 and {len(self.options)}")
-                    except ValueError:
-                        print("Invalid input. Please enter a number.")
-            else:
-                # Yes/no or free-form prompt
-                response = input(f"\n{self.prompt} ").strip()
-                if not response and self.default:
-                    response = self.default
-
-                confirmed = response.lower() in ("yes", "y", "true", "1")
-                return {
-                    "user_input": response,
-                    "confirmed": confirmed,
-                    "success": True,
-                }
+            return self._collect_options() if self.options else self._collect_freeform()
         except (EOFError, KeyboardInterrupt):
-            return {
-                "user_input": None,
-                "confirmed": False,
-                "success": False,
-                "error": "User cancelled input",
-            }
+            return {"user_input": None, "confirmed": False, "success": False, "error": "User cancelled input"}
+
+    def _collect_options(self) -> dict[str, Any]:
+        """Collect user selection from multiple choice options."""
+        print(f"\n{self.prompt}")
+        for i, option in enumerate(self.options, 1):
+            print(f"  {i}. {option}")
+
+        while True:
+            choice = input("Select option (number): ").strip()
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(self.options):
+                    return {"user_input": self.options[idx], "selected_option": idx, "success": True}
+            except ValueError:
+                pass
+            print(f"Please enter a number between 1 and {len(self.options)}")
+
+    def _collect_freeform(self) -> dict[str, Any]:
+        """Collect free-form or yes/no user input."""
+        response = input(f"\n{self.prompt} ").strip()
+        if not response and self.default:
+            response = self.default
+        confirmed = response.lower() in ("yes", "y", "true", "1")
+        return {"user_input": response, "confirmed": confirmed, "success": True}
 
 
 class SubgraphNode(GraphNode):
@@ -325,28 +314,17 @@ class RecallNode(GraphNode):
                 limit=self.limit,
                 threshold=self.threshold,
             )
-
-            return {
-                "success": True,
-                "results": [
-                    {
-                        "document_id": r.document_id,
-                        "collection": r.collection,
-                        "text": r.text,
-                        "score": r.score,
-                    }
-                    for r in results
-                ],
-                "top_text": results[0].text if results else "",
-            }
-
+            return self._format_recall_results(results)
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "results": [],
-                "top_text": "",
-            }
+            return {"success": False, "error": str(e), "results": [], "top_text": ""}
+
+    def _format_recall_results(self, results) -> dict[str, Any]:
+        """Format recall results into output dict."""
+        formatted = [
+            {"document_id": r.document_id, "collection": r.collection, "text": r.text, "score": r.score}
+            for r in results
+        ]
+        return {"success": True, "results": formatted, "top_text": results[0].text if results else ""}
 
 
 class APINode(GraphNode):

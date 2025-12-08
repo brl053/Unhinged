@@ -491,36 +491,28 @@ class ContextStore:
             pass
         return None
 
-    def list_sessions(self, limit: int = 20) -> list[SessionSummary]:
-        """List previous sessions for landing page.
+    def _doc_to_summary(self, doc) -> SessionSummary:
+        """Convert a document to a SessionSummary."""
+        data = doc.data
+        created = datetime.fromisoformat(data.get("created_at", datetime.utcnow().isoformat()))
+        changelog = data.get("changelog", [])
+        last_ts = datetime.fromisoformat(changelog[-1].get("timestamp", created.isoformat())) if changelog else created
+        return SessionSummary(
+            session_id=data.get("session_id", doc.id),
+            created_at=created,
+            last_updated=last_ts,
+            mutation_count=len(changelog),
+        )
 
-        Returns sessions ordered by most recent first.
-        """
+    def list_sessions(self, limit: int = 20) -> list[SessionSummary]:
+        """List previous sessions for landing page. Returns sessions ordered by most recent first."""
         store = self._get_store()
         if store is None:
             return []
 
         try:
             docs = store.query(self.COLLECTION, limit=limit)
-            summaries = []
-            for doc in docs:
-                data = doc.data
-                created = datetime.fromisoformat(data.get("created_at", datetime.utcnow().isoformat()))
-                # Use last changelog entry timestamp or created_at
-                changelog = data.get("changelog", [])
-                if changelog:
-                    last_ts = datetime.fromisoformat(changelog[-1].get("timestamp", created.isoformat()))
-                else:
-                    last_ts = created
-                summaries.append(
-                    SessionSummary(
-                        session_id=data.get("session_id", doc.id),
-                        created_at=created,
-                        last_updated=last_ts,
-                        mutation_count=len(changelog),
-                    )
-                )
-            # Sort by last_updated descending
+            summaries = [self._doc_to_summary(doc) for doc in docs]
             summaries.sort(key=lambda s: s.last_updated, reverse=True)
             return summaries
         except Exception:
@@ -565,32 +557,25 @@ class ContextStore:
         except Exception:
             return False
 
-    def _persist_cdc_feed(self, context: SessionContext) -> None:
-        """Write all CDC events to the session_cdc collection.
+    def _cdc_event_to_doc(self, session_id: str, event) -> dict:
+        """Convert a CDC event to a document dict."""
+        return {
+            "session_id": session_id,
+            "event_type": event.event_type.value,
+            "timestamp": event.timestamp.isoformat(),
+            "data": event.data,
+            "stage": event.stage,
+            "sequence": event.sequence,
+        }
 
-        This captures EVERYTHING that happened in the session:
-        - State mutations
-        - Chat messages
-        - Execution stdout/stderr
-        - Flight checks/actions
-        - System calls (if available)
-        """
+    def _persist_cdc_feed(self, context: SessionContext) -> None:
+        """Write all CDC events to the session_cdc collection. Best-effort."""
         store = self._get_store()
         if store is None or not context.cdc_feed():
             return
 
         try:
             for event in context.cdc_feed():
-                store.create(
-                    "session_cdc",
-                    {
-                        "session_id": context.session_id,
-                        "event_type": event.event_type.value,
-                        "timestamp": event.timestamp.isoformat(),
-                        "data": event.data,
-                        "stage": event.stage,
-                        "sequence": event.sequence,
-                    },
-                )
+                store.create("session_cdc", self._cdc_event_to_doc(context.session_id, event))
         except Exception:
             pass  # CDC is best-effort
