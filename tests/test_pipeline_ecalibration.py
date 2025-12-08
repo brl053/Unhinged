@@ -73,13 +73,13 @@ class TestECalibrationStep:
 
         step = ECalibrationStep()
         mock_session = MagicMock()
-        mock_session.get_meta.return_value = {}
+        mock_session.get.return_value = {}
 
         payload = PromptPayload(user_input="fuck this is confusing")
         step.execute(payload, session=mock_session)
 
-        mock_session.set_meta.assert_called()
-        call_args = mock_session.set_meta.call_args
+        mock_session.set.assert_called()
+        call_args = mock_session.set.call_args
         assert "ecalibration" in call_args[0][0] or "calibration" in str(call_args)
 
     # =========================================================================
@@ -112,14 +112,14 @@ class TestECalibrationStep:
 
         # Simulate existing calibration from previous messages
         existing_calibration = {"profanity_level": 0.1, "formality": 0.8, "message_count": 3}
-        mock_session.get_meta.return_value = existing_calibration
+        mock_session.get.return_value = existing_calibration
 
         # New message with high profanity
         payload = PromptPayload(user_input="damn this is harder than I thought")
         step.execute(payload, session=mock_session)
 
         # Should update, not reset
-        call_args = mock_session.set_meta.call_args[0][1]
+        call_args = mock_session.set.call_args[0][1]
         assert call_args.get("message_count", 0) > 3
 
     # =========================================================================

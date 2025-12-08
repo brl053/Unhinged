@@ -91,6 +91,13 @@ class CDCEventType(Enum):
     PIPELINE_COMPRESS = "pipeline.compress"
     PIPELINE_COMPLETE = "pipeline.complete"
 
+    # Loop control flow events
+    LOOP_ITERATION_START = "loop.iteration.start"
+    LOOP_ITERATION_END = "loop.iteration.end"
+
+    # Identity/calibration events
+    IDENTITY_HYDRATED = "identity.hydrated"
+
 
 @dataclass
 class CDCEvent:

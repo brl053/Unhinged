@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from .context import CDCEventType
 from .prompt_pipeline import PipelineStep, PromptPayload, StepOutput, StepResult
 
 if TYPE_CHECKING:
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 # =============================================================================
-# STUB: IdentityHydrationStep - TDD implementation pending
+# IdentityHydrationStep - Inject deployment-time identity
 # =============================================================================
 
 
@@ -38,18 +39,141 @@ class IdentityHydrationStep(PipelineStep):
     def step_id(self) -> str:
         return "identity_hydration"
 
+    def _load_config(self) -> dict[str, Any] | None:
+        """Load identity config from dict or YAML file."""
+        if self._identity_config:
+            return self._identity_config
+
+        if self._config_path:
+            from pathlib import Path
+
+            import yaml
+
+            path = Path(self._config_path)
+            if not path.exists():
+                return None
+            with path.open() as f:
+                loaded: dict[str, Any] = yaml.safe_load(f)
+                return loaded
+
+        return None
+
+    def _format_identity_block(self, config: dict[str, Any]) -> str:
+        """Format identity config into structured block."""
+        lines = ["[identity]"]
+
+        if "role" in config:
+            lines.append(f"Role: {config['role']}")
+
+        if "codebase" in config:
+            lines.append(f"Codebase: {config['codebase']}")
+
+        if "repo_root" in config:
+            lines.append(f"Repository: {config['repo_root']}")
+
+        if "capabilities" in config:
+            caps = ", ".join(config["capabilities"])
+            lines.append(f"Capabilities: {caps}")
+
+        lines.append("[/identity]")
+        return "\n".join(lines)
+
     def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
-        # STUB: Return ABORT to make tests fail properly
+        config = self._load_config()
+
+        if not config:
+            return StepOutput(
+                result=StepResult.ABORT,
+                reason="No identity config provided - cannot hydrate identity",
+                metrics={},
+            )
+
+        identity_block = self._format_identity_block(config)
+
+        # Prepend identity to existing system prompt (don't replace)
+        if payload.system_prompt:
+            payload.system_prompt = f"{identity_block}\n\n{payload.system_prompt}"
+        else:
+            payload.system_prompt = identity_block
+
+        # Emit CDC event if session provided
+        if session:
+            session.emit(CDCEventType.IDENTITY_HYDRATED, {"config": config})
+
         return StepOutput(
-            result=StepResult.ABORT,
-            reason="IdentityHydrationStep not implemented",
-            metrics={},
+            result=StepResult.CONTINUE,
+            metrics={
+                "role": config.get("role", ""),
+                "codebase": config.get("codebase", ""),
+                "capabilities": config.get("capabilities", []),
+            },
         )
 
 
 # =============================================================================
-# STUB: ECalibrationStep - TDD implementation pending
+# ECalibrationStep - Calibrate tone to match user style
 # =============================================================================
+
+# Profanity word list for rule-based detection
+_PROFANITY_WORDS = frozenset(
+    [
+        "fuck",
+        "fucking",
+        "fucked",
+        "shit",
+        "damn",
+        "hell",
+        "ass",
+        "bitch",
+        "crap",
+        "piss",
+        "bastard",
+        "dammit",
+        "goddamn",
+        "bullshit",
+        "asshole",
+    ]
+)
+
+# Informal markers
+_INFORMAL_MARKERS = frozenset(
+    [
+        "yo",
+        "lol",
+        "lmao",
+        "gonna",
+        "wanna",
+        "gotta",
+        "kinda",
+        "sorta",
+        "yeah",
+        "nah",
+        "dude",
+        "bro",
+        "bruh",
+        "tbh",
+        "idk",
+        "omg",
+        "wtf",
+    ]
+)
+
+# Formal markers
+_FORMAL_MARKERS = frozenset(
+    [
+        "please",
+        "kindly",
+        "appreciate",
+        "assistance",
+        "regarding",
+        "therefore",
+        "however",
+        "furthermore",
+        "consequently",
+        "nevertheless",
+        "accordingly",
+    ]
+)
 
 
 class ECalibrationStep(PipelineStep):
@@ -66,11 +190,98 @@ class ECalibrationStep(PipelineStep):
     def step_id(self) -> str:
         return "e_calibration"
 
+    def _detect_profanity_level(self, text: str) -> float:
+        """Detect profanity level from 0.0 (clean) to 1.0 (heavy)."""
+        words = text.lower().split()
+        if not words:
+            return 0.0
+        profane_count = sum(1 for w in words if w.strip(".,!?") in _PROFANITY_WORDS)
+        # Normalize: 2+ profane words = high level
+        return min(1.0, profane_count / 2.0)
+
+    def _detect_formality(self, text: str) -> float:
+        """Detect formality level from 0.0 (casual) to 1.0 (formal)."""
+        words = text.lower().split()
+        if not words:
+            return 0.5
+
+        informal_count = sum(1 for w in words if w.strip(".,!?") in _INFORMAL_MARKERS)
+        formal_count = sum(1 for w in words if w.strip(".,!?") in _FORMAL_MARKERS)
+
+        # Base formality on marker ratio
+        if informal_count > formal_count:
+            return max(0.0, 0.5 - (informal_count * 0.15))
+        elif formal_count > informal_count:
+            return min(1.0, 0.5 + (formal_count * 0.15))
+        return 0.5
+
+    def _detect_pace(self, text: str) -> float:
+        """Detect communication pace from 0.0 (terse) to 1.0 (verbose)."""
+        words = text.split()
+        # Short messages = terse, long = verbose
+        if len(words) < 5:
+            return 0.2
+        elif len(words) > 20:
+            return 0.8
+        return 0.5
+
+    def _generate_tone_guidance(self, profile: dict[str, Any]) -> str:
+        """Generate tone guidance for system prompt."""
+        profanity = profile.get("profanity_level", 0)
+        formality = profile.get("formality", 0.5)
+
+        guidance_parts = ["[tone-calibration]"]
+
+        if profanity > 0.5:
+            guidance_parts.append("User uses casual/profane language. Mirror relaxed tone.")
+        elif formality > 0.7:
+            guidance_parts.append("User is formal. Maintain professional tone.")
+        else:
+            guidance_parts.append("User is casual. Match conversational style.")
+
+        guidance_parts.append("[/tone-calibration]")
+        return "\n".join(guidance_parts)
+
     def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
-        # STUB: Return minimal metrics to make tests fail properly
+        text = payload.user_input
+
+        # Detect current message signals
+        profanity = self._detect_profanity_level(text)
+        formality = self._detect_formality(text)
+        pace = self._detect_pace(text)
+
+        # Get existing calibration from session (for adaptive updates)
+        existing: dict[str, Any] = {}
+        message_count = 1
+        if session:
+            existing = session.get("ecalibration") or {}
+            message_count = existing.get("message_count", 0) + 1
+
+            # Blend with existing calibration (exponential moving average)
+            alpha = 0.3  # Weight for new observation
+            if existing:
+                profanity = alpha * profanity + (1 - alpha) * existing.get("profanity_level", 0)
+                formality = alpha * formality + (1 - alpha) * existing.get("formality", 0.5)
+                pace = alpha * pace + (1 - alpha) * existing.get("pace", 0.5)
+
+        profile = {
+            "profanity_level": profanity,
+            "formality": formality,
+            "pace": pace,
+            "message_count": message_count,
+        }
+
+        # Store in session
+        if session:
+            session.set("ecalibration", profile)
+
+        # Add tone guidance to context
+        guidance = self._generate_tone_guidance(profile)
+        payload.context_blocks.append(guidance)
+
         return StepOutput(
             result=StepResult.CONTINUE,
-            metrics={"profanity_level": 0.0, "formality": 0.5, "pace": 0.5},
+            metrics=profile,
         )
 
 
