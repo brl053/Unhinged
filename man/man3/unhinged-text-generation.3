@@ -1,0 +1,130 @@
+.TH UNHINGED-TEXT-GENERATION 3 "December 2025" "Unhinged 1.0" "Library Functions"
+.SH NAME
+unhinged-text-generation \- LLM text generation using local or remote models
+.SH SYNOPSIS
+.B from libs.python.clients import TextGenerationService
+.PP
+.BI "service = TextGenerationService(model=" llama2 ", provider=" ollama ")"
+.PP
+.BI "text = service.generate(" prompt ")"
+.br
+.BI "result = service.generate_with_metadata(" prompt ")"
+.SH DESCRIPTION
+The
+.B TextGenerationService
+provides text generation using large language models.
+Supports multiple providers:
+.TP
+.B ollama
+Local models via Ollama (default, privacy-preserving)
+.TP
+.B openai
+OpenAI API (GPT-4, GPT-3.5, etc.)
+.TP
+.B anthropic
+Anthropic API (Claude models)
+.PP
+The client is loaded lazily on first use. For Ollama, a health check ensures
+the service is running before attempting generation.
+.SH METHODS
+.TP
+.BI "generate(" prompt ", max_tokens=" 512 ", temperature=" 0.7 ", top_p=" 0.9 ")"
+Generate text from a prompt. Returns the generated text as a string.
+.TP
+.BI "generate_with_metadata(" prompt ", max_tokens=" 512 ", temperature=" 0.7 ")"
+Generate text and return metadata including model info and token counts.
+.SH PARAMETERS
+.TP
+.B model
+Model name. Examples:
+.RS
+.TP
+Ollama: llama2, mistral, codellama, phi
+.TP
+OpenAI: gpt-4, gpt-4-turbo, gpt-3.5-turbo
+.TP
+Anthropic: claude-3-opus, claude-3-sonnet
+.RE
+.TP
+.B provider
+Backend provider: ollama, openai, or anthropic.
+.TP
+.B max_tokens
+Maximum tokens to generate (default: 512).
+.TP
+.B temperature
+Sampling temperature from 0.0 (deterministic) to 1.0 (creative).
+Default: 0.7.
+.TP
+.B top_p
+Nucleus sampling parameter. Default: 0.9.
+.SH RETURN VALUES
+.TP
+.B generate()
+Returns a string containing the generated text.
+.TP
+.B generate_with_metadata()
+Returns a dictionary with keys:
+.RS
+.TP
+.B text
+The generated text (string)
+.TP
+.B model
+Model name used
+.TP
+.B provider
+Provider name
+.TP
+.B prompt_length
+Length of input prompt
+.TP
+.B text_length
+Length of generated text
+.RE
+.SH ERRORS
+.TP
+.B ServiceNotRunningError
+Raised if Ollama is not running (for ollama provider).
+.TP
+.B RuntimeError
+Raised if generation fails.
+.TP
+.B ValueError
+Raised if an unknown provider is specified.
+.SH EXAMPLES
+Local generation with Ollama:
+.PP
+.RS
+.nf
+from libs.python.clients import TextGenerationService
+
+service = TextGenerationService(model="mistral", provider="ollama")
+response = service.generate("Explain quantum computing in simple terms")
+print(response)
+.fi
+.RE
+.PP
+Using OpenAI:
+.PP
+.RS
+.nf
+service = TextGenerationService(model="gpt-4", provider="openai")
+response = service.generate("Write a haiku about coding")
+.fi
+.RE
+.SH ENVIRONMENT
+.TP
+.B OPENAI_API_KEY
+Required for OpenAI provider.
+.TP
+.B ANTHROPIC_API_KEY
+Required for Anthropic provider.
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-generate (1),
+.BR unhinged-transcription (3),
+.BR unhinged-architecture (7)
+.SH AUTHOR
+Unhinged Development Team
+

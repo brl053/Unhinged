@@ -1,0 +1,123 @@
+.TH UNHINGED-TRANSCRIPTION 3 "December 2025" "Unhinged 1.0" "Library Functions"
+.SH NAME
+unhinged-transcription \- Speech-to-text transcription using Whisper
+.SH SYNOPSIS
+.B from libs.python.clients import TranscriptionService
+.PP
+.BI "service = TranscriptionService(model_size=" tiny "|" base "|" small "|" medium "|" large ")"
+.PP
+.BI "text = service.transcribe_audio(" audio_path ")"
+.br
+.BI "text = service.transcribe_audio_data(" audio_bytes ", format=" wav ")"
+.br
+.BI "result = service.transcribe_with_metadata(" audio_path ")"
+.SH DESCRIPTION
+The
+.B TranscriptionService
+provides speech-to-text transcription using OpenAI's Whisper model.
+It runs locally with no network calls \- audio never leaves your machine.
+.PP
+The model is loaded lazily on first use, so initialization is fast.
+.SH METHODS
+.TP
+.BI "transcribe_audio(" audio_path ")"
+Transcribe an audio file to text. Accepts WAV, MP3, and other common formats.
+Returns the transcribed text as a string.
+.TP
+.BI "transcribe_audio_data(" audio_bytes ", format=" wav ")"
+Transcribe raw audio bytes. The data is written to a temporary file,
+transcribed, then cleaned up. Returns the transcribed text.
+.TP
+.BI "transcribe_with_metadata(" audio_path ")"
+Transcribe audio and return detailed metadata including detected language,
+word-level segments, and duration estimate.
+.SH PARAMETERS
+.TP
+.B model_size
+Whisper model size. Larger models are more accurate but slower:
+.RS
+.TP
+.B tiny
+Fastest, lowest accuracy (~1GB VRAM)
+.TP
+.B base
+Good balance for most use cases (~1GB VRAM)
+.TP
+.B small
+Better accuracy (~2GB VRAM)
+.TP
+.B medium
+High accuracy (~5GB VRAM)
+.TP
+.B large
+Highest accuracy (~10GB VRAM)
+.RE
+.SH RETURN VALUES
+.TP
+.B transcribe_audio(), transcribe_audio_data()
+Returns a string containing the transcribed text.
+.TP
+.B transcribe_with_metadata()
+Returns a dictionary with keys:
+.RS
+.TP
+.B text
+The transcribed text (string)
+.TP
+.B language
+Detected language code (string)
+.TP
+.B segments
+List of word-level timing segments
+.TP
+.B duration
+Estimated audio duration in seconds
+.RE
+.SH ERRORS
+.TP
+.B FileNotFoundError
+Raised if the audio file does not exist.
+.TP
+.B RuntimeError
+Raised if transcription fails or the model fails to load.
+.TP
+.B ImportError
+Raised if the whisper package is not installed.
+.SH EXAMPLES
+Basic transcription:
+.PP
+.RS
+.nf
+from libs.python.clients import TranscriptionService
+
+service = TranscriptionService(model_size="base")
+text = service.transcribe_audio("recording.wav")
+print(text)
+.fi
+.RE
+.PP
+Transcription with metadata:
+.PP
+.RS
+.nf
+result = service.transcribe_with_metadata("speech.mp3")
+print(f"Language: {result['language']}")
+print(f"Text: {result['text']}")
+.fi
+.RE
+.SH DEPENDENCIES
+Requires the
+.B openai-whisper
+package:
+.PP
+.RS
+pip install openai-whisper
+.RE
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-transcribe (1),
+.BR unhinged-text-generation (3),
+.BR unhinged-architecture (7)
+.SH AUTHOR
+Unhinged Development Team
+

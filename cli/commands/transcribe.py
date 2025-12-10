@@ -10,10 +10,17 @@ from pathlib import Path
 from uuid import uuid4
 
 import click
-from unhinged_events import create_service_logger
 
 from cli.utils import display_transcript, loading_indicator, log_error, log_info, log_success
-from libs.python.persistence.event_store import persist_event
+
+# Add event-framework to path (hyphenated directory name can't be imported directly)
+_event_framework_path = Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"
+if str(_event_framework_path) not in sys.path:
+    sys.path.insert(0, str(_event_framework_path))
+
+from events import create_service_logger  # noqa: E402
+
+from libs.python.persistence.event_store import persist_event  # noqa: E402
 
 # Import service - handle both direct and pytest imports
 try:

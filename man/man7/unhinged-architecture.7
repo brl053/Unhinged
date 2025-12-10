@@ -1,0 +1,133 @@
+.TH UNHINGED-ARCHITECTURE 7 "December 2025" "Unhinged 1.0" "Miscellaneous"
+.SH NAME
+unhinged-architecture \- Unhinged system architecture and design philosophy
+.SH DESCRIPTION
+Unhinged is a CLI-first native graphics platform with a local-first,
+privacy-preserving architecture. It provides headless content generation
+(text, images, audio) and system automation through executable graph workflows.
+.SH DESIGN PHILOSOPHY
+.TP
+.B CLI-First
+All functionality is accessible via the
+.B unhinged
+command. The CLI is the primary interface, not a wrapper around a GUI.
+.TP
+.B Local-First
+Models run locally via Ollama and Whisper. Your data never leaves your machine
+unless you explicitly configure cloud providers.
+.TP
+.B Direct Model Access
+No gRPC, no microservices, no network hops. Python clients call models directly
+for minimal latency and maximum reliability.
+.TP
+.B UNIX Philosophy
+Small, composable tools. Graphs pipe data between nodes using stdout/stdin
+semantics familiar to shell users.
+.SH COMPONENTS
+.SS CLI Layer
+The
+.B unhinged
+command provides subcommands for all operations:
+.PP
+.RS
+unhinged generate text "prompt"
+.br
+unhinged transcribe mic
+.br
+unhinged graph session
+.RE
+.SS Clients
+Python wrappers for direct model access in
+.BR libs/python/clients/ :
+.TP
+.B TranscriptionService
+Whisper speech-to-text. See
+.BR unhinged-transcription (3).
+.TP
+.B TextGenerationService
+LLM text generation. See
+.BR unhinged-text-generation (3).
+.TP
+.B ImageGenerationService
+Stable Diffusion image generation.
+.TP
+.B TTSService
+Text-to-speech synthesis.
+.SS Drivers
+Higher-level adapters in
+.B libs/python/drivers/
+that implement a common
+.B Driver
+interface for graph execution. Drivers wrap clients and provide
+consistent input/output contracts.
+.SS Graphs
+Executable DAG workflows defined in JSON. Nodes represent operations
+(shell commands, LLM queries, user prompts) and edges define data flow.
+See
+.BR unhinged-graph (5).
+.SH EXECUTION MODEL
+.SS Graph Execution
+Graphs execute as DAGs with automatic parallelization:
+.IP 1. 4
+Nodes with no dependencies execute first (in parallel if multiple).
+.IP 2. 4
+Node outputs route to downstream nodes via
+.B stdout
+piping.
+.IP 3. 4
+Conditional edges evaluate Python expressions to determine flow.
+.IP 4. 4
+Execution continues until all reachable nodes complete.
+.SS Node Types
+.TP
+.B UnixCommandNode
+Execute shell commands with timeout.
+.TP
+.B UserInputNode
+Prompt user for confirmation or selection.
+.TP
+.B SubgraphNode
+Execute nested graphs.
+.TP
+.B RubricGradeNode
+Quality gate with pass/fail scoring.
+.SH DIRECTORY STRUCTURE
+.TP
+.B cli/
+Click-based CLI commands.
+.TP
+.B libs/python/clients/
+Direct model access wrappers.
+.TP
+.B libs/python/drivers/
+Driver-interface adapters for graphs.
+.TP
+.B libs/python/graph/
+Graph execution engine.
+.TP
+.B libs/python/persistence/
+Document store for graphs and sessions.
+.TP
+.B man/
+Manual pages (you are here).
+.SH INFRASTRUCTURE
+.TP
+.B Ollama
+Local LLM server on port 1500. Runs models like Llama, Mistral, CodeLlama.
+.TP
+.B Whisper
+OpenAI's speech recognition, loaded directly via Python.
+.TP
+.B PostgreSQL
+Optional persistence for sessions and documents.
+.TP
+.B Redis
+Optional caching layer.
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-transcription (3),
+.BR unhinged-text-generation (3),
+.BR unhinged-graph (5)
+.SH AUTHOR
+Unhinged Development Team
+

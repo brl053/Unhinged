@@ -7,8 +7,6 @@ from cli.commands.generate import generate
 from cli.commands.graph import graph
 from cli.commands.image import image
 from cli.commands.parse import parse
-from cli.commands.prompt import prompt
-from cli.commands.query import query
 from cli.commands.shortform import shortform
 from cli.commands.system import system
 from cli.commands.transcribe import transcribe
@@ -42,7 +40,5 @@ __all__ = [
     "parse",
     "shortform",
     "orchestrate",
-    "prompt",
-    "query",
     "graph",
 ]

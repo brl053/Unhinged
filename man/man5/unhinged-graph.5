@@ -1,0 +1,171 @@
+.TH UNHINGED-GRAPH 5 "December 2025" "Unhinged 1.0" "File Formats"
+.SH NAME
+unhinged-graph \- Unhinged graph workflow file format
+.SH DESCRIPTION
+Unhinged graphs define executable workflows as directed acyclic graphs (DAGs).
+Graphs are stored as JSON files with nodes representing operations and edges
+defining data flow between them.
+.SH FILE FORMAT
+A graph file is a JSON object with the following structure:
+.PP
+.RS
+.nf
+{
+  "name": "Graph Name",
+  "description": "What this graph does",
+  "tags": ["tag1", "tag2"],
+  "version": "1.0",
+  "nodes": [ ... ],
+  "edges": [ ... ]
+}
+.fi
+.RE
+.SH TOP-LEVEL KEYS
+.TP
+.B name
+Required. Human-readable name for the graph.
+.TP
+.B description
+Optional. Detailed description of the graph's purpose.
+.TP
+.B tags
+Optional. Array of strings for categorization and search.
+.TP
+.B version
+Optional. Version string for the graph definition.
+.TP
+.B nodes
+Required. Array of node definitions.
+.TP
+.B edges
+Required. Array of edge definitions connecting nodes.
+.SH NODE TYPES
+Each node is an object with
+.B id
+and
+.B type
+keys, plus type-specific configuration.
+.TP
+.B unix
+Execute a shell command.
+.RS
+.nf
+{
+  "id": "list_files",
+  "type": "unix",
+  "command": "ls -la /tmp"
+}
+.fi
+.RE
+.TP
+.B llm
+Query a language model.
+.RS
+.nf
+{
+  "id": "analyze",
+  "type": "llm",
+  "config": {
+    "model": "gpt-4o-mini",
+    "system_prompt": "You are a helpful assistant.",
+    "input_template": "Analyze: {{upstream.stdout}}"
+  }
+}
+.fi
+.RE
+.TP
+.B user_input
+Prompt user for input during execution.
+.RS
+.nf
+{
+  "id": "confirm",
+  "type": "user_input",
+  "config": {
+    "prompt": "Proceed with installation?",
+    "options": ["yes", "no", "abort"]
+  }
+}
+.fi
+.RE
+.TP
+.B rubric_grade
+Grade upstream output against a quality rubric.
+.RS
+.nf
+{
+  "id": "grade",
+  "type": "rubric_grade",
+  "config": {
+    "rubric_name": "invoice_v1",
+    "input_mapping": {
+      "citations": "upstream.citations",
+      "diagnosis": "upstream.diagnosis"
+    }
+  }
+}
+.fi
+.RE
+.SH EDGE FORMAT
+Edges connect nodes and optionally include conditions:
+.PP
+.RS
+.nf
+{
+  "from": "source_node_id",
+  "to": "target_node_id",
+  "condition": "source_node_id['passed'] == true"
+}
+.fi
+.RE
+.TP
+.B from
+Source node ID.
+.TP
+.B to
+Target node ID.
+.TP
+.B condition
+Optional. Python expression evaluated at runtime. The edge is only followed
+if the condition evaluates to true. Access upstream node outputs using
+bracket notation.
+.SH DATA FLOW
+Node outputs are automatically routed to downstream nodes via the
+.B stdin
+key, matching UNIX piping semantics. The
+.B stdout
+from upstream nodes becomes available as input to downstream nodes.
+.PP
+Template variables in LLM nodes use double-brace syntax:
+.B {{node_id.key}}
+.SH EXAMPLE
+Complete graph for updating software:
+.PP
+.RS
+.nf
+{
+  "name": "Update Discord",
+  "nodes": [
+    {"id": "check", "type": "unix",
+     "command": "dpkg -l discord"},
+    {"id": "confirm", "type": "user_input",
+     "config": {"prompt": "Update?",
+                "options": ["yes", "no"]}},
+    {"id": "update", "type": "unix",
+     "command": "sudo apt upgrade discord"}
+  ],
+  "edges": [
+    {"from": "check", "to": "confirm"},
+    {"from": "confirm", "to": "update",
+     "condition": "confirm['selected_option'] == 0"}
+  ]
+}
+.fi
+.RE
+.SH SEE ALSO
+.BR unhinged (1),
+.BR unhinged-graph (1),
+.BR unhinged-architecture (7)
+.SH AUTHOR
+Unhinged Development Team
+

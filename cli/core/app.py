@@ -14,8 +14,6 @@ from cli.commands import (
     image,
     orchestrate,
     parse,
-    prompt,
-    query,
     shortform,
     system,
     transcribe,
@@ -52,8 +50,6 @@ cli.add_command(parse)
 cli.add_command(shortform)
 cli.add_command(chat)
 cli.add_command(orchestrate)
-cli.add_command(prompt)
-cli.add_command(query)
 cli.add_command(graph)
 
 

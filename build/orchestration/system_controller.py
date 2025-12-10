@@ -10,12 +10,17 @@ import time
 from pathlib import Path
 from typing import Any
 
-from unhinged_events import create_service_logger
+# Add event-framework to path (hyphenated directory name can't be imported directly)
+_event_framework_path = Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"
+if str(_event_framework_path) not in sys.path:
+    sys.path.insert(0, str(_event_framework_path))
 
 # Add build system to path
 sys.path.append(str(Path(__file__).parent.parent.parent / "build"))
 
-from .operation_result import OperationResult, SystemStatus
+from events import create_service_logger  # noqa: E402
+
+from .operation_result import OperationResult, SystemStatus  # noqa: E402
 
 # Import build system components
 try:
