@@ -54,6 +54,34 @@
 
 ---
 
+## Repository Structure
+
+```
+Unhinged/
+├── build/              # Polyglot build system, CI/CD, quality gates, Python venv
+├── cli/                # `unc` command-line interface (graph, voice, dev tools)
+├── control/            # Desktop application launchers and service orchestration
+├── docs/               # LlmDocs-annotated technical documentation
+├── examples/           # Example scripts and graph definitions
+├── generated/          # Auto-generated code (design system CSS, bindings)
+├── libs/               # Shared libraries (graphics, Python utilities, design system)
+├── man/                # Man pages for CLI commands
+├── scription/          # Project vision, architecture decisions, roadmaps
+├── scripts/            # Shell scripts for setup, hooks, debugging
+├── services/           # AI microservices (STT, TTS, vision, chat, graph-service)
+├── tests/              # Unit and e2e tests
+├── vm/                 # Virtual machine configs (Windows, TempleOS, Alpine)
+├── .github/            # GitHub Actions workflows
+├── unhinged            # Main entry point script
+├── LLM_MASTER_PROMPT.md # Context prompt for LLM agents working on this repo
+├── Makefile            # Build shortcuts
+├── mypy.ini            # Type checking configuration
+├── pytest.ini          # Test runner configuration
+└── ruff.toml           # Linter configuration
+```
+
+---
+
 
 
 
