@@ -125,7 +125,7 @@ class UnhingedSystemTest:
         else:
             self.log("Creating Alpine VM disk...")
             result = self.run_command(
-                'python3 -c "from control.qemu_vm_launcher import QEMULauncher; q = QEMULauncher(); q.create_alpine_vm_disk()"'
+                'python3 -c "from vm.launchers import QEMULauncher; ' 'q = QEMULauncher(); q.create_alpine_vm_disk()"'
             )
             disk_created = result["success"] and vm_disk.exists()
 
@@ -193,7 +193,6 @@ class UnhingedSystemTest:
 
         for test_name, result in self.test_results.items():
             status = "PASS" if result else "FAIL"
-            status_symbol = "✅" if result else "❌"
             self.log(
                 f"{test_name.replace('_', ' ').title()}: {status}",
                 "SUCCESS" if result else "ERROR",

@@ -69,8 +69,8 @@ class SimpleCommunicationTest:
 
         # Try to create disk using the launcher
         try:
-            result = subprocess.run(
-                ["python3", "control/simple_vm_launcher.py"],
+            subprocess.run(
+                ["python3", "vm/launchers/simple_vm_launcher.py"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -154,7 +154,7 @@ class SimpleCommunicationTest:
         # Test the launcher script syntax
         try:
             result = subprocess.run(
-                ["python3", "-m", "py_compile", "control/simple_vm_launcher.py"],
+                ["python3", "-m", "py_compile", "vm/launchers/simple_vm_launcher.py"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,

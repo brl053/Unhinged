@@ -95,7 +95,7 @@ class ServiceRegistry:
     """
 
     def __init__(self, config_path: Path | None = None):
-        self.config_path = config_path or Path("control/network/services.json")
+        self.config_path = config_path or Path("services/shared/services.json")
         self.services: dict[str, ServiceEndpoint] = {}
         self.health_cache: dict[str, tuple[ServiceStatus, float]] = {}
         self.cache_ttl = 30  # seconds

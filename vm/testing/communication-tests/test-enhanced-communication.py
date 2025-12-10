@@ -55,7 +55,7 @@ class EnhancedCommunicationTest:
 
         try:
             result = subprocess.run(
-                ["python3", "-m", "py_compile", "control/simple_vm_launcher.py"],
+                ["python3", "-m", "py_compile", "vm/launchers/simple_vm_launcher.py"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -77,7 +77,7 @@ class EnhancedCommunicationTest:
 
         try:
             result = subprocess.run(
-                ["python3", "-m", "py_compile", "control/enhanced_vm_launcher.py"],
+                ["python3", "-m", "py_compile", "vm/launchers/enhanced_vm_launcher.py"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -99,7 +99,7 @@ class EnhancedCommunicationTest:
 
         try:
             result = subprocess.run(
-                ["python3", "-m", "py_compile", "control/unhinged_launcher.py"],
+                ["python3", "-m", "py_compile", "build/orchestration/unhinged_launcher.py"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -189,7 +189,7 @@ class EnhancedCommunicationTest:
                 [
                     "python3",
                     "-c",
-                    'import sys; sys.path.append("control"); from enhanced_vm_launcher import EnhancedVMLauncher; print("Enhanced import OK")',
+                    "from vm.launchers import EnhancedVMLauncher; print('Enhanced import OK')",
                 ],
                 cwd=self.project_root,
                 capture_output=True,
@@ -205,13 +205,13 @@ class EnhancedCommunicationTest:
             self.log(f"Enhanced launcher import test error: {e}", "ERROR")
             return False
 
-        # Test QoL launcher can import enhanced launcher
+        # Test orchestration launcher can import
         try:
             result = subprocess.run(
                 [
                     "python3",
                     "-c",
-                    'import sys; sys.path.append("control"); from unhinged_launcher import UnhingedLauncher; print("QoL import OK")',
+                    "from build.orchestration import UnhingedLauncher; print('Orchestration import OK')",
                 ],
                 cwd=self.project_root,
                 capture_output=True,
@@ -275,7 +275,7 @@ class EnhancedCommunicationTest:
                 [
                     "python3",
                     "-c",
-                    "from control.simple_vm_launcher import SimpleVMLauncher; "
+                    "from vm.launchers.simple_vm_launcher import SimpleVMLauncher; "
                     "launcher = SimpleVMLauncher(); "
                     "disk = launcher.create_simple_vm_disk(); "
                     'print("Disk created:", disk)',

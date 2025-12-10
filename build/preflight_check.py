@@ -26,9 +26,6 @@ try:
     from .checksum_manager import ChecksumManager
 except ImportError:
     # Handle when running as script
-    import sys
-    from pathlib import Path
-
     sys.path.insert(0, str(Path(__file__).parent))
     from checksum_manager import ChecksumManager
 
@@ -55,7 +52,7 @@ class PreflightChecker:
         self.checksum_manager = ChecksumManager(self.project_root / "build")
 
         # Define critical modules to check
-        self.critical_modules = ["cli", "libs/python", "control/service_launcher.py", "build"]
+        self.critical_modules = ["cli", "libs/python", "services/shared/service_launcher.py", "build"]
 
     def check_python_cache(self) -> bool:
         """Check and clear Python cache if needed"""
@@ -185,7 +182,7 @@ class PreflightChecker:
         running_pids = self.check_running_processes()
 
         # Step 3: Check Python cache
-        cache_cleared = self.check_python_cache()
+        self.check_python_cache()
 
         # Step 4: Update checksums if auto-update enabled (before strategy check)
         if auto_update:

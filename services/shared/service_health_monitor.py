@@ -19,11 +19,11 @@ from typing import Any
 
 import requests
 
-sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 import builtins
 import contextlib
 
-from network.service_registry import ServiceEndpoint, ServiceRegistry
+from services.shared.service_registry import ServiceEndpoint, ServiceRegistry
 
 # Import gRPC health checking (optional)
 try:

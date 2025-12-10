@@ -7,26 +7,29 @@
 
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 try:
     from . import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
 except ImportError:
-    import sys
-    from pathlib import Path
-
     sys.path.insert(0, str(Path(__file__).parent))
     from __init__ import BuildArtifact, BuildContext, BuildModule, BuildModuleResult, BuildUtils
 
 
 class DualSystemBuilder(BuildModule):
-    """Build module for dual-system desktop application and conversation CLI"""
+    """Build module for dual-system desktop application and conversation CLI
+
+    DEPRECATED: The GTK4 desktop application has been sunsetted.
+    This module is retained for reference but conversation_cli.py has been removed.
+    """
 
     def __init__(self, context: BuildContext):
         super().__init__(context)
         self.desktop_dir = self.context.project_root / "desktop"
-        self.control_dir = self.context.project_root / "control"
+        # Note: control/ directory was removed, conversation CLI deprecated
+        self.control_dir = self.context.project_root / "cli"  # Legacy reference
         self.build_dir = self.context.project_root / "build" / "dual-system"
         self.dist_dir = self.context.project_root / "dist" / "dual-system"
 
@@ -349,13 +352,10 @@ class DualSystemBuilder(BuildModule):
             f.write("Dual-System Integration Test Report\n")
             f.write("=" * 40 + "\n")
             f.write(f"Test Date: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Desktop App Syntax Check: {'PASSED' if result.returncode == 0 else 'FAILED'}\n")
-            f.write(
-                f"Native C Graphics: {'AVAILABLE' if (self.context.project_root / 'libs' / 'graphics' / 'build' / 'libunhinged_graphics.so').exists() else 'MISSING'}\n"
-            )
-            f.write(
-                f"Conversation CLI: {'AVAILABLE' if (self.control_dir / 'conversation_cli.py').exists() else 'MISSING'}\n"
-            )
+            f.write(f"Desktop App Syntax Check: " f"{'PASSED' if result.returncode == 0 else 'FAILED'}\n")
+            graphics_lib = self.context.project_root / "libs" / "graphics" / "build"
+            graphics_lib = graphics_lib / "libunhinged_graphics.so"
+            f.write(f"Native C Graphics: " f"{'AVAILABLE' if graphics_lib.exists() else 'MISSING'}\n")
             f.write("Status: INTEGRATION_READY\n")
 
         artifacts.append(

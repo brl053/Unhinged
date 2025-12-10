@@ -59,8 +59,8 @@
 ```
 Unhinged/
 ├── build/              # Polyglot build system, CI/CD, quality gates, Python venv
+│   └── orchestration/  # System launcher and controller
 ├── cli/                # `unc` command-line interface (graph, voice, dev tools)
-├── control/            # Desktop application launchers and service orchestration
 ├── docs/               # LlmDocs-annotated technical documentation
 ├── examples/           # Example scripts and graph definitions
 ├── generated/          # Auto-generated code (design system CSS, bindings)
@@ -69,8 +69,10 @@ Unhinged/
 ├── scription/          # Project vision, architecture decisions, roadmaps
 ├── scripts/            # Shell scripts for setup, hooks, debugging
 ├── services/           # AI microservices (STT, TTS, vision, chat, graph-service)
+│   └── shared/         # Service launcher, registry, health monitoring
 ├── tests/              # Unit and e2e tests
 ├── vm/                 # Virtual machine configs (Windows, TempleOS, Alpine)
+│   └── launchers/      # QEMU VM launchers and monitors
 ├── .github/            # GitHub Actions workflows
 ├── unhinged            # Main entry point script
 ├── LLM_MASTER_PROMPT.md # Context prompt for LLM agents working on this repo

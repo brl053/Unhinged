@@ -45,28 +45,21 @@ DB_USER := postgres
 # See: build/python/requirements.txt and LLM_MASTER_PROMPT.md
 PYTHON_RUN := ./build/python/venv/bin/python3
 
-# Native GUI
-NATIVE_GUI := python3 control/gui/native_app.py
-
-# Native C Graphics (Primary GUI System - NO GTK, NO WEBKIT!)
-# Pure C graphics rendering with DRM framebuffer
-NATIVE_C_GRAPHICS := if getent group video | grep -q $$USER && ! groups | grep -q video; then sg video "python3 control/native_c_launcher.py"; else python3 control/native_c_launcher.py; fi
-
 # QEMU VM Graphics (Alternative: Full VM isolation)
 # Complete virtualization with GPU passthrough capability
-QEMU_VM_GRAPHICS := python3 control/qemu_vm_launcher.py --custom-iso
+QEMU_VM_GRAPHICS := python3 vm/launchers/qemu_vm_launcher.py --custom-iso
 
 # Simple VM Communication (Core: Unidirectional VM → Host)
 # Direct console output streaming for immediate visibility
-SIMPLE_VM_COMMUNICATION := python3 control/simple_vm_launcher.py
+SIMPLE_VM_COMMUNICATION := python3 vm/launchers/simple_vm_launcher.py
 
 # Enhanced VM Communication (Phase 2: Bidirectional Host ↔ VM)
 # QEMU monitor + serial console for full bidirectional communication
-ENHANCED_VM_COMMUNICATION := python3 control/enhanced_vm_launcher.py
+ENHANCED_VM_COMMUNICATION := python3 vm/launchers/enhanced_vm_launcher.py
 
 # Unhinged QoL Launcher (Phase 2: Enhanced UX with Makefile Integration)
 # Quality-of-life launcher that calls Makefile targets behind the scenes
-UNHINGED_LAUNCHER := python3 control/unhinged_launcher.py
+UNHINGED_LAUNCHER := python3 build/orchestration/unhinged_launcher.py
 
 # Legacy GTK GUI (REMOVED - GTK4 has been purged from the system)
 
@@ -839,7 +832,7 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "  📦 Generating all build artifacts..."
 	@$(MAKE) generate >/dev/null 2>&1 || echo "  ⚠️ Build artifact generation failed (non-critical)"
 	@echo "🚀 Launching services..."
-	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
+	@python3 services/shared/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
 	@echo "🚀 PHASE 2: Enhanced VM Communication with QoL Interface"
 	@echo "📋 Calling Makefile targets behind the scenes"
@@ -848,14 +841,8 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@if test -f vm/alpine-unhinged-custom.iso || test -f vm/alpine/alpine-virt-3.22.2-x86_64.iso; then \
 		echo "🔥 LAUNCHING ENHANCED UNHINGED EXPERIENCE!"; \
 		$(UNHINGED_LAUNCHER); \
-	elif test -f libs/graphics/build/examples/hello_world; then \
-		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
-		$(NATIVE_C_GRAPHICS) || \
-		(echo "⚠️ Native C graphics failed - using enhanced VM launcher..."; \
-		 echo "🔄 LAUNCHING ENHANCED VM COMMUNICATION!"; \
-		 $(UNHINGED_LAUNCHER)); \
 	else \
-		echo "⚠️ No native graphics - using enhanced VM communication..."; \
+		echo "⚠️ No VM ISO found - using enhanced VM communication..."; \
 		echo "🔄 LAUNCHING ENHANCED VM COMMUNICATION!"; \
 		$(UNHINGED_LAUNCHER); \
 	fi
@@ -881,11 +868,11 @@ start-continue: ## Continue start process after DRM permissions are fixed
 	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
 	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
 	@echo "🚀 Launching services..."
-	@python3 control/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
+	@python3 services/shared/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
-	@if test -f libs/graphics/build/examples/hello_world; then \
-		echo "🔥 NATIVE C GRAPHICS RENDERING - MAXIMUM PERFORMANCE!"; \
-		$(NATIVE_C_GRAPHICS); \
+	@if test -f vm/alpine-unhinged-custom.iso || test -f vm/alpine/alpine-virt-3.22.2-x86_64.iso; then \
+		echo "🔥 LAUNCHING ENHANCED UNHINGED EXPERIENCE!"; \
+		$(UNHINGED_LAUNCHER); \
 	else \
 		echo "⚠️ Native C graphics not available - defaulting to QEMU VM..."; \
 		echo "🔥 LAUNCHING QEMU VM WITH WHITE HELLO WORLD!"; \
@@ -902,7 +889,7 @@ test-vm: ## Test QEMU VM without GPU passthrough requirements
 	$(call log_info,🧪 Testing QEMU VM in basic mode...)
 	@echo "🎮 QEMU VM TEST MODE - Basic virtualization"
 	@echo "💡 This will test QEMU without IOMMU/GPU passthrough"
-	@python3 control/qemu_vm_launcher.py --test
+	@python3 vm/launchers/qemu_vm_launcher.py --test
 
 start-offline: status ## Launch native GUI without starting services (offline mode)
 	$(call log_info,🏥 Starting System Health Command Center (Offline Mode)...)
@@ -926,7 +913,7 @@ build-custom-alpine: ## Build custom Alpine ISO with Unhinged pre-installed
 start-custom-iso: ## Launch custom Alpine ISO (recommended)
 	$(call log_info,🎨 Launching custom Alpine ISO...)
 	@echo "🔥 CUSTOM ALPINE ISO - UNHINGED GUI READY!"
-	@python3 control/qemu_vm_launcher.py --custom-iso
+	@python3 vm/launchers/qemu_vm_launcher.py --custom-iso
 
 build-dual-system: ## Build complete dual-system architecture (CI/CD target)
 	$(call log_info,🔧 Building Dual-System Architecture...)
@@ -963,25 +950,25 @@ alpine-install: ## Install Alpine Linux in QEMU VM for Unhinged (legacy)
 	$(call log_info,🏔️ Installing Alpine Linux for Unhinged...)
 	@echo "⚠️ LEGACY MODE - Consider using 'make build-custom-alpine' instead"
 	@echo "🎯 This will launch Alpine installation in QEMU VM"
-	@python3 control/qemu_vm_launcher.py --install
+	@python3 vm/launchers/qemu_vm_launcher.py --install
 
 alpine-run: ## Run installed Alpine Linux VM (legacy)
 	$(call log_info,🏔️ Launching Alpine Linux VM...)
 	@echo "⚠️ LEGACY MODE - Consider using 'make start-custom-iso' instead"
 	@echo "🎯 Starting Alpine VM with Unhinged graphics"
-	@python3 control/qemu_vm_launcher.py
+	@python3 vm/launchers/qemu_vm_launcher.py
 
 start-services: ## Launch essential services only (LLM, Backend, Database)
 	$(call log_info,🚀 Launching essential services...)
-	@python3 control/service_launcher.py --timeout 120
+	@python3 services/shared/service_launcher.py --timeout 120
 
 service-status: ## Show status of essential services
 	$(call log_info,📊 Checking service status...)
-	@python3 control/service_launcher.py --status
+	@python3 services/shared/service_launcher.py --status
 
 stop-services: ## Stop services launched by service launcher
 	$(call log_info,🛑 Stopping services...)
-	@python3 control/service_launcher.py --stop
+	@python3 services/shared/service_launcher.py --stop
 
 watch-html: ## Watch for changes and auto-rebuild HTML files
 	$(call log_info,👀 Starting HTML build watcher...)

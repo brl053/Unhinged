@@ -79,8 +79,9 @@ def fix(file):
                 "build/python/venv/bin/ruff",
                 "check",
                 "--fix",
-                "control/",
+                "cli/",
                 "libs/",
+                "services/",
                 "--exclude",
                 "build/python/venv",
             ]
@@ -105,8 +106,9 @@ def format(file):
             [
                 "build/python/venv/bin/ruff",
                 "format",
-                "control/",
+                "cli/",
                 "libs/",
+                "services/",
                 "--exclude",
                 "build/python/venv",
             ]
@@ -124,7 +126,7 @@ def static_analysis(verbose):
     """Run static analysis on all modules (mypy).
 
     Checks: type safety, type mismatches, None errors.
-    Runs on all Python files in control/ and libs/.
+    Runs on all Python files in cli/, libs/, and services/.
 
     BLOCKING: Project is unhealthy if this fails.
     """

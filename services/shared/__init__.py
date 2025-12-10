@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @llm-type service.shared
-@llm-does shared service utilities and base classes for
+@llm-does shared service utilities, registry, and base classes
 @llm-rule shared service code must be simple, reusable, and eliminate duplication
 """
 
@@ -18,8 +18,15 @@ from .paths import (
     get_upload_directory,
     service_paths,
 )
+from .service_registry import (
+    ServiceEndpoint,
+    ServiceRegistry,
+    ServiceStatus,
+    get_service_registry,
+)
 
 __all__ = [
+    # Paths
     "get_service_path",
     "ensure_service_directory",
     "get_upload_directory",
@@ -31,4 +38,9 @@ __all__ = [
     "service_paths",
     "get_service_config_path",
     "get_service_env_path",
+    # Registry
+    "ServiceRegistry",
+    "ServiceEndpoint",
+    "ServiceStatus",
+    "get_service_registry",
 ]

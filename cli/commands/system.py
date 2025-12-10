@@ -37,10 +37,10 @@ def start():
 
     # Launch services
     log_info("🚀 Launching services...")
-    if not check_file_exists("control/service_launcher.py", "Service launcher"):
+    if not check_file_exists("services/shared/service_launcher.py", "Service launcher"):
         return 1
 
-    result = run_command([python_cmd, "control/service_launcher.py", "--timeout", "120"])
+    result = run_command([python_cmd, "services/shared/service_launcher.py", "--timeout", "120"])
     if result == 0:
         log_success("Essential services started")
     else:
@@ -69,11 +69,11 @@ def status():
     log_info("Checking Unhinged system status...")
 
     python_cmd = get_python()
-    if not check_file_exists("control/service_launcher.py", "Service launcher"):
+    if not check_file_exists("services/shared/service_launcher.py", "Service launcher"):
         return 1
 
     log_info("📊 Service Status:")
-    run_command([python_cmd, "control/service_launcher.py", "--status"])
+    run_command([python_cmd, "services/shared/service_launcher.py", "--status"])
 
     log_info("🖥️  System Status:")
     run_command(["make", "status"])

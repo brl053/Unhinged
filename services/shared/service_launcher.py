@@ -20,9 +20,9 @@ from typing import Any
 
 import requests
 
-sys.path.append(str(Path(__file__).parent))
-sys.path.append(str(Path(__file__).parent.parent / "libs" / "event-framework" / "python" / "src"))
-sys.path.append(str(Path(__file__).parent.parent / "generated/python/clients"))
+sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"))
+sys.path.append(str(Path(__file__).parent.parent.parent / "generated/python/clients"))
 
 try:
     from events import EventLogger, create_service_logger
@@ -35,7 +35,7 @@ except ImportError:
     events = logging.getLogger("service-launcher")
     USING_EVENT_FRAMEWORK = False
 
-from network import get_service_registry
+from services.shared.service_registry import get_service_registry
 
 
 # Helper function to handle different logging APIs

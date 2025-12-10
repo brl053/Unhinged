@@ -27,7 +27,7 @@ def list():
     """List all running services."""
     log_info("Listing services...")
     python_cmd = get_python()
-    subprocess.run([python_cmd, "control/service_launcher.py", "--list"])
+    subprocess.run([python_cmd, "services/shared/service_launcher.py", "--list"])
 
 
 @services.command()
@@ -35,7 +35,7 @@ def health():
     """Health check all services."""
     log_info("Checking service health...")
     python_cmd = get_python()
-    subprocess.run([python_cmd, "control/service_launcher.py", "--status"])
+    subprocess.run([python_cmd, "services/shared/service_launcher.py", "--status"])
 
 
 @admin.group()

@@ -1,6 +1,5 @@
 #!/bin/bash
 # Unhinged CLI - Bash shim to Python Click app
-# Delegates to consolidated CLI in libs.cli.core via control.cli.__main__
 set -e
 
 # Resolve the actual script location (handles symlinks)
@@ -22,6 +21,6 @@ if [ ! -f ".setup_checked" ] && [ "$1" != "dev" ]; then
     touch .setup_checked
 fi
 
-# Execute the Python CLI (delegates to libs.cli.core)
-exec $PYTHON -m control.cli "$@"
+# Execute the Python CLI
+exec $PYTHON -m cli "$@"
 
