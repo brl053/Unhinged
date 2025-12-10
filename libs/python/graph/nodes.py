@@ -224,45 +224,6 @@ class SubgraphNode(GraphNode):
         return output
 
 
-class GmailAPINode(GraphNode):
-    """Graph node that fetches unread Gmail messages via the Gmail connector.
-
-    This node is intentionally minimal and Gmail-specific. It returns a list
-    of message dictionaries under the ``"emails"`` key for downstream
-    processing (for example, LLM-based summarisation).
-    """
-
-    def __init__(self, node_id: str, limit: int = 25) -> None:
-        super().__init__(node_id)
-        self.limit = limit
-
-    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Fetch unread messages and expose them for downstream nodes.
-
-        The node currently ignores ``input_data`` and always fetches the most
-        recent unread messages according to the configured limit.
-        """
-
-        # Local import keeps the core graph library decoupled from optional
-        # connector dependencies at import time.
-        from libs.python.connectors.gmail import GmailConnectorError, list_unread_messages
-
-        del input_data  # This node does not yet consume upstream input.
-
-        try:
-            emails = await list_unread_messages(limit=self.limit)
-        except GmailConnectorError as exc:  # pragma: no cover - exercised via mocks
-            return {
-                "success": False,
-                "error": str(exc),
-            }
-
-        return {
-            "success": True,
-            "emails": emails,
-        }
-
-
 class RecallNode(GraphNode):
     """Graph node that performs semantic recall over persisted sessions.
 

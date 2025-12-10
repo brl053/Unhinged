@@ -12,7 +12,6 @@ from .graph import Graph, GraphExecutionResult, GraphExecutor, NodeExecutionResu
 from .loader import GraphLoadError, load_graph_from_dict, load_graph_from_json
 from .nodes import (
     APINode,
-    GmailAPINode,
     GraphNode,
     LLMNode,
     RecallNode,
@@ -65,7 +64,6 @@ __all__ = [
     "SubgraphNode",
     "UnixCommandNode",
     "UserInputNode",
-    "GmailAPINode",
     "APINode",
     "RecallNode",
     "RubricGradeNode",
