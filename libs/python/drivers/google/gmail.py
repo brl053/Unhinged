@@ -10,9 +10,6 @@ import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
 from libs.python.drivers.base import Driver, DriverCapability, DriverError
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
@@ -69,6 +66,8 @@ class GmailDriver(Driver):
 
     def _list_messages_sync(self, query: str, limit: int) -> list[dict[str, Any]]:
         """Synchronous implementation of list messages with query."""
+        from googleapiclient.discovery import build
+
         service = build("gmail", "v1", credentials=self._get_credentials())
         response = service.users().messages().list(userId="me", q=query, maxResults=limit).execute()
         messages = response.get("messages", [])
@@ -142,9 +141,11 @@ class GmailDriver(Driver):
                     "success": False,
                     "error": f"Unsupported operation: {operation}",
                 }
-        except HttpError as exc:  # pragma: no cover - exercised via mocks
-            status_obj = getattr(exc, "resp", getattr(exc, "response", None))
-            status_code = getattr(status_obj, "status", None)
-            raise DriverError(str(exc), status_code=status_code, driver_name=self.driver_id) from exc
         except Exception as exc:  # pragma: no cover - defensive
+            # Handle googleapiclient.errors.HttpError specially
+            exc_type = type(exc).__name__
+            if exc_type == "HttpError":
+                status_obj = getattr(exc, "resp", getattr(exc, "response", None))
+                status_code = getattr(status_obj, "status", None)
+                raise DriverError(str(exc), status_code=status_code, driver_name=self.driver_id) from exc
             raise DriverError(str(exc), driver_name=self.driver_id) from exc
