@@ -23,6 +23,7 @@ from .protocol import (
     CheckResult,
     FlightContext,
     FlightRecord,
+    GradeResult,
     PostFlightAction,
     PreFlightCheck,
     Verdict,
@@ -109,32 +110,30 @@ class AuditAction(PostFlightAction):
             from libs.python.persistence import get_document_store
 
             store = get_document_store()
-
-            data: dict[str, Any] = {
-                "graph_id": record.context.graph_id,
-                "execution_id": record.context.execution_id,
-                "input_data": record.context.input_data,
-                "timestamp": record.context.timestamp.isoformat(),
-                "pre_flight_checks": [
-                    {
-                        "check_id": c.check_id,
-                        "verdict": c.verdict.value,
-                        "reason": c.reason,
-                    }
-                    for c in record.pre_flight_checks
-                ],
-                "in_flight_result": record.in_flight_result,
-                "post_flight_actions": record.post_flight_actions,
-                "aborted": record.aborted,
-                "abort_reason": record.abort_reason,
-                "completed_at": record.completed_at.isoformat() if record.completed_at else None,
-            }
-
+            data = self._build_audit_data(record)
             store.create(self._collection, data)
 
         except Exception:
             # audit is best-effort; do not fail execution
             pass
+
+    def _build_audit_data(self, record: FlightRecord) -> dict[str, Any]:
+        """Build audit data dictionary from record."""
+        pre_flight = [
+            {"check_id": c.check_id, "verdict": c.verdict.value, "reason": c.reason} for c in record.pre_flight_checks
+        ]
+        return {
+            "graph_id": record.context.graph_id,
+            "execution_id": record.context.execution_id,
+            "input_data": record.context.input_data,
+            "timestamp": record.context.timestamp.isoformat(),
+            "pre_flight_checks": pre_flight,
+            "in_flight_result": record.in_flight_result,
+            "post_flight_actions": record.post_flight_actions,
+            "aborted": record.aborted,
+            "abort_reason": record.abort_reason,
+            "completed_at": record.completed_at.isoformat() if record.completed_at else None,
+        }
 
 
 class ContextLoadCheck(PreFlightCheck):
@@ -188,3 +187,121 @@ class ContextPersistAction(PostFlightAction):
 
         session_ctx.set_stage("post_flight")
         self._store.persist(session_ctx)
+
+
+class RubricGradeAction(PostFlightAction):
+    """Grade execution output against a stored rubric in post-flight.
+
+    Rubrics are stored as documents with schema:
+        {
+            "name": "invoice_v1",
+            "criteria": [
+                {"field": "citations", "min_count": 1, "weight": 0.4},
+                {"field": "diagnosis", "min_length": 20, "weight": 0.3},
+                {"field": "action", "required": True, "weight": 0.3}
+            ],
+            "pass_threshold": 0.6
+        }
+
+    If rubric fails, record.rubric_grade.passed = False.
+    Session can then offer re-run to user.
+    """
+
+    def __init__(self, rubric_name: str = "invoice_v1", collection: str = "rubrics") -> None:
+        self._rubric_name = rubric_name
+        self._collection = collection
+
+    @property
+    def action_id(self) -> str:
+        return f"rubric_grade:{self._rubric_name}"
+
+    def execute(self, record: FlightRecord) -> None:
+        """Grade the in_flight_result against the rubric."""
+        rubric = self._load_rubric()
+        if rubric is None:
+            # No rubric defined yet - pass by default
+            record.rubric_grade = GradeResult(
+                rubric_name=self._rubric_name,
+                score=1.0,
+                threshold=0.0,
+                passed=True,
+                feedback="no rubric defined - auto-pass",
+            )
+            return
+
+        result = record.in_flight_result
+        criteria = rubric.get("criteria", [])
+        threshold = rubric.get("pass_threshold", 0.6)
+
+        total_weight = sum(c.get("weight", 1.0) for c in criteria)
+        weighted_score = 0.0
+        criteria_scores: dict[str, float] = {}
+        missing_fields: list[str] = []
+        feedback_parts: list[str] = []
+
+        for criterion in criteria:
+            field = criterion.get("field", "")
+            weight = criterion.get("weight", 1.0)
+            field_value = result.get(field)
+
+            score = self._grade_criterion(criterion, field_value)
+            criteria_scores[field] = score
+            weighted_score += score * weight
+
+            if score < 1.0:
+                if field_value is None:
+                    missing_fields.append(field)
+                    feedback_parts.append(f"missing: {field}")
+                else:
+                    feedback_parts.append(f"insufficient: {field} (score: {score:.2f})")
+
+        final_score = weighted_score / total_weight if total_weight > 0 else 0.0
+        passed = final_score >= threshold
+
+        record.rubric_grade = GradeResult(
+            rubric_name=self._rubric_name,
+            score=final_score,
+            threshold=threshold,
+            passed=passed,
+            criteria_scores=criteria_scores,
+            missing_fields=missing_fields,
+            feedback="; ".join(feedback_parts) if feedback_parts else "all criteria met",
+        )
+
+    def _load_rubric(self) -> dict[str, Any] | None:
+        """Load rubric from document store."""
+        try:
+            from libs.python.persistence import get_document_store
+
+            store = get_document_store()
+            results = store.query(self._collection, {"name": self._rubric_name})
+            return results[0].data if results else None
+        except Exception:
+            return None
+
+    def _grade_criterion(self, criterion: dict[str, Any], value: Any) -> float:
+        """Grade a single criterion. Returns 0.0-1.0."""
+        if value is None or (criterion.get("required") and not value):
+            return 0.0
+
+        min_count = criterion.get("min_count")
+        if min_count is not None:
+            return self._grade_min_count(value, min_count)
+
+        min_length = criterion.get("min_length")
+        if min_length is not None:
+            return self._grade_min_length(value, min_length)
+
+        return 1.0  # present and no specific check
+
+    def _grade_min_count(self, value: Any, min_count: int) -> float:
+        """Grade min_count criterion for list values."""
+        if not isinstance(value, list):
+            return 0.0
+        return min(1.0, len(value) / float(min_count))
+
+    def _grade_min_length(self, value: Any, min_length: int) -> float:
+        """Grade min_length criterion for string values."""
+        if not isinstance(value, str):
+            return 0.0
+        return min(1.0, len(value) / float(min_length))

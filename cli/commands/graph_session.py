@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from libs.python.graph.context import CDCEventType
+
 
 async def record_and_transcribe() -> str:
     """Record mic input and transcribe. Returns transcribed text."""
@@ -369,7 +371,6 @@ async def _execute_graph(match, text: str, session_id: str, session_ctx, uuid_mo
     from libs.python.graph import (
         AssembleFinalPromptStep,
         AuditAction,
-        CDCEventType,
         ContextWindowCheckStep,
         ExecutionProtocol,
         FlightContext,

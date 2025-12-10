@@ -6,10 +6,19 @@
 
 from __future__ import annotations
 
-from .checks import AuditAction, ContextLoadCheck, ContextPersistAction, RubricMatchCheck
+from .checks import AuditAction, ContextLoadCheck, ContextPersistAction, RubricGradeAction, RubricMatchCheck
 from .context import CDCEvent, CDCEventType, ContextStore, Mutation, MutationType, SessionContext, SessionSummary
 from .graph import Graph, GraphExecutionResult, GraphExecutor, NodeExecutionResult
-from .nodes import APINode, GmailAPINode, GraphNode, RecallNode, SubgraphNode, UnixCommandNode, UserInputNode
+from .nodes import (
+    APINode,
+    GmailAPINode,
+    GraphNode,
+    RecallNode,
+    RubricGradeNode,
+    SubgraphNode,
+    UnixCommandNode,
+    UserInputNode,
+)
 from .pipeline_steps import (
     AssembleFinalPromptStep,
     ContextWindowCheckStep,
@@ -29,6 +38,7 @@ from .protocol import (
     FlightContext,
     FlightRecord,
     FlightStage,
+    GradeResult,
     PostFlightAction,
     PreFlightCheck,
     Verdict,
@@ -55,6 +65,7 @@ __all__ = [
     "GmailAPINode",
     "APINode",
     "RecallNode",
+    "RubricGradeNode",
     # graph
     "Graph",
     "GraphExecutor",
@@ -67,10 +78,12 @@ __all__ = [
     "FlightStage",
     "CheckResult",
     "Verdict",
+    "GradeResult",
     "PreFlightCheck",
     "PostFlightAction",
     # checks
     "RubricMatchCheck",
+    "RubricGradeAction",
     "AuditAction",
     "ContextLoadCheck",
     "ContextPersistAction",

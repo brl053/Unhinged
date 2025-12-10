@@ -390,3 +390,123 @@ class APINode(GraphNode):
                 "success": False,
                 "error": f"Unexpected error: {exc}",
             }
+
+
+class RubricGradeNode(GraphNode):
+    """Graph node that grades input against a rubric.
+
+    Used as a quality gate in graph execution. Can be followed by
+    conditional edges to loop back on failure.
+
+    Input keys (from upstream node):
+    - ``citations``: List of citations (URLs, man pages, error codes)
+    - ``diagnosis``: Proof-of-work diagnosis text
+    - ``action``: Specific action plan
+
+    Output keys:
+    - ``score``: Float 0.0-1.0 weighted score
+    - ``threshold``: Required score to pass
+    - ``passed``: Boolean indicating pass/fail
+    - ``feedback``: Human-readable feedback
+    - ``missing_fields``: List of fields that failed criteria
+    - ``success``: Always True (grading itself doesn't fail)
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        rubric_name: str = "invoice_v1",
+        threshold: float | None = None,
+    ) -> None:
+        super().__init__(node_id)
+        self.rubric_name = rubric_name
+        self._threshold_override = threshold
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Grade input_data against the rubric."""
+        input_data = input_data or {}
+        rubric = self._load_rubric()
+
+        if rubric is None:
+            # No rubric - auto-pass with warning
+            return {
+                "score": 1.0,
+                "threshold": 0.0,
+                "passed": True,
+                "feedback": f"rubric '{self.rubric_name}' not found - auto-pass",
+                "missing_fields": [],
+                "success": True,
+            }
+
+        criteria = rubric.get("criteria", [])
+        threshold = self._threshold_override or rubric.get("pass_threshold", 0.6)
+
+        total_weight = sum(c.get("weight", 1.0) for c in criteria)
+        weighted_score = 0.0
+        missing_fields: list[str] = []
+        feedback_parts: list[str] = []
+
+        for criterion in criteria:
+            field = criterion.get("field", "")
+            weight = criterion.get("weight", 1.0)
+            field_value = input_data.get(field)
+
+            score = self._grade_criterion(criterion, field_value)
+            weighted_score += score * weight
+
+            if score < 1.0:
+                if field_value is None:
+                    missing_fields.append(field)
+                    feedback_parts.append(f"missing: {field}")
+                else:
+                    feedback_parts.append(f"insufficient: {field} ({score:.0%})")
+
+        final_score = weighted_score / total_weight if total_weight > 0 else 0.0
+        passed = final_score >= threshold
+
+        return {
+            "score": round(final_score, 3),
+            "threshold": threshold,
+            "passed": passed,
+            "feedback": "; ".join(feedback_parts) if feedback_parts else "all criteria met",
+            "missing_fields": missing_fields,
+            "success": True,
+        }
+
+    def _load_rubric(self) -> dict[str, Any] | None:
+        """Load rubric from document store."""
+        try:
+            from libs.python.persistence import get_document_store
+
+            store = get_document_store()
+            results = store.query("rubrics", {"name": self.rubric_name})
+            return results[0].data if results else None
+        except Exception:
+            return None
+
+    def _grade_criterion(self, criterion: dict[str, Any], value: Any) -> float:
+        """Grade a single criterion. Returns 0.0-1.0."""
+        if value is None or (criterion.get("required") and not value):
+            return 0.0
+
+        min_count = criterion.get("min_count")
+        if min_count is not None:
+            return self._grade_min_count(value, min_count)
+
+        min_length = criterion.get("min_length")
+        if min_length is not None:
+            return self._grade_min_length(value, min_length)
+
+        return 1.0  # present and no specific check
+
+    def _grade_min_count(self, value: Any, min_count: int) -> float:
+        """Grade min_count criterion for list values."""
+        if not isinstance(value, list):
+            return 0.0
+        return min(1.0, len(value) / float(min_count))
+
+    def _grade_min_length(self, value: Any, min_length: int) -> float:
+        """Grade min_length criterion for string values."""
+        if not isinstance(value, str):
+            return 0.0
+        return min(1.0, len(value) / float(min_length))

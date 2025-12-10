@@ -154,4 +154,3 @@ class TestSystemReady:
 
         # System is ready
         assert payload.final_prompt != ""
-

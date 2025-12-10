@@ -99,6 +99,9 @@ class CDCEventType(Enum):
     IDENTITY_HYDRATED = "identity.hydrated"
     ECALIBRATION_UPDATED = "ecalibration.updated"
 
+    # Rubric grading events (post-flight quality gate)
+    RUBRIC_GRADE = "rubric.grade"
+
 
 @dataclass
 class CDCEvent:

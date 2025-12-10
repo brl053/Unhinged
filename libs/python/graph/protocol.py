@@ -61,6 +61,19 @@ class FlightContext:
 
 
 @dataclass
+class GradeResult:
+    """Result of rubric grading in post-flight."""
+
+    rubric_name: str
+    score: float
+    threshold: float
+    passed: bool
+    criteria_scores: dict[str, float] = field(default_factory=dict)
+    missing_fields: list[str] = field(default_factory=list)
+    feedback: str = ""
+
+
+@dataclass
 class FlightRecord:
     """Audit record of a complete execution."""
 
@@ -71,6 +84,8 @@ class FlightRecord:
     completed_at: datetime | None = None
     aborted: bool = False
     abort_reason: str = ""
+    # Post-flight rubric grading
+    rubric_grade: GradeResult | None = None
 
 
 class PreFlightCheck(ABC):

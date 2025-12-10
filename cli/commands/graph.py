@@ -643,3 +643,92 @@ def session():
     finally:
         with suppress(ValueError):
             signal.signal(signal.SIGTERM, original_sigterm or signal.SIG_DFL)
+
+
+@graph.command(name="rubric-seed")
+def rubric_seed():
+    """Seed default rubric documents for invoice grading.
+
+    Creates the invoice_v1 rubric in the document store.
+    This rubric validates execution outputs have:
+    - citations (40% weight, min 1)
+    - diagnosis (30% weight, min 20 chars)
+    - action (30% weight, required)
+
+    Example:
+        unhinged graph rubric-seed
+    """
+    from libs.python.persistence import get_document_store
+
+    store = get_document_store()
+
+    # Check if rubric already exists
+    existing = store.query("rubrics", {"name": "invoice_v1"})
+    if existing:
+        log_warning("rubric 'invoice_v1' already exists")
+        print(f"  id: {existing[0].id}")
+        print(f"  threshold: {existing[0].data.get('pass_threshold', 'n/a')}")
+        return
+
+    rubric_data = {
+        "name": "invoice_v1",
+        "description": "Invoice rubric for graph execution quality gate",
+        "criteria": [
+            {
+                "field": "citations",
+                "min_count": 1,
+                "weight": 0.4,
+                "description": "At least one citation (man page, URL, error code)",
+            },
+            {
+                "field": "diagnosis",
+                "min_length": 20,
+                "weight": 0.3,
+                "description": "Diagnosis text showing proof-of-work",
+            },
+            {
+                "field": "action",
+                "required": True,
+                "weight": 0.3,
+                "description": "Specific action plan",
+            },
+        ],
+        "pass_threshold": 0.6,
+        "version": 1,
+    }
+
+    doc = store.create("rubrics", rubric_data)
+    log_success(f"created rubric 'invoice_v1' (id: {doc.id})")
+    print(f"  threshold: {rubric_data['pass_threshold']}")
+    print("  criteria:")
+    for c in rubric_data["criteria"]:
+        print(f"    - {c['field']}: weight={c['weight']}")
+
+
+@graph.command(name="rubric-list")
+def rubric_list():
+    """List all rubrics in the document store.
+
+    Example:
+        unhinged graph rubric-list
+    """
+    from libs.python.persistence import get_document_store
+
+    store = get_document_store()
+    rubrics = store.query("rubrics", {})
+
+    if not rubrics:
+        log_warning("no rubrics found")
+        print("  run: unhinged graph rubric-seed")
+        return
+
+    log_info(f"found {len(rubrics)} rubric(s)")
+    for r in rubrics:
+        print(f"\n  {r.data.get('name', 'unnamed')}:")
+        print(f"    id: {r.id}")
+        print(f"    threshold: {r.data.get('pass_threshold', 'n/a')}")
+        criteria = r.data.get("criteria", [])
+        if criteria:
+            print(f"    criteria: {len(criteria)}")
+            for c in criteria:
+                print(f"      - {c.get('field', '?')}: weight={c.get('weight', '?')}")
