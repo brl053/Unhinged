@@ -9,9 +9,9 @@ from cli.utils import log_error, log_info, log_success
 
 # Import service - handle both direct and pytest imports
 try:
-    from libs.services import ImageGenerationService
+    from libs.python.clients import ImageGenerationService
 except ImportError:
-    from libs.services.image_generation_service import ImageGenerationService
+    from libs.python.clients.image_generation_service import ImageGenerationService
 
 
 @click.group()

@@ -9,9 +9,9 @@ from cli.utils import log_error, log_info, log_success
 
 # Import service - handle both direct and pytest imports
 try:
-    from libs.services import TTSService
+    from libs.python.clients import TTSService
 except ImportError:
-    from libs.services.tts_service import TTSService
+    from libs.python.clients.tts_service import TTSService
 
 
 @click.group()

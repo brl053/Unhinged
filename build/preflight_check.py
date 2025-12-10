@@ -52,7 +52,7 @@ class PreflightChecker:
         self.checksum_manager = ChecksumManager(self.project_root / "build")
 
         # Define critical modules to check
-        self.critical_modules = ["cli", "libs/python", "services/shared/service_launcher.py", "build"]
+        self.critical_modules = ["cli", "libs/python", "build"]
 
     def check_python_cache(self) -> bool:
         """Check and clear Python cache if needed"""

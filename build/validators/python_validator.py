@@ -41,9 +41,7 @@ class PythonValidator(BaseValidator):
             # Check for Flask usage (should be removed)
             await self._check_flask_usage(file_path, content, results)
 
-            # Check for health.proto implementation in services
-            if "services/" in str(file_path) and file_path.name in ["main.py", "grpc_server.py"]:
-                await self._check_health_proto_implementation(file_path, content, results)
+            # NOTE: gRPC service validation removed - services/ directory deprecated
 
             # Existing validations...
             await self._validate_existing_patterns(file_path, content, results)

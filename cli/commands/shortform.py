@@ -9,9 +9,9 @@ from cli.utils import log_error, log_info, log_success
 
 # Import service
 try:
-    from libs.services import ShortFormVideoService
+    from libs.python.clients import ShortFormVideoService
 except ImportError:
-    from libs.services.shortform_video_service import ShortFormVideoService
+    from libs.python.clients.shortform_video_service import ShortFormVideoService
 
 
 @click.group()

@@ -10,9 +10,9 @@ from cli.utils import log_error, log_info, log_success
 
 # Import service
 try:
-    from libs.services import ScriptParserService
+    from libs.python.clients import ScriptParserService
 except ImportError:
-    from libs.services.script_parser_service import ScriptParserService
+    from libs.python.clients.script_parser_service import ScriptParserService
 
 
 @click.group()

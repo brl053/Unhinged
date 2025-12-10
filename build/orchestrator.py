@@ -374,7 +374,7 @@ class BuildOrchestrator:
         if "python" in target_name or any(
             service in target_name for service in ["whisper-tts", "vision-ai", "context-llm"]
         ):
-            inputs.extend(["services/**/*.py", "services/**/requirements.txt", "services/**/pyproject.toml"])
+            inputs.extend(["libs/python/**/*.py"])
 
         if "proto" in target_name:
             inputs.extend(["proto/*.proto"])

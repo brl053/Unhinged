@@ -78,9 +78,9 @@ async def record_and_transcribe() -> str:
 
     # Transcribe
     try:
-        from libs.services import TranscriptionService
+        from libs.python.clients import TranscriptionService
     except ImportError:
-        from libs.services.transcription_service import TranscriptionService
+        from libs.python.clients.transcription_service import TranscriptionService
 
     service = TranscriptionService(model_size="base")
     text = service.transcribe_audio(audio_path)

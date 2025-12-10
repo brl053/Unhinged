@@ -9,13 +9,13 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Any
 
-from libs.python.drivers.base import Driver, DriverCapability, DriverError
-from libs.python.models.transcription.schema import TranscriptionMode, TranscriptionSession
-from libs.python.services.mic_capture import MicCaptureError, iter_audio_chunks
-from libs.python.services.streaming_transcription import (
+from libs.python.audio.mic_capture import MicCaptureError, iter_audio_chunks
+from libs.python.audio.streaming_transcription import (
     new_session,
     stream_transcription_from_chunks,
 )
+from libs.python.drivers.base import Driver, DriverCapability, DriverError
+from libs.python.models.transcription.schema import TranscriptionMode, TranscriptionSession
 
 
 class MicTranscriptionDriver(Driver):

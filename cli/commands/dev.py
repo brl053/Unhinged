@@ -81,7 +81,6 @@ def fix(file):
                 "--fix",
                 "cli/",
                 "libs/",
-                "services/",
                 "--exclude",
                 "build/python/venv",
             ]
@@ -108,7 +107,6 @@ def format(file):
                 "format",
                 "cli/",
                 "libs/",
-                "services/",
                 "--exclude",
                 "build/python/venv",
             ]
@@ -126,7 +124,7 @@ def static_analysis(verbose):
     """Run static analysis on all modules (mypy).
 
     Checks: type safety, type mismatches, None errors.
-    Runs on all Python files in cli/, libs/, and services/.
+    Runs on all Python files in cli/ and libs/.
 
     BLOCKING: Project is unhealthy if this fails.
     """

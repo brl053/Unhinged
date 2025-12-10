@@ -27,8 +27,6 @@ class UnifiedVenvManager:
         # Requirements files to consolidate
         self.requirements_files = [
             "build/python/requirements.txt",
-            "services/text-to-speech/requirements.txt",
-            "services/vision-ai/requirements.txt",
         ]
 
     def setup_unified_environment(self) -> bool:

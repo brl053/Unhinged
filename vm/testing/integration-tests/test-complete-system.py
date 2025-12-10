@@ -152,7 +152,7 @@ class UnhingedSystemTest:
                 voice_working = False
         except requests.exceptions.RequestException:
             self.log("Whisper service: NOT RUNNING", "WARNING")
-            self.log("💡 Start with: python3 services/speech-to-text/simple_whisper_server.py")
+            self.log("💡 Use: unhinged transcribe mic (direct Whisper access)")
             voice_working = False
 
         self.test_results["voice_services"] = voice_working

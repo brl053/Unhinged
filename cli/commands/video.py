@@ -9,9 +9,9 @@ from cli.utils import log_error, log_info, log_success
 
 # Import service
 try:
-    from libs.services import VideoGenerationService
+    from libs.python.clients import VideoGenerationService
 except ImportError:
-    from libs.services.video_generation_service import VideoGenerationService
+    from libs.python.clients.video_generation_service import VideoGenerationService
 
 
 @click.group()

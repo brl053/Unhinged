@@ -58,6 +58,12 @@ yarn-error.log*
 /build/__pycache__/
 /build/*/__pycache__/
 /build/python/venv/
+/build/.cache/
+
+# Python tool caches (configured to use build/.cache/, but ignore root level too)
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 
 # Unified Python Virtual Environment
 .venv/

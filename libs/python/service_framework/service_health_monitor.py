@@ -23,7 +23,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 import builtins
 import contextlib
 
-from services.shared.service_registry import ServiceEndpoint, ServiceRegistry
+from .service_registry import ServiceEndpoint, ServiceRegistry
 
 # Import gRPC health checking (optional)
 try:

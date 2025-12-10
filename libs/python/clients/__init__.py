@@ -1,7 +1,8 @@
 """
-Unhinged Services Library
+Unhinged Service Client Library
 
-Provides reusable service implementations for the Unhinged platform.
+Direct Python wrappers for model access (Whisper, Ollama, TTS, etc.).
+No gRPC - these call models directly via their Python APIs.
 """
 
 from .chat_service import ChatService

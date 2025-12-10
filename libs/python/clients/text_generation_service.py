@@ -11,7 +11,7 @@ from typing import Any
 
 import requests  # type: ignore
 
-from libs.services.errors import ServiceNotRunningError
+from .errors import ServiceNotRunningError
 
 logger = logging.getLogger(__name__)
 

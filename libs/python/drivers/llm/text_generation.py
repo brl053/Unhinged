@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from libs.python.clients.text_generation_service import TextGenerationService
 from libs.python.drivers.base import Driver, DriverCapability, DriverError
-from libs.services.text_generation_service import TextGenerationService
 
 
 class LLMTextGenerationDriver(Driver):

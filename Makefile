@@ -417,19 +417,8 @@ gateway-gen: ## Generate presentation gateway from proto annotations
 	@$(PROTO_DIR)/build-gateway.sh
 	$(call log_success,Presentation gateway generated)
 
-gateway-dev: ## Start presentation gateway in development mode
-	$(call log_info,🚀 Starting presentation gateway...)
-	@cd services/presentation-gateway && npm run dev
-
-gateway-build: ## Build presentation gateway
-	$(call log_info,🔨 Building presentation gateway...)
-	@cd services/presentation-gateway && npm run build
-	$(call log_success,Presentation gateway built)
-
-gateway-test: ## Test presentation gateway
-	$(call log_info,🧪 Testing presentation gateway...)
-	@cd services/presentation-gateway && npm test
-	$(call log_success,Presentation gateway tests completed)
+# NOTE: Presentation gateway has been deprecated along with gRPC services
+# gateway-dev, gateway-build, gateway-test targets removed
 
 # ============================================================================
 # Backend Development
@@ -832,7 +821,7 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "  📦 Generating all build artifacts..."
 	@$(MAKE) generate >/dev/null 2>&1 || echo "  ⚠️ Build artifact generation failed (non-critical)"
 	@echo "🚀 Launching services..."
-	@python3 services/shared/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
+	@python3 libs/python/service_framework/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
 	@echo "🚀 PHASE 2: Enhanced VM Communication with QoL Interface"
 	@echo "📋 Calling Makefile targets behind the scenes"
@@ -868,7 +857,7 @@ start-continue: ## Continue start process after DRM permissions are fixed
 	@mkdir -p generated/typescript/clients generated/c/clients generated/python/clients generated/kotlin/clients
 	@python3 build/build.py build proto-clients >/dev/null 2>&1 || echo "  ⚠️ Proto clients generation failed (non-critical)"
 	@echo "🚀 Launching services..."
-	@python3 services/shared/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
+	@python3 libs/python/service_framework/service_launcher.py --timeout 30 >/dev/null 2>&1 || echo "⚠️ Services will run in offline mode"
 	@echo "🎮 Launching GUI..."
 	@if test -f vm/alpine-unhinged-custom.iso || test -f vm/alpine/alpine-virt-3.22.2-x86_64.iso; then \
 		echo "🔥 LAUNCHING ENHANCED UNHINGED EXPERIENCE!"; \
@@ -960,15 +949,15 @@ alpine-run: ## Run installed Alpine Linux VM (legacy)
 
 start-services: ## Launch essential services only (LLM, Backend, Database)
 	$(call log_info,🚀 Launching essential services...)
-	@python3 services/shared/service_launcher.py --timeout 120
+	@python3 libs/python/service_framework/service_launcher.py --timeout 120
 
 service-status: ## Show status of essential services
 	$(call log_info,📊 Checking service status...)
-	@python3 services/shared/service_launcher.py --status
+	@python3 libs/python/service_framework/service_launcher.py --status
 
 stop-services: ## Stop services launched by service launcher
 	$(call log_info,🛑 Stopping services...)
-	@python3 services/shared/service_launcher.py --stop
+	@python3 libs/python/service_framework/service_launcher.py --stop
 
 watch-html: ## Watch for changes and auto-rebuild HTML files
 	$(call log_info,👀 Starting HTML build watcher...)

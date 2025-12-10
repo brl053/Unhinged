@@ -22,7 +22,6 @@ targets:
       - "orchestration/docker-compose.yml"
       - "orchestration/docker-compose.*.yml"
       - "proto/**/*.proto"
-      - "services/*/proto/*.proto"
     outputs:
       - "generated/service-registry.js"
       - "generated/service-topology.json"
@@ -76,7 +75,6 @@ targets:
     dependencies: []
     inputs:
       - "proto/**/*.proto"
-      - "services/*/proto/*.proto"
     outputs:
       - "generated/clients/**/*"
     cache_key: "proto-clients-v1"
@@ -87,7 +85,7 @@ targets:
     module: "python_builder"
     dependencies: ["proto-clients"]
     inputs:
-      - "services/**/*.py"
+      - "libs/python/**/*.py"
       - "control/**/*.py"
     outputs:
       - "generated/python/**/*"
@@ -112,7 +110,6 @@ targets:
     module: "kotlin_builder"
     dependencies: ["proto-clients"]
     inputs:
-      - "services/**/*.kt"
       - "kotlin/**/*.kt"
     outputs:
       - "generated/kotlin/**/*"
@@ -211,7 +208,6 @@ modules:
         - "control/orchestration/docker-compose.development.yml"
       proto_directories:
         - "proto"
-        - "services/*/proto"
       output_directory: "generated"
 
   mobile_ui_builder:
@@ -226,7 +222,6 @@ modules:
     config:
       proto_directories:
         - "proto"
-        - "services/*/proto"
       output_directory: "generated/clients"
       languages: ["python", "typescript", "kotlin"]
 
@@ -234,7 +229,7 @@ modules:
     class: "PythonBuilder"
     config:
       source_directories:
-        - "services"
+        - "libs/python"
         - "control"
       output_directory: "generated/python"
 

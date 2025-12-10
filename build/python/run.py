@@ -185,8 +185,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run a service
-  python run.py services/speech-to-text/main.py
+  # Run a CLI command
+  python run.py cli/main.py graph session
 
   # Run build system
   python run.py build/build.py build service-discovery

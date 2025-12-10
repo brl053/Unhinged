@@ -2,7 +2,7 @@
 
 import asyncio
 
-from libs.python.services.mic_capture import iter_audio_chunks
+from libs.python.audio.mic_capture import iter_audio_chunks
 
 
 async def main() -> None:

@@ -15,12 +15,12 @@ from collections.abc import AsyncIterable, AsyncIterator
 from datetime import datetime
 from uuid import uuid4
 
+from libs.python.clients.transcription_service import TranscriptionService
 from libs.python.models.transcription.schema import (
     TranscriptionMode,
     TranscriptionSegment,
     TranscriptionSession,
 )
-from libs.services.transcription_service import TranscriptionService
 
 
 async def stream_transcription_from_chunks(

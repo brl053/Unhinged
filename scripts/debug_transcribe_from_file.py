@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from libs.services.transcription_service import TranscriptionService
+from libs.python.clients.transcription_service import TranscriptionService
 
 
 def main() -> None:

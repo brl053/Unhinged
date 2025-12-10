@@ -1,6 +1,9 @@
 # Ruff configuration for Unhinged platform
 # Mozilla-grade Python static analysis configuration
 
+# Keep cache in build directory for cleaner repo root
+cache-dir = "build/.cache/ruff"
+
 # Exclude generated files and vendored code
 exclude = [
     ".git",

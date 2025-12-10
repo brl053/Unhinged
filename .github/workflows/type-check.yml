@@ -44,28 +44,11 @@ jobs:
             libs/python \
             libs/event-framework \
             libs/graphics \
-            libs/services \
-            libs/design_system \
-            services/shared \
-            services/speech-to-text \
-            services/text-to-speech \
-            services/vision-ai
-      
-      - name: Run mypy on legacy directories (informational)
-        continue-on-error: true
-        run: |
-          echo "ℹ️  Type checking legacy directories (permissive mode)..."
-          mypy --config-file=mypy.ini \
-            services/graph-service \
-            services/image-generation \
-            services/chat-with-sessions || true
-          echo "⚠️  Legacy directories have known errors (see MYPY_BASELINE_AUDIT.md)"
-      
+            libs/design_system
+
       - name: Summary
         if: success()
         run: |
           echo "✅ Type safety check passed!"
-          echo "📊 Clean directories: 0 errors"
-          echo "📋 Legacy directories: 27 errors (grandfathered)"
-          echo "📖 See docs/development/MYPY_BASELINE_AUDIT.md for details"
+          echo "📊 All directories: 0 errors"
 

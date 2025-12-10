@@ -10,16 +10,16 @@ from pathlib import Path
 from uuid import uuid4
 
 import click
+from unhinged_events import create_service_logger
 
 from cli.utils import display_transcript, loading_indicator, log_error, log_info, log_success
 from libs.python.persistence.event_store import persist_event
-from unhinged_events import create_service_logger
 
 # Import service - handle both direct and pytest imports
 try:
-    from libs.services import TranscriptionService
+    from libs.python.clients import TranscriptionService
 except ImportError:
-    from libs.services.transcription_service import TranscriptionService
+    from libs.python.clients.transcription_service import TranscriptionService
 
 
 @click.group()

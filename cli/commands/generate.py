@@ -9,11 +9,11 @@ from cli.utils import log_error, log_info, log_success
 
 # Import service - handle both direct and pytest imports
 try:
-    from libs.services import TextGenerationService
-    from libs.services.errors import ServiceNotRunningError
+    from libs.python.clients import TextGenerationService
+    from libs.python.clients.errors import ServiceNotRunningError
 except ImportError:
-    from libs.services.errors import ServiceNotRunningError
-    from libs.services.text_generation_service import TextGenerationService
+    from libs.python.clients.errors import ServiceNotRunningError
+    from libs.python.clients.text_generation_service import TextGenerationService
 
 
 @click.group()

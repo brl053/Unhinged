@@ -10,9 +10,9 @@ from cli.utils import log_error, log_info, log_success
 
 # Import GUI analysis service
 try:
-    from libs.services import HybridGUIAnalysisService
+    from libs.python.clients import HybridGUIAnalysisService
 except ImportError:
-    from libs.services.yolo_analysis_service import HybridGUIAnalysisService
+    from libs.python.clients.yolo_analysis_service import HybridGUIAnalysisService
 
 
 @click.group()

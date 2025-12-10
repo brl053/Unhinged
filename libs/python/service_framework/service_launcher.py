@@ -35,7 +35,7 @@ except ImportError:
     events = logging.getLogger("service-launcher")
     USING_EVENT_FRAMEWORK = False
 
-from services.shared.service_registry import get_service_registry
+from .service_registry import get_service_registry
 
 
 # Helper function to handle different logging APIs

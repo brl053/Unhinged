@@ -1,7 +1,0 @@
-Collecting libcst
-  Downloading libcst-1.8.6-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (15 kB)
-Requirement already satisfied: pyyaml>=5.2 in ./build/python/venv/lib/python3.12/site-packages (from libcst) (6.0.3)
-Downloading libcst-1.8.6-cp312-cp312-manylinux_2_28_x86_64.whl (2.3 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 65.8 MB/s  0:00:00
-Installing collected packages: libcst
-Successfully installed libcst-1.8.6

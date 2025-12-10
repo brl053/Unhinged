@@ -9,10 +9,10 @@ from cli.utils import log_error, log_info, log_success
 
 # Import services
 try:
-    from libs.services import ChatService, TextGenerationService
+    from libs.python.clients import ChatService, TextGenerationService
 except ImportError:
-    from libs.services.chat_service import ChatService
-    from libs.services.text_generation_service import TextGenerationService
+    from libs.python.clients.chat_service import ChatService
+    from libs.python.clients.text_generation_service import TextGenerationService
 
 
 @click.group()

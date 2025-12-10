@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, cast
 
-from libs.services.text_generation_service import TextGenerationService
+from libs.python.clients.text_generation_service import TextGenerationService
 
 logger = logging.getLogger(__name__)
 

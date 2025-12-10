@@ -137,7 +137,7 @@ class SessionInitializationService:
             SessionCreationFailedError: If ChatService fails
         """
         try:
-            from libs.services.chat_service import ChatService
+            from libs.python.clients.chat_service import ChatService
 
             service = ChatService()
             conversation = service.create_conversation(
