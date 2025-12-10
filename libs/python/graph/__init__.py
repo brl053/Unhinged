@@ -9,12 +9,15 @@ from __future__ import annotations
 from .checks import AuditAction, ContextLoadCheck, ContextPersistAction, RubricGradeAction, RubricMatchCheck
 from .context import CDCEvent, CDCEventType, ContextStore, Mutation, MutationType, SessionContext, SessionSummary
 from .graph import Graph, GraphExecutionResult, GraphExecutor, NodeExecutionResult
+from .loader import GraphLoadError, load_graph_from_dict, load_graph_from_json
 from .nodes import (
     APINode,
     GmailAPINode,
     GraphNode,
+    LLMNode,
     RecallNode,
     RubricGradeNode,
+    StructuredOutputNode,
     SubgraphNode,
     UnixCommandNode,
     UserInputNode,
@@ -66,8 +69,14 @@ __all__ = [
     "APINode",
     "RecallNode",
     "RubricGradeNode",
+    "LLMNode",
+    "StructuredOutputNode",
     # graph
     "Graph",
+    # loader
+    "load_graph_from_json",
+    "load_graph_from_dict",
+    "GraphLoadError",
     "GraphExecutor",
     "NodeExecutionResult",
     "GraphExecutionResult",

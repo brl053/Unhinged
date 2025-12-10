@@ -392,6 +392,258 @@ class APINode(GraphNode):
             }
 
 
+class LLMNode(GraphNode):
+    """Graph node that calls an LLM with template interpolation.
+
+    Supports Mustache-style template variables ({{node_id.field}}) that are
+    interpolated from upstream node outputs before sending to the LLM.
+
+    Configuration:
+    - model: LLM model name (e.g., "gpt-4o-mini", "llama2")
+    - provider: LLM provider (e.g., "openai", "ollama")
+    - system_prompt: System prompt for the LLM
+    - input_template: User prompt template with {{node_id.field}} placeholders
+    - max_tokens: Maximum tokens in response (default: 1024)
+    - temperature: Sampling temperature (default: 0.7)
+
+    Output keys:
+    - ``stdout``: Raw LLM response text (for downstream piping)
+    - ``text``: Same as stdout (alias)
+    - ``model``: Model used
+    - ``provider``: Provider used
+    - ``success``: Boolean indicating success
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        model: str = "llama2",
+        provider: str = "ollama",
+        system_prompt: str = "",
+        input_template: str = "",
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+    ) -> None:
+        super().__init__(node_id)
+        self.model = model
+        self.provider = provider
+        self.system_prompt = system_prompt
+        self.input_template = input_template
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute LLM call with interpolated template."""
+        input_data = input_data or {}
+
+        # Interpolate template with upstream node outputs
+        prompt = self._interpolate_template(self.input_template, input_data)
+
+        # Build full prompt with system prompt
+        full_prompt = prompt
+        if self.system_prompt:
+            full_prompt = f"{self.system_prompt}\n\n{prompt}"
+
+        try:
+            # Lazy import to avoid requiring LLM deps at import time
+            from libs.python.clients.text_generation_service import TextGenerationService
+
+            service = TextGenerationService(model=self.model, provider=self.provider)
+            text = service.generate(
+                prompt=full_prompt,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+            )
+
+            return {
+                "stdout": text,
+                "text": text,
+                "model": self.model,
+                "provider": self.provider,
+                "success": True,
+            }
+        except Exception as exc:
+            return {
+                "stdout": "",
+                "text": "",
+                "error": str(exc),
+                "success": False,
+            }
+
+    def _interpolate_template(self, template: str, context: dict[str, Any]) -> str:
+        """Interpolate {{node_id.field}} placeholders with context values.
+
+        Supports nested access like {{diagnose.stdout}} or {{check.data.value}}.
+        """
+        import re
+
+        def replace_match(match: re.Match[str]) -> str:
+            path = match.group(1)
+            parts = path.split(".")
+            value: Any = context
+            for part in parts:
+                if isinstance(value, dict):
+                    value = value.get(part, "")
+                else:
+                    return f"{{{{{path}}}}}"  # Keep original if not found
+            return str(value) if value is not None else ""
+
+        return re.sub(r"\{\{([^}]+)\}\}", replace_match, template)
+
+
+class StructuredOutputNode(LLMNode):
+    """LLM node that validates output against a JSON schema.
+
+    Extends LLMNode with JSON parsing and schema validation. If the LLM
+    output is not valid JSON or doesn't match the schema, the node can
+    retry up to max_retries times with feedback.
+
+    Additional configuration:
+    - json_schema: JSON schema dict for validation (optional)
+    - max_retries: Number of retries on parse/validation failure (default: 2)
+
+    Additional output keys:
+    - ``parsed``: Parsed JSON object (if successful)
+    - ``validation_errors``: List of validation errors (if any)
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        model: str = "llama2",
+        provider: str = "ollama",
+        system_prompt: str = "",
+        input_template: str = "",
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        json_schema: dict[str, Any] | None = None,
+        max_retries: int = 2,
+    ) -> None:
+        super().__init__(
+            node_id=node_id,
+            model=model,
+            provider=provider,
+            system_prompt=system_prompt,
+            input_template=input_template,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+        self.json_schema = json_schema
+        self.max_retries = max_retries
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute LLM call and validate JSON output."""
+
+        last_error = ""
+        for attempt in range(self.max_retries + 1):
+            # Add retry feedback to prompt if this is a retry
+            retry_input = input_data
+            if attempt > 0 and last_error:
+                retry_input = dict(input_data or {})
+                retry_input["_retry_feedback"] = (
+                    f"Previous attempt failed: {last_error}. " "Please output valid JSON matching the required schema."
+                )
+
+            result = await super().execute(retry_input)
+
+            if not result.get("success"):
+                return result
+
+            text = result.get("text", "")
+
+            # Try to extract JSON from response
+            parsed, parse_error = self._extract_json(text)
+            if parse_error:
+                last_error = parse_error
+                continue
+
+            # Validate against schema if provided
+            if self.json_schema and parsed is not None:
+                validation_errors = self._validate_schema(parsed)
+                if validation_errors:
+                    last_error = f"Schema validation failed: {validation_errors}"
+                    result["validation_errors"] = validation_errors
+                    continue
+
+            # Success - add parsed output
+            result["parsed"] = parsed
+            result["validation_errors"] = []
+            return result
+
+        # All retries exhausted
+        result = await super().execute(input_data)
+        result["parsed"] = None
+        result["validation_errors"] = [last_error]
+        result["success"] = False
+        result["error"] = f"Failed to get valid JSON after {self.max_retries + 1} attempts: {last_error}"
+        return result
+
+    def _extract_json(self, text: str) -> tuple[dict[str, Any] | None, str]:
+        """Extract JSON from LLM response text.
+
+        Handles common cases like markdown code blocks.
+        Returns (parsed_dict, error_message).
+        """
+        import json
+        import re
+
+        # Try to find JSON in markdown code block
+        code_block = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
+        if code_block:
+            text = code_block.group(1)
+
+        # Try to find JSON object in text
+        json_match = re.search(r"\{.*\}", text, re.DOTALL)
+        if json_match:
+            text = json_match.group(0)
+
+        try:
+            parsed = json.loads(text)
+            if isinstance(parsed, dict):
+                return parsed, ""
+            return None, f"Expected JSON object, got {type(parsed).__name__}"
+        except json.JSONDecodeError as exc:
+            return None, f"JSON parse error: {exc}"
+
+    def _validate_schema(self, data: dict[str, Any]) -> list[str]:
+        """Validate data against JSON schema. Returns list of errors."""
+        if not self.json_schema:
+            return []
+
+        errors: list[str] = []
+
+        # Simple schema validation (required fields, types)
+        required = self.json_schema.get("required", [])
+        properties = self.json_schema.get("properties", {})
+
+        for field in required:
+            if field not in data:
+                errors.append(f"Missing required field: {field}")
+
+        for field, spec in properties.items():
+            if field in data:
+                expected_type = spec.get("type")
+                if expected_type and not self._check_type(data[field], expected_type):
+                    errors.append(f"Field '{field}' should be {expected_type}")
+
+        return errors
+
+    def _check_type(self, value: Any, expected: str) -> bool:
+        """Check if value matches expected JSON schema type."""
+        type_map: dict[str, type | tuple[type, ...]] = {
+            "string": str,
+            "number": (int, float),
+            "integer": int,
+            "boolean": bool,
+            "array": list,
+            "object": dict,
+        }
+        expected_types = type_map.get(expected)
+        if expected_types is None:
+            return True  # Unknown type, assume valid
+        return isinstance(value, expected_types)
+
+
 class RubricGradeNode(GraphNode):
     """Graph node that grades input against a rubric.
 
