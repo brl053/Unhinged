@@ -236,6 +236,10 @@ class GraphExecutor:
         node_success = bool(output.get("success", True))
         if self._session_ctx:
             self._session_ctx.node_output(node_id, output)
+            # Store output to session state for cross-graph access via {{session.outputs.node_id.field}}
+            outputs = self._session_ctx.get("outputs") or {}
+            outputs[node_id] = output
+            self._session_ctx.set("outputs", outputs)
             if node_success:
                 self._session_ctx.node_success(node_id, output)
             else:
