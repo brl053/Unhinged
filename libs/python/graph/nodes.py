@@ -861,3 +861,84 @@ class WebSearchNode(GraphNode):
                 "error": str(exc),
                 "success": False,
             }
+
+
+class HumanFeedbackNode(GraphNode):
+    """Graph node that blocks for human input and returns the response.
+
+    This creates a natural checkpoint in graph execution where the human
+    can review output, provide feedback, or make decisions.
+
+    Configuration:
+    - prompt_template: Template string with {{placeholders}} shown to user
+    - options: Optional list of valid options (empty = freeform input)
+
+    Output keys:
+    - ``stdout``: The human's input (for downstream piping)
+    - ``text``: Same as stdout (alias)
+    - ``selected_option``: If options provided, the index (1-based) selected
+    - ``success``: Always True (human responded)
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        prompt_template: str = "Provide feedback:",
+        options: list[str] | None = None,
+    ) -> None:
+        super().__init__(node_id)
+        self.prompt_template = prompt_template
+        self.options = options or []
+        self._session: SessionContext | None = None
+
+    def set_session(self, session: SessionContext | None) -> None:
+        """Set session context for template interpolation."""
+        self._session = session
+
+    def hydrate(self, input_data: dict[str, Any] | None = None) -> dict[str, str]:
+        """Return the hydrated prompt without executing."""
+        from libs.python.graph.template import interpolate
+
+        input_data = input_data or {}
+        prompt = interpolate(self.prompt_template, nodes=input_data, session=self._session)
+        return {"prompt": prompt, "options": ", ".join(self.options) if self.options else "(freeform)"}
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Block for human input and return the response."""
+        import asyncio
+
+        from libs.python.graph.template import interpolate
+
+        input_data = input_data or {}
+
+        # Interpolate prompt template
+        prompt = interpolate(self.prompt_template, nodes=input_data, session=self._session)
+
+        # Display prompt and options
+        print(f"\n=== HUMAN FEEDBACK REQUIRED ===\n{prompt}")
+        if self.options:
+            for i, opt in enumerate(self.options, 1):
+                print(f"  [{i}] {opt}")
+            print()
+
+        # Get input (async to not block event loop)
+        user_input = await asyncio.to_thread(input, "> ")
+        user_input = user_input.strip()
+
+        # Parse option selection if options provided
+        selected_option = 0
+        if self.options:
+            try:
+                idx = int(user_input)
+                if 1 <= idx <= len(self.options):
+                    selected_option = idx
+                    user_input = self.options[idx - 1]
+            except ValueError:
+                pass  # Freeform input even when options provided
+
+        return {
+            "stdout": user_input,
+            "text": user_input,
+            "selected_option": selected_option,
+            "success": True,
+        }

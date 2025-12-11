@@ -14,6 +14,7 @@ from typing import Any
 from .graph import Graph
 from .nodes import (
     GraphNode,
+    HumanFeedbackNode,
     LLMNode,
     RecallNode,
     RubricGradeNode,
@@ -39,6 +40,7 @@ NODE_TYPE_REGISTRY: dict[str, type[GraphNode]] = {
     "recall": RecallNode,
     "subgraph": SubgraphNode,
     "web_search": WebSearchNode,
+    "human_feedback": HumanFeedbackNode,
 }
 
 
@@ -203,6 +205,17 @@ def _create_web_search_node(node_id: str, node_def: dict[str, Any], config: dict
     )
 
 
+def _create_human_feedback_node(
+    node_id: str, node_def: dict[str, Any], config: dict[str, Any]
+) -> HumanFeedbackNode:
+    del node_def  # unused
+    return HumanFeedbackNode(
+        node_id=node_id,
+        prompt_template=config.get("prompt_template", "Provide feedback:"),
+        options=config.get("options"),
+    )
+
+
 # Type alias for node factory functions
 NodeFactory = Callable[[str, dict[str, Any], dict[str, Any]], GraphNode]
 
@@ -215,4 +228,5 @@ _NODE_FACTORIES: dict[str, NodeFactory] = {
     "rubric_grade": _create_rubric_grade_node,
     "recall": _create_recall_node,
     "web_search": _create_web_search_node,
+    "human_feedback": _create_human_feedback_node,
 }
