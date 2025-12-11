@@ -529,6 +529,37 @@ async def _run_in_flight(match, session_ctx, record, protocol) -> None:
     print()
 
 
+def _format_node_preview(node_id: str, templates: dict[str, str]) -> str:
+    """Format a single node's hydrated templates for preview."""
+    lines = [f"[{node_id}]"]
+    query = templates.get("query", "")
+    prompt = templates.get("user_prompt", "")
+    if query:
+        lines.append(f"  query: {query}")
+    if prompt:
+        lines.append(f"  prompt: {prompt[:500]}..." if len(prompt) > 500 else f"  prompt: {prompt}")
+    return "\n".join(lines)
+
+
+def _show_hydrated_preview(hydrated: dict[str, dict[str, str]]) -> bool:
+    """Show hydrated plan preview and prompt for confirmation."""
+    print("\n=== HYDRATED PLAN ===")
+    for node_id, templates in hydrated.items():
+        print(f"\n{_format_node_preview(node_id, templates)}")
+    print()
+
+    confirm = input("execute? [y/n/full] ").strip().lower()
+    if confirm != "full":
+        return confirm == "y"
+
+    # Show full prompts
+    for node_id, templates in hydrated.items():
+        print(f"\n=== {node_id} FULL PROMPT ===")
+        print(templates.get("full_prompt") or templates.get("query", ""))
+    print()
+    return input("execute? [y/n] ").strip().lower() == "y"
+
+
 async def _run_json_graph(content_str: str, session_ctx, record) -> None:
     """Execute a JSON graph definition using GraphExecutor."""
     import json
@@ -548,6 +579,16 @@ async def _run_json_graph(content_str: str, session_ctx, record) -> None:
         initial_inputs = {node_id: {"input": {"topic": last_input}} for node_id in first_nodes}
 
         executor = GraphExecutor(session_ctx)
+
+        # Show hydrated prompts before execution (dry-run preview)
+        hydrated = executor.hydrate(graph, initial_inputs=initial_inputs)
+        if hydrated and not _show_hydrated_preview(hydrated):
+            session_ctx.msg_system("execution cancelled by user")
+            print("cancelled")
+            record.in_flight_result = {"returncode": 0, "stdout": "", "stderr": ""}
+            session_ctx.exec_exit(0)
+            return
+
         result = await executor.execute(graph, initial_inputs=initial_inputs)
 
         # Collect output from final nodes

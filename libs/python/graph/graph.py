@@ -282,6 +282,61 @@ class GraphExecutor:
             self._session_ctx.node_start(node_id, type(node).__name__, input_payload)
         return asyncio.create_task(node.execute(input_payload))
 
+    def hydrate(
+        self,
+        graph: Graph,
+        initial_inputs: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, dict[str, str]]:
+        """Dry-run: return hydrated templates for all nodes without executing.
+
+        Walks the graph in topological order and collects hydrated templates
+        from nodes that support the hydrate() method (e.g., LLMNode, WebSearchNode).
+
+        Returns:
+            Dict mapping node_id to hydrated template dict.
+            For LLMNode: {"system_prompt": ..., "user_prompt": ..., "full_prompt": ...}
+            For WebSearchNode: {"query": ...}
+        """
+        initial_inputs = initial_inputs or {}
+
+        try:
+            execution_groups = graph.topological_groups()
+        except ValueError:
+            return {}
+
+        aggregated_inputs: dict[str, dict[str, Any]] = {
+            node_id: dict(payload) for node_id, payload in initial_inputs.items()
+        }
+        hydrated: dict[str, dict[str, str]] = {}
+
+        for group in execution_groups:
+            for node_id in group:
+                node = graph.nodes[node_id]
+
+                # Inject session if node supports it
+                if hasattr(node, "set_session"):
+                    node.set_session(self._session_ctx)
+
+                input_payload = aggregated_inputs.get(node_id, {})
+
+                # Hydrate if node supports it
+                if hasattr(node, "hydrate"):
+                    hydrated[node_id] = node.hydrate(input_payload)
+
+                # Simulate routing: for downstream nodes to hydrate correctly,
+                # we need to propagate 'input' key (actual outputs won't exist)
+                for src, dst, _cond in graph.edges:
+                    if src == node_id:
+                        dest_input = aggregated_inputs.setdefault(dst, {})
+                        # Propagate input key
+                        src_input = aggregated_inputs.get(node_id, {})
+                        if "input" in src_input and "input" not in dest_input:
+                            dest_input["input"] = src_input["input"]
+                        # Mark that this node ran (for template placeholders)
+                        dest_input[node_id] = {"_pending": True}
+
+        return hydrated
+
     async def execute(  # noqa: C901
         self,
         graph: Graph,

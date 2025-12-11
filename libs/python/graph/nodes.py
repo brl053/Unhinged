@@ -402,6 +402,34 @@ class LLMNode(GraphNode):
         """Set session context for template interpolation."""
         self._session = session
 
+    def hydrate(self, input_data: dict[str, Any] | None = None) -> dict[str, str]:
+        """Return the hydrated (interpolated) prompts without executing.
+
+        Useful for dry-run / preview mode to inspect what will be sent to the LLM.
+
+        Returns:
+            Dict with 'system_prompt', 'user_prompt', and 'full_prompt' keys.
+        """
+        from libs.python.graph.template import interpolate
+
+        input_data = input_data or {}
+
+        user_prompt = interpolate(
+            template=self.input_template,
+            nodes=input_data,
+            session=self._session,
+        )
+
+        full_prompt = user_prompt
+        if self.system_prompt:
+            full_prompt = f"{self.system_prompt}\n\n{user_prompt}"
+
+        return {
+            "system_prompt": self.system_prompt,
+            "user_prompt": user_prompt,
+            "full_prompt": full_prompt,
+        }
+
     async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute LLM call with interpolated template."""
         from libs.python.graph.template import interpolate
@@ -753,6 +781,22 @@ class WebSearchNode(GraphNode):
     def set_session(self, session: SessionContext | None) -> None:
         """Set session context for template interpolation."""
         self._session = session
+
+    def hydrate(self, input_data: dict[str, Any] | None = None) -> dict[str, str]:
+        """Return the hydrated (interpolated) query without executing.
+
+        Returns:
+            Dict with 'query' key.
+        """
+        from libs.python.graph.template import interpolate
+
+        input_data = input_data or {}
+        query = interpolate(
+            template=self.query_template,
+            nodes=input_data,
+            session=self._session,
+        )
+        return {"query": query}
 
     async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute web search with interpolated query."""
