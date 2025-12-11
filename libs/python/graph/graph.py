@@ -202,10 +202,13 @@ class GraphExecutor:
     ) -> None:
         """Route outputs from a node to downstream nodes based on edge conditions.
 
-        Routes both:
+        Routes:
         - stdout → stdin (for UNIX-style piping)
         - Full output dict keyed by node_id (for template interpolation)
+        - 'input' key from source node (for propagating initial inputs)
         """
+        src_input = aggregated_inputs.get(node_id, {})
+
         for src, dst, condition in edges:
             if src == node_id and self._evaluate_condition(condition, node_results):
                 dest_input = aggregated_inputs.setdefault(dst, {})
@@ -216,6 +219,10 @@ class GraphExecutor:
                 # Route full output dict keyed by node_id for template access
                 # This allows templates like {{search.text}} to work
                 dest_input[node_id] = output
+                # Propagate 'input' key from source to destination
+                # This allows downstream nodes to access {{input.topic}} etc.
+                if "input" in src_input and "input" not in dest_input:
+                    dest_input["input"] = src_input["input"]
 
     def _process_node_result(self, node_id: str, result: Any) -> tuple[dict[str, Any], bool, str | None]:
         """Process a node execution result. Returns (output, success, error)."""

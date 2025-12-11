@@ -539,7 +539,7 @@ async def _run_json_graph(content_str: str, session_ctx, record) -> None:
         data = json.loads(content_str)
         graph = load_graph_from_dict(data)
 
-        # Get topic from session's last_input
+        # Get topic from session's last_input (the transcribed voice command)
         last_input = session_ctx.get("last_input", "")
 
         # Execute graph with input - pass to first node (search)
