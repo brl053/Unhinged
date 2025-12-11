@@ -1,0 +1,52 @@
+{
+  "name": "Plan and Run",
+  "description": "Take a goal, plan the commands, then execute them. For multi-step terminal tasks.",
+  "tags": ["plan", "execute", "run", "command", "shell", "bash", "goal", "multi-step"],
+  "nodes": [
+    {
+      "id": "plan",
+      "type": "json_llm",
+      "config": {
+        "model": "mistral",
+        "provider": "ollama",
+        "system_prompt": "You are a Linux expert. Given a goal, output the exact shell command to run. Be precise. Output ONLY valid JSON.",
+        "input_template": "Goal: {{input.topic}}\n\nOutput the shell command to achieve this goal. Use bash syntax.\n\nJSON format:\n{\"command\": \"the exact command to run\", \"description\": \"what it does\"}\n\nIMPORTANT: Output ONLY the JSON object, nothing else.",
+        "max_tokens": 256,
+        "temperature": 0.1,
+        "json_schema": {
+          "type": "object",
+          "required": ["command", "description"],
+          "properties": {
+            "command": {"type": "string"},
+            "description": {"type": "string"}
+          }
+        }
+      }
+    },
+    {
+      "id": "run",
+      "type": "unix",
+      "config": {
+        "command": "{{plan.parsed.command}}",
+        "timeout": 60
+      }
+    },
+    {
+      "id": "summarize",
+      "type": "llm",
+      "config": {
+        "model": "mistral",
+        "provider": "ollama",
+        "system_prompt": "Summarize command execution results concisely.",
+        "input_template": "Goal: {{input.topic}}\nCommand: {{plan.parsed.command}}\nDescription: {{plan.parsed.description}}\n\nOutput:\n{{run.stdout}}\n\nErrors (if any):\n{{run.stderr}}\n\nExit code: {{run.returncode}}\n\nSummarize what happened. If successful, highlight key results. If failed, explain what went wrong.",
+        "max_tokens": 512,
+        "temperature": 0.3
+      }
+    }
+  ],
+  "edges": [
+    {"from": "plan", "to": "run"},
+    {"from": "run", "to": "summarize"}
+  ]
+}
+

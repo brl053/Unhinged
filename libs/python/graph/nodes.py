@@ -42,12 +42,23 @@ class UnixCommandNode(GraphNode):
     - ``stderr``: decoded standard error (str)
     - ``returncode``: integer exit code or ``None`` if timed out
     - ``success``: bool indicating whether the command exited with code 0
+    - ``command``: the interpolated command that was executed
+
+    Supports template interpolation in command:
+    - ``{{input.topic}}``: user input
+    - ``{{node_id.field}}``: output from another node
+    - ``{{session.key}}``: session state value
     """
 
     def __init__(self, node_id: str, command: str, timeout: float = 30.0) -> None:
         super().__init__(node_id)
         self.command = command
         self.timeout = timeout
+        self._session: Any = None
+
+    def set_session(self, session: Any) -> None:
+        """Inject session context for template interpolation."""
+        self._session = session
 
     async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute the configured shell command.
@@ -59,8 +70,29 @@ class UnixCommandNode(GraphNode):
             will be sent to the process as standard input. Supported value
             types are ``str`` and ``bytes``.
         """
+        from libs.python.graph.template import interpolate
+
+        input_data = input_data or {}
+
+        # Interpolate command template
+        command = interpolate(
+            template=self.command,
+            nodes=input_data,
+            session=self._session,
+        )
+
+        # Check for unfilled placeholders
+        if "{{" in command and "}}" in command:
+            return {
+                "stdout": "",
+                "stderr": f"Command contains unfilled placeholders: {command}",
+                "command": command,
+                "returncode": None,
+                "success": False,
+            }
+
         stdin_bytes: bytes | None = None
-        if input_data is not None and "stdin" in input_data:
+        if "stdin" in input_data:
             value = input_data["stdin"]
             if isinstance(value, bytes):
                 stdin_bytes = value
@@ -70,7 +102,7 @@ class UnixCommandNode(GraphNode):
                 raise TypeError("stdin must be str or bytes")
 
         process = await asyncio.create_subprocess_shell(
-            self.command,
+            command,
             stdin=asyncio.subprocess.PIPE if stdin_bytes is not None else None,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -87,6 +119,7 @@ class UnixCommandNode(GraphNode):
             return {
                 "stdout": "",
                 "stderr": f"Command timed out after {self.timeout} seconds",
+                "command": command,
                 "returncode": None,
                 "success": False,
             }
@@ -97,6 +130,7 @@ class UnixCommandNode(GraphNode):
         return {
             "stdout": stdout_text.rstrip("\n"),
             "stderr": stderr_text.rstrip("\n"),
+            "command": command,
             "returncode": process.returncode,
             "success": process.returncode == 0,
         }
@@ -811,12 +845,22 @@ class WebSearchNode(GraphNode):
             session=self._session,
         )
 
-        if not query or query == self.query_template:
+        # Only fail if query is empty or still contains unfilled placeholders
+        if not query:
             return {
                 "results": [],
                 "text": "",
                 "query": query,
                 "error": "No query provided",
+                "success": False,
+            }
+        # Check for unfilled placeholders (contains {{ }})
+        if "{{" in query and "}}" in query:
+            return {
+                "results": [],
+                "text": "",
+                "query": query,
+                "error": f"Query contains unfilled placeholders: {query}",
                 "success": False,
             }
 
