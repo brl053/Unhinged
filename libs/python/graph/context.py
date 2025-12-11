@@ -29,6 +29,7 @@ while maintaining a record of all mutations.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -130,6 +131,9 @@ class Mutation:
     stage: str = ""  # pre_flight, in_flight, post_flight
 
 
+CDCCallback = Callable[[CDCEvent], None]
+
+
 @dataclass
 class SessionContext:
     """Mutable session state with full CDC feed.
@@ -151,6 +155,11 @@ class SessionContext:
     _cdc_feed: list[CDCEvent] = field(default_factory=list)
     _current_stage: str = ""
     _sequence: int = 0
+    _live_callback: CDCCallback | None = None
+
+    def set_live_callback(self, callback: CDCCallback | None) -> None:
+        """Set a callback to receive CDC events in real-time."""
+        self._live_callback = callback
 
     def set_stage(self, stage: str) -> None:
         """Set current execution stage for mutation tracking."""
@@ -166,15 +175,18 @@ class SessionContext:
 
         This is the primary method for capturing everything that happens.
         """
-        self._cdc_feed.append(
-            CDCEvent(
-                event_type=event_type,
-                timestamp=datetime.utcnow(),
-                data=data,
-                stage=self._current_stage,
-                sequence=self._next_seq(),
-            )
+        event = CDCEvent(
+            event_type=event_type,
+            timestamp=datetime.utcnow(),
+            data=data,
+            stage=self._current_stage,
+            sequence=self._next_seq(),
         )
+        self._cdc_feed.append(event)
+
+        # Notify live callback if set
+        if self._live_callback:
+            self._live_callback(event)
 
     def msg_user(self, text: str) -> None:
         """Log a user message."""

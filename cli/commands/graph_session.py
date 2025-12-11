@@ -98,6 +98,32 @@ def match_graph(text: str, graphs: list) -> tuple[Any, float]:
     return match_best_graph(text, graphs)
 
 
+def _cdc_live_printer(event) -> None:
+    """Print CDC events in real-time during graph execution."""
+    from libs.python.graph.context import CDCEventType
+
+    # Only print interesting events during in_flight stage
+    if event.stage != "in_flight":
+        return
+
+    etype = event.event_type
+    data = event.data
+    ts = event.timestamp.strftime("%H:%M:%S")
+
+    # Format based on event type
+    if etype == CDCEventType.NODE_START:
+        print(f"  [cdc] {ts} node_start: {data.get('node_id')} ({data.get('node_type')})")
+    elif etype == CDCEventType.NODE_OUTPUT:
+        node_id = data.get("node_id", "")
+        output = data.get("output", {})
+        keys = list(output.keys())[:3]  # First 3 keys
+        print(f"  [cdc] {ts} node_output: {node_id} {{{', '.join(keys)}...}}")
+    elif etype == CDCEventType.NODE_SUCCESS:
+        print(f"  [cdc] {ts} node_success: {data.get('node_id')}")
+    elif etype == CDCEventType.NODE_FAILED:
+        print(f"  [cdc] {ts} node_failed: {data.get('node_id')} - {data.get('error', '')[:50]}")
+
+
 def _new_session_id() -> str:
     """Generate a new session ID."""
     import uuid as uuid_mod
@@ -262,6 +288,9 @@ async def run_session() -> None:  # noqa: C901
             session_ctx = context_store.create(session_id)
     else:
         session_ctx = context_store.create(session_id)
+
+    # Enable live CDC streaming during execution
+    session_ctx.set_live_callback(_cdc_live_printer)
 
     # Register embedding observer for transparency
     if isinstance(doc_store, EmbeddingDocumentStore):
