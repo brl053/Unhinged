@@ -12,6 +12,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - import only for type checking
+    from .context import SessionContext
     from .graph import Graph, GraphExecutionResult
 
 
@@ -356,14 +357,16 @@ class APINode(GraphNode):
 class LLMNode(GraphNode):
     """Graph node that calls an LLM with template interpolation.
 
-    Supports Mustache-style template variables ({{node_id.field}}) that are
-    interpolated from upstream node outputs before sending to the LLM.
+    Supports template variables that are interpolated before sending to the LLM:
+    - {{node_id.field}} - Upstream node outputs
+    - {{session.key}} - Session context data
+    - {{env.VAR}} - Environment variables
 
     Configuration:
     - model: LLM model name (e.g., "gpt-4o-mini", "llama2")
     - provider: LLM provider (e.g., "openai", "ollama")
     - system_prompt: System prompt for the LLM
-    - input_template: User prompt template with {{node_id.field}} placeholders
+    - input_template: User prompt template with {{...}} placeholders
     - max_tokens: Maximum tokens in response (default: 1024)
     - temperature: Sampling temperature (default: 0.7)
 
@@ -392,13 +395,25 @@ class LLMNode(GraphNode):
         self.input_template = input_template
         self.max_tokens = max_tokens
         self.temperature = temperature
+        # Session context for {{session.*}} interpolation (set by executor)
+        self._session: SessionContext | None = None
+
+    def set_session(self, session: SessionContext | None) -> None:
+        """Set session context for template interpolation."""
+        self._session = session
 
     async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute LLM call with interpolated template."""
+        from libs.python.graph.template import interpolate
+
         input_data = input_data or {}
 
-        # Interpolate template with upstream node outputs
-        prompt = self._interpolate_template(self.input_template, input_data)
+        # Interpolate template with nodes, session, and env
+        prompt = interpolate(
+            template=self.input_template,
+            nodes=input_data,
+            session=self._session,
+        )
 
         # Build full prompt with system prompt
         full_prompt = prompt
@@ -430,26 +445,6 @@ class LLMNode(GraphNode):
                 "error": str(exc),
                 "success": False,
             }
-
-    def _interpolate_template(self, template: str, context: dict[str, Any]) -> str:
-        """Interpolate {{node_id.field}} placeholders with context values.
-
-        Supports nested access like {{diagnose.stdout}} or {{check.data.value}}.
-        """
-        import re
-
-        def replace_match(match: re.Match[str]) -> str:
-            path = match.group(1)
-            parts = path.split(".")
-            value: Any = context
-            for part in parts:
-                if isinstance(value, dict):
-                    value = value.get(part, "")
-                else:
-                    return f"{{{{{path}}}}}"  # Keep original if not found
-            return str(value) if value is not None else ""
-
-        return re.sub(r"\{\{([^}]+)\}\}", replace_match, template)
 
 
 class StructuredOutputNode(LLMNode):

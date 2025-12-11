@@ -57,6 +57,7 @@ from .strace import (
     parse_strace_output,
     run_with_strace,
 )
+from .template import interpolate
 
 __all__ = [
     # nodes
@@ -127,4 +128,6 @@ __all__ = [
     "ContextWindowCheckStep",
     "GarbageCompressionStep",
     "AssembleFinalPromptStep",
+    # template DSL
+    "interpolate",
 ]
