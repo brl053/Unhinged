@@ -20,6 +20,7 @@ from .nodes import (
     SubgraphNode,
     UnixCommandNode,
     UserInputNode,
+    WebSearchNode,
 )
 from .pipeline_steps import (
     AssembleFinalPromptStep,
@@ -70,6 +71,7 @@ __all__ = [
     "RubricGradeNode",
     "LLMNode",
     "StructuredOutputNode",
+    "WebSearchNode",
     # graph
     "Graph",
     # loader

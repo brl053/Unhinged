@@ -1,0 +1,35 @@
+{
+  "name": "Research Memo",
+  "description": "Search the web for a topic and write a memo summarizing the findings",
+  "tags": ["memo", "research", "write", "summary", "search"],
+  "nodes": [
+    {
+      "id": "search",
+      "type": "web_search",
+      "config": {
+        "query_template": "{{input.topic}}",
+        "max_results": 5,
+        "max_content_chars": 4000
+      }
+    },
+    {
+      "id": "write_memo",
+      "type": "llm",
+      "config": {
+        "model": "mistral",
+        "provider": "ollama",
+        "system_prompt": "You are a professional research analyst. Write clear, concise memos that summarize key findings. Use bullet points for key specs/features. Include sources.",
+        "input_template": "Write a research memo on the following topic:\n\nTOPIC: {{input.topic}}\n\nRESEARCH FINDINGS:\n{{search.text}}\n\nWrite a well-structured memo that:\n1. Summarizes the key points\n2. Highlights important specs/features\n3. Notes any limitations or considerations\n4. Cites the sources\n\nMEMO:",
+        "max_tokens": 2048,
+        "temperature": 0.3
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "search",
+      "to": "write_memo"
+    }
+  ]
+}
+

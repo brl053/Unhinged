@@ -718,3 +718,102 @@ class RubricGradeNode(GraphNode):
         if not isinstance(value, str):
             return 0.0
         return min(1.0, len(value) / float(min_length))
+
+
+class WebSearchNode(GraphNode):
+    """Graph node that searches the web and returns results.
+
+    Uses DuckDuckGo for search and fetches page content for LLM consumption.
+
+    Configuration:
+    - query_template: Template string with {{placeholders}} for search query
+    - max_results: Number of results to fetch (default: 5)
+    - max_content_chars: Max chars to extract per page (default: 3000)
+
+    Output keys:
+    - ``results``: List of search result dicts with title, url, snippet, body
+    - ``text``: Formatted text version of results for LLM consumption
+    - ``query``: The interpolated search query
+    - ``success``: Boolean indicating success
+    """
+
+    def __init__(
+        self,
+        node_id: str,
+        query_template: str = "{{input.query}}",
+        max_results: int = 5,
+        max_content_chars: int = 3000,
+    ) -> None:
+        super().__init__(node_id)
+        self.query_template = query_template
+        self.max_results = max_results
+        self.max_content_chars = max_content_chars
+        self._session: SessionContext | None = None
+
+    def set_session(self, session: SessionContext | None) -> None:
+        """Set session context for template interpolation."""
+        self._session = session
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute web search with interpolated query."""
+        from libs.python.graph.template import interpolate
+
+        input_data = input_data or {}
+
+        # Interpolate query template
+        query = interpolate(
+            template=self.query_template,
+            nodes=input_data,
+            session=self._session,
+        )
+
+        if not query or query == self.query_template:
+            return {
+                "results": [],
+                "text": "",
+                "query": query,
+                "error": "No query provided",
+                "success": False,
+            }
+
+        try:
+            from libs.python.drivers.web import search, search_as_text
+
+            results = search(
+                query=query,
+                max_results=self.max_results,
+                max_content_chars=self.max_content_chars,
+            )
+
+            # Convert to dicts for serialization
+            result_dicts = [
+                {
+                    "title": r.title,
+                    "url": r.url,
+                    "snippet": r.snippet,
+                    "body": r.body,
+                }
+                for r in results
+            ]
+
+            text = search_as_text(
+                query=query,
+                max_results=self.max_results,
+                max_content_chars=self.max_content_chars,
+            )
+
+            return {
+                "results": result_dicts,
+                "text": text,
+                "query": query,
+                "stdout": text,  # For consistency with other nodes
+                "success": True,
+            }
+        except Exception as exc:
+            return {
+                "results": [],
+                "text": "",
+                "query": query,
+                "error": str(exc),
+                "success": False,
+            }

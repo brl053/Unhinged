@@ -21,6 +21,7 @@ from .nodes import (
     SubgraphNode,
     UnixCommandNode,
     UserInputNode,
+    WebSearchNode,
 )
 
 
@@ -37,6 +38,7 @@ NODE_TYPE_REGISTRY: dict[str, type[GraphNode]] = {
     "rubric_grade": RubricGradeNode,
     "recall": RecallNode,
     "subgraph": SubgraphNode,
+    "web_search": WebSearchNode,
 }
 
 
@@ -191,6 +193,16 @@ def _create_recall_node(node_id: str, node_def: dict[str, Any], config: dict[str
     )
 
 
+def _create_web_search_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> WebSearchNode:
+    del node_def  # unused
+    return WebSearchNode(
+        node_id=node_id,
+        query_template=config.get("query_template", "{{input.query}}"),
+        max_results=config.get("max_results", 5),
+        max_content_chars=config.get("max_content_chars", 3000),
+    )
+
+
 # Type alias for node factory functions
 NodeFactory = Callable[[str, dict[str, Any], dict[str, Any]], GraphNode]
 
@@ -202,4 +214,5 @@ _NODE_FACTORIES: dict[str, NodeFactory] = {
     "user_input": _create_user_input_node,
     "rubric_grade": _create_rubric_grade_node,
     "recall": _create_recall_node,
+    "web_search": _create_web_search_node,
 }

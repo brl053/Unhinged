@@ -497,14 +497,10 @@ async def _execute_graph(match, text: str, session_id: str, session_ctx, uuid_mo
 async def _run_in_flight(match, session_ctx, record, protocol) -> None:
     """Execute the in-flight stage of graph execution.
 
-    Runs the graph script and captures stdout/stderr with optional strace.
+    Handles both:
+    - JSON graph definitions (executed via GraphExecutor)
+    - Python scripts (executed directly with optional strace)
     """
-    import os
-    import subprocess
-    import sys
-    import tempfile
-
-    from libs.python.graph import FILTER_IO, is_strace_available, run_with_strace
 
     name = match.data.get("name", "unnamed")
     session_ctx.set_stage("in_flight")
@@ -515,6 +511,101 @@ async def _run_in_flight(match, session_ctx, record, protocol) -> None:
     content = match.data.get("content", "")
     encoding = match.data.get("encoding", "")
     content_bytes = base64.b64decode(content) if encoding == "base64" else content.encode("utf-8")
+    content_str = content_bytes.decode("utf-8")
+
+    # Detect JSON graph definition
+    file_name = match.data.get("file", "")
+    is_json_graph = file_name.endswith(".json") or content_str.strip().startswith("{")
+
+    if is_json_graph:
+        await _run_json_graph(content_str, session_ctx, record)
+    else:
+        await _run_python_script(content_bytes, session_ctx, record)
+
+    # === STAGE 3: POST-FLIGHT ===
+    session_ctx.set_stage("post_flight")
+    protocol.run_post_flight(record)
+    session_ctx.flight_action("audit", success=True)
+    print()
+
+
+async def _run_json_graph(content_str: str, session_ctx, record) -> None:
+    """Execute a JSON graph definition using GraphExecutor."""
+    import json
+
+    from libs.python.graph import GraphExecutor, load_graph_from_dict
+
+    try:
+        data = json.loads(content_str)
+        graph = load_graph_from_dict(data)
+
+        # Get topic from session's last_input
+        last_input = session_ctx.get("last_input", "")
+
+        # Execute graph with input - pass to first node (search)
+        # Find the first node (no incoming edges)
+        first_nodes = [n for n in graph.nodes if not any(dst == n for _, dst, _ in graph.edges)]
+        initial_inputs = {node_id: {"input": {"topic": last_input}} for node_id in first_nodes}
+
+        executor = GraphExecutor(session_ctx)
+        result = await executor.execute(graph, initial_inputs=initial_inputs)
+
+        # Collect output from final nodes
+        stdout_parts = []
+        for node_result in result.node_results.values():
+            output = node_result.output
+            if output.get("text"):
+                stdout_parts.append(output["text"])
+            elif output.get("stdout"):
+                stdout_parts.append(output["stdout"])
+
+        stdout = "\n".join(stdout_parts)
+        stderr = ""
+        returncode = 0 if result.success else 1
+
+        record.in_flight_result = {
+            "returncode": returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+
+        if stdout:
+            for line in stdout.splitlines():
+                session_ctx.exec_stdout(line)
+            print(stdout)
+
+        session_ctx.exec_exit(returncode)
+        if returncode == 0:
+            session_ctx.msg_system("done")
+            print("done")
+        else:
+            session_ctx.msg_error("graph execution failed")
+            print("graph execution failed")
+
+    except Exception as exc:
+        import sys
+        import traceback
+
+        stderr = f"Graph error: {exc}\n{traceback.format_exc()}"
+        record.in_flight_result = {
+            "returncode": 1,
+            "stdout": "",
+            "stderr": stderr,
+        }
+        session_ctx.exec_stderr(str(exc))
+        session_ctx.exec_exit(1)
+        session_ctx.msg_error(str(exc))
+        print(stderr, file=sys.stderr)
+
+
+async def _run_python_script(content_bytes: bytes, session_ctx, record) -> None:
+    """Execute a Python script with optional strace."""
+    import os
+    import subprocess
+    import sys
+    import tempfile
+
+    from libs.python.graph import FILTER_IO, is_strace_available, run_with_strace
 
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".py", delete=False) as f:
         f.write(content_bytes)
@@ -561,9 +652,3 @@ async def _run_in_flight(match, session_ctx, record, protocol) -> None:
             print(f"failed (exit {result.returncode})")
     finally:
         os.unlink(temp_path)
-
-    # === STAGE 3: POST-FLIGHT ===
-    session_ctx.set_stage("post_flight")
-    protocol.run_post_flight(record)
-    session_ctx.flight_action("audit", success=True)
-    print()
