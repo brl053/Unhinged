@@ -28,12 +28,14 @@ while maintaining a record of all mutations.
 
 from __future__ import annotations
 
-from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from libs.python.cache import LRUCache
 
 
 class MutationType(Enum):
@@ -148,8 +150,9 @@ class SessionContext:
     - Embedding events
     - System calls (if strace enabled)
 
-    Node outputs are stored in an LRU cache for automatic eviction
-    when the session grows large. Access via set_output()/get_output().
+    Node outputs are stored in an LRU cache (libs/python/cache.LRUCache)
+    for automatic eviction when the session grows large.
+    Access via set_output()/get_output().
     """
 
     session_id: str
@@ -160,9 +163,29 @@ class SessionContext:
     _current_stage: str = ""
     _sequence: int = 0
     _live_callback: CDCCallback | None = None
-    # LRU cache for node outputs - prevents unbounded growth
-    _outputs_cache: OrderedDict[str, dict[str, Any]] = field(default_factory=OrderedDict)
+    # LRU cache for node outputs - initialized in __post_init__
+    _outputs_cache: LRUCache | None = field(default=None, repr=False)
     _outputs_max_size: int = 100  # Max nodes to keep in cache
+
+    def __post_init__(self) -> None:
+        """Initialize LRU cache with eviction callback."""
+        from libs.python.cache import LRUCache
+
+        if self._outputs_cache is None:
+            self._outputs_cache = LRUCache(
+                max_size=self._outputs_max_size,
+                on_evict=self._on_output_evict,
+            )
+        else:
+            # Restored from serialization - wire up callback
+            self._outputs_cache.set_on_evict(self._on_output_evict)
+
+    def _on_output_evict(self, key: str, value: Any) -> None:
+        """Called by LRUCache when an output is evicted."""
+        self.emit(
+            CDCEventType.STATE_DELETE,
+            {"key": f"outputs.{key}", "reason": "lru_eviction"},
+        )
 
     def set_live_callback(self, callback: CDCCallback | None) -> None:
         """Set a callback to receive CDC events in real-time."""
@@ -171,16 +194,8 @@ class SessionContext:
     def set_outputs_max_size(self, max_size: int) -> None:
         """Set max number of node outputs to keep (LRU eviction)."""
         self._outputs_max_size = max_size
-        self._evict_outputs()
-
-    def _evict_outputs(self) -> None:
-        """Evict oldest outputs if over max size."""
-        while len(self._outputs_cache) > self._outputs_max_size:
-            evicted_key, evicted_val = self._outputs_cache.popitem(last=False)
-            self.emit(
-                CDCEventType.STATE_DELETE,
-                {"key": f"outputs.{evicted_key}", "reason": "lru_eviction"},
-            )
+        if self._outputs_cache:
+            self._outputs_cache._max_size = max_size
 
     def set_output(self, node_id: str, output: dict[str, Any]) -> None:
         """Store a node output in the LRU cache.
@@ -188,37 +203,26 @@ class SessionContext:
         Automatically evicts oldest outputs when over max_size.
         Emits CDC event for the mutation.
         """
-        is_update = node_id in self._outputs_cache
-        if is_update:
-            # Move to end (most recently used)
-            self._outputs_cache.move_to_end(node_id)
-        self._outputs_cache[node_id] = output
+        is_update = self._outputs_cache.get(node_id) is not None
 
-        # Emit CDC event
+        # Store in cache (eviction handled by LRUCache with callback)
+        self._outputs_cache.set(node_id, output)
+
+        # Emit CDC event for the set
         cdc_type = CDCEventType.STATE_UPDATE if is_update else CDCEventType.STATE_CREATE
         self.emit(cdc_type, {"key": f"outputs.{node_id}", "output": output})
 
-        # Evict if needed
-        self._evict_outputs()
-
     def get_output(self, node_id: str, default: Any = None) -> dict[str, Any] | None:
         """Get a node output from the cache. Moves to most-recently-used."""
-        if node_id in self._outputs_cache:
-            self._outputs_cache.move_to_end(node_id)
-            return self._outputs_cache[node_id]
-        return default
+        return self._outputs_cache.get(node_id, default)
 
     def get_all_outputs(self) -> dict[str, dict[str, Any]]:
         """Get all cached outputs as a dict (for template interpolation)."""
-        return dict(self._outputs_cache)
+        return dict(self._outputs_cache.items())
 
     def outputs_stats(self) -> dict[str, Any]:
         """Get stats about the outputs cache."""
-        return {
-            "size": len(self._outputs_cache),
-            "max_size": self._outputs_max_size,
-            "keys": list(self._outputs_cache.keys()),
-        }
+        return self._outputs_cache.stats()
 
     def set_stage(self, stage: str) -> None:
         """Set current execution stage for mutation tracking."""
@@ -470,9 +474,8 @@ class SessionContext:
             "created_at": self.created_at.isoformat(),
             "data": self._data,
             "sequence": self._sequence,
-            # LRU outputs cache - preserve order for LRU restoration
-            "outputs_cache": dict(self._outputs_cache),
-            "outputs_cache_order": list(self._outputs_cache.keys()),
+            # LRU outputs cache - use LRUCache.to_dict()
+            "outputs_cache": self._outputs_cache.to_dict() if self._outputs_cache else {},
             "outputs_max_size": self._outputs_max_size,
             "changelog": [
                 {
@@ -500,21 +503,24 @@ class SessionContext:
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> SessionContext:
         """Deserialize context from persistence."""
+        from libs.python.cache import LRUCache
+
+        max_size = d.get("outputs_max_size", 100)
+
+        # Create LRUCache and restore from serialized data
+        cache = LRUCache(max_size=max_size)
+        cache_data = d.get("outputs_cache", {})
+        if cache_data:
+            cache.from_dict(cache_data)
+
         ctx = cls(
             session_id=d["session_id"],
             created_at=datetime.fromisoformat(d["created_at"]),
+            _outputs_cache=cache,
+            _outputs_max_size=max_size,
         )
         ctx._data = dict(d.get("data", {}))
         ctx._sequence = d.get("sequence", 0)
-
-        # Restore LRU outputs cache in correct order
-        outputs = d.get("outputs_cache", {})
-        order = d.get("outputs_cache_order", list(outputs.keys()))
-        ctx._outputs_cache = OrderedDict()
-        for key in order:
-            if key in outputs:
-                ctx._outputs_cache[key] = outputs[key]
-        ctx._outputs_max_size = d.get("outputs_max_size", 100)
 
         # Changelog and CDC feed are not restored - they're append-only per execution
         # But we preserve the sequence counter for continuity

@@ -29,11 +29,15 @@ Usage:
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from libs.python.persistence.document_store import DocumentStore
+
+# Callback type for eviction notifications
+EvictCallback = Callable[[str, Any], None]  # (key, value) -> None
 
 
 class LRUCache:
@@ -48,22 +52,27 @@ class LRUCache:
         store: DocumentStore | None = None,
         namespace: str = "cache",
         max_size: int = 100,
+        on_evict: EvictCallback | None = None,
     ) -> None:
         """Initialize LRU cache.
 
         Args:
-            store: Document store for persistence
-
-. None = in-memory only.
+            store: Document store for persistence. None = in-memory only.
             namespace: Collection/document ID prefix for storage.
             max_size: Maximum number of entries before LRU eviction.
+            on_evict: Optional callback called when an entry is evicted.
         """
         self._store = store
         self._namespace = namespace
         self._max_size = max_size
+        self._on_evict = on_evict
         self._cache: OrderedDict[str, Any] = OrderedDict()
         self._hits = 0
         self._misses = 0
+
+    def set_on_evict(self, callback: EvictCallback | None) -> None:
+        """Set the eviction callback."""
+        self._on_evict = callback
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get value by key. Moves key to most-recently-used."""
@@ -84,7 +93,9 @@ class LRUCache:
 
         # Evict LRU entries if over max_size
         while len(self._cache) > self._max_size:
-            self._cache.popitem(last=False)  # Remove oldest (first)
+            evicted_key, evicted_value = self._cache.popitem(last=False)
+            if self._on_evict:
+                self._on_evict(evicted_key, evicted_value)
 
     def delete(self, key: str) -> bool:
         """Delete key. Returns True if key existed."""
@@ -115,6 +126,28 @@ class LRUCache:
             "misses": self._misses,
             "hit_rate": self._hits / total if total > 0 else 0.0,
         }
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize cache for embedding in another structure."""
+        return {
+            "entries": dict(self._cache),
+            "key_order": list(self._cache.keys()),
+            "max_size": self._max_size,
+        }
+
+    def from_dict(self, data: dict[str, Any]) -> None:
+        """Restore cache from serialized dict."""
+        entries = data.get("entries", {})
+        order = data.get("key_order", list(entries.keys()))
+        self._max_size = data.get("max_size", self._max_size)
+        self._cache = OrderedDict()
+        for key in order:
+            if key in entries:
+                self._cache[key] = entries[key]
+
+    def items(self) -> list[tuple[str, Any]]:
+        """Get all (key, value) pairs in LRU order (oldest first)."""
+        return list(self._cache.items())
 
     def save(self) -> bool:
         """Persist cache to document store. Returns True on success."""
