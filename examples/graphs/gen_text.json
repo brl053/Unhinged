@@ -1,0 +1,20 @@
+{
+  "name": "Simple Text Generation",
+  "description": "Generate text from a prompt using LLM",
+  "tags": ["text", "generation", "llm"],
+  "nodes": [
+    {
+      "id": "generate",
+      "type": "text_gen",
+      "config": {
+        "prompt_template": "{{input.topic}}",
+        "model": "llama2",
+        "provider": "ollama",
+        "max_tokens": 1024,
+        "temperature": 0.7
+      }
+    }
+  ],
+  "edges": []
+}
+

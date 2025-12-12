@@ -196,3 +196,109 @@ class TestSubgraphNode:
 
         assert result["success"] is False
         assert result["subgraph"]["node_results"]["fail"]["success"] is False
+
+
+class TestGenerationNodes:
+    """Tests for GenerationNode and its modality subclasses."""
+
+    @pytest.mark.asyncio
+    async def test_text_gen_node_hydrate(self) -> None:
+        """Test that TextGenerationNode hydrates prompt template correctly."""
+        from libs.python.graph import TextGenerationNode
+
+        node = TextGenerationNode(
+            node_id="text",
+            prompt_template="Write about {{input.topic}}",
+        )
+
+        result = node.hydrate({"input": {"topic": "cats"}})
+
+        assert result["prompt"] == "Write about cats"
+
+    @pytest.mark.asyncio
+    async def test_image_gen_node_hydrate(self) -> None:
+        """Test that ImageGenerationNode hydrates prompt template correctly."""
+        from libs.python.graph import ImageGenerationNode
+
+        node = ImageGenerationNode(
+            node_id="img",
+            prompt_template="A photo of {{input.topic}}",
+            width=1024,
+            height=768,
+        )
+
+        result = node.hydrate({"input": {"topic": "sunset"}})
+
+        assert result["prompt"] == "A photo of sunset"
+        assert node.width == 1024
+        assert node.height == 768
+
+    @pytest.mark.asyncio
+    async def test_audio_gen_node_hydrate(self) -> None:
+        """Test that AudioGenerationNode hydrates prompt template correctly."""
+        from libs.python.graph import AudioGenerationNode
+
+        node = AudioGenerationNode(
+            node_id="audio",
+            prompt_template="{{input.topic}}",
+            voice="echo",
+            speed=1.5,
+        )
+
+        result = node.hydrate({"input": {"topic": "Hello world"}})
+
+        assert result["prompt"] == "Hello world"
+        assert node.voice == "echo"
+        assert node.speed == 1.5
+
+    @pytest.mark.asyncio
+    async def test_video_gen_node_hydrate(self) -> None:
+        """Test that VideoGenerationNode hydrates prompt template correctly."""
+        from libs.python.graph import VideoGenerationNode
+
+        node = VideoGenerationNode(
+            node_id="video",
+            prompt_template="{{input.topic}}",
+            duration=10,
+            fps=30,
+        )
+
+        result = node.hydrate({"input": {"topic": "ocean waves"}})
+
+        assert result["prompt"] == "ocean waves"
+        assert node.duration == 10
+        assert node.fps == 30
+
+    @pytest.mark.asyncio
+    async def test_generation_node_with_session_context(self) -> None:
+        """Test that GenerationNode can access session context in templates."""
+        from libs.python.graph import TextGenerationNode
+        from libs.python.graph.context import SessionContext
+
+        session = SessionContext(session_id="test-session")
+        session.set("memo", "Important note about cats")
+
+        node = TextGenerationNode(
+            node_id="text",
+            prompt_template="Expand on: {{session.memo}}",
+        )
+        node.set_session(session)
+
+        result = node.hydrate({})
+
+        assert result["prompt"] == "Expand on: Important note about cats"
+
+    @pytest.mark.asyncio
+    async def test_generation_node_with_upstream_node_output(self) -> None:
+        """Test that GenerationNode can reference upstream node outputs."""
+        from libs.python.graph import ImageGenerationNode
+
+        node = ImageGenerationNode(
+            node_id="img",
+            prompt_template="{{write_script.stdout}}",
+        )
+
+        input_data = {"write_script": {"stdout": "A beautiful mountain landscape at dawn"}}
+        result = node.hydrate(input_data)
+
+        assert result["prompt"] == "A beautiful mountain landscape at dawn"

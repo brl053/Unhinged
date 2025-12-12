@@ -8,6 +8,13 @@ from __future__ import annotations
 
 from .checks import AuditAction, ContextLoadCheck, ContextPersistAction, RubricGradeAction, RubricMatchCheck
 from .context import CDCEvent, CDCEventType, ContextStore, Mutation, MutationType, SessionContext, SessionSummary
+from .generation_nodes import (
+    AudioGenerationNode,
+    GenerationNode,
+    ImageGenerationNode,
+    TextGenerationNode,
+    VideoGenerationNode,
+)
 from .graph import Graph, GraphExecutionResult, GraphExecutor, NodeExecutionResult
 from .loader import GraphLoadError, load_graph_from_dict, load_graph_from_json
 from .nodes import (
@@ -72,6 +79,12 @@ __all__ = [
     "LLMNode",
     "StructuredOutputNode",
     "WebSearchNode",
+    # generation nodes
+    "GenerationNode",
+    "TextGenerationNode",
+    "ImageGenerationNode",
+    "AudioGenerationNode",
+    "VideoGenerationNode",
     # graph
     "Graph",
     # loader

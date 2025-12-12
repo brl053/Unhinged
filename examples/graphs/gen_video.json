@@ -1,0 +1,21 @@
+{
+  "name": "Simple Video Generation",
+  "description": "Generate a video from a text prompt",
+  "tags": ["video", "generation", "diffusion"],
+  "nodes": [
+    {
+      "id": "generate",
+      "type": "video_gen",
+      "config": {
+        "prompt_template": "{{input.topic}}",
+        "approach": "frame-interp",
+        "duration": 5,
+        "fps": 24,
+        "width": 512,
+        "height": 512
+      }
+    }
+  ],
+  "edges": []
+}
+

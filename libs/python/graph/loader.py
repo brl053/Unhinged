@@ -11,6 +11,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .generation_nodes import (
+    AudioGenerationNode,
+    ImageGenerationNode,
+    TextGenerationNode,
+    VideoGenerationNode,
+)
 from .graph import Graph
 from .nodes import (
     GraphNode,
@@ -41,6 +47,10 @@ NODE_TYPE_REGISTRY: dict[str, type[GraphNode]] = {
     "subgraph": SubgraphNode,
     "web_search": WebSearchNode,
     "human_feedback": HumanFeedbackNode,
+    "text_gen": TextGenerationNode,
+    "image_gen": ImageGenerationNode,
+    "audio_gen": AudioGenerationNode,
+    "video_gen": VideoGenerationNode,
 }
 
 
@@ -205,14 +215,63 @@ def _create_web_search_node(node_id: str, node_def: dict[str, Any], config: dict
     )
 
 
-def _create_human_feedback_node(
-    node_id: str, node_def: dict[str, Any], config: dict[str, Any]
-) -> HumanFeedbackNode:
+def _create_human_feedback_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> HumanFeedbackNode:
     del node_def  # unused
     return HumanFeedbackNode(
         node_id=node_id,
         prompt_template=config.get("prompt_template", "Provide feedback:"),
         options=config.get("options"),
+    )
+
+
+def _create_text_gen_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> TextGenerationNode:
+    del node_def  # unused
+    return TextGenerationNode(
+        node_id=node_id,
+        prompt_template=config.get("prompt_template", "{{input.topic}}"),
+        model=config.get("model", "llama2"),
+        provider=config.get("provider", "ollama"),
+        max_tokens=config.get("max_tokens", 1024),
+        temperature=config.get("temperature", 0.7),
+        output_dir=config.get("output_dir"),
+    )
+
+
+def _create_image_gen_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> ImageGenerationNode:
+    del node_def  # unused
+    return ImageGenerationNode(
+        node_id=node_id,
+        prompt_template=config.get("prompt_template", "{{input.topic}}"),
+        width=config.get("width", 512),
+        height=config.get("height", 512),
+        num_inference_steps=config.get("num_inference_steps", 20),
+        guidance_scale=config.get("guidance_scale", 7.5),
+        output_dir=config.get("output_dir"),
+    )
+
+
+def _create_audio_gen_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> AudioGenerationNode:
+    del node_def  # unused
+    return AudioGenerationNode(
+        node_id=node_id,
+        prompt_template=config.get("prompt_template", "{{input.topic}}"),
+        voice=config.get("voice", "nova"),
+        speed=config.get("speed", 1.0),
+        output_dir=config.get("output_dir"),
+    )
+
+
+def _create_video_gen_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> VideoGenerationNode:
+    del node_def  # unused
+    return VideoGenerationNode(
+        node_id=node_id,
+        prompt_template=config.get("prompt_template", "{{input.topic}}"),
+        approach=config.get("approach", "frame-interp"),
+        duration=config.get("duration", 5),
+        fps=config.get("fps", 24),
+        width=config.get("width", 512),
+        height=config.get("height", 512),
+        output_dir=config.get("output_dir"),
     )
 
 
@@ -229,4 +288,8 @@ _NODE_FACTORIES: dict[str, NodeFactory] = {
     "recall": _create_recall_node,
     "web_search": _create_web_search_node,
     "human_feedback": _create_human_feedback_node,
+    "text_gen": _create_text_gen_node,
+    "image_gen": _create_image_gen_node,
+    "audio_gen": _create_audio_gen_node,
+    "video_gen": _create_video_gen_node,
 }
