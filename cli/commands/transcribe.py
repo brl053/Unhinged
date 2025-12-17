@@ -11,7 +11,8 @@ from uuid import uuid4
 
 import click
 
-from cli.utils import display_transcript, loading_indicator, log_error, log_info, log_success
+from cli.tui import loading, panel
+from cli.utils import log_error, log_info, log_success
 
 # Add event-framework to path (hyphenated directory name can't be imported directly)
 _event_framework_path = Path(__file__).parent.parent.parent / "libs" / "event-framework" / "python" / "src"
@@ -272,7 +273,7 @@ async def _transcribe_recording(
     log_info("Transcribing recorded audio...")
 
     try:
-        with loading_indicator("Transcribing recorded audio..."):
+        with loading("Transcribing recorded audio..."):
             full_text = service.transcribe_audio(audio_path)
     except Exception as exc:  # Surface errors nicely
         log_error(f"Microphone transcription failed: {exc}")
@@ -377,7 +378,7 @@ async def _run_mic_session(model: str, max_seconds: int | None, output: str | No
         )
 
     # Display the transcript in a visually distinct area
-    display_transcript(full_text, title="Transcription")
+    panel(full_text, title="Transcription")
 
     if output and full_text:
         output_path = Path(output)
