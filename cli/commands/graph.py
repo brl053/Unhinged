@@ -98,9 +98,11 @@ def create(file_path: str, name: str | None, description: str | None, tags: tupl
 
 def _parse_node_line(line: str) -> dict | None:
     """Parse a single node input line. Returns node dict or None on error."""
+    from cli.tui import console
+
     parts = line.split(maxsplit=2)
     if len(parts) < 2:
-        print("  error: need at least <node_id> <type>")
+        console.print("[error]need at least <node_id> <type>[/error]")
         return None
 
     node_id, node_type = parts[0], parts[1].lower()
@@ -110,14 +112,16 @@ def _parse_node_line(line: str) -> dict | None:
     config_keys = {"unix": "command", "api": "endpoint", "input": "prompt"}
     node[config_keys.get(node_type, "config")] = config
 
-    print(f"  added: {node_id} ({node_type})")
+    console.print(f"  [success]added:[/success] {node_id} ({node_type})")
     return node
 
 
 def _parse_edge_line(line: str) -> dict | None:
     """Parse a single edge input line. Returns edge dict or None on error."""
+    from cli.tui import console
+
     if "->" not in line:
-        print("  error: use format 'source -> target'")
+        console.print("[error]use format 'source -> target'[/error]")
         return None
 
     parts = line.split("->")
@@ -130,21 +134,28 @@ def _parse_edge_line(line: str) -> dict | None:
         edge["condition"] = condition
 
     suffix = f" [{condition}]" if condition else ""
-    print(f"  added: {source} -> {target}{suffix}")
+    console.print(f"  [success]added:[/success] {source} → {target}{suffix}")
     return edge
 
 
-def _collect_nodes() -> list[dict]:
-    """Interactively collect nodes from user input."""
-    print("add nodes (empty line when done)")
-    print("format: <node_id> <type> <command_or_config>")
-    print("types: unix, api, input, subgraph")
-    print()
+def _collect_nodes_tui() -> list[dict]:
+    """Interactively collect nodes using TUI prompts."""
+    from rich.prompt import Prompt
+
+    from cli.tui import console, panel
+
+    panel(
+        "Format: <node_id> <type> <command_or_config>\n"
+        "Types: unix, llm, user_input, api, subgraph\n"
+        "Empty line when done",
+        title="Add Nodes",
+    )
 
     nodes = []
     while True:
         try:
-            line = input("node> ").strip()
+            line: str = Prompt.ask("node", console=console, default="")
+            line = line.strip()
         except EOFError:
             break
         if not line:
@@ -155,17 +166,23 @@ def _collect_nodes() -> list[dict]:
     return nodes
 
 
-def _collect_edges() -> list[dict]:
-    """Interactively collect edges from user input."""
-    print()
-    print("add edges (empty line when done)")
-    print("format: <source> -> <target> [condition]")
-    print()
+def _collect_edges_tui() -> list[dict]:
+    """Interactively collect edges using TUI prompts."""
+    from rich.prompt import Prompt
+
+    from cli.tui import console, panel
+
+    console.print()
+    panel(
+        "Format: <source> -> <target> [condition]\n" "Empty line when done",
+        title="Add Edges",
+    )
 
     edges = []
     while True:
         try:
-            line = input("edge> ").strip()
+            line: str = Prompt.ask("edge", console=console, default="")
+            line = line.strip()
         except EOFError:
             break
         if not line:
@@ -174,6 +191,33 @@ def _collect_edges() -> list[dict]:
         if edge:
             edges.append(edge)
     return edges
+
+
+def _store_graph(store, name: str, description: str, tags: list, nodes: list, edges: list):
+    """Store graph definition in document store."""
+    import json
+
+    graph_def = {
+        "name": name,
+        "description": description,
+        "tags": tags,
+        "nodes": nodes,
+        "edges": edges,
+        "version": "1.0",
+    }
+    content = json.dumps(graph_def, indent=2)
+    return store.create(
+        "graphs",
+        {
+            "name": name,
+            "description": description,
+            "tags": tags,
+            "content": content,
+            "encoding": "json",
+            "node_count": len(nodes),
+            "edge_count": len(edges),
+        },
+    )
 
 
 @graph.command(name="build")
@@ -189,49 +233,27 @@ def build(name: str, description: str, tags: tuple[str, ...]):
         unhinged graph build --name "Open Firefox Private"
         unhinged graph build -n "Email Check" -t email -t automation
     """
-    import json
+    from cli.tui import console
 
     try:
         from libs.python.persistence import get_document_store
 
         store = get_document_store()
-        print(f"building graph: {name}")
-        print()
+        console.print(f"\n[action.primary]Building graph:[/action.primary] {name}\n")
 
-        nodes = _collect_nodes()
+        nodes = _collect_nodes_tui()
         if not nodes:
-            print("no nodes added, aborting")
+            console.print("[warning]No nodes added, aborting[/warning]")
             return 1
 
-        edges = _collect_edges()
+        edges = _collect_edges_tui()
 
-        # Store graph
-        graph_def = {
-            "name": name,
-            "description": description,
-            "tags": list(tags),
-            "nodes": nodes,
-            "edges": edges,
-            "version": "1.0",
-        }
-        content = json.dumps(graph_def, indent=2)
-        doc = store.create(
-            "graphs",
-            {
-                "name": name,
-                "description": description,
-                "tags": list(tags),
-                "content": content,
-                "encoding": "json",
-                "node_count": len(nodes),
-                "edge_count": len(edges),
-            },
-        )
+        doc = _store_graph(store, name, description, list(tags), nodes, edges)
 
-        print()
-        print(f"created graph: {doc.id}")
-        print(f"  nodes: {len(nodes)}")
-        print(f"  edges: {len(edges)}")
+        console.print()
+        console.print(f"[success]Created graph:[/success] {doc.id}")
+        console.print(f"  nodes: {len(nodes)}")
+        console.print(f"  edges: {len(edges)}")
 
     except Exception as e:
         log_error(f"Failed to build graph: {e}")
