@@ -14,7 +14,7 @@ _theme = Theme(
         # Action colors
         "action.primary": "bold blue",
         "action.secondary": "dim",
-        "action.disabled": "dim grey",
+        "action.disabled": "dim bright_black",
         # Feedback colors
         "success": "bold green",
         "warning": "bold yellow",
@@ -23,7 +23,7 @@ _theme = Theme(
         # Text hierarchy
         "text.primary": "default",
         "text.secondary": "dim",
-        "text.muted": "dim grey",
+        "text.muted": "dim bright_black",
         # Interactive states
         "selected": "bold reverse",
         "highlight": "bold",
