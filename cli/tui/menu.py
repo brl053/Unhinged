@@ -85,7 +85,7 @@ class Menu:
 
     def _render_actions(self) -> str:
         """Build action hint string."""
-        parts = [f"[{a.key}]{a.label}" for a in self.actions]
+        parts = [f"[bold]{a.key.upper()}[/bold]{a.label[1:]}" for a in self.actions]
         return "  ".join(parts)
 
     def _find_item(self, key: str) -> MenuItem | None:
@@ -113,16 +113,15 @@ class Menu:
     def _prompt_action(self, selected: MenuItem) -> Any:
         """Prompt for and execute action on selected item."""
         console.print(f"\nSelected: [highlight]{selected.label}[/highlight]")
-        action_keys = [a.key for a in self.actions]
-        action_prompt = f"Action [{'/'.join(action_keys)}]"
-        action_response: str = Prompt.ask(action_prompt, console=console)
-        action_response = action_response.strip().lower()
+        action_keys = "/".join(a.key for a in self.actions)
+        action_response: str = Prompt.ask(f"Action [{action_keys}]", console=console)
+        action_response = action_response.strip().lower()[:1]  # First char only
 
         action = self._find_action(action_response)
         if action is None:
             console.print("[warning]Invalid action[/warning]")
             return "continue"
-        if action_response == "q":
+        if action.callback is None or action_response == "q":
             return None
         return action.callback(selected)
 
