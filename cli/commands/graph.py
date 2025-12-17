@@ -645,6 +645,107 @@ def session():
             signal.signal(signal.SIGTERM, original_sigterm or signal.SIG_DFL)
 
 
+def _menu_run_action(item) -> str:
+    """Menu action: run the selected graph."""
+    from cli.tui import console
+
+    doc = item.data
+    console.print(f"\n[action.primary]Running: {item.label}[/action.primary]")
+    ctx = click.Context(run)
+    ctx.invoke(run, graph_id=doc.id)
+    return "done"
+
+
+def _menu_view_action(item) -> str:
+    """Menu action: view graph structure."""
+    import json
+
+    from cli.tui import console, graph_tree
+
+    doc = item.data
+    content = doc.data.get("content", "{}")
+    try:
+        graph_data = json.loads(content)
+        graph_data["name"] = doc.data.get("name", "Graph")
+        graph_data["description"] = doc.data.get("description", "")
+        graph_tree(graph_data, show_config=True)
+    except json.JSONDecodeError:
+        console.print("[warning]Cannot parse graph content[/warning]")
+    return "continue"
+
+
+def _menu_delete_action(store):
+    """Create menu action: delete the selected graph."""
+
+    def delete_graph(item) -> str:
+        from cli.tui import confirm, console
+
+        doc = item.data
+        if confirm(f"Delete '{item.label}'?"):
+            store.delete("graphs", doc.id)
+            console.print(f"[success]Deleted: {item.label}[/success]")
+        return "continue"
+
+    return delete_graph
+
+
+def _build_graph_menu(docs, store):
+    """Build menu from graph documents."""
+    from cli.tui import Menu
+
+    menu_obj = Menu("Select a Graph")
+    for i, doc in enumerate(docs, 1):
+        data = doc.data
+        name = data.get("name", "Unnamed")
+        node_count = data.get("node_count", "?")
+        desc = f"{node_count} nodes"
+        if data.get("tags"):
+            desc += f" | {', '.join(data['tags'][:3])}"
+        menu_obj.add_item(str(i), name, desc, data=doc)
+
+    menu_obj.add_action("r", "Run", _menu_run_action)
+    menu_obj.add_action("v", "View", _menu_view_action)
+    menu_obj.add_action("d", "Delete", _menu_delete_action(store))
+    menu_obj.add_action("q", "Quit", lambda _: None)
+    return menu_obj
+
+
+@graph.command(name="menu")
+@click.option("--tag", "-t", help="Filter by tag")
+def menu(tag: str | None):
+    """Interactive graph menu.
+
+    Browse and select graphs with keyboard navigation.
+    Actions: run, view, delete, or quit.
+
+    Examples:
+        unhinged graph menu
+        unhinged graph menu --tag email
+    """
+    from cli.tui import console
+
+    try:
+        from libs.python.persistence import get_document_store
+
+        store = get_document_store()
+        filters = {"tags": [tag]} if tag else None
+        docs = store.query("graphs", filters=filters, limit=50)
+
+        if not docs:
+            console.print("[warning]No graphs found[/warning]")
+            return 0
+
+        menu_obj = _build_graph_menu(docs, store)
+        menu_obj.run()
+
+    except ImportError as e:
+        console.print(f"[error]Document store not available: {e}[/error]")
+        return 1
+    except Exception as e:
+        console.print(f"[error]Menu failed: {e}[/error]")
+        return 1
+
+
 @graph.command(name="rubric-seed")
 def rubric_seed():
     """Seed default rubric documents for invoice grading.
