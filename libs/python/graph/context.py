@@ -203,6 +203,8 @@ class SessionContext:
         Automatically evicts oldest outputs when over max_size.
         Emits CDC event for the mutation.
         """
+        if self._outputs_cache is None:
+            return
         is_update = self._outputs_cache.get(node_id) is not None
 
         # Store in cache (eviction handled by LRUCache with callback)
@@ -212,16 +214,23 @@ class SessionContext:
         cdc_type = CDCEventType.STATE_UPDATE if is_update else CDCEventType.STATE_CREATE
         self.emit(cdc_type, {"key": f"outputs.{node_id}", "output": output})
 
-    def get_output(self, node_id: str, default: Any = None) -> dict[str, Any] | None:
+    def get_output(self, node_id: str, default: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """Get a node output from the cache. Moves to most-recently-used."""
-        return self._outputs_cache.get(node_id, default)
+        if self._outputs_cache is None:
+            return default
+        result: dict[str, Any] | None = self._outputs_cache.get(node_id, default)
+        return result
 
     def get_all_outputs(self) -> dict[str, dict[str, Any]]:
         """Get all cached outputs as a dict (for template interpolation)."""
+        if self._outputs_cache is None:
+            return {}
         return dict(self._outputs_cache.items())
 
     def outputs_stats(self) -> dict[str, Any]:
         """Get stats about the outputs cache."""
+        if self._outputs_cache is None:
+            return {}
         return self._outputs_cache.stats()
 
     def set_stage(self, stage: str) -> None:
