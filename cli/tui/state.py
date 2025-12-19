@@ -1,0 +1,158 @@
+"""Application state for TUI.
+
+Voice-first, single pane interface.
+Press Enter to start/stop voice recording.
+"""
+
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Any
+
+
+class VoiceState(Enum):
+    """Voice recording state."""
+
+    IDLE = auto()  # Ready, waiting for Enter
+    RECORDING = auto()  # Recording voice input
+    PROCESSING = auto()  # Transcribing audio
+    ANALYZING = auto()  # Running intent analysis
+
+
+@dataclass
+class IntentResult:
+    """Result from intent analysis graph."""
+
+    intent: str = ""
+    domain: str = ""
+    confidence: float = 0.0
+    reasoning: str = ""
+    success: bool = False
+    error: str = ""
+
+
+@dataclass
+class AppState:
+    """Complete application state.
+
+    Single pane, voice-first design.
+    """
+
+    # Voice state
+    voice: VoiceState = VoiceState.IDLE
+
+    # Transcript history (most recent first)
+    history: list[str] = field(default_factory=list)
+
+    # Current transcription result
+    last_transcript: str = ""
+
+    # Intent analysis result
+    intent_result: IntentResult | None = None
+
+    # Graph data for visualization (dict form)
+    graph_data: dict[str, Any] | None = None
+
+    # Status message
+    status: str = "Ready"
+
+    # Running flag
+    running: bool = True
+
+    # Dirty flag (needs re-render)
+    dirty: bool = True
+
+    # Recording elapsed time (seconds)
+    recording_seconds: int = 0
+
+    def start_recording(self) -> "AppState":
+        """Start voice recording."""
+        return self._replace(
+            voice=VoiceState.RECORDING,
+            status="🎤 Recording... Press Enter to stop.",
+            recording_seconds=0,
+            intent_result=None,
+            graph_data=None,
+            dirty=True,
+        )
+
+    def stop_recording(self) -> "AppState":
+        """Stop recording, start processing."""
+        return self._replace(
+            voice=VoiceState.PROCESSING,
+            status="⏳ Transcribing...",
+            dirty=True,
+        )
+
+    def set_transcript(self, text: str) -> "AppState":
+        """Set transcription result, move to analyzing."""
+        new_history = [text] + self.history[:9]  # Keep last 10
+        return self._replace(
+            voice=VoiceState.ANALYZING,
+            last_transcript=text,
+            history=new_history,
+            status="🧠 Analyzing intent...",
+            dirty=True,
+        )
+
+    def set_intent_result(self, result: IntentResult, graph_data: dict[str, Any] | None = None) -> "AppState":
+        """Set intent analysis result and return to idle."""
+        if result.success:
+            status = f"✓ Intent: {result.intent} | Domain: {result.domain} | Confidence: {result.confidence:.0%}"
+        else:
+            status = f"⚠ Analysis failed: {result.error}"
+        return self._replace(
+            voice=VoiceState.IDLE,
+            intent_result=result,
+            graph_data=graph_data,
+            status=status,
+            dirty=True,
+        )
+
+    def set_error(self, error: str) -> "AppState":
+        """Set error state and return to idle."""
+        return self._replace(
+            voice=VoiceState.IDLE,
+            status=f"❌ {error}",
+            dirty=True,
+        )
+
+    def tick_recording(self) -> "AppState":
+        """Increment recording timer."""
+        return self._replace(
+            recording_seconds=self.recording_seconds + 1,
+            status=f"🎤 Recording... {self.recording_seconds + 1}s. Press Enter to stop.",
+            dirty=True,
+        )
+
+    def quit(self) -> "AppState":
+        """Signal application to quit."""
+        return self._replace(running=False)
+
+    def set_status(self, message: str) -> "AppState":
+        """Set status message."""
+        return self._replace(status=message, dirty=True)
+
+    def mark_clean(self) -> "AppState":
+        """Mark state as rendered (not dirty)."""
+        return self._replace(dirty=False)
+
+    def _replace(self, **changes) -> "AppState":
+        """Return new state with specified changes."""
+        return AppState(
+            voice=changes.get("voice", self.voice),
+            history=changes.get("history", self.history),
+            last_transcript=changes.get("last_transcript", self.last_transcript),
+            intent_result=changes.get("intent_result", self.intent_result),
+            graph_data=changes.get("graph_data", self.graph_data),
+            status=changes.get("status", self.status),
+            running=changes.get("running", self.running),
+            dirty=changes.get("dirty", self.dirty),
+            recording_seconds=changes.get("recording_seconds", self.recording_seconds),
+        )
+
+
+def create_initial_state() -> AppState:
+    """Create initial application state."""
+    return AppState(
+        status="Press Enter to speak. Press 'q' to quit.",
+    )

@@ -10,6 +10,7 @@ from cli.commands.parse import parse
 from cli.commands.shortform import shortform
 from cli.commands.system import system
 from cli.commands.transcribe import transcribe
+from cli.commands.tui import tui
 from cli.commands.video import video
 from cli.commands.vm import vm
 from cli.commands.voice import voice
@@ -41,4 +42,5 @@ __all__ = [
     "shortform",
     "orchestrate",
     "graph",
+    "tui",
 ]

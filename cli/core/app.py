@@ -17,6 +17,7 @@ from cli.commands import (
     shortform,
     system,
     transcribe,
+    tui,
     video,
     vm,
     voice,
@@ -28,12 +29,14 @@ from cli.commands import (
 def cli(ctx: click.Context) -> None:
     """Unhinged - Native Graphics Platform with Dual-System Architecture.
 
-    Normal usage: unhinged [COMMAND] [OPTIONS]
-    Default: unhinged system start (start complete system)
+    Run without arguments to launch interactive TUI.
+    Or use: unhinged [COMMAND] [OPTIONS]
     """
-    # If no command provided, show help
+    # If no command provided, launch TUI
     if ctx.invoked_subcommand is None:
-        click.echo(ctx.get_help())
+        from cli.tui import run_app
+
+        run_app()
 
 
 # Add command groups
@@ -51,6 +54,7 @@ cli.add_command(shortform)
 cli.add_command(chat)
 cli.add_command(orchestrate)
 cli.add_command(graph)
+cli.add_command(tui)
 
 
 if __name__ == "__main__":
