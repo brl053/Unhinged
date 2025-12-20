@@ -376,6 +376,14 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
         return IntentResult(success=False, error=str(e)), None
 
 
+def _preload_transcription_model() -> None:
+    """Preload Whisper model in background thread."""
+    global _transcription_service
+    if _transcription_service is None:
+        _transcription_service = TranscriptionService(model_size="base")
+        _transcription_service._load_model()
+
+
 def _handle_start_recording(
     state: AppState,
     recorder: VoiceRecorder,
@@ -384,6 +392,8 @@ def _handle_start_recording(
     """Handle starting voice recording."""
     try:
         loop.run_until_complete(recorder.start_recording())
+        # Preload model while user is speaking
+        loop.run_until_complete(asyncio.to_thread(_preload_transcription_model))
         return state.start_recording()
     except Exception as e:
         return state.set_error(f"Mic error: {e}")
@@ -393,6 +403,7 @@ def _handle_stop_recording(
     state: AppState,
     recorder: VoiceRecorder,
     loop: asyncio.AbstractEventLoop,
+    live: Live,
 ) -> AppState:
     """Handle stopping recording and processing audio."""
     state = state.stop_recording()
@@ -402,10 +413,12 @@ def _handle_stop_recording(
         if not audio_path or not audio_path.exists():
             return state.set_error("No audio recorded")
 
+        # Transcribe and update UI immediately
         text = loop.run_until_complete(asyncio.to_thread(transcribe_audio_sync, audio_path))
         state = state.set_transcript(text)
+        live.update(render_state(state))  # Show transcript NOW
 
-        # Run intent analysis
+        # Intent analysis - UI already shows transcript
         intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text))
         state = state.set_intent_result(intent_result, graph_data)
 
@@ -470,7 +483,7 @@ def _handle_key_event(
             return _handle_start_recording(state, recorder, loop)
         if state.voice == VoiceState.RECORDING:
             live.update(render_state(state.stop_recording()))
-            return _handle_stop_recording(state, recorder, loop)
+            return _handle_stop_recording(state, recorder, loop, live)
 
     return state
 
