@@ -8,13 +8,13 @@ Educational: this is what frameworks hide from you.
 """
 
 import asyncio
-import base64
 import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
+import pyperclip
 from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
@@ -27,14 +27,14 @@ from cli.tui.state import AppState, IntentResult, VoiceState, create_initial_sta
 
 
 def _copy_to_clipboard(text: str) -> bool:
-    """Copy text to clipboard using OSC 52 escape sequence. Direct to terminal."""
+    """Copy text to clipboard using pyperclip."""
     if not text:
         return False
-    encoded = base64.b64encode(text.encode()).decode()
-    # OSC 52: \x1b]52;c;BASE64\x07
-    sys.stdout.write(f"\x1b]52;c;{encoded}\x07")
-    sys.stdout.flush()
-    return True
+    try:
+        pyperclip.copy(text)
+        return True
+    except pyperclip.PyperclipException:
+        return False
 
 
 def _build_clipboard_text(state: AppState) -> str:
