@@ -6,7 +6,10 @@ Press Enter to start/stop voice recording.
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from libs.python.graph.context import SessionContext
 
 
 class VoiceState(Enum):
@@ -40,6 +43,10 @@ class AppState:
 
     Single pane, voice-first design.
     """
+
+    # Session context (CDC, persistence)
+    session_id: str = ""
+    session_ctx: "SessionContext | None" = None
 
     # Voice state
     voice: VoiceState = VoiceState.IDLE
@@ -143,6 +150,8 @@ class AppState:
     def _replace(self, **changes) -> "AppState":
         """Return new state with specified changes."""
         return AppState(
+            session_id=changes.get("session_id", self.session_id),
+            session_ctx=changes.get("session_ctx", self.session_ctx),
             voice=changes.get("voice", self.voice),
             history=changes.get("history", self.history),
             last_transcript=changes.get("last_transcript", self.last_transcript),
@@ -155,8 +164,10 @@ class AppState:
         )
 
 
-def create_initial_state() -> AppState:
-    """Create initial application state."""
+def create_initial_state(session_id: str, session_ctx: "SessionContext") -> AppState:
+    """Create initial application state with session context."""
     return AppState(
-        status="Press Enter to speak. Press 'q' to quit.",
+        session_id=session_id,
+        session_ctx=session_ctx,
+        status=f"[{session_id[:8]}] Press Enter to speak. 'q' to quit.",
     )

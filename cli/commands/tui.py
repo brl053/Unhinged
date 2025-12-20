@@ -243,7 +243,13 @@ def preview_cmd() -> None:
     console.print(f"[dim]Terminal size: {term_width}x{term_height}[/dim]")
     console.print()
 
-    state = create_initial_state()
+    # Create a mock session for preview
+    from libs.python.graph.context import ContextStore
+
+    context_store = ContextStore()
+    session_id = "preview-session"
+    session_ctx = context_store.create(session_id)
+    state = create_initial_state(session_id, session_ctx)
 
     # Render the current voice-first layout
     layout = render_state(state)

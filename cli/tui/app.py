@@ -8,9 +8,11 @@ Educational: this is what frameworks hide from you.
 """
 
 import asyncio
+import signal
 import sys
 import tempfile
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +27,7 @@ from rich.text import Text
 from cli.tui.input import Key, KeyboardInput, KeyEvent
 from cli.tui.state import AppState, IntentResult, VoiceState, create_initial_state
 from libs.python.clients import TranscriptionService
+from libs.python.graph.context import ContextStore
 
 
 def _copy_to_clipboard(text: str) -> bool:
@@ -488,6 +491,20 @@ def _handle_key_event(
     return state
 
 
+# Global for disgraceful shutdown recovery
+_shutdown_state: dict[str, Any] = {}
+
+
+def _disgraceful_shutdown(signum: int, frame: Any) -> None:
+    """Handle SIGINT/SIGTERM - attempt session persist."""
+    ctx = _shutdown_state.get("session_ctx")
+    store = _shutdown_state.get("context_store")
+    if ctx and store:
+        ctx.msg_system("disgraceful shutdown")
+        store.persist(ctx)
+    sys.exit(0)
+
+
 def run_app(console: Console | None = None) -> None:
     """Run the interactive TUI application.
 
@@ -497,7 +514,17 @@ def run_app(console: Console | None = None) -> None:
     if console is None:
         console = Console()
 
-    state = create_initial_state()
+    # Create session
+    context_store = ContextStore()
+    session_id = str(uuid.uuid4())
+    session_ctx = context_store.create(session_id)
+
+    # Register for disgraceful shutdown
+    _shutdown_state["session_ctx"] = session_ctx
+    _shutdown_state["context_store"] = context_store
+    signal.signal(signal.SIGTERM, _disgraceful_shutdown)
+
+    state = create_initial_state(session_id, session_ctx)
     recorder = VoiceRecorder()
 
     # Async event loop for recording
@@ -532,10 +559,13 @@ def run_app(console: Console | None = None) -> None:
         if recorder.recording:
             loop.run_until_complete(recorder.stop_recording())
     finally:
+        # Graceful shutdown - persist session
+        session_ctx.msg_system("graceful shutdown")
+        context_store.persist(session_ctx)
         loop.close()
         # Clear screen on exit
         console.clear()
-        console.print("👋 Goodbye from Unhinged!")
+        console.print(f"Session {session_id[:8]} saved. Goodbye!")
 
 
 def main() -> None:
