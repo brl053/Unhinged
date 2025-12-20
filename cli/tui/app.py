@@ -452,9 +452,10 @@ def _handle_key_event(
             loop.run_until_complete(recorder.stop_recording())
         return state.quit()
 
-    if event.key == Key.ALT_C:
+    # 'c' to copy when idle (Alt+C is terminal-dependent)
+    if event.char == "c" and state.voice == VoiceState.IDLE:
         clipboard_text = _build_clipboard_text(state)
-        status = "Copied to clipboard!" if _copy_to_clipboard(clipboard_text) else "Copy failed - install xclip"
+        status = "Copied!" if _copy_to_clipboard(clipboard_text) else "Copy failed"
         return state.set_status(status)
 
     if event.key == Key.ENTER:
