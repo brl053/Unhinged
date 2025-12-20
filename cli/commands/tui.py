@@ -235,12 +235,15 @@ def preview_cmd() -> None:
     from cli.tui.app import render_state
     from cli.tui.state import create_initial_state
 
-    # Get terminal size
+    # Get terminal size from OS (ioctl) and from Rich console
     term_width, term_height = shutil.get_terminal_size((80, 24))
+    console_width = console.size.width
+    console_height = console.size.height
 
     console.print()
     console.print("[bold]TUI Layout Preview[/bold]")
-    console.print(f"[dim]Terminal size: {term_width}x{term_height}[/dim]")
+    console.print(f"[dim]Terminal size (shutil): {term_width}x{term_height}[/dim]")
+    console.print(f"[dim]Console size: {console_width}x{console_height}[/dim]")
     console.print()
 
     # Create a mock session for preview
@@ -254,3 +257,21 @@ def preview_cmd() -> None:
     # Render the current voice-first layout
     layout = render_state(state)
     console.print(layout)
+
+
+@tui.command()
+def native() -> None:
+    """Launch native in-house terminal renderer.
+
+    This is the from-scratch terminal renderer without Rich.
+    Uses direct ANSI escape sequences and our own framebuffer.
+
+    Controls:
+        W/S: Navigate up/down
+        E: Select/interact
+        C: Copy session ID
+        Q: Quit
+    """
+    from libs.python.terminal.unhinged import run_landing
+
+    run_landing()
