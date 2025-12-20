@@ -20,7 +20,7 @@ class VoiceState(Enum):
 
 @dataclass
 class IntentResult:
-    """Result from intent analysis graph."""
+    """Result from intent analysis graph with action routing."""
 
     intent: str = ""
     domain: str = ""
@@ -28,6 +28,10 @@ class IntentResult:
     reasoning: str = ""
     success: bool = False
     error: str = ""
+    # Action routing fields (from hydrated prompt)
+    action_type: str = ""  # linux, cli, graph, clarify, none
+    command: str = ""  # Linux or CLI command if applicable
+    graph_name: str = ""  # Graph name if action_type=graph
 
 
 @dataclass

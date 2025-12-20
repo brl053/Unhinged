@@ -21,81 +21,99 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-from cli.tui.input import Key, KeyboardInput
+from cli.tui.input import Key, KeyboardInput, KeyEvent
 from cli.tui.state import AppState, IntentResult, VoiceState, create_initial_state
+
+
+def _render_voice_state(state: AppState) -> list[Text | str]:
+    """Render voice state indicator lines."""
+    lines: list[Text | str] = []
+    if state.voice == VoiceState.IDLE:
+        lines.extend([Text("[ READY ]", style="bold green"), "", Text("Press Enter to speak", style="dim")])
+    elif state.voice == VoiceState.RECORDING:
+        lines.extend(
+            [
+                Text(f"● RECORDING  {state.recording_seconds}s", style="bold red"),
+                "",
+                Text("Press Enter to stop", style="dim"),
+            ]
+        )
+    elif state.voice == VoiceState.PROCESSING:
+        lines.extend([Text("⏳ TRANSCRIBING...", style="bold yellow"), "", Text("Please wait", style="dim")])
+    elif state.voice == VoiceState.ANALYZING:
+        lines.extend(
+            [Text("🧠 ANALYZING...", style="bold magenta"), "", Text("Running intent analysis graph", style="dim")]
+        )
+    return lines
+
+
+def _render_intent_result(result: IntentResult) -> list[Text | str]:
+    """Render intent analysis result lines."""
+    lines: list[Text | str] = [
+        Text("─" * 50, style="dim"),
+        Text("Intent Analysis:", style="bold magenta"),
+        Text(f"  Intent:     {result.intent}", style="cyan"),
+        Text(f"  Domain:     {result.domain}", style="cyan"),
+        Text(f"  Confidence: {result.confidence:.0%}", style="green" if result.confidence > 0.7 else "yellow"),
+    ]
+
+    # Action routing (from hydrated prompt)
+    if result.action_type:
+        lines.extend(
+            ["", Text("Suggested Action:", style="bold green"), Text(f"  Type: {result.action_type}", style="green")]
+        )
+        if result.command:
+            lines.append(Text(f"  Command: {result.command}", style="bold white"))
+        if result.graph_name:
+            lines.append(Text(f"  Graph: {result.graph_name}", style="bold white"))
+
+    lines.extend(["", Text("  Reasoning:", style="dim")])
+    reasoning = result.reasoning
+    if len(reasoning) > 60:
+        for i in range(0, len(reasoning), 60):
+            lines.append(Text(f"    {reasoning[i:i+60]}", style="dim italic"))
+    else:
+        lines.append(Text(f"    {reasoning}", style="dim italic"))
+    lines.append("")
+    return lines
 
 
 def render_main_pane(state: AppState) -> Panel:
     """Render the main content pane."""
-    lines: list[Text | str] = []
-
-    # Title
-    lines.append(Text("🎙️ Unhinged Voice", style="bold cyan"))
+    lines: list[Text | str] = [Text("🎙️ Unhinged Voice", style="bold cyan"), ""]
+    lines.extend(_render_voice_state(state))
     lines.append("")
 
-    # Voice state indicator
-    if state.voice == VoiceState.IDLE:
-        lines.append(Text("[ READY ]", style="bold green"))
-        lines.append("")
-        lines.append(Text("Press Enter to speak", style="dim"))
-    elif state.voice == VoiceState.RECORDING:
-        lines.append(Text(f"● RECORDING  {state.recording_seconds}s", style="bold red"))
-        lines.append("")
-        lines.append(Text("Press Enter to stop", style="dim"))
-    elif state.voice == VoiceState.PROCESSING:
-        lines.append(Text("⏳ TRANSCRIBING...", style="bold yellow"))
-        lines.append("")
-        lines.append(Text("Please wait", style="dim"))
-    elif state.voice == VoiceState.ANALYZING:
-        lines.append(Text("🧠 ANALYZING...", style="bold magenta"))
-        lines.append("")
-        lines.append(Text("Running intent analysis graph", style="dim"))
-
-    lines.append("")
-
-    # Last transcript
     if state.last_transcript:
-        lines.append(Text("─" * 50, style="dim"))
-        lines.append(Text("Transcript:", style="bold white"))
-        lines.append(Text(state.last_transcript, style="white"))
-        lines.append("")
-
-    # Intent result
-    if state.intent_result and state.intent_result.success:
-        lines.append(Text("─" * 50, style="dim"))
-        lines.append(Text("Intent Analysis:", style="bold magenta"))
-        lines.append(Text(f"  Intent:     {state.intent_result.intent}", style="cyan"))
-        lines.append(Text(f"  Domain:     {state.intent_result.domain}", style="cyan"))
-        lines.append(
-            Text(
-                f"  Confidence: {state.intent_result.confidence:.0%}",
-                style="green" if state.intent_result.confidence > 0.7 else "yellow",
-            )
+        lines.extend(
+            [
+                Text("─" * 50, style="dim"),
+                Text("Transcript:", style="bold white"),
+                Text(state.last_transcript, style="white"),
+                "",
+            ]
         )
-        lines.append("")
-        lines.append(Text("  Reasoning:", style="dim"))
-        # Wrap reasoning text
-        reasoning = state.intent_result.reasoning
-        if len(reasoning) > 60:
-            for i in range(0, len(reasoning), 60):
-                lines.append(Text(f"    {reasoning[i:i+60]}", style="dim italic"))
-        else:
-            lines.append(Text(f"    {reasoning}", style="dim italic"))
-        lines.append("")
 
-    # Graph visualization
+    if state.intent_result and state.intent_result.success:
+        lines.extend(_render_intent_result(state.intent_result))
+
     if state.graph_data:
-        lines.append(Text("─" * 50, style="dim"))
-        lines.append(Text("Orchestration Graph:", style="bold yellow"))
-        lines.append(_render_graph_mini(state.graph_data))
+        lines.extend(
+            [
+                Text("─" * 50, style="dim"),
+                Text("Orchestration Graph:", style="bold yellow"),
+                _render_graph_mini(state.graph_data),
+            ]
+        )
 
     content = Group(*[line if isinstance(line, Text) else Text(line) for line in lines])
+    return Panel(Align.center(content, vertical="middle"), title="[bold cyan]Unhinged[/bold cyan]", border_style="cyan")
 
-    return Panel(
-        Align.center(content, vertical="middle"),
-        title="[bold cyan]Unhinged[/bold cyan]",
-        border_style="cyan",
-    )
+
+def _build_graph_flow(nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
+    """Build ordered flow of node names from graph data."""
+    # Simple approach: just return node names in order (no complex graph traversal)
+    return [n.get("type", n.get("id", "?"))[:12] for n in nodes]
 
 
 def _render_graph_mini(graph_data: dict[str, Any]) -> Text:
@@ -111,38 +129,9 @@ def _render_graph_mini(graph_data: dict[str, Any]) -> Text:
         text.append("  (empty graph)", style="dim")
         return text
 
-    # Simple linear visualization: node1 → node2 → node3
-    node_ids = [n.get("id", "?") for n in nodes]
-    node_names = {n.get("id"): n.get("type", n.get("id", "?"))[:12] for n in nodes}
+    flow_parts = _build_graph_flow(nodes, edges)
 
-    # Build adjacency
-    outgoing: dict[str, list[str]] = {nid: [] for nid in node_ids}
-    for edge in edges:
-        src = edge.get("from", edge.get("source", ""))
-        dst = edge.get("to", edge.get("target", ""))
-        if src in outgoing:
-            outgoing[src].append(dst)
-
-    # Find roots (no incoming edges)
-    incoming = {dst for e in edges for dst in [e.get("to", e.get("target", ""))]}
-    roots = [nid for nid in node_ids if nid not in incoming]
-
-    # Simple BFS to show flow
-    visited = set()
-    queue = roots if roots else node_ids[:1]
-    flow_parts = []
-
-    while queue:
-        nid = queue.pop(0)
-        if nid in visited:
-            continue
-        visited.add(nid)
-        flow_parts.append(node_names.get(nid, nid))
-        for child in outgoing.get(nid, []):
-            if child not in visited:
-                queue.append(child)
-
-    # Render as flow
+    # Render as flow: [node1 → node2 → node3]
     text.append("  [", style="dim")
     for i, part in enumerate(flow_parts):
         if i > 0:
@@ -267,6 +256,7 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
     from libs.python.graph import GraphExecutor
     from libs.python.graph.context import ContextStore
     from libs.python.query_planner import INTENT_NODE_ID, build_intent_analysis_graph
+    from libs.python.query_planner.prompt_hydration import build_hydration_context
 
     try:
         # Create a session context for CDC logging
@@ -276,8 +266,11 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
         session_ctx.set_stage("intent_analysis")
         session_ctx.msg_user(query)
 
-        # Build the intent analysis graph (local Ollama only)
-        graph = build_intent_analysis_graph(provider="ollama", model="llama2")
+        # Build hydration context for grounded action routing
+        hydration = build_hydration_context(session_ctx)
+
+        # Build the intent analysis graph (local Ollama only) with hydration
+        graph = build_intent_analysis_graph(provider="ollama", model="llama2", hydration=hydration)
 
         # Execute with session context for CDC
         executor = GraphExecutor(session_ctx)
@@ -297,10 +290,14 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
                 confidence=float(node_output.get("confidence", 0.0)),
                 reasoning=node_output.get("reasoning", ""),
                 success=node_output.get("success", False),
+                action_type=node_output.get("action_type", ""),
+                command=node_output.get("command") or "",
+                graph_name=node_output.get("graph_name") or "",
             )
 
-            # Log success
-            session_ctx.msg_system(f"Intent: {intent_result.intent}, Domain: {intent_result.domain}")
+            # Log success with action routing info
+            action_info = f", Action: {intent_result.action_type}" if intent_result.action_type else ""
+            session_ctx.msg_system(f"Intent: {intent_result.intent}, Domain: {intent_result.domain}{action_info}")
 
             # Build graph data for visualization
             graph_data = {
@@ -334,6 +331,85 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
 
         print(f"[DEBUG] Intent analysis error: {error_detail}", file=sys.stderr)
         return IntentResult(success=False, error=str(e)), None
+
+
+def _handle_start_recording(
+    state: AppState,
+    recorder: VoiceRecorder,
+    loop: asyncio.AbstractEventLoop,
+) -> AppState:
+    """Handle starting voice recording."""
+    try:
+        loop.run_until_complete(recorder.start_recording())
+        return state.start_recording()
+    except Exception as e:
+        return state.set_error(f"Mic error: {e}")
+
+
+def _handle_stop_recording(
+    state: AppState,
+    recorder: VoiceRecorder,
+    loop: asyncio.AbstractEventLoop,
+) -> AppState:
+    """Handle stopping recording and processing audio."""
+    state = state.stop_recording()
+
+    try:
+        audio_path = loop.run_until_complete(recorder.stop_recording())
+        if not audio_path or not audio_path.exists():
+            return state.set_error("No audio recorded")
+
+        text = loop.run_until_complete(asyncio.to_thread(transcribe_audio_sync, audio_path))
+        state = state.set_transcript(text)
+
+        # Run intent analysis
+        intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text))
+        state = state.set_intent_result(intent_result, graph_data)
+
+        # Cleanup
+        audio_path.unlink(missing_ok=True)
+        return state
+
+    except Exception as e:
+        return state.set_error(f"Error: {e}")
+
+
+def _process_event(
+    state: AppState,
+    event: KeyEvent | None,
+    recorder: VoiceRecorder,
+    loop: asyncio.AbstractEventLoop,
+    live: Live,
+    last_tick: float,
+) -> tuple[AppState, float]:
+    """Process a single keyboard event and update state."""
+    # Handle key events
+    if event:
+        if event.key in (Key.CTRL_C, Key.CTRL_Q) or event.char == "q":
+            if state.voice == VoiceState.RECORDING:
+                loop.run_until_complete(recorder.stop_recording())
+            return state.quit(), last_tick
+
+        if event.key == Key.ENTER:
+            if state.voice == VoiceState.IDLE:
+                state = _handle_start_recording(state, recorder, loop)
+            elif state.voice == VoiceState.RECORDING:
+                live.update(render_state(state.stop_recording()))
+                state = _handle_stop_recording(state, recorder, loop)
+
+    # Update recording timer every second
+    if state.voice == VoiceState.RECORDING:
+        now = time.time()
+        if now - last_tick >= 1.0:
+            state = state.tick_recording()
+            last_tick = now
+
+    # Update display if dirty
+    if state.dirty:
+        live.update(render_state(state))
+        state = state.mark_clean()
+
+    return state, last_tick
 
 
 def run_app(console: Console | None = None) -> None:
@@ -370,66 +446,11 @@ def run_app(console: Console | None = None) -> None:
                 screen=True,
             ) as live,
         ):
-                last_tick = time.time()
+            last_tick = time.time()
 
-                while state.running:
-                    # Non-blocking key read with timeout
-                    event = kb.read(timeout=0.1)
-
-                    # Handle key events
-                    if event:
-                        # Quit
-                        if event.key in (Key.CTRL_C, Key.CTRL_Q) or event.char == "q":
-                            if state.voice == VoiceState.RECORDING:
-                                loop.run_until_complete(recorder.stop_recording())
-                            state = state.quit()
-
-                        # Enter - toggle recording
-                        elif event.key == Key.ENTER:
-                            if state.voice == VoiceState.IDLE:
-                                # Start recording
-                                try:
-                                    loop.run_until_complete(recorder.start_recording())
-                                    state = state.start_recording()
-                                except Exception as e:
-                                    state = state.set_error(f"Mic error: {e}")
-
-                            elif state.voice == VoiceState.RECORDING:
-                                # Stop and transcribe
-                                state = state.stop_recording()
-                                live.update(render_state(state))
-
-                                try:
-                                    audio_path = loop.run_until_complete(recorder.stop_recording())
-                                    if audio_path and audio_path.exists():
-                                        text = loop.run_until_complete(
-                                            asyncio.to_thread(transcribe_audio_sync, audio_path)
-                                        )
-                                        state = state.set_transcript(text)
-                                        live.update(render_state(state))
-
-                                        # Run intent analysis
-                                        intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text))
-                                        state = state.set_intent_result(intent_result, graph_data)
-
-                                        # Cleanup
-                                        audio_path.unlink(missing_ok=True)
-                                    else:
-                                        state = state.set_error("No audio recorded")
-                                except Exception as e:
-                                    state = state.set_error(f"Error: {e}")
-
-                    # Update recording timer every second
-                    if state.voice == VoiceState.RECORDING:
-                        now = time.time()
-                        if now - last_tick >= 1.0:
-                            state = state.tick_recording()
-                            last_tick = now
-
-                    # Update display if dirty
-                    if state.dirty:
-                        live.update(render_state(state))
-                        state = state.mark_clean()
+            while state.running:
+                event = kb.read(timeout=0.1)
+                state, last_tick = _process_event(state, event, recorder, loop, live, last_tick)
 
     except KeyboardInterrupt:
         if recorder.recording:

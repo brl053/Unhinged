@@ -11,6 +11,7 @@ import logging
 from typing import Any, cast
 
 from libs.python.graph import Graph, GraphNode
+from libs.python.query_planner.prompt_hydration import HydrationContext
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class LLMIntentNode(GraphNode):
         node_id: str,
         model: str = "claude-3-5-sonnet-20241022",
         provider: str = "anthropic",
+        hydration: HydrationContext | None = None,
     ):
         """Initialize LLM intent node.
 
@@ -77,55 +79,70 @@ class LLMIntentNode(GraphNode):
             LLM model to use (default: Claude 3.5 Sonnet for reasoning).
         provider : str
             LLM provider (anthropic, openai, ollama).
+        hydration : HydrationContext | None
+            Optional hydration context for grounded action routing.
         """
         super().__init__(node_id)
         self.model = model
         self.provider = provider
+        self.hydration = hydration
         self._client: Any = None
 
     def _get_system_prompt(self) -> str:
-        """Build system prompt with intent taxonomy and term semantics."""
+        """Build system prompt with intent taxonomy, hydration, and action routing."""
         taxonomy_yaml = json.dumps(INTENT_TAXONOMY, indent=2)
-        return f"""You are an expert intent classifier for system diagnostics and automation.
 
-Your task: Analyze the user's natural language query and classify it into:
-1. **intent**: The high-level action (diagnose, generate, analyze, etc.)
-2. **domain**: The specific subdomain (audio/headphone_volume, storage/disk_usage, etc.)
-3. **confidence**: 0.0-1.0 confidence in your classification
-4. **reasoning**: Brief explanation of your classification
+        # Build hydration section if available
+        hydration_section = ""
+        if self.hydration:
+            hydration_section = f"""
+## Available Actions (Grounded Context)
+
+{self.hydration.to_prompt_section()}
+
+When the user's query matches an available action, prefer routing to it.
+Use action_type to indicate what to execute:
+- "linux": A Linux command from the list above
+- "cli": An Unhinged CLI command
+- "graph": An available graph workflow
+- "clarify": Need more information from user
+"""
+
+        return f"""You are an expert intent classifier and action router for voice-driven system automation.
+
+Your task: Analyze the user's natural language query and:
+1. Classify the intent (diagnose, generate, analyze, execute)
+2. Route to the best available action when possible
+3. Provide actionable command/graph recommendations
 
 ## Intent Taxonomy
 
 {taxonomy_yaml}
+{hydration_section}
 
 ## Term Semantics
 
 When analyzing queries, consider:
 - **Etymology**: Word origins and historical meaning
-- **Connotation**: Emotional/cultural associations (e.g., "low" = insufficient, inadequate)
-- **Denotation**: Literal/technical meaning (e.g., "volume" = amplitude, storage capacity)
+- **Connotation**: Emotional/cultural associations (e.g., "low" = insufficient)
+- **Denotation**: Literal/technical meaning (e.g., "volume" = amplitude)
 
 Examples:
-- "audio is too low" → intent=diagnose, domain=audio/system_volume (connotation: insufficient)
-- "my headphones are quiet" → intent=diagnose, domain=audio/headphone_volume (denotation: amplitude)
-- "disk is full" → intent=diagnose, domain=storage/disk_usage (connotation: capacity exceeded)
+- "check my disk space" → intent=execute, action_type=linux, command="df -h"
+- "run the email graph" → intent=execute, action_type=graph, graph_name="email-summary"
+- "what's using my CPU" → intent=diagnose, action_type=linux, command="top -bn1 | head -20"
 
 ## Output Format
 
 Return ONLY valid JSON (no markdown, no explanation):
 {{
-  "intent": "<intent>",
-  "domain": "<domain>",
+  "intent": "<diagnose|generate|analyze|execute|clarify|unknown>",
+  "domain": "<specific subdomain or 'general'>",
+  "action_type": "<linux|cli|graph|clarify|none>",
+  "command": "<linux command or cli command or null>",
+  "graph_name": "<graph name if action_type=graph, else null>",
   "confidence": <0.0-1.0>,
   "reasoning": "<brief explanation>"
-}}
-
-If the query does not match any known intent/domain, return:
-{{
-  "intent": "unknown",
-  "domain": "unknown",
-  "confidence": 0.0,
-  "reasoning": "<why it doesn't match>"
 }}
 """
 
@@ -165,16 +182,20 @@ If the query does not match any known intent/domain, return:
             # Parse JSON response
             result = json.loads(response_text)
 
-            # Validate required fields
-            if not all(k in result for k in ["intent", "domain", "confidence", "reasoning"]):
-                raise ValueError(f"LLM response missing required fields: {result}")
+            # Validate minimum required field (intent)
+            if "intent" not in result:
+                raise ValueError(f"LLM response missing 'intent' field: {result}")
 
             return {
                 "success": True,
                 "intent": result["intent"],
-                "domain": result["domain"],
-                "confidence": float(result["confidence"]),
-                "reasoning": result["reasoning"],
+                "domain": result.get("domain", "general"),
+                "confidence": float(result.get("confidence", 0.8)),
+                "reasoning": result.get("reasoning", ""),
+                # Action routing fields (from hydrated prompt)
+                "action_type": result.get("action_type", ""),
+                "command": result.get("command"),
+                "graph_name": result.get("graph_name"),
                 "stdout": json.dumps(result),
             }
 
@@ -262,6 +283,7 @@ If the query does not match any known intent/domain, return:
 def build_intent_analysis_graph(
     model: str = "claude-3-5-sonnet-20241022",
     provider: str = "anthropic",
+    hydration: HydrationContext | None = None,
 ) -> Graph:
     """Construct the LLM-backed IntentAnalysisGraph.
 
@@ -271,6 +293,10 @@ def build_intent_analysis_graph(
         LLM model to use (default: Claude 3.5 Sonnet).
     provider : str
         LLM provider (anthropic, openai, ollama).
+    hydration : HydrationContext | None
+        Optional hydration context for grounded action routing.
+        When provided, the LLM knows about available CLI commands,
+        graphs, and Linux commands.
 
     Returns
     -------
@@ -278,5 +304,12 @@ def build_intent_analysis_graph(
         A graph with a single LLMIntentNode that classifies queries.
     """
     graph = Graph()
-    graph.add_node(LLMIntentNode(node_id=INTENT_NODE_ID, model=model, provider=provider))
+    graph.add_node(
+        LLMIntentNode(
+            node_id=INTENT_NODE_ID,
+            model=model,
+            provider=provider,
+            hydration=hydration,
+        )
+    )
     return graph
