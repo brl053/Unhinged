@@ -16,7 +16,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import pyperclip
 from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
@@ -30,39 +29,36 @@ from libs.python.clients import TranscriptionService
 from libs.python.graph.context import ContextStore
 
 
-def _copy_to_clipboard(text: str) -> bool:
-    """Copy text to clipboard using pyperclip."""
-    if not text:
-        return False
-    try:
-        pyperclip.copy(text)
-        return True
-    except pyperclip.PyperclipException:
-        return False
-
-
-def _build_clipboard_text(state: AppState) -> str:
-    """Build text for clipboard from current state."""
-    parts: list[str] = []
+def _save_session_to_file(state: AppState) -> str:
+    """Save session state to /tmp file. Returns file path."""
+    path = Path(f"/tmp/unhinged-{state.session_id[:8]}.txt")
+    lines = [f"Session: {state.session_id}", f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}", ""]
 
     if state.last_transcript:
-        parts.append(f"Transcript: {state.last_transcript}")
+        lines.extend(["Transcript:", state.last_transcript, ""])
 
     if state.intent_result and state.intent_result.success:
         r = state.intent_result
-        parts.append(f"\nIntent: {r.intent}")
-        parts.append(f"Domain: {r.domain}")
-        parts.append(f"Confidence: {r.confidence:.0%}")
-        if r.action_type:
-            parts.append(f"Action Type: {r.action_type}")
-        if r.command:
-            parts.append(f"Command: {r.command}")
-        if r.graph_name:
-            parts.append(f"Graph: {r.graph_name}")
-        if r.reasoning:
-            parts.append(f"Reasoning: {r.reasoning}")
+        lines.extend(
+            [
+                "Intent Analysis:",
+                f"  intent: {r.intent}",
+                f"  domain: {r.domain}",
+                f"  confidence: {r.confidence:.0%}",
+                f"  action_type: {r.action_type}",
+                f"  command: {r.command}" if r.command else "",
+                "",
+            ]
+        )
 
-    return "\n".join(parts) if parts else ""
+    if state.cdc_events:
+        lines.extend(["CDC Events:"])
+        for event in state.cdc_events[:20]:
+            ts = event.timestamp.strftime("%H:%M:%S")
+            lines.append(f"  {ts} {event.event_type.value}: {event.data}")
+
+    path.write_text("\n".join(line for line in lines if line is not None))
+    return str(path)
 
 
 def _render_voice_state(state: AppState) -> list[Text | str]:
@@ -524,11 +520,10 @@ def _handle_key_event(
             loop.run_until_complete(recorder.stop_recording())
         return state.quit()
 
-    # 'c' to copy when idle (Alt+C is terminal-dependent)
+    # 'c' to save session to file when idle
     if event.char == "c" and state.voice == VoiceState.IDLE:
-        clipboard_text = _build_clipboard_text(state)
-        status = "Copied!" if _copy_to_clipboard(clipboard_text) else "Copy failed"
-        return state.set_status(status)
+        path = _save_session_to_file(state)
+        return state.set_status(f"Saved: {path}")
 
     if event.key == Key.ENTER:
         if state.voice == VoiceState.IDLE:
