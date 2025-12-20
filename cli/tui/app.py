@@ -16,7 +16,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
@@ -116,45 +115,59 @@ def _render_intent_result(result: IntentResult) -> list[Text | str]:
     return lines
 
 
+def _format_cdc_event(event: Any) -> Text | None:
+    """Format a CDC event for display."""
+    from libs.python.graph.context import CDCEventType
+
+    ts = event.timestamp.strftime("%H:%M:%S")
+    etype = event.event_type
+    text = event.data.get("text", "") or event.data.get("node_id", "")[:20]
+
+    styles = {
+        CDCEventType.MSG_USER: ("👤", "cyan"),
+        CDCEventType.MSG_SYSTEM: ("🤖", "green"),
+        CDCEventType.MSG_ERROR: ("❌", "red"),
+        CDCEventType.NODE_START: ("⚙️ ", "dim"),
+        CDCEventType.NODE_OUTPUT: ("⚙️ ", "dim"),
+    }
+    if etype in styles:
+        emoji, style = styles[etype]
+        return Text(f"[{ts}] {emoji} {text}", style=style)
+    return None
+
+
 def render_main_pane(state: AppState) -> Panel:
-    """Render the main content pane."""
-    lines: list[Text | str] = [Text("🎙️ Unhinged Voice", style="bold cyan"), ""]
+    """Render the main content pane with CDC events interpolated."""
+    from rich.box import HEAVY
+
+    lines: list[Text | str] = []
+
+    # CDC events at top (scrollable history)
+    for event in state.cdc_events:
+        line = _format_cdc_event(event)
+        if line:
+            lines.append(line)
+
+    if lines:
+        lines.append(Text("─" * 60, style="dim"))
+
+    # Current state
     lines.extend(_render_voice_state(state))
-    lines.append("")
 
     if state.last_transcript:
-        lines.extend(
-            [
-                Text("─" * 50, style="dim"),
-                Text("Transcript:", style="bold white"),
-                Text(state.last_transcript, style="white"),
-                "",
-            ]
-        )
+        lines.append(Text("─" * 60, style="dim"))
+        lines.append(Text("📝 " + state.last_transcript, style="white"))
 
     if state.intent_result and state.intent_result.success:
         lines.extend(_render_intent_result(state.intent_result))
 
-    if state.graph_data:
-        lines.extend(
-            [
-                Text("─" * 50, style="dim"),
-                Text("Orchestration Graph:", style="bold yellow"),
-                _render_graph_mini(state.graph_data),
-            ]
-        )
-
     if state.execution_output:
-        lines.extend(
-            [
-                Text("─" * 50, style="dim"),
-                Text("Output:", style="bold green"),
-                Text(state.execution_output[:500], style="white"),
-            ]
-        )
+        lines.append(Text("─" * 60, style="dim"))
+        lines.append(Text("Output:", style="bold green"))
+        lines.append(Text(state.execution_output[:500], style="white"))
 
     content = Group(*[line if isinstance(line, Text) else Text(line) for line in lines])
-    return Panel(Align.center(content, vertical="middle"), title="[bold cyan]Unhinged[/bold cyan]", border_style="cyan")
+    return Panel(content, title="[bold cyan]Unhinged[/bold cyan]", border_style="cyan", box=HEAVY)
 
 
 def _build_graph_flow(nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
@@ -198,51 +211,15 @@ def render_status_bar(state: AppState) -> Panel:
     return Panel(status_text, style="dim", height=3)
 
 
-def render_cdc_panel(state: AppState) -> Panel:
-    """Render CDC events panel."""
-    from libs.python.graph.context import CDCEventType
-
-    lines: list[Text] = []
-    for event in state.cdc_events[:8]:  # Show last 8
-        ts = event.timestamp.strftime("%H:%M:%S")
-        etype = event.event_type
-
-        # Format based on type
-        if etype == CDCEventType.MSG_USER:
-            text = event.data.get("text", "")[:40]
-            lines.append(Text(f"{ts} [user] {text}", style="cyan"))
-        elif etype == CDCEventType.MSG_SYSTEM:
-            text = event.data.get("text", "")[:40]
-            lines.append(Text(f"{ts} [sys]  {text}", style="green"))
-        elif etype == CDCEventType.MSG_ERROR:
-            text = event.data.get("text", "")[:40]
-            lines.append(Text(f"{ts} [err]  {text}", style="red"))
-        else:
-            lines.append(Text(f"{ts} [{etype.value[:8]}]", style="dim"))
-
-    if not lines:
-        lines.append(Text("(no events)", style="dim"))
-
-    content = Group(*lines)
-    return Panel(content, title=f"[dim]CDC [{state.session_id[:8]}][/dim]", border_style="dim")
-
-
 def render_state(state: AppState) -> Layout:
     """Render complete application state to Rich Layout."""
     layout = Layout(name="root")
     layout.split_column(
-        Layout(name="body", ratio=1),
+        Layout(name="main", ratio=1),
         Layout(name="status", size=3),
     )
 
-    # Split body into main pane and CDC panel
-    layout["body"].split_row(
-        Layout(name="main", ratio=3),
-        Layout(name="cdc", ratio=1),
-    )
-
     layout["main"].update(render_main_pane(state))
-    layout["cdc"].update(render_cdc_panel(state))
     layout["status"].update(render_status_bar(state))
 
     return layout
