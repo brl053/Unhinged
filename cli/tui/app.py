@@ -8,6 +8,7 @@ Educational: this is what frameworks hide from you.
 """
 
 import asyncio
+import subprocess
 import sys
 import tempfile
 import time
@@ -23,6 +24,76 @@ from rich.text import Text
 
 from cli.tui.input import Key, KeyboardInput, KeyEvent
 from cli.tui.state import AppState, IntentResult, VoiceState, create_initial_state
+
+
+def _copy_to_clipboard(text: str) -> bool:
+    """Copy text to system clipboard. Returns True on success."""
+    if not text:
+        return False
+    try:
+        # Try xclip first (X11)
+        proc = subprocess.run(
+            ["xclip", "-selection", "clipboard"],
+            input=text.encode(),
+            capture_output=True,
+            timeout=2,
+        )
+        if proc.returncode == 0:
+            return True
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    try:
+        # Try xsel as fallback
+        proc = subprocess.run(
+            ["xsel", "--clipboard", "--input"],
+            input=text.encode(),
+            capture_output=True,
+            timeout=2,
+        )
+        if proc.returncode == 0:
+            return True
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    try:
+        # Try wl-copy for Wayland
+        proc = subprocess.run(
+            ["wl-copy"],
+            input=text.encode(),
+            capture_output=True,
+            timeout=2,
+        )
+        if proc.returncode == 0:
+            return True
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    return False
+
+
+def _build_clipboard_text(state: AppState) -> str:
+    """Build text for clipboard from current state."""
+    parts: list[str] = []
+
+    if state.last_transcript:
+        parts.append(f"Transcript: {state.last_transcript}")
+
+    if state.intent_result and state.intent_result.success:
+        r = state.intent_result
+        parts.append(f"\nIntent: {r.intent}")
+        parts.append(f"Domain: {r.domain}")
+        parts.append(f"Confidence: {r.confidence:.0%}")
+        if r.action_type:
+            parts.append(f"Action Type: {r.action_type}")
+        if r.command:
+            parts.append(f"Command: {r.command}")
+        if r.graph_name:
+            parts.append(f"Graph: {r.graph_name}")
+        if r.reasoning:
+            parts.append(f"Reasoning: {r.reasoning}")
+
+    return "\n".join(parts) if parts else ""
 
 
 def _render_voice_state(state: AppState) -> list[Text | str]:
@@ -383,19 +454,10 @@ def _process_event(
     last_tick: float,
 ) -> tuple[AppState, float]:
     """Process a single keyboard event and update state."""
-    # Handle key events
     if event:
-        if event.key in (Key.CTRL_C, Key.CTRL_Q) or event.char == "q":
-            if state.voice == VoiceState.RECORDING:
-                loop.run_until_complete(recorder.stop_recording())
-            return state.quit(), last_tick
-
-        if event.key == Key.ENTER:
-            if state.voice == VoiceState.IDLE:
-                state = _handle_start_recording(state, recorder, loop)
-            elif state.voice == VoiceState.RECORDING:
-                live.update(render_state(state.stop_recording()))
-                state = _handle_stop_recording(state, recorder, loop)
+        state = _handle_key_event(state, event, recorder, loop, live)
+        if not state.running:
+            return state, last_tick
 
     # Update recording timer every second
     if state.voice == VoiceState.RECORDING:
@@ -410,6 +472,34 @@ def _process_event(
         state = state.mark_clean()
 
     return state, last_tick
+
+
+def _handle_key_event(
+    state: AppState,
+    event: KeyEvent,
+    recorder: VoiceRecorder,
+    loop: asyncio.AbstractEventLoop,
+    live: Live,
+) -> AppState:
+    """Handle a single keyboard event."""
+    if event.key in (Key.CTRL_C, Key.CTRL_Q) or event.char == "q":
+        if state.voice == VoiceState.RECORDING:
+            loop.run_until_complete(recorder.stop_recording())
+        return state.quit()
+
+    if event.key == Key.ALT_C:
+        clipboard_text = _build_clipboard_text(state)
+        status = "Copied to clipboard!" if _copy_to_clipboard(clipboard_text) else "Copy failed - install xclip"
+        return state.set_status(status)
+
+    if event.key == Key.ENTER:
+        if state.voice == VoiceState.IDLE:
+            return _handle_start_recording(state, recorder, loop)
+        if state.voice == VoiceState.RECORDING:
+            live.update(render_state(state.stop_recording()))
+            return _handle_stop_recording(state, recorder, loop)
+
+    return state
 
 
 def run_app(console: Console | None = None) -> None:

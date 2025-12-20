@@ -32,10 +32,11 @@ class Key(Enum):
     BACKSPACE = auto()
     DELETE = auto()
 
-    # Modifiers (for future use)
+    # Modifiers
     CTRL_C = auto()
     CTRL_D = auto()
     CTRL_Q = auto()
+    ALT_C = auto()  # Alt+C for copy
 
     # Unknowns
     UNKNOWN = auto()
@@ -80,6 +81,8 @@ _ESCAPE_SEQUENCES: dict[bytes, Key] = {
     b"\x1bOB": Key.DOWN,
     b"\x1bOC": Key.RIGHT,
     b"\x1bOD": Key.LEFT,
+    b"\x1bc": Key.ALT_C,  # Alt+C (ESC + c)
+    b"\x1bC": Key.ALT_C,  # Alt+Shift+C
 }
 
 # Single byte special keys
@@ -125,64 +128,46 @@ def raw_mode() -> Generator[None, None, None]:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
+def _read_escape_sequence(first: bytes) -> KeyEvent:
+    """Read and parse an escape sequence starting with ESC."""
+    import select
+
+    more_bytes = first
+    while True:
+        ready, _, _ = select.select([sys.stdin], [], [], 0.05)
+        if not ready:
+            break
+        next_byte = sys.stdin.buffer.read(1)
+        if not next_byte:
+            break
+        more_bytes += next_byte
+        if more_bytes in _ESCAPE_SEQUENCES:
+            return KeyEvent(key=_ESCAPE_SEQUENCES[more_bytes], raw=more_bytes)
+
+    if more_bytes in _ESCAPE_SEQUENCES:
+        return KeyEvent(key=_ESCAPE_SEQUENCES[more_bytes], raw=more_bytes)
+    if more_bytes == b"\x1b":
+        return KeyEvent(key=Key.ESCAPE, raw=more_bytes)
+    return KeyEvent(key=Key.UNKNOWN, raw=more_bytes)
+
+
 def read_key_raw() -> KeyEvent:
     """Read a single key from stdin in raw mode.
 
-    MUST be called within raw_mode() context.
-    Blocks until a key is pressed.
-
-    Returns:
-        KeyEvent with either char or key set.
+    MUST be called within raw_mode() context. Blocks until a key is pressed.
     """
-    # Read first byte
     first = sys.stdin.buffer.read(1)
-
     if not first:
         return KeyEvent(key=Key.CTRL_D, raw=b"")
 
     byte_val = first[0]
 
-    # Check for escape sequence
-    if byte_val == 27:  # ESC
-        # Try to read more bytes (escape sequence)
-        # Set stdin to non-blocking temporarily to check for more
-        import select
-
-        more_bytes = first
-        while True:
-            # Check if more data available (timeout 0.05s for escape sequences)
-            ready, _, _ = select.select([sys.stdin], [], [], 0.05)
-            if not ready:
-                break
-            next_byte = sys.stdin.buffer.read(1)
-            if not next_byte:
-                break
-            more_bytes += next_byte
-
-            # Check if we have a known sequence
-            if more_bytes in _ESCAPE_SEQUENCES:
-                return KeyEvent(key=_ESCAPE_SEQUENCES[more_bytes], raw=more_bytes)
-
-        # Check final accumulated bytes
-        if more_bytes in _ESCAPE_SEQUENCES:
-            return KeyEvent(key=_ESCAPE_SEQUENCES[more_bytes], raw=more_bytes)
-
-        # Just escape key alone
-        if more_bytes == b"\x1b":
-            return KeyEvent(key=Key.ESCAPE, raw=more_bytes)
-
-        # Unknown escape sequence
-        return KeyEvent(key=Key.UNKNOWN, raw=more_bytes)
-
-    # Check for special single-byte keys
+    if byte_val == 27:  # ESC - escape sequence
+        return _read_escape_sequence(first)
     if byte_val in _SPECIAL_BYTES:
         return KeyEvent(key=_SPECIAL_BYTES[byte_val], raw=first)
-
-    # Printable ASCII
     if 32 <= byte_val < 127:
         return KeyEvent(char=chr(byte_val), raw=first)
-
-    # Unknown
     return KeyEvent(key=Key.UNKNOWN, raw=first)
 
 
