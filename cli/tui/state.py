@@ -19,6 +19,7 @@ class VoiceState(Enum):
     RECORDING = auto()  # Recording voice input
     PROCESSING = auto()  # Transcribing audio
     ANALYZING = auto()  # Running intent analysis
+    EXECUTING = auto()  # Running graph/command
 
 
 @dataclass
@@ -78,6 +79,9 @@ class AppState:
     # CDC events (last N for display)
     cdc_events: list["CDCEvent"] = field(default_factory=list)
 
+    # Execution output (stdout/stderr from graph/command)
+    execution_output: str = ""
+
     def add_cdc_event(self, event: "CDCEvent") -> "AppState":
         """Add a CDC event to the display list (keep last 20)."""
         events = [event] + self.cdc_events[:19]
@@ -127,6 +131,24 @@ class AppState:
             dirty=True,
         )
 
+    def start_execution(self, name: str) -> "AppState":
+        """Start graph/command execution."""
+        return self._replace(
+            voice=VoiceState.EXECUTING,
+            status=f"⚙ Running: {name}",
+            execution_output="",
+            dirty=True,
+        )
+
+    def set_execution_output(self, output: str) -> "AppState":
+        """Set execution output and return to idle."""
+        return self._replace(
+            voice=VoiceState.IDLE,
+            execution_output=output,
+            status="✓ Done",
+            dirty=True,
+        )
+
     def set_error(self, error: str) -> "AppState":
         """Set error state and return to idle."""
         return self._replace(
@@ -170,6 +192,7 @@ class AppState:
             dirty=changes.get("dirty", self.dirty),
             recording_seconds=changes.get("recording_seconds", self.recording_seconds),
             cdc_events=changes.get("cdc_events", self.cdc_events),
+            execution_output=changes.get("execution_output", self.execution_output),
         )
 
 

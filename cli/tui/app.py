@@ -80,6 +80,8 @@ def _render_voice_state(state: AppState) -> list[Text | str]:
         lines.extend(
             [Text("🧠 ANALYZING...", style="bold magenta"), "", Text("Running intent analysis graph", style="dim")]
         )
+    elif state.voice == VoiceState.EXECUTING:
+        lines.extend([Text("⚙ EXECUTING...", style="bold blue"), "", Text("Running graph", style="dim")])
     return lines
 
 
@@ -139,6 +141,15 @@ def render_main_pane(state: AppState) -> Panel:
                 Text("─" * 50, style="dim"),
                 Text("Orchestration Graph:", style="bold yellow"),
                 _render_graph_mini(state.graph_data),
+            ]
+        )
+
+    if state.execution_output:
+        lines.extend(
+            [
+                Text("─" * 50, style="dim"),
+                Text("Output:", style="bold green"),
+                Text(state.execution_output[:500], style="white"),
             ]
         )
 
@@ -419,6 +430,49 @@ def _preload_transcription_model() -> None:
         _transcription_service._load_model()
 
 
+async def execute_graph_by_name(graph_name: str, user_input: str, session_ctx: Any) -> str:
+    """Execute a graph by name. Returns output string."""
+    import json
+
+    from libs.python.graph import GraphExecutor, load_graph_from_dict
+    from libs.python.persistence import get_document_store
+
+    store = get_document_store()
+    docs = store.query("graphs", filters={"name": graph_name}, limit=1)
+
+    if not docs:
+        return f"Graph not found: {graph_name}"
+
+    doc = docs[0]
+    content = doc.data.get("content", "")
+
+    try:
+        data = json.loads(content)
+        graph = load_graph_from_dict(data)
+    except Exception as e:
+        return f"Failed to load graph: {e}"
+
+    # Find first nodes and set input
+    first_nodes = [n for n in graph.nodes if not any(dst == n for _, dst, _ in graph.edges)]
+    initial_inputs = {node_id: {"input": {"topic": user_input}} for node_id in first_nodes}
+
+    executor = GraphExecutor(session_ctx)
+    result = await executor.execute(graph, initial_inputs=initial_inputs)
+
+    # Collect output
+    output_parts = []
+    for node_result in result.node_results.values():
+        out = node_result.output
+        if out.get("text"):
+            output_parts.append(out["text"])
+        elif out.get("stdout"):
+            output_parts.append(out["stdout"])
+
+    if output_parts:
+        return "\n".join(output_parts)
+    return "Success" if result.success else (result.error_message or "Failed")
+
+
 def _handle_start_recording(
     state: AppState,
     recorder: VoiceRecorder,
@@ -463,10 +517,20 @@ def _handle_stop_recording(
         # Intent analysis - UI already shows transcript
         intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text))
         state = state.set_intent_result(intent_result, graph_data)
+        live.update(render_state(state))  # Show intent result
 
         # Emit CDC: system message (intent result)
         if ctx and intent_result.success:
             ctx.msg_system(f"intent={intent_result.intent} action={intent_result.action_type}")
+
+        # Execute graph if action_type is "graph"
+        if intent_result.success and intent_result.action_type == "graph" and intent_result.graph_name:
+            state = state.start_execution(intent_result.graph_name)
+            live.update(render_state(state))
+            output = loop.run_until_complete(execute_graph_by_name(intent_result.graph_name, text, ctx))
+            state = state.set_execution_output(output)
+            if ctx:
+                ctx.msg_system(f"execution complete: {output[:100]}")
 
         # Cleanup
         audio_path.unlink(missing_ok=True)
