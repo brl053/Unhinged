@@ -333,27 +333,25 @@ def transcribe_audio_sync(audio_path: Path, model: str = "base") -> str:
     return _transcription_service.transcribe_audio(audio_path)
 
 
-async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] | None]:
+async def run_intent_analysis(query: str, session_ctx: Any | None = None) -> tuple[IntentResult, dict[str, Any] | None]:
     """Run intent analysis graph on the given query.
+
+    Args:
+        query: User's transcribed voice input
+        session_ctx: Optional session context for CDC logging (uses TUI's session)
 
     Returns:
         Tuple of (IntentResult, graph_data dict for visualization)
     """
     import traceback
-    import uuid
 
     from libs.python.graph import GraphExecutor
-    from libs.python.graph.context import ContextStore
     from libs.python.query_planner import INTENT_NODE_ID, build_intent_analysis_graph
     from libs.python.query_planner.prompt_hydration import build_hydration_context
 
     try:
-        # Create a session context for CDC logging
-        session_id = f"tui-{uuid.uuid4().hex[:8]}"
-        context_store = ContextStore()
-        session_ctx = context_store.create(session_id)
-        session_ctx.set_stage("intent_analysis")
-        session_ctx.msg_user(query)
+        if session_ctx:
+            session_ctx.set_stage("intent_analysis")
 
         # Build hydration context for grounded action routing
         hydration = build_hydration_context(session_ctx)
@@ -385,8 +383,9 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
             )
 
             # Log success with action routing info
-            action_info = f", Action: {intent_result.action_type}" if intent_result.action_type else ""
-            session_ctx.msg_system(f"Intent: {intent_result.intent}, Domain: {intent_result.domain}{action_info}")
+            if session_ctx:
+                action_info = f", Action: {intent_result.action_type}" if intent_result.action_type else ""
+                session_ctx.msg_system(f"Intent: {intent_result.intent}, Domain: {intent_result.domain}{action_info}")
 
             # Build graph data for visualization
             graph_data = {
@@ -410,7 +409,8 @@ async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] 
                     # Check output for error details
                     error_msg = node_result.output.get("error", error_msg)
 
-            session_ctx.msg_error(error_msg)
+            if session_ctx:
+                session_ctx.msg_error(error_msg)
             return IntentResult(success=False, error=error_msg), None
 
     except Exception as e:
@@ -515,7 +515,7 @@ def _handle_stop_recording(
             ctx.msg_user(text)
 
         # Intent analysis - UI already shows transcript
-        intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text))
+        intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text, ctx))
         state = state.set_intent_result(intent_result, graph_data)
         live.update(render_state(state))  # Show intent result
 
