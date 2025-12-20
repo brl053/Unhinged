@@ -24,6 +24,7 @@ from rich.text import Text
 
 from cli.tui.input import Key, KeyboardInput, KeyEvent
 from cli.tui.state import AppState, IntentResult, VoiceState, create_initial_state
+from libs.python.clients import TranscriptionService
 
 
 def _copy_to_clipboard(text: str) -> bool:
@@ -269,15 +270,21 @@ class VoiceRecorder:
         return 0
 
 
+# Cached transcription service to avoid reloading model on every call
+_transcription_service: TranscriptionService | None = None
+
+
 def transcribe_audio_sync(audio_path: Path, model: str = "base") -> str:
     """Transcribe audio file using Whisper (synchronous).
 
     This is CPU-bound work, so we run it in a thread pool.
+    Model is cached to avoid reloading on every transcription.
     """
-    from libs.python.clients import TranscriptionService
+    global _transcription_service
 
-    service = TranscriptionService(model_size=model)
-    return service.transcribe_audio(audio_path)
+    if _transcription_service is None or _transcription_service.model_size != model:
+        _transcription_service = TranscriptionService(model_size=model)
+    return _transcription_service.transcribe_audio(audio_path)
 
 
 async def run_intent_analysis(query: str) -> tuple[IntentResult, dict[str, Any] | None]:
