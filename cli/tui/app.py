@@ -191,15 +191,51 @@ def render_status_bar(status: str) -> Panel:
     )
 
 
+def render_cdc_panel(state: AppState) -> Panel:
+    """Render CDC events panel."""
+    from libs.python.graph.context import CDCEventType
+
+    lines: list[Text] = []
+    for event in state.cdc_events[:8]:  # Show last 8
+        ts = event.timestamp.strftime("%H:%M:%S")
+        etype = event.event_type
+
+        # Format based on type
+        if etype == CDCEventType.MSG_USER:
+            text = event.data.get("text", "")[:40]
+            lines.append(Text(f"{ts} [user] {text}", style="cyan"))
+        elif etype == CDCEventType.MSG_SYSTEM:
+            text = event.data.get("text", "")[:40]
+            lines.append(Text(f"{ts} [sys]  {text}", style="green"))
+        elif etype == CDCEventType.MSG_ERROR:
+            text = event.data.get("text", "")[:40]
+            lines.append(Text(f"{ts} [err]  {text}", style="red"))
+        else:
+            lines.append(Text(f"{ts} [{etype.value[:8]}]", style="dim"))
+
+    if not lines:
+        lines.append(Text("(no events)", style="dim"))
+
+    content = Group(*lines)
+    return Panel(content, title=f"[dim]CDC [{state.session_id[:8]}][/dim]", border_style="dim")
+
+
 def render_state(state: AppState) -> Layout:
     """Render complete application state to Rich Layout."""
     layout = Layout(name="root")
     layout.split_column(
-        Layout(name="main", ratio=1),
+        Layout(name="body", ratio=1),
         Layout(name="status", size=3),
     )
 
+    # Split body into main pane and CDC panel
+    layout["body"].split_row(
+        Layout(name="main", ratio=3),
+        Layout(name="cdc", ratio=1),
+    )
+
     layout["main"].update(render_main_pane(state))
+    layout["cdc"].update(render_cdc_panel(state))
     layout["status"].update(render_status_bar(state.status))
 
     return layout
@@ -410,10 +446,13 @@ def _handle_stop_recording(
 ) -> AppState:
     """Handle stopping recording and processing audio."""
     state = state.stop_recording()
+    ctx = state.session_ctx
 
     try:
         audio_path = loop.run_until_complete(recorder.stop_recording())
         if not audio_path or not audio_path.exists():
+            if ctx:
+                ctx.msg_error("no audio recorded")
             return state.set_error("No audio recorded")
 
         # Transcribe and update UI immediately
@@ -421,15 +460,25 @@ def _handle_stop_recording(
         state = state.set_transcript(text)
         live.update(render_state(state))  # Show transcript NOW
 
+        # Emit CDC: user message (transcript)
+        if ctx:
+            ctx.msg_user(text)
+
         # Intent analysis - UI already shows transcript
         intent_result, graph_data = loop.run_until_complete(run_intent_analysis(text))
         state = state.set_intent_result(intent_result, graph_data)
+
+        # Emit CDC: system message (intent result)
+        if ctx and intent_result.success:
+            ctx.msg_system(f"intent={intent_result.intent} action={intent_result.action_type}")
 
         # Cleanup
         audio_path.unlink(missing_ok=True)
         return state
 
     except Exception as e:
+        if ctx:
+            ctx.msg_error(str(e))
         return state.set_error(f"Error: {e}")
 
 
@@ -494,6 +543,22 @@ def _handle_key_event(
 # Global for disgraceful shutdown recovery
 _shutdown_state: dict[str, Any] = {}
 
+# Global CDC event queue (for live callback → main loop)
+_cdc_queue: list[Any] = []
+
+
+def _cdc_live_callback(event: Any) -> None:
+    """Receive CDC events and queue for UI update."""
+    _cdc_queue.append(event)
+
+
+def _drain_cdc_queue(state: AppState) -> AppState:
+    """Drain CDC event queue into state."""
+    while _cdc_queue:
+        cdc_event = _cdc_queue.pop(0)
+        state = state.add_cdc_event(cdc_event)
+    return state
+
 
 def _disgraceful_shutdown(signum: int, frame: Any) -> None:
     """Handle SIGINT/SIGTERM - attempt session persist."""
@@ -518,6 +583,9 @@ def run_app(console: Console | None = None) -> None:
     context_store = ContextStore()
     session_id = str(uuid.uuid4())
     session_ctx = context_store.create(session_id)
+
+    # Set up CDC live callback
+    session_ctx.set_live_callback(_cdc_live_callback)
 
     # Register for disgraceful shutdown
     _shutdown_state["session_ctx"] = session_ctx
@@ -552,6 +620,7 @@ def run_app(console: Console | None = None) -> None:
             last_tick = time.time()
 
             while state.running:
+                state = _drain_cdc_queue(state)
                 event = kb.read(timeout=0.1)
                 state, last_tick = _process_event(state, event, recorder, loop, live, last_tick)
 

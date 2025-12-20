@@ -9,7 +9,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from libs.python.graph.context import SessionContext
+    from libs.python.graph.context import CDCEvent, SessionContext
 
 
 class VoiceState(Enum):
@@ -74,6 +74,14 @@ class AppState:
 
     # Recording elapsed time (seconds)
     recording_seconds: int = 0
+
+    # CDC events (last N for display)
+    cdc_events: list["CDCEvent"] = field(default_factory=list)
+
+    def add_cdc_event(self, event: "CDCEvent") -> "AppState":
+        """Add a CDC event to the display list (keep last 20)."""
+        events = [event] + self.cdc_events[:19]
+        return self._replace(cdc_events=events, dirty=True)
 
     def start_recording(self) -> "AppState":
         """Start voice recording."""
@@ -161,6 +169,7 @@ class AppState:
             running=changes.get("running", self.running),
             dirty=changes.get("dirty", self.dirty),
             recording_seconds=changes.get("recording_seconds", self.recording_seconds),
+            cdc_events=changes.get("cdc_events", self.cdc_events),
         )
 
 
