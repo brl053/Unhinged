@@ -189,13 +189,13 @@ def _render_graph_mini(graph_data: dict[str, Any]) -> Text:
     return text
 
 
-def render_status_bar(status: str) -> Panel:
-    """Render the status bar at bottom."""
-    return Panel(
-        Text(status, style="dim"),
-        style="dim",
-        height=3,
-    )
+def render_status_bar(state: AppState) -> Panel:
+    """Render the status bar at bottom with session ID."""
+    session_short = state.session_id[:8] if state.session_id else "no-session"
+    status_text = Text()
+    status_text.append(f"[{session_short}] ", style="cyan dim")
+    status_text.append(state.status, style="dim")
+    return Panel(status_text, style="dim", height=3)
 
 
 def render_cdc_panel(state: AppState) -> Panel:
@@ -243,7 +243,7 @@ def render_state(state: AppState) -> Layout:
 
     layout["main"].update(render_main_pane(state))
     layout["cdc"].update(render_cdc_panel(state))
-    layout["status"].update(render_status_bar(state.status))
+    layout["status"].update(render_status_bar(state))
 
     return layout
 
