@@ -138,7 +138,7 @@ def _format_cdc_event(event: Any) -> Text | None:
 
 def render_main_pane(state: AppState) -> Panel:
     """Render the main content pane with CDC events interpolated."""
-    from rich.box import HEAVY
+    from rich.box import ASCII
 
     lines: list[Text | str] = []
 
@@ -167,7 +167,7 @@ def render_main_pane(state: AppState) -> Panel:
         lines.append(Text(state.execution_output[:500], style="white"))
 
     content = Group(*[line if isinstance(line, Text) else Text(line) for line in lines])
-    return Panel(content, title="[bold cyan]Unhinged[/bold cyan]", border_style="cyan", box=HEAVY)
+    return Panel(content, title="[bold cyan]Unhinged[/bold cyan]", border_style="cyan", box=ASCII)
 
 
 def _build_graph_flow(nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
