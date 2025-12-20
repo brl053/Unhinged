@@ -8,7 +8,7 @@ Educational: this is what frameworks hide from you.
 """
 
 import asyncio
-import subprocess
+import base64
 import sys
 import tempfile
 import time
@@ -27,49 +27,14 @@ from cli.tui.state import AppState, IntentResult, VoiceState, create_initial_sta
 
 
 def _copy_to_clipboard(text: str) -> bool:
-    """Copy text to system clipboard. Returns True on success."""
+    """Copy text to clipboard using OSC 52 escape sequence. Direct to terminal."""
     if not text:
         return False
-    try:
-        # Try xclip first (X11)
-        proc = subprocess.run(
-            ["xclip", "-selection", "clipboard"],
-            input=text.encode(),
-            capture_output=True,
-            timeout=2,
-        )
-        if proc.returncode == 0:
-            return True
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-
-    try:
-        # Try xsel as fallback
-        proc = subprocess.run(
-            ["xsel", "--clipboard", "--input"],
-            input=text.encode(),
-            capture_output=True,
-            timeout=2,
-        )
-        if proc.returncode == 0:
-            return True
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-
-    try:
-        # Try wl-copy for Wayland
-        proc = subprocess.run(
-            ["wl-copy"],
-            input=text.encode(),
-            capture_output=True,
-            timeout=2,
-        )
-        if proc.returncode == 0:
-            return True
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-
-    return False
+    encoded = base64.b64encode(text.encode()).decode()
+    # OSC 52: \x1b]52;c;BASE64\x07
+    sys.stdout.write(f"\x1b]52;c;{encoded}\x07")
+    sys.stdout.flush()
+    return True
 
 
 def _build_clipboard_text(state: AppState) -> str:
