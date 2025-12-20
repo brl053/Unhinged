@@ -7,7 +7,6 @@ Graph management CLI - Create, Read, Update, Delete graph workflows.
 Graphs are stored in the document store under the "graphs" collection.
 """
 
-import asyncio
 import base64
 import sys
 from pathlib import Path
@@ -617,54 +616,20 @@ def run(graph_id: str):
         return 1
 
 
-# Session command entry point - delegates to graph_session.py
+# Session command - deprecated, redirects to TUI
 
 
 @graph.command(name="session")
 def session():
-    """Interactive voice-driven graph session.
+    """[DEPRECATED] Use 'unhinged tui' instead.
 
-    Speak to select and run graphs. Minimal interface.
-
-    Commands:
-        voice, v  - record and transcribe speech
-        list      - show available graphs
-        quit, q   - exit session
-        <text>    - match text to a graph
-
-    Shutdown modes:
-        - Graceful: quit/exit or Ctrl+C - persists session cleanly
-        - Disgraceful: crash/kill - attempts recovery persist
+    The session command has been consolidated into the TUI.
+    Run 'unhinged tui' for voice-driven graph execution.
     """
-    import signal
-    from contextlib import suppress
-
-    from cli.commands.graph_session import attempt_recovery_persist, run_session
-
-    # Register signal handler for disgraceful shutdown
-    original_sigterm = signal.getsignal(signal.SIGTERM)
-
-    def sigterm_handler(signum, frame):
-        attempt_recovery_persist()
-        if callable(original_sigterm):
-            original_sigterm(signum, frame)
-        sys.exit(1)
-
-    with suppress(ValueError):
-        signal.signal(signal.SIGTERM, sigterm_handler)
-
-    try:
-        asyncio.run(run_session())
-    except KeyboardInterrupt:
-        attempt_recovery_persist()
-        print()
-        print("interrupted")
-    except Exception:
-        attempt_recovery_persist()
-        raise
-    finally:
-        with suppress(ValueError):
-            signal.signal(signal.SIGTERM, original_sigterm or signal.SIG_DFL)
+    print("DEPRECATED: 'unhinged graph session' is now 'unhinged tui'")
+    print()
+    print("Run: unhinged tui")
+    sys.exit(0)
 
 
 def _menu_run_action(item) -> str:
