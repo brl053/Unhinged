@@ -102,6 +102,7 @@ class EmbeddingDocumentStore(DocumentStore):
         "session_contexts",
         "session_cdc",
         "execution_audit",
+        "graphs",  # Graph registry for semantic intent matching
     }
 
     def __init__(

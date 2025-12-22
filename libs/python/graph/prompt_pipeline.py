@@ -148,22 +148,63 @@ class PromptPipeline:
 
         outputs: list[StepOutput] = []
 
-        for step in self._steps:
-            # Emit CDC event if session available
-            if session:
-                from .context import CDCEventType
+        # Emit prompt BEFORE hydration
+        if session:
+            from .context import CDCEventType
 
-                session.emit(CDCEventType.PIPELINE_STEP, {"step": step.step_id, "action": "start"})
+            session.emit(
+                CDCEventType.PIPELINE_STEP,
+                {
+                    "step": "pipeline_start",
+                    "action": "before_hydration",
+                    "prompt": user_input,
+                    "system_prompt": payload.system_prompt,
+                    "context_blocks": len(payload.context_blocks),
+                },
+            )
+
+        for step in self._steps:
+            # Emit step start
+            if session:
+                session.emit(
+                    CDCEventType.PIPELINE_STEP,
+                    {"step": step.step_id, "action": "start"},
+                )
 
             output = step.execute(payload, session)
             outputs.append(output)
             payload.steps_executed.append(step.step_id)
             payload.step_metrics[step.step_id] = output.metrics
 
+            # Emit step complete with metrics
+            if session:
+                session.emit(
+                    CDCEventType.PIPELINE_STEP,
+                    {
+                        "step": step.step_id,
+                        "action": "complete",
+                        "result": output.result.value,
+                        "metrics": output.metrics,
+                    },
+                )
+
             # Update token estimate after each step
             payload.estimate_tokens()
 
             if output.result == StepResult.ABORT or output.result == StepResult.SKIP:
                 break
+
+        # Emit prompt AFTER hydration
+        if session:
+            session.emit(
+                CDCEventType.PIPELINE_COMPLETE,
+                {
+                    "action": "after_hydration",
+                    "final_prompt": payload.final_prompt[:500] if payload.final_prompt else "",
+                    "token_estimate": payload.token_count_estimate,
+                    "context_blocks": len(payload.context_blocks),
+                    "steps_executed": payload.steps_executed,
+                },
+            )
 
         return payload, outputs

@@ -102,7 +102,9 @@ class VectorBridge:
 
     def _extract_text(self, data: dict[str, Any]) -> str:
         """Extract embeddable text from document data."""
-        # Priority: explicit text field, then concatenate string values
+        # Priority: explicit embedding_text, then text, content, message
+        if "embedding_text" in data:
+            return str(data["embedding_text"])
         if "text" in data:
             return str(data["text"])
         if "content" in data:

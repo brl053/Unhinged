@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from .analytical_nodes import AnalyticalNode, TextClassifierNode
 from .checks import AuditAction, ContextLoadCheck, ContextPersistAction, RubricGradeAction, RubricMatchCheck
 from .context import CDCEvent, CDCEventType, ContextStore, Mutation, MutationType, SessionContext, SessionSummary
 from .generation_nodes import (
@@ -79,6 +80,9 @@ __all__ = [
     "LLMNode",
     "StructuredOutputNode",
     "WebSearchNode",
+    # analytical (non-generative) nodes
+    "AnalyticalNode",
+    "TextClassifierNode",
     # generation nodes
     "GenerationNode",
     "TextGenerationNode",

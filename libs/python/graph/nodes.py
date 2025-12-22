@@ -486,7 +486,8 @@ class LLMNode(GraphNode):
             # Lazy import to avoid requiring LLM deps at import time
             from libs.python.clients.text_generation_service import TextGenerationService
 
-            service = TextGenerationService(model=self.model, provider=self.provider)
+            # TextGenerationService only supports Ollama, so provider is ignored
+            service = TextGenerationService(model=self.model)
             text = service.generate(
                 prompt=full_prompt,
                 max_tokens=self.max_tokens,
@@ -497,7 +498,7 @@ class LLMNode(GraphNode):
                 "stdout": text,
                 "text": text,
                 "model": self.model,
-                "provider": self.provider,
+                "provider": "ollama",  # Always ollama for now
                 "success": True,
             }
         except Exception as exc:
@@ -913,9 +914,14 @@ class HumanFeedbackNode(GraphNode):
     This creates a natural checkpoint in graph execution where the human
     can review output, provide feedback, or make decisions.
 
+    Supports two modes:
+    1. CLI mode (default): Uses print/input for terminal interaction
+    2. Async mode: Emits CDC event and waits for external response via provide_feedback()
+
     Configuration:
     - prompt_template: Template string with {{placeholders}} shown to user
     - options: Optional list of valid options (empty = freeform input)
+    - async_mode: If True, emit CDC event and wait for provide_feedback() call
 
     Output keys:
     - ``stdout``: The human's input (for downstream piping)
@@ -929,15 +935,24 @@ class HumanFeedbackNode(GraphNode):
         node_id: str,
         prompt_template: str = "Provide feedback:",
         options: list[str] | None = None,
+        async_mode: bool = False,
     ) -> None:
         super().__init__(node_id)
         self.prompt_template = prompt_template
         self.options = options or []
+        self.async_mode = async_mode
         self._session: SessionContext | None = None
+        # For async mode: event to signal when feedback arrives
+        self._feedback_event: asyncio.Event | None = None
+        self._feedback_response: str | None = None
 
     def set_session(self, session: SessionContext | None) -> None:
-        """Set session context for template interpolation."""
+        """Set session context for template interpolation and CDC events."""
         self._session = session
+
+    def set_async_mode(self, enabled: bool) -> None:
+        """Enable or disable async mode for TUI integration."""
+        self.async_mode = enabled
 
     def hydrate(self, input_data: dict[str, Any] | None = None) -> dict[str, str]:
         """Return the hydrated prompt without executing."""
@@ -947,10 +962,21 @@ class HumanFeedbackNode(GraphNode):
         prompt = interpolate(self.prompt_template, nodes=input_data, session=self._session)
         return {"prompt": prompt, "options": ", ".join(self.options) if self.options else "(freeform)"}
 
-    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Block for human input and return the response."""
-        import asyncio
+    def provide_feedback(self, response: str) -> None:
+        """Provide feedback response from external source (e.g., TUI voice input).
 
+        This unblocks the execute() method when in async_mode.
+        """
+        self._feedback_response = response
+        if self._feedback_event:
+            self._feedback_event.set()
+
+    async def execute(self, input_data: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Block for human input and return the response.
+
+        In async_mode, emits HUMAN_FEEDBACK_REQUIRED CDC event and waits
+        for provide_feedback() to be called. Otherwise uses stdin.
+        """
         from libs.python.graph.template import interpolate
 
         input_data = input_data or {}
@@ -958,16 +984,62 @@ class HumanFeedbackNode(GraphNode):
         # Interpolate prompt template
         prompt = interpolate(self.prompt_template, nodes=input_data, session=self._session)
 
-        # Display prompt and options
-        print(f"\n=== HUMAN FEEDBACK REQUIRED ===\n{prompt}")
-        if self.options:
-            for i, opt in enumerate(self.options, 1):
-                print(f"  [{i}] {opt}")
-            print()
+        if self.async_mode and self._session:
+            # Async mode: emit CDC event and wait for external response
+            from libs.python.graph.context import CDCEventType
 
-        # Get input (async to not block event loop)
-        user_input = await asyncio.to_thread(input, "> ")
-        user_input = user_input.strip()
+            # Create event for waiting
+            self._feedback_event = asyncio.Event()
+            self._feedback_response = None
+
+            # Store reference to this node in session for external access
+            self._session.set(f"_pending_feedback_node_{self.id}", self)
+
+            # Emit CDC event with prompt and options
+            self._session.emit(
+                CDCEventType.HUMAN_FEEDBACK_REQUIRED,
+                {
+                    "node_id": self.id,
+                    "prompt": prompt,
+                    "options": self.options,
+                },
+            )
+
+            # Wait for feedback (with timeout to prevent infinite hang)
+            try:
+                await asyncio.wait_for(self._feedback_event.wait(), timeout=600.0)  # 10 min timeout
+            except asyncio.TimeoutError:
+                self._session.set(f"_pending_feedback_node_{self.id}", None)
+                return {
+                    "stdout": "",
+                    "text": "",
+                    "selected_option": 0,
+                    "success": False,
+                    "error": "Feedback timeout",
+                }
+
+            user_input = (self._feedback_response or "").strip()
+            self._session.set(f"_pending_feedback_node_{self.id}", None)
+
+            # Emit response event
+            self._session.emit(
+                CDCEventType.HUMAN_FEEDBACK_RESPONSE,
+                {
+                    "node_id": self.id,
+                    "response": user_input,
+                },
+            )
+        else:
+            # CLI mode: use print/input
+            print(f"\n=== HUMAN FEEDBACK REQUIRED ===\n{prompt}")
+            if self.options:
+                for i, opt in enumerate(self.options, 1):
+                    print(f"  [{i}] {opt}")
+                print()
+
+            # Get input (async to not block event loop)
+            user_input = await asyncio.to_thread(input, "> ")
+            user_input = user_input.strip()
 
         # Parse option selection if options provided
         selected_option = 0

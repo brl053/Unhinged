@@ -96,7 +96,15 @@ class FrameBuffer:
         self._force_redraw = True
 
 
-def create_framebuffer(term: Terminal) -> FrameBuffer:
-    """Create a framebuffer sized to current terminal."""
+def create_framebuffer(term: Terminal, padding: int = 2) -> FrameBuffer:
+    """Create a framebuffer sized to current terminal.
+
+    Args:
+        term: Terminal to get size from.
+        padding: Horizontal padding to subtract from width (default: 2).
+                 Prevents content from rendering off-screen on some terminals.
+    """
     size = term.get_size()
-    return FrameBuffer(size.width, size.height)
+    # Apply padding to width to prevent off-screen rendering
+    width = max(40, size.width - padding)
+    return FrameBuffer(width, size.height)

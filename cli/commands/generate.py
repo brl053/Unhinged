@@ -98,10 +98,10 @@ def text(prompt, model, provider, tokens, temperature, file):
             log_error("Prompt cannot be empty")
             sys.exit(1)
 
-        log_info(f"Generating text with {provider}/{model}...")
+        log_info(f"Generating text with ollama/{model}...")
 
-        # Initialize service and generate
-        service = TextGenerationService(model=model, provider=provider)
+        # Initialize service and generate (always ollama for now)
+        service = TextGenerationService(model=model)
         result = service.generate(
             prompt=prompt_text,
             max_tokens=tokens,

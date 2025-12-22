@@ -8,17 +8,11 @@ Usage:
     python3 package_manager.py list
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
 import yaml
-
-# Import subprocess utilities
-try:
-    from subprocess_utils import SubprocessRunner
-except ImportError:
-    # Fallback if subprocess_utils not available
-    SubprocessRunner = None
 
 
 class UbuntuPackageManager:
@@ -29,31 +23,18 @@ class UbuntuPackageManager:
 
     def _run_command(self, command: str) -> bool:
         """Run shell command"""
-        print(f"🔧 {command}")
-
-        # Check if we need sudo for apt-get commands
+        # Add sudo for apt-get commands
         if command.startswith("apt-get"):
-            # Try to run with sudo
             command = f"sudo {command}"
-        elif command.startswith("build/python/venv/bin/pip"):
-            # Handle Python venv pip commands - ensure venv exists first
-            venv_path = Path("build/python/venv")
-            if not venv_path.exists():
-                print("⚠️ Python virtual environment not found. Setting up...")
-                runner = SubprocessRunner(timeout=300)
-                setup_result = runner.run_shell("cd build/python && python3 setup.py")
-                if not setup_result["success"]:
-                    print("❌ Failed to setup Python virtual environment")
-                    return False
 
-        runner = SubprocessRunner(timeout=300)
-        result = runner.run_shell(command)
+        print(f"🔧 {command}")
+        result = subprocess.run(command, shell=True)
 
-        if not result["success"]:
+        if result.returncode != 0:
             print(f"❌ Command failed: {command}")
             return False
         else:
-            print(f"✅ Command succeeded: {command}")
+            print(f"✅ {command}")
             return True
 
     def install_package(self, package_name: str) -> bool:

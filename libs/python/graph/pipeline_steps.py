@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import os
+import platform
 from typing import TYPE_CHECKING, Any
 
 from .context import CDCEventType
@@ -13,6 +15,152 @@ from .prompt_pipeline import PipelineStep, PromptPayload, StepOutput, StepResult
 
 if TYPE_CHECKING:
     from .context import SessionContext
+
+
+# =============================================================================
+# STATIC CAPABILITIES - What the system can do (not session-dependent)
+# =============================================================================
+
+SYSTEM_CAPABILITIES = """## System Capabilities
+
+### Linux/GNU Commands
+ls, cat, grep, find, sed, awk, head, tail, wc, sort, uniq, cut, tr, xargs,
+chmod, chown, mkdir, rm, cp, mv, ln, touch, echo, printf, pwd, which, file,
+stat, du, df, ps, top, htop, kill, pkill, pgrep, lsof, netstat, ss, ip, ping,
+curl, wget, ssh, scp, rsync, tar, gzip, gunzip, zip, unzip, diff, patch,
+git, docker, docker-compose, make, arecord, aplay, ffmpeg, nvidia-smi
+
+### Unhinged CLI
+unhinged --help, unhinged dev, unhinged transcribe mic, unhinged transcribe file,
+unhinged tui, unhinged generate text
+
+### Python
+python3, pip, pytest, ruff, mypy
+All libs under libs/python/* are importable
+"""
+
+
+def get_system_info() -> str:
+    """Get current system information."""
+    info = [
+        f"OS: {platform.system()} {platform.release()}",
+        f"Distro: {_get_distro()}",
+        f"Shell: {os.environ.get('SHELL', '/bin/bash')}",
+        f"CWD: {os.getcwd()}",
+        f"Python: {platform.python_version()}",
+    ]
+    return "\n".join(info)
+
+
+def _get_distro() -> str:
+    """Get Linux distro name."""
+    try:
+        with open("/etc/os-release") as f:
+            for line in f:
+                if line.startswith("PRETTY_NAME="):
+                    return line.split("=", 1)[1].strip().strip('"')
+    except Exception:
+        pass
+    return "Unknown"
+
+
+# =============================================================================
+# CapabilitiesStep - Inject static system capabilities
+# =============================================================================
+
+
+class CapabilitiesStep(PipelineStep):
+    """Inject static system capabilities into prompt.
+
+    Capabilities are STATIC - Linux commands, CLI commands, Python libs.
+    Not session-dependent. Just a constant string.
+    """
+
+    @property
+    def step_id(self) -> str:
+        return "capabilities"
+
+    def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
+        payload.context_blocks.append(SYSTEM_CAPABILITIES)
+        return StepOutput(
+            result=StepResult.CONTINUE,
+            metrics={"chars": len(SYSTEM_CAPABILITIES)},
+        )
+
+
+# =============================================================================
+# SystemInfoStep - Inject current system info (OS, distro, shell, cwd)
+# =============================================================================
+
+
+class SystemInfoStep(PipelineStep):
+    """Inject current system information into prompt.
+
+    System info: OS, distro, shell, cwd, Python version.
+    """
+
+    @property
+    def step_id(self) -> str:
+        return "system_info"
+
+    def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
+        info = get_system_info()
+        block = f"## System Info\n{info}"
+        payload.context_blocks.append(block)
+        return StepOutput(
+            result=StepResult.CONTINUE,
+            metrics={"info": info},
+        )
+
+
+# =============================================================================
+# SessionHydrationStep - Interpolate session keys into prompt
+# =============================================================================
+
+
+class SessionHydrationStep(PipelineStep):
+    """Hydrate prompt with session context keys.
+
+    Hydration = interpolating {{session.key}} from session.data().
+    This is the ONLY meaning of hydration.
+    """
+
+    @property
+    def step_id(self) -> str:
+        return "session_hydration"
+
+    def execute(self, payload: PromptPayload, session: SessionContext | None = None) -> StepOutput:
+        if session is None:
+            return StepOutput(
+                result=StepResult.CONTINUE,
+                metrics={"skipped": True, "reason": "no session"},
+            )
+
+        # Get all session keys
+        data = session.data()
+        keys = list(data.keys())
+
+        if not keys:
+            return StepOutput(
+                result=StepResult.CONTINUE,
+                metrics={"key_count": 0},
+            )
+
+        # Format session context for prompt
+        lines = ["## Session Context", f"Keys: {', '.join(keys)}"]
+        for key in keys[:10]:  # Limit to avoid bloat
+            value = data[key]
+            if isinstance(value, str) and len(value) > 200:
+                value = value[:200] + "..."
+            lines.append(f"- {key}: {value}")
+
+        block = "\n".join(lines)
+        payload.context_blocks.append(block)
+
+        return StepOutput(
+            result=StepResult.CONTINUE,
+            metrics={"key_count": len(keys), "keys": keys[:10]},
+        )
 
 
 # =============================================================================

@@ -539,19 +539,11 @@ deps-list: ## List available packages
 
 deps-install-essential: ## Install essential packages
 	$(call log_info,📦 Installing essential Ubuntu packages...)
-	@echo "🔧 This will install: cmake, build-essential, python3-dev, cffi"
+	@echo "🔧 This will install: python3-psutil, xclip"
 	@python3 build/dependencies/package_manager.py install-group essential
 	@echo "✅ Essential packages installed!"
 
-deps-install-graphics: ## Install graphics packages
-	$(call log_info,🎨 Installing graphics Ubuntu packages...)
-	@echo "🖼️ This will install: libdrm-dev, libwayland-dev"
-	@python3 build/dependencies/package_manager.py install-group graphics
-	@echo "✅ Graphics packages installed!"
-
-
-
-ubuntu-setup: deps-install-essential deps-install-graphics ## Quick Ubuntu dependency setup for new users
+ubuntu-setup: deps-install-essential ## Quick Ubuntu dependency setup for new users
 	$(call log_info,🎯 Ubuntu setup complete!)
 	@echo "✅ All dependencies installed!"
 	@echo "🚀 You can now run: make start"
@@ -793,7 +785,7 @@ start: ## Remove all friction barriers - setup dependencies and launch GUI
 	@echo "🐍 Ensuring Python environment..."
 	@test -d build/python/venv || (cd build/python && python3 setup.py)
 	@echo "📦 Installing missing dependencies..."
-	@if ! command -v cmake >/dev/null 2>&1 || ! command -v gcc >/dev/null 2>&1 || ! build/python/venv/bin/python -c "import cffi" >/dev/null 2>&1; then \
+	@if ! command -v xclip >/dev/null 2>&1 || ! python3 -c "import psutil" >/dev/null 2>&1; then \
 		python3 build/dependencies/package_manager.py install-group essential; \
 	fi
 	@if ! pkg-config --exists libdrm 2>/dev/null || ! pkg-config --exists wayland-client 2>/dev/null; then \

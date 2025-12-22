@@ -160,7 +160,8 @@ class TextGenerationNode(GenerationNode):
         """Generate text using TextGenerationService."""
         from libs.python.clients.text_generation_service import TextGenerationService
 
-        service = TextGenerationService(model=self.model, provider=self.provider)
+        # TextGenerationService only supports Ollama, so provider is ignored
+        service = TextGenerationService(model=self.model)
         text = service.generate(
             prompt=prompt,
             max_tokens=self.max_tokens,
@@ -171,7 +172,7 @@ class TextGenerationNode(GenerationNode):
             "stdout": text,
             "text": text,
             "model": self.model,
-            "provider": self.provider,
+            "provider": "ollama",  # Always ollama for now
         }
 
 

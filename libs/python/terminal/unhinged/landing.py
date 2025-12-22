@@ -1,8 +1,12 @@
-"""Landing page - Session selection and creation.
+"""Landing page - Table of Contents and session navigation.
 
 Entry point: run_landing()
 
-WASD navigation with CDC event emission.
+Flow:
+1. TOC screen (User Terminal, Sudoers Terminal, Graphs)
+2. Based on selection:
+   - User/Sudoers Terminal: Session selection -> Main screen
+   - Graphs: Graph management screen
 """
 
 import uuid
@@ -13,12 +17,27 @@ from libs.python.terminal.renderer import Renderer
 from libs.python.terminal.unhinged.state import (
     LandingState,
     SessionSlot,
-    create_landing_state,
+    TerminalMode,
+    TOCItem,
 )
+
+# Result of session selection
+_selected_session_id: str | None = None
 
 # Lazy imports to avoid circular deps
 _context_store = None
 _CDCEventType = None
+_doc_store = None
+
+
+def _get_document_store():
+    """Lazy load document store."""
+    global _doc_store
+    if _doc_store is None:
+        from libs.python.persistence import get_document_store
+
+        _doc_store = get_document_store()
+    return _doc_store
 
 
 def _get_context_store():
@@ -113,19 +132,23 @@ def update(state: LandingState, event: Event) -> LandingState:
 
 
 def _handle_interact(state: LandingState) -> LandingState:
-    """Handle 'E' interact key."""
+    """Handle 'E' interact key - creates/resumes session and exits to main."""
+    global _selected_session_id
+
     if state.selected_index == 0:
         # Create new session
         new_id = str(uuid.uuid4())
         _emit_interact_event(state, "create_session", new_id)
-        return state.set_status(f"Created session: {new_id[:8]}... (TODO: transition to main)")
+        _selected_session_id = new_id
+        return state.quit()  # Exit landing to transition to main
     else:
         # Resume existing session
         idx = state.selected_index - 1
         if idx < len(state.sessions):
             session = state.sessions[idx]
             _emit_interact_event(state, "resume_session", session.session_id)
-            return state.set_status(f"Resuming: {session.label} (TODO: transition to main)")
+            _selected_session_id = session.session_id
+            return state.quit()  # Exit landing to transition to main
     return state
 
 
@@ -182,52 +205,131 @@ def render(state: LandingState, r: Renderer) -> None:
 
     # Help text
     help_y = h - 5
-    r.text(2, help_y, "W/S: Navigate  |  E: Select  |  C: Copy ID  |  Q: Quit", dim_style)
+    r.text(2, help_y, "W/S: Navigate  |  E: Select  |  C: Copy ID  |  Q: Back to TOC", dim_style)
 
     # Status bar
     r.panel(0, h - 2, w, 2, style=border_style)
     r.text(2, h - 1, state.status[: w - 4], status_style)
 
 
-def run_landing() -> str | None:
-    """Run the landing page. Returns selected session ID or None if quit."""
+def _run_session_selection(terminal_mode: TerminalMode) -> str | None:
+    """Run session selection for a terminal mode.
+
+    Returns the selected session ID, or None if user quit.
+    """
+    global _selected_session_id
     from libs.python.graph.context import ContextStore
 
+    # Reset selection
+    _selected_session_id = None
+
     # Create a temporary session context for CDC during landing
-    # (real session created/resumed on selection)
     store = ContextStore()
     temp_ctx = store.create("landing-" + str(uuid.uuid4())[:8])
 
     # Load existing sessions
     sessions = _load_sessions()
 
-    # Initial state
-    initial = create_landing_state(session_ctx=temp_ctx)
+    # Initial state with mode-specific status
+    mode_name = "User Terminal" if terminal_mode == TerminalMode.USER else "Sudoers Terminal"
     initial = LandingState(
         session_ctx=temp_ctx,
         sessions=sessions,
         selected_index=0,
         running=True,
-        status=f"Found {len(sessions)} previous session(s). Press E to select.",
+        status=f"{mode_name}: {len(sessions)} session(s). Press E to select.",
         cdc_events=[],
     )
 
     # Run engine
     engine = Engine()
 
-    # We need to capture the final state to return session choice
-    final_state: list[LandingState] = [initial]
-
     def _update(state: LandingState, event: Event) -> LandingState:
-        new_state = update(state, event)
-        final_state[0] = new_state
-        return new_state
+        return update(state, event)
 
     engine.run(_update, render, initial)
 
-    # Return session ID if one was selected
-    # For now, just return None (quit)
-    return None
+    return _selected_session_id
+
+
+def run_landing() -> str | None:
+    """Run the landing page with TOC as entry point.
+
+    Flow:
+    1. Show TOC (User Terminal, Sudoers Terminal, Graphs)
+    2. Navigate to selected screen
+    3. Loop back to TOC on quit from sub-screens
+    """
+    from libs.python.graph.context import ContextStore
+    from libs.python.terminal.unhinged.graphs import run_graphs
+    from libs.python.terminal.unhinged.main import run_main
+    from libs.python.terminal.unhinged.toc import run_toc
+
+    store = ContextStore()
+
+    while True:
+        # Show TOC
+        selected = run_toc()
+
+        if selected is None:
+            # User quit from TOC
+            return None
+
+        if selected == TOCItem.USER_TERMINAL:
+            # User terminal - daily driver
+            session_id = _run_session_selection(TerminalMode.USER)
+            if session_id is not None:
+                session_ctx = store.create(session_id)
+                run_main(session_ctx)
+            # Loop back to TOC
+
+        elif selected == TOCItem.SUDOERS_TERMINAL:
+            # Sudoers terminal - elevated privileges
+            session_id = _run_session_selection(TerminalMode.SUDOERS)
+            if session_id is not None:
+                session_ctx = store.create(session_id)
+                # TODO: Pass terminal_mode to run_main for different graph/prompt
+                run_main(session_ctx)
+            # Loop back to TOC
+
+        elif selected == TOCItem.GRAPHS:
+            # Graph management screen
+            graph_id, created = run_graphs()
+            if graph_id is not None:
+                # Open graph in workspace (read-only for now)
+                from libs.python.terminal.unhinged.graph_types import (
+                    create_empty_graph,
+                    load_graph_from_document,
+                )
+                from libs.python.terminal.unhinged.workspace import run_workspace
+
+                # Load or create graph
+                graph = None
+                try:
+                    doc_store = _get_document_store()
+                    doc = doc_store.read("graphs", graph_id)
+                    if doc:
+                        # Use the loader to properly parse nodes and edges
+                        graph = load_graph_from_document(doc.id, doc.data)
+                except Exception:
+                    pass
+
+                if graph is None:
+                    # Fallback to empty graph
+                    name = "New Graph" if created else "Unknown"
+                    graph = create_empty_graph(graph_id, name)
+
+                # Run workspace in read-only mode
+                # (editing will be enabled in a future update)
+                run_workspace(graph, read_only=True)
+            # Loop back to TOC
+
+        elif selected == TOCItem.CODEX:
+            # Node Codex - reference documentation
+            from libs.python.terminal.unhinged.codex import run_codex
+
+            run_codex()
+            # Loop back to TOC
 
 
 if __name__ == "__main__":

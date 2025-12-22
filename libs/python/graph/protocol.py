@@ -122,17 +122,52 @@ class PostFlightAction(ABC):
         """Execute the post-flight action."""
 
 
+class FlightObserver(ABC):
+    """Abstract base for flight observers.
+
+    Observers receive events during all flight stages in real-time.
+    Used for live UI updates, progress tracking, streaming output.
+
+    Unlike PostFlightAction (which runs after completion), observers
+    are notified as events occur during execution.
+    """
+
+    @property
+    @abstractmethod
+    def observer_id(self) -> str:
+        """Unique identifier for this observer."""
+
+    @abstractmethod
+    def on_event(self, stage: FlightStage, event_type: str, data: dict[str, Any]) -> None:
+        """Called when an event occurs during any flight stage.
+
+        Args:
+            stage: Current flight stage (PRE_FLIGHT, IN_FLIGHT, POST_FLIGHT)
+            event_type: Type of event (e.g., "node.start", "msg.user")
+            data: Event payload
+        """
+
+    def on_stage_enter(self, stage: FlightStage) -> None:
+        """Called when entering a flight stage. Optional override."""
+
+    def on_stage_exit(self, stage: FlightStage) -> None:
+        """Called when exiting a flight stage. Optional override."""
+
+
 class ExecutionProtocol:
     """Orchestrates the 3-stage execution SOP.
 
     Pre-flight checks run sequentially. First ABORT halts.
     In-flight execution is delegated to a provided executor.
     Post-flight actions run sequentially after execution.
+    Observers are notified of events during all stages.
     """
 
     def __init__(self) -> None:
         self._pre_flight_checks: list[PreFlightCheck] = []
         self._post_flight_actions: list[PostFlightAction] = []
+        self._observers: list[FlightObserver] = []
+        self._current_stage: FlightStage | None = None
 
     def register_check(self, check: PreFlightCheck) -> None:
         """Register a pre-flight check."""
@@ -142,18 +177,66 @@ class ExecutionProtocol:
         """Register a post-flight action."""
         self._post_flight_actions.append(action)
 
+    def register_observer(self, observer: FlightObserver) -> None:
+        """Register a flight observer for real-time event notifications."""
+        self._observers.append(observer)
+
+    def unregister_observer(self, observer: FlightObserver) -> None:
+        """Unregister a flight observer."""
+        if observer in self._observers:
+            self._observers.remove(observer)
+
+    def notify_observers(self, event_type: str, data: dict[str, Any]) -> None:
+        """Notify all observers of an event in the current stage."""
+        if self._current_stage is None:
+            return
+        for observer in self._observers:
+            try:
+                observer.on_event(self._current_stage, event_type, data)
+            except Exception:
+                # Observers should not break execution
+                pass
+
+    def _enter_stage(self, stage: FlightStage) -> None:
+        """Enter a flight stage and notify observers."""
+        self._current_stage = stage
+        for observer in self._observers:
+            try:
+                observer.on_stage_enter(stage)
+            except Exception:
+                pass
+
+    def _exit_stage(self, stage: FlightStage) -> None:
+        """Exit a flight stage and notify observers."""
+        for observer in self._observers:
+            try:
+                observer.on_stage_exit(stage)
+            except Exception:
+                pass
+        self._current_stage = None
+
     def run_pre_flight(self, context: FlightContext) -> tuple[Verdict, list[CheckResult]]:
         """Execute all pre-flight checks.
 
         Returns (final_verdict, list_of_results).
         Final verdict is ABORT if any check returns ABORT.
         """
+        self._enter_stage(FlightStage.PRE_FLIGHT)
         results: list[CheckResult] = []
         final_verdict = Verdict.PROCEED
 
         for check in self._pre_flight_checks:
+            self.notify_observers("check.start", {"check_id": check.check_id})
             result = check.execute(context)
             results.append(result)
+            self.notify_observers(
+                "check.complete",
+                {
+                    "check_id": check.check_id,
+                    "verdict": result.verdict.value,
+                    "reason": result.reason,
+                },
+            )
 
             if result.verdict == Verdict.ABORT:
                 final_verdict = Verdict.ABORT
@@ -161,12 +244,17 @@ class ExecutionProtocol:
             elif result.verdict == Verdict.WARN and final_verdict != Verdict.ABORT:
                 final_verdict = Verdict.WARN
 
+        self._exit_stage(FlightStage.PRE_FLIGHT)
         return final_verdict, results
 
     def run_post_flight(self, record: FlightRecord) -> None:
         """Execute all post-flight actions."""
+        self._enter_stage(FlightStage.POST_FLIGHT)
         for action in self._post_flight_actions:
+            self.notify_observers("action.start", {"action_id": action.action_id})
             action.execute(record)
             record.post_flight_actions.append(action.action_id)
+            self.notify_observers("action.complete", {"action_id": action.action_id})
 
         record.completed_at = datetime.utcnow()
+        self._exit_stage(FlightStage.POST_FLIGHT)

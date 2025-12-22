@@ -2,8 +2,18 @@
 """
 Text Generation Service
 
-LLM-based text generation using local or remote models.
+LLM-based text generation using local Ollama models.
 Direct Python implementation - no gRPC overhead.
+
+Local-only: All inference runs on-device via Ollama.
+No external API calls.
+
+Supported Models (Mistral family - Apache-2.0):
+- mistral: Mistral 7B base model (default)
+- mistral-nemo: Mistral Nemo 12B
+- mixtral: Mixtral 8x7B (MoE)
+- codestral: Code-focused variant
+- devstral: Development/coding focused
 """
 
 import logging
@@ -15,24 +25,76 @@ from .errors import ServiceNotRunningError
 
 logger = logging.getLogger(__name__)
 
+# Supported Mistral family models (Apache-2.0 licensed)
+SUPPORTED_MODELS = frozenset(
+    {
+        "mistral",
+        "mistral:latest",
+        "mistral:7b",
+        "mistral-nemo",
+        "mistral-nemo:latest",
+        "mixtral",
+        "mixtral:latest",
+        "mixtral:8x7b",
+        "codestral",
+        "codestral:latest",
+        "devstral",
+        "devstral:latest",
+        "devstral-small",
+    }
+)
+
 
 class TextGenerationService:
-    """Text generation using LLM models (Ollama, OpenAI, Anthropic, etc.)"""
+    """Text generation using Mistral family models via local Ollama.
 
-    def __init__(self, model: str = "llama2", provider: str = "ollama"):
+    Only Apache-2.0 licensed Mistral models are supported:
+    - mistral (7B) - General purpose, fast
+    - mistral-nemo (12B) - More capable
+    - mixtral (8x7B) - MoE, high quality
+    - codestral - Code generation
+    - devstral - Development tasks
+    """
+
+    def __init__(self, model: str = "mistral"):
         """
         Initialize text generation service.
 
         Args:
-            model: Model name (e.g., "llama2", "mistral", "gpt-4")
-            provider: Provider (ollama, openai, anthropic)
+            model: Mistral family model name. Supported:
+                   mistral, mistral-nemo, mixtral, codestral, devstral
         """
-        self.model = model
-        self.provider = provider
+        # Normalize model name
+        self.model = model.lower().strip()
         self.client: Any = None
         self.model_loaded = False
 
-        logger.info(f"TextGenerationService initialized (model: {model}, provider: {provider})")
+        # Warn if using unsupported model (but allow it for flexibility)
+        base_model = self.model.split(":")[0]
+        if base_model not in {m.split(":")[0] for m in SUPPORTED_MODELS}:
+            logger.warning(
+                f"Model '{model}' is not in supported Mistral family. "
+                f"Supported: mistral, mistral-nemo, mixtral, codestral, devstral"
+            )
+
+        logger.info(f"TextGenerationService initialized (model: {self.model})")
+
+    @staticmethod
+    def list_available_models() -> list[str]:
+        """List models available in local Ollama instance."""
+        try:
+            response = requests.get("http://localhost:1500/api/tags", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                return [m["name"] for m in data.get("models", [])]
+        except Exception:
+            pass
+        return []
+
+    @staticmethod
+    def get_supported_models() -> frozenset[str]:
+        """Return set of supported Mistral family model names."""
+        return SUPPORTED_MODELS
 
     def _check_ollama_health(self) -> bool:
         """Check if Ollama service is available at localhost:1500 (external port)."""
@@ -58,42 +120,19 @@ class TextGenerationService:
         self.client = Client(host="http://localhost:1500")
         logger.info(f"Ollama client initialized for model: {self.model}")
 
-    def _load_openai_client(self) -> None:
-        """Load OpenAI client."""
-        from openai import OpenAI
-
-        self.client = OpenAI()
-        logger.info("OpenAI client initialized")
-
-    def _load_anthropic_client(self) -> None:
-        """Load Anthropic client."""
-        from anthropic import Anthropic
-
-        self.client = Anthropic()
-        logger.info("Anthropic client initialized")
-
     def _load_client(self) -> None:
-        """Load LLM client (lazy loading)"""
+        """Load Ollama client (lazy loading)."""
         if self.model_loaded:
             return
 
         try:
-            if self.provider == "ollama":
-                self._load_ollama_client()
-            elif self.provider == "openai":
-                self._load_openai_client()
-            elif self.provider == "anthropic":
-                self._load_anthropic_client()
-            else:
-                raise ValueError(f"Unknown provider: {self.provider}")
-
+            self._load_ollama_client()
             self.model_loaded = True
-
         except ImportError as e:
-            logger.error(f"Failed to import {self.provider} client: {e}")
+            logger.error(f"Failed to import ollama client: {e}")
             raise
         except Exception as e:
-            logger.error(f"Failed to initialize {self.provider} client: {e}")
+            logger.error(f"Failed to initialize Ollama client: {e}")
             raise
 
     def generate(
@@ -124,43 +163,20 @@ class TextGenerationService:
             raise RuntimeError("LLM client failed to load")
 
         try:
-            logger.info(f"Generating text with {self.provider}/{self.model}")
+            logger.info(f"Generating text with ollama/{self.model}")
 
-            text: str = ""
-            if self.provider == "ollama":
-                response = self.client.generate(
-                    model=self.model,
-                    prompt=prompt,
-                    stream=False,
-                )
-                text = str(response.get("response", "")).strip()
-
-            elif self.provider == "openai":
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
-                )
-                text = str(response.choices[0].message.content).strip()
-
-            elif self.provider == "anthropic":
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=max_tokens,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                )
-                text = str(response.content[0].text).strip()
+            response = self.client.generate(
+                model=self.model,
+                prompt=prompt,
+                stream=False,
+            )
+            text = str(response.get("response", "")).strip()
 
             logger.info(f"Generation complete: {len(text)} characters")
             return text
 
         except ConnectionError as e:
-            error_msg = (
-                f"Connection error with {self.provider}: {e}\nPlease ensure the service is running and accessible."
-            )
+            error_msg = f"Connection error with Ollama: {e}\n" "Please ensure Ollama is running on port 1500."
             logger.error(error_msg)
             raise RuntimeError(error_msg) from e
         except Exception as e:
@@ -182,14 +198,13 @@ class TextGenerationService:
             temperature: Sampling temperature
 
         Returns:
-            Dict with text, model, tokens_generated, etc.
+            Dict with text, model, prompt_length, text_length.
         """
         text = self.generate(prompt, max_tokens, temperature)
 
         return {
             "text": text,
             "model": self.model,
-            "provider": self.provider,
             "prompt_length": len(prompt),
             "text_length": len(text),
         }

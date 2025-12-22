@@ -41,11 +41,19 @@ if TYPE_CHECKING:
 class MutationType(Enum):
     """Type of context mutation."""
 
+    # TODO: Add "archive"
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"
 
 
+# TODO:P1:Graduate this pattern to have an accompanying schema for each event type.
+# - This can be implemented in variety of manners.
+# - The intention is to have more information included in the event payload. This information can be used for filtering, searching, and analysis.
+# - This will also increase the success of the LLM's ability to understand the context of the event.
+# - This will, in effect, "graduate" this pattern from a simple enum to a full-blown class hierarchy.
+# - CDCEvent.data is where we store a generic payload. We cannot add any logic (bussiness, validation, etc.) in a consistent and extensible manner without first graduating the pattern.
+# - This is a big ask. The pre-commit hooks, which run linting and static analysis as well as other quality gates, will slow this work and make it considerably frustrating as this pattern is currently using `Any`.
 class CDCEventType(Enum):
     """Type of CDC event for the session feed."""
 
@@ -106,7 +114,16 @@ class CDCEventType(Enum):
     # Rubric grading events (post-flight quality gate)
     RUBRIC_GRADE = "rubric.grade"
 
+    # Human feedback events (async human-in-the-loop)
+    HUMAN_FEEDBACK_REQUIRED = "human.feedback.required"
+    HUMAN_FEEDBACK_RESPONSE = "human.feedback.response"
 
+
+# TODO: Rename to Event -- There will be an increasing amount of event types directly correlated with features over time.
+# This work will first require the engineer to gather all existing use cases, ideate on the new class hierarchy, and then implement.
+# CDCEventType should help here.
+#
+# User signoff is required at the class heirarchy and naming.
 @dataclass
 class CDCEvent:
     """Single event in the CDC feed.
@@ -122,6 +139,12 @@ class CDCEvent:
     sequence: int = 0  # monotonic sequence number within session
 
 
+# TODO: Pivot this pattern to "Delta".
+# - This is the diff between two things, and is determined both by "an" event as well as "between" events if applicable.
+# - A Mutation is a type of Delta.
+# - An example of a Delta that is not a Mutation is an increase in some telemetry metric.
+#   - In this example, it is an Observation where the Delta carries some significance relative to the user.
+# - User signoff on naming required.
 @dataclass
 class Mutation:
     """Single mutation record in the changelog."""
@@ -137,6 +160,9 @@ class Mutation:
 CDCCallback = Callable[[CDCEvent], None]
 
 
+# TODO:
+# - Enable strace by default.
+# - Dedupe "changelog" and "cdc_feed" features. See TODO on Changelog.
 @dataclass
 class SessionContext:
     """Mutable session state with full CDC feed.

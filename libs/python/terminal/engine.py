@@ -36,6 +36,7 @@ class InputEvent(Enum):
     CHAR = auto()
     ENTER = auto()
     ESCAPE = auto()
+    TAB = auto()  # Tab key
     QUIT = auto()  # Ctrl+C or 'q'
     # Navigation (WASD)
     NAV_UP = auto()  # W

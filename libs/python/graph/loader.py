@@ -11,6 +11,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .analytical_nodes import TextClassifierNode
 from .generation_nodes import (
     AudioGenerationNode,
     ImageGenerationNode,
@@ -51,6 +52,8 @@ NODE_TYPE_REGISTRY: dict[str, type[GraphNode]] = {
     "image_gen": ImageGenerationNode,
     "audio_gen": AudioGenerationNode,
     "video_gen": VideoGenerationNode,
+    # Analytical (non-generative) nodes
+    "text_classifier": TextClassifierNode,
 }
 
 
@@ -77,6 +80,77 @@ def load_graph_from_json(json_path: str | Path) -> Graph:
         raise GraphLoadError(f"Invalid JSON in {path}: {exc}") from exc
 
     return load_graph_from_dict(data)
+
+
+def load_graph_from_registry(name_or_id: str) -> Graph:
+    """Load a graph from the document store registry.
+
+    Looks up the graph by name or document ID, parses the stored JSON content,
+    and returns an executable Graph object.
+
+    Args:
+        name_or_id: Either the graph name (e.g., "Engineering Intake") or
+                    the document ID from the registry.
+
+    Returns:
+        Executable Graph object.
+
+    Raises:
+        GraphLoadError: If the graph cannot be found or loaded.
+    """
+    try:
+        from libs.python.persistence import get_document_store
+    except ImportError as exc:
+        raise GraphLoadError("Document store not available") from exc
+
+    store = get_document_store()
+
+    # Try by name first (more common case)
+    results = store.query("graphs", {"name": name_or_id}, limit=1)
+    if results:
+        doc = results[0]
+    else:
+        # Try by document ID
+        doc = store.read("graphs", name_or_id)
+        if doc is None:
+            raise GraphLoadError(f"Graph not found: {name_or_id}")
+
+    # Parse the stored JSON content
+    content = doc.data.get("content")
+    if not content:
+        raise GraphLoadError(f"Graph {name_or_id} has no content")
+
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise GraphLoadError(f"Invalid JSON in graph {name_or_id}: {exc}") from exc
+
+    return load_graph_from_dict(data)
+
+
+def list_registry_graphs() -> list[dict[str, Any]]:
+    """List all graphs in the registry.
+
+    Returns:
+        List of graph metadata dicts with keys: id, name, description, tags
+    """
+    try:
+        from libs.python.persistence import get_document_store
+    except ImportError:
+        return []
+
+    store = get_document_store()
+    docs = store.query("graphs", {}, limit=1000)
+
+    return [
+        {
+            "id": doc.id,
+            "name": doc.data.get("name", ""),
+            "description": doc.data.get("description", ""),
+            "tags": doc.data.get("tags", []),
+        }
+        for doc in docs
+    ]
 
 
 def load_graph_from_dict(data: dict[str, Any]) -> Graph:
@@ -221,6 +295,7 @@ def _create_human_feedback_node(node_id: str, node_def: dict[str, Any], config: 
         node_id=node_id,
         prompt_template=config.get("prompt_template", "Provide feedback:"),
         options=config.get("options"),
+        async_mode=config.get("async_mode", False),
     )
 
 
@@ -275,6 +350,16 @@ def _create_video_gen_node(node_id: str, node_def: dict[str, Any], config: dict[
     )
 
 
+def _create_text_classifier_node(node_id: str, node_def: dict[str, Any], config: dict[str, Any]) -> TextClassifierNode:
+    del node_def  # unused
+    return TextClassifierNode(
+        node_id=node_id,
+        model_name=config.get("model_name", "all-MiniLM-L6-v2"),
+        labels=config.get("labels"),
+        threshold=config.get("threshold", 0.3),
+    )
+
+
 # Type alias for node factory functions
 NodeFactory = Callable[[str, dict[str, Any], dict[str, Any]], GraphNode]
 
@@ -292,4 +377,6 @@ _NODE_FACTORIES: dict[str, NodeFactory] = {
     "image_gen": _create_image_gen_node,
     "audio_gen": _create_audio_gen_node,
     "video_gen": _create_video_gen_node,
+    # Analytical nodes
+    "text_classifier": _create_text_classifier_node,
 }
